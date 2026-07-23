@@ -1,0 +1,2 @@
+<?php require __DIR__.'/../app/bootstrap.php';require_login();require_permission('dashboard');header('Content-Type: application/json');
+$sql="SELECT event_date,SUM(status='Breakdown') breakdown,SUM(status='Ready for Use') ready,SUM(status='Downtime') downtime FROM condition_events WHERE event_date>=DATE_SUB(CURDATE(),INTERVAL 6 DAY) GROUP BY event_date ORDER BY event_date";$rows=$pdo->query($sql)->fetchAll();echo json_encode($rows);
