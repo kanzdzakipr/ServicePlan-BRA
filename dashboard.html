@@ -237,6 +237,12 @@
         .kanban-card-title { font-weight: bold; margin-bottom: 5px; }
         .kanban-card-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;}
         
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem;}
+        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 15px; outline: none;}
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-danger { background: var(--danger); color: #fff; }
+
         .uc-container { text-align: center; padding: 100px 20px; color: var(--text-muted); }
         .uc-container i { font-size: 4rem; color: #dee2e6; margin-bottom: 20px; }
 
@@ -251,7 +257,7 @@
         </div>
         <ul class="sidebar-menu">
             <li><a onclick="showView('dashboard')" id="menu-dashboard" class="active"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
-            <li><a onclick="showView('uc', 'Monitoring Unit')"><i class="fa-solid fa-location-dot"></i> Monitoring Unit</a></li>
+            <li><a onclick="showView('monitoring')" id="menu-monitoring"><i class="fa-solid fa-location-dot"></i> Monitoring Unit</a></li>
             <li><a onclick="showView('asset')" id="menu-asset"><i class="fa-solid fa-cubes"></i> Master Asset</a></li>
             <li><a onclick="showView('uc', 'Inspeksi & P2H')"><i class="fa-solid fa-clipboard-check"></i> Inspeksi & P2H</a></li>
             <li><a onclick="showView('wo')" id="menu-wo"><i class="fa-solid fa-screwdriver-wrench"></i> Work Order</a></li>
@@ -260,7 +266,7 @@
             <li><a onclick="showView('uc', 'Condition Monitoring')"><i class="fa-solid fa-stethoscope"></i> Condition Monitoring</a></li>
             <li><a onclick="showView('uc', 'Fuel Management')"><i class="fa-solid fa-gas-pump"></i> Fuel</a></li>
             <li><a onclick="showView('uc', 'Produktivitas')"><i class="fa-solid fa-chart-line"></i> Produktivitas</a></li>
-            <li><a onclick="showView('uc', 'Biaya')"><i class="fa-solid fa-money-bill-trend-up"></i> Biaya</a></li>
+            <li><a onclick="showView('biaya')" id="menu-biaya"><i class="fa-solid fa-money-bill-trend-up"></i> Biaya</a></li>
             <li><a onclick="showView('uc', 'People & KPI')"><i class="fa-solid fa-users-gear"></i> People & KPI</a></li>
             <li><a onclick="showView('uc', 'HSE / Accident')"><i class="fa-solid fa-triangle-exclamation"></i> HSE / Accident</a></li>
             <li><a onclick="showView('uc', 'Laporan')"><i class="fa-solid fa-file-invoice"></i> Laporan</a></li>
@@ -339,13 +345,49 @@
                 </div>
             </div>
 
+            <!-- VIEW: MONITORING UNIT (Sesuai Permintaan User) -->
+            <div id="view-monitoring" class="view-section">
+                <h1 class="page-title">Monitoring Unit Bermasalah (Non-Ready)</h1>
+                <div class="panel">
+                    <div class="panel-body" style="padding-bottom: 0;">
+                        <p style="color:var(--text-muted); margin-bottom: 20px;">Halaman ini difilter khusus untuk menampilkan alat berat yang membutuhkan perhatian (Breakdown, Inspeksi/PM, dan Standby).</p>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <span><i class="fa-solid fa-triangle-exclamation"></i> Daftar Unit Tidak Ready</span>
+                        <div class="search-bar">
+                            <input type="text" id="searchMonitoring" placeholder="Cari unit bermasalah..." onkeyup="searchTableMonitoring()">
+                        </div>
+                    </div>
+                    <div class="panel-body" style="padding:0;">
+                        <div class="table-responsive">
+                            <table id="monitoringTable" style="margin-top:0;">
+                                <thead>
+                                    <tr>
+                                        <th>Unit ID</th>
+                                        <th>Kategori</th>
+                                        <th>Lokasi</th>
+                                        <th>Status Terakhir</th>
+                                        <th>Tindakan Lanjutan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="monTableBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- VIEW: MASTER ASSET (MVP 1) -->
             <div id="view-asset" class="view-section">
                 <h1 class="page-title">Master Asset</h1>
                 <div class="panel">
                     <div class="panel-header">
                         <span>Daftar Unit</span>
-                        <button style="padding:5px 10px; background:var(--primary); color:#fff; border:none; border-radius:4px;"><i class="fa-solid fa-plus"></i> Unit Baru</button>
+                        <button class="btn btn-primary" onclick="openModal('modalNewAsset')"><i class="fa-solid fa-plus"></i> Unit Baru</button>
                     </div>
                     <div class="panel-body">
                         <div class="table-responsive">
@@ -371,7 +413,10 @@
 
             <!-- VIEW: WORK ORDER (MVP 2) -->
             <div id="view-wo" class="view-section">
-                <h1 class="page-title">Manajemen Work Order</h1>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h1 class="page-title">Manajemen Work Order</h1>
+                    <button class="btn btn-danger" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Buat Tiket WO</button>
+                </div>
                 <div class="kanban-board" id="woKanbanBoard">
                     <!-- Populated via JS -->
                     <div class="kanban-column" id="col-Open">
@@ -385,6 +430,61 @@
                     <div class="kanban-column" id="col-Closed">
                         <h3><span>Closed / Ready</span> <span class="badge bg-operating" id="count-Closed">0</span></h3>
                         <div class="card-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: BIAYA (MVP 2/3) -->
+            <div id="view-biaya" class="view-section">
+                <h1 class="page-title">Modul Biaya (Cost Control)</h1>
+                
+                <div class="kpi-grid">
+                    <div class="kpi-card total">
+                        <div class="kpi-info"><h3>Total Budget Berjalan</h3><div class="value" id="kpiBudget">Rp 0</div></div>
+                        <div class="kpi-icon"><i class="fa-solid fa-vault"></i></div>
+                    </div>
+                    <div class="kpi-card breakdown">
+                        <div class="kpi-info"><h3>Total Pengeluaran Aktual</h3><div class="value" id="kpiActual">Rp 0</div></div>
+                        <div class="kpi-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                    </div>
+                </div>
+
+                <div class="dashboard-layout">
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-chart-bar"></i> Budget vs Actual (8 Bulan Terakhir)</span></div>
+                        <div class="panel-body" style="padding: 20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-end; height:250px; border-bottom:1px solid #ccc; padding-bottom:10px;" id="chartContainer">
+                                <!-- Bars populated via JS -->
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.8rem; color:var(--text-muted);" id="chartLabels">
+                                <!-- Labels via JS -->
+                            </div>
+                            <div style="margin-top:20px; font-size:0.8rem; display:flex; gap:20px;">
+                                <div><span style="display:inline-block; width:15px; height:15px; background:var(--primary); margin-right:5px;"></span> Budget</div>
+                                <div><span style="display:inline-block; width:15px; height:15px; background:var(--danger); margin-right:5px;"></span> Actual</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-list-check"></i> Daftar Harga Jual & Nilai Aset</span></div>
+                        <div class="panel-body" style="padding:0;">
+                            <div class="table-responsive">
+                                <table style="margin-top:0;">
+                                    <thead>
+                                        <tr>
+                                            <th>Unit ID</th>
+                                            <th>Total Biaya Perbaikan</th>
+                                            <th>Nilai Buku</th>
+                                            <th>Harga Pasaran</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="valTableBody">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -420,7 +520,7 @@
                 </div>
                 <div class="asset-360-grid">
                     <div>
-                        <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid var(--border);">
+                        <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
                             <p style="color:var(--text-muted); font-size:0.85rem;">Status</p>
                             <h3 id="modalStatus" style="margin-bottom:15px;">-</h3>
                             <p style="color:var(--text-muted); font-size:0.85rem;">Kategori</p>
@@ -428,6 +528,7 @@
                             <p style="color:var(--text-muted); font-size:0.85rem;">Lokasi Terakhir</p>
                             <h4 id="modalLokasi">-</h4>
                         </div>
+                        <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="triggerUpdateStatus()">Update Status</button>
                     </div>
                     <div>
                         <h3 style="margin-bottom:10px;">Informasi Detail</h3>
@@ -440,6 +541,85 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Aset -->
+    <div class="modal-overlay" id="modalNewAsset">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Registrasi Aset Baru</h2>
+                <button onclick="closeModal('modalNewAsset')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body form-group">
+                <label>Unit ID / Kode Lambung</label>
+                <input type="text" id="na-id" placeholder="Misal: DT-099" class="form-control">
+                <label>Kategori</label>
+                <select id="na-cat" class="form-control">
+                    <option>Excavator</option>
+                    <option>Bulldozer</option>
+                    <option>Dump Truck</option>
+                    <option>Motor Grader</option>
+                    <option>Vibro Compactor</option>
+                </select>
+                <label>Lokasi / Project</label>
+                <input type="text" id="na-loc" placeholder="Misal: Site Alpha" class="form-control">
+                <button class="btn btn-primary" onclick="submitNewAsset()" style="width:100%;">Simpan Aset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Update Status -->
+    <div class="modal-overlay" id="modalUpdateStatus">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Update Status Unit: <span id="us-id-label"></span></h2>
+                <button onclick="closeModal('modalUpdateStatus')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body form-group">
+                <input type="hidden" id="us-id">
+                <label>Status Baru</label>
+                <select id="us-status" class="form-control">
+                    <option value="READY">READY / OPERATING</option>
+                    <option value="STANDBY">STANDBY</option>
+                    <option value="INSPEKSI">INSPECTION / PM</option>
+                    <option value="BREAKDOWN">BREAKDOWN</option>
+                </select>
+                <label>Update Lokasi (Opsional)</label>
+                <input type="text" id="us-loc" placeholder="Biarkan kosong jika tidak pindah" class="form-control">
+                <label>Keterangan / Kondisi Fisik</label>
+                <textarea id="us-notes" rows="3" class="form-control" placeholder="Tuliskan keterangan perpindahan atau alasan status..."></textarea>
+                <button class="btn btn-primary" onclick="submitUpdateStatus()" style="width:100%;">Update Status</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Lapor Breakdown / WO -->
+    <div class="modal-overlay" id="modalNewWO">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Lapor Breakdown / Buat Work Order</h2>
+                <button onclick="closeModal('modalNewWO')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body form-group">
+                <label>Pilih Unit</label>
+                <select id="nwo-id" class="form-control">
+                    <!-- Populated via JS -->
+                </select>
+                <label>Prioritas</label>
+                <select id="nwo-prio" class="form-control">
+                    <option value="Normal">Normal (Terjadwal)</option>
+                    <option value="High">High (Darurat / Breakdown)</option>
+                </select>
+                <label>Keluhan / Diagnosis Awal</label>
+                <textarea id="nwo-issue" rows="3" class="form-control" placeholder="Jelaskan secara detail kerusakan yang terjadi..."></textarea>
+                <label>Apakah unit berhenti total (downtime)?</label>
+                <select id="nwo-down" class="form-control">
+                    <option value="Yes">Ya, Breakdown</option>
+                    <option value="No">Tidak, masih bisa beroperasi terbatas</option>
+                </select>
+                <button class="btn btn-danger" onclick="submitNewWO()" style="width:100%;">Kirim Tiket WO</button>
             </div>
         </div>
     </div>
@@ -457,8 +637,10 @@
                 globalData = await response.json();
                 
                 initDashboard(globalData);
+                initMonitoringView(globalData.assets);
                 initAssetView(globalData.assets);
                 initWorkOrderView(globalData.work_orders);
+                initBiayaView(globalData.costs);
 
                 showView('dashboard');
             } catch (error) {
@@ -554,7 +736,101 @@
             document.getElementById('modalStatus').textContent = status;
             document.getElementById('modalKategori').textContent = category;
             document.getElementById('modalLokasi').textContent = location;
-            document.getElementById('assetModal').classList.add('active');
+            openModal('assetModal');
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function submitNewAsset() {
+            const id = document.getElementById('na-id').value;
+            const cat = document.getElementById('na-cat').value;
+            const loc = document.getElementById('na-loc').value;
+            if(!id) return alert('ID harus diisi');
+            globalData.assets.unshift({
+                id: id, type: 'Heavy Equipment', category: cat, status: 'READY', location: loc || 'Yard', lastUpdate: 'Baru saja'
+            });
+            globalData.summary.total_units++;
+            globalData.summary.status_counts['READY']++;
+            closeModal('modalNewAsset');
+            alert('Aset berhasil didaftarkan');
+            refreshAllViews();
+        }
+
+        function triggerUpdateStatus() {
+            const id = document.getElementById('modalAssetId').textContent;
+            document.getElementById('us-id').value = id;
+            document.getElementById('us-id-label').textContent = id;
+            closeModal('assetModal');
+            openModal('modalUpdateStatus');
+        }
+
+        function submitUpdateStatus() {
+            const id = document.getElementById('us-id').value;
+            const status = document.getElementById('us-status').value;
+            const loc = document.getElementById('us-loc').value;
+            
+            const asset = globalData.assets.find(a => a.id === id);
+            if(asset) {
+                if(globalData.summary.status_counts[asset.status]) globalData.summary.status_counts[asset.status]--;
+                if(globalData.summary.status_counts[status] !== undefined) globalData.summary.status_counts[status]++;
+                
+                asset.status = status;
+                if(loc) asset.location = loc;
+                asset.lastUpdate = 'Baru saja';
+
+                if(status === 'BREAKDOWN') {
+                    const woId = 'WO-26-' + Math.floor(Math.random()*1000);
+                    globalData.work_orders.unshift({
+                        woId: woId, assetId: asset.id, location: asset.location, issue: document.getElementById('us-notes').value || 'Status diupdate ke Breakdown', downtime: '0', status: 'Open', priority: 'High', assignedTo: 'Pending'
+                    });
+                    alert(`Status diupdate ke BREAKDOWN. Tiket WO darurat dibuat otomatis: ${woId}`);
+                } else {
+                    alert('Status berhasil diupdate');
+                }
+            }
+            closeModal('modalUpdateStatus');
+            refreshAllViews();
+        }
+
+        function openNewWOModal() {
+            const select = document.getElementById('nwo-id');
+            select.innerHTML = globalData.assets.map(a => `<option value="${a.id}">${a.id} (${a.category})</option>`).join('');
+            openModal('modalNewWO');
+        }
+
+        function submitNewWO() {
+            const id = document.getElementById('nwo-id').value;
+            const prio = document.getElementById('nwo-prio').value;
+            const issue = document.getElementById('nwo-issue').value;
+            const down = document.getElementById('nwo-down').value;
+            
+            if(!issue) return alert('Keluhan harus diisi');
+            
+            const woId = 'WO-26-' + Math.floor(Math.random()*1000);
+            const asset = globalData.assets.find(a => a.id === id);
+            
+            if(down === 'Yes' && asset && asset.status !== 'BREAKDOWN') {
+                if(globalData.summary.status_counts[asset.status]) globalData.summary.status_counts[asset.status]--;
+                asset.status = 'BREAKDOWN';
+                globalData.summary.status_counts['BREAKDOWN']++;
+                alert(`Unit ${id} otomatis diubah statusnya menjadi BREAKDOWN karena laporan downtime`);
+            }
+
+            globalData.work_orders.unshift({
+                woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: issue, downtime: down==='Yes'?'0':'-', status: 'Open', priority: prio, assignedTo: 'Pending'
+            });
+            
+            closeModal('modalNewWO');
+            alert('Work Order berhasil dibuat');
+            refreshAllViews();
+        }
+
+        function refreshAllViews() {
+            initDashboard(globalData);
+            initMonitoringView(globalData.assets);
+            initAssetView(globalData.assets);
+            initWorkOrderView(globalData.work_orders);
         }
 
         function clearActiveMenus() {
@@ -565,8 +841,10 @@
             clearActiveMenus();
             
             if(viewName === 'dashboard') document.getElementById('menu-dashboard').classList.add('active');
+            else if(viewName === 'monitoring') document.getElementById('menu-monitoring').classList.add('active');
             else if(viewName === 'asset') document.getElementById('menu-asset').classList.add('active');
             else if(viewName === 'wo') document.getElementById('menu-wo').classList.add('active');
+            else if(viewName === 'biaya') document.getElementById('menu-biaya').classList.add('active');
             else if(viewName === 'uc') {
                 document.getElementById('ucTitle').innerText = title;
             }
@@ -606,6 +884,104 @@
                     .bindPopup(`<b>${escapeHtml(unit.id)}</b><br>Kategori: ${escapeHtml(unit.category)}<br>Status: ${escapeHtml(unit.status)}`);
             });
             setTimeout(() => { map.invalidateSize(); }, 500);
+        }
+
+        function initMonitoringView(assets) {
+            // Filter out 'READY' units, keep BREAKDOWN, INSPEKSI, STANDBY
+            const problematic = assets.filter(a => a.status !== 'READY');
+            
+            const tbody = document.getElementById('monTableBody');
+            tbody.innerHTML = problematic.map(asset => {
+                let badge = '';
+                let action = '';
+                if (asset.status === 'STANDBY') {
+                    badge = '<span class="badge bg-standby">STANDBY</span>';
+                    action = '<button class="badge bg-progress" style="border:none; cursor:pointer;" onclick="showView(\'wo\')">Assign WO</button>';
+                }
+                else if (asset.status === 'BREAKDOWN') {
+                    badge = '<span class="badge bg-breakdown">BREAKDOWN</span>';
+                    action = '<button class="badge bg-danger" style="border:none; cursor:pointer;" onclick="showView(\'wo\')">Cek Mekanik</button>';
+                }
+                else if (asset.status === 'INSPEKSI') {
+                    badge = '<span class="badge bg-inspeksi">INSPECTION</span>';
+                    action = '<button class="badge bg-draft" style="border:none; cursor:pointer;" onclick="alert(\'Menunggu verifikasi inspector\')">Review P2H</button>';
+                }
+                
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(asset.id)}</strong></td>
+                        <td>${escapeHtml(asset.category)}</td>
+                        <td>${escapeHtml(asset.location)}</td>
+                        <td>${badge}</td>
+                        <td>${action}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function searchTableMonitoring() {
+            const input = document.getElementById('searchMonitoring');
+            const filter = input.value.toUpperCase();
+            const tr = document.getElementById('monitoringTable').getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                let visible = false;
+                const tds = tr[i].getElementsByTagName('td');
+                for (let j = 0; j < tds.length; j++) {
+                    if (tds[j]) {
+                        if (tds[j].textContent.toUpperCase().indexOf(filter) > -1) {
+                            visible = true;
+                            break;
+                        }
+                    }
+                }
+                tr[i].style.display = visible ? "" : "none";
+            }
+        }
+
+        function initBiayaView(costs) {
+            if(!costs) return;
+            
+            // Format currency
+            const fmt = (num) => 'Rp ' + (num/1000000).toFixed(0) + ' Jt';
+            
+            let totalB = costs.budget.reduce((a,b)=>a+b, 0);
+            let totalA = costs.actual.reduce((a,b)=>a+b, 0);
+            
+            document.getElementById('kpiBudget').innerText = fmt(totalB);
+            document.getElementById('kpiActual').innerText = fmt(totalA);
+
+            // Chart
+            const maxVal = Math.max(...costs.budget, ...costs.actual);
+            let chartHtml = '';
+            let labelHtml = '';
+            
+            for(let i=0; i<costs.labels.length; i++) {
+                const bH = (costs.budget[i] / maxVal) * 100;
+                const aH = (costs.actual[i] / maxVal) * 100;
+                
+                chartHtml += `
+                    <div style="display:flex; flex-direction:column; justify-content:flex-end; align-items:center; width:30px; margin:0 5px;">
+                        <div style="display:flex; gap:2px; align-items:flex-end; height:200px;">
+                            <div style="width:12px; height:${bH}%; background:var(--primary); border-radius:2px 2px 0 0;" title="Budget: ${fmt(costs.budget[i])}"></div>
+                            <div style="width:12px; height:${aH}%; background:var(--danger); border-radius:2px 2px 0 0;" title="Actual: ${fmt(costs.actual[i])}"></div>
+                        </div>
+                    </div>
+                `;
+                labelHtml += `<div style="width:40px; text-align:center;">${costs.labels[i]}</div>`;
+            }
+            document.getElementById('chartContainer').innerHTML = chartHtml;
+            document.getElementById('chartLabels').innerHTML = labelHtml;
+
+            // Table
+            document.getElementById('valTableBody').innerHTML = costs.unit_valuations.map(val => `
+                <tr>
+                    <td><strong>${escapeHtml(val.id)}</strong><br><small class="text-muted">${escapeHtml(val.unit)}</small></td>
+                    <td>${escapeHtml(val.total_perbaikan)}</td>
+                    <td>${escapeHtml(val.nilai_buku)}</td>
+                    <td><span class="badge bg-operating">${escapeHtml(val.harga_pasaran)}</span></td>
+                </tr>
+            `).join('');
         }
 
         function escapeHtml(unsafe) {
