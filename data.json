@@ -1,0 +1,3342 @@
+{
+  "total_units": 416,
+  "status_counts": {
+    "READY": 335,
+    "INSPEKSI": 18,
+    "BREAKDOWN": 11,
+    "STANDBY": 52
+  },
+  "financials": {
+    "total_repair_cost": "Rp 0"
+  },
+  "units": [
+    {
+      "id": "DZ-00002 SN P6G01656",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "579 jam 16 menit",
+      "issue": "STUCK ENGINE. Mati total, Over heat, minyak di Nozzle sudah bercampur air, packing<br>head bocor",
+      "location": "Dari Lokasi Minas<br>dibawa ke YARD km 12"
+    },
+    {
+      "id": "DT-00049 - B 9104 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "371 jam 51 menit",
+      "issue": "MEKANIKAL &amp; K3<br>1. Perbaikan lampu hazard.<br>2. Karet ting tong bawah kanan 1 pcs,<br>3. Karet ting tong atas 2 pcs,<br>4. Karet susu/bantalan 4 pcs<br>5. Seal cylinder hoist bocor<br>6. . Housekeping<br>7. Perbaikan kepala batteray<br>8.. Mounting gantungan knalpot<br>WELDING<br>1. Lantai dump<br>2. Sub Chasis retak kiri &amp; kanan luar dalam<br>3. Tutup aki<br>4. Dinding dump kanan bocor.<br>5. Underrun retak dan bengkok<br>6. Gantungan ban serap",
+      "location": "Bropit harpaan baru.<br>hujan jm 08.00 wib<br>access pit baru<br>dilakukzn clearing<br>Aktivitas mekanik<br>terhambat access<br>semua basah. Rencana<br>akan dipindah ke Yard<br>jika Accses jalan sudah<br>siap/bagus<br>22/12/2025 DIBAWA<br>KE BENGKEL ANUGRA"
+    },
+    {
+      "id": "DT-04024 - BM 9285 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "49 jam 40 menit",
+      "issue": "RADIATOR BOCOR, MOUNTING ENGINE",
+      "location": "Bropit harpaan baru"
+    },
+    {
+      "id": "DT-00055 - B 9701 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "368 jam 00 menit",
+      "issue": "1. Karet ting tong bawah kanan 2 pcs,<br>2. Karet ting tong atas 4 pcs,<br>3. Karet susu/bantalan 4 pcs<br>4. Lantai dump<br>5. Sub Chasis retak kiri &amp; kanan luar dalam<br>6. Seal cylinder hoist bocor<br>7. Tutup aki<br>8. Dinding dump kanan bocor.<br>9. Underrun retak dan bengkok<br>10. Gantungan ban serap<br>11. Housekeping<br>12. Perbaikan kepala batteray<br>13. Pemasangan per depan<br>REGREASING",
+      "location": "B.Pit Harapan Baru.<br>Rencana akan<br>dipindah ke Yard jika<br>access jalan sudah<br>siap/bagus. Lokasi<br>Bropit hujan dari jam<br>08:00 WIB. Sehingga<br>jalan access belum<br>bisa dilewati.<br>20/12/2025 UNIT<br>Pindah ke Yard KM 12"
+    },
+    {
+      "id": "DT-00059 - BG 8163 NJ",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "202 jam 21 menit",
+      "issue": "WELDING<br>1. Cover body kiri penyok<br>2. Kisi2 chasis dump<br>3. Bracket knalpot<br>4. Baut clamp sub chasis. Cover body<br>5. KUnci ombeng<br>MEKANIKAL &amp; K3<br>1.. Pls check body set / trunion.<br>2.. Tutup battery<br>3. Ting tong atas bawah<br>4. Karet susu OK<br>5. Apar low pressure<br>6. Lock safety belt kiri<br>7. Clemp per depan kanan<br>8. Grease all fitting<br>9. House keping<br>10. SImpang 4 PTO<br>11. Safety lumpur kanan depan<br>12. URL Belakang<br>Temuan baru : pelek roda retak 2 pcs .<br>Regreasing",
+      "location": "B.Pit Harapan Baru.<br>hujan jm 08.00 sd 9.37<br>wib access Aktivitas<br>mekanik terhambat<br>access semua basah.<br>Rencana akan<br>dipindah ke Yard KM<br>12 jika access jalan<br>siap. Tgl 19/12/2025<br>Pindah Yard KM 12"
+    },
+    {
+      "id": "DT-00046 -B 9094 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "262 jam 40 menit",
+      "issue": "1. Ting tong atas bawah<br>Inspek tgl 18-12-2025<br>2. Alarm mundur<br>3. Grease all fitting",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00074 - Z 9109 AB",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "89 jam 57 menit",
+      "issue": "1. Ombeng bengkok / retak kiri, tidak bisa dikunci<br>2. Bracket tutup batteray.<br>3. Stabil front<br>4. Grease all fitting",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00060 - BG 8230 MX",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "269 jam 56 menit",
+      "issue": "WELDING<br>1.Lantai dump.<br>2. Underrun kanan patah<br>3. Chasis dump &amp; kisi2<br>4. Bracket clamp battery dan cover battery<br>Mekanikal &amp; K3<br>1. Karet susu<br>2. Ban serap<br>3. Pin bushing cylinder hoise atas &amp; bawah<br>4. Ting tong atas<br>5. Karet mounting shower per depan<br>6. Grease all fitting<br>7. Service berkala",
+      "location": "Bropit Harapan Baru<br>20/12/2025 Pindah ke<br>YARD KM12"
+    },
+    {
+      "id": "DT-00064 - BG 8640 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "145 jam 23 menit",
+      "issue": "WELDING<br>1 Underrun belakang<br>2. Lantai dump<br>3. Cross member sub chassis<br>Mekanikal &amp; K3<br>1. Clamp tutup battery<br>2. Marking nut<br>3. Alarm mundur<br>4. Ting tong atas bawah<br>5. Baut pin bushing cyllinder hoise longgar<br>6. Simpang 4 PTO<br>7. Karet susu<br>8. Grease all fitting (Regreasing) CLose tgl 25/12/2025",
+      "location": "Bropit Harapan Baru<br>20/12/2025 unit<br>dorsmeer, rencana<br>pindah ke Yard KM12"
+    },
+    {
+      "id": "DT-00050 - B 9105 ZYT",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "102 jam 00 menit",
+      "issue": "WELDING<br>1. SUB Chasis keropos<br>2. Chasis dump retak dan kisi<br>MEKANIKAL<br>1. Packing cylinder head (merembes)<br>2. Karet susu kiri belakang<br>3. Greasie all fitting",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00065-BG 8641 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "431 jam 47 menit",
+      "issue": "WELDING<br>1. Kisi ksi chasis dump<br>2. Lantai dump<br>3. Clamp Battery dan clamp tutup batteray<br>4. Chasis dump ke stand hydraulic<br>5. Gantungan knalpot dan ujung knalpot<br>Info Mekanik tgl 30/12/2025 : Gantungan ban serep putus/hilang<br>Batteray low Batt. Jumper Accu. Pembuatan bracket penahan accu<br>MEKANIKAL<br>1. Marking nut<br>2. Lampu rem<br>3. Baut pin bushing cylinder hoise bawah<br>4. Kaca rayban kena lentingan batu<br>5. Grease all fitting",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04029 - BM9819QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "94 jam 00 menit",
+      "issue": "1.hanger pen spring depan<br>2.penyetelan kanvas rem<br>3.service berkala<br>4.pengecekan disclutch<br>5. Ombeng baling",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04048",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "3 jam 22 menit",
+      "issue": "PERGANTIAN SHOCK ABSORBER 2 PCS",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04058 - BM 9678 JO - DT-41005",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "343 jam 00 menit",
+      "issue": "1. Penggantian Baut Roda 2 set<br>2. Ganti kampas rem 1 set<br>3. Ganti brake lining 1 tromol RH",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-04053 - BM 9824 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "338 jam 00 menit",
+      "issue": "Perbaikan / ganti baut roda<br>Penggantian Accu",
+      "location": "Dari Bropit ke Yard<br>KM12"
+    },
+    {
+      "id": "DT-04057 - BM 9289 JO DT-41004",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "907 jam 50 menit",
+      "issue": "Perbaikan / ganti baut roda<br>Welding Bolt Roda ( penahan Bolt pada saat di kunci).",
+      "location": "Dari Bropit ke Yard<br>KM12"
+    },
+    {
+      "id": "DT-04056 DT-41003 - BM 9956 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "907 jam 50 menit",
+      "issue": "Perbaikan / ganti baut roda<br>Welding Bolt Roda 10 pcs ( Bolt baru welding penahan agar tidak berputar saat di kunci)",
+      "location": "Dari Bropit ke Yard<br>KM12"
+    },
+    {
+      "id": "DT-04054 - BM9291JO DT-41001",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "907 jam 50 menit",
+      "issue": "Perbaikan / ganti baut roda<br>🔴 A. STRUKTURAL &amp; SUSPENSI (BERAT / KRITIS)<br>Per depan kanan patah → ✅ SUDAH diganti<br>Shock breaker depan → ✅ SUDAH terpasang<br>Mounting shock absorber kiri → ❗ PERLU verifikasi retak / kekuatan<br>Sub chassis retak → ❗ BELUM ada konfirmasi selesai<br>Mounting / stopper per depan kiri–kanan → ❗ BELUM dikonfirmasi<br>Hanger spring / gantungan per kiri → ❗ BELUM dikonfirmasi<br>Clamp / klem per kiri → ❗ BELUM dikonfirmasi<br>🟡 B. SISTEM STEERING &amp; REM (PENENTU RTW)<br>Steering keras Indikasi: masalah sistem power steering (pompa / tekanan / hose)<br>Problem rem Bisa terkait: adjuster, selang, atau sistem rem utama<br>🟡 C. SISTEM DUMP &amp; MEKANIKAL<br>Ting tong atas → ✅ SUDAH terpasang<br>Trunnion / bushing per kanan → ❗ BELUM dikonfirmasi selesai<br>Stud bolt / cucumber per → ❗ BELUM dikonfirmasi<br>🟢 D. FUEL SYSTEM &amp; ENGINE SUPPORT<br>Filter solar dari tangki tidak terpasang / terbuka<br>→ ❗ KRITIS, BELUM dikonfirmasi<br>(Ini tidak boleh diabaikan karena risiko kotoran masuk sistem)<br>🟢 E. K3 &amp; FINISHING<br>Lock seat belt kiri → ❗ BELUM dikonfirmasi<br>Fender kiri depan lepas → ❗ BELUM dikonfirmasi<br>Marking nut &amp; torque check → ❗ BELUM dilakukan / belum dilaporkan<br>Tutup battery &amp; clamp battery → ❗ BELUM dikonfirmasi",
+      "location": "Dari Bropit ke Yard<br>KM12"
+    },
+    {
+      "id": "DT-04055 - BM9503QO DT-41002",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "907 jam 50 menit",
+      "issue": "Perbaikan / ganti baut roda 40 pcs",
+      "location": "Dari Bropit ke Yard<br>KM12"
+    },
+    {
+      "id": "DT-00052 - B 9642 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "833 jam 50 menit",
+      "issue": "1. Perbaikan lampu kabut dan lampu besar .<br>2. BROKEN, MASTER KLOSE ATAS, MASTER KLOSE BAWAH",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04024 - BM 9285 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "833 jam 50 menit",
+      "issue": "1. Putus monting enggine (depan 2 pcs)(belakang 2 pcs)<br>2. Safety radiator pecah<br>3. Safety lumpur spackboard",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DOZER-BRA 05",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "840 jam 35 menit",
+      "issue": "Tambah oli hidrolik dobel",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00072 - DT 8669 KE",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "840 jam 05 menit",
+      "issue": "Regreasing",
+      "location": "-"
+    },
+    {
+      "id": "Lowboy PM-00003 - KT 9287 KU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "839 jam 20 menit",
+      "issue": "Regreasing",
+      "location": "-"
+    },
+    {
+      "id": "CC-00001 - ZCC600V",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "839 jam 00 menit",
+      "issue": "Ada kebocoran oli hidrolik di Hose. Penambahan olihyidrolik",
+      "location": "2 H - 013 A"
+    },
+    {
+      "id": "DT-00054 - B 9683 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "839 jam 50 menit",
+      "issue": "Penggantian kepala batteray",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04038 - BM 9296 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "839 jam 05 menit",
+      "issue": "Kepala batteray longgar. Perbaikan",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04032",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "831 jam 41 menit",
+      "issue": "Tambah oli hidrolik.<br>perbaikan kunci ombeng kiri dan kanan",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DZ-00001",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "830 jam 50 menit",
+      "issue": "Filter Solar sdh kotor . Pergantian Filter Solar",
+      "location": "LOC 3 Q - 19 B"
+    },
+    {
+      "id": "EX-00003 - C51503",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "832 jam 20 menit",
+      "issue": "REGREASING",
+      "location": "LOC 3 Q - 19 B"
+    },
+    {
+      "id": "DT-00032",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "817 jam 20 menit",
+      "issue": "GANTI KEPALA BATTERAY. KEPALA BATTERAY LONGGAR. MINTA DICOR<br>pengelasan pagar sebelah kiri dan ombeng",
+      "location": "BROPIT HARAPAN<br>BARU. TGL.<br>23/12/2025 MINTA<br>DIBAWA KE YARD"
+    },
+    {
+      "id": "EX-00012- PC 200",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "816 jam 20 menit",
+      "issue": "TAMBAH OLI ENGINE 2,5 LT. KLAKSON TIDAK BUNYI",
+      "location": "Loc ; 4 Q - 32 B"
+    },
+    {
+      "id": "DT-00071 - DT 8126 JE",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "785 jam 20 menit",
+      "issue": "Radiator berlumpur, perlu perbaikan<br>Oli kipas berkurang.<br>Accu soak pinjam dari DT-04030<br>Perbaikan elektrik lampu kota dan penggantian lampu",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04037 - BM 9666 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "815 jam 50 menit",
+      "issue": "- SELANG RADIATOR.<br>- Karet ting tong teouble.<br>- Turbo charge leaking perlu diganti.(Turbo broken)<br>- Temuan tngl. 19/01/2026 : poly engine dan V-Belt engine trouble.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00050 - B 9105 ZYT",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "96 jam 08 menit",
+      "issue": "ACCU/BATTERAY MINTA GANTI 1 PCS",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "WT-00001",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "100 jam 03 menit",
+      "issue": "ACCU/BATTERAY MINTA GANTI 1 PCS",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00037 - B 9139 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "PERBAIKAN KUNCI OMEBNG",
+      "location": "Bropit harpaan baru."
+    },
+    {
+      "id": "DT-00040 - B 9081 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Pemasangan angin",
+      "location": "B.Pit Harapan Baru"
+    },
+    {
+      "id": "DT-00054 - B 9683 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "101 jam 39 menit",
+      "issue": "MEKANIKAL<br>1. Lock safety belt kiri, 2. Steering problem (steering system), 3. Brake adjuster<br>4. Marking Nut 5. Per kanan depan patah 6. Moiunting stoper per depan kiri kanan<br>7. Sobreker / absorber mounting kiri 8. Ting tong atas. 9. HUnger spring- kiri<br>10. klem per kiri, 11. Pls check stud bolt / cucuk per dan trunion bushing kanan.<br>11. Tutup batteray dan clam Pls check fuel system (selang filter dari tangki tidak<br>dipasang . 12. REgreasing .<br>Welding<br>1. Lantai dump. 2. Fender kiri depan lepas. 3. SUb chassis retak . \\",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00053 - B 9644 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 49 menit",
+      "issue": "1. perbaikan kunci ombeng kiri,<br>2. Pengelasan breket underround belakang",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00003 - B 9109 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 33 menit",
+      "issue": "Perbaikan safety lumpur",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04038 - BM 9296 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "23 jam 09 menit",
+      "issue": "patah baut keliling transmisi.",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04012 - BM 9944 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 10 menit",
+      "issue": "Perbaikan elektrik, lampu2 mati",
+      "location": "B.Pit Harapan Baru"
+    },
+    {
+      "id": "DT-00035 - BM 8621 QU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 45 menit",
+      "issue": "Ganti selang minyak rem belakang",
+      "location": "B.Pit Harapan Baru"
+    },
+    {
+      "id": "DT-00027 - B 9136 ZYT",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "1 jam 37 menit",
+      "issue": "Gantungan ban serep, batteray low.<br>Bumper patah",
+      "location": "Bropit Haapan baru"
+    },
+    {
+      "id": "DT-00073 - DT8973IE",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "3 jam 00 menit",
+      "issue": "Perbaikan/penggantian Trouble engine mounting",
+      "location": "-"
+    },
+    {
+      "id": "DT-04048 - BM 9951 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 51 menit",
+      "issue": "Selang tangki BBM putus (welding)",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "EX-00007",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Ganti oli hidrolik/tambah",
+      "location": "Bangko"
+    },
+    {
+      "id": "PF-0001 - BW - 211D - 40",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "165 jam 16 menit",
+      "issue": "Alarm mundur tidak hidup. Penggantian alaarm mundur<br>Service Berkala",
+      "location": "Loc ; 3 Q - 19 C"
+    },
+    {
+      "id": "DT-00058 - B 9973 BIS",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Pengencangan baut as tarik. Mufler longgar dan bocor",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "PF-0002",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 19 menit",
+      "issue": "Trouble ; Alat Low Power<br>~ Solution ; Pencucian Filter Solar",
+      "location": "Loc ; 4 Q - 21 E"
+    },
+    {
+      "id": "DT-04042 - BM 9287 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "24 jam 54 menit",
+      "issue": "Penggantian mounting engine",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00034",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 50 menit",
+      "issue": "Baut roda patah 8 pcs",
+      "location": "Lok. HO"
+    },
+    {
+      "id": "DT-00017 - B 9126 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "UNDERRUN PROTECTION PATAH . WELDING",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00061 - BG 8367 IJ",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "98 jam 53 menit",
+      "issue": "RADIATOR LEAKING<br>TALI KIPAS RADIATOR PUTUS<br>Selang radiator rusak",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00063 - BG 8639 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "79 jam 23 menit",
+      "issue": "Inspeksi CEM tgl. 24/12/2025<br>1. Karet Wiiper 2. Klem per kiri kanan, 3. Per depan kanan patah, 4. Tutup batteray<br>5. Pin bushing gantiungan per kiri depan. 6. Ting tomg kanan bawah 1 pcs,<br>7. Simpang 4 PTO. 8. Housekeepig 9. Grease all fitting 10. Safety lumpur kanan depan<br>11. Hose cylinder noise. 12. LOck pintu kanan 13. Cover lampu sein kiri belakang lepas<br>Welding :<br>1 Sub Chasis retak, 2. Kisi2 chasis dump. 3. Underrun kiri broken. 4. Knalpot patah",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00058 - B 9973 BIS",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "106 jam 53 menit",
+      "issue": "Inspeksi CEM tgl. 24/12/2025<br>1. Packing cyl head. 2. Baut Axle shaft kiri longgar. 3. Ting tong kiri belakang.<br>4. Karet susu. 5. Engine brake. 6. Lampu kabut kanan. 7. Kunci pintu kanan<br>8. Marking nut. 9. Ban serep. 10. Alarm low sound 11. Lampu rem tidak berfungsi<br>Welding<br>1. Bracket lamu belakang kiri kanan 2. Underrun belakang kri retak.<br>3. Brakcet tutup batteray 4. Brakcet klam knalpot. 5. Bak samping kanan keropos<br>6. Engsel ombeng 7. Dump kanan atas bengkok dan retak<br>Info Mekanik tgl. 30/12/2025 (Joni Septian : )<br>Engine Break Rusak perlu penggantian part. 1 set..: engine break",
+      "location": "-"
+    },
+    {
+      "id": "DT-04040 - BM 9509 QO",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "1 jam 25 menit",
+      "issue": "PERBAIKAN KUNCI OMBENG",
+      "location": "B.Pit Harapan Baru"
+    },
+    {
+      "id": "DT-04048 - BM 9951 JO",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "0 jam 45 menit",
+      "issue": "pengelasan gantungan ban serap",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00031 - BG 8535 OW",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "24 jam 51 menit",
+      "issue": "RADIATOR LEAKING<br>~ganti radiator baru<br>~pengisian air coolen 25 liter<br>~ganti baterai baru",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "MB-00006 -- BM 7680 TU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "24 jam 53 menit",
+      "issue": "TEMPAT DUDUK TENGAH BROKEN<br>Welding tapak bangku penumpang &amp; lock<br>Ganti kepala ACCU &amp; ganti skun kabel power",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00074 - Z 9109 AB",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "114 jam 42 menit",
+      "issue": "1. Ombeng bengkok / retak kiri, tidak bisa dikunci<br>2. Bracket tutup batteray.<br>3. Stabil front<br>4. Grease all fitting<br>5. LAMPU BELAKANG PUTUS<br>6. KACA SPION KIRI RUSAK",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "PM-00001",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 23 menit",
+      "issue": "Penggantian 1 bh.songket jek lamdor loboy..",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00057 - B 9914 JYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 46 menit",
+      "issue": "LAMPU STOP BELAKANG MINTA DIGANTI 1 SET",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-04042 - BM 9287 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "77 jam 21 menit",
+      "issue": "Peraikan kunci ombeng. Overheat, mounting engine rusak lagi",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00003 - B 9109 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Penggantian lampu kota",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00012 - B 9121 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 00 menit",
+      "issue": "STEL/TONJOK KLOS BAWAH",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-04036 - BM 9949 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 25 menit",
+      "issue": "Ombeng koyak",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00008 - B 9115 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "20 jam 46 menit",
+      "issue": "Gantungan ban serep putus &amp; lasing",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04044 - BM9244NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 46 menit",
+      "issue": "Penyambungan selang angin bocor",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "PM-00003 - KT 9287 KU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 44 menit",
+      "issue": "Safety Underround Samping sebelah kanan broken..",
+      "location": "Yard KM 12"
+    },
+    {
+      "id": "MG-00004 SN:PRD800108",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 15 menit",
+      "issue": "Lampu Sein Kanan Short",
+      "location": "2 H - 1010 B"
+    },
+    {
+      "id": "SD-00001 - BW 211D - 40",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 30 menit",
+      "issue": "Lampu Rotari Putus . Pengantian lampu rotary",
+      "location": "2 J - 0110 A"
+    },
+    {
+      "id": "PF-00004 - 961884301614",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 37 menit",
+      "issue": "Tombol getar broken",
+      "location": "2 J - 0110 A"
+    },
+    {
+      "id": "DT-00035 - BM 8621 QU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 53 menit",
+      "issue": "Penggantian bola lamu belakang dan pemeriksaan jalur elektrik",
+      "location": "B.Pit Harapan Baru"
+    },
+    {
+      "id": "THRILLER - BM 8371 cu",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 45 menit",
+      "issue": "Penggantian Accu/Batteray 1pcs",
+      "location": "Yard KM 12"
+    },
+    {
+      "id": "HE-6.001 Exca mini",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Ada Rembesan Oli di Track Sisi Kanan Unit",
+      "location": "Yard HO"
+    },
+    {
+      "id": "PM-0001 - B 9012 ZEH",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "5 jam 49 menit",
+      "issue": "Perbaikan Baut bohel sebelah kiri lepas.dan per miring..",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-04024 - BM 9285 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Ganti piston bawah",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "SD-00005 - 961582391661",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 21 menit",
+      "issue": "Pergantian input Sealing washer fuel 1pcs",
+      "location": "MINAS"
+    },
+    {
+      "id": "EX-00004 - DBCH 0366",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "7 jam 31 menit",
+      "issue": "Kerusakan jalur hyduluic. Kode eror L03 pada control panel",
+      "location": "MINAS"
+    },
+    {
+      "id": "DT-04024 - BM 9285 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "27 jam 44 menit",
+      "issue": "Penggantian safety lumpur<br>Pabrikasi dudukan spackboard",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00055 - B 9701 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "171 jam 09 menit",
+      "issue": "Dinamo stater rusak",
+      "location": "Bropit Harapan baru.<br>Dibawa ke Bengkel<br>Dinamo"
+    },
+    {
+      "id": "PF-00003 SN : 961582391152",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "249 jam 11 menit",
+      "issue": "Solenoid gas rusak. Harus diganti",
+      "location": "MINAS"
+    },
+    {
+      "id": "DT-00005 - B9113ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 48 menit",
+      "issue": "LAMPU REM RUSAK",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "EX-22 - EX-04001 - DBCH1801",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "10 jam 51 menit",
+      "issue": "Perbaikan / Ganti Pin As dan Bushing Bucket, karena kondisi aus",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-04025 - BM 9398 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Ganti bola lampu besar dan kota",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00031 - BG 8535 OW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "18 jam 27 menit",
+      "issue": "ALARM MUNDUR - DRIVER TIDAK INFO",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00011 - B 9120 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "164 jam 00 menit",
+      "issue": "Seal Crankshaft Bocor",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "MG-00004 SN:PRD800108",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 38 menit",
+      "issue": "penguncian baut penahan kabin",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "TMC-00001 - B 9008 ZIN",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "3 jam 55 menit",
+      "issue": "Fabrikasi Safety Trailer &amp; TMC Samping Sebelah kanan dan kiri.",
+      "location": "Yard KM 12"
+    },
+    {
+      "id": "DT-00040-- B9081ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 39 menit",
+      "issue": "1..ganti belting AC.<br>2..ganti volli AC.",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "SD-00004 -",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Service Berkala",
+      "location": "Loc ; 3 Q - 19 A"
+    },
+    {
+      "id": "DT-04048 - BM 9951 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "51 jam 10 menit",
+      "issue": "Pengelsan kunci ombeng<br>1 : ganti gantungan ban depan.<br>2: perbaikan lampu rem..<br>3 : wiper kaca mati.<br>4 : lampu saen.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "EX-00001",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 25 menit",
+      "issue": "Pemberian Grease ke Operator",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00060 - BG 8230 MX",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 05 menit",
+      "issue": "Perbaikan temuan inspek pekerjaan perbaikan Frame Dump dan tambahkan plate<br>dump pada sisi kiri robek",
+      "location": "Yard KM 12"
+    },
+    {
+      "id": "DZ-00003 - BRA-05",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 54 menit",
+      "issue": "Perbaikan unit low power",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00056 - B 9892 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 51 menit",
+      "issue": "Kabel batteray",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "EX-00005-SYW01364",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "223 jam 00 menit",
+      "issue": "1. Penggantian kuku bucket.<br>2. Mufler keropos<br>3. Bushing bucket aus<br>4. Pin Bucket aus<br>5. Side cutter kiri kanan<br>6. Oli Hidrolik, Filter minta ganti<br>7. Tag Apar",
+      "location": "NDD<br>TGL 11/01/2026<br>DIBAWA KE YARD"
+    },
+    {
+      "id": "SD-00001 - BW 211D - 40",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 43 menit",
+      "issue": "Penambahan Oli Engine &amp; Hidrolik 1,5 Liter",
+      "location": "2 H - 1010 A"
+    },
+    {
+      "id": "DT-00045-B9093ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Stel Pully AC",
+      "location": "YARD KM.12"
+    },
+    {
+      "id": "DT-00053 - B 9644 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 00 menit",
+      "issue": "perbaikan piston klos bawah bocor.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00043 - B9091ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 43 menit",
+      "issue": "Perbaikan Sparkboard",
+      "location": "MInas"
+    },
+    {
+      "id": "DT-00074 - Z 9109 AB",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 29 menit",
+      "issue": "Penggantian 1 bh kepala batrai.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "EX-00008 - C01531",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 12 menit",
+      "issue": "Service Berkala<br>-fuel sparator 2pcs<br>-Fuel filter 1pcs<br>-Oil SAE 40 : 25 ltrs",
+      "location": "MINAS"
+    },
+    {
+      "id": "EX-00004 - DBCH 0366",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 22 menit",
+      "issue": "Ganti filter oli 1pcs, Ganti filter sparator 1pcs",
+      "location": "MINAS"
+    },
+    {
+      "id": "EX-00008 - C01531",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "552 jam 04 menit",
+      "issue": "Pada sealr arm bucket ada rembesan",
+      "location": "MINAS"
+    },
+    {
+      "id": "EX-00004 - DBCH 0366",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "149 jam 14 menit",
+      "issue": "Pada layar muncul : \"Blow pressure high error\". Error L03 kembali muncul tgl.<br>05/01/2026<br>Pengecekan soket injektor exc 0004 lok minas<br>Injector rusak<br>Ada rembesan oli dari soket injektor<br>Service Berkala<br>Baut as pen",
+      "location": "MINAS"
+    },
+    {
+      "id": "EX-00011",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 41 menit",
+      "issue": "Pabrikasi bracket lampu rotary",
+      "location": "HO"
+    },
+    {
+      "id": "DT-00057 - B 9914 JYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 47 menit",
+      "issue": "Ganti : Belting AC &amp; Pully AC",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "BRA-03 - B 9096 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "147 jam 00 menit",
+      "issue": "Universal join sudah pecah",
+      "location": "Yard KM 12"
+    },
+    {
+      "id": "WT-00001",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 02 menit",
+      "issue": "Perbaikan lampu rem belakang mati.",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "FUSO TMC - XCMG B 9435 XFY",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 30 menit",
+      "issue": "Instal lampu sorot + pergantian bohlam dari 12 volt ke 24 volt",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00038 - B9079ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 05 menit",
+      "issue": "Bell Ting AC lepas.",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "MG-00004 SN:PRD800108",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 20 menit",
+      "issue": "Perbaikan lampu Hazard",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00071 - DT 8126 JE",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "332 jam 51 menit",
+      "issue": "1. Overheat, air menembak dari radiator.<br>2. Ganti packing cilinder head<br>3. Cleaning component,skir klep,ganti packing cylinder head.<br>Temuan kerusakan tanggal 18/01/2026 : STARTING MOTOR TROUBLE<br>TINDAKAN MITIGASI YANG DILAKUKAN:<br>1.Membuka silinder head<br>2.skir klep<br>3.cleaning<br>4.ganti starting motor<br>5.mencabut bolt turbo 5pcs.",
+      "location": "WORKSHOP KM 12<br>STARTING MOTOR<br>DIBAWA KE BENGKEL<br>DINAMO"
+    },
+    {
+      "id": "DT-00021 - B 9130 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 25 menit",
+      "issue": "Tuas pompa pto lengket.",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "EX-00011",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 45 menit",
+      "issue": "LAMPU ROTARY PUTUS. PENGGANTIAN LAMPU ROTARY",
+      "location": "Loc ; 2 H - 1110 A"
+    },
+    {
+      "id": "DT-00053 - B 9644 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "KNALPOT RUSAK. PERBAIKAN WELDING",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00062 - BG8638NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "PENGGANTIAN DRAK LINK",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "EX-00012 - DBCH1801",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "APAR LOW PRESSURE. KLAKSON TIDAK MAU BUNYI",
+      "location": "2 H - 0306"
+    },
+    {
+      "id": "DT-00057 - B 9914 JYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "51 jam 00 menit",
+      "issue": "PUTUS CENTRAL Bolt PER DEPAN /<br>patah baut cucuk per",
+      "location": "2 H - 0306"
+    },
+    {
+      "id": "DT-00061 - BG 8367 IJ",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "22 jam 35 menit",
+      "issue": "1 : lampu besar depan sebelah kiri pecah..<br>2 : lampu kabut kiri pecah.<br>3. Bumper depan rusak",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-04048 - BM 9951 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 49 menit",
+      "issue": "Ganti pully AC",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-04024 - BM 9285 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "7 jam 56 menit",
+      "issue": "Bangku mesin belakang kiri depan kiri rusak. (Penggantian).<br>Perbaikan dan pengelasan kunci ombeng baru",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04042 - BM 9287 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 21 menit",
+      "issue": "Sleang radiator lepas.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00021 - B 9130 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 38 menit",
+      "issue": "Ganti bohlam lampu kiri depan",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-04036 - BM 9949 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 40 menit",
+      "issue": "Ganti sambungan selang.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04038 - BM 9296 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 15 menit",
+      "issue": "Selang radiator bocor",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00001",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 03 menit",
+      "issue": "Pengelasan underround belakang",
+      "location": "Bropit harpaan baru"
+    },
+    {
+      "id": "DT-04025 - BM 9398 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 45 menit",
+      "issue": "pengelasan ombeng yang retak",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00062 - BG8638NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 45 menit",
+      "issue": "Pengelasan gantungan ban serep",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00059 - BG 8163 NJ",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 15 menit",
+      "issue": "Repair attention Muffler selesai.<br>pengelasan muffler yang patah Selesai",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00009 - B 9116 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 51 menit",
+      "issue": "Pengelasan underround belakang yang patah",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00045-B9093ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "pengelasan pagar kiri dan kanan",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DZ-00003 - BRA-05",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "43 jam 53 menit",
+      "issue": "Pengelasan tapak shoe Dozer. Trouble nozle no.5 &amp; 6",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "EX-00008 - C01531",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Penggantian filter oli",
+      "location": "MINAS"
+    },
+    {
+      "id": "DT-00052 - B 9642 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 27 menit",
+      "issue": "Perbaikan ombeng dan kunci ombeng",
+      "location": "-"
+    },
+    {
+      "id": "MG-00005",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "143 jam 20 menit",
+      "issue": "Penambahan oli hidrolik 5 ltr. Control Valve Bocor",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00032 - BG8976IX",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "26 jam 14 menit",
+      "issue": "~ Trouble ; Radiator Bocor",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-04048 - BM 9951 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 46 menit",
+      "issue": "Bropit Harapan baru",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00072 - DT 8669 KE",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Ganti kepala bateray",
+      "location": "Bropit Harapan baru<br>Loc ; 2 R - 85 A"
+    },
+    {
+      "id": "DT-04032",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 18 menit",
+      "issue": "Ganti sambungan slang.1 bh<br>Ganti Nepal slang velve angin .<br>Ganti slang ..40 cm",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00054 - B 9683 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 34 menit",
+      "issue": "Unit Susah hidup. Pengantian kepala batere ,kabel seri dan menjamper batere",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00048-B 9103 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "51 jam 26 menit",
+      "issue": "Alternator / dinamo cas rusak.<br>Sama Vanbelt dinamo cas minta ganti 2 bh.<br>Gantungan ban serap rusak<br>08/01/2026 : Dinamo charer sudah dipasang, Van Belt tidak cocok<br>Ganti pully ac",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00052 - B 9642 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "3 jam 13 menit",
+      "issue": "Pemasangan kepala batteray. Low power.<br>Perbaikan pesawat2 kaca samping kanan.",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00044 - B9092ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 47 menit",
+      "issue": "Penggantian ban dalam 1 pcs",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00056 - B 9892 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 20 menit",
+      "issue": "Perbaikan gantungan ban serap..dan pasang lasing baru.<br>Ganti kepala batrai 1 pcs.",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00031 - BG 8535 OW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "3 jam 58 menit",
+      "issue": "Ganti master kelos bawah",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00026 - B9135ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 49 menit",
+      "issue": "pengelasan pen ombeng dan pagar yang patah",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-04001-BM 9174 NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 06 menit",
+      "issue": "Penggantian lampu rem / lampu kota",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00074 - Z 9109 AB",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 14 menit",
+      "issue": "pengelasan dudukan apar",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "SD-00002 - 961582391716",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 15 menit",
+      "issue": "Alat low power, Proses Perbaikan Oleh Mekanik dan Pencucian Filter Solar",
+      "location": "NDD"
+    },
+    {
+      "id": "SD-00005 - 961582391661",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 15 menit",
+      "issue": "Minyak kososng di filter, buang solar",
+      "location": "NDD"
+    },
+    {
+      "id": "DT-00052 - B 9642 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Perbaikan klakson.",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "CAT RM-500B",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "instal &amp; pabrikasi Stensen flank penghubung ke watertank",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00074 - Z 9109 AB",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "selesai pekerjaan ganti filter solar bawah 1 pcs",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00061 - BG 8367 IJ",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 06 menit",
+      "issue": "Bracket knalpot patah",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "PF-00004 - 961884301614",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 43 menit",
+      "issue": "Finding Tpe. Pemasangan Baut Pen Bomag<br>1. Pen di Bubut lagi u penambahan daging besi penahan<br>2. Pergantian Pen baru",
+      "location": "NDD"
+    },
+    {
+      "id": "DT-04042 - BM 9287 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 45 menit",
+      "issue": "pengelasan pengunci ombeng",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-04001-BM 9174 NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 45 menit",
+      "issue": "perbaikan kunci ombeng yang bengkok",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DZ-00006 - SHANTUI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "102 jam 39 menit",
+      "issue": "~ Trouble ; Alat Low Power<br>~ Solution ; Pencucian Filter Solar Alat",
+      "location": "NDD"
+    },
+    {
+      "id": "MG-00004 SN:PRD800108",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 32 menit",
+      "issue": "Baut Kuku Grader Patah , Proses Pergantian Baut Oleh Mekanik",
+      "location": "NDD"
+    },
+    {
+      "id": "EX-00012 - DBCH1801",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 22 menit",
+      "issue": "Penambahan Oli Engine 1,5 Liter",
+      "location": "Loc ; 2 H - 10 10 A"
+    },
+    {
+      "id": "WT-00001 - B9018KFA",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "3 jam 15 menit",
+      "issue": "Nozel rusak. Minta ganti nozle<br>pengelasan pagar atas yang patah",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00029 - B 9138 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 19 menit",
+      "issue": "Disc Clutch dan Belting AC trouble. Stel klose dan belting AC",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00050 - B 9105 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 50 menit",
+      "issue": "Perbaikan slang minyak lepas.",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00026 - B9135ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 52 menit",
+      "issue": "perbaikan engsel ombeng dan kunci ombeng",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04040 - BM 9509 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 54 menit",
+      "issue": "Pekerjaan penyetelan rem",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00003 - B 9109 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 25 menit",
+      "issue": "Ganti bohlam lampu rem sebelah kiri.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "EX-00007-C51502",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "REGREASING",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00005 - B9113ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "REGREASING, PEMBERSIHAN SARINGAN UDARA",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00039-B9080ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "REGREASING, PEMBERSIHAN SARINGAN UDARA",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00014 - B 9123 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "REGREASING, PEMBERSIHAN SARINGAN UDARA",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00041-B9082ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 18 menit",
+      "issue": "PERBAIKAN/PENGGANTIAN PULLY AC",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00046 -B 9094 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 08 menit",
+      "issue": "SERVICE BERKALA",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT 0008 - B 9137 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "23 jam 27 menit",
+      "issue": "Pemasangan bola lampu",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT 0057 - B 9914 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "23 jam 12 menit",
+      "issue": "Pemasangan bola lampu",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "XCMG-B 9435 XFY",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "103 jam 10 menit",
+      "issue": "Melengkapi unit",
+      "location": "WORKSHOP KM 12"
+    },
+    {
+      "id": "FLAT BED B 9733 XPZ",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "103 jam 10 menit",
+      "issue": "Melengkapi unit",
+      "location": "WORKSHOP KM 12"
+    },
+    {
+      "id": "DT-00054 - B 9683 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 10 menit",
+      "issue": "Pemasangan bola lampu",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "SD-00004 - 961884301945",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "~ Pergantian Filter Solar<br>~ Pergantian Filter Oli<br>~ Pergantian Saringan Hawa<br>~ Trouble ; Elektrik System Short",
+      "location": "Loc ; 4 P - 81 B"
+    },
+    {
+      "id": "PF-00001-961582391717",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 53 menit",
+      "issue": "~ Penambahan Oli Engine 1,5 Liter",
+      "location": "Loc ; 4 P - 81 B"
+    },
+    {
+      "id": "HE-6.001 Exca mini",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 59 menit",
+      "issue": "Dinamo charge trouble. (perbaikan)",
+      "location": "HO"
+    },
+    {
+      "id": "DT-04024 - BM 9285 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "101 jam 51 menit",
+      "issue": "Pakam klos bermasalah.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00072 - DT 8669 KE",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 45 menit",
+      "issue": "Perbaikan kepala batteray",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "EX-00012 - DBCH1801",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 57 menit",
+      "issue": "~ Trouble ; Cucuk Pin Bucket Patah<br>~ Solution ; Proses Pergantian Cucuk Pin Bucket",
+      "location": "Loc ; 2 H - 1010 A"
+    },
+    {
+      "id": "DT-00056 - B 9892 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "76 jam 55 menit",
+      "issue": "Broken kit jamber dan Valve angin bocor.",
+      "location": "Loc ; 3 S - 46 C"
+    },
+    {
+      "id": "MG-00004 SN:PRD800108",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 45 menit",
+      "issue": "Slang oli Tranmisi &amp; torq conm.lepas..<br>Oli Tranmisi habis. Alat perlu oli SAE 40.. sebanyak 20 liter",
+      "location": "Bropit Harapan Baru -<br>POS MERAH"
+    },
+    {
+      "id": "DT-00012 - B 9121 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "REGREASING, PEMBERSIHAN SARINGAN UDARA",
+      "location": "-"
+    },
+    {
+      "id": "DT-00004 - B 9112 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "REGREASING, PEMBERSIHAN SARINGAN UDARA, STEL BELTING AC",
+      "location": "-"
+    },
+    {
+      "id": "DT-00016 - B 9125 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Pekerjaan setel jemberit",
+      "location": "-"
+    },
+    {
+      "id": "DT-00013 - B 9122 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "REGREASING, PEMBERSIHAN SARINGAN UDARA",
+      "location": "-"
+    },
+    {
+      "id": "DT-04040 - BM 9509 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "20 jam 10 menit",
+      "issue": "ganti baut roda belakang 1 pcs",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00043 - B9091ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 42 menit",
+      "issue": "menyetel V-Belt AC",
+      "location": "MINAS"
+    },
+    {
+      "id": "DT-00031 - BG 8535 OW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 05 menit",
+      "issue": "Perbaikan kunci ombeng",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00057 - B 9914 JYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 48 menit",
+      "issue": "Perbaikan kunci ombeng",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "RM-02 -RM-500",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 49 menit",
+      "issue": "Pengecekan blade di body rottor",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "EX-00008 - C01531",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 28 menit",
+      "issue": "PERGANTIAN TRACK ROLER",
+      "location": "MInas"
+    },
+    {
+      "id": "DT-04001 - BM 9174 NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 34 menit",
+      "issue": "Proses penggantian karet susu 4 PCS",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00028 - B9137ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 21 menit",
+      "issue": "Ganti bola lampu kota dan lampu rem",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00050 - B 9105 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 15 menit",
+      "issue": "Tidak mau masuk gigi. Ganti guli2 handel 1 pcs.",
+      "location": "Lokasi 4r 41d."
+    },
+    {
+      "id": "DT-00059 - BG 8163 NJ",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "117 jam 20 menit",
+      "issue": "Gantungan knalpot rusak/Pengelasan . Mufler patah.",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00022 - B 9131 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Perbaikan pengelasan underround belakang patah",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00017 - B 9126 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Perbaikan pengelasan underround belakang patah",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "FBT 31002. - FLAT BED BM 8443 NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "267 jam 09 menit",
+      "issue": "1~ Pasang Bareket Apar.<br>2~ Merubah dimensi tinggi/Rendah pada Underround Protection.<br>3~ Merubah dimensi tinggi/Rendah pada Safety Underround Samping sebelah<br>kanan/Kiri .<br>4~ Fabrikasi Stopper ( Pagar Pipa )sisi kanan 4 buah dan kiri 4 buah= 8 buah ( proses<br>pengerjaan )<br>5~ Pasang Safety Bareket Apar.( Selesai )",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "FBT 31004. - BM 8451 NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "220 jam 00 menit",
+      "issue": "1~ Merubah dimensi Tinggi/rendah Safety Underround Protection belakang Sesuai<br>Standard JPK.( Selesai )<br>2~ Merubah Tinggi /Rendah Safety Underround Samping Kanan dan kiri sesuai standard<br>JPK ( selesai )<br>3~ Fabrikasi Penempatan Whellchock 2 pcs ( proses )<br>4~ Fabrikasi Stopper ( Pagar Pipa )sisi kanan 4 buah dan kiri 4 buah= 8 buah ( proses )<br>5~ Pasang Safety Bareket Apar.( Proses )",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "BM 8441 NU ( XCMG Double Jack )",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "51 jam 57 menit",
+      "issue": "1~Merubah dimensi tinggi/Rendah Underround Protection ( belakang )<br>2~ Merubah dimensi tinggi/Rendah Safety Underround Samping kanan dan kiri.<br>3~ Pasang Bareket Apar<br>4~ Penempatan Whellchock/ melengkapi<br>5~ Pasang Safety Pagar Lantai kanan 4 buah dan kiri 4 buah total = 8 buah<br>6~ Pasang Tempat untuk tapak JackOutrigger kanan/kiri .<br>7~ Fabrikasi Tangga Untuk pengoperasian JackOutrigger kanan dan kiri",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "HILUX - B 9123 ZBA",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "57 jam 00 menit",
+      "issue": "Disc Cluth trouble. Penggantian disc cluth",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "DT-00052 - B 9642 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 39 menit",
+      "issue": "Hight - low tidak berfungsi. Penggantian bola lampu depan kiri",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DZ-00003 - BRA-05",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "#########################",
+      "issue": "UNIT TIDAK MAU STARTER. HAND PUMP TROUBLE<br>INDIKASI KLEP BOCOR/ RENCANA LAKUKAN OVER HOUL<br>1 penggantian paking dexsel<br>2 penyecrupan dexsel<br>3 penyekiran clep<br>4 penggantian sil clep<br>5 seting clep ulang<br>6 kalibrasi nozel<br>7 penggantian sil nozel<br>8 penggantian paking set pada dexsel.",
+      "location": "Bropit Harapan baru<br>Dibawa ke Yard u/<br>Over houl"
+    },
+    {
+      "id": "MB-00006 -- BM 7680 TU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "173 jam 30 menit",
+      "issue": "SERVICE BERKALA<br>Penggantian filter solar atas, Filter udara, filter oli, filter solar bawah.<br>temuan buat perbaikan, tambahan air radiator dan perbaiki kunci pintu belakang<br>Bateray lemah / TEKOR",
+      "location": "WORKSHOP - YARD<br>DIBAWA KE BENGKEL<br>DURI"
+    },
+    {
+      "id": "DT-00038 - B9079ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "PEMASANGAN VAN BELT AC",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-04001 - BM 9174 NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "5 jam 38 menit",
+      "issue": "Perbaikan kunci ombeng dan pengelasan ombeng yang retak.<br>Filter solar atas retak ..dan kebocoran solar... Filter solar pinjam punya DT-00055",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00065-BG 8641 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 42 menit",
+      "issue": "PENGGANTIAN PULLY AC 1 PCS. Repair attention MuffleR",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-04030 - BM 9510 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Penambahan oli power steering",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-04042 - BM 9287 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 11 menit",
+      "issue": "High/low gear planetary tidak mau masuk. canibal switch/sensor H/L dari DT 04037 ke<br>DT 04042.",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "DT-00073 - DT8973IE",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "49 jam 48 menit",
+      "issue": "kontrol velve bocor.angin sering berkurang",
+      "location": "Bropit Harapan baru"
+    },
+    {
+      "id": "PM-00003 - KT 9287 KU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 31 menit",
+      "issue": "1~ Braket Lampu Send sebelah kanan broken<br>2~ Safety Ban serep patah.<br>3~ Safety Underround Samping sebelah kanan broken",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "SD-00004 - 961884301945",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 29 menit",
+      "issue": "Perbaikan Elektrik System Short .",
+      "location": "Loc ; 4 P - 81 P"
+    },
+    {
+      "id": "DT-00055 - B 9701 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "50 jam 15 menit",
+      "issue": "Propeller shaff inter axle TROUBLE . Filter solar dipinjam DT-04001<br>= &gt; pemasang shaf propeler baru,pemasang batere,<br>ganti filter solar kecil,ganti kaber sery,ganti fuse kecil 4pcs",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04044 - BM9244NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 14 menit",
+      "issue": "Pengelasan Sefti lampu belakang benkel luar",
+      "location": "BENGKEL LUAR"
+    },
+    {
+      "id": "DT-00049 - B 9104 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 50 menit",
+      "issue": "Ganti bohlam lampu besar 1 pcs.<br>Ganti bohlam lampu kabut kiri 1 pcs.",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00064 - BG 8640 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 52 menit",
+      "issue": "Ganti bola lampu kabut 1 pcs",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00025 - B 9134 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "40 jam 20 menit",
+      "issue": "Pipa slang solar di dalam tengki patah.perlu pengelasan Kuningan.",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "FBT-31001 - BM 8442 NU",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "59 jam 25 menit",
+      "issue": "1~ Merubah dimensi tinggi/renda pada Underround Safety Samping kanan dan kiri.<br>2~ Merubah dimensi tinggi/Renda pada Underround Protection Belakang.<br>3~ Pasang Safety ( Bareket) Apar.<br>4~ Pasang Safety Pagar Lantai 8 buah ( kanan 4 pcs &amp; kiri 4 pcs ).<br>12/01/2026<br>5~ Penempatan Whellchock/ melengkapi ( selesai pengerjaan)<br>6~ Pasang Safety Pagar Lantai kanan 4 buah dan kiri 4 buah total = 8 buah( dlm proses<br>pengerjaan ).<br>12/01/206 : lembur assembly Railling",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "BM 8452 NU",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "375 jam 10 menit",
+      "issue": "1~ Merubah dimensi Tinggi/rendah Safety Underround Protection belakang Sesuai<br>Standard JPK.(Dalam Proses Repair).<br>2~ Merubah Tinggi /Rendah Safety Underround Samping Kanan dan kiri sesuai standard<br>JPK ( Sudah Selesai Repair).<br>3~ Pabrikasi Tangga pengoperasian Undle JackOutrigger system hidrolik ( Sudah selesai<br>pengerjaan)<br>4~ Fabrikasi Penempatan Tapak JackOutrigger Kanan dan kiri ( Masih dalam proses<br>pengerjaan)<br>5~ Fabrikasi Penempatan Whellchock 2 pcs ( sudah selesai pengerjaan).<br>6~ Fabrikasi Stopper ( Pagar Pipa )sisi kanan 4 buah dan kiri 4 buah= 8 buah<br>7~ Pasang Bareket Apar ( selesai pengerjaan)<br>8~ Pasang Safety Pagar Lantai kanan 4 buah dan kiri 4 buah total = 8 buah( dlm proses",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "TMC 31001 - BM 8440 NU",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "375 jam 10 menit",
+      "issue": "1.Pasang / Revisi underan<br>2.Tangga oplator",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "EX-00009 - DBCH2941",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Baut² Lampu Rotari Lepas",
+      "location": "Loc ; 2 H - 10 10 A /"
+    },
+    {
+      "id": "DT-00017 - B 9126 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 42 menit",
+      "issue": "Ganti bohlam lampu rem.kiri dan kanan.",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "MG-00004 SN:PRD800108",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "75 jam 00 menit",
+      "issue": "- Ban Sebelah Kiri Tengah Bocor. Bongkar pasang bawa ke Bengkel ban<br>- BAN MOTOR GRADER SOBEK MINTA GANTI<br>- Baut Roda Mor 36 sdh dol dan minta di ganti. Unit dibawa ke Yard untuk perbaikan<br>baut roda/",
+      "location": "Loc ; 2 H - 1010 A<br>unit dibawa ke Yard tgl<br>12/01/2026"
+    },
+    {
+      "id": "ML-41001 - BRA-03",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "7 jam 39 menit",
+      "issue": "- Memasang simpang4 PTO<br>- Shockbreaker depan belakang,<br>- Lampu rem tidak berfungsi",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "PM-41001 - BM8371CU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "128 jam 00 menit",
+      "issue": "1~ Dumping Plate Chasis kanan dan kiri.<br>2~ Welding Casing luar Chasis kanan dan kiri..<br>3 Perbaikan dan penggantian spakbor 2 pcs<br>4 Pengantian gagangan pintu<br>5 Lanjutan pemasangan kaca",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "DT-00061 - BG 8367 IJ",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 25 menit",
+      "issue": "Master klos angin bocor",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00046 -B 9094 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 26 menit",
+      "issue": "Ganti volli AC 1 pcs.",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00031 - BG 8535 OW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "5 jam 47 menit",
+      "issue": "Perbaikan mufler keropos / Pabrikasi welding",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-04036 - BM 9949 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 50 menit",
+      "issue": "Ganti alarm mundur 1 pcs",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00004 - B 9112 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Ganti filter solar 2 pcs",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00064 - BG 8640 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Ganti oring filter oli bawah 2 pcs",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00057 - B 9914 JYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 49 menit",
+      "issue": "Ganti bohlam lampu rem.sebelah kanan",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00050 - B 9105 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 55 menit",
+      "issue": "Ganti bohlam lampu rem Sebelah kiri.",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00005 - B9113ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 55 menit",
+      "issue": "Ganti filter solar bawah 1 pcs",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00023 - B9132ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 42 menit",
+      "issue": "Ganti filter solar bawah 1 pcs",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00006 - B9118ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "~gerising, ~membersihkan saringan udara, ~ganti filter solar bawah 1 pcs",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00047 - B 9102 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Regreasing",
+      "location": "Celcin"
+    },
+    {
+      "id": "EX-00003 - C51503",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "25 jam 30 menit",
+      "issue": "Perbaikan busing dan<br>pergantian pen excavator 00003<br>Perbaikan lampu rotary",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00063 - BG 8639 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Ganti bola lampu besar, H4 24v100w sebanyak 1pcs",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00030 - B 9139 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 30 menit",
+      "issue": "Ganti belting AC 1 pcs (LEMBUR)",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-04012 - BM 9944 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "26 jam 37 menit",
+      "issue": "Ganti bola lampu 2 pc,<br>Penggantian tingtong 4pcs dan<br>ganti karet susu 4pcs",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "HE-6.004 Exca mini",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 30 menit",
+      "issue": "Sambungan bucket mini exca trouble",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "FT-00001 - BA9016QU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Lampu sein kiri mati",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "DT-00049 - B 9104 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 56 menit",
+      "issue": "Perbaikan selang angin bocor.<br>ganti bola lampu kota belakang dan lampu besar h4",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00011 - B 9120 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 34 menit",
+      "issue": "Pasang mur guli handle gigi ,menyeter tali ac",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00032 - BG8976IX",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 23 menit",
+      "issue": "Ganti bola lampu",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00056 - B 9892 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 14 menit",
+      "issue": "1. Ganti bola lampu.<br>2. Pengelasan gantungan muffler",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-41001 - BM9291JO",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "28 jam 01 menit",
+      "issue": "Mengunci ulang baut roda (baut masih kendor)<br>Pemasangan alarm mundur",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "DT-41002 - BM9503QO",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "0 jam 32 menit",
+      "issue": "Mengunci ulang baut roda (baut masih kendor)",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "DT-41003 - BM9956JO",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "0 jam 32 menit",
+      "issue": "Mengunci ulang baut roda (baut masih kendor)",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "DT-41004 - BM9289JO",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "0 jam 32 menit",
+      "issue": "Mengunci ulang baut roda (baut masih kendor)",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "DT-41005 - BM9678JO",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "0 jam 32 menit",
+      "issue": "Mengunci ulang baut roda (baut masih kendor)",
+      "location": "WORKSHOP - YARD"
+    },
+    {
+      "id": "DZ-00006 - SHANTUI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 36 menit",
+      "issue": "Perbaikan kabel Lampu Rotari ada yg short",
+      "location": "NDD"
+    },
+    {
+      "id": "SD-00001 - BW 211D - 40",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 01 menit",
+      "issue": "Unit low power. Pencucian Filter Solar",
+      "location": "Loc ; 2 H - 1010 A"
+    },
+    {
+      "id": "FT-00001 - BA9016QU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 59 menit",
+      "issue": "Service berkala,",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "TMC B 9430 XFY",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 50 menit",
+      "issue": "Merubah 8 line jalur seling menjadi 4 line jalur seling crane",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00058 - B 9973 BIS",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "7 jam 24 menit",
+      "issue": "Perbaikan selang minyak solar.",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00063 - BG 8639 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "96 jam 00 menit",
+      "issue": "RADIATOR BOCOR",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00016 - B 9125 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 45 menit",
+      "issue": "Ganti poly AC 1 pcs",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00029 - B 9138 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Stel bell Ting AC.",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "TMC-00001 - B 9008 ZIN",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "0 jam 30 menit",
+      "issue": "1# pengatian Bering AC<br>2# pengatian v belt<br>3# Penambahan freon",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-04030 - BM 9510 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "26 jam 12 menit",
+      "issue": "Kerusakan hose hydrolik Dump<br>Aki tekor : repair kepala aki<br>Hose hydrolik bocor : install hose hydrolik<br>V-Belt engine putus : canibal V-Belt engine dari DT 04037<br>Ganti pully ac dan belting kipas",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04029 - BM9819QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 05 menit",
+      "issue": "Pemasangan lampu kota dan lampu rem",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "SD-41001 -",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 27 menit",
+      "issue": "- Instal emergency stop<br>- River breaket apar sesuai standard jpk<br>- Melengkapi/permintaan JPK membuat atap safety compag",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00008 - B 9115 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 43 menit",
+      "issue": "~ Ganti gantungan ban serap<br>~ Regreaising<br>~ Membersihkan saringan udara",
+      "location": "Celcin"
+    },
+    {
+      "id": "DT-00056 - B 9892 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 30 menit",
+      "issue": "Penggantian piston master clutch",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "SD-00001 - BW 211D - 40",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 53 menit",
+      "issue": "SERVICE BERKALA",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-04040 - BM 9509 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 47 menit",
+      "issue": "Perbaikan baut roda belakang sebelah kanan patah<br>Ganti baut roda belakang sebelah kanan : 3 pcs",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00058 - B 9973 BIS",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 01 menit",
+      "issue": "Pekerjaan setel rem semua roda",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00022 - B 9131 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 39 menit",
+      "issue": "Regreasing dan membersihkan saringan udara<br>PENGELASAN DUDUKAN APAR YANG PATAH",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00061 - BG 8367 IJ",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "145 jam 06 menit",
+      "issue": "PENGELASAN GANTUNGAN MUFFLERYANG PATAH.<br>Spring depan no 1 patah<br>Temuan kerusakan Mekanik tgl. 19/01/2026 : Baut turbo patah 6 pcs (baut 12 pjg 2,5\")",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-04025 - BM 9398 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "REGREASING, PEMBERSIHAN SARINGAN UDARA",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "LB-00001 - PM-00001",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "77 jam 57 menit",
+      "issue": "1~ Ganti filter ( solar ) atas 1 pcs dan bawah 1 pcs .( Andi Low &amp; landak )<br>2~ Low Power. ( Andi Low &amp; Landak ) Penggantian filter solar atas dan bawah.<br>3~ Chasis Trailer PATAH di bagian Sisi kanan dan kiri ( sama dengan kejadian yang<br>sebelumnya) .<br>4~ Casing Penutup body Chasis bagian luar kanan dan kiri patah.",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00028 - B9137ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "~ganti bola lampu rem 1 pcs<br>~ganti bola lampu kabut 1pcs",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00052 - B 9642 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 02 menit",
+      "issue": "Pengelasan dudukan APAR, pemasangan lasing ban serap 1 pcs",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "RM-41001 - XUG2303KJRDQ00021",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 23 menit",
+      "issue": "Regreasing 48 titik nipple unit Cold Recycling",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00044 - B9092ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Penggantian bola lampu",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00073 - DT8973IE",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 16 menit",
+      "issue": "Penggantian bola lampu KABUT",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00021 - B 9130 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 40 menit",
+      "issue": "Pengantian lampu kota dan lampu rem",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00054 - B 9683 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "4 jam 21 menit",
+      "issue": "PENGELASAN PAGAR YANG PATAH<br>PERBAIKAN Lok pintu sebelah kiri.<br>Stel tali jek Dum.<br>Pasang spakbor sebelah kiri..",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "TMC 31001 - BM 8440 NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "101 jam 05 menit",
+      "issue": "1~ Merubah dimensi Tinggi/rendah Safety Underround Protection belakang Sesuai<br>Standard JPK.( Proses )<br>2~ Merubah Tinggi /Rendah Safety Underround Samping Kanan dan kiri sesuai standard<br>JPK ( proses )<br>3~ Pabrikasi Tangga pengoperasian Undle JackOutrigger system hidrolik ( proses )<br>4~ Fabrikasi Penempatan Tapak JackOutrigger Kanan dan kiri ( proses )<br>5~ Fabrikasi Penempatan Whellchock 2 pcs ( Proses )<br>6~ Fabrikasi Stopper ( Pagar Pipa )sisi kanan 4 buah dan kiri 4 buah= 8 buah ( proses )<br>7~ Pasang Safety Bareket Apar.( Proses)<br>8. Pabrikasi , Pemasangan railing",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00015 - B 9124 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 52 menit",
+      "issue": "Ganti filter solar bawah 2 pcs.<br>Unit dt low power.<br>Ganti bohlam lampu rem 1 pcs.",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "EX-00011",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "24 jam 24 menit",
+      "issue": "~ Trouble ; Kunci Exca Hilang<br>~ Solution ; Proses Pelepasan Kunci Betina",
+      "location": "NDD"
+    },
+    {
+      "id": "WT-00001 - B9018KFA",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "4 jam 00 menit",
+      "issue": "pencopotan mesin pompa water tank menuju myanmar service",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00062 - BG8638NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "51 jam 19 menit",
+      "issue": "KIPAS RADIATOR TROUBLE",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00056 - B 9892 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "PENGGANTIAN BOLA LAMPU KOTA",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00055 - B 9701 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "103 jam 27 menit",
+      "issue": "- Pemasangan kit Valve angin .<br>- Rem chamber<br>Ganti kit Valve angin<br>Perbaikan jamber belakang sebelah kanan.<br>Cek kompresor angin.",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00057 - B 9914 JYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 05 menit",
+      "issue": "Pengelasan pengunci ombeng",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00039-B9080ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 36 menit",
+      "issue": "Ganti bohlam lampu rem.",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-04024 - BM 9285 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 39 menit",
+      "issue": "SERVICE BERKALA<br>*Ganti filter solar 2 pcs<br>*Ganti filter oli 1 pcs<br>*Ganti oli mesin<br>~gerising<br>~membersihkan saringan udara",
+      "location": "BROPIT HARAPAN<br>BARU"
+    },
+    {
+      "id": "DT-00074 - Z 9109 AB",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 49 menit",
+      "issue": "Ban depan kanan bocor. Bongkar pasang ganti ban serep",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00011 - B 9120 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 28 menit",
+      "issue": "Ganti bola lampu",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00047 - B 9102 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 17 menit",
+      "issue": "pengelasan penutup Unnderound belakang dan samping",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00023 - B9132ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 28 menit",
+      "issue": "selesai pekerjaan gerising dan memberikan saringan udara",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "LB-00003",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 24 menit",
+      "issue": "Penggantian 2 bh ban meledak di KM 9",
+      "location": "-"
+    },
+    {
+      "id": "DT-00064 - BG 8640 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 36 menit",
+      "issue": "Regreasing dan pembersihan saringan udara",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00072 - DT 8669 KE",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "113 jam 44 menit",
+      "issue": "1~ Pintu Ombeng Terlepas, Engsel patah kanan/kiri.( Proses perbaikan).<br>2~ Kunci Pintu Cabin sebelah kanan Broken.( Proses Perbaikan ).",
+      "location": "Bropit Harapan Baru<br>TGL. 19/01/2026<br>DIBAWA KE YARD"
+    },
+    {
+      "id": "DT-00049 - B 9104 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "121 jam 51 menit",
+      "issue": "Seal Crankshaft Bocor; Penggantian seal crankshaft",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00074 - Z 9109 AB",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 22 menit",
+      "issue": "Penggantian bola lampu kota depan",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00010 - B9117ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Penggantian bola lampu kabut",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "WL-31001 - AS5512759",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Regreasing",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-04044 - BM9244NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 02 menit",
+      "issue": "Pengelasan / Perbaikan gantungan ban serep",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04032 - BG8976IX",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "106 jam 35 menit",
+      "issue": "Service berkala<br>~ganti filter solar 3 pcs<br>~ganti filter oli 1 pcs<br>~ganti oli<br>Temuan kerusakan: patah per depan nomor 6 dan 7 sebelah kanan",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "SD-00005 - 961582391661",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "9 jam 08 menit",
+      "issue": "Problem Unit tidak bisa start. Pencucian filter solar. tersumbat",
+      "location": "MINAS"
+    },
+    {
+      "id": "DT-00024 - B9133ZYT",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "9 jam 10 menit",
+      "issue": "Lampu rem tidak nyala",
+      "location": "MINAS"
+    },
+    {
+      "id": "DT-00053 - B 9644 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 07 menit",
+      "issue": "Pengelasan muffler yang patah",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04042 - BM 9287 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 43 menit",
+      "issue": "Ganti filter solar bawah 1 pcs",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "EX-00004 - DBCH 0366",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 57 menit",
+      "issue": "Perbaikan lampu depan",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00057 - B 9914 JYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 55 menit",
+      "issue": "- Pompa hidrolik trouble",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "MB-00006 -- BM 7680 TU",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "#########################",
+      "issue": "Batteray tekor - ACCU SOAK",
+      "location": "Duri jalan anggur"
+    },
+    {
+      "id": "DT-00063 - BG 8639 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Penggantian bola lampu belakang 2 pcs",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00021 - B 9130 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Perbaikan lampu rem belakang mati.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00065-BG 8641 NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 26 menit",
+      "issue": "Penggantian bola lampu depan",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04053 - BM 9824 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 03 menit",
+      "issue": "~servis berkala<br>*Ganti filter solar 1pcs (2 baru diganti)<br>*Ganti oli mesin<br>*Ganti filter oli 1 pcs",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04025 - BM 9398 JO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 25 menit",
+      "issue": "Perbaikan kaca spion",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00031 - BG 8535 OW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "Perbaikan selang angin bocor.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00026 - B9135ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Penggantian bola lampu depan",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00012 - B 9121 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 13 menit",
+      "issue": "Penggantian bola lampu depan",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00058 - B 9973 BIS",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 27 menit",
+      "issue": "Pemasangan baut gantungan knalpot",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00014 - B 9123 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 08 menit",
+      "issue": "PENGELASAN UNDERROUND BELAKANG",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00023 - B9132ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 31 menit",
+      "issue": "PENGELASAN UNDERROUND BELAKANG<br>Perbaikan selang angin bocor",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00047 - B 9102 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "3 jam 26 menit",
+      "issue": "PENGELASAN UNDERROUND SAMPING SEBELAH KIRI<br>PERBAIKAN OMBENG YANG PATAH",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00004 - B 9112 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 10 menit",
+      "issue": "PENGELASAN UNDERROUND SAMPING SEBELAH KIRI",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00074 - Z 9109 AB",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 41 menit",
+      "issue": "Perbaikan lampu rem belakang mati.",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "EX-00012 - DBCH1801",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 57 menit",
+      "issue": "LOW POWER, GANTI FILTER SOLAR",
+      "location": "Lksi : 4p 48c"
+    },
+    {
+      "id": "DT-00054 - B 9683 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 32 menit",
+      "issue": "PASANG KEMBALI BATTERAY 2 PCS",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00050 - B 9105 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 47 menit",
+      "issue": "Meperbaiki selang minyak balik bocor dan lampu rem , kota",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00011 - B 9120 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 25 menit",
+      "issue": "Ganti bohlam lampu rem sebelah kanan.",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "CS-01 CEMENT SPREADER",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 22 menit",
+      "issue": "REGREASING, Lubricatin",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "PF-41001 - Pad foot Vibro Sakai",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 00 menit",
+      "issue": "REGREASING, Lubricatin",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "DT-00031 - BG 8535 OW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "#########################",
+      "issue": "Angin tekor / bocor --&gt; Mengikat selang angin yg bocor lokasil ndd",
+      "location": "NDD"
+    },
+    {
+      "id": "DT-00052 - B 9642 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 02 menit",
+      "issue": "PENGELASAN BAGIAN PINTU OBENG YANG PATAH",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "SD-00002 - 961582391716",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 32 menit",
+      "issue": "Low power, cuci filter solar.",
+      "location": "NDD"
+    },
+    {
+      "id": "DT-00019 - B 9128 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 23 menit",
+      "issue": "Ganti filter solar bawah 1 pcs",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00016 - B 9125 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 20 menit",
+      "issue": "Ganti bola lampu kabut 1 pcs",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-04030 - BM 9510 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 40 menit",
+      "issue": "Regreasing, pembersihan saringan udara",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "EX-00003 - C51503",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 30 menit",
+      "issue": "Regreasing, pembersihan saringan udara. Penggantian filter solar 1 pcs",
+      "location": "BROPIT HARAPAN"
+    },
+    {
+      "id": "DT-00057 - B 9914 JYT",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "#########################",
+      "issue": "Safety Valve cylinder dump rusak",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04044 - BM9244NU",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "#########################",
+      "issue": "Konector selang angin trouble. Penggantian lampu rem",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00044 - B9092ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 49 menit",
+      "issue": "Stel belting AC",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "WT-00001 - B9018KFA",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "#########################",
+      "issue": "Accu / Batteray soak",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00050 - B 9105 ZYT",
+      "type": "Break Down Report",
+      "status": "BREAKDOWN",
+      "downtime": "#########################",
+      "issue": "Kebocoran fuel di selang minyak balik",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00041-B9082ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 22 menit",
+      "issue": "Regreasing. Daniel Sitepu, USka<br>PENGELASAN DUDUKAN BAK DUMP (Soleh)",
+      "location": "Bropit Celcin"
+    },
+    {
+      "id": "DT-00062 - BG8638NI",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 44 menit",
+      "issue": "PENGELASAN MUFFLER YANG PATAH DAN UNDERROUND SAMPING<br>Regreasing",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00052 - B 9642 KYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 22 menit",
+      "issue": "1 ~ Pintu Ombeng broken:<br>~ Engsel Patah<br>~ Kunci Pintu bengkok<br>~ Body Pintu las retak di beberapa titik.<br>2 ~ Lantai Plate Dump robek di beberapa titik.",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "EX-00012 - DBCH1801",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "10 jam 15 menit",
+      "issue": "alat low power..<br>Kode eror pada panel muncul ..L01<br>Selang solar tersumbat",
+      "location": "Lokasi : 4p-48c"
+    },
+    {
+      "id": "DT-00056 - B 9892 PYW",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 06 menit",
+      "issue": "Oli hydrolik low ( tambah oli hydrolik 5 liter )",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04044 - BM9244NU",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "5 jam 02 menit",
+      "issue": "Trobel slang angin pecah butuh sambungan slang 14 1pcs<br>- Penggantian konektor selang 15 mm",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00042 - B 9089 ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 56 menit",
+      "issue": "Regreasing, Pembersihan saringan udara",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-00045-B9093ZYT",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 48 menit",
+      "issue": "Regreasing, Pembersihan saringan udara",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DT-04040 - BM 9509 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "3 jam 46 menit",
+      "issue": "PENGELASAN CHACIS DAN SUB CHASIS YANG RETAK",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "MG-00005",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 31 menit",
+      "issue": "Regreasing",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "DZ-00002 SN P6G01656",
+      "type": "Break Down Report",
+      "status": "INSPEKSI",
+      "downtime": "#########################",
+      "issue": "Lampu rotary minta diganti. Sudah buram",
+      "location": "MINAS"
+    },
+    {
+      "id": "DT-04030 - BM 9510 QO",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "0 jam 18 menit",
+      "issue": "perbaikan Kopling slip (stel kopling)",
+      "location": "Bropit Harapan Baru"
+    },
+    {
+      "id": "Padfoot XCMG XS205PD",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "2 jam 59 menit",
+      "issue": "Instal GPS di unit",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "CS-01 CEMENT SPREADER",
+      "type": "Break Down Report",
+      "status": "READY",
+      "downtime": "1 jam 33 menit",
+      "issue": "Instal GPS di unit",
+      "location": "YARD KM 12"
+    },
+    {
+      "id": "Bomag Smooth Drum Compactor BW211D-40 SL",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bomag Smooth Drum Compactor BW211D-40SL",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bomag Smooth Drum BW211D-40",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bomag Pad Foot Compactor BW211D-40",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bomag Smooth Drum Compactor BW211D-40SL",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bomag Pad Foot Compactor BW211D-40",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Excavator Caterpillar 305.5E2",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Excavator Caterpillar 305.5E2",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bulldozer Komatsu D85ESS-2",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bulldozer Caterpillar D6R",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bulldozer Caterpillar D6G 2XL",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bulldozer Caterpillar D6G",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Bulldozer Caterpillar D7G2",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Excavator Caterpillar 320D S/N",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Excavator Caterpillar 320 GC",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Excavator Caterpillar 320 GC",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Excavator Caterpillar 320 GC",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Excavator Caterpillar 320 GC",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Excavator PC 210-10M0/P1",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Dumptruck Isuzu NMR 81",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Dumptruck Isuzu NMR 81",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Dumptruck FUSO FM 517 HS",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "TRADO MITSUBISHI FV 419 P",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "TRADO HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD PRABUMULIH"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck FUSO FN62F HD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 260 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck QUESTER",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 280 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 280 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 280 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 280 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 280 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 280 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 280 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Dump Truck HINO RANGER-FM 280 JD",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Excavator Caterpillar 305.5E2",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Excavator Caterpillar 305.5E2",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bulldozer Komatsu D85ESS-2",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    },
+    {
+      "id": "Bulldozer Caterpillar D6R",
+      "type": "Standby Unit",
+      "status": "STANDBY",
+      "downtime": "-",
+      "issue": "-",
+      "location": "YARD DURI"
+    }
+  ]
+}
