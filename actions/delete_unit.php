@@ -1,1 +1,0 @@
-<?php require __DIR__.'/../app/bootstrap.php';require_login();require_permission('units.edit');verify_csrf();$pdo->prepare('DELETE FROM units WHERE id=?')->execute([(int)$_POST['id']]);flash('success','Unit dihapus.');redirect('../dashboard.php?page=units');
