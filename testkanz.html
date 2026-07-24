@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FleetMonitor - Equipment Maintenance & Monitoring</title>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --bg-body: #f4f6f9;
+            --text-main: #333;
+            --text-muted: #6c757d;
+            --border: #dee2e6;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: var(--dark);
+            color: #c2c7d0;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+        }
+        .sidebar-header {
+            padding: 20px;
+            background-color: #23272b;
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fff;
+            border-bottom: 1px solid #4b545c;
+        }
+        .sidebar-header i { color: var(--primary); margin-right: 10px; }
+        .sidebar-menu {
+            list-style: none;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding: 10px 0;
+        }
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #c2c7d0;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        .sidebar-menu li a i { width: 25px; text-align: center; margin-right: 10px; }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active {
+            background-color: rgba(255,255,255,0.1);
+            color: #fff;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* Main Content Styles */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Header */
+        .top-header {
+            background-color: #fff;
+            height: 60px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+        .header-left, .header-right { display: flex; align-items: center; gap: 20px; }
+        .search-bar input {
+            padding: 8px 15px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 250px;
+            outline: none;
+        }
+        .search-bar input:focus { border-color: var(--primary); }
+        .dropdown select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background: #fff;
+            outline: none;
+        }
+        .profile { display: flex; align-items: center; gap: 10px; font-weight: bold; }
+        .profile img { width: 35px; height: 35px; border-radius: 50%; }
+
+        /* Dashboard Content */
+        .content {
+            padding: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .page-title {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #ccc;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .kpi-card.total { border-color: var(--dark); }
+        .kpi-card.operating { border-color: var(--success); }
+        .kpi-card.standby { border-color: var(--info); }
+        .kpi-card.breakdown { border-color: var(--danger); }
+        .kpi-card.pm { border-color: var(--warning); }
+        .kpi-card.waiting { border-color: #fd7e14; }
+        
+        .kpi-info h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .kpi-info .value { font-size: 1.8rem; font-weight: bold; color: var(--text-main); }
+        .kpi-icon i { font-size: 2.5rem; color: #e9ecef; }
+
+        /* Complex Grid Layout */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .panel {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .panel-body {
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        /* Map styling */
+        #map { width: 100%; height: 350px; border-radius: 5px; z-index: 1;}
+        
+        /* Attention List */
+        .attention-list {
+            list-style: none;
+        }
+        .attention-list li {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .attention-list li:last-child { border-bottom: none; }
+        .attention-list li i { font-size: 1.2rem; }
+        .attention-list .danger i { color: var(--danger); }
+        .attention-list .warning i { color: var(--warning); }
+        .attention-list .info i { color: var(--info); }
+        .attention-details { flex-grow: 1; }
+        .attention-details strong { display: block; font-size: 0.95rem; }
+        .attention-details span { font-size: 0.85rem; color: var(--text-muted); }
+        
+        /* Table Styles */
+        .table-responsive { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th { background-color: #f8f9fa; font-weight: 600; color: var(--text-muted); font-size: 0.9rem; }
+        tr:hover { background-color: #f1f3f5; }
+        
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        .bg-operating { background-color: var(--success); }
+        .bg-breakdown { background-color: var(--danger); }
+        .bg-standby { background-color: var(--info); }
+        .bg-waiting { background-color: #fd7e14; }
+        
+        .progress-bar {
+            background-color: #e9ecef;
+            border-radius: 10px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--success);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-truck-monster"></i> FleetMonitor
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
+            <li><a href="#"><i class="fa-solid fa-location-dot"></i> Monitoring Unit</a></li>
+            <li><a href="#"><i class="fa-solid fa-cubes"></i> Master Asset</a></li>
+            <li><a href="#"><i class="fa-solid fa-clipboard-check"></i> Inspeksi & P2H</a></li>
+            <li><a href="#"><i class="fa-solid fa-screwdriver-wrench"></i> Work Order</a></li>
+            <li><a href="#"><i class="fa-regular fa-calendar-check"></i> Preventive Maint.</a></li>
+            <li><a href="#"><i class="fa-solid fa-boxes-stacked"></i> Spare Part & Logistik</a></li>
+            <li><a href="#"><i class="fa-solid fa-gas-pump"></i> Fuel Management</a></li>
+            <li><a href="#"><i class="fa-solid fa-chart-line"></i> Produktivitas</a></li>
+            <li><a href="#"><i class="fa-solid fa-money-bill-trend-up"></i> Biaya</a></li>
+            <li><a href="#"><i class="fa-solid fa-users-gear"></i> People & KPI</a></li>
+            <li><a href="#"><i class="fa-solid fa-triangle-exclamation"></i> HSE / Accident</a></li>
+            <li><a href="#"><i class="fa-solid fa-file-invoice"></i> Laporan</a></li>
+            <li><a href="#"><i class="fa-solid fa-check-double"></i> Approval</a></li>
+            <li><a href="#"><i class="fa-solid fa-gear"></i> Pengaturan</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        
+        <!-- Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <div class="dropdown">
+                    <select>
+                        <option>Project: Sunter Area Stadium</option>
+                        <option>Project: Site Alpha</option>
+                        <option>Project: Site Beta</option>
+                    </select>
+                </div>
+                <div class="dropdown">
+                    <select>
+                        <option>Lokasi: Semua Pit/Area</option>
+                        <option>Pit 1</option>
+                        <option>Pit 2</option>
+                        <option>Workshop</option>
+                    </select>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="search-bar">
+                    <input type="text" placeholder="Cari unit, WO, lambung...">
+                </div>
+                <i class="fa-regular fa-bell" style="font-size: 1.2rem; color: #6c757d; cursor: pointer;"></i>
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=007bff&color=fff" alt="User">
+                    <span>Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="content">
+            <h1 class="page-title">Dashboard Operasional</h1>
+
+            <!-- Section 4.1 Ringkasan status unit -->
+            <div class="kpi-grid">
+                <div class="kpi-card total">
+                    <div class="kpi-info">
+                        <h3>Total Unit</h3>
+                        <div class="value">124</div>
+                    </div>
+                    <div class="kpi-icon"><i class="fa-solid fa-truck"></i></div>
+                </div>
+                <div class="kpi-card operating">
+                    <div class="kpi-info">
+                        <h3>Operating / Ready</h3>
+                        <div class="value">96</div>
+                    </div>
+                    <div class="kpi-icon"><i class="fa-solid fa-person-digging"></i></div>
+                </div>
+                <div class="kpi-card standby">
+                    <div class="kpi-info">
+                        <h3>Standby</h3>
+                        <div class="value">8</div>
+                    </div>
+                    <div class="kpi-icon"><i class="fa-solid fa-pause"></i></div>
+                </div>
+                <div class="kpi-card breakdown">
+                    <div class="kpi-info">
+                        <h3>Breakdown</h3>
+                        <div class="value">12</div>
+                    </div>
+                    <div class="kpi-icon"><i class="fa-solid fa-wrench"></i></div>
+                </div>
+                <div class="kpi-card waiting">
+                    <div class="kpi-info">
+                        <h3>Waiting Part</h3>
+                        <div class="value">5</div>
+                    </div>
+                    <div class="kpi-icon"><i class="fa-solid fa-box-open"></i></div>
+                </div>
+                <div class="kpi-card pm">
+                    <div class="kpi-info">
+                        <h3>Inspec. / PM</h3>
+                        <div class="value">3</div>
+                    </div>
+                    <div class="kpi-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                </div>
+            </div>
+
+            <!-- Section 4.2 Peta Lokasi & Section 4.4 Panel Perhatian -->
+            <div class="dashboard-layout">
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <span><i class="fa-solid fa-map-location-dot"></i> Peta Lokasi Unit (Live Map)</span>
+                        <a href="#" style="font-size: 0.85rem; color: var(--primary); text-decoration: none;">Lihat Layar Penuh</a>
+                    </div>
+                    <div class="panel-body" style="padding: 0;">
+                        <div id="map"></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span><i class="fa-solid fa-triangle-exclamation"></i> Panel Perhatian Utama</span>
+                    </div>
+                    <div class="panel-body" style="padding: 10px;">
+                        <ul class="attention-list">
+                            <li class="danger">
+                                <i class="fa-solid fa-fire"></i>
+                                <div class="attention-details">
+                                    <strong>WO Emergency (WO-2026-074)</strong>
+                                    <span>EXC-014 (Komatsu PC210) Engine stall saat operasi.</span>
+                                </div>
+                            </li>
+                            <li class="danger">
+                                <i class="fa-solid fa-stopwatch"></i>
+                                <div class="attention-details">
+                                    <strong>Unit Down > 30 Menit Tanpa JO</strong>
+                                    <span>DT-045 dilaporkan breakdown oleh operator Budi sejak 09:12.</span>
+                                </div>
+                            </li>
+                            <li class="warning">
+                                <i class="fa-solid fa-calendar-xmark"></i>
+                                <div class="attention-details">
+                                    <strong>PM Overdue (2 Unit)</strong>
+                                    <span>BDZ-003 (Service 500HM) lewat 15 jam.</span>
+                                </div>
+                            </li>
+                            <li class="warning">
+                                <i class="fa-solid fa-truck-ramp-box"></i>
+                                <div class="attention-details">
+                                    <strong>Spare Part Melewati ETA</strong>
+                                    <span>Hydraulic Pump (PO-9912) untuk EXC-022 terlambat 2 hari.</span>
+                                </div>
+                            </li>
+                            <li class="info">
+                                <i class="fa-solid fa-gas-pump"></i>
+                                <div class="attention-details">
+                                    <strong>Konsumsi BBM Abnormal</strong>
+                                    <span>DT-021 mengkonsumsi 35% lebih banyak dari baseline harian.</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4.3 KPI Operasional & Unit Monitoring -->
+            <div class="dashboard-layout">
+                
+                <div class="panel">
+                    <div class="panel-header">
+                        <span><i class="fa-solid fa-chart-pie"></i> KPI Operasional (Target vs Actual)</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Indikator Kinerja</th>
+                                        <th>Target</th>
+                                        <th>Aktual</th>
+                                        <th>Pencapaian</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Physical Availability (PA)</strong></td>
+                                        <td>&ge; 85%</td>
+                                        <td>87.5%</td>
+                                        <td>
+                                            <div class="progress-bar"><div class="progress-fill" style="width: 87.5%;"></div></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Utilization (UA)</strong></td>
+                                        <td>&ge; 75%</td>
+                                        <td>82.1%</td>
+                                        <td>
+                                            <div class="progress-bar"><div class="progress-fill" style="width: 82.1%;"></div></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Breakdown Rate</strong></td>
+                                        <td>&lt; 5%</td>
+                                        <td>4.2%</td>
+                                        <td>
+                                            <div class="progress-bar"><div class="progress-fill" style="width: 84%; background-color: var(--warning);"></div></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>PM Compliance</strong></td>
+                                        <td>100%</td>
+                                        <td>94.0%</td>
+                                        <td>
+                                            <div class="progress-bar"><div class="progress-fill" style="width: 94%; background-color: var(--warning);"></div></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span><i class="fa-solid fa-list"></i> Status Monitoring Unit (Top List)</span>
+                    </div>
+                    <div class="panel-body" style="padding: 0;">
+                        <table style="margin-top: 0;">
+                            <thead>
+                                <tr>
+                                    <th>Kode Unit</th>
+                                    <th>Lokasi</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>DT-021</strong><br><small class="text-muted">Hino FM 260</small></td>
+                                    <td>Pit 2</td>
+                                    <td><span class="badge bg-operating">Operating</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>EXC-014</strong><br><small class="text-muted">CAT 320D</small></td>
+                                    <td>Pit 1</td>
+                                    <td><span class="badge bg-breakdown">Breakdown</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>BDZ-005</strong><br><small class="text-muted">Komatsu D85</small></td>
+                                    <td>Workshop</td>
+                                    <td><span class="badge bg-waiting">Waiting Part</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>MGR-002</strong><br><small class="text-muted">CAT 120K</small></td>
+                                    <td>Haul Road</td>
+                                    <td><span class="badge bg-standby">Standby</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Leaflet Map Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Inisialisasi peta berpusat di Jakarta Utara (merepresentasikan area konstruksi GOR Sunter / Proyek umum)
+        var map = L.map('map').setView([-6.140, 106.865], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Custom icons
+        var iconOperating = L.divIcon({className: 'custom-div-icon', html: "<div style='background-color:#28a745; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15]});
+        var iconBreakdown = L.divIcon({className: 'custom-div-icon', html: "<div style='background-color:#dc3545; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15]});
+        
+        // Dummy Markers sesuai kriteria PDF
+        L.marker([-6.142, 106.860], {icon: iconOperating}).addTo(map)
+            .bindPopup("<b>DT-021 (Hino FM 260)</b><br>Lokasi: Pit 2<br>Status: Operating<br>HM: 8.215 jam<br>Operator: Budi");
+            
+        L.marker([-6.138, 106.868], {icon: iconBreakdown}).addTo(map)
+            .bindPopup("<b>EXC-014 (CAT 320D)</b><br>Lokasi: Pit 1<br>Status: Breakdown<br>Downtime: 2j 15m<br>Keluhan: Engine stall");
+            
+        L.marker([-6.145, 106.870], {icon: iconOperating}).addTo(map)
+            .bindPopup("<b>DT-045 (Isuzu NMR 81)</b><br>Lokasi: Pit 2<br>Status: Operating<br>HM: 4.102 jam");
+    </script>
+</body>
+</html>
