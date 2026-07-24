@@ -50,7 +50,7 @@ export function Header() {
           </SheetHeader>
           <nav className="mt-6 flex flex-col gap-2">
             {navItems.map((item) => {
-              const isActive = pathname.startsWith(item.href);
+              const isActive = pathname ? pathname.startsWith(item.href) : false;
               return (
                 <Link
                   key={item.href}
