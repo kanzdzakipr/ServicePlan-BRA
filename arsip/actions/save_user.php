@@ -1,0 +1,4 @@
+<?php require __DIR__.'/../app/bootstrap.php'; require_login(); require_permission('users.manage'); verify_csrf();
+$name=trim($_POST['name']??'');$email=trim($_POST['email']??'');$role=$_POST['role']??'viewer';$password=$_POST['password']??'';
+if(!$name||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($password)<8){flash('error','Data pengguna tidak valid.');redirect('../'.page_url('users'));}
+try{$stmt=$pdo->prepare('INSERT INTO users(name,email,password_hash,role) VALUES(?,?,?,?)');$stmt->execute([$name,$email,password_hash($password,PASSWORD_DEFAULT),$role]);audit($pdo,'CREATE','user',(int)$pdo->lastInsertId(),'Menambah pengguna '.$email);flash('success','Pengguna berhasil ditambahkan.');}catch(Throwable $e){flash('error','Gagal menambah pengguna: '.$e->getMessage());}redirect('../'.page_url('users'));
