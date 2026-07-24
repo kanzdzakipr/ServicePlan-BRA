@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet PM Service Dashboard - Juli 2026</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for clean dashboard icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-truck-monster text-amber-500 text-3xl"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">WUR EW PROJECT</h1>
+                    <p class="text-xs text-slate-400">Rencana PM Service - Bulan Juli 2026</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-4 text-sm text-slate-300">
+                <div><span class="font-semibold text-white">Date:</span> 24 Juli 2026</div>
+                <div class="hidden md:block">|</div>
+                <div><span class="font-semibold text-white">Planner:</span> Samsul Bahri</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- KPI Summary Cards Section -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 uppercase">Total Target Unit</p>
+                    <p class="text-3xl font-bold text-slate-900 mt-1">34</p>
+                </div>
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-boxes-stacked text-xl"></i></div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 uppercase">Realisasi S.D. Sekarang</p>
+                    <p class="text-3xl font-bold text-emerald-600 mt-1">15</p>
+                </div>
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-circle-check text-xl"></i></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 uppercase">Sisa Belum Ditangani</p>
+                    <p class="text-3xl font-bold text-amber-600 mt-1">19</p>
+                </div>
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-lg"><i class="fa-solid fa-clock text-xl"></i></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 uppercase">Ketercapaian Target</p>
+                    <p class="text-3xl font-bold text-slate-900 mt-1">44.1%</p>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div class="bg-emerald-500 h-2 rounded-full" style="width: 44.1%"></div>
+                    </div>
+                </div>
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg"><i class="fa-solid fa-chart-pie text-xl"></i></div>
+            </div>
+        </section>
+
+        <!-- Dynamic Control Panel (Search & Category Filters) -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="relative w-full md:w-72">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Cari nama asset atau kode unit..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm">
+            </div>
+            <div class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+                <button onclick="filterStatus('all')" class="px-4 py-2 text-xs font-semibold bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition">Semua Unit</button>
+                <button onclick="filterStatus('Realisasi')" class="px-4 py-2 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition">Sudah Realisasi</button>
+                <button onclick="filterStatus('Belum')" class="px-4 py-2 text-xs font-semibold bg-amber-50 text-amber-700 rounded-lg border border-amber-200 hover:bg-amber-100 transition">Belum Realisasi</button>
+            </div>
+        </section>
+
+        <!-- Main Data Table -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="serviceTable">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
+                            <th class="p-4">Kode / Lambung</th>
+                            <th class="p-4">Nama Asset / SN</th>
+                            <th class="p-4" style="width: 180px;">Status Warranty</th>
+                            <th class="p-4 text-right" style="width: 160px;">HM/KM Terkini</th>
+                            <th class="p-4 text-right">Interval</th>
+                            <th class="p-4 text-center">Rencana Servis</th>
+                            <th class="p-4 text-center" style="width: 200px;">Status Realisasi</th>
+                            <th class="p-4">Analisa / Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-slate-100">
+                        <!-- Unit 1 -->
+                        <tr class="hover:bg-slate-50 transition data-row" data-status="Realisasi">
+                            <td class="p-4 font-semibold text-slate-900">PF 05 <br><span class="text-xs text-gray-500 font-normal">PF-00001</span></td>
+                            <td class="p-4">Vibro Bomag Pad Foot Compactor BW 211D<br><span class="text-xs text-gray-400">SN: 9.61582E+11 (2024)</span></td>
+                            <td class="p-4">
+                                <select class="w-full text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                    <option value="nowarranty" selected>No Warranty</option>
+                                    <option value="w1000">Warranty 1000</option>
+                                    <option value="w4000">Warranty 4000</option>
+                                    <option value="w10000">Warranty 10000</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-right">
+                                <input type="number" step="0.1" value="1894.2" class="w-full text-right text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                <div class="text-[10px] text-gray-400 mt-1">30-Jun-2026</div>
+                            </td>
+                            <td class="p-4 text-right font-mono">500</td>
+                            <td class="p-4 text-center font-mono text-xs text-amber-700 font-semibold bg-amber-50/50">2,009.00</td>
+                            <td class="p-4 text-center">
+                                <select onchange="updateRowStatus(this)" class="w-full text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 rounded px-2 py-1 font-semibold focus:outline-none mb-1">
+                                    <option value="Realisasi" selected>Sudah Realisasi</option>
+                                    <option value="Belum">Belum Realisasi (Outstanding)</option>
+                                </select>
+                                <input type="text" value="22/07/2026 (KM: 2036.4)" class="w-full text-[11px] text-center bg-gray-50 border border-gray-300 rounded px-1 py-0.5 font-mono">
+                            </td>
+                            <td class="p-4 text-xs text-red-600 font-medium">-23% (-114.8 Overdue)</td>
+                        </tr>
+                        <!-- Unit 2 -->
+                        <tr class="hover:bg-slate-50 transition data-row" data-status="Realisasi">
+                            <td class="p-4 font-semibold text-slate-900">SD 02 <br><span class="text-xs text-gray-500 font-normal">SD-00001</span></td>
+                            <td class="p-4">Vibro Bomag Smooth Drum Compactor BW<br><span class="text-xs text-gray-400">SN: 9.61582E+11 (2020)</span></td>
+                            <td class="p-4">
+                                <select class="w-full text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                    <option value="nowarranty" selected>No Warranty</option>
+                                    <option value="w1000">Warranty 1000</option>
+                                    <option value="w4000">Warranty 4000</option>
+                                    <option value="w10000">Warranty 10000</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-right">
+                                <input type="number" step="0.1" value="6365.0" class="w-full text-right text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                <div class="text-[10px] text-gray-400 mt-1">22-Jun-2026</div>
+                            </td>
+                            <td class="p-4 text-right font-mono">500</td>
+                            <td class="p-4 text-center font-mono text-xs text-amber-700 font-semibold bg-amber-50/50">2,551.3</td>
+                            <td class="p-4 text-center">
+                                <select onchange="updateRowStatus(this)" class="w-full text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 rounded px-2 py-1 font-semibold focus:outline-none mb-1">
+                                    <option value="Realisasi" selected>Sudah Realisasi</option>
+                                    <option value="Belum">Belum Realisasi (Outstanding)</option>
+                                </select>
+                                <input type="text" value="20/07/2026 (KM: 6532.2)" class="w-full text-[11px] text-center bg-gray-50 border border-gray-300 rounded px-1 py-0.5 font-mono">
+                            </td>
+                            <td class="p-4 text-xs text-red-600 font-medium">-36% (-105.2 Overdue)</td>
+                        </tr>
+                        <!-- Unit 3 -->
+                        <tr class="hover:bg-slate-50 transition data-row" data-status="Belum">
+                            <td class="p-4 font-semibold text-slate-900">EXC-00001 <br><span class="text-xs text-gray-500 font-normal">Exca 24</span></td>
+                            <td class="p-4">Excavator Komatsu PC200-10M0 CE<br><span class="text-xs text-gray-400">SN: DBCH2244 (2024)</span></td>
+                            <td class="p-4">
+                                <select class="w-full text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                    <option value="nowarranty">No Warranty</option>
+                                    <option value="w1000">Warranty 1000</option>
+                                    <option value="w4000" selected>Warranty 4000</option>
+                                    <option value="w10000">Warranty 10000</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-right">
+                                <input type="number" step="0.1" value="2443.0" class="w-full text-right text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                <div class="text-[10px] text-gray-400 mt-1">24-Jun-2026</div>
+                            </td>
+                            <td class="p-4 text-right font-mono">500</td>
+                            <td class="p-4 text-center font-mono text-xs text-amber-700 font-semibold bg-amber-50/50">2,501.00</td>
+                            <td class="p-4 text-center">
+                                <select onchange="updateRowStatus(this)" class="w-full text-xs bg-amber-50 text-amber-800 border border-amber-300 rounded px-2 py-1 font-semibold focus:outline-none mb-1">
+                                    <option value="Realisasi">Sudah Realisasi</option>
+                                    <option value="Belum" selected>Belum Realisasi (Outstanding)</option>
+                                </select>
+                                <input type="text" value="Outstanding" class="w-full text-[11px] text-center bg-gray-50 border border-gray-300 rounded px-1 py-0.5 font-mono">
+                            </td>
+                            <td class="p-4 text-xs text-red-600 font-medium">-12% (-116.7 Overdue)</td>
+                        </tr>
+                        <!-- Unit 4 -->
+                        <tr class="hover:bg-slate-50 transition data-row" data-status="Realisasi">
+                            <td class="p-4 font-semibold text-slate-900">EXC-00009 <br><span class="text-xs text-gray-500 font-normal">EXCA-29</span></td>
+                            <td class="p-4">Excavator Komatsu PC200-10M0 СЕ<br><span class="text-xs text-gray-400">SN: DBCH2941 (2025)</span></td>
+                            <td class="p-4">
+                                <select class="w-full text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                    <option value="nowarranty">No Warranty</option>
+                                    <option value="w1000" selected>Warranty 1000</option>
+                                    <option value="w4000">Warranty 4000</option>
+                                    <option value="w10000">Warranty 10000</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-right">
+                                <input type="number" step="0.1" value="1436.9" class="w-full text-right text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                <div class="text-[10px] text-gray-400 mt-1">01-Jul-2026</div>
+                            </td>
+                            <td class="p-4 text-right font-mono">500</td>
+                            <td class="p-4 text-center font-mono text-xs text-amber-700 font-semibold bg-amber-50/50">1,617.30</td>
+                            <td class="p-4 text-center">
+                                <select onchange="updateRowStatus(this)" class="w-full text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 rounded px-2 py-1 font-semibold focus:outline-none mb-1">
+                                    <option value="Realisasi" selected>Sudah Realisasi</option>
+                                    <option value="Belum">Belum Realisasi (Outstanding)</option>
+                                </select>
+                                <input type="text" value="03/07/2026" class="w-full text-[11px] text-center bg-gray-50 border border-gray-300 rounded px-1 py-0.5 font-mono">
+                            </td>
+                            <td class="p-4 text-xs text-gray-600 font-medium">Warranty UT (-36% Delay)</td>
+                        </tr>
+                        <!-- Unit 5 -->
+                        <tr class="hover:bg-slate-50 transition data-row" data-status="Realisasi">
+                            <td class="p-4 font-semibold text-slate-900">DT-00004 <br><span class="text-xs text-gray-500 font-normal">DT 058</span></td>
+                            <td class="p-4">Dump Truck HINO RANGER-FM 280 JD<br><span class="text-xs text-gray-400">SN: 89112ZYT (2024)</span></td>
+                            <td class="p-4">
+                                <select class="w-full text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                    <option value="nowarranty" selected>No Warranty</option>
+                                    <option value="w1000">Warranty 1000</option>
+                                    <option value="w4000">Warranty 4000</option>
+                                    <option value="w10000">Warranty 10000</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-right">
+                                <input type="number" step="0.1" value="38146.0" class="w-full text-right text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                <div class="text-[10px] text-gray-400 mt-1">30-Jun-2026</div>
+                            </td>
+                            <td class="p-4 text-right font-mono">10000</td>
+                            <td class="p-4 text-center font-mono text-xs text-amber-700 font-semibold bg-amber-50/50">40,066.00</td>
+                            <td class="p-4 text-center">
+                                <select onchange="updateRowStatus(this)" class="w-full text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 rounded px-2 py-1 font-semibold focus:outline-none mb-1">
+                                    <option value="Realisasi" selected>Sudah Realisasi</option>
+                                    <option value="Belum">Belum Realisasi (Outstanding)</option>
+                                </select>
+                                <input type="text" value="11/07/2026 (KM: 40031)" class="w-full text-[11px] text-center bg-gray-50 border border-gray-300 rounded px-1 py-0.5 font-mono">
+                            </td>
+                            <td class="p-4 text-xs text-red-600 font-medium">-19% Under Schedule</td>
+                        </tr>
+                        <!-- Unit 6 -->
+                        <tr class="hover:bg-slate-50 transition data-row" data-status="Belum">
+                            <td class="p-4 font-semibold text-slate-900">DT-00010 <br><span class="text-xs text-gray-500 font-normal">DT 064</span></td>
+                            <td class="p-4">Dump Truck HINO RANGER-FM 280 JD<br><span class="text-xs text-gray-400">SN: 89117ZYT (2024)</span></td>
+                            <td class="p-4">
+                                <select class="w-full text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                    <option value="nowarranty" selected>No Warranty</option>
+                                    <option value="w1000">Warranty 1000</option>
+                                    <option value="w4000">Warranty 4000</option>
+                                    <option value="w10000">Warranty 10000</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-right">
+                                <input type="number" step="0.1" value="39146.0" class="w-full text-right text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 font-mono focus:ring-1 focus:ring-amber-500 focus:outline-none">
+                                <div class="text-[10px] text-gray-400 mt-1">27-Jun-2026</div>
+                            </td>
+                            <td class="p-4 text-right font-mono">10000</td>
+                            <td class="p-4 text-center font-mono text-xs text-amber-700 font-semibold bg-amber-50/50">29,946.00</td>
+                            <td class="p-4 text-center">
+                                <select onchange="updateRowStatus(this)" class="w-full text-xs bg-amber-50 text-amber-800 border border-amber-300 rounded px-2 py-1 font-semibold focus:outline-none mb-1">
+                                    <option value="Realisasi">Sudah Realisasi</option>
+                                    <option value="Belum" selected>Belum Realisasi (Outstanding)</option>
+                                </select>
+                                <input type="text" value="Outstanding" class="w-full text-[11px] text-center bg-gray-50 border border-gray-300 rounded px-1 py-0.5 font-mono">
+                            </td>
+                            <td class="p-4 text-xs text-amber-600 font-medium">92% Headroom (Ctt service km 30rb tdk tersedia)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Project Management & Approvals Signature Footer Section -->
+        <section class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-xs text-gray-600">
+            <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                <p class="font-semibold text-slate-900">Dibuat Oleh:</p>
+                <div class="h-12 flex items-center justify-center text-slate-400 italic">[Signed]</div>
+                <p class="font-medium text-slate-800">Samsul Bahri</p>
+                <p class="text-[10px] text-gray-400">Planner</p>
+            </div>
+            <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                <p class="font-semibold text-slate-900">Diperiksa Oleh:</p>
+                <div class="h-12 flex items-center justify-center text-slate-400 italic">[Signed]</div>
+                <p class="font-medium text-slate-800">Dany Agung</p>
+                <p class="text-[10px] text-gray-400">Head of Equipment</p>
+            </div>
+            <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                <p class="font-semibold text-slate-900">Diperiksa Oleh:</p>
+                <div class="h-12 flex items-center justify-center text-slate-400 italic">[Signed]</div>
+                <p class="font-medium text-slate-800">Guswan Arizal</p>
+                <p class="text-[10px] text-gray-400">Ka Logistik</p>
+            </div>
+            <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                <p class="font-semibold text-slate-900">Mengetahui:</p>
+                <div class="h-12 flex items-center justify-center text-slate-400 italic">[Signed]</div>
+                <p class="font-medium text-slate-800">Widya Apriani</p>
+                <p class="text-[10px] text-gray-400">Asset Manager</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Interactive Search and Filtering Logic -->
+    <script>
+        function filterTable() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.querySelectorAll(".data-row");
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                // Check inner inputs/selects value as well so searched text matches even after updates
+                const inputs = Array.from(row.querySelectorAll('input, select')).map(el => el.value.toLowerCase()).join(' ');
+                row.style.display = (text.includes(input) || inputs.includes(input)) ? "" : "none";
+            });
+        }
+
+        function filterStatus(status) {
+            const rows = document.querySelectorAll(".data-row");
+            rows.forEach(row => {
+                if (status === 'all') {
+                    row.style.display = "";
+                } else {
+                    row.style.display = row.getAttribute("data-status") === status ? "" : "none";
+                }
+            });
+        }
+
+        // Dynamically adapts classes and attributes when status is changed by the user
+        function updateRowStatus(selectElement) {
+            const tr = selectElement.closest('tr');
+            const statusValue = selectElement.value;
+            
+            // Sync custom row filter token
+            tr.setAttribute('data-status', statusValue);
+
+            // Change select field theme dynamically based on selection
+            if(statusValue === 'Realisasi') {
+                selectElement.className = "w-full text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 rounded px-2 py-1 font-semibold focus:outline-none mb-1";
+            } else {
+                selectElement.className = "w-full text-xs bg-amber-50 text-amber-800 border border-amber-300 rounded px-2 py-1 font-semibold focus:outline-none mb-1";
+            }
+        }
+    </script>
+</body>
+</html>
