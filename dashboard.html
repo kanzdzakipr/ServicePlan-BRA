@@ -9,6 +9,7 @@
     <!-- Leaflet for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="scripts/report-forms.css">
+    <link rel="stylesheet" href="scripts/preventive-maintenance.css">
     <style>
         :root {
             --primary: #007bff;
@@ -22,6 +23,10 @@
             --text-main: #333;
             --text-muted: #6c757d;
             --border: #dee2e6;
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 76px;
+            --header-height: 60px;
+            --nav-item-height: 46px;
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,49 +42,85 @@
 
         /* Sidebar Styles */
         .sidebar {
-            width: 260px;
+            flex: 0 0 var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            width: var(--sidebar-width);
             background-color: var(--dark);
             color: #c2c7d0;
             display: flex;
             flex-direction: column;
-            transition: all 0.3s;
+            overflow: hidden;
+            transition: flex-basis 0.3s, min-width 0.3s, width 0.3s;
         }
         .sidebar-header {
-            padding: 20px;
+            align-items: center;
             background-color: #23272b;
-            text-align: center;
+            border-bottom: 1px solid #4b545c;
             font-size: 1.4rem;
             font-weight: bold;
             color: #fff;
-            border-bottom: 1px solid #4b545c;
+            display: flex;
+            flex: 0 0 var(--header-height);
+            height: var(--header-height);
+            justify-content: center;
+            min-height: var(--header-height);
+            padding: 0 18px;
+            white-space: nowrap;
         }
         .sidebar-header i { color: var(--primary); margin-right: 10px; }
         .sidebar-menu {
             list-style: none;
             overflow-y: auto;
+            overflow-x: hidden;
             flex-grow: 1;
             padding: 10px 0;
+            scrollbar-color: #59616a transparent;
+            scrollbar-width: thin;
         }
         .sidebar-menu li a {
-            display: flex;
             align-items: center;
-            padding: 12px 20px;
+            border-left: 4px solid transparent;
             color: #c2c7d0;
-            text-decoration: none;
-            transition: 0.2s;
             cursor: pointer;
-            font-size: 0.9rem;
+            display: flex;
+            font-size: 0.86rem;
+            height: var(--nav-item-height);
+            min-height: var(--nav-item-height);
+            padding: 0 16px;
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+            width: 100%;
         }
-        .sidebar-menu li a i { width: 25px; text-align: center; margin-right: 10px; }
+        .sidebar-menu li a i {
+            flex: 0 0 28px;
+            font-size: 0.95rem;
+            margin-right: 9px;
+            text-align: center;
+            width: 28px;
+        }
+        .sidebar-menu .nav-label {
+            display: block;
+            line-height: 1.2;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         .sidebar-menu li a:hover, .sidebar-menu li a.active {
             background-color: rgba(255,255,255,0.1);
             color: #fff;
-            border-left: 4px solid var(--primary);
+            border-left-color: var(--primary);
+        }
+        .sidebar-menu li a:focus-visible {
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55);
+            color: #fff;
+            outline: none;
         }
 
         /* Main Content Styles */
         .main-wrapper {
             flex-grow: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -88,7 +129,9 @@
         /* Top Header */
         .top-header {
             background-color: #fff;
-            height: 60px;
+            flex: 0 0 var(--header-height);
+            height: var(--header-height);
+            min-height: var(--header-height);
             padding: 0 20px;
             display: flex;
             justify-content: space-between;
@@ -96,7 +139,7 @@
             border-bottom: 1px solid var(--border);
             box-shadow: 0 2px 4px rgba(0,0,0,0.04);
         }
-        .header-left, .header-right { display: flex; align-items: center; gap: 20px; }
+        .header-left, .header-right { display: flex; align-items: center; gap: 20px; min-width: 0; }
         .search-bar input {
             padding: 8px 15px;
             border: 1px solid var(--border);
@@ -119,15 +162,25 @@
             padding: 20px;
             overflow-y: auto;
             flex-grow: 1;
+            min-width: 0;
             position: relative;
+            width: 100%;
         }
         .page-title {
             margin-bottom: 20px;
             font-size: 1.5rem;
             color: var(--dark);
         }
-        .view-section { display: none; }
+        .view-section {
+            display: none;
+            margin: 0 auto;
+            max-width: 1450px;
+            min-width: 0;
+            width: 100%;
+        }
         .view-section.active { display: block; }
+        #reportModule,
+        #preventiveMaintenanceModule { max-width: none; width: 100%; }
         
         .panel {
             background: #fff;
@@ -247,6 +300,53 @@
         .uc-container { text-align: center; padding: 100px 20px; color: var(--text-muted); }
         .uc-container i { font-size: 4rem; color: #dee2e6; margin-bottom: 20px; }
 
+        @media (max-width: 900px) {
+            .sidebar {
+                flex-basis: var(--sidebar-collapsed-width);
+                min-width: var(--sidebar-collapsed-width);
+                width: var(--sidebar-collapsed-width);
+            }
+            .sidebar-header {
+                padding: 0;
+            }
+            .sidebar-header i {
+                font-size: 1.25rem;
+                margin: 0;
+            }
+            .brand-label,
+            .sidebar-menu .nav-label {
+                display: none;
+            }
+            .sidebar-menu li a {
+                justify-content: center;
+                padding: 0;
+            }
+            .sidebar-menu li a i {
+                font-size: 1rem;
+                margin: 0;
+            }
+            .content {
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .top-header {
+                padding: 0 12px;
+            }
+            .top-header .search-bar,
+            .profile span {
+                display: none;
+            }
+            .dropdown select {
+                max-width: 210px;
+                width: 100%;
+            }
+            .content {
+                padding: 12px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -254,25 +354,25 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <i class="fa-solid fa-truck-monster"></i> FleetMonitor
+            <i class="fa-solid fa-truck-monster"></i><span class="brand-label">FleetMonitor</span>
         </div>
         <ul class="sidebar-menu">
-            <li><a onclick="showView('dashboard')" id="menu-dashboard" class="active"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
-            <li><a onclick="showView('monitoring')" id="menu-monitoring"><i class="fa-solid fa-location-dot"></i> Monitoring Unit</a></li>
-            <li><a onclick="showView('asset')" id="menu-asset"><i class="fa-solid fa-cubes"></i> Master Asset</a></li>
-            <li><a onclick="showView('uc', 'Inspeksi & P2H')"><i class="fa-solid fa-clipboard-check"></i> Inspeksi & P2H</a></li>
-            <li><a onclick="showView('wo')" id="menu-wo"><i class="fa-solid fa-screwdriver-wrench"></i> Work Order</a></li>
-            <li><a onclick="showView('uc', 'Preventive Maintenance')"><i class="fa-regular fa-calendar-check"></i> Preventive Maint.</a></li>
-            <li><a onclick="showView('uc', 'Spare Part & Logistik')"><i class="fa-solid fa-boxes-stacked"></i> Spare Part & Logistik</a></li>
-            <li><a onclick="showView('uc', 'Condition Monitoring')"><i class="fa-solid fa-stethoscope"></i> Condition Monitoring</a></li>
-            <li><a onclick="showView('uc', 'Fuel Management')"><i class="fa-solid fa-gas-pump"></i> Fuel</a></li>
-            <li><a onclick="showView('uc', 'Produktivitas')"><i class="fa-solid fa-chart-line"></i> Produktivitas</a></li>
-            <li><a onclick="showView('biaya')" id="menu-biaya"><i class="fa-solid fa-money-bill-trend-up"></i> Biaya</a></li>
-            <li><a onclick="showView('uc', 'People & KPI')"><i class="fa-solid fa-users-gear"></i> People & KPI</a></li>
-            <li><a onclick="showView('uc', 'HSE / Accident')"><i class="fa-solid fa-triangle-exclamation"></i> HSE / Accident</a></li>
-            <li><a onclick="showView('reports')" id="menu-reports"><i class="fa-solid fa-file-invoice"></i> Laporan & Form</a></li>
-            <li><a onclick="showView('uc', 'Approval')"><i class="fa-solid fa-check-double"></i> Approval</a></li>
-            <li><a onclick="showView('uc', 'Pengaturan')"><i class="fa-solid fa-gear"></i> Pengaturan</a></li>
+            <li><a onclick="showView('dashboard')" id="menu-dashboard" class="active" role="button" tabindex="0" aria-current="page" title="Dashboard"><i class="fa-solid fa-gauge-high"></i><span class="nav-label">Dashboard</span></a></li>
+            <li><a onclick="showView('monitoring')" id="menu-monitoring" role="button" tabindex="0" title="Monitoring Unit"><i class="fa-solid fa-location-dot"></i><span class="nav-label">Monitoring Unit</span></a></li>
+            <li><a onclick="showView('asset')" id="menu-asset" role="button" tabindex="0" title="Master Asset"><i class="fa-solid fa-cubes"></i><span class="nav-label">Master Asset</span></a></li>
+            <li><a onclick="showView('uc', 'Inspeksi & P2H', 'menu-inspection')" id="menu-inspection" role="button" tabindex="0" title="Inspeksi & P2H"><i class="fa-solid fa-clipboard-check"></i><span class="nav-label">Inspeksi & P2H</span></a></li>
+            <li><a onclick="showView('wo')" id="menu-wo" role="button" tabindex="0" title="Work Order"><i class="fa-solid fa-screwdriver-wrench"></i><span class="nav-label">Work Order</span></a></li>
+            <li><a onclick="showView('pm')" id="menu-pm" role="button" tabindex="0" title="Preventive Maintenance"><i class="fa-regular fa-calendar-check"></i><span class="nav-label">Preventive Maint.</span></a></li>
+            <li><a onclick="showView('uc', 'Spare Part & Logistik', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0" title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare Part & Logistik</span></a></li>
+            <li><a onclick="showView('uc', 'Condition Monitoring', 'menu-condition')" id="menu-condition" role="button" tabindex="0" title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span class="nav-label">Condition Monitoring</span></a></li>
+            <li><a onclick="showView('uc', 'Fuel Management', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0" title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a></li>
+            <li><a onclick="showView('uc', 'Produktivitas', 'menu-productivity')" id="menu-productivity" role="button" tabindex="0" title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Produktivitas</span></a></li>
+            <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" title="Biaya"><i class="fa-solid fa-money-bill-trend-up"></i><span class="nav-label">Biaya</span></a></li>
+            <li><a onclick="showView('uc', 'People & KPI', 'menu-people')" id="menu-people" role="button" tabindex="0" title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People & KPI</span></a></li>
+            <li><a onclick="showView('uc', 'HSE / Accident', 'menu-hse')" id="menu-hse" role="button" tabindex="0" title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE / Accident</span></a></li>
+            <li><a onclick="showView('reports')" id="menu-reports" role="button" tabindex="0" title="Laporan & Form"><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Laporan & Form</span></a></li>
+            <li><a onclick="showView('uc', 'Approval', 'menu-approval')" id="menu-approval" role="button" tabindex="0" title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a></li>
+            <li><a onclick="showView('uc', 'Pengaturan', 'menu-settings')" id="menu-settings" role="button" tabindex="0" title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a></li>
         </ul>
     </aside>
 
@@ -433,6 +533,11 @@
                         <div class="card-container"></div>
                     </div>
                 </div>
+            </div>
+
+            <!-- VIEW: PREVENTIVE MAINTENANCE -->
+            <div id="view-pm" class="view-section">
+                <div id="preventiveMaintenanceModule"></div>
             </div>
 
             <!-- VIEW: BIAYA (MVP 2/3) -->
@@ -840,30 +945,48 @@
         }
 
         function clearActiveMenus() {
-            document.querySelectorAll('.sidebar-menu a').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sidebar-menu a').forEach(el => {
+                el.classList.remove('active');
+                el.removeAttribute('aria-current');
+            });
         }
 
-        function showView(viewName, title = '') {
+        function showView(viewName, title = '', menuId = '') {
             clearActiveMenus();
-            
-            if(viewName === 'dashboard') document.getElementById('menu-dashboard').classList.add('active');
-            else if(viewName === 'monitoring') document.getElementById('menu-monitoring').classList.add('active');
-            else if(viewName === 'asset') document.getElementById('menu-asset').classList.add('active');
-            else if(viewName === 'wo') document.getElementById('menu-wo').classList.add('active');
-            else if(viewName === 'biaya') document.getElementById('menu-biaya').classList.add('active');
-            else if(viewName === 'reports') document.getElementById('menu-reports').classList.add('active');
-            else if(viewName === 'uc') {
+
+            const resolvedMenuId = menuId || `menu-${viewName}`;
+            const activeMenu = document.getElementById(resolvedMenuId);
+            if (activeMenu) {
+                activeMenu.classList.add('active');
+                activeMenu.setAttribute('aria-current', 'page');
+            }
+
+            if(viewName === 'uc') {
                 document.getElementById('ucTitle').innerText = title;
             }
 
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + viewName).classList.add('active');
+            const targetView = document.getElementById('view-' + viewName);
+            if (!targetView) return;
+            targetView.classList.add('active');
+
+            const content = document.querySelector('.content');
+            if (content) content.scrollTop = 0;
 
             if(viewName === 'dashboard' && !mapInitialized && globalData) {
                 initMap(globalData.assets);
                 mapInitialized = true;
             }
         }
+
+        document.querySelectorAll('.sidebar-menu a[role="button"]').forEach(menuItem => {
+            menuItem.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    menuItem.click();
+                }
+            });
+        });
 
         function initMap(assets) {
             const map = L.map('map').setView([1.2721, 101.2173], 12); 
@@ -1001,5 +1124,6 @@
         }
     </script>
     <script src="scripts/report-forms.js"></script>
+    <script src="scripts/preventive-maintenance.js"></script>
 </body>
 </html>
