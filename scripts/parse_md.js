@@ -37,14 +37,17 @@ const main = () => {
     const rootDir = path.resolve(__dirname, '..');
     const materialDir = path.join(rootDir, 'material');
     
-    // We only use files relevant to our CMMS core (Asset and WO)
     const breakDownPath = path.join(materialDir, 'ADMINISTRASI-Laporan-Divisi-Equipment-Januari-2026', '01_Laporan_Break_Down_Januari_2026_Tabulasi.md');
     const standbyPath = path.join(materialDir, 'AVAILABILITY_UNIT', 'REKAP_UNIT_STANDBY.md');
     const cashOutPath = path.join(materialDir, 'ADMINISTRASI-Laporan-Divisi-Equipment-Januari-2026', '06_Laporan_Cash_Out_Januari_2026_Tabulasi.md');
+    const expensesPath = path.join(materialDir, 'Biaya', 'Equipment_Expenses_Report_Tabulasi.md');
+    const unitCostsPath = path.join(materialDir, 'Biaya', 'Harga_Jual_Unit_Tabulasi.md');
     
     const breakDownData = parseMarkdownTable(breakDownPath);
     const standbyData = parseMarkdownTable(standbyPath);
     const cashOutData = parseMarkdownTable(cashOutPath);
+    const expensesData = parseMarkdownTable(expensesPath);
+    const unitCostsData = parseMarkdownTable(unitCostsPath);
 
     let totalCost = "Rp 0";
     cashOutData.forEach(item => {
@@ -60,12 +63,46 @@ const main = () => {
             financials: { total_repair_cost: totalCost }
         },
         assets: [],
-        work_orders: []
+        work_orders: [],
+        costs: {
+            budget: [],
+            actual: [],
+            labels: ['Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+            unit_valuations: []
+        }
     };
+
+    // Process expenses (Budget vs Actual)
+    expensesData.forEach(item => {
+        if (item.deskripsi === 'Budget Planning') {
+            output.costs.budget = [
+                item.mei, item.juni, item.juli, item.agustus, 
+                item.september, item.oktober, item.november, item.desember
+            ].map(val => parseInt((val || '0').replace(/[^0-9]/g, '')) || 0);
+        } else if (item.deskripsi === 'Pembayaran cash') {
+            output.costs.actual = [
+                item.mei, item.juni, item.juli, item.agustus, 
+                item.september, item.oktober, item.november, item.desember
+            ].map(val => parseInt((val || '0').replace(/[^0-9]/g, '')) || 0);
+        }
+    });
+
+    // Process unit costs
+    unitCostsData.forEach(item => {
+        if (item.nama_alat_berat) {
+            output.costs.unit_valuations.push({
+                unit: item.nama_alat_berat,
+                id: item.id,
+                total_perbaikan: item.total_biaya_perbaikan,
+                harga_beli: item.harga_beli,
+                nilai_buku: item.nilai_buku,
+                harga_pasaran: item.harga_pasaran
+            });
+        }
+    });
 
     let woCounter = 1;
 
-    // Process breakdown as Assets and Work Orders
     breakDownData.forEach(item => {
         if (!item.alat_berat_truck) return;
         let status = (item.update_kondisi || '').toUpperCase();
@@ -80,17 +117,15 @@ const main = () => {
         const location = item.lokasi_unit_down || 'Workshop';
         const issue = item.permasalahan_trouble_yang_terjadi || '';
 
-        // Add to assets
         output.assets.push({
             id: assetId,
             type: 'Heavy Equipment',
-            category: item.jenis_unit || 'Excavator', // Mock category if not present
+            category: item.jenis_unit || 'Excavator',
             status: status,
             location: location,
             lastUpdate: '2 jam lalu'
         });
 
-        // Add to work orders if broken down or has issue
         if (status === 'BREAKDOWN' || issue) {
             output.work_orders.push({
                 woId: `WO-26-${String(woCounter++).padStart(3, '0')}`,
@@ -105,7 +140,6 @@ const main = () => {
         }
     });
 
-    // Process standby as Assets
     standbyData.forEach(item => {
         if (!item.nama_asset) return;
         output.summary.status_counts['STANDBY']++;
@@ -123,7 +157,7 @@ const main = () => {
 
     const outputPath = path.join(rootDir, 'data.json');
     fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
-    console.log(`Parsed core CMMS data. Total Assets: ${output.assets.length}. Total WOs: ${output.work_orders.length}.`);
+    console.log(`Parsed core CMMS data + Costs. Total Assets: ${output.assets.length}. WOs: ${output.work_orders.length}. Costs Extracted.`);
 };
 
 main();

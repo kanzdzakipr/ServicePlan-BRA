@@ -6982,5 +6982,123 @@
       "priority": "Normal",
       "assignedTo": "Belum ada PIC"
     }
-  ]
+  ],
+  "costs": {
+    "budget": [
+      330000000,
+      330000000,
+      430000000,
+      330000000,
+      330000000,
+      330000000,
+      330000000,
+      550000000
+    ],
+    "actual": [
+      393758107,
+      553477901,
+      5425098935,
+      439682327,
+      264006655,
+      321656974,
+      4297177288,
+      449174956
+    ],
+    "labels": [
+      "Mei",
+      "Jun",
+      "Jul",
+      "Agu",
+      "Sep",
+      "Okt",
+      "Nov",
+      "Des"
+    ],
+    "unit_valuations": [
+      {
+        "unit": "Bulldozer Caterpillar D6R",
+        "id": "Dozer 06",
+        "total_perbaikan": "Rp421.415.277",
+        "harga_beli": "Rp600.000.000",
+        "nilai_buku": "Rp360.000.000",
+        "harga_pasaran": "450.000.000 – 520.000.000"
+      },
+      {
+        "unit": "Bulldozer Komatsu D85ESS-2",
+        "id": "Dozer 04",
+        "total_perbaikan": "Rp403.684.851",
+        "harga_beli": "Rp1.220.000.000",
+        "nilai_buku": "Rp854.000.000",
+        "harga_pasaran": "750.000.000 – 900.000.000"
+      },
+      {
+        "unit": "Excavator Caterpillar 305.5E2",
+        "id": "Exca 16",
+        "total_perbaikan": "Rp35.606.864",
+        "harga_beli": "Rp841.380.000",
+        "nilai_buku": "Rp588.966.000",
+        "harga_pasaran": "420.000.000 –480.000.000"
+      },
+      {
+        "unit": "Excavator Caterpillar 305.5E2",
+        "id": "Exca 17",
+        "total_perbaikan": "Rp66.808.545",
+        "harga_beli": "Rp841.380.000",
+        "nilai_buku": "Rp588.966.000",
+        "harga_pasaran": "Rp420.000.000 – Rp480.000.000"
+      },
+      {
+        "unit": "Bulldozer Caterpillar D7G2",
+        "id": "Dozer 07",
+        "total_perbaikan": "Rp286.553.522",
+        "harga_beli": "Rp800.000.000",
+        "nilai_buku": "Rp480.000.000",
+        "harga_pasaran": "420.000.000 – 500.000.000"
+      },
+      {
+        "unit": "Bulldozer Caterpillar D6G",
+        "id": "Dozer 01",
+        "total_perbaikan": "Rp579.012.317",
+        "harga_beli": "Rp415.000.000",
+        "nilai_buku": "Rp290.500.000",
+        "harga_pasaran": "400.000.000 – 550.000.000"
+      },
+      {
+        "unit": "Excavator Caterpillar 320D",
+        "id": "Exca 04",
+        "total_perbaikan": "Rp456.208.914",
+        "harga_beli": "Rp370.000.000",
+        "nilai_buku": "Rp185.000.000",
+        "harga_pasaran": "400.000.00 – 580.000.000"
+      },
+      {
+        "unit": "Bulldozer Caterpillar D6R",
+        "id": "Dozer 06"
+      },
+      {
+        "unit": "Bulldozer Komatsu D85ESS-2",
+        "id": "Dozer 04"
+      },
+      {
+        "unit": "Excavator Caterpillar 305.5E2",
+        "id": "Exca 16"
+      },
+      {
+        "unit": "Excavator Caterpillar 305.5E2",
+        "id": "Exca 17"
+      },
+      {
+        "unit": "Bulldozer Caterpillar D7G2",
+        "id": "Dozer 07"
+      },
+      {
+        "unit": "Bulldozer Caterpillar D6G",
+        "id": "Dozer 01"
+      },
+      {
+        "unit": "Excavator Caterpillar 320D",
+        "id": "Exca 04"
+      }
+    ]
+  }
 }
