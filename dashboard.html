@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Leaflet for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="scripts/report-forms.css">
     <style>
         :root {
             --primary: #007bff;
@@ -269,7 +270,7 @@
             <li><a onclick="showView('biaya')" id="menu-biaya"><i class="fa-solid fa-money-bill-trend-up"></i> Biaya</a></li>
             <li><a onclick="showView('uc', 'People & KPI')"><i class="fa-solid fa-users-gear"></i> People & KPI</a></li>
             <li><a onclick="showView('uc', 'HSE / Accident')"><i class="fa-solid fa-triangle-exclamation"></i> HSE / Accident</a></li>
-            <li><a onclick="showView('uc', 'Laporan')"><i class="fa-solid fa-file-invoice"></i> Laporan</a></li>
+            <li><a onclick="showView('reports')" id="menu-reports"><i class="fa-solid fa-file-invoice"></i> Laporan & Form</a></li>
             <li><a onclick="showView('uc', 'Approval')"><i class="fa-solid fa-check-double"></i> Approval</a></li>
             <li><a onclick="showView('uc', 'Pengaturan')"><i class="fa-solid fa-gear"></i> Pengaturan</a></li>
         </ul>
@@ -487,6 +488,11 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- VIEW: LAPORAN & FORM -->
+            <div id="view-reports" class="view-section">
+                <div id="reportModule"></div>
             </div>
 
             <!-- VIEW: UNDER CONSTRUCTION -->
@@ -845,6 +851,7 @@
             else if(viewName === 'asset') document.getElementById('menu-asset').classList.add('active');
             else if(viewName === 'wo') document.getElementById('menu-wo').classList.add('active');
             else if(viewName === 'biaya') document.getElementById('menu-biaya').classList.add('active');
+            else if(viewName === 'reports') document.getElementById('menu-reports').classList.add('active');
             else if(viewName === 'uc') {
                 document.getElementById('ucTitle').innerText = title;
             }
@@ -993,5 +1000,6 @@
                 .replace(/'/g, "&#039;");
         }
     </script>
+    <script src="scripts/report-forms.js"></script>
 </body>
 </html>
