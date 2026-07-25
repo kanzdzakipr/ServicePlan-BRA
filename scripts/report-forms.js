@@ -14,6 +14,9 @@
             title: 'Berita Acara Penerimaan/Penyerahan Barang',
             description: 'Pencatatan penerimaan barang, kondisi fisik, kekurangan, dan pengesahan.',
             source: 'FORM_BAPP_Penerimaan_Penyerahan_Barang_Parts_Tabulasi.md',
+            seedFields: {
+                nomor: 'BAPP / ___ / ___ / ___ / 20__'
+            },
             fields: [
                 field('nomor', 'Nomor BAPP', 'text', true, [], false, 'BAPP / ___ / ___ / ___ / 20__'),
                 field('tanggal', 'Tanggal penerimaan', 'date', true),
@@ -64,7 +67,7 @@
         },
         {
             id: 'bhw-in', code: 'BHW-IN', category: 'Logistik & Warehouse',
-            title: 'Buku Harian Warehouse — Barang Masuk',
+            title: 'Buku Harian Warehouse (Barang Masuk)',
             description: 'Log penerimaan spare parts dan pembaruan saldo persediaan.',
             source: 'FORM_BHW_IN_Tabulasi.md',
             fields: [
@@ -90,7 +93,7 @@
         },
         {
             id: 'bhw-out', code: 'BHW-OUT', category: 'Logistik & Warehouse',
-            title: 'Buku Harian Warehouse — Barang Keluar',
+            title: 'Buku Harian Warehouse (Barang Keluar)',
             description: 'Log pengeluaran spare parts, penerima, persediaan, dan sisa stok.',
             source: 'FORM_BHW_OUT_Tabulasi.md',
             fields: [
@@ -210,7 +213,7 @@
         },
         {
             id: 'p2h-excavator', code: 'P2H-HEX', category: 'Operasional',
-            title: 'P2H — Hydraulic Excavator',
+            title: 'P2H (Hydraulic Excavator)',
             description: 'Pelaksanaan perawatan harian excavator dengan kondisi dan tindakan per slot.',
             source: 'Form_P2H_Hydraulic_Excavator_Tabulasi.md',
             fields: [
@@ -241,7 +244,7 @@
         },
         {
             id: 'p2h-roller', code: 'P2H-SDR', category: 'Operasional',
-            title: 'P2H — Single Drum Rollers',
+            title: 'P2H (Single Drum Rollers)',
             description: 'Pelaksanaan perawatan harian compactor/roller dengan checklist kondisi.',
             source: 'Form_P2H_Single_Drum_Rollers_Tabulasi.md',
             fields: [
@@ -298,9 +301,12 @@
         },
         {
             id: 'ppb', code: 'P-3', category: 'Logistik & Warehouse',
-            title: 'PPB — Pesanan Pembelian/Pengadaan Barang',
+            title: 'PPB (Pesanan Pembelian/Pengadaan Barang)',
             description: 'Pesanan pembelian dengan harga, PPN 11%, nilai total, dan penyerahan.',
             source: 'FORM_PPB_Pengadaan_Barang_Tabulasi.md',
+            seedFields: {
+                nomor_ppb: '___ / Dept-Equip / ___ / 20__'
+            },
             fields: [
                 field('nomor_ppb', 'Nomor PPB', 'text', true, [], false, '___ / Dept-Equip / ___ / 20__'),
                 field('kepada', 'Kepada Yth.', 'text', true),
@@ -351,9 +357,14 @@
         },
         {
             id: 'spb', code: 'P-1', category: 'Logistik & Warehouse',
-            title: 'SPB — Surat Permintaan Barang',
+            title: 'SPB (Surat Permintaan Barang)',
             description: 'Permintaan barang atau spare parts dari project kepada bagian logistik.',
             source: 'FORM_SPB_Permintaan_Parts_Tabulasi.md',
+            seedFields: {
+                kepada: 'Bagian Logistik',
+                perusahaan: 'PT Bina Rekayasa Anugerah',
+                nomor_spb: 'SPB / ___ / ___ / ___ / 20__'
+            },
             fields: [
                 field('nomor_kontrak', 'Nomor kontrak project'),
                 field('project', 'Project', 'text', true),
@@ -376,7 +387,7 @@
         },
         {
             id: 'spl', code: 'SPL', category: 'Operasional',
-            title: 'Surat Perintah Lembur — Yard',
+            title: 'Surat Perintah Lembur (Yard)',
             description: 'Penugasan lembur, daftar personel, durasi, dan total jam-orang.',
             source: 'FORM_SPL_Yard_Tabulasi.md',
             fields: [
@@ -401,9 +412,12 @@
         },
         {
             id: 'sppu', code: 'SPPU', category: 'Logistik & Warehouse',
-            title: 'Surat Permintaan Parts Urgent — Yard',
+            title: 'Surat Permintaan Parts Urgent (Yard)',
             description: 'Permintaan parts mendesak disertai HM, analisa kerusakan, dan solusi.',
             source: 'FORM_SPPU_Yard_Tabulasi.md',
+            seedFields: {
+                nomor: '___ / SPPU / YARD / BRA / ___ / 20__'
+            },
             fields: [
                 field('nomor', 'Nomor SPPU', 'text', true, [], false, '___ / SPPU / YARD / BRA / ___ / 20__'),
                 field('tanggal', 'Tanggal pengajuan', 'date', true),
@@ -422,6 +436,56 @@
                 column('satuan', 'Sat'),
                 column('analisa', 'Analisa kerusakan'),
                 column('solusi', 'Solusi')
+            ]
+        },
+        {
+            id: 'sppu-006-pf04-cs10', code: 'SPPU-006', category: 'Logistik & Warehouse',
+            title: 'Template SPPU 006 (Parts Urgent PF-04 / CS-10)',
+            description: 'Template kosong siap pakai untuk permintaan parts urgent, analisa kerusakan, tindak lanjut, lampiran, dan pengesahan.',
+            source: 'SPPU_006_PF-04_CS10_Tabulasi.md',
+            seedFields: {
+                nomor: '___/SPPU/PF-04/WS/__/20__'
+            },
+            fields: [
+                field('nomor', 'Nomor SPPU', 'text', true, [], false, '___/SPPU/PF-04/WS/__/20__'),
+                field('tanggal', 'Tanggal pengajuan', 'date', true),
+                field('lokasi', 'Lokasi', 'text', true, [], false, 'Contoh: Duri'),
+                field('prioritas', 'Tingkat kebutuhan', 'select', true, ['Urgent dan diprioritaskan', 'Urgent', 'Prioritas normal']),
+                field('jenis_unit', 'Jenis unit', 'text', true, [], false, 'Contoh: Soil Compactor CS-10'),
+                field('serial_number', 'Serial number', 'text', true),
+                field('hour_meter', 'Hour meter unit', 'number', true, [], false, '0'),
+                field('operator', 'Operator'),
+                field('project', 'Project / kebutuhan', 'text', true),
+                field('sistem', 'Sistem terkait', 'text', false, [], false, 'Contoh: Fitur pemadatan dan brake system'),
+                field('analisa', 'Analisa kerusakan', 'textarea', true, [], true, 'Jelaskan gejala, faktor penyebab, hasil pemeriksaan, dan riwayat perbaikan.'),
+                field('dampak', 'Dampak operasional', 'textarea', true, [], true, 'Jelaskan fungsi unit yang terganggu dan risiko bila parts belum diganti.'),
+                field('tindak_lanjut', 'Solusi dan tindak lanjut', 'textarea', true, [], true, 'Tuliskan tindakan penggantian, pemeriksaan wiring, pengujian fungsi, dan langkah lanjutan lain.'),
+                field('instruksi', 'Instruksi / catatan prioritas', 'textarea', false, [], true),
+                field('diajukan_oleh', 'Diajukan oleh'),
+                field('jabatan_pengaju', 'Jabatan pengaju'),
+                field('diadakan_oleh', 'Diadakan oleh'),
+                field('jabatan_pengadaan', 'Jabatan pengadaan'),
+                field('disetujui_oleh', 'Mengetahui / disetujui oleh'),
+                field('jabatan_penyetuju', 'Jabatan penyetuju'),
+                field('lampiran', 'Dokumentasi lampiran', 'textarea', false, [], true, 'Daftar foto unit, pemeriksaan, komponen, panel instrumen, atau dokumen pendukung.')
+            ],
+            tableTitle: 'Tabulasi permintaan parts',
+            calculation: 'sppu006',
+            calculationNote: 'Jumlah jenis parts, total kuantitas, dan item dengan kuantitas terbesar dihitung otomatis.',
+            columns: [
+                column('nama', 'Nama parts'),
+                column('hm', 'HM', 'number'),
+                column('operator', 'Operator'),
+                column('pn', 'Part number'),
+                column('jumlah', 'Jumlah', 'number'),
+                column('satuan', 'Satuan'),
+                column('kelompok', 'Kelompok parts')
+            ],
+            seedRows: [{}, {}, {}, {}, {}, {}, {}, {}, {}],
+            approvals: [
+                { label: 'Diajukan oleh', nameField: 'diajukan_oleh', roleField: 'jabatan_pengaju' },
+                { label: 'Diadakan oleh', nameField: 'diadakan_oleh', roleField: 'jabatan_pengadaan' },
+                { label: 'Mengetahui / Disetujui', nameField: 'disetujui_oleh', roleField: 'jabatan_penyetuju' }
             ]
         },
         {
@@ -481,11 +545,56 @@
         }
     ];
 
+    formSchemas.forEach(schema => {
+        schema.fields.forEach(item => {
+            item.required = true;
+        });
+        schema.columns.forEach(item => {
+            item.required = !item.readonly;
+        });
+    });
+
     let currentPage = 1;
     let activeSchema = null;
     let activeDraft = null;
     const pageSize = 8;
     const storagePrefix = 'fleetmonitor-report-draft-';
+    const historyStorageKey = 'fleetmonitor-report-history-v1';
+    const evidenceRequiredFormIds = new Set(['ppb', 'spb', 'sppu', 'sppu-006-pf04-cs10']);
+    const calculatedRowKeys = new Set(['saldo_sekarang', 'sisa', 'jam_kerja', 'hm_operasi', 'total', 'durasi', 'in_total', 'out_total', 'saldo', 'nilai_saldo']);
+    const maxSourceImageBytes = 8 * 1024 * 1024;
+    const minImageLongSide = 1280;
+    const minImageShortSide = 720;
+
+    function cloneData(value) {
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    function createEmptyDraft(schema) {
+        const seedRows = schema.seedRows || [{}];
+        return {
+            fields: { ...(schema.seedFields || {}) },
+            rows: seedRows.map(row => ({ ...row })),
+            updatedAt: null
+        };
+    }
+
+    function requiresEvidence(schema = activeSchema) {
+        return Boolean(schema && evidenceRequiredFormIds.has(schema.id));
+    }
+
+    function readHistory() {
+        try {
+            const records = JSON.parse(localStorage.getItem(historyStorageKey));
+            return Array.isArray(records) ? records : [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function writeHistory(records) {
+        localStorage.setItem(historyStorageKey, JSON.stringify(records));
+    }
 
     function escapeHtml(value) {
         return String(value == null ? '' : value)
@@ -520,6 +629,15 @@
         const module = document.getElementById('reportModule');
         if (!module) return;
         module.innerHTML = `
+            <nav class="report-view-tabs" aria-label="Navigasi laporan">
+                <button class="report-view-tab active" type="button" data-report-panel="templates">
+                    <i class="fa-regular fa-file-lines"></i> Template Form
+                </button>
+                <button class="report-view-tab" type="button" data-report-panel="history">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Laporan
+                    <span id="reportHistoryCount">0</span>
+                </button>
+            </nav>
             <section class="catalog-workspace" id="reportCatalog">
                 <div class="report-heading">
                     <div>
@@ -564,9 +682,35 @@
                 <div class="report-grid" id="reportGrid"></div>
                 <div class="report-pagination" id="reportPagination"></div>
             </section>
+            <section class="report-history-workspace hidden" id="reportHistory">
+                <div class="report-heading report-history-heading">
+                    <div>
+                        <div class="report-eyebrow">Database laporan lokal</div>
+                        <h1>Riwayat Laporan Final</h1>
+                        <p>Laporan yang sudah disimpan dapat dilihat, dicetak, atau digunakan ulang sebagai dasar laporan baru.</p>
+                    </div>
+                    <div class="history-storage-note"><i class="fa-solid fa-database"></i> Prototipe: tersimpan di browser ini</div>
+                </div>
+                <div class="history-toolbar">
+                    <div class="report-control-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input id="historySearch" class="report-input" type="search" placeholder="Cari nomor atau jenis laporan...">
+                    </div>
+                </div>
+                <div id="historyList"></div>
+                <div class="form-preview" id="historyPrintArea"></div>
+            </section>
             <section class="form-workspace" id="formWorkspace"></section>
             <div class="report-toast" id="reportToast"><i class="fa-solid fa-circle-check"></i><span></span></div>
         `;
+
+        module.querySelectorAll('[data-report-panel]').forEach(button => {
+            button.addEventListener('click', () => switchReportPanel(button.dataset.reportPanel));
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeDetailedGuide();
+        });
+        document.getElementById('historySearch').addEventListener('input', renderHistory);
 
         document.getElementById('reportApply').addEventListener('click', () => {
             currentPage = 1;
@@ -587,6 +731,7 @@
             renderCatalog();
         });
         renderCatalog();
+        renderHistory();
 
         const queryRoute = new URLSearchParams(window.location.search).get('view');
         const route = window.location.hash.match(/^#reports(?:\/([a-z0-9-]+))?$/i)
@@ -597,6 +742,173 @@
             document.querySelectorAll('.sidebar-menu a').forEach(link => link.classList.remove('active'));
             document.getElementById('menu-reports').classList.add('active');
             if (route[1] && formSchemas.some(item => item.id === route[1])) openForm(route[1]);
+        }
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '—';
+        return new Intl.DateTimeFormat('id-ID', {
+            dateStyle: 'long',
+            timeStyle: 'short'
+        }).format(new Date(value));
+    }
+
+    function getReportNumberKey(schema, fields = {}) {
+        const preferredKeys = ['nomor', 'nomor_ppb', 'nomor_spb', 'nomor_log', 'nomor_bukti', 'kode'];
+        return preferredKeys.find(key => (
+            Object.prototype.hasOwnProperty.call(fields, key)
+            || schema.fields.some(item => item.key === key)
+        )) || schema.fields.find(item => /nomor|kode/i.test(item.key))?.key;
+    }
+
+    function getReportNumber(schema, fields) {
+        const key = getReportNumberKey(schema, fields);
+        return key && fields[key] ? fields[key] : `${schema.code} / TANPA NOMOR`;
+    }
+
+    function isRowPopulated(row) {
+        return Object.entries(row).some(([key, value]) => {
+            if (key === '_evidence' || calculatedRowKeys.has(key)) return false;
+            return String(value == null ? '' : value).trim();
+        });
+    }
+
+    function switchReportPanel(panel) {
+        const showHistory = panel === 'history';
+        document.body.classList.remove('guide-modal-open');
+        document.getElementById('reportCatalog').classList.toggle('hidden', showHistory);
+        document.getElementById('reportHistory').classList.toggle('hidden', !showHistory);
+        document.getElementById('formWorkspace').classList.remove('active');
+        document.getElementById('formWorkspace').innerHTML = '';
+        document.querySelectorAll('[data-report-panel]').forEach(button => {
+            button.classList.toggle('active', button.dataset.reportPanel === panel);
+        });
+        if (showHistory) renderHistory();
+        activeSchema = null;
+        activeDraft = null;
+    }
+
+    function closeDetailedGuide() {
+        document.getElementById('formGuideModal')?.classList.remove('active');
+        document.body.classList.remove('guide-modal-open');
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('historyList');
+        if (!list) return;
+        const records = readHistory();
+        const count = document.getElementById('reportHistoryCount');
+        if (count) count.textContent = records.length;
+        const query = (document.getElementById('historySearch')?.value || '').trim().toLocaleLowerCase('id');
+        const filtered = records.filter(record => (
+            `${record.reportNumber} ${record.title} ${record.code}`.toLocaleLowerCase('id').includes(query)
+        ));
+
+        list.innerHTML = filtered.length ? `
+            <div class="history-table-wrap">
+                <table class="history-table">
+                    <thead><tr>
+                        <th>Waktu dibuat</th>
+                        <th>Nomor laporan</th>
+                        <th>Jenis laporan</th>
+                        <th>Item</th>
+                        <th>Aksi</th>
+                    </tr></thead>
+                    <tbody>
+                        ${filtered.map(record => `
+                            <tr>
+                                <td><strong>${escapeHtml(formatDateTime(record.createdAt))}</strong><small>${escapeHtml(record.id)}</small></td>
+                                <td>${escapeHtml(record.reportNumber)}</td>
+                                <td><span class="history-code">${escapeHtml(record.code)}</span>${escapeHtml(record.title)}</td>
+                                <td>${record.draft.rows.filter(isRowPopulated).length}</td>
+                                <td>
+                                    <div class="history-actions">
+                                        <button type="button" data-history-view="${escapeHtml(record.id)}"><i class="fa-regular fa-eye"></i> Lihat/Cetak</button>
+                                        <button type="button" class="primary" data-history-clone="${escapeHtml(record.id)}"><i class="fa-regular fa-copy"></i> Gunakan Ulang</button>
+                                        <button type="button" class="danger" data-history-delete="${escapeHtml(record.id)}"><i class="fa-regular fa-trash-can"></i> Hapus</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        ` : `
+            <div class="report-empty history-empty">
+                <i class="fa-solid fa-box-archive"></i>
+                <strong>${records.length ? 'Riwayat tidak ditemukan' : 'Belum ada laporan final'}</strong>
+                <p>${records.length ? 'Ubah kata kunci pencarian.' : 'Isi form lalu gunakan tombol Simpan Laporan untuk membuat riwayat.'}</p>
+            </div>
+        `;
+
+        list.querySelectorAll('[data-history-view]').forEach(button => {
+            button.addEventListener('click', () => viewSavedReport(button.dataset.historyView));
+        });
+        list.querySelectorAll('[data-history-clone]').forEach(button => {
+            button.addEventListener('click', () => duplicateSavedReport(button.dataset.historyClone));
+        });
+        list.querySelectorAll('[data-history-delete]').forEach(button => {
+            button.addEventListener('click', () => deleteSavedReport(button.dataset.historyDelete));
+        });
+    }
+
+    function viewSavedReport(recordId) {
+        const record = readHistory().find(item => item.id === recordId);
+        const schema = record && formSchemas.find(item => item.id === record.schemaId);
+        if (!record || !schema) {
+            showToast('Data laporan tidak ditemukan.', true);
+            return;
+        }
+        const rows = record.draft.rows.filter(isRowPopulated);
+        renderPreview(rows, {
+            schema,
+            draft: cloneData(record.draft),
+            createdAt: record.createdAt,
+            targetId: 'historyPrintArea',
+            finalized: true
+        });
+    }
+
+    function duplicateSavedReport(recordId) {
+        const record = readHistory().find(item => item.id === recordId);
+        const schema = record && formSchemas.find(item => item.id === record.schemaId);
+        if (!record || !schema) {
+            showToast('Data laporan tidak ditemukan.', true);
+            return;
+        }
+        const draft = cloneData(record.draft);
+        const reportNumberKey = getReportNumberKey(schema, draft.fields);
+        if (reportNumberKey) draft.fields[reportNumberKey] = schema.seedFields?.[reportNumberKey] || '';
+        delete draft.finalizedAt;
+        draft.updatedAt = new Date().toISOString();
+        localStorage.setItem(storagePrefix + schema.id, JSON.stringify(draft));
+        switchReportPanel('templates');
+        openForm(schema.id);
+        showToast('Laporan diduplikat. Perbarui nomor dan detail yang berubah.');
+    }
+
+    function deleteSavedReport(recordId) {
+        const records = readHistory();
+        const record = records.find(item => item.id === recordId);
+        if (!record) {
+            showToast('Data laporan tidak ditemukan.', true);
+            return;
+        }
+        const confirmed = window.confirm(
+            `Hapus laporan “${record.reportNumber}”?\n\nData final dan lampirannya akan dihapus dari riwayat browser ini dan tidak dapat dipulihkan.`
+        );
+        if (!confirmed) return;
+        try {
+            writeHistory(records.filter(item => item.id !== recordId));
+            const preview = document.getElementById('historyPrintArea');
+            if (preview) {
+                preview.classList.remove('active');
+                preview.innerHTML = '';
+            }
+            renderHistory();
+            showToast('Laporan berhasil dihapus dari riwayat.');
+        } catch (error) {
+            showToast('Laporan gagal dihapus. Silakan coba kembali.', true);
         }
     }
 
@@ -636,7 +948,6 @@
                 </div>
                 <div class="report-card-copy">
                     <div class="report-card-title">${escapeHtml(item.title)}</div>
-                    <div class="report-card-description">${escapeHtml(item.description)}</div>
                     <div class="report-card-meta">
                         <span><i class="fa-solid fa-folder-open"></i>${escapeHtml(item.category)}</span>
                         <span><i class="fa-solid fa-list-check"></i>${item.fields.length + item.columns.length} field</span>
@@ -678,58 +989,394 @@
         } catch (error) {
             stored = null;
         }
-        const seedRows = schema.seedRows || [{}];
         return stored && stored.fields && Array.isArray(stored.rows)
-            ? stored
-            : { fields: {}, rows: seedRows.map(row => ({ ...row })), updatedAt: null };
+            ? { ...stored, fields: { ...(schema.seedFields || {}), ...stored.fields } }
+            : createEmptyDraft(schema);
     }
 
     function saveDraft(showMessage = false) {
-        if (!activeSchema || !activeDraft) return;
+        if (!activeSchema || !activeDraft) return false;
         activeDraft.updatedAt = new Date().toISOString();
         try {
             localStorage.setItem(storagePrefix + activeSchema.id, JSON.stringify(activeDraft));
             const badge = document.getElementById('autosaveBadge');
             if (badge) badge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Tersimpan lokal';
             if (showMessage) showToast('Draft berhasil disimpan di perangkat ini.');
+            return true;
         } catch (error) {
             if (showMessage) showToast('Penyimpanan lokal tidak tersedia pada browser ini.', true);
+            return false;
         }
+    }
+
+    function getNumberTemplate(schema, item) {
+        if (!schema || !item || item.type !== 'text') return '';
+        const candidate = schema.seedFields?.[item.key] || item.placeholder || '';
+        return candidate.includes('_') ? candidate : '';
+    }
+
+    function tokenizeNumberTemplate(template) {
+        return template.split(/(_+)/).filter(Boolean).map(value => ({
+            value,
+            editable: /^_+$/.test(value)
+        }));
+    }
+
+    function escapeRegExp(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function extractTemplateNumberValues(template, currentValue) {
+        const tokens = tokenizeNumberTemplate(template);
+        if (!currentValue || currentValue === template) {
+            return tokens.filter(token => token.editable).map(() => '');
+        }
+        const pattern = tokens.map(token => token.editable ? '(.*?)' : escapeRegExp(token.value)).join('');
+        const match = new RegExp(`^${pattern}$`).exec(currentValue);
+        return match ? match.slice(1) : tokens.filter(token => token.editable).map(() => '');
+    }
+
+    function templateNumberControl(item, value, template) {
+        const tokens = tokenizeNumberTemplate(template);
+        const values = extractTemplateNumberValues(template, value);
+        let valueIndex = 0;
+        return `
+            <div class="template-number-control" data-template-number="${escapeHtml(item.key)}" data-template-pattern="${escapeHtml(template)}">
+                ${tokens.map(token => {
+                    if (!token.editable) return `<span class="template-number-fixed">${escapeHtml(token.value)}</span>`;
+                    const currentIndex = valueIndex++;
+                    const width = Math.max(3, Math.min(10, token.value.length + 1));
+                    return `<input
+                        class="template-number-part"
+                        type="text"
+                        inputmode="text"
+                        autocomplete="off"
+                        data-number-field="${escapeHtml(item.key)}"
+                        data-number-index="${currentIndex}"
+                        value="${escapeHtml(values[currentIndex] || '')}"
+                        placeholder="isi"
+                        maxlength="12"
+                        size="${width}"
+                        aria-label="${escapeHtml(`${item.label} bagian ${currentIndex + 1}`)}"
+                        ${item.required ? 'required' : ''}
+                    >`;
+                }).join('')}
+            </div>
+            <small class="template-number-hint"><i class="fa-solid fa-lock"></i> Bagian format baku dikunci; isi hanya kotak yang tersedia.</small>
+        `;
+    }
+
+    function composeTemplateNumber(fieldKey) {
+        const container = document.querySelector(`[data-template-number="${fieldKey}"]`);
+        if (!container) return;
+        const template = container.dataset.templatePattern;
+        const values = [...container.querySelectorAll('[data-number-index]')].map(input => input.value.trim());
+        let valueIndex = 0;
+        activeDraft.fields[fieldKey] = tokenizeNumberTemplate(template).map(token => (
+            token.editable ? (values[valueIndex++] || token.value) : token.value
+        )).join('');
+    }
+
+    function fieldInstruction(item) {
+        const label = item.label.toLowerCase();
+        const key = item.key.toLowerCase();
+        if (getNumberTemplate(activeSchema, item)) {
+            return 'Isi setiap kotak dinamis sesuai nomor register resmi. Bagian teks, kode baku, garis miring, dan awalan tahun tidak perlu diketik ulang.';
+        }
+        if (item.type === 'date') return `Pilih tanggal ${label.replace(/^tanggal\s*/, '')} sesuai dokumen atau kejadian sebenarnya.`;
+        if (item.type === 'month') return `Pilih bulan dan tahun untuk ${label}.`;
+        if (item.type === 'time') return `Isi waktu ${label} menggunakan format 24 jam.`;
+        if (item.type === 'select') return `Pilih satu opsi ${label} yang paling sesuai dari daftar yang tersedia.`;
+        if (item.type === 'number') {
+            if (/harga|biaya|estimasi|nilai/.test(key)) return `Isi ${label} dalam Rupiah berupa angka tanpa simbol mata uang atau pemisah ribuan.`;
+            if (/hm|hour|meter/.test(key + label)) return `Isi pembacaan ${label} sesuai panel/unit; desimal diperbolehkan.`;
+            return `Isi ${label} berupa angka nol atau lebih; gunakan desimal hanya bila diperlukan.`;
+        }
+        if (/alamat|tempat_penyerahan/.test(key)) return `Tuliskan ${label} lengkap agar lokasi dapat dikenali tanpa penjelasan tambahan.`;
+        if (/analisa|temuan|dampak|solusi|tindak|riwayat|uraian|catatan|lampiran/.test(key)) {
+            return `Jelaskan ${label} secara ringkas tetapi lengkap, termasuk fakta, kondisi, dan tindak lanjut yang relevan.`;
+        }
+        if (/project|lokasi|site|yard/.test(key)) return `Isi ${label} dengan nama resmi project/site/lokasi operasional.`;
+        if (/pengirim|penerima|dari|kepada|operator|mekanik|diajukan|disetujui|dibuat|diperiksa/.test(key)) {
+            return `Isi ${label} dengan nama pihak/personel yang dapat diidentifikasi pada dokumen.`;
+        }
+        if (/serial|part_number|kode|identifikasi|nomor_polisi|nrp/.test(key)) {
+            return `Salin ${label} persis seperti label unit, komponen, kartu identitas, atau dokumen sumber.`;
+        }
+        if (item.placeholder) return `Isi ${label}. Acuan format/contoh: ${item.placeholder}.`;
+        return `Isi ${label} sesuai data sumber yang benar dan dapat diverifikasi.`;
+    }
+
+    function fieldPlaceholder(item) {
+        if (item.placeholder) return item.placeholder;
+        if (item.type === 'number') return `Masukkan angka ${item.label.toLowerCase()}`;
+        if (item.type === 'textarea') return `Tuliskan ${item.label.toLowerCase()} secara jelas...`;
+        return `Isi ${item.label.toLowerCase()}`;
+    }
+
+    function columnInstruction(item) {
+        const label = item.label.toLowerCase();
+        if (item.readonly) return `${item.label} dihitung otomatis oleh sistem dari data pada kolom terkait.`;
+        if (item.type === 'select') return `Pilih ${label} yang sesuai untuk item pada baris ini.`;
+        if (item.type === 'date') return `Pilih tanggal ${label} untuk item pada baris ini.`;
+        if (item.type === 'time') return `Isi ${label} dengan format 24 jam untuk item pada baris ini.`;
+        if (item.type === 'number') return `Isi ${label} berupa angka nol atau lebih. Jangan gunakan teks atau simbol satuan.`;
+        if (/keterangan|catatan|analisa|solusi|tindakan/.test(item.key)) return `Tuliskan ${label} untuk menjelaskan kondisi atau tindak lanjut item pada baris ini.`;
+        return `Isi ${label} sesuai identitas atau data sumber item pada baris ini.`;
+    }
+
+    function columnPlaceholder(item) {
+        if (item.readonly) return 'Otomatis';
+        if (item.type === 'number') return '0';
+        if (item.type === 'date') return 'Pilih tanggal';
+        if (item.type === 'time') return '00:00';
+        return `Isi ${item.label}`;
     }
 
     function formControl(item, value) {
         const required = item.required ? 'required' : '';
-        const placeholder = item.placeholder ? `placeholder="${escapeHtml(item.placeholder)}"` : '';
+        const placeholder = `placeholder="${escapeHtml(fieldPlaceholder(item))}"`;
+        const nonNegative = item.type === 'number' ? 'min="0" step="any"' : '';
+        const instruction = `title="${escapeHtml(fieldInstruction(item))}" aria-label="${escapeHtml(`${item.label}. ${fieldInstruction(item)}`)}"`;
+        const numberTemplate = getNumberTemplate(activeSchema, item);
+        if (numberTemplate) return templateNumberControl(item, value, numberTemplate);
         if (item.type === 'textarea') {
-            return `<textarea class="builder-input" data-field="${escapeHtml(item.key)}" ${required} ${placeholder}>${escapeHtml(value)}</textarea>`;
+            return `<textarea class="builder-input" data-field="${escapeHtml(item.key)}" ${required} ${placeholder} ${instruction}>${escapeHtml(value)}</textarea>`;
         }
         if (item.type === 'select') {
-            return `<select class="builder-input" data-field="${escapeHtml(item.key)}" ${required}>
-                <option value="">Pilih...</option>
+            return `<select class="builder-input" data-field="${escapeHtml(item.key)}" ${required} ${instruction}>
+                <option value="">Pilih ${escapeHtml(item.label.toLowerCase())}...</option>
                 ${item.options.map(option => `<option value="${escapeHtml(option)}" ${value === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}
             </select>`;
         }
-        return `<input class="builder-input" data-field="${escapeHtml(item.key)}" type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" ${required} ${placeholder}>`;
+        return `<input class="builder-input" data-field="${escapeHtml(item.key)}" type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" ${required} ${placeholder} ${nonNegative} ${instruction}>`;
     }
 
     function tableControl(item, value, rowIndex) {
-        const common = `class="table-cell-input" data-row="${rowIndex}" data-key="${escapeHtml(item.key)}"`;
+        const common = `class="table-cell-input" data-row="${rowIndex}" data-key="${escapeHtml(item.key)}" title="${escapeHtml(columnInstruction(item))}" aria-label="${escapeHtml(`${item.label} baris ${rowIndex + 1}. ${columnInstruction(item)}`)}"`;
+        const required = item.required ? 'required' : '';
         if (item.type === 'select') {
-            return `<select ${common}>
-                <option value="">Pilih...</option>
+            return `<select ${common} ${required}>
+                <option value="">Pilih ${escapeHtml(item.label.toLowerCase())}...</option>
                 ${item.options.map(option => `<option value="${escapeHtml(option)}" ${value === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}
             </select>`;
         }
-        return `<input ${common} type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" ${item.readonly ? 'readonly tabindex="-1"' : ''}>`;
+        const nonNegative = item.type === 'number' && !item.readonly ? 'min="0" step="any"' : '';
+        return `<input ${common} type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(columnPlaceholder(item))}" ${required} ${nonNegative} ${item.readonly ? 'readonly tabindex="-1"' : ''}>`;
+    }
+
+    function evidenceControl(row, rowIndex) {
+        const evidence = row._evidence;
+        return `
+            <div class="evidence-control ${evidence?.dataUrl ? 'has-file' : ''}">
+                ${evidence?.dataUrl ? `
+                    <img src="${escapeHtml(evidence.dataUrl)}" alt="Bukti ${rowIndex + 1}">
+                    <span title="${escapeHtml(evidence.name)}">${escapeHtml(evidence.name)}</span>
+                    <button type="button" data-remove-evidence="${rowIndex}" title="Hapus gambar"><i class="fa-solid fa-xmark"></i></button>
+                    <input class="evidence-caption-input" type="text" data-evidence-caption-row="${rowIndex}" value="${escapeHtml(evidence.caption || '')}" placeholder="Keterangan/konteks foto *">
+                ` : `
+                    <label>
+                        <i class="fa-solid fa-camera"></i>
+                        <span>Unggah gambar <b>*</b></span>
+                        <input type="file" accept="image/jpeg,image/png,image/webp" data-evidence-row="${rowIndex}">
+                    </label>
+                `}
+            </div>
+        `;
+    }
+
+    function readImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const image = new Image();
+                image.onload = () => {
+                    const longSide = Math.max(image.naturalWidth, image.naturalHeight);
+                    const shortSide = Math.min(image.naturalWidth, image.naturalHeight);
+                    if (longSide < minImageLongSide || shortSide < minImageShortSide) {
+                        reject({ code: 'LOW_RESOLUTION', width: image.naturalWidth, height: image.naturalHeight });
+                        return;
+                    }
+                    const scale = Math.min(1, 1920 / longSide);
+                    const width = Math.round(image.naturalWidth * scale);
+                    const height = Math.round(image.naturalHeight * scale);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const context = canvas.getContext('2d');
+                    context.fillStyle = '#ffffff';
+                    context.fillRect(0, 0, width, height);
+                    context.drawImage(image, 0, 0, width, height);
+                    resolve({
+                        name: file.name,
+                        type: 'image/jpeg',
+                        originalType: file.type,
+                        size: file.size,
+                        width,
+                        height,
+                        dataUrl: canvas.toDataURL('image/jpeg', 0.9)
+                    });
+                };
+                image.onerror = () => reject({ code: 'INVALID_IMAGE' });
+                image.src = reader.result;
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function handleEvidenceUpload(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+            input.value = '';
+            showToast('Format gambar harus JPG, PNG, atau WebP.', true);
+            return;
+        }
+        if (file.size > maxSourceImageBytes) {
+            input.value = '';
+            showToast('Ukuran file sumber maksimal 8 MB per item.', true);
+            return;
+        }
+        try {
+            const rowIndex = Number(input.dataset.evidenceRow);
+            activeDraft.rows[rowIndex]._evidence = await readImage(file);
+            if (!saveDraft()) {
+                delete activeDraft.rows[rowIndex]._evidence;
+                showToast('Gambar tidak dapat disimpan karena kapasitas browser penuh.', true);
+                renderRows();
+                return;
+            }
+            renderRows();
+            showToast('Gambar bukti berhasil dilampirkan.');
+        } catch (error) {
+            if (error?.code === 'LOW_RESOLUTION') {
+                showToast(`Resolusi ${error.width}×${error.height}px terlalu kecil. Gunakan minimal HD 1280×720px.`, true);
+            } else {
+                showToast('Gambar gagal dibaca. Silakan pilih ulang.', true);
+            }
+        }
     }
 
     function renderFields() {
         return activeSchema.fields.map(item => `
             <div class="builder-field ${item.full ? 'full' : ''}">
-                <label>${escapeHtml(item.label)}${item.required ? '<span class="required-mark">*</span>' : ''}</label>
+                <label>
+                    ${escapeHtml(item.label)}<span class="required-mark">*</span>
+                </label>
                 ${formControl(item, activeDraft.fields[item.key] || '')}
             </div>
         `).join('');
+    }
+
+    function tableHeaderMarkup(item) {
+        return `
+            <div class="table-header-content">
+                <span>${escapeHtml(item.label)}${item.readonly ? '<em>Otomatis</em>' : '<b class="required-mark">*</b>'}</span>
+            </div>
+        `;
+    }
+
+    function renderDetailedGuide() {
+        return `
+            <div class="guide-modal" id="formGuideModal" role="dialog" aria-modal="true" aria-labelledby="formGuideTitle">
+                <button type="button" class="guide-modal-backdrop" data-close-guide aria-label="Tutup panduan"></button>
+                <section class="guide-modal-panel">
+                    <header>
+                        <div>
+                            <span>PANDUAN LENGKAP</span>
+                            <h2 id="formGuideTitle">${escapeHtml(activeSchema.title)}</h2>
+                            <p>Gunakan panduan ini untuk memahami isi setiap field dan kolom tabel.</p>
+                        </div>
+                        <button type="button" class="guide-modal-close" data-close-guide><i class="fa-solid fa-xmark"></i></button>
+                    </header>
+                    <div class="guide-modal-body">
+                        <section class="guide-quick-start">
+                            <h3>Urutan pengerjaan yang disarankan</h3>
+                            <div class="guide-steps">
+                                <div><span>1</span><strong>Identitas</strong><small>Isi data dokumen dan pihak terkait.</small></div>
+                                <div><span>2</span><strong>Detail tabel</strong><small>Masukkan satu item pada setiap baris.</small></div>
+                                <div><span>3</span><strong>Periksa</strong><small>Simpan draft dan tinjau melalui Preview.</small></div>
+                                <div><span>4</span><strong>Finalisasi</strong><small>Simpan laporan setelah seluruh data benar.</small></div>
+                            </div>
+                        </section>
+                        <section class="guide-reference">
+                            <div class="guide-reference-heading">
+                                <div><h3>Identitas & informasi dokumen</h3><p>Penjelasan mengenai data pada bagian atas form.</p></div>
+                                <div class="guide-legend"><span class="required">Semua wajib diisi</span></div>
+                            </div>
+                            <div class="guide-reference-table">
+                                <div class="guide-reference-row head"><span>Field</span><span>Status</span><span>Cara mengisi</span></div>
+                                ${activeSchema.fields.map(item => `
+                                    <div class="guide-reference-row">
+                                        <strong>${escapeHtml(item.label)}</strong>
+                                        <span><em class="required">Wajib</em></span>
+                                        <p>${escapeHtml(fieldInstruction(item))}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
+                        <section class="guide-reference">
+                            <div class="guide-reference-heading">
+                                <div><h3>Tabel ${escapeHtml(activeSchema.tableTitle)}</h3><p>Satu baris digunakan untuk satu item atau satu kejadian.</p></div>
+                                <div class="guide-legend"><span class="required">Wajib</span><span class="automatic">Otomatis</span></div>
+                            </div>
+                            <div class="guide-reference-table">
+                                <div class="guide-reference-row head"><span>Kolom</span><span>Status</span><span>Cara mengisi</span></div>
+                                ${activeSchema.columns.map(item => `
+                                    <div class="guide-reference-row">
+                                        <strong>${escapeHtml(item.label)}</strong>
+                                        <span><em class="${item.readonly ? 'automatic' : 'required'}">${item.readonly ? 'Otomatis' : 'Wajib'}</em></span>
+                                        <p>${escapeHtml(columnInstruction(item))}</p>
+                                    </div>
+                                `).join('')}
+                                ${requiresEvidence() ? `
+                                    <div class="guide-reference-row">
+                                        <strong>Bukti gambar & keterangan</strong>
+                                        <span><em class="required">Wajib</em></span>
+                                        <p>Unggah satu foto minimal HD 1280×720px untuk setiap item, lalu tuliskan konteks foto. Foto akan menjadi halaman lampiran tersendiri.</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="guide-modal-footer">
+                        <span><i class="fa-solid fa-floppy-disk"></i> Gunakan Simpan Draft selama data belum final.</span>
+                        <button type="button" data-close-guide>Saya mengerti, kembali ke form</button>
+                    </footer>
+                </section>
+            </div>
+        `;
+    }
+
+    function renderFormGuidance() {
+        const requiredLabels = activeSchema.fields.filter(item => item.required).map(item => item.label);
+        const hasTemplateNumber = activeSchema.fields.some(item => getNumberTemplate(activeSchema, item));
+        const steps = [
+            `Lengkapi identitas wajib: ${requiredLabels.slice(0, 6).join(', ')}${requiredLabels.length > 6 ? ', dan field wajib lainnya' : ''}.`,
+            `Isi tabel “${activeSchema.tableTitle}” per item/baris. Pastikan identitas, jumlah, kondisi, atau hasil pemeriksaan saling konsisten.`
+        ];
+        if (hasTemplateNumber) {
+            steps.unshift('Pada nomor dokumen, bagian teks baku sudah dikunci. Isi hanya kotak nomor urut, kode/periode, bulan, atau tahun yang tersedia.');
+        }
+        if (requiresEvidence()) {
+            steps.push('Setiap baris item yang terisi wajib memiliki gambar bukti minimal HD 1280×720px dan keterangan foto. Gunakan foto fokus, cukup cahaya, dan menampilkan objek terkait.');
+        }
+        if (activeSchema.calculationNote) {
+            steps.push(activeSchema.calculationNote);
+        }
+        steps.push('Gunakan Simpan Draft untuk pekerjaan sementara, Preview untuk pengecekan, lalu Simpan Laporan setelah seluruh data benar. Form akan kembali kosong setelah finalisasi berhasil.');
+
+        return `
+            <aside class="form-guidance">
+                <div class="form-guidance-heading">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <div><strong>Panduan pengisian ${escapeHtml(activeSchema.code)}</strong><span>Baca sebelum menyimpan laporan final.</span></div>
+                    <button type="button" id="openDetailedGuide"><i class="fa-solid fa-book-open"></i> Baca panduan lengkap</button>
+                </div>
+                <ol>${steps.map(step => `<li>${escapeHtml(step)}</li>`).join('')}</ol>
+            </aside>
+        `;
     }
 
     function renderRows() {
@@ -739,9 +1386,20 @@
             <tr>
                 <td style="width:42px;text-align:center;color:#7b8798">${rowIndex + 1}</td>
                 ${activeSchema.columns.map(item => `<td>${tableControl(item, row[item.key] == null ? '' : row[item.key], rowIndex)}</td>`).join('')}
+                ${requiresEvidence() ? `<td class="evidence-cell">${evidenceControl(row, rowIndex)}</td>` : ''}
                 <td style="width:42px"><button class="row-remove-btn" data-remove-row="${rowIndex}" title="Hapus baris"><i class="fa-solid fa-trash-can"></i></button></td>
             </tr>
         `).join('');
+        tbody.querySelectorAll('[data-evidence-row]').forEach(input => {
+            input.addEventListener('change', () => handleEvidenceUpload(input));
+        });
+        tbody.querySelectorAll('[data-remove-evidence]').forEach(button => {
+            button.addEventListener('click', () => {
+                delete activeDraft.rows[Number(button.dataset.removeEvidence)]._evidence;
+                saveDraft();
+                renderRows();
+            });
+        });
         tbody.querySelectorAll('[data-remove-row]').forEach(button => {
             button.addEventListener('click', () => {
                 if (activeDraft.rows.length === 1) {
@@ -789,10 +1447,10 @@
         activeDraft.rows.forEach(calculateRow);
     }
 
-    function summaryMarkup() {
-        if (!activeSchema.calculation) return '';
-        if (activeSchema.calculation === 'ppb') {
-            const subtotal = activeDraft.rows.reduce((sum, row) => sum + numberValue(row.total), 0);
+    function summaryMarkup(schema = activeSchema, draft = activeDraft) {
+        if (!schema?.calculation || !draft) return '';
+        if (schema.calculation === 'ppb') {
+            const subtotal = draft.rows.reduce((sum, row) => sum + numberValue(row.total), 0);
             const ppn = subtotal * 0.11;
             return `
                 <div class="summary-line"><span>Subtotal</span><strong>${formatRupiah(subtotal)}</strong></div>
@@ -800,35 +1458,50 @@
                 <div class="summary-line total"><span>Total</span><strong>${formatRupiah(subtotal + ppn)}</strong></div>
             `;
         }
-        if (activeSchema.calculation === 'spl') {
-            const total = activeDraft.rows.reduce((sum, row) => sum + numberValue(row.durasi), 0);
-            const people = activeDraft.rows.filter(row => row.nama).length;
+        if (schema.calculation === 'spl') {
+            const total = draft.rows.reduce((sum, row) => sum + numberValue(row.durasi), 0);
+            const people = draft.rows.filter(row => row.nama).length;
             return `
                 <div class="summary-line"><span>Jumlah personel</span><strong>${people} orang</strong></div>
                 <div class="summary-line total"><span>Total jam-orang</span><strong>${total.toLocaleString('id-ID')} jam</strong></div>
             `;
         }
-        if (activeSchema.calculation === 'lho') {
-            const hours = activeDraft.rows.reduce((sum, row) => sum + numberValue(row.jam_kerja), 0);
-            const hm = activeDraft.rows.reduce((sum, row) => sum + numberValue(row.hm_operasi), 0);
-            const fuel = activeDraft.rows.reduce((sum, row) => sum + numberValue(row.bbm), 0);
+        if (schema.calculation === 'lho') {
+            const hours = draft.rows.reduce((sum, row) => sum + numberValue(row.jam_kerja), 0);
+            const hm = draft.rows.reduce((sum, row) => sum + numberValue(row.hm_operasi), 0);
+            const fuel = draft.rows.reduce((sum, row) => sum + numberValue(row.bbm), 0);
             return `
                 <div class="summary-line"><span>Total jam kerja</span><strong>${hours.toLocaleString('id-ID')} jam</strong></div>
                 <div class="summary-line"><span>Total HM operasi</span><strong>${hm.toLocaleString('id-ID')} HM</strong></div>
                 <div class="summary-line total"><span>Total BBM</span><strong>${fuel.toLocaleString('id-ID')} liter</strong></div>
             `;
         }
-        if (activeSchema.calculation === 'weeklyParts') {
-            const stockValue = activeDraft.rows.reduce((sum, row) => sum + numberValue(row.nilai_saldo), 0);
+        if (schema.calculation === 'weeklyParts') {
+            const stockValue = draft.rows.reduce((sum, row) => sum + numberValue(row.nilai_saldo), 0);
             return `<div class="summary-line total"><span>Total nilai saldo</span><strong>${formatRupiah(stockValue)}</strong></div>`;
         }
-        if (activeSchema.calculation === 'warehouseIn') {
-            const received = activeDraft.rows.reduce((sum, row) => sum + numberValue(row.jumlah), 0);
+        if (schema.calculation === 'warehouseIn') {
+            const received = draft.rows.reduce((sum, row) => sum + numberValue(row.jumlah), 0);
             return `<div class="summary-line total"><span>Total barang masuk</span><strong>${received.toLocaleString('id-ID')} unit</strong></div>`;
         }
-        if (activeSchema.calculation === 'warehouseOut') {
-            const issued = activeDraft.rows.reduce((sum, row) => sum + numberValue(row.diberikan), 0);
+        if (schema.calculation === 'warehouseOut') {
+            const issued = draft.rows.reduce((sum, row) => sum + numberValue(row.diberikan), 0);
             return `<div class="summary-line total"><span>Total barang keluar</span><strong>${issued.toLocaleString('id-ID')} unit</strong></div>`;
+        }
+        if (schema.calculation === 'sppu006') {
+            const populatedRows = draft.rows.filter(row => row.nama || row.pn || numberValue(row.jumlah));
+            const totalQuantity = populatedRows.reduce((sum, row) => sum + numberValue(row.jumlah), 0);
+            const largest = populatedRows.reduce((selected, row) => (
+                !selected || numberValue(row.jumlah) > numberValue(selected.jumlah) ? row : selected
+            ), null);
+            const largestLabel = largest
+                ? `${largest.nama || largest.pn || 'Parts tanpa nama'} — ${numberValue(largest.jumlah).toLocaleString('id-ID')} ${largest.satuan || 'unit'}`
+                : 'Belum ada data';
+            return `
+                <div class="summary-line"><span>Jumlah jenis parts</span><strong>${populatedRows.length}</strong></div>
+                <div class="summary-line"><span>Total kuantitas</span><strong>${totalQuantity.toLocaleString('id-ID')}</strong></div>
+                <div class="summary-line total"><span>Kuantitas terbesar</span><strong>${escapeHtml(largestLabel)}</strong></div>
+            `;
         }
         return '';
     }
@@ -885,33 +1558,46 @@
                                 <table class="form-table">
                                     <thead><tr>
                                         <th>No.</th>
-                                        ${activeSchema.columns.map(item => `<th>${escapeHtml(item.label)}</th>`).join('')}
+                                        ${activeSchema.columns.map(item => `<th>${tableHeaderMarkup(item)}</th>`).join('')}
+                                        ${requiresEvidence() ? '<th>Bukti gambar <span class="required-mark">*</span></th>' : ''}
                                         <th>Aksi</th>
                                     </tr></thead>
                                     <tbody id="formRows"></tbody>
                                 </table>
                             </div>
                             <button type="button" class="row-add-btn" id="addFormRow"><i class="fa-solid fa-plus"></i> Tambah baris</button>
-                            ${activeSchema.calculationNote ? `<div class="calculation-note"><i class="fa-solid fa-calculator"></i><span>${escapeHtml(activeSchema.calculationNote)}</span></div>` : ''}
                             <div class="calculation-summary" id="calculationSummary"></div>
                         </section>
+                        ${renderFormGuidance()}
                     </div>
                     <div class="form-builder-footer">
                         <div class="form-footer-note"><i class="fa-solid fa-shield-halved"></i> Data prototipe tersimpan lokal di browser, belum dikirim ke server.</div>
                         <div class="form-footer-actions">
                             <button type="button" class="form-secondary-btn" id="saveReportDraft"><i class="fa-regular fa-floppy-disk"></i> Simpan Draft</button>
-                            <button type="submit" class="form-primary-btn"><i class="fa-regular fa-eye"></i> Validasi & Preview</button>
+                            <button type="button" class="form-secondary-btn danger-soft" id="resetReportForm"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                            <button type="submit" class="form-secondary-btn preview-btn"><i class="fa-regular fa-eye"></i> Preview</button>
+                            <button type="button" class="form-primary-btn" id="finalizeReport"><i class="fa-solid fa-check"></i> Simpan Laporan</button>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="form-preview" id="reportPrintArea"></div>
+            ${renderDetailedGuide()}
         `;
 
         document.getElementById('reportCatalog').classList.add('hidden');
         workspace.classList.add('active');
         document.getElementById('backToCatalog').addEventListener('click', closeForm);
         document.getElementById('saveReportDraft').addEventListener('click', () => saveDraft(true));
+        document.getElementById('resetReportForm').addEventListener('click', resetActiveForm);
+        document.getElementById('finalizeReport').addEventListener('click', finalizeReport);
+        document.getElementById('openDetailedGuide').addEventListener('click', () => {
+            document.getElementById('formGuideModal').classList.add('active');
+            document.body.classList.add('guide-modal-open');
+        });
+        document.querySelectorAll('[data-close-guide]').forEach(button => {
+            button.addEventListener('click', closeDetailedGuide);
+        });
         document.getElementById('addFormRow').addEventListener('click', () => {
             activeDraft.rows.push({});
             renderRows();
@@ -929,6 +1615,16 @@
 
     function handleFormInput(event) {
         const target = event.target;
+        if (target.dataset.numberField) {
+            target.value = target.value.replace(/[\\/]/g, '');
+            composeTemplateNumber(target.dataset.numberField);
+        }
+        if (target.dataset.evidenceCaptionRow != null) {
+            const rowIndex = Number(target.dataset.evidenceCaptionRow);
+            if (activeDraft.rows[rowIndex]._evidence) {
+                activeDraft.rows[rowIndex]._evidence.caption = target.value;
+            }
+        }
         if (target.dataset.field) {
             activeDraft.fields[target.dataset.field] = target.value;
         }
@@ -946,6 +1642,7 @@
     }
 
     function closeForm() {
+        closeDetailedGuide();
         saveDraft();
         window.history.replaceState(null, '', '#reports');
         document.getElementById('formWorkspace').classList.remove('active');
@@ -956,7 +1653,23 @@
         document.getElementById('reportModule').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    function validateAndPreview() {
+    function resetActiveForm() {
+        if (!activeSchema) return;
+        const schemaId = activeSchema.id;
+        if (!window.confirm('Kosongkan seluruh isian dan hapus draft form ini?')) return;
+        localStorage.removeItem(storagePrefix + schemaId);
+        openForm(schemaId);
+        showToast('Form dan draft berhasil direset.');
+    }
+
+    function validateDraft() {
+        const missingNumberPart = document.querySelector('.template-number-part:invalid')
+            || [...document.querySelectorAll('.template-number-part')].find(input => !input.value.trim());
+        if (missingNumberPart) {
+            missingNumberPart.focus();
+            showToast('Lengkapi seluruh bagian dinamis pada nomor dokumen.', true);
+            return null;
+        }
         const missing = activeSchema.fields.filter(item => item.required && !String(activeDraft.fields[item.key] || '').trim());
         if (missing.length) {
             const input = document.querySelector(`[data-field="${missing[0].key}"]`);
@@ -965,67 +1678,264 @@
                 input.reportValidity();
             }
             showToast(`Lengkapi field wajib: ${missing[0].label}.`, true);
-            return;
+            return null;
         }
-        const populatedRows = activeDraft.rows.filter(row => Object.values(row).some(value => String(value || '').trim()));
+        const invalidNumber = [...document.querySelectorAll('input[type="number"]')].find(input => !input.checkValidity());
+        if (invalidNumber) {
+            invalidNumber.focus();
+            showToast('Nilai angka tidak boleh negatif atau menggunakan format yang tidak valid.', true);
+            return null;
+        }
+        const populatedRows = activeDraft.rows.filter(isRowPopulated);
         if (!populatedRows.length) {
             showToast('Isi minimal satu baris data sebelum membuat preview.', true);
-            return;
+            return null;
         }
+        for (let rowIndex = 0; rowIndex < activeDraft.rows.length; rowIndex += 1) {
+            const row = activeDraft.rows[rowIndex];
+            if (!isRowPopulated(row)) continue;
+            const missingColumn = activeSchema.columns.find(item => (
+                item.required
+                && !item.readonly
+                && !String(row[item.key] == null ? '' : row[item.key]).trim()
+            ));
+            if (missingColumn) {
+                const input = document.querySelector(`[data-row="${rowIndex}"][data-key="${missingColumn.key}"]`);
+                input?.focus();
+                showToast(`Lengkapi kolom ${missingColumn.label} pada baris ${rowIndex + 1}.`, true);
+                return null;
+            }
+        }
+        if (requiresEvidence()) {
+            const missingEvidenceIndex = activeDraft.rows.findIndex(row => isRowPopulated(row) && !row._evidence?.dataUrl);
+            if (missingEvidenceIndex >= 0) {
+                const input = document.querySelector(`[data-evidence-row="${missingEvidenceIndex}"]`);
+                input?.focus();
+                showToast(`Unggah gambar bukti untuk item baris ${missingEvidenceIndex + 1}.`, true);
+                return null;
+            }
+            const missingCaptionIndex = activeDraft.rows.findIndex(row => isRowPopulated(row) && !row._evidence?.caption?.trim());
+            if (missingCaptionIndex >= 0) {
+                const input = document.querySelector(`[data-evidence-caption-row="${missingCaptionIndex}"]`);
+                input?.focus();
+                showToast(`Isi keterangan/konteks gambar untuk item baris ${missingCaptionIndex + 1}.`, true);
+                return null;
+            }
+        }
+        return populatedRows;
+    }
+
+    function validateAndPreview() {
+        const populatedRows = validateDraft();
+        if (!populatedRows) return;
         saveDraft();
         renderPreview(populatedRows);
     }
 
-    function displayValue(item, value) {
-        if (item.type === 'number' && /harga|total|nilai|estimasi/.test(item.key)) return formatRupiah(value);
-        return value || '—';
+    function finalizeReport() {
+        const populatedRows = validateDraft();
+        if (!populatedRows) return;
+        const createdAt = new Date().toISOString();
+        const record = {
+            id: `RPT-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
+            schemaId: activeSchema.id,
+            code: activeSchema.code,
+            title: activeSchema.title,
+            reportNumber: getReportNumber(activeSchema, activeDraft.fields),
+            createdAt,
+            draft: cloneData({ ...activeDraft, finalizedAt: createdAt })
+        };
+        try {
+            const records = readHistory();
+            records.unshift(record);
+            writeHistory(records);
+            const schemaId = activeSchema.id;
+            localStorage.removeItem(storagePrefix + schemaId);
+            openForm(schemaId);
+            renderHistory();
+            showToast('Laporan berhasil disimpan. Form sudah dikosongkan untuk pengisian berikutnya.');
+        } catch (error) {
+            showToast('Laporan gagal disimpan. Kapasitas penyimpanan browser mungkin penuh.', true);
+        }
     }
 
-    function renderPreview(rows) {
-        const preview = document.getElementById('reportPrintArea');
+    function displayValue(item, value) {
+        if (item.type === 'number' && /harga|total|nilai|estimasi/.test(item.key)) return formatRupiah(value);
+        return value === 0 || value === '0' ? '0' : value || '—';
+    }
+
+    function renderDocumentationPages(schema, rows, reportNumber, createdAt) {
+        if (!requiresEvidence(schema)) return '';
+        return rows.filter(row => row._evidence?.dataUrl).map((row, index) => {
+            const identityCells = schema.columns
+                .filter(columnItem => row[columnItem.key] !== '' && row[columnItem.key] != null)
+                .slice(0, 8)
+                .map(columnItem => `
+                    <div><strong>${escapeHtml(columnItem.label)}</strong><span>${escapeHtml(displayValue(columnItem, row[columnItem.key]))}</span></div>
+                `).join('');
+            const itemName = row.nama || row.item || row.solusi || row.pn || `Item ${index + 1}`;
+            return `
+                <article class="print-documentation-sheet">
+                    <header class="documentation-header">
+                        <div class="print-logo-mark company-logo"><span>BRA</span></div>
+                        <div>
+                            <span>LAMPIRAN DOKUMENTASI</span>
+                            <h2>${escapeHtml(schema.title)}</h2>
+                            <small>Nomor: ${escapeHtml(reportNumber)}</small>
+                        </div>
+                        <strong>ITEM ${index + 1}</strong>
+                    </header>
+                    <div class="documentation-title">
+                        <span>Bukti fisik / dokumentasi pendukung</span>
+                        <h3>${escapeHtml(itemName)}</h3>
+                    </div>
+                    <figure class="documentation-figure">
+                        <img src="${escapeHtml(row._evidence.dataUrl)}" alt="Dokumentasi ${escapeHtml(itemName)}">
+                        <figcaption>
+                            <strong>${escapeHtml(row._evidence.caption || `Dokumentasi item ${index + 1}`)}</strong>
+                            <span>File: ${escapeHtml(row._evidence.name || '—')}</span>
+                            <span>Resolusi tersimpan: ${escapeHtml(`${row._evidence.width || '—'} × ${row._evidence.height || '—'} px`)}</span>
+                        </figcaption>
+                    </figure>
+                    <section class="documentation-context">
+                        <h4>Identitas dan konteks gambar</h4>
+                        <div class="documentation-context-grid">
+                            ${identityCells || '<div><strong>Keterangan</strong><span>Dokumentasi pendukung laporan</span></div>'}
+                        </div>
+                    </section>
+                    <footer class="print-footer">
+                        <span>Lampiran dokumentasi ${index + 1} dari ${rows.filter(item => item._evidence?.dataUrl).length}</span>
+                        <strong>Dibuat: ${escapeHtml(formatDateTime(createdAt))}</strong>
+                    </footer>
+                </article>
+            `;
+        }).join('');
+    }
+
+    async function printReportPreview(preview, button) {
+        if (!preview || !button) return;
+        const originalMarkup = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan halaman...';
+        try {
+            if (document.fonts?.ready) await document.fonts.ready;
+            const images = [...preview.querySelectorAll('img')];
+            await Promise.all(images.map(image => {
+                if (image.complete && image.naturalWidth) {
+                    return typeof image.decode === 'function' ? image.decode().catch(() => undefined) : Promise.resolve();
+                }
+                return new Promise(resolve => {
+                    image.addEventListener('load', resolve, { once: true });
+                    image.addEventListener('error', resolve, { once: true });
+                });
+            }));
+            document.body.classList.add('report-printing');
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            window.print();
+        } finally {
+            document.body.classList.remove('report-printing');
+            button.disabled = false;
+            button.innerHTML = originalMarkup;
+        }
+    }
+
+    function renderPreview(rows, options = {}) {
+        const schema = options.schema || activeSchema;
+        const draft = options.draft || activeDraft;
+        const preview = document.getElementById(options.targetId || 'reportPrintArea');
+        if (!preview || !schema || !draft) return;
+        const createdAt = options.createdAt || draft.finalizedAt || new Date().toISOString();
+        const approvals = schema.approvals || [
+            { label: 'Pengaju' },
+            { label: 'Pengada' },
+            { label: 'Pihak yang diajukan' }
+        ];
+        const reportNumber = getReportNumber(schema, draft.fields);
+        const projectName = draft.fields.project || draft.fields.lokasi || 'PROJECT / MITRA';
+        const summary = summaryMarkup(schema, draft);
+        const tableDensity = schema.columns.length >= 10
+            ? 'print-table-ultra'
+            : schema.columns.length >= 7
+                ? 'print-table-dense'
+                : '';
         preview.innerHTML = `
             <div class="preview-toolbar">
-                <strong><i class="fa-regular fa-file-pdf"></i> Preview dokumen terstandarisasi</strong>
+                <strong><i class="fa-regular fa-file-pdf"></i> ${options.finalized ? 'Laporan final' : 'Preview dokumen terstandarisasi'}</strong>
                 <div>
-                    <button type="button" id="closePreview"><i class="fa-solid fa-xmark"></i> Tutup</button>
-                    <button type="button" id="printReport"><i class="fa-solid fa-print"></i> Cetak / Simpan PDF</button>
+                    <button type="button" data-close-preview><i class="fa-solid fa-xmark"></i> Tutup</button>
+                    <button type="button" data-print-report><i class="fa-solid fa-print"></i> Cetak / Simpan PDF</button>
                 </div>
             </div>
             <article class="print-sheet">
+                <section class="print-identification-section">
                 <header class="print-brand">
-                    <div><h2>PT BINA REKAYASA ANUGERAH</h2><small>Departemen Equipment</small></div>
-                    <div style="text-align:right"><strong>${escapeHtml(activeSchema.code)}</strong><br><small>Dokumen terkendali</small></div>
+                    <div class="print-logo-block">
+                        <div class="print-logo-mark company-logo"><span>BRA</span></div>
+                        <div><h2>PT BINA REKAYASA ANUGERAH</h2><small>Departemen Equipment</small></div>
+                    </div>
+                    <div class="print-logo-block partner">
+                        <div><strong>${escapeHtml(projectName)}</strong><small>Project / Mitra</small></div>
+                        <div class="print-logo-mark partner-logo"><span>MITRA</span></div>
+                    </div>
                 </header>
                 <div class="print-title">
-                    <h1>${escapeHtml(activeSchema.title)}</h1>
+                    <span>${escapeHtml(schema.code)} · DOKUMEN TERKENDALI</span>
+                    <h1>${escapeHtml(schema.title)}</h1>
+                    <div class="print-document-number">Nomor: ${escapeHtml(reportNumber)}</div>
                 </div>
                 <div class="print-meta">
-                    ${activeSchema.fields.map(item => `
-                        <div><strong>${escapeHtml(item.label)}</strong><span>${escapeHtml(displayValue(item, activeDraft.fields[item.key]))}</span></div>
+                    ${schema.fields.map(item => `
+                        <div><strong>${escapeHtml(item.label)}</strong><span>${escapeHtml(displayValue(item, draft.fields[item.key]))}</span></div>
                     `).join('')}
                 </div>
-                <table class="print-table">
-                    <thead><tr><th>No.</th>${activeSchema.columns.map(item => `<th>${escapeHtml(item.label)}</th>`).join('')}</tr></thead>
+                </section>
+                <section class="print-data-section">
+                    <header class="print-section-header">
+                        <div>
+                            <small>RINCIAN DATA LAPORAN</small>
+                            <h2>${escapeHtml(schema.tableTitle)}</h2>
+                        </div>
+                        <div class="print-section-identity">
+                            <strong>${escapeHtml(schema.code)}</strong>
+                            <span>${escapeHtml(reportNumber)}</span>
+                        </div>
+                    </header>
+                <table class="print-table ${tableDensity}">
+                    <thead><tr>
+                        <th>No.</th>
+                        ${schema.columns.map(item => `<th>${escapeHtml(item.label)}</th>`).join('')}
+                    </tr></thead>
                     <tbody>
                         ${rows.map((row, index) => `<tr>
                             <td>${index + 1}</td>
-                            ${activeSchema.columns.map(item => `<td>${escapeHtml(displayValue(item, row[item.key]))}</td>`).join('')}
+                            ${schema.columns.map(item => `<td>${escapeHtml(displayValue(item, row[item.key]))}</td>`).join('')}
                         </tr>`).join('')}
                     </tbody>
                 </table>
-                ${summaryMarkup() ? `<div class="calculation-summary"><div class="summary-card">${summaryMarkup()}</div></div>` : ''}
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:55px;text-align:center;font-size:.72rem">
-                    <div>Dibuat oleh<br><br><br><strong>( __________________ )</strong></div>
-                    <div>Diperiksa oleh<br><br><br><strong>( __________________ )</strong></div>
-                    <div>Disetujui oleh<br><br><br><strong>( __________________ )</strong></div>
+                <section class="print-closing-section">
+                ${summary ? `<div class="calculation-summary"><div class="summary-card">${summary}</div></div>` : ''}
+                <div class="print-approvals" style="grid-template-columns:repeat(${approvals.length},1fr)">
+                    ${approvals.map(item => {
+                        const name = item.nameField ? draft.fields[item.nameField] : '';
+                        const role = item.roleField ? draft.fields[item.roleField] : '';
+                        return `<div><span>${escapeHtml(item.label)}</span><div class="signature-space"></div><strong>( ${escapeHtml(name || '__________________')} )</strong>${role ? `<small>${escapeHtml(role)}</small>` : ''}</div>`;
+                    }).join('')}
                 </div>
+                <footer class="print-footer">
+                    <span>Dibuat otomatis oleh FleetMonitor</span>
+                    <strong>Tanggal pembuatan: ${escapeHtml(formatDateTime(createdAt))}</strong>
+                </footer>
+                </section>
+                </section>
             </article>
+            ${renderDocumentationPages(schema, rows, reportNumber, createdAt)}
         `;
         preview.classList.add('active');
-        document.getElementById('closePreview').addEventListener('click', () => preview.classList.remove('active'));
-        document.getElementById('printReport').addEventListener('click', () => window.print());
+        preview.querySelector('[data-close-preview]').addEventListener('click', () => preview.classList.remove('active'));
+        const printButton = preview.querySelector('[data-print-report]');
+        printButton.addEventListener('click', () => printReportPreview(preview, printButton));
         preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        showToast('Validasi selesai. Preview laporan siap ditinjau.');
+        showToast(options.finalized ? 'Laporan final siap dicetak.' : 'Validasi selesai. Preview laporan siap ditinjau.');
     }
 
     function showToast(message, isError = false) {
