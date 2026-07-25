@@ -1,0 +1,396 @@
+/* People & KPI Module Stylesheet */
+.pk-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: inherit;
+}
+
+.pk-header {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.pk-header-title h2 {
+    font-size: 1.4rem;
+    color: var(--dark);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pk-header-title p {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+}
+
+.pk-nav-tabs {
+    display: flex;
+    gap: 10px;
+    background: #ffffff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+}
+
+.pk-tab-btn {
+    padding: 10px 18px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.88rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pk-tab-btn:hover {
+    background: var(--light);
+    color: var(--primary);
+}
+
+.pk-tab-btn.active {
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.25);
+}
+
+.pk-tab-content {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pk-tab-content.active {
+    display: flex;
+}
+
+/* KPI Summary Cards Grid */
+.pk-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 15px;
+}
+
+.pk-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid var(--primary);
+}
+
+.pk-card.warning { border-left-color: var(--warning); }
+.pk-card.danger { border-left-color: var(--danger); }
+.pk-card.success { border-left-color: var(--success); }
+.pk-card.info { border-left-color: var(--info); }
+.pk-card.dark { border-left-color: var(--dark); }
+
+.pk-card-info h4 {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.pk-card-info .pk-val {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.pk-card-info .pk-sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.pk-card-icon i {
+    font-size: 2.2rem;
+    color: #e2e8f0;
+}
+
+/* Alert Boxes & Banners */
+.pk-alert {
+    padding: 15px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border: 1px solid transparent;
+}
+
+.pk-alert-warning {
+    background: #fff9db;
+    border-color: #ffe066;
+    color: #856404;
+}
+
+.pk-alert-danger {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.pk-alert-success {
+    background: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.pk-alert-info {
+    background: #e3f2fd;
+    border-color: #bbdefb;
+    color: #0c5460;
+}
+
+.pk-alert i {
+    font-size: 1.4rem;
+    margin-top: 2px;
+}
+
+/* Panels & Tables */
+.pk-panel {
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pk-panel-header {
+    padding: 15px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pk-panel-header .pk-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pk-panel-body {
+    padding: 20px;
+}
+
+.pk-panel-body.no-padding {
+    padding: 0;
+}
+
+/* Badges */
+.pk-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: inline-block;
+    text-align: center;
+}
+
+.pk-badge-success { background: #d4edda; color: #155724; }
+.pk-badge-warning { background: #fff3cd; color: #856404; }
+.pk-badge-danger { background: #f8d7da; color: #721c24; }
+.pk-badge-info { background: #e3f2fd; color: #0c5460; }
+.pk-badge-secondary { background: #e2e8f0; color: #475569; }
+
+/* Score Inputs & Calculators */
+.pk-score-input {
+    width: 60px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.pk-score-input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+}
+
+/* Leaderboards */
+.pk-leaderboard-rank {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.pk-rank-1 { background: #ffd700; color: #5c4300; }
+.pk-rank-2 { background: #c0c0c0; color: #333333; }
+.pk-rank-3 { background: #cd7f32; color: #ffffff; }
+.pk-rank-normal { background: #e2e8f0; color: #64748b; }
+
+/* Progress Bar */
+.pk-progress-bg {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.pk-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.pk-progress-fill.bg-success { background: var(--success); }
+.pk-progress-fill.bg-warning { background: var(--warning); }
+.pk-progress-fill.bg-danger { background: var(--danger); }
+.pk-progress-fill.bg-primary { background: var(--primary); }
+
+/* Matrix Comparison Grid */
+.pk-matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.pk-matrix-card {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.pk-matrix-card h4 {
+    font-size: 0.95rem;
+    color: var(--dark);
+    margin-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pk-matrix-item {
+    margin-bottom: 12px;
+}
+
+.pk-matrix-item .pk-item-lbl {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+/* Roadmap Stepper */
+.pk-roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 15px;
+}
+
+.pk-roadmap-card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    border-top: 4px solid var(--primary);
+}
+
+.pk-roadmap-card.days-60 { border-top-color: var(--warning); }
+.pk-roadmap-card.days-90 { border-top-color: var(--success); }
+
+.pk-roadmap-card h4 {
+    font-size: 0.95rem;
+    color: var(--dark);
+    margin-bottom: 10px;
+}
+
+.pk-roadmap-card ul {
+    padding-left: 18px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    line-height: 1.6;
+}
+
+/* SPL Verification Badge List */
+.pk-spl-signature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.pk-spl-sig-box {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+}
+
+.pk-spl-sig-box .pk-role {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.pk-spl-sig-box .pk-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 4px 0;
+}
+
+.pk-spl-sig-box .pk-status {
+    font-size: 0.78rem;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .pk-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .pk-nav-tabs {
+        width: 100%;
+    }
+}
