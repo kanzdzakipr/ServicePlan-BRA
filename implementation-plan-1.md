@@ -1,0 +1,674 @@
+# Blueprint & Rencana Implementasi Kompleks Sistem Informasi Equipment (ServicePlan-BRA)
+
+Dokumen ini merupakan panduan arsitektur teknis dan analisis sistematis mendalam untuk pengembangan *Equipment Maintenance & Fleet Monitoring System* PT Bina Rekayasa Anugrah (BRA). Seluruh penjabaran disusun berpatokan pada struktur elemen tampilan `dashboard.html`, terintegrasi secara ketat dengan folder `material/` (ARSITEKTUR_BPMN, SOP, Laporan Tabulasi, Efisiensi BBM, Laporan Accident, dan Bank Data).
+
+---
+
+## 1. Arsitektur Enterprise & Filosofi Data Terpadu
+
+Sistem dirancang mengusung prinsip **Single Source of Truth (SSOT)** dan **Event-Driven State Machine** guna menggantikan dependensi laporan manual spreadsheet/WhatsApp.
+
+```
+[ Lapangan: Operator / Mekanik / Inspector ]
+                   │
+                   ▼ (Input Event: Inspeksi, WO, Fuel, Parts Issue)
+         [ Real-time Validation Gate ]
+                   │
+                   ▼
+       [ Transactional MySQL Engine ]
+                   │
+    ┌──────────────┴──────────────┐
+    ▼                             ▼
+[ State Engine (Auto Status) ]   [ Financial & KPI Calculators ]
+    │                             │
+    └──────────────┬──────────────┘
+                   ▼
+  [ Real-Time Executive Dashboard & Leaflet Live Map ]
+```
+
+### Prinsip Utama Sistem:
+1. **Event-Driven Status Transmutation**: Status unit (`READY`, `OPERATING`, `STANDBY`, `INSPEKSI`, `BREAKDOWN`, `WAITING_PART`, `ACCIDENT_HOLD`, `INACTIVE`) **TIDAK BISA** diubah secara manual tanpa transaksi yang valid. Contoh: Pembuatan Work Order (WO) dengan flag `downtime=true` otomatis mengubah status unit menjadi `BREAKDOWN`.
+2. **Workflow Gatekeeper & SLA**: Transisi status WO/SPB memerlukan *gate validation*. WO tidak dapat berstatus `CLOSED` tanpa bukti foto *before-after*, catatan jam mekanik, diagnosis akar masalah, dan verifikasi supervisor (SLA identifikasi 30 menit).
+3. **Relasi ID Unik Lintas Modul**: Asset ID (Kode Lambung) dan WO ID menjadi kunci relasi utama (*primary/foreign key*) yang menghubungkan modul Aset, Pemeliharaan, Logistik, Biaya, HSE, hingga KPI.
+
+---
+
+## 2. Matriks Integrasi Navbar `dashboard.html` terhadap Modul BPMN & Material
+
+Tabel berikut memetakan 16 menu navigasi di `dashboard.html` ke modul BPMN (`M01`–`M12`), dokumen referensi pada `material/`, dan output transaksi dasarnya.
+
+| No | Navbar Menu (`dashboard.html`) | Modul ID | Referensi Material Utama | Primary Entity & Event Target | Output Transaksi Utama |
+|:---|:---|:---|:---|:---|:---|
+| 1 | **Dashboard** | `M11` | `ARSITEKTUR_BPMN...md` (Bab 9) | `assets`, `work_orders`, `locations` | Executive Summary KPI, Live Map, WO Emergency List |
+| 2 | **Monitoring Unit** | `M01`, `M04` | `REKAP_UNIT_STANDBY.md`, `01_Laporan_Break_Down...` | `assets (status != READY)` | Monitoring Table Unit Non-Ready & Quick Action |
+| 3 | **Master Asset** | `M01`, `M02` | `SOP_Penerimaan_dan_Pengiriman...`, `ASSET_REKAP...` | `assets`, `asset_movements`, `BAST` | Asset 360° View, Lifecycle Tracking, Mutasi Unit |
+| 4 | **Inspeksi & P2H** | `M03` | `SOP_Pemeriksaan_Penggunaan...`, `Reclaimer_Spreader...` | `inspections`, `meter_readings` | Checklist P2H, Update HM/KM, Pre-trip Findings |
+| 5 | **Work Order** | `M04` | `005 Prosedure Breakdown`, `WMJO_HISTORY...` | `work_orders`, `wo_assignments`, `time_logs` | Kanban Board, Downtime Log, Repair Clock, RTW Ticket |
+| 6 | **Preventive Maint.** | `M05` | `Plan Service Juli 2026`, `Perbandingan_Rencana_vs...` | `maintenance_plans`, `executions` | Forecast Interval, PM Kitting, Due/Overdue Tracker |
+| 7 | **Spare Part & Logistik**| `M06` | `Flowchart_Procurement...`, `05_Laporan_Logistik...` | `purchase_requests`, `parts`, `inventory_tx` | SPB Management, Stock Reservation, ETA Lead Time |
+| 8 | **Condition Monitoring**| `M07` | `REPORT_BAN...`, `Form_Kontrol_Cutting_Bit...` | `tires`, `components`, `greasing_logs` | Wear Depth Diagram, Rotasi Ban, Structural Health |
+| 9 | **Fuel Management** | `M03/M08`| `EFISIENSI-BBM_Spesifikasi...` | `fuel_logs`, `meter_readings` | LPH Analysis, Fuel Anomaly Alert, Flowmeter Audit |
+| 10| **Produktivitas** | `M09` | `Analisis Produktivitas / Absensi / SPL`, `KOMTRAX` | `unit_productivity`, `komtrax_logs` | Hour Meter vs Working Hour, Utilization Rate (%) |
+| 11| **Biaya** | `M08` | `Equipment_Expenses...`, `06_Laporan_Cash_Out...` | `cost_transactions`, `purchase_orders` | Budget vs Actual Chart, Cost/Hour, Depreciation |
+| 12| **People & KPI** | `M09` | `Template_KPI_Head_of_Equipment.md`, `WMJO...` | `employees`, `mechanic_kpi`, `time_logs` | Mechanic Leaderboard, MTTR/MTBF, Jam Lembur SPL |
+| 13| **HSE / Accident** | `M10` | `LAPORAN_ACCIDENT.md`, `TAR_Unit_CS_41001_RWI.md` | `accidents`, `capa_actions` | Safety Incident Stepper, Damage Cost, Unit Hold/Release |
+| 14| **Laporan** | `M11` | `LAPORAN_DIVISI_EQUIPMENT_JANUARI_2026.md` | `reports_generated`, `audit_logs` | Multi-Format Export (Excel/PDF), Daily Fleet Summary |
+| 15| **Approval** | `M12` | `ARSITEKTUR_BPMN...md` (Bab 3 & 7) | `approvals`, `approval_matrices` | Centralized Approval Inbox, Escalation Queue |
+| 16| **Pengaturan** | `M12` | `ARSITEKTUR_BPMN...md` (Bab 12 & 15) | `system_configs`, `users`, `roles`, `sla_rules` | Threshold Settings, User RBAC, SLA Configurator |
+
+---
+
+## 3. Penjabaran Kompleks & Detail Per Menu Navigasi
+
+---
+
+### 3.1 Dashboard Executive (`view-dashboard`)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Elemen utama: `.kpi-grid` (`#kpiTotal`, `#kpiReady`, `#kpiStandby`, `#kpiBreakdown`, `#kpiInspeksi`), `.dashboard-layout` berisi `#map` (Leaflet.js) dan `#attentionList` (Daftar WO Emergency High Priority).
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Dashboard adalah representasi *real-time* dari seluruh agregasi transaksi. Kartu KPI menghitung status efektif dari tabel `assets`. Panel Perhatian menyaring Work Order aktif yang memiliki flag `priority = 'High'` dan status `!= CLOSED` untuk memberikan *early warning* kepada Equipment Manager.
+
+#### C. Spesifikasi Teknis Frontend
+* **Leaflet Live Map**: Marker dibuat secara berbasis GeoJSON. Marker memiliki warna terikat status (`#28a745` Ready, `#dc3545` Breakdown, `#17a2b8` Standby).
+* **Attention List Engine**: Render otomatis list WO emergency dengan perhitungan lama waktu unit terhenti (*downtime hours*) secara dinamis.
+
+#### D. Spesifikasi Backend & Schema Relasional
+```sql
+SELECT 
+    COUNT(id) AS total_units,
+    SUM(CASE WHEN status = 'READY' THEN 1 ELSE 0 END) AS ready_count,
+    SUM(CASE WHEN status = 'STANDBY' THEN 1 ELSE 0 END) AS standby_count,
+    SUM(CASE WHEN status = 'BREAKDOWN' THEN 1 ELSE 0 END) AS breakdown_count,
+    SUM(CASE WHEN status = 'INSPEKSI' THEN 1 ELSE 0 END) AS inspeksi_count
+FROM assets WHERE is_active = TRUE;
+```
+* **REST API**: `GET /api/v1/dashboard/executive-summary` & `GET /api/v1/dashboard/emergency-wos`
+
+#### E. Tabulasi Spesifikasi Data
+| Field Name | Type | Source Table | Validation / Display Rule |
+|:---|:---|:---|:---|
+| `total_units` | Integer | `assets` | Agregat seluruh unit aktif |
+| `status_counts` | JSON Object | `assets` | Group by status enum |
+| `emergency_wos` | Array | `work_orders` | Priority = 'High' AND status != 'Closed' |
+| `geo_coordinates` | Point (Lat, Long) | `locations` / Telematics | Latitude & Longitude terakhir |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Buatkan modul JavaScript terpisah `dashboard-executive.js` yang mengimplementasikan integrasi Leaflet Map dengan custom icon SVG berwarna (Hijau=READY, Merah=BREAKDOWN, Biru=STANDBY). Tambahkan WebSocket listener `onStatusChange` yang meng-update counter KPI `#kpiTotal`, `#kpiReady`, `#kpiBreakdown` dan memperbarui marker map secara smooth tanpa reload halaman."
+
+---
+
+### 3.2 Monitoring Unit Bermasalah (`view-monitoring`)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Elemen utama: `#view-monitoring`, input `#searchMonitoring`, tabel `#monitoringTable` dengan `#monTableBody`.
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Berdasarkan dokumen `REKAP_UNIT_STANDBY.md` dan `01_Laporan_Break_Down_Januari_2026`, tim operasional membutuhkan tampilan terisolasi yang hanya berfokus pada alat berat non-operasional (*Non-Ready Fleet*). Kolom "Tindakan Lanjutan" menentukan jalur eskalasi (contoh: jika Breakdown -> link ke WO; jika Inspeksi -> link ke Schedule PM).
+
+#### C. Spesifikasi Teknis Frontend
+* Real-time client-side filter menggunakan Regex JS pada event `keyup`.
+* Render dinamis tombol aksi pada baris tabel: "Cek Progress WO", "Assign Mekanik", atau "Release Unit".
+
+#### D. Spesifikasi Backend & Schema Relasional
+* **Endpoint**: `GET /api/v1/assets/monitoring-non-ready?search={query}&status={filter}`
+* **Query Filter**: `WHERE status IN ('BREAKDOWN', 'STANDBY', 'INSPEKSI')`
+
+#### E. Tabulasi Spesifikasi Data
+| Field Table | Data Type | Logic / Source | Interaktivitas UI |
+|:---|:---|:---|:---|
+| Unit ID | String (PK) | `assets.asset_id` | Klik membuka Modal Detail 360 |
+| Kategori | String | `assets.category` | Badge Kategori Alat |
+| Lokasi | String | `assets.location` | Text site/pit |
+| Status Terakhir | Enum | `assets.status` | Color-coded Badge |
+| Tindakan Lanjutan | HTML Component | Derived from `work_orders` | Shortcut Button Modal WO / PM |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Kembangkan modul `monitoring-view.js` dengan fungsi filter multi-kategori (Dropdown Filter Site & Filter Status: BREAKDOWN, STANDBY, INSPEKSI). Buatkan parser JS yang menghasilkan tombol aksi dinamis pada kolom 'Tindakan Lanjutan', misal jika unit breakdown akan menampilkan progress bar repair % dan tombol 'BukaWO'."
+
+---
+
+### 3.3 Master Asset (`view-asset`)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Elemen utama: `#view-asset`, tabel `#assetTableBody`, modal `#assetModal` (Detail 360°), modal `#modalNewAsset`, dan modal `#modalUpdateStatus`.
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Sesuai `SOP_Penerimaan_dan_Pengiriman_Asset_Tabulasi.md` (BPMN 1), registrasi aset harus memuat spesifikasi lengkap (Merek, Model, Serial Number, Tahun, Ownership, Value). Panel "Detail 360°" menggabungkan seluruh jejak digital unit selama masa operasinya.
+
+#### C. Spesifikasi Teknis Frontend
+* **Tab-switching System**: Modal Detail 360 memuat 4 tab (Ringkasan, Lokasi, Breakdown & WO, Inspeksi & P2H).
+* **Modal Management**: Form registrasi unit baru (`#modalNewAsset`) dan form update status manual (`#modalUpdateStatus`).
+
+#### D. Spesifikasi Backend & Schema Relasional
+```sql
+CREATE TABLE assets (
+    asset_id VARCHAR(50) PRIMARY KEY,
+    serial_number VARCHAR(100) UNIQUE,
+    category ENUM('Excavator', 'Bulldozer', 'Dump Truck', 'Motor Grader', 'Vibro') NOT NULL,
+    make_model VARCHAR(100),
+    year_manufacture INT,
+    ownership ENUM('Owned', 'Rented', 'Leased'),
+    acquisition_value DECIMAL(15,2),
+    status ENUM('READY', 'OPERATING', 'STANDBY', 'INSPEKSI', 'BREAKDOWN', 'ACCIDENT_HOLD', 'INACTIVE') DEFAULT 'READY',
+    current_location VARCHAR(100),
+    last_hm_km DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### E. Tabulasi Spesifikasi Data Detail 360°
+| Tab Name | Sub-Data Entity | Source API Endpoint | Render Component |
+|:---|:---|:---|:---|
+| Ringkasan | Asset Specs, Status, Value | `GET /api/v1/assets/{id}` | Info Grid & Badge Status |
+| Lokasi | Movement History, BAST | `GET /api/v1/assets/{id}/movements` | Vertical Timeline Map |
+| Breakdown & WO | All Historical & Active WOs | `GET /api/v1/assets/{id}/work-orders` | Mini DataTable + Status WO |
+| Inspeksi & P2H | Daily Pre-trip Checklists | `GET /api/v1/assets/{id}/inspections` | Inspection Cards + Pass/Fail Badge |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Tuliskan kode JavaScript untuk menangani tab-switching di dalam `#assetModal`. Saat tab 'Breakdown & WO' diklik, lakukan fetch data AJAX ke `/api/v1/assets/{id}/work-orders`, lalu render hasilnya ke dalam tabel ringkas yang menampilkan WO ID, Tanggal Down, Diagnosis, Downtime (Jam), dan Status WO."
+
+---
+
+### 3.4 Inspeksi & P2H (`view-uc` -> Inspeksi)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "Inspeksi & P2H".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Mengacu pada `SOP_Pemeriksaan_Penggunaan_Pemeliharaan_Perbaikan_Alat_Berat_Tabulasi.md`. Operator/Inspector wajib mengisi P2H (Pelaksanaan Perawatan Harian) sebelum unit beroperasi. Jika ditemukan item inspek "CRITICAL/FAIL", sistem secara otomatis memicu pemblokiran unit (status -> `INSPEKSI` / `BREAKDOWN`) dan membuat tiket WO DRAFT.
+
+#### C. Spesifikasi Teknis Frontend
+* UI Form Inspeksi Berbasis Checklist (Pass / Fail / Warning).
+* Modul kamera HTML5 / File Upload dengan kompresi otomatis client-side untuk bukti foto kerusakan.
+* Input validasi bacaan Meter Reading (HM/KM tidak boleh lebih kecil dari bacaan terakhir).
+
+#### D. Spesifikasi Backend & Schema Relasional
+* **Rule Engine**: `IF inspection_item.severity = 'CRITICAL' AND result = 'FAIL' THEN TRIGGER_CREATE_WO()`.
+* **Database**: Tabel `inspections` (Header) & `inspection_details` (Items JSON / Child rows).
+
+#### E. Tabulasi Struktur Checklist P2H
+| Category Item | Inspection Point | Options | Trigger Action on Fail |
+|:---|:---|:---|:---|
+| Engine System | Oli Mesin & Air Radiator | Pass / Fail | Auto-WO Status: High Priority |
+| Hydraulic System| Kebocoran Selang / Hose | Pass / Fail / Warning | Flag Component Warning |
+| Safety Device | Rem, Klakson, Lampu, APAR | Pass / Fail | Block Unit Operation (HOLD) |
+| Undercarriage | Ketegangan Track / Baut Roda | Pass / Fail | Trigger Maintenance Task |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Buatkan komponen UI Form P2H (Pre-Trip Inspection) interaktif di `#view-uc`. Form harus memiliki: Input HM/KM awal, grup checklist dengan switch Pass/Fail, area upload gambar dengan preview, serta logika validasi JS yang menampilkan warning jika HM baru lebih kecil dari HM terakhir."
+
+---
+
+### 3.5 Work Order (`view-wo`)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Elemen utama: `#view-wo`, `#woKanbanBoard` (Kolom: `#col-Open`, `#col-In-Progress`, `#col-Closed`), dan modal `#modalNewWO`.
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Berdasarkan `005 Prosedure Penanganan Unit Breakdown` dan `WMJO_HISTORY...`, WO adalah inti operasional.
+* **SLA 30 Menit**: Tiket WO/Job Order harus diterbitkan maks 30 menit sejak unit down.
+* **Gate Closing**: WO tidak bisa ditutup tanpa:
+  1. Catatan Jam Mekanik (*time log* normal & lembur SPL).
+  2. Foto *Before & After* perbaikan.
+  3. Hasil Uji Fungsi (*Testing/Commissioning*).
+  4. Verifikasi Supervisor/Foreman.
+
+#### C. Spesifikasi Teknis Frontend
+* **Kanban Engine**: Render card dinamis berdasarkan prioritas (`High` = Border Merah).
+* **Modal Lapor Breakdown (`#modalNewWO`)**: Menangkap keluhan, prioritas, dan status unit berhenti total (downtime).
+
+#### D. Spesifikasi Backend & State Machine
+```
+[DRAFT] ➔ [SUBMITTED] ➔ [APPROVED] ➔ [IN_PROGRESS] ➔ [PAUSED/WAITING_PART] ➔ [TESTING] ➔ [CLOSED]
+```
+```sql
+CREATE TABLE work_orders (
+    wo_id VARCHAR(50) PRIMARY KEY,
+    asset_id VARCHAR(50),
+    priority ENUM('Normal', 'High') DEFAULT 'Normal',
+    issue_description TEXT,
+    is_downtime BOOLEAN DEFAULT TRUE,
+    status ENUM('Open', 'In Progress', 'Waiting Part', 'Testing', 'Closed') DEFAULT 'Open',
+    assigned_mechanic_id VARCHAR(50),
+    down_time_start TIMESTAMP,
+    repair_time_start TIMESTAMP,
+    repair_time_end TIMESTAMP,
+    verification_supervisor_id VARCHAR(50),
+    FOREIGN KEY (asset_id) REFERENCES assets(asset_id)
+);
+```
+
+#### E. Tabulasi Matriks WO Kanban Status
+| Column Name | Allowed Status Transition | Required Form Field Gate | Output Event Status Unit |
+|:---|:---|:---|:---|
+| **Open / Submitted** | -> In Progress, Cancelled | Job Order Number & Priority | Status Unit: `BREAKDOWN` |
+| **In Progress** | -> Waiting Part, Testing | Mechanic PIC Assignment | Repair Clock Active |
+| **Closed / Ready** | Terminal State | Photos, Test Result, Sup Approval | Status Unit: `READY` (RTW) |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Buatkan skrip JavaScript Kanban Board lengkap untuk `#woKanbanBoard` dengan fitur HTML5 Drag and Drop. Ketika card WO digeser dari 'In Progress' ke 'Closed', munculkan modal verifikasi yang memvalidasi bahwa mekanik telah mengunggah foto perbaikan dan memasukkan jam kerja sebelum melepaskan card ke status Closed."
+
+---
+
+### 3.6 Preventive Maintenance (`view-uc` -> PM)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "Preventive Maintenance".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Sesuai `Plan Service Juli 2026` dan `Perbandingan_Rencana_vs_Realisasi_PM_Jan_2026`. Sistem membandingkan last service HM dengan interval servis berkala (contoh: PM 250, 500, 1000, 2000 Jam).
+* **Warning Window**: Peringatan diterbitkan pada H-3 atau sisa 50 HM sebelum jatuh tempo (`Due Soon`).
+* **Overdue Flag**: Jika HM melewati batas interval tanpa ada eksekusi PM, status berubah menjadi `Overdue`.
+
+#### C. Spesifikasi Teknis Frontend
+* Dashboard dual-panel: Panel Kiri = PM Forecast Tracker (Due Soon/Overdue), Panel Kanan = Calendar View Maintenance Schedule.
+* Kitting checklist indikator (Kesiapan Filter, Oli, Grease).
+
+#### D. Spesifikasi Backend & Cron Scheduler
+* **Background Worker**: Cron job harian yang mengkalkulasi `(current_hm - last_service_hm)` terhadap `interval_hm`.
+* **Endpoint**: `GET /api/v1/pm/forecast` & `POST /api/v1/pm/schedule-kitting`.
+
+#### E. Tabulasi Interval & Kitting Material PM
+| Service Level | Interval HM | Material Kitting Wajib | Standard Duration |
+|:---|:---|:---|:---|
+| PM 250 | Setiap 250 Jam | Ganti Oli Mesin, Filter Oli, Filter Solar | 4 Jam |
+| PM 500 | Setiap 500 Jam | PM 250 + Filter Udara, Filter Transmisi | 6 Jam |
+| PM 1000 | Setiap 1000 Jam | PM 500 + Oli Transmisi, Oli Hidrolik, Coolant | 8 Jam |
+| PM 2000 | Setiap 2000 Jam | Major Service, Replacement All Fluids & Belts | 12 Jam |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Tuliskan modul UI JS untuk Preventive Maintenance yang memuat widget 'PM Due Tracker'. Widget menampilkan daftar unit dengan progress bar linier % pencapaian HM interval, dan mengubah warna progress bar menjadi Kuning jika Sisa HM < 50 Jam (Due Soon), dan Merah jika Sisa HM <= 0 (Overdue)."
+
+---
+
+### 3.7 Spare Part & Logistik (`view-uc` -> Logistik)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "Spare Part & Logistik".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Mengacu pada `Flowchart_Procurement_dan_Logistik_BRA_Tabulasi.md` & `05_Laporan_Logistik_Januari_2026`.
+* **Prasyarat SPB**: Surat Permintaan Barang (SPB) **wajib** mencantumkan Nomor WO atau Nomor PM yang valid (`BR-02`).
+* **SLA Tracking**: Pengadaan diukur dari tanggal disetujuinya SPB hingga part tiba di Site (*Sourcing Lead Time*).
+
+#### C. Spesifikasi Teknis Frontend
+* Autocomplete Part Number Search dari Master Inventory.
+* UI Multi-item Cart untuk permintaan kitting sparepart per WO.
+* Tracker Status SPB (Submitted -> Approved -> PO Created -> In Transit -> Received -> Issued).
+
+#### D. Spesifikasi Backend & Schema Relasional
+```sql
+CREATE TABLE purchase_requests (
+    spb_id VARCHAR(50) PRIMARY KEY,
+    wo_id VARCHAR(50),
+    requested_by VARCHAR(50),
+    urgency ENUM('Normal', 'Emergency') DEFAULT 'Normal',
+    status ENUM('Draft', 'Submitted', 'Approved', 'Ordered', 'Received', 'Issued') DEFAULT 'Submitted',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (wo_id) REFERENCES work_orders(wo_id)
+);
+```
+
+#### E. Tabulasi SLA & Status Pengadaan Part
+| Status SPB | Responsible Role | Target SLA | Action Trigger |
+|:---|:---|:---|:---|
+| `SUBMITTED` | Supervisi Logistik | Maks 2 Jam | Cek Stok Gudang Lokal |
+| `RESERVED` | Logistik Gudang | Maks 1 Jam | Potong Stok Reservasi -> Ready Issue |
+| `SOURCING` | Procurement Purchasing | Maks 24 Jam | Penerbitan PO Vendor |
+| `SHIPPED` | Ekspedisi Logistik | ETA Monitoring | Tracking Resi / Posisi Barang |
+| `ISSUED` | Mekanik / Logistik | Immediate | Part terpasang ke WO -> WO Repair Clock Resume |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Buatkan komponen Form SPB (Surat Permintaan Barang) interaktif pada `#view-uc` Logistik. Form mencakup dropdown pilih WO ID aktif, tabel dinamis untuk input Part Number, Deskripsi, Jumlah, Satuan, dan tombol 'Submit SPB' yang memvalidasi bahwa minimal 1 item telah diinput."
+
+---
+
+### 3.8 Condition Monitoring (`view-uc` -> Condition Monitoring)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "Condition Monitoring".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Berdasarkan `REPORT_BAN_UPDATE_19.07.2026.md`, `REGRESING_WEEKLY_MAINTENANCE...`, `Form_Kontrol_Cutting_Bit...`, dan `PEMAKAIAN_AKI`.
+Modul ini mengawasi komponen kritikal dengan metode pengukuran aus berulang:
+* **Ban**: Ambang Merah (<3.2 mm), Kuning (3.2–8.5 mm), Hijau (>8.5 mm).
+* **Cutting Bit / Undercarriage**: Pengukuran persentase keausan terhadap jam kerja.
+
+#### C. Spesifikasi Teknis Frontend
+* Skematik Visual 2D Sasis Unit (Dump Truck 10 Roda) dengan elemen lingkaran terinteraksi di setiap posisi roda.
+* Form Input Pengukuran Tread Depth (mm) & Tekanan Angin (PSI).
+
+#### D. Spesifikasi Backend & Threshold Evaluator
+* **Evaluation Engine**: Mengubah kondisi komponen secara otomatis berdasarkan input inspeksi fisik terbaru.
+
+#### E. Tabulasi Ambang Batas Condition Monitoring
+| Komponen | Parameter Ukur | Ambang Hijau (Good) | Ambang Kuning (Warning) | Ambang Merah (Critical/Replace) |
+|:---|:---|:---|:---|:---|
+| Ban Dump Truck | Tread Depth (mm) | > 8.5 mm | 3.2 mm – 8.5 mm | < 3.2 mm / Rusak Fisik |
+| Cutting Bit CAT RM500| Panjang Tip (cm) | > 10 cm | 5 cm – 10 cm | < 5 cm / Patah |
+| Battery / Aki | Voltage (V) & CCA | > 12.6V / CCA > 80%| 12.0V – 12.5V | < 12.0V (Perlu Re-charge/Replace) |
+| Undercarriage Exca | Pitch Bushing / Rollers| Wear < 50% | Wear 50% – 85% | Wear > 85% / Overhoist |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Rancang komponen visual HTML/CSS/JS untuk 'Visual Tire Pressure & Tread Depth Monitor'. Tampilkan diagram posisi ban 10-wheeler (Posisi FL, FR, R1L, R1R, dst.). Setiap posisi ban dapat diklik untuk memasukkan data Tread Depth (mm). Warnai indikator ban sesuai ambang batas: Merah (<3.2mm), Kuning (3.2-8.5mm), Hijau (>8.5mm)."
+
+---
+
+### 3.9 Fuel Management (`view-uc` -> Fuel)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "Fuel Management".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Sesuai dokumen `EFISIENSI-BBM_Spesifikasi_Modul_Monitoring_BBM_BRA.md`.
+* **Metrik Utama**: Liter per Jam (LPH) untuk Alat Berat atau KM per Liter (KPL) untuk Dump Truck.
+* **Deteksi Anomali**: Jika rasio konsumsi BBM aktual melampaui toleransi standar pabrikan (> 15% dari baseline), sistem menandai transaksi tersebut sebagai `ANOMALY_SUSPECT`.
+
+#### C. Spesifikasi Teknis Frontend
+* Line Chart (Chart.js) Trend Konsumsi BBM vs Jam Kerja Unit.
+* Form Input Pengisian BBM (Nomor Flowmeter Awal/Akhir, Total Liter, HM/KM Saat Pengisian, Foto Meteran).
+
+#### D. Spesifikasi Backend & Formula Calculation
+```
+LPH = Total Liter BBM / (HM Pengisian Sekarang - HM Pengisian Sebelumnya)
+```
+* **Endpoint**: `POST /api/v1/fuel/refuel-log` & `GET /api/v1/fuel/efficiency-report`.
+
+#### E. Tabulasi Standard Fuel Ratio Baseline (Contoh BRA Fleet)
+| Kategori Unit | Model Unit | Baseline Standard LPH | Threshold Anomali (+15%) |
+|:---|:---|:---|:---|
+| Excavator 20 Ton | Komatsu PC200-8 | 16.5 L/Jam | > 18.97 L/Jam |
+| Excavator 40 Ton | CAT 345D | 32.0 L/Jam | > 36.80 L/Jam |
+| Bulldozer | Komatsu D85ESS | 28.0 L/Jam | > 32.20 L/Jam |
+| Dump Truck | Hino FM260TI | 2.2 KM/Liter | < 1.87 KM/Liter |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Buatkan dashboard Mini Fuel Management di `#view-uc`. Tampilkan form transaksi pengisian BBM yang otomatis menghitung selisih Flowmeter Awal & Akhir menjadi Total Liter, serta mengkalkulasi LPH berdasarkan selisih HM. Tambahkan alert peringatan merah jika nilai LPH > 15% dari baseline standard."
+
+---
+
+### 3.10 Produktivitas (`view-uc` -> Produktivitas)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "Produktivitas".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Mengacu pada `20_BRA_KOMTRAX_Januari_2026.md` dan data telematika.
+Modul ini mengukur Physical Availability (PA), Use of Availability (UA), Breakdown Rate (BR), dan Utilization Rate (UT).
+* **Formula PA**: `(Scheduled Hours - Breakdown Hours) / Scheduled Hours * 100%`
+
+#### C. Spesifikasi Teknis Frontend
+* Gauge Chart UI untuk skor PA %, UA %, dan Utilization %.
+* Comparison Table: Jam Kerja Telematika (KOMTRAX) vs Jam Kerja Laporan Operator.
+
+#### D. Spesifikasi Backend & Aggregator
+* Data Ingestion Worker dari data telematika GPS / KOMTRAX.
+* **Endpoint**: `GET /api/v1/productivity/fleet-kpi`.
+
+#### E. Tabulasi Formula KPI Availability & Utilization
+| Indikator KPI | Rumus Perhitungan | Target Standard BRA |
+|:---|:---|:---|
+| Physical Availability (PA) | `(Scheduled Time - Downtime) / Scheduled Time * 100%` | >= 90% |
+| Use of Availability (UA) | `Operating Hours / (Scheduled Time - Downtime) * 100%` | >= 80% |
+| Breakdown Rate (BR) | `Breakdown Hours / Scheduled Time * 100%` | <= 10% |
+| Mean Time Between Failures (MTBF) | `Total Operating Time / Total Breakdown Occurrences` | >= 100 Jam |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Buatkan komponen UI Produktivitas Alat Berat yang memuat 3 buah Gauge Chart (menggunakan Chart.js atau Pure CSS SVG) untuk menampilkan persentase Physical Availability (PA), Use of Availability (UA), dan Utilization Rate. Sertakan tabel komparasi HM Operasional vs Jam Idling."
+
+---
+
+### 3.11 Biaya (`view-biaya`)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Elemen utama: `#view-biaya`, kartu KPI `#kpiBudget` & `#kpiActual`, `#chartContainer`, dan tabel `#valTableBody` (Nilai Aset & Biaya Perbaikan).
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Berdasarkan `Equipment_Expenses_Report_Tabulasi.md`, `Harga_Jual_Unit_Tabulasi.md`, dan `06_Laporan_Cash_Out_Januari_2026`.
+Seluruh biaya pemeliharaan (Sparepart, Oli/Oli Filter, Jasa Mekanik Luar, Machining) diakumulasikan secara *real-time* per Unit ID melalui WO.
+
+#### C. Spesifikasi Teknis Frontend
+* Bar Chart Grafik *Budget vs Actual Cost* (8 Bulan Terakhir) yang responsif di `#chartContainer`.
+* DataTable Nilai Buku Aset vs Harga Pasaran vs Total Biaya Perbaikan Kumulatif.
+
+#### D. Spesifikasi Backend & Cost Calculation Engine
+```sql
+SELECT 
+    a.asset_id,
+    a.acquisition_value,
+    COALESCE(SUM(c.amount), 0) AS total_repair_cost
+FROM assets a
+LEFT JOIN cost_transactions c ON a.asset_id = c.asset_id
+GROUP BY a.asset_id;
+```
+
+#### E. Tabulasi Struktur Klasifikasi Biaya Maintenance
+| Biaya Category | Sub-Kategori Transaksi | Direct Source Link | Impact Financial |
+|:---|:---|:---|:---|
+| Spare Part & Consumable| Filter, Hose, Seal, Fluid, Tire | Issuance Part SPB | Menambah Biaya WO |
+| Labor & Overtime | Jam Lembur Mekanik Internal (SPL)| Timesheet Mekanik | Cost Allocation per Unit |
+| External Service | Bubut, Recondition, Sub-contractor| PO Jasa Outsource | Accounts Payable |
+| Capital Expenses (CAPEX)| Overhaul Mesin, Replacement Engine| Purchase Order Unit | Kapitalisasi Nilai Aset |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Integrasikan library Chart.js pada container `#chartContainer` di `#view-biaya`. Buatkan grouped bar chart yang membandingkan 'Budget Maintenance' vs 'Actual Cost' selama 8 bulan terakhir dengan animasi smooth dan tooltip format mata uang Rupiah (Rp)."
+
+---
+
+### 3.12 People & KPI (`view-uc` -> People & KPI)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "People & KPI".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Sesuai `Template_KPI_Head_of_Equipment.md` dan `Analisis Produktivitas / Absensi / SPL`.
+Modul ini mengukur kinerja tim maintenance:
+* Jam produktif mekanik (Time Log WO).
+* Efektivitas pengerjaan (Rasio WO selesai tepat waktu vs Overdue).
+* MTTR (Mean Time to Repair) per Mekanik/Group.
+
+#### C. Spesifikasi Teknis Frontend
+* Leaderboard Performa Mekanik (Avatar, Nama, Rating, Selesai WO, Total Jam Lembur).
+* Matrix Skill Mekanik (Kompetensi Engine, Electrical, Hydraulic).
+
+#### D. Spesifikasi Backend & KPI Aggregator
+* **Endpoint**: `GET /api/v1/people/mechanic-performance` & `GET /api/v1/people/overtime-summary`.
+
+#### E. Tabulasi Indikator Evaluasi KPI Mekanik
+| Metric KPI | Bobot | Rumus / Indikator Evaluasi | Benchmark Target |
+|:---|:---|:---|:---|
+| Repair Efficiency | 35% | `Standard Estimated Time / Actual Repair Time * 100%` | >= 95% |
+| Work Order Quality | 30% | `100% - (Repeat Order Failure Rate innerhalb 7 hari)` | >= 98% (No Repeat Fail) |
+| Safety & 5S Compliance| 20% | Insiden Kerja & Keberlanjutan APD di Bay Workshop | 0 Accident (Zero Harm) |
+| Timesheet Discipline | 15% | Kepatuhan Start/Stop Timer Pekerjaan pada WO | 100% Recorded |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Buatkan tampilan UI 'Mechanic Performance Leaderboard' pada `#view-uc`. Tampilkan tabel berisi Nama Mekanik, Skill Level (Lead/Senior/Junior), Jumlah WO Selesai, Rata-rata Durasi Perbaikan, dan Score KPI dalam bentuk Progress Bar atau Star Rating."
+
+---
+
+### 3.13 HSE / Accident (`view-uc` -> HSE / Accident)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "HSE / Accident".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Berdasarkan `LAPORAN_ACCIDENT.md` dan `TAR_Unit_CS_41001_RWI.md` (BPMN 6).
+Setiap kejadian insiden/kecelakaan kerja yang melibatkan alat berat wajib melalui registrasi laporan insiden. Unit otomatis berstatus `ACCIDENT_HOLD` dan tidak dapat dioperasikan sampai ada verifikasi rilis resmi dari General Manager & HSE Head.
+
+#### C. Spesifikasi Teknis Frontend
+* Multi-step Wizard Form Pelaporan Insiden (Step 1: Data Kejadian & Dampak, Step 2: Klasifikasi Kerusakan & Foto, Step 3: Action Plan CAPA).
+* Status Lock Indicator Banner pada Unit yang dalam penahanan insiden.
+
+#### D. Spesifikasi Backend & Schema Relasional
+```sql
+CREATE TABLE accidents (
+    accident_id VARCHAR(50) PRIMARY KEY,
+    asset_id VARCHAR(50),
+    incident_date TIMESTAMP,
+    location VARCHAR(100),
+    severity_level ENUM('Minor', 'Moderate', 'Critical/Fatal'),
+    description TEXT,
+    financial_impact_estimate DECIMAL(15,2),
+    status ENUM('Reported', 'Investigating', 'CAPA_Pending', 'Closed') DEFAULT 'Reported',
+    unit_released BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (asset_id) REFERENCES assets(asset_id)
+);
+```
+
+#### E. Tabulasi Klasifikasi Severitas Insiden & Alur Rilis
+| Level Severitas | Dampak Insiden | Otoritas Approval Rilis Unit | Tindakan Wajib Sistem |
+|:---|:---|:---|:---|
+| **Minor** | Kerusakan Ringan, No Injury, Cost < Rp 10 Juta | Equipment Manager & Safety Officer | Auto-Generate Repair WO |
+| **Moderate** | Kerusakan Komponen Utama, First Aid Injury | Equipment Manager & HSE Head | Lock Unit -> Status `ACCIDENT_HOLD` |
+| **Critical** | Major Structural Damage, Fatality / Lost Time | General Manager & Direktur Operasional | Lock Unit + Investigasi CAPA Mandatory |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Buatkan UI Form Stepper Pelaporan Accident pada `#view-uc`. Form memiliki 3 langkah: Step 1 (Tanggal, Unit ID, Lokasi, Driver), Step 2 (Kronologi Kejadian & Upload Bukti Kerusakan), Step 3 (Estimasi Kerugian & Form CAPA). Tambahkan badge peringatan 'UNIT LOCKED (ACCIDENT HOLD)' pada ringkasan."
+
+---
+
+### 3.14 Laporan (`view-uc` -> Laporan)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "Laporan".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Sesuai `LAPORAN_DIVISI_EQUIPMENT_JANUARI_2026.md`.
+Modul pelaporan manajemen menyediakan *export generator* otomatis untuk laporan harian, mingguan, dan bulanan dalam format Excel (.xlsx) dan PDF yang siap cetak.
+
+#### C. Spesifikasi Teknis Frontend
+* Report Generator Selector (Tipe Laporan, Rentang Tanggal, Filter Site/Lokasi, Kategori Unit).
+* Preview Data Table sebelum mengunduh berkas.
+
+#### D. Spesifikasi Backend & Export Engine
+* **Export Process**: Stream generator data dari database MySQL ke SheetJS / ExcelJS atau PDFKit backend.
+* **Endpoint**: `POST /api/v1/reports/generate-excel` & `POST /api/v1/reports/generate-pdf`.
+
+#### E. Tabulasi Catalog Laporan Standar Sistem
+| Kode Laporan | Nama Laporan | Format Output | Target Audiens |
+|:---|:---|:---|:---|
+| RPT-01 | Daily Equipment Availability & Status | Excel / PDF | Operational Manager & Site Director |
+| RPT-02 | Monthly Work Order Summary & MTTR/MTBF | Excel | Maintenance Planner |
+| RPT-03 | Spare Part Consumption & Inventory Value | Excel | Purchasing & Finance |
+| RPT-04 | Equipment Cost History & Budget Variance | PDF | Executive Management & Director |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Desain halaman Report Generator pada `#view-uc` Laporan. Buatkan card pilihan laporan (Laporan Availability Harian, Laporan Rekap WO, Laporan Biaya Unit). Setiap card memiliki filter tanggal, dropdown lokasi, dan tombol 'Download Excel' & 'Preview Data'."
+
+---
+
+### 3.15 Approval (`view-uc` -> Approval)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "Approval".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Berdasarkan `ARSITEKTUR_BPMN...md` (Bab 3 & 7).
+Seluruh transaksi yang memerlukan persetujuan berjenjang (SPB Sparepart > Rp X, WO Major Overhaul, Rilis Unit Insiden, Mutasi Aset) berkumpul pada satu *Central Approval Inbox*.
+
+#### C. Spesifikasi Teknis Frontend
+* Unified Approval Inbox dengan filter Tab (Pending, Approved, Rejected).
+* Quick Action Modal: Tombol Approve (Hijau) & Tombol Reject (Merah) dengan kewajiban mengisi Textarea "Alasan Penolakan".
+
+#### D. Spesifikasi Backend & Multi-Tier Matrix Engine
+```sql
+CREATE TABLE approvals (
+    approval_id VARCHAR(50) PRIMARY KEY,
+    document_type ENUM('SPB', 'WO', 'MUTASI', 'ACCIDENT_RELEASE', 'PO'),
+    document_id VARCHAR(50) NOT NULL,
+    current_approver_id VARCHAR(50),
+    approval_tier INT DEFAULT 1,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING',
+    rejection_reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### E. Tabulasi Approval Matrix Limits (Contoh BRA Matrix)
+| Jenis Dokumen | Rentang Nilai / Kondisi | Approver Tier 1 | Approver Tier 2 | Approver Tier 3 |
+|:---|:---|:---|:---|:---|
+| SPB Sparepart | < Rp 5.000.000 | Maintenance Foreman | Equipment Manager | - |
+| SPB Sparepart | >= Rp 5.000.000 | Equipment Manager | General Manager | - |
+| Work Order Major | Biaya Est. > Rp 20.000.000| Equipment Manager | General Manager | Direktur Operasional |
+| Rilis Unit Insiden | Severitas Moderate / Critical | HSE Head | Equipment Manager | General Manager |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Tuliskan kode UI JavaScript Inbox Approval pada `#view-uc`. Tampilkan list card item permohonan yang berisi Jenis Dokumen, Pemohon, Nominal/Detail, dan Status. Sertakan modal konfirmasi saat klik 'Reject' yang mewajibkan input teks alasan sebelum melempar request ke backend API."
+
+---
+
+### 3.16 Pengaturan (`view-uc` -> Pengaturan)
+
+#### A. Analisis & Scope HTML (`dashboard.html`)
+Ditempatkan pada seksi `#view-uc` dengan judul "Pengaturan".
+
+#### B. Pemahaman Alur Bisnis & Aturan Sistem
+Sesuai `ARSITEKTUR_BPMN...md` (Modul M12 - Administrasi Sistem).
+Pengaturan mengontrol seluruh konstanta sistem: Management User & Access Role (RBAC), Ambang Batas Condition Monitoring, Master Lokasi/Site, Matriks SLA, dan Template Checklist P2H.
+
+#### C. Spesifikasi Teknis Frontend
+* Tab Navigation Setting (Manajemen User, Master Lokasi, Parameter SLA, Threshold Component).
+* Interface Management Role Checkbox Matrix (Read, Create, Edit, Delete, Approve per Modul).
+
+#### D. Spesifikasi Backend & Dynamic Config Store
+* **Configuration Table**: `system_configs (config_key, config_value, description)`.
+
+#### E. Tabulasi Master Rules & Configuration Keys
+| Config Key | Default Value | Description / Scope | Modification Scope |
+|:---|:---|:---|:---|
+| `SLA_WO_IDENTIFICATION_MINS` | `30` | SLA Pembuatan Tiket WO sejak Unit Down | System Admin |
+| `THRESHOLD_TIRE_RED_MM` | `3.2` | Batas Merah Aus Ban (mm) | Fleet Planner |
+| `PM_WARNING_WINDOW_HM` | `50` | Batas HM Warning PM Due Soon | Maintenance Planner |
+| `FUEL_ANOMALY_PERCENT` | `15.0` | Toleransi % Kebocoran / Anomali BBM | Equipment Manager |
+
+#### F. Supporting AI Prompt (Production Ready)
+> "Buatkan halaman System Settings di `#view-uc` Pengaturan dengan UI Tabified: Tab 1 (User & Role RBAC Table), Tab 2 (Konfigurasi Threshold & SLA), dan Tab 3 (Master Lokasi Project). Tambahkan handler JS untuk menyimpan nilai parameter konfigurasi secara real-time."
+
+---
+
+## 4. Arsitektur Relasi Database & Integrasi API Endpoints
+
+### Single Source Schema Mapping (ERD Topology)
+```
+  ┌──────────────┐          ┌────────────────────┐          ┌─────────────────┐
+  │    assets    │1        *│    work_orders     │1        *│   wo_time_logs  │
+  ├──────────────┤──────────├────────────────────┤──────────├─────────────────┤
+  │ asset_id (PK)│          │ wo_id (PK)         │          │ log_id (PK)     │
+  │ status       │          │ asset_id (FK)      │          │ wo_id (FK)      │
+  │ location     │          │ priority           │          │ mechanic_id     │
+  └──────────────┘          │ status             │          │ hours_spent     │
+         │1                 └────────────────────┘          └─────────────────┘
+         │                             │1
+         │                             │
+         │*                            │*
+  ┌──────────────┐          ┌────────────────────┐
+  │meter_readings│          │ purchase_requests  │
+  ├──────────────┤          ├────────────────────┤
+  │ reading_id   │          │ spb_id (PK)        │
+  │ asset_id (FK)│          │ wo_id (FK)         │
+  │ hm_value     │          │ status             │
+  └──────────────┘          └────────────────────┘
+```
+
+---
+
+## 5. Roadmap Eksekusi & Strategi Refactoring Codebase
+
+Untuk mengubah `dashboard.html` monolitik menjadi aplikasi produksi yang kokoh:
+
+1. **Fase 1: Modularisasi JavaScript (Struktur Berkas)**
+   * Pisahkan skrip monolitik ke berkas modular terorganisir:
+     * `/js/app.js` (Router & Core State Handler)
+     * `/js/views/dashboard.js`
+     * `/js/views/asset.js`
+     * `/js/views/workorder.js`
+     * `/js/views/biaya.js`
+
+2. **Fase 2: Mock API Data Service Layer**
+   * Buat service layer terpisah (`/js/services/api.js`) untuk memisahkan logika UI dari sumber data JSON/Backend REST API.
+
+3. **Fase 3: Migrasi ke Frontend Framework (Opsional/Rekomendasi)**
+   * Jika kompleksitas form & state bertambah, lakukan migrasi dari Vanilla HTML/JS ke **Vite + React** atau **Next.js** dengan TailwindCSS / Modular CSS.
