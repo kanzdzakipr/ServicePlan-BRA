@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="scripts/report-forms.css">
     <link rel="stylesheet" href="scripts/preventive-maintenance.css">
+    <link rel="stylesheet" href="scripts/people-kpi.css">
+    <link rel="stylesheet" href="scripts/hse-accident.css">
     <style>
         :root {
             --primary: #007bff;
@@ -368,8 +370,8 @@
             <li><a onclick="showView('uc', 'Fuel Management', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0" title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a></li>
             <li><a onclick="showView('uc', 'Produktivitas', 'menu-productivity')" id="menu-productivity" role="button" tabindex="0" title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Produktivitas</span></a></li>
             <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" title="Biaya"><i class="fa-solid fa-money-bill-trend-up"></i><span class="nav-label">Biaya</span></a></li>
-            <li><a onclick="showView('uc', 'People & KPI', 'menu-people')" id="menu-people" role="button" tabindex="0" title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People & KPI</span></a></li>
-            <li><a onclick="showView('uc', 'HSE / Accident', 'menu-hse')" id="menu-hse" role="button" tabindex="0" title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE / Accident</span></a></li>
+            <li><a onclick="showView('people', '', 'menu-people')" id="menu-people" role="button" tabindex="0" title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People & KPI</span></a></li>
+            <li><a onclick="showView('hse', '', 'menu-hse')" id="menu-hse" role="button" tabindex="0" title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE / Accident</span></a></li>
             <li><a onclick="showView('reports')" id="menu-reports" role="button" tabindex="0" title="Laporan & Form"><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Laporan & Form</span></a></li>
             <li><a onclick="showView('uc', 'Approval', 'menu-approval')" id="menu-approval" role="button" tabindex="0" title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a></li>
             <li><a onclick="showView('uc', 'Pengaturan', 'menu-settings')" id="menu-settings" role="button" tabindex="0" title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a></li>
@@ -598,6 +600,16 @@
             <!-- VIEW: LAPORAN & FORM -->
             <div id="view-reports" class="view-section">
                 <div id="reportModule"></div>
+            </div>
+
+            <!-- VIEW: PEOPLE & KPI -->
+            <div id="view-people" class="view-section">
+                <div id="peopleKpiModule"></div>
+            </div>
+
+            <!-- VIEW: HSE / ACCIDENT -->
+            <div id="view-hse" class="view-section">
+                <div id="hseAccidentModule"></div>
             </div>
 
             <!-- VIEW: UNDER CONSTRUCTION -->
@@ -1125,5 +1137,7 @@
     </script>
     <script src="scripts/report-forms.js"></script>
     <script src="scripts/preventive-maintenance.js"></script>
+    <script src="scripts/people-kpi.js"></script>
+    <script src="scripts/hse-accident.js"></script>
 </body>
 </html>

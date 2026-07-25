@@ -457,76 +457,104 @@ GROUP BY a.asset_id;
 
 ---
 
-### 3.12 People & KPI (`view-uc` -> People & KPI)
+### 3.12 People & KPI (`#view-people`)
 
 #### A. Analisis & Scope HTML (`dashboard.html`)
-Ditempatkan pada seksi `#view-uc` dengan judul "People & KPI".
+Diterapkan pada seksi khusus `#view-people` dengan modul independen `scripts/people-kpi.js` dan `scripts/people-kpi.css`, terakses secara langsung dari sidebar navigasi `onclick="showView('people', '', 'menu-people')"`.
 
-#### B. Pemahaman Alur Bisnis & Aturan Sistem
-Sesuai `Template_KPI_Head_of_Equipment.md` dan `Analisis Produktivitas / Absensi / SPL`.
-Modul ini mengukur kinerja tim maintenance:
-* Jam produktif mekanik (Time Log WO).
-* Efektivitas pengerjaan (Rasio WO selesai tepat waktu vs Overdue).
-* MTTR (Mean Time to Repair) per Mekanik/Group.
+#### B. Pemahaman Alur Bisnis & Integration Context (`material/KPI-TEAM/`)
+Modul ini mengintegrasikan secara erat 5 dokumen utama dari direktori `material/KPI-TEAM/`:
+1. **`Template_KPI_Head_of_Equipment.md`**: Penilaian 10 Indikator Kinerja Head of Equipment (Target RTW, Downtime, Kepatuhan PM, Waktu Respon, Delay Parts, Delay Manpower, Deviasi Biaya, Repeat Breakdown, Pelaporan & Inisiatif) dengan kalkulator interaktif terbobot.
+2. **`analisis_produktivitas_mekanik_feb2026.md`**: Rekapitulasi produktivitas 10 mekanik (489.62 jam kerja teralokasi, 430.11 jam normal, 59.51 jam lembur, rasio delay sparepart, efektivitas vs standar 208 jam/bulan).
+3. **`Evaluasi_P_Martin_dan_Standar_Planner.md`**: Matriks kesenjangan kompetensi Maintenance Planner (Latar belakang D3 Akuntansi vs Standar D3/S1 Teknik Mesin), serta Roadmap Pengembangan 30-60-90 Hari.
+4. **`ABSEN_DAN_LEMBUR_JANUARI_2026_YARD_KM12.md`**: Rekapitulasi absensi (KJ, KL, O) dan leaderboard lembur 27 personel (1.397 jam lembur audit).
+5. **`SPL_23_JULI_2026_konversi_dan_penjelasan.md`**: Audit verifikasi Surat Perintah Lembur resmi Workshop KM 12 (Suwardi & Hendrik, 16:00-17:00).
 
 #### C. Spesifikasi Teknis Frontend
-* Leaderboard Performa Mekanik (Avatar, Nama, Rating, Selesai WO, Total Jam Lembur).
-* Matrix Skill Mekanik (Kompetensi Engine, Electrical, Hydraulic).
+* **Multi-Tab Architecture**: 4 Sub-Modul (Tab 1: KPI Head of Equipment, Tab 2: Produktivitas Mekanik, Tab 3: Evaluasi Maintenance Planner, Tab 4: Absensi & Lembur Tim).
+* **Dynamic Weighted Calculator**: Penilaian Skor 1-5 dengan formula `Nilai Bobot = Skor × Bobot / 5`, yang meng-update total skor dan status kategori secara *real-time*.
+* **Interactive Leaderboard & Filters**: Filter pencarian mekanik, visualisasi *progress bar* efektivitas, dan widget audit TTD Surat Perintah Lembur (SPL).
 
-#### D. Spesifikasi Backend & KPI Aggregator
-* **Endpoint**: `GET /api/v1/people/mechanic-performance` & `GET /api/v1/people/overtime-summary`.
+#### D. Spesifikasi Backend & API Aggregator
+* **Endpoints**: `GET /api/v1/people/head-kpi`, `GET /api/v1/people/mechanic-productivity`, `GET /api/v1/people/planner-evaluation`, `GET /api/v1/people/overtime-summary`.
 
-#### E. Tabulasi Indikator Evaluasi KPI Mekanik
-| Metric KPI | Bobot | Rumus / Indikator Evaluasi | Benchmark Target |
-|:---|:---|:---|:---|
-| Repair Efficiency | 35% | `Standard Estimated Time / Actual Repair Time * 100%` | >= 95% |
-| Work Order Quality | 30% | `100% - (Repeat Order Failure Rate innerhalb 7 hari)` | >= 98% (No Repeat Fail) |
-| Safety & 5S Compliance| 20% | Insiden Kerja & Keberlanjutan APD di Bay Workshop | 0 Accident (Zero Harm) |
-| Timesheet Discipline | 15% | Kepatuhan Start/Stop Timer Pekerjaan pada WO | 100% Recorded |
+#### E. Tabulasi Matriks 10 Indikator KPI Head of Equipment
+| No | Aspek KPI | Indikator Kinerja | Target | Bobot (%) | Formula & Rule Penilaian |
+|:---|:---|:---|:---|:---|:---|
+| 1 | RTW & Downtime | % Unit Selesai ≤ Target RTW | ≥ 90% | 15% | `RTW On-Time / Total RTW * 100%` |
+| 2 | RTW & Downtime | Rata-rata Downtime per Unit | ≤ Standar | 20% | DT Dump Truck ≤ 5-7 Hari; No Unit > 7 Hari |
+| 3 | RTW & Downtime | Kepatuhan PM Tepat Waktu | ≥ 95% | 10% | `PM On-Time / Total PM Due * 100%` |
+| 4 | Percepatan | Waktu Respon Awal Kerusakan | ≤ 24 Jam | 10% | Elapsed Time sejak laporan sampai JO terbit |
+| 5 | Percepatan | Keterlambatan karena Spare Part | ≤ 10% | 10% | `Job Delayed Parts / Total Maintenance Job * 100%` |
+| 6 | Percepatan | Keterlambatan karena Manpower | ≤ 5% | 5% | `Job Delayed Manpower / Total Maintenance Job * 100%` |
+| 7 | Biaya & Kualitas | Deviasi Biaya Corrective | ≤ 110% | 10% | `Biaya Corrective Actual / Biaya Rencana * 100%` |
+| 8 | Biaya & Kualitas | Repeat Breakdown ≤ 30 Hari | ≤ 5% | 10% | `Kerusakan Berulang ≤ 30hr / Total Repair Selesai * 100%` |
+| 9 | Kepemimpinan | Monitoring & Pelaporan Unit | Konsisten | 5% | Kepatuhan pengisian JO, RTW, & report harian |
+| 10| Kepemimpinan | Inisiatif Percepatan Perbaikan | Aktif | 5% | Penambahan shift, vendor support, & prioritas repair |
 
 #### F. Supporting AI Prompt (Production Ready)
-> "Buatkan tampilan UI 'Mechanic Performance Leaderboard' pada `#view-uc`. Tampilkan tabel berisi Nama Mekanik, Skill Level (Lead/Senior/Junior), Jumlah WO Selesai, Rata-rata Durasi Perbaikan, dan Score KPI dalam bentuk Progress Bar atau Star Rating."
+> "Terapkan modul JavaScript `scripts/people-kpi.js` dan CSS `scripts/people-kpi.css` yang merender tampilan 'People & KPI' pada container `#peopleKpiModule`. Sertakan kalkulator interaktif KPI Head of Equipment, tabel produktivitas 10 mekanik dengan efektivitas vs 208 jam, matriks gap kompetensi planner, dan leaderboard lembur Januari 2026."
 
 ---
 
-### 3.13 HSE / Accident (`view-uc` -> HSE / Accident)
+### 3.13 HSE / Accident (`#view-hse`)
 
 #### A. Analisis & Scope HTML (`dashboard.html`)
-Ditempatkan pada seksi `#view-uc` dengan judul "HSE / Accident".
+Diterapkan pada seksi khusus `#view-hse` dengan modul independen `scripts/hse-accident.js` dan `scripts/hse-accident.css`, terakses secara langsung dari sidebar navigasi `onclick="showView('hse', '', 'menu-hse')"`.
 
-#### B. Pemahaman Alur Bisnis & Aturan Sistem
-Berdasarkan `LAPORAN_ACCIDENT.md` dan `TAR_Unit_CS_41001_RWI.md` (BPMN 6).
-Setiap kejadian insiden/kecelakaan kerja yang melibatkan alat berat wajib melalui registrasi laporan insiden. Unit otomatis berstatus `ACCIDENT_HOLD` dan tidak dapat dioperasikan sampai ada verifikasi rilis resmi dari General Manager & HSE Head.
+#### B. Pemahaman Alur Bisnis & Integration Context (`material/LAPORAN_ACCIDENT.md` & `TAR_Unit_CS_41001_RWI.md`)
+Modul ini mengintegrasikan secara rinci format registrasi laporan kecelakaan kerja dan laporan analisis teknis:
+1. **`material/LAPORAN_ACCIDENT.md`**: Mengadopsi 7 seksi standar laporan insiden:
+   - Seksi I (Data Umum: Dokumen No, Unit Code, Tipe/Merk, Plat, Lokasi, Datetime, Operator & Masa Kerja).
+   - Seksi II (Kronologi Kejadian: Deskripsi narasi objektif).
+   - Seksi III (Kondisi Lingkungan: Cuaca, Jalan, Penerangan, Kepadatan, Muatan).
+   - Seksi IV (Dampak Insiden: Kerusakan fisik, Estimasi downtime, Kerugian finansial).
+   - Seksi V (Analisa Awal Penyebab: Checkbox faktor Human, Mechanical, Environmental, Procedural).
+   - Seksi VI & VII (Corrective Action & Preventive Action / CAPA Tracking).
+2. **`material/BREAKDOWN/TAR_Unit_CS_41001_RWI.md`**: Mengintegrasikan Case Study Technical Analysis Report (TAR No. 01/TAR/05/2026 Unit CS-41001 Powder Binder Spreader XCMG XKC185, trouble 11-Mei-2026 overload cement, penanganan & klaim garansi OEM XCMG).
 
 #### C. Spesifikasi Teknis Frontend
-* Multi-step Wizard Form Pelaporan Insiden (Step 1: Data Kejadian & Dampak, Step 2: Klasifikasi Kerusakan & Foto, Step 3: Action Plan CAPA).
-* Status Lock Indicator Banner pada Unit yang dalam penahanan insiden.
+* **Multi-Step Wizard Incident Form**: 3 Step (Step 1: Data Umum & Kronologi, Step 2: Lingkungan & Dampak Finansial, Step 3: Faktor Penyebab & CAPA).
+* **Unit Lock Engine (`ACCIDENT_HOLD`)**: Insiden severitas *Moderate* & *Critical* secara otomatis mengubah status unit di `globalData.assets` menjadi `ACCIDENT_HOLD` dan memunculkan *Red Alert Banner* di bagian atas layar.
+* **Otorisasi Rilis Unit**: Pengunci unit hanya dapat di-release kembali ke status `READY` setelah mendapatkan verifikasi otorisasi dari Equipment Manager / Safety Head.
 
 #### D. Spesifikasi Backend & Schema Relasional
 ```sql
 CREATE TABLE accidents (
     accident_id VARCHAR(50) PRIMARY KEY,
     asset_id VARCHAR(50),
-    incident_date TIMESTAMP,
+    report_date DATE,
+    incident_datetime TIMESTAMP,
     location VARCHAR(100),
-    severity_level ENUM('Minor', 'Moderate', 'Critical/Fatal'),
-    description TEXT,
-    financial_impact_estimate DECIMAL(15,2),
+    operator_name VARCHAR(100),
+    operator_tenure VARCHAR(50),
+    chronology TEXT,
+    weather VARCHAR(50),
+    road_condition VARCHAR(50),
+    lighting_condition VARCHAR(50),
+    severity_level ENUM('Minor', 'Moderate', 'Critical') DEFAULT 'Minor',
+    physical_damage TEXT,
+    estimated_repair_cost DECIMAL(15,2),
+    estimated_downtime_days INT,
+    total_financial_loss DECIMAL(15,2),
+    cause_factors JSON,
+    corrective_action TEXT,
+    preventive_action TEXT,
+    is_unit_locked BOOLEAN DEFAULT TRUE,
     status ENUM('Reported', 'Investigating', 'CAPA_Pending', 'Closed') DEFAULT 'Reported',
-    unit_released BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (asset_id) REFERENCES assets(asset_id)
 );
 ```
 
 #### E. Tabulasi Klasifikasi Severitas Insiden & Alur Rilis
-| Level Severitas | Dampak Insiden | Otoritas Approval Rilis Unit | Tindakan Wajib Sistem |
+| Level Severitas | Dampak Insiden & Ambang Kerugian | Otoritas Approval Rilis Unit | Tindakan Wajib Sistem |
 |:---|:---|:---|:---|
-| **Minor** | Kerusakan Ringan, No Injury, Cost < Rp 10 Juta | Equipment Manager & Safety Officer | Auto-Generate Repair WO |
-| **Moderate** | Kerusakan Komponen Utama, First Aid Injury | Equipment Manager & HSE Head | Lock Unit -> Status `ACCIDENT_HOLD` |
-| **Critical** | Major Structural Damage, Fatality / Lost Time | General Manager & Direktur Operasional | Lock Unit + Investigasi CAPA Mandatory |
+| **Minor** | Kerusakan Ringan, No Injury, Cost < Rp 10 Juta | Equipment Manager & Safety Officer | Unit Tetap Operasional / WO Regular |
+| **Moderate** | Kerusakan Komponen Utama, Downtime 1-3 Hari | Equipment Manager & HSE Head | Lock Unit -> Status `ACCIDENT_HOLD` |
+| **Critical** | Major Structural Damage, Fatality / High Loss (>Rp 30 Jt) | General Manager & Direktur Operasional | Lock Unit + TAR Mandatory & Audit CAPA |
 
 #### F. Supporting AI Prompt (Production Ready)
-> "Buatkan UI Form Stepper Pelaporan Accident pada `#view-uc`. Form memiliki 3 langkah: Step 1 (Tanggal, Unit ID, Lokasi, Driver), Step 2 (Kronologi Kejadian & Upload Bukti Kerusakan), Step 3 (Estimasi Kerugian & Form CAPA). Tambahkan badge peringatan 'UNIT LOCKED (ACCIDENT HOLD)' pada ringkasan."
+> "Terapkan modul `scripts/hse-accident.js` dan `scripts/hse-accident.css` pada container `#hseAccidentModule`. Sertakan multi-step form wizard pelaporan insiden 3 step, banner unit locked `ACCIDENT_HOLD`, tabulasi case study TAR Unit CS-41001 XCMG, serta otorisasi rilis unit kembali ke READY."
 
 ---
 
