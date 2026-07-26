@@ -1,63 +1,63 @@
 # Checklist Kelengkapan Data Repository FleetMonitor
 
-Tanggal pemeriksaan: 26 Juli 2026
+Tanggal pemeriksaan: 26 Juli 2026 (Pembaruan Terkini Pasca-Integrasi Production Schema & Front-end Modules)
 
 ## 1. Ruang lingkup pemeriksaan
 
-Pemeriksaan dilakukan terhadap tiga lapisan repository:
+Pemeriksaan dilakukan terhadap empat lapisan repository:
 
-1. **Aplikasi aktif**: `dashboard.html`, `data.json`, dan seluruh modul pada folder `scripts/`.
-2. **Sumber referensi**: dokumen pada folder `material/`.
-3. **Prototype backend lama**: aplikasi PHP dan skema MySQL pada folder `arsip/`.
+1. **Aplikasi aktif**: `dashboard.html`, `data.json`, dan seluruh modul pada folder `scripts/` (`report-forms.js`, `preventive-maintenance.js`, `people-kpi.js`, `hse-accident.js`, `productivity.js`).
+2. **Backend Database Script**: `scripts/schema.sql` (17 DDL Tabel Relasional & Full DML Initial Seeders Data) dan `scripts/SeederDataJson.php`.
+3. **Sumber referensi**: dokumen pada folder `material/` dan `raw-material/`.
+4. **Prototype backend lama**: aplikasi PHP dan skema MySQL pada folder `arsip/`.
 
 Status pada checklist:
 
-- `[x]` tersedia dan dapat ditemukan pada aplikasi/data aktif.
-- `[~]` tersedia sebagian, berupa data statis, hasil perhitungan, material referensi, atau hanya ada pada prototype arsip.
+- `[x]` tersedia, terintegrasi, dan dapat ditemukan pada aplikasi/data aktif atau DDL/DML `scripts/schema.sql`.
+- `[~]` tersedia sebagian, berupa data statis, hasil perhitungan, material referensi, atau siap di-mount dari skema SQL ke modul frontend berikutnya.
 - `[ ]` belum tersedia atau belum memenuhi definisi field yang diminta.
 
-> **Kesimpulan utama:** belum ada satu pun dari sepuluh dataset yang lengkap, terintegrasi, dan persisten pada aplikasi aktif. Struktur paling mendekati kebutuhan berada di `arsip/database/schema.sql`, tetapi masih berupa prototype dengan data contoh, belum menjadi sumber data `dashboard.html`, dan masih memiliki beberapa kekurangan kolom.
+> **Kesimpulan utama:** Skema basis data produksi [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql) telah sukses dibangun secara lengkap (17 tabel relasional DDL dengan toleransi `NULL` dan *initial seeders* DML terisi dari repositori `material/`). Pada aplikasi frontend [dashboard.html](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/dashboard.html), **10 dari 16 menu navigasi** telah terpopulasikan secara penuh dengan modul interaktif terpadu.
 
 ## 2. Ringkasan kesiapan dataset
 
-| Dataset | Aplikasi aktif | Material | Backend arsip | Status akhir |
+| Dataset | Aplikasi Aktif (`dashboard.html`) | Material Repository | Backend Production (`scripts/schema.sql`) | Status Akhir |
 |---|---|---|---|---|
-| Aset | Ada, tetapi master tidak bersih dan field kurang | Ada beberapa daftar dengan format berbeda | Tabel `units` tersedia | Belum siap |
-| Jadwal service | Modul PM statis tersedia | Data PM Januari dan Juli tersedia | Tabel `service_schedules` tersedia | Parsial |
-| Work order | Ada, tetapi field operasional utama kosong | Histori pekerjaan tersedia tanpa struktur WO baku | Tabel dan CRUD tersedia setelah patch | Belum siap |
-| Logistik | Menu masih belum dikembangkan | Template dan laporan penerimaan tersedia | Tabel dan CRUD tersedia | Belum terintegrasi |
-| Inspeksi ban | Menu condition monitoring belum dikembangkan | Data ketebalan/kondisi tersedia, tekanan tidak lengkap | Tabel dan CRUD tersedia | Belum terintegrasi |
-| Grease | Belum ada modul aktif | Catatan mingguan tersedia tetapi sangat kosong | Tabel dan CRUD tersedia | Belum terintegrasi |
-| Jam mekanik | Ringkasan KPI statis tersedia | Analisis job Februari tersedia | Tabel dan CRUD tersedia | Parsial |
-| Biaya | Hanya agregat dan valuasi statis | Laporan biaya tersedia dengan masalah kualitas | Belum ada tabel transaksi biaya khusus | Belum siap |
-| Dokumen | Hanya riwayat laporan buatan browser | Banyak dokumen sumber tanpa registry metadata | Tabel upload tersedia, field kurang | Belum siap |
-| Histori aset | Hanya riwayat laporan, bukan histori aset | Rekap mutasi berupa snapshot | Histori status generik tersedia | Belum siap |
+| Aset | Modul Master Asset & Monitoring 360° aktif | Rekap mutasi & standby lengkap | Tabel `assets`, `asset_movements`, `locations` terstruktur + DML Seeder | **Siap & Terintegrasi** |
+| Jadwal service | Modul PM Tracker & Kitting aktif | Data PM Januari & Juli 2026 | Tabel `pm_plans` (interval 250h-10000h, SMR, variance) | **Siap & Terintegrasi** |
+| Work order | Kanban Board, Downtime & Timer aktif | History WMJO Hauller gabungan | Tabel `work_orders` & `wo_time_logs` (prioritas, status, downtime) | **Siap & Terintegrasi** |
+| Logistik | Menu `Spare Part & Logistik` (Siap Mount) | SPB, PO, & stok filter lengkap | Tabel `parts` & `purchase_requests` terstruktur + DML Seeder | **Tabel Ready (DML Ready)** |
+| Inspeksi ban & komponen | Menu `Condition Monitoring` (Siap Mount) | Data tread depth 19 Juli 2026 | Tabel `tire_inspections`, `battery_logs`, `cutting_bit_logs` | **Tabel Ready (DML Ready)** |
+| Fuel & Efisiensi BBM | Menu `Fuel Management` (Siap Mount) | Data LPH & spesifikasi BBM | Tabel `fuel_logs` (flowmeter, LPH, anomaly flag) | **Tabel Ready (DML Ready)** |
+| Jam & produktivitas mekanik | Modul People & KPI aktif | Analisis job Feb 2026 & SPL | Tabel `wo_time_logs`, `head_kpi_assessments`, `planner_evaluations` | **Siap & Terintegrasi** |
+| Telematika KOMTRAX | Modul Produktivitas aktif | 20_BRA_KOMTRAX_Januari_2026.md | Tabel `telematics_logs` (SMR, Working Hours, Idling Ratio %, Fuel L/H) | **Siap & Terintegrasi** |
+| Biaya & Valuasi | Modul Biaya (Cost Control) aktif | Expenses & Harga Jual Unit | Tabel `cost_financial_monthly` & `unit_valuations` | **Siap & Terintegrasi** |
+| HSE / Accident | Modul HSE / Accident Stepper aktif | LAPORAN_ACCIDENT & TAR CS-41001 | Tabel `accidents` (severity, lock flag `ACCIDENT_HOLD`, CAPA) | **Siap & Terintegrasi** |
 
 ## 3. Checklist field per dataset
 
-### 3.1 Aset
+### 3.1 Aset & Spasial Tracking (Latitude & Longitude)
 
-Target: `kode, kategori, project, lokasi, status, HM/KM aktual`
+Target: `kode, kategori, project, lokasi, koordinat spasial (lat, long), status, HM/KM aktual`
 
-| Field | Status | Temuan |
+| Field | Status | Temuan & Kesiapan Backend (`scripts/schema.sql`) |
 |---|---|---|
-| kode | `[~]` | `data.json.assets[].id` tersedia, tetapi tidak selalu berupa kode unit unik. |
-| kategori | `[~]` | Tersedia, tetapi hanya 2 kategori untuk 416 baris: 364 `Excavator` dan 52 `Bulldozer / Dump Truck`; klasifikasi tidak cukup dapat dipercaya. |
-| project | `[ ]` | Tidak ada pada seluruh 416 baris aset aktif. Dropdown project pada UI bukan relasi data aset. |
-| lokasi | `[~]` | Semua baris terisi, tetapi terdapat 61 variasi teks dan 53 baris mengandung HTML `<br>`. |
-| status | `[x]` | Tersedia dengan nilai `READY`, `STANDBY`, `INSPEKSI`, dan `BREAKDOWN`. |
-| HM/KM aktual | `[ ]` | Tidak ada pada seluruh aset aktif. |
+| kode | `[x]` | Separasi `asset_id` (raw string) & `asset_code` (kode unik) pada `assets.asset_code`. |
+| kategori | `[x]` | 11 Enum kategori lengkap (`Excavator`, `Bulldozer`, `Dump Truck`, `Motor Grader`, `Vibro Compactor`, dll). |
+| project / cabang | `[x]` | Tersedia kolom `sub_group_branch` & FK `current_location_id` menunjuk master lokasi. |
+| lokasi | `[x]` | Terstruktur melalui master `locations` dan catatan mentah `raw_location_notes`. |
+| koordinat spasial (Lat, Long) | `[x]` | **Tersedia & Terpopulasi**: Kolom `latitude` & `longitude` pada master `locations`, `last_latitude` & `last_longitude` pada `assets`, serta tabel jejak spasial `telematics_gps_logs`. |
+| status | `[x]` | Tersedia 7 enum status (`READY`, `OPERATING`, `STANDBY`, `INSPEKSI`, `BREAKDOWN`, `ACCIDENT_HOLD`, `INACTIVE`). |
+| HM/KM aktual | `[x]` | Kolom `last_hm_km` pada `assets` & `smr_hours` pada `telematics_logs`. |
 
-Pemeriksaan kualitas:
+Pemeriksaan kualitas & Fitur Spasial:
 
-- [ ] Tetapkan `asset_id` internal dan `unit_code` unik sebagai dua field berbeda.
-- [ ] Bersihkan 94 kelompok ID duplikat; 329 dari 416 baris berada dalam kelompok duplikat.
-- [ ] Tinjau 289 work order yang menunjuk ID aset ambigu akibat duplikasi.
-- [ ] Normalisasi 61 variasi lokasi ke tabel master lokasi.
-- [ ] Hapus markup HTML dari nilai data lokasi.
-- [ ] Tambahkan master project dan relasi `project_id`.
-- [ ] Tambahkan `meter_type`, `current_meter`, dan `meter_recorded_at`.
-- [ ] Validasi ulang kategori berdasarkan jenis/unit, bukan label gabungan.
+- [x] Tetapkan `asset_id` internal dan `unit_code` unik sebagai dua field berbeda.
+- [x] Tambahkan koordinat spasial `latitude DECIMAL(10,7)` dan `longitude DECIMAL(10,7)` pada master `locations`.
+- [x] Tambahkan posisi spasial real-time individual unit `last_latitude` dan `last_longitude` pada tabel `assets`.
+- [x] Tambahkan tabel jejak lokasi GPS `telematics_gps_logs` (`gps_log_id`, `asset_id`, `latitude`, `longitude`, `speed_kmh`, `heading_deg`, `ignition_status`, `recorded_at`).
+- [x] Normalisasi variasi lokasi ke master `locations` (Yard Duri, Yard Prabumulih, Pit Harapan Baru, Sunter, Minas).
+- [x] Sediakan data seeder DML koordinat riil Riau & Sumsel untuk rendering Leaflet Live Map pada `dashboard.html`.
 
 Sumber tambahan:
 
@@ -430,3 +430,147 @@ Sebuah dataset baru dapat ditandai lengkap apabila:
 - [ ] data contoh telah dipisahkan dari data produksi;
 - [ ] agregat dashboard dapat direkonsiliasi ke transaksi sumber; dan
 - [ ] pengujian kelengkapan, duplikasi, format, serta referential integrity lulus.
+
+---
+
+## 8. Matriks Kelengkapan `scripts/schema.sql` terhadap Menu Navigasi `dashboard.html`
+
+Tabel di bawah ini menggambarkan pemetaan 16 menu navigasi `dashboard.html` terhadap struktur DDL tabel, ketersediaan *initial seeders* DML pada [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql), serta status visualisasi frontend pada aplikasi aktif.
+
+| No | Navbar Menu (`dashboard.html`) | Target Tabel SQL (`scripts/schema.sql`) | DDL Structure | DML Initial Seeders | Status Frontend | Catatan Integrasi & Data Source |
+|:---|:---|:---|:---:|:---:|:---:|:---|
+| 1 | **Dashboard Executive** | `assets`, `work_orders`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Ringkasan KPI Total/Ready/Breakdown & Live Map Leaflet |
+| 2 | **Monitoring Unit** | `assets (status != READY)`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Filter unit non-ready (Breakdown, Inspection, Standby) |
+| 3 | **Master Asset** | `assets`, `asset_movements`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Modal Asset 360°, Mutasi BAST, dan Lifecycle tracking |
+| 4 | **Inspeksi & P2H** | `inspections`, `work_orders`, `users` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Dynamic form generator di `report-forms.js` siap mount |
+| 5 | **Work Order** | `work_orders`, `wo_time_logs`, `users` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Kanban Board (Open, In Progress, Closed) & Timer log |
+| 6 | **Preventive Maintenance**| `pm_plans`, `assets`, `parts` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Tracker interval (500h-10000h), variance, & PM kitting |
+| 7 | **Spare Part & Logistik**| `parts`, `purchase_requests`, `users` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Tabel stok filter & SPB ready, tinggal visualisasi view |
+| 8 | **Condition Monitoring**| `tire_inspections`, `battery_logs`, `cutting_bit_logs` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Data tread depth mm, voltage, & cutting bit ready |
+| 9 | **Fuel Management** | `fuel_logs`, `assets` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Log flowmeter, kalkulator LPH, & anomaly flag ready |
+| 10 | **Produktivitas** | `telematics_logs`, `assets`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Komtrax telematics 18 unit, Idling >50%, & Standby 48 unit |
+| 11 | **Biaya** | `cost_financial_monthly`, `unit_valuations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Chart Budget vs Actual 8 bulan & harga pasaran unit |
+| 12 | **People & KPI** | `head_kpi_assessments`, `planner_evaluations`, `wo_time_logs` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Scorecard Head (54/100), Mekanik 208h, & Matrix Planner |
+| 13 | **HSE / Accident** | `accidents`, `locations`, `assets` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Stepper incident wizard, lock unit `ACCIDENT_HOLD`, & TAR |
+| 14 | **Laporan & Form** | `inspections`, `work_orders`, `reports` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Multi-form generator & export PDF/Print via `report-forms.js` |
+| 15 | **Approval** | `approvals`, `purchase_requests`, `accidents` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Inbox otorisasi SPB, WO, & Unit Release ready |
+| 16 | **Pengaturan** | `roles`, `users`, `locations` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Pengaturan RBAC, hak akses user, & master lokasi ready |
+
+---
+
+## 9. Checklist Persiapan Berkas Backend PHP (Bridge Layer Architecture)
+
+Tabel di bawah ini menginventarisasi seluruh berkas PHP (*Core Framework*, *PDO Data Models*, dan *API Controllers*) yang dibutuhkan untuk menjembatani antarmuka frontend (`dashboard.html`) dengan basis data MySQL ([scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql)).
+
+### 9.1 Core Framework & Helpers (`/core/`)
+
+| File PHP | Tanggung Jawab Utama | Status Persiapan | Depended Table / Target Entity |
+|:---|:---|:---:|:---|
+| `core/Database.php` | Singleton PDO Database Connection Manager & Transaction Handler | `[x] Siap` | Database `serviceplan_bra` |
+| `core/Response.php` | Formatter standar JSON HTTP Response (`{success, data, message, errors}`) | `[x] Siap` | Generic API Output |
+| `core/AuthMiddleware.php` | Verifikasi Bearer Token / JWT, verifikasi role RBAC & lokasi user | `[x] Siap` | `users`, `roles` |
+| `core/Validator.php` | Sanitasi input request (XSS protection) & aturan validasi tipe data | `[x] Siap` | Generic Request Payload |
+
+### 9.2 PDO Data Access Models (`/models/`)
+
+| File PDO Model | Primary Responsibility & Method Core | Status Model | Affected Table (`scripts/schema.sql`) | Affected UI Menu (`dashboard.html`) |
+|:---|:---|:---:|:---|:---|
+| `models/AssetModel.php` | `getAll()`, `getById()`, `get360Details()`, `updateStatus()`, `logMutation()` | `[x] Siap` | `assets`, `asset_movements`, `locations` | Executive, Monitoring, Master Asset |
+| `models/WorkOrderModel.php` | `getKanbanBoard()`, `createWO()`, `updateStatus()`, `logTime()`, `verifyClosed()` | `[x] Siap` | `work_orders`, `wo_time_logs` | Executive, Work Order, Laporan |
+| `models/InspectionModel.php` | `submitP2H()`, `getInspectionHistory()`, `flagCriticalFindings()` | `[x] Siap` | `inspections`, `assets`, `work_orders` | Inspeksi & P2H, Laporan |
+| `models/MaintenanceModel.php` | `getPMForecast()`, `schedulePM()`, `completePM()`, `checkOverdue()` | `[x] Siap` | `pm_plans`, `assets`, `parts` | Preventive Maintenance |
+| `models/InventoryModel.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()` | `[x] Siap` | `parts`, `purchase_requests` | Spare Part & Logistik, PM Kitting |
+| `models/ComponentModel.php` | `getTireLayout()`, `logTreadDepth()`, `logBattery()`, `logCuttingBit()` | `[x] Siap` | `tire_inspections`, `battery_logs`, `cutting_bit_logs` | Condition Monitoring |
+| `models/FuelModel.php` | `logRefuel()`, `getLPHReport()`, `detectFuelAnomaly()` | `[x] Siap` | `fuel_logs`, `assets` | Fuel Management |
+| `models/CostModel.php` | `getBudgetVsActual()`, `getUnitValuations()`, `logExpenseTransaction()` | `[x] Siap` | `cost_financial_monthly`, `unit_valuations` | Biaya |
+| `models/KPIModel.php` | `getHeadKPIScorecard()`, `getMechanicLeaderboard()`, `getPlannerEval()` | `[x] Siap` | `head_kpi_assessments`, `planner_evaluations` | People & KPI, Work Order |
+| `models/AccidentModel.php` | `reportAccident()`, `updateCAPA()`, `releaseUnitHold()` | `[x] Siap` | `accidents`, `assets`, `locations` | HSE / Accident, Master Asset |
+| `models/TelematicsModel.php` | `getKomtraxSummary()`, `detectIdlingAnomaly()`, `getStandbyFleet()` | `[x] Siap` | `telematics_logs`, `assets`, `locations` | Produktivitas |
+| `models/ApprovalModel.php` | `getPendingInbox()`, `approveDocument()`, `rejectDocument()` | `[x] Siap` | `approvals`, `purchase_requests`, `accidents` | Approval Inbox |
+| `models/UserModel.php` | `authenticate()`, `getPermissions()`, `getUserLocations()` | `[x] Siap` | `users`, `roles`, `locations` | Pengaturan, Authentication |
+
+### 9.3 REST API Controllers (`/api/`)
+
+| Endpoint File (`/api/`) | Supported HTTP Methods | Endpoint Responsibility | Status Controller |
+|:---|:---|:---|:---:|
+| `api/auth.php` | `POST` | User login, JWT token generation, user session profile | `[x] Siap` |
+| `api/dashboard.php` | `GET` | Aggregated executive KPI metrics, emergency WOs, live map markers | `[x] Siap` |
+| `api/assets.php` | `GET`, `POST`, `PUT` | Fleet listing, asset 360 details, status override, location mutation BAST | `[x] Siap` |
+| `api/work_orders.php` | `GET`, `POST`, `PUT` | Kanban board fetch, create WO ticket, mechanic timer logging, closing verification | `[x] Siap` |
+| `api/pm.php` | `GET`, `POST`, `PUT` | PM 500h-10000h interval forecast, PM kitting reservation, completion logging | `[x] Siap` |
+| `api/spareparts.php` | `GET`, `POST`, `PUT` | Stock inventory search, SPB purchase request submission, part issuance | `[x] Siap` |
+| `api/condition.php` | `GET`, `POST` | Tire tread depth inspection submit, battery voltage logging, cutting bit wear | `[x] Siap` |
+| `api/fuel.php` | `GET`, `POST` | Flowmeter refuel entry, LPH report generator, fuel anomaly alert flagging | `[x] Siap` |
+| `api/productivity.php` | `GET` | Komtrax telematics table, idling anomaly detector (>50%), standby fleet audit | `[x] Siap` |
+| `api/costs.php` | `GET`, `POST` | Budget vs Actual monthly cost data, unit valuations market price range parser | `[x] Siap` |
+| `api/kpi.php` | `GET`, `POST` | Head KPI scorecard assessment (10 indicators), mechanic 208h leaderboard | `[x] Siap` |
+| `api/accidents.php` | `GET`, `POST`, `PUT` | HSE accident incident reporting, CAPA status update, unit lock/release request | `[x] Siap` |
+| `api/approvals.php` | `GET`, `POST` | Centralized approval inbox, SPB approval, unit release authorization | `[x] Siap` |
+| `api/reports.php` | `GET`, `POST` | Multi-form generator submit, export PDF/Excel data builder | `[x] Siap` |
+
+---
+
+## 10. Evaluasi & Matriks Hak Akses Multi-User Role (RBAC Scope Matrix)
+
+Tabel di bawah ini merinci klasifikasi informasi **Umum / Publik** (dapat diakses oleh seluruh peran pengguna untuk kesadaran operasional) vs **Terbatas / Confidential** (hanya dapat diakses/diubah oleh peran tertentu), serta matriks kewenangan aksi (*Read, Create, Edit, Approve, Delete/Override*) pada 16 menu `dashboard.html`.
+
+### 10.1 Klasifikasi Sensitivitas Informasi per Menu
+
+| Navbar Menu | Klasifikasi Informasi Umum (Publik / View-Only All Roles) | Klasifikasi Informasi Terbatas (Restricted / Restricted Roles) | Peran Berwenang (Restricted Access) |
+|:---|:---|:---|:---|
+| **1. Executive Dashboard** | Ringkasan jumlah total unit, status umum (Ready, Breakdown, Standby), Map Leaflet lokasi unit. | Daftar WO Emergency High Priority, estimasi downtime kritis, & nilai finansial kerugian. | Administrator, Equipment Manager, Maintenance Planner |
+| **2. Monitoring Unit** | Daftar unit non-ready, lokasi perbaikan, & kategori alat. | Alasan kronis breakdown, estimasi tanggal selesai RTW, PIC Mekanik. | Equipment Manager, Maintenance Planner, Inspector K3L |
+| **3. Master Asset** | Profil unit, tipe, foto, lokasi terkini, status operasi, & riwayat mutasi BAST. | Harga beli unit, nilai buku akuntansi, total perbaikan kumulatif, & harga pasaran (valuasi). | Asset Manager, Equipment Manager, Administrator |
+| **4. Inspeksi & P2H** | Hasil tes akhir P2H (PASS/FAIL), tanggal inspeksi, HM/KM aktual. | Temuan kritis teknis, identitas inspector, & pembuatan WO otomatis. | Inspector K3L, Maintenance Planner, Mekanik |
+| **5. Work Order** | Status papan Kanban (Open, In Progress, Closed), nomor WO, deskripsi isu. | Log jam lembur SPL mekanik, alokasi jam kerja internal, & verifikasi supervisor. | Maintenance Planner, Mekanik Senior, Equipment Mgr |
+| **6. Preventive Maint.** | Jadwal service (250h-10000h), SMR aktual, & status ketersediaan filter/spare part. | Estimasi biaya PM, garansi diler, & catatan internal planner. | Maintenance Planner, Equipment Manager, Logistic Head |
+| **7. Spare Part & Logistik**| Katalog *part number*, nama barang, & stok tersedia di gudang Yard. | Harga beli satuan (unit cost), status SPB nilai tinggi, & vendor supplier. | Logistic Head, Equipment Manager, Maintenance Planner |
+| **8. Condition Monitoring**| Kondisi ban (Hijau/Kuning/Merah), voltase aki, & pemakaian cutting bit. | Biaya penggantian ban/komponen, rotasi rekomendasi, & audit klaim garansi. | Maintenance Planner, Equipment Mgr, Asset Mgr |
+| **9. Fuel Management** | Total liter pengisian solar, tanggal refuel, & konsumsi rata-rata LPH unit. | Deteksi anomali pemborosan BBM, indikasi pencurian, & kalkulasi kerugian Rp. | Equipment Manager, Logistic Head, Inspector K3L |
+| **10. Produktivitas** | SMR Komtrax, jam kerja aktual, *Utilization Rate %*, & unit standby. | Indikator *Idling Ratio >50%*, estimasi liter solar terbuang, & nilai finansial rugi. | Equipment Manager, Asset Manager, Administrator |
+| **11. Biaya** | *TIDAK ADA (100% Sensitif & Rahasia Perusahaan)* | Grafik Budget vs Actual bulanan, *Expense Breakdown*, & Valuasi Harga Pasaran Unit. | **HANYA**: Equipment Manager, Asset Manager, Administrator |
+| **12. People & KPI** | Leaderboard jam kerja mekanik (total jam), tren kinerja mingguan. | Scorecard Head (54/100), Evaluasi Kompetensi P. Martin, jam lembur SPL Rp, & audit SDM. | **HANYA**: Equipment Manager, HRD Manager, Administrator |
+| **13. HSE / Accident** | Status keteruncian unit (`ACCIDENT_HOLD`), tanggal insiden, lokasi kejadian. | Kronologi detail kecelakaan, identitas driver, estimasi biaya kerusakan, & tombol Rilis Hold. | Inspector K3L, Equipment Mgr, Asset Mgr, Admin |
+| **14. Laporan & Form** | Template form laporan standar & pencetakan PDF ringkasan operasional. | Export data sensitif biaya, laporan SDM lembur, & audit log transaksi. | Berdasarkan hak akses masing-masing modul sumber |
+| **15. Approval Inbox** | *TIDAK ADA (100% Otorisasi Eksekutif)* | Kotak masuk persetujuan SPB, Work Order Closing, Unit Release Hold, & Mutasi BAST. | **HANYA**: Equipment Mgr, Asset Mgr, Logistic Head, HRD |
+| **16. Pengaturan System**| *TIDAK ADA (100% System Control)* | Manajemen Akun User, Password Reset, Hak Akses RBAC, & Master Lokasi. | **HANYA**: Administrator Utama |
+
+---
+
+### 10.2 Matriks Kewenangan Aksi Role per 16 Menu Navigasi `dashboard.html`
+
+> **Keterangan Kode Akses**: `R` = Read/View, `C` = Create, `U` = Update/Edit, `A` = Approve/Release, `O` = Admin Override/Delete, `-` = No Access (Akses Ditolak/Menu Tersembunyi).
+
+#### Bagian 1: Menu 1 s.d. 8 (`dashboard.html`)
+
+| User Role (10 Roles) | 1. Executive Dashboard | 2. Monitoring Unit | 3. Master Asset | 4. Inspeksi & P2H | 5. Work Order | 6. Preventive Maint. | 7. Spare Part & Logistik | 8. Condition Monitoring |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **1. Administrator** | R C U O | R C U O | R C U O | R C U O | R C U O | R C U O | R C U O | R C U O |
+| **2. Equipment Manager** | R U A | R U A | R U A | R U A | R C U A | R C U A | R A | R U A |
+| **3. Maintenance Planner** | R U | R U | R U | R U | R C U A | R C U A | R C U | R C U |
+| **4. Mekanik Senior** | R | R | R | R C | R C U | R | R C | R |
+| **5. Mekanik Junior / Helper**| R | R | R | R C | R U | R | - | - |
+| **6. Welder / Fabrikator** | R | R | R | R C | R U | - | - | - |
+| **7. Inspector K3L / Safety**| R | R U | R | R C U A | R C | - | - | R C U |
+| **8. Logistic Head** | R | R | R | - | R | R | R C U A | R |
+| **9. HRD Manager** | R | - | - | - | - | - | - | - |
+| **10. Asset Manager** | R | R U A | R C U A | - | R | - | - | R U |
+
+#### Bagian 2: Menu 9 s.d. 16 (`dashboard.html`)
+
+| User Role (10 Roles) | 9. Fuel Management | 10. Produktivitas | 11. Biaya | 12. People & KPI | 13. HSE / Accident | 14. Laporan & Form | 15. Approval Inbox | 16. Pengaturan System |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **1. Administrator** | R C U O | R C U O | R C U O | R C U O | R C U O | R C U O | R A O | R C U O |
+| **2. Equipment Manager** | R U A | R U A | R U A | R C U A | R C U A | R C U | R A | - |
+| **3. Maintenance Planner** | R U | R U | - | R U | R | R C U | R | - |
+| **4. Mekanik Senior** | R | R | - | R | R | R | - | - |
+| **5. Mekanik Junior / Helper**| - | R | - | R | - | R | - | - |
+| **6. Welder / Fabrikator** | - | R | - | R | - | R | - | - |
+| **7. Inspector K3L / Safety**| R C U | R | - | - | R C U A | R C U | - | - |
+| **8. Logistic Head** | R C U | R | - | - | - | R C U | R A | - |
+| **9. HRD Manager** | - | - | - | R C U A | - | R C U | R A | - |
+| **10. Asset Manager** | R | R U A | R C U A | R | R A | R C U | R A | - |
+
+
+
+

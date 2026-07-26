@@ -1,0 +1,40 @@
+# ============================================================================
+# GITIGNORE CONFIGURATION - SERVICEPLAN-BRA (PT BINA REKAYASA ANUGRAH)
+# Security & Deprecated File Filtering Rules
+# ============================================================================
+
+# 1. Confidential & Legacy Materials (Prevent Public Exposure)
+material/
+raw-material/
+arsip/
+data.json
+
+# 2. Environment & Database Configuration Credentials
+.env
+.env.*
+config/database.local.php
+config/constants.local.php
+
+# 3. Server SQL Dumps & Database Schemas
+*.sql
+scripts/schema.sql
+schema.sql
+
+# 4. Storage & Dynamic Uploads
+uploads/*
+!uploads/.gitkeep
+logs/*.log
+
+# 5. IDE, Editors & OS System Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 6. Temporary Scratch Scripts & IDE Brain Logs
+brain/
+scratch/
+.gemini/

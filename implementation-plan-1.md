@@ -1,5 +1,9 @@
 # Blueprint & Rencana Implementasi Kompleks Sistem Informasi Equipment (ServicePlan-BRA)
 
+> **Status Progress Implementasi Terkini (26 Juli 2026)**:
+> - **Frontend Modules**: 10 dari 16 Navbar Menu di [dashboard.html](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/dashboard.html) telah diimplementasikan secara komprehensif (`#view-dashboard`, `#view-monitoring`, `#view-asset`, `#view-wo`, `#view-pm`, `#view-biaya`, `#view-reports`, `#view-people`, `#view-hse`, `#view-productivity`).
+> - **Backend Database Schema**: Skema basis data produksi [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql) (17 DDL Tabel Relasional & Full DML Initial Seeders) dan skrip migrasi CLI [scripts/SeederDataJson.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/SeederDataJson.php) telah 100% selesai dan siap digunakan.
+
 Dokumen ini merupakan panduan arsitektur teknis dan analisis sistematis mendalam untuk pengembangan *Equipment Maintenance & Fleet Monitoring System* PT Bina Rekayasa Anugrah (BRA). Seluruh penjabaran disusun berpatokan pada struktur elemen tampilan `dashboard.html`, terintegrasi secara ketat dengan folder `material/` (ARSITEKTUR_BPMN, SOP, Laporan Tabulasi, Efisiensi BBM, Laporan Accident, dan Bank Data).
 
 ---
@@ -30,6 +34,7 @@ Sistem dirancang mengusung prinsip **Single Source of Truth (SSOT)** dan **Event
 1. **Event-Driven Status Transmutation**: Status unit (`READY`, `OPERATING`, `STANDBY`, `INSPEKSI`, `BREAKDOWN`, `WAITING_PART`, `ACCIDENT_HOLD`, `INACTIVE`) **TIDAK BISA** diubah secara manual tanpa transaksi yang valid. Contoh: Pembuatan Work Order (WO) dengan flag `downtime=true` otomatis mengubah status unit menjadi `BREAKDOWN`.
 2. **Workflow Gatekeeper & SLA**: Transisi status WO/SPB memerlukan *gate validation*. WO tidak dapat berstatus `CLOSED` tanpa bukti foto *before-after*, catatan jam mekanik, diagnosis akar masalah, dan verifikasi supervisor (SLA identifikasi 30 menit).
 3. **Relasi ID Unik Lintas Modul**: Asset ID (Kode Lambung) dan WO ID menjadi kunci relasi utama (*primary/foreign key*) yang menghubungkan modul Aset, Pemeliharaan, Logistik, Biaya, HSE, hingga KPI.
+4. **Multi-User Role Access Control (RBAC) & Scope Sensitivity**: Sistem memisahkan secara tegas informasi **Umum / Publik** (dapat diakses oleh seluruh peran untuk kesadaran operasional) vs **Terbatas / Rahasia** (hanya dapat diakses oleh peran eksekutif tertentu seperti Equipment Manager, Asset Manager, Logistic Head, HRD, dan Administrator). Matriks kewenangan aksi (*Read, Create, Edit, Approve, Override*) dipetakan secara presisi per 16 menu `dashboard.html` pada [DATA_COMPLETENESS_CHECKLIST.md](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/DATA_COMPLETENESS_CHECKLIST.md) Seksi 10.2.
 
 ---
 

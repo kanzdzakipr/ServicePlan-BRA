@@ -1,5 +1,10 @@
 # Blueprint Implementation Plan 2: Backend Architecture, Database Schema (MySQL/PDO), and Data Migration Strategy (ServicePlan-BRA)
 
+> **Status Progress Backend & Database (26 Juli 2026)**:
+> - **Production Database Script**: Berkas [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql) telah sukses dibuat dan terpopulasi dengan 17 DDL tabel relasional lengkap, indeks performa, aturan `NULL`, serta data *initial seeders* DML otentik.
+> - **ETL CLI Migration Engine**: Berkas [scripts/SeederDataJson.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/SeederDataJson.php) telah siap dieksekusi secara otomatis dari berkas `data.json` ke MySQL.
+> - **Backend PHP Inventory**: Inventarisasi 4 Helper Core, 13 PDO Models (`/models/`), dan 14 API Controllers (`/api/`) telah didokumentasikan dan disiapkan untuk tahap perbintangan integrasi frontend `dashboard.html`.
+
 Dokumen ini merupakan panduan teknis mendalam untuk pembangunan *Backend Engine* menggunakan **PHP Data Objects (PDO)**, perancangan skema basis data **MySQL**, serta strategi transisi (*migration & ETL engine*) untuk mengubah data *dummy*/legacy dari `data.json` dan berkas spreadsheet `material/` menjadi basis data relasional yang aman, terstruktur, dan siap pakai.
 
 ---
@@ -115,11 +120,14 @@ class Database {
 }
 ```
 
-### 1.4 Keamanan, Autentikasi, dan Error Handling
+### 1.4 Keamanan, Autentikasi Multi-Role, dan Middleware RBAC
 1. **Prepared Statements Strict Rule**: Seluruh query SQL wajib menggunakan *parameterized queries* (`PDOStatement::bindValue` atau `execute([$params])`) untuk menghapus risiko **SQL Injection**.
 2. **Input Sanitization**: Seluruh payload request melewati `Validator::sanitize()` untuk mencegah serangan **XSS (Cross-Site Scripting)**.
-3. **RBAC & Middleware**: Every API endpoint evaluates `AuthMiddleware::verifyToken()` and checks `UserPermission` against location scope and action privileges.
-4. **Transaction Integrity**: Transaksi kompleks (seperti penutupan WO yang mengubah status unit dan mencatat stok spare part) wajib dibungkus dalam `PDO::beginTransaction()`, `PDO::commit()`, dan `PDO::rollBack()`.
+3. **Many-to-Many Multi-Role Assignment Architecture**:
+   * Setiap akun pengguna (`user_id`) didukung oleh tabel junction **`user_roles`** (`user_id`, `role_id`, `is_primary`) yang memungkinkan satu pengguna memegang **lebih dari satu peran (*Multi-Role*)** secara bersamaan (contoh: *Equipment Manager* merangkap *Maintenance Planner*, atau *Welder* merangkap *Mekanik Senior*).
+   * Pada saat autentikasi, `AuthMiddleware::verifyToken()` mengekstrak seluruh peran aktif pengguna dan menggabungkan (*union*) seluruh kewenangan aksi granular dari tabel **`permissions`** (`permission_key`, `menu_slug`, `action_type`) dan **`role_permissions`**.
+   * Antarmuka frontend `dashboard.html` menerima klaim token JWT `active_roles` dan `permissions` untuk mengontrol visibilitas menu navbar (misal: menyembunyikan menu *Biaya* dan *Approval Inbox* dari peran yang tidak berwenang) serta menonaktifkan tombol aksi (*Create, Edit, Approve, Override*).
+4. **Transaction Integrity**: Transaksi kompleks (seperti penutupan WO yang mengubah status unit, mencatat stok spare part, dan memperbarui jam kerja mekanik) wajib dibungkus dalam `PDO::beginTransaction()`, `PDO::commit()`, dan `PDO::rollBack()`.
 
 ---
 
