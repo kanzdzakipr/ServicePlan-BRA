@@ -793,6 +793,47 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="dashboard-layout" style="margin-top: 20px;">
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-list"></i> Unit per Kategori</span></div>
+                        <div class="panel-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table style="margin: 0;">
+                                    <thead>
+                                        <tr>
+                                            <th>Kategori</th>
+                                            <th style="text-align: center;">Jumlah Unit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboardCategoryTable">
+                                        <!-- Diisi via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-clipboard-list"></i> Work Order Aktif (Terbaru)</span></div>
+                        <div class="panel-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table style="margin: 0;">
+                                    <thead>
+                                        <tr>
+                                            <th>WO ID</th>
+                                            <th>Unit</th>
+                                            <th>Status</th>
+                                            <th>Prioritas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboardWoTable">
+                                        <!-- Diisi via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- VIEW: MONITORING UNIT (Sesuai Permintaan User) -->
@@ -1595,6 +1636,41 @@
                 `).join('');
             } else {
                 attentionList.innerHTML = '<li><i class="fa-solid fa-check text-success"></i><div class="attention-details"><strong>Aman</strong><span>Tidak ada WO darurat.</span></div></li>';
+            }
+
+            // Populate Unit per Kategori
+            const catCounts = {};
+            data.assets.forEach(a => {
+                const c = a.category || 'Lainnya';
+                catCounts[c] = (catCounts[c] || 0) + 1;
+            });
+            const catArr = Object.entries(catCounts).sort((a, b) => b[1] - a[1]).slice(0, 5); // top 5
+            const catTable = document.getElementById('dashboardCategoryTable');
+            if(catTable) {
+                catTable.innerHTML = catArr.map(([cat, count]) => `
+                    <tr>
+                        <td><strong>${escapeHtml(cat)}</strong></td>
+                        <td style="text-align: center;">${count}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Populate WO Terbaru
+            const activeWos = data.work_orders.filter(wo => wo.status !== 'Closed').slice(0, 5);
+            const woTable = document.getElementById('dashboardWoTable');
+            if(woTable) {
+                woTable.innerHTML = activeWos.map(wo => {
+                    let badgeColor = wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating';
+                    let statColor = wo.status === 'Open' ? 'color: red;' : 'color: orange;';
+                    return `
+                        <tr>
+                            <td><strong>${escapeHtml(wo.woId)}</strong></td>
+                            <td>${escapeHtml(wo.assetId)}</td>
+                            <td><span style="font-weight:bold; ${statColor}">${escapeHtml(wo.status)}</span></td>
+                            <td><span class="badge ${badgeColor}">${escapeHtml(wo.priority)}</span></td>
+                        </tr>
+                    `;
+                }).join('');
             }
         }
 
