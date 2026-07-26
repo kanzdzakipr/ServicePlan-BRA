@@ -1,7 +1,7 @@
 (function (global) {
     'use strict';
 
-    const ENGINE_VERSION = '1.1.0';
+    const ENGINE_VERSION = '1.1.1';
     const ENVELOPE_VERSION = '1.0.0';
     const SUPPORTED_EXTENSIONS = new Set([
         '.doc',

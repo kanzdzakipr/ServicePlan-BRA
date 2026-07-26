@@ -6,7 +6,7 @@ importScripts(
     'vendor/jszip-3.10.1.min.js'
 );
 
-const WORKER_VERSION = '1.1.0';
+const WORKER_VERSION = '1.1.1';
 const MAX_ZIP_ENTRIES = 10000;
 const MAX_ZIP_UNCOMPRESSED_BYTES = 64 * 1024 * 1024;
 const MAX_ZIP_ENTRY_BYTES = 32 * 1024 * 1024;

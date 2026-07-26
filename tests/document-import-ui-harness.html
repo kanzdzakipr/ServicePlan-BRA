@@ -92,7 +92,12 @@
                         cuaca: 'cerah',
                         keterangan: ' Normal ',
                         status: 'misteri',
+                        _import: { sourceTable: 'table-1', sourceRow: 1 },
                         ignored_column: 'DROP'
+                    }, {
+                        hm_awal: '1.000',
+                        hm_akhir: '1,000',
+                        bbm: '0.125'
                     }],
                     importSource: {
                         importId: 'TEST-TYPED-IMPORT',
@@ -127,30 +132,43 @@
                     ''
                 );
                 check(
+                    'ambiguous_number_rejected',
+                    normalizedDraft.rows[1].hm_awal === ''
+                        && normalizedDraft.rows[1].hm_akhir === ''
+                        && normalizedDraft.rows[1].bbm === '0.125',
+                    normalizedDraft.rows[1],
+                    { hm_awal: '', hm_akhir: '', bbm: '0.125' }
+                );
+                check(
                     'raw_extra_and_readonly_keys_dropped',
                     !Object.prototype.hasOwnProperty.call(normalizedDraft.fields, 'ignored_field')
                         && !Object.prototype.hasOwnProperty.call(normalizedDraft.rows[0], 'ignored_column')
+                        && !Object.prototype.hasOwnProperty.call(normalizedDraft.rows[0], '_import')
                         && !Object.prototype.hasOwnProperty.call(normalizedDraft.rows[0], 'jam_kerja')
                         && !Object.prototype.hasOwnProperty.call(normalizedDraft.rows[0], 'hm_operasi'),
                     {
                         field: normalizedDraft.fields.ignored_field,
                         column: normalizedDraft.rows[0].ignored_column,
+                        importMetadata: normalizedDraft.rows[0]._import,
                         jamKerja: normalizedDraft.rows[0].jam_kerja,
                         hmOperasi: normalizedDraft.rows[0].hm_operasi
                     },
                     'keys absent'
                 );
                 const typeIssueReasons = normalizedDraft.importSource.typeIssues.map(item => item.reason);
+                const typeIssuePaths = normalizedDraft.importSource.typeIssues.map(item => item.path);
                 check(
                     'type_issues_recorded',
-                    normalizedDraft.importSource.typeIssueCount >= 5
-                        && ['unknown_field_ignored', 'unknown_column_ignored', 'readonly_ignored', 'select_option_mismatch']
-                            .every(reason => typeIssueReasons.includes(reason)),
+                    normalizedDraft.importSource.typeIssueCount >= 7
+                        && ['unknown_field_ignored', 'unknown_column_ignored', 'readonly_ignored', 'select_option_mismatch', 'invalid_number']
+                            .every(reason => typeIssueReasons.includes(reason))
+                        && !typeIssuePaths.some(path => path.endsWith('._import')),
                     {
                         count: normalizedDraft.importSource.typeIssueCount,
-                        reasons: typeIssueReasons
+                        reasons: typeIssueReasons,
+                        paths: typeIssuePaths
                     },
-                    'at least 5 issues with expected reasons'
+                    'at least 7 issues, expected reasons, no _import false-positive'
                 );
                 const calculatedJam = document.querySelector('[data-row="0"][data-key="jam_kerja"]')?.value;
                 const calculatedHm = document.querySelector('[data-row="0"][data-key="hm_operasi"]')?.value;
@@ -162,6 +180,7 @@
                 );
 
                 const malformedDraft = JSON.parse(JSON.stringify(normalizedDraft));
+                malformedDraft.rows = [malformedDraft.rows[0]];
                 malformedDraft.rows[0].status = 'misteri';
                 localStorage.setItem(lhoDraftKey, JSON.stringify(malformedDraft));
                 FleetReportForms.openForm('lho');

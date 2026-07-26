@@ -562,6 +562,7 @@
     const historyStorageKey = 'fleetmonitor-report-history-v1';
     const evidenceRequiredFormIds = new Set(['ppb', 'spb', 'sppu', 'sppu-006-pf04-cs10']);
     const calculatedRowKeys = new Set(['saldo_sekarang', 'sisa', 'jam_kerja', 'hm_operasi', 'total', 'durasi', 'in_total', 'out_total', 'saldo', 'nilai_saldo']);
+    const importRowMetadataKeys = new Set(['_import']);
     const maxSourceImageBytes = 8 * 1024 * 1024;
     const minImageLongSide = 1280;
     const minImageShortSide = 720;
@@ -700,6 +701,7 @@
             return String(Object.is(value, -0) ? 0 : value);
         }
         const text = importedScalarText(value)?.trim() || '';
+        if (/^[+-]?[1-9]\d*\.\d{3}$/.test(text)) return '';
         const sign = options.allowNegative ? '[+-]?' : '\\+?';
         const pattern = new RegExp(`^${sign}(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$`);
         if (!pattern.test(text)) return '';
@@ -2308,6 +2310,7 @@
                     return {};
                 }
                 Object.keys(sourceRow).forEach(key => {
+                    if (importRowMetadataKeys.has(key)) return;
                     if (!columnDefinitions.has(key)) {
                         recordTypeIssue(
                             `rows[${rowIndex}].${String(key).slice(0, 100)}`,
@@ -2398,7 +2401,7 @@
     }
 
     window.FleetReportForms = Object.freeze({
-        version: '1.0.0',
+        version: '1.1.0',
         getSchemas: () => cloneData(formSchemas),
         getDraftState(schemaId) {
             const schema = formSchemas.find(item => item.id === schemaId);
