@@ -7,8 +7,10 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Leaflet for Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="scripts/report-forms.css?v=20260726-3">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="scripts/report-forms.css?v=20260726-4">
+    <link rel="stylesheet" href="scripts/document-import.css?v=20260726-2">
     <link rel="stylesheet" href="scripts/preventive-maintenance.css">
     <link rel="stylesheet" href="scripts/people-kpi.css">
     <link rel="stylesheet" href="scripts/hse-accident.css">
@@ -754,7 +756,8 @@
     </div>
 
     <!-- Leaflet Map Script -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
         let globalData = null;
         let mapInitialized = false;
@@ -771,7 +774,18 @@
                 initWorkOrderView(globalData.work_orders);
                 initBiayaView(globalData.costs);
 
-                showView('dashboard');
+                const queryView = new URLSearchParams(window.location.search).get('view') || '';
+                const hashView = window.location.hash.replace(/^#/, '');
+                const requestedView = hashView || queryView;
+                if (/^reports(?:\/|$)/i.test(requestedView)) {
+                    showView('reports');
+                    const reportPanel = requestedView.split('/')[1];
+                    if (reportPanel === 'import' || reportPanel === 'history') {
+                        window.FleetReportForms?.selectPanel(reportPanel);
+                    }
+                } else {
+                    showView('dashboard');
+                }
             } catch (error) {
                 console.error("Error loading dashboard data: ", error);
             }
@@ -995,6 +1009,14 @@
                 initMap(globalData.assets);
                 mapInitialized = true;
             }
+            if (viewName === 'reports') {
+                if (!/^#reports(?:\/|$)/i.test(window.location.hash)) {
+                    window.history.replaceState(null, '', '#reports');
+                    window.FleetReportForms?.selectPanel('templates');
+                }
+            } else if (/^#reports(?:\/|$)/i.test(window.location.hash)) {
+                window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+            }
         }
 
         document.querySelectorAll('.sidebar-menu a[role="button"]').forEach(menuItem => {
@@ -1141,7 +1163,13 @@
                 .replace(/'/g, "&#039;");
         }
     </script>
-    <script src="scripts/report-forms.js?v=20260726-3"></script>
+    <script src="scripts/vendor/jszip-3.10.1.min.js"></script>
+    <script src="scripts/vendor/pdf-3.11.174.min.js"></script>
+    <script src="scripts/vendor/tesseract-5.1.1.min.js"></script>
+    <script src="scripts/report-forms.js?v=20260726-5"></script>
+    <script src="scripts/document-import-zip-preflight.js?v=20260726-2"></script>
+    <script src="scripts/document-import-engine.js?v=20260726-17"></script>
+    <script src="scripts/document-import.js?v=20260726-5"></script>
     <script src="scripts/preventive-maintenance.js"></script>
     <script src="scripts/people-kpi.js"></script>
     <script src="scripts/hse-accident.js"></script>

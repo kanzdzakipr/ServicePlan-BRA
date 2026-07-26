@@ -366,7 +366,8 @@
 }
 
 .catalog-workspace.hidden,
-.report-history-workspace.hidden {
+.report-history-workspace.hidden,
+.report-import-workspace.hidden {
     display: none;
 }
 

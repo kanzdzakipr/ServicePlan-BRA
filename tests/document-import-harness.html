@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <title>WAITING</title>
+</head>
+<body>
+    <h1>Document import test harness</h1>
+    <pre id="progress">Menyiapkan…</pre>
+    <pre id="result"></pre>
+    <script src="../scripts/vendor/jszip-3.10.1.min.js"></script>
+    <script src="../scripts/vendor/pdf-3.11.174.min.js"></script>
+    <script src="../scripts/vendor/tesseract-5.1.1.min.js"></script>
+    <script src="../scripts/report-forms.js"></script>
+    <script src="../scripts/document-import-zip-preflight.js"></script>
+    <script src="../scripts/document-import-engine.js"></script>
+    <script>
+        const smokeFiles = [
+            '../tests/fixtures/document-import-multiline.csv',
+            '../raw-material/Accident/LAPORAN ACCIDENT.docx',
+            '../raw-material/SOP/Form/Form BAST MDE-1 ( Milik Dept Equipment ).doc',
+            '../raw-material/SOP/Form/FORM BAPP ( Penerimaan penyerahan barangParts ).xls',
+            '../raw-material/SOP/Form/FORM SPPU YARD.xlsx',
+            '../raw-material/Availability unit/REKAP UNIT STANDBY.pdf',
+            '../raw-material/SOP/SOP.rar'
+        ];
+
+        function mimeFor(path) {
+            const extension = path.split('.').pop().toLowerCase();
+            return {
+                pdf: 'application/pdf',
+                doc: 'application/msword',
+                docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                xls: 'application/vnd.ms-excel',
+                xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                csv: 'text/csv',
+                jpeg: 'image/jpeg'
+            }[extension] || 'application/octet-stream';
+        }
+
+        async function resolveFiles(parameters) {
+            const requested = parameters.get('files');
+            if (requested) return JSON.parse(requested);
+            if (parameters.get('suite') === 'raw-material') {
+                const response = await fetch('./raw-material-manifest.json');
+                if (!response.ok) throw new Error(`Manifest HTTP ${response.status}`);
+                return response.json();
+            }
+            return smokeFiles;
+        }
+
+        function validConfidence(value) {
+            return Number.isFinite(value) && value >= 0 && value <= 1;
+        }
+
+        function sameSet(left, right) {
+            return left.size === right.size && [...left].every(value => right.has(value));
+        }
+
+        function validateAnalysisMapping(analysis) {
+            const fragmentIds = new Set(
+                analysis.extraction.fragments.map(fragment => fragment.id)
+            );
+            const mappedIds = analysis.mapping.mappedFragmentIds || [];
+            const mappedIdSet = new Set(mappedIds);
+            const provenanceIds = new Set();
+            if (mappedIdSet.size !== mappedIds.length) return false;
+            if (!mappedIds.every(id => fragmentIds.has(id))) return false;
+
+            const fieldKeys = Object.keys(analysis.mapping.fields || {}).sort();
+            const fieldProvenanceKeys = Object.keys(
+                analysis.mapping.fieldProvenance || {}
+            ).sort();
+            if (JSON.stringify(fieldKeys) !== JSON.stringify(fieldProvenanceKeys)) return false;
+            for (const key of fieldKeys) {
+                const provenance = analysis.mapping.fieldProvenance[key];
+                if (provenance.normalizedValue !== analysis.mapping.fields[key]) return false;
+                if (!validConfidence(provenance.confidence)) return false;
+                if (!String(provenance.sourceRef || '').trim()) return false;
+                if (!Array.isArray(provenance.fragmentIds)) return false;
+                if (!provenance.fragmentIds.every(id => fragmentIds.has(id))) return false;
+                provenance.fragmentIds.forEach(id => provenanceIds.add(id));
+            }
+
+            const rowProvenance = analysis.mapping.rowProvenance || [];
+            const provenanceByRowId = new Map(
+                rowProvenance.map(item => [item.rowId, item])
+            );
+            if (provenanceByRowId.size !== rowProvenance.length) return false;
+            if ((analysis.mapping.rows || []).length !== rowProvenance.length) return false;
+            for (const row of analysis.mapping.rows || []) {
+                const rowId = row._import?.rowId;
+                const provenance = provenanceByRowId.get(rowId);
+                if (!rowId || !provenance) return false;
+                if (row._import.sourceRef !== provenance.sourceRef) return false;
+                if (!validConfidence(row._import.confidence)) return false;
+                if (!validConfidence(provenance.confidence)) return false;
+                if (!String(provenance.tableId || '').trim()) return false;
+                const rowKeys = Object.keys(row).filter(key => key !== '_import').sort();
+                const provenanceKeys = Object.keys(provenance.fields || {}).sort();
+                if (JSON.stringify(rowKeys) !== JSON.stringify(provenanceKeys)) return false;
+                for (const key of rowKeys) {
+                    const fieldSource = provenance.fields[key];
+                    if (fieldSource.normalizedValue !== row[key]) return false;
+                    if (!validConfidence(fieldSource.confidence)) return false;
+                    if (!String(fieldSource.sourceRef || '').trim()) return false;
+                    if (fieldSource.fragmentId) {
+                        if (!fragmentIds.has(fieldSource.fragmentId)) return false;
+                        provenanceIds.add(fieldSource.fragmentId);
+                    }
+                }
+            }
+
+            if (!sameSet(mappedIdSet, provenanceIds)) return false;
+            const fragmentCount = analysis.extraction.fragments.length;
+            const expectedCoverage = fragmentCount ? mappedIds.length / fragmentCount : 0;
+            return analysis.quality.sourceFragments === fragmentCount
+                && analysis.quality.mappedFragments === mappedIds.length
+                && analysis.mapping.unmappedCount === fragmentCount - mappedIds.length
+                && analysis.quality.unmappedFragments === fragmentCount - mappedIds.length
+                && Math.abs(analysis.quality.mappingCoverage - expectedCoverage) < 1e-12;
+        }
+
+        function validateDraftPayload(analysis, draft) {
+            const source = draft?.importSource || {};
+            return draft?.schemaId === analysis.target?.schemaId
+                && JSON.stringify(draft.fields) === JSON.stringify(analysis.mapping.fields)
+                && JSON.stringify(draft.rows) === JSON.stringify(analysis.mapping.rows)
+                && draft.fields !== analysis.mapping.fields
+                && draft.rows !== analysis.mapping.rows
+                && draft.rows.every((row, index) => row !== analysis.mapping.rows[index])
+                && source.importId === analysis.importId
+                && source.fileName === analysis.source.fileName
+                && source.relativePath === analysis.source.relativePath
+                && source.sha256 === analysis.source.sha256
+                && JSON.stringify(source.parser) === JSON.stringify(analysis.extraction.parser)
+                && source.targetConfidence === analysis.classification.confidence
+                && source.extractionCoverage === analysis.quality.extractionCoverage
+                && source.mappingCoverage === analysis.quality.mappingCoverage
+                && source.requiredCoverage === analysis.quality.requiredCoverage
+                && source.mappedFragments === analysis.quality.mappedFragments
+                && source.unmappedFragments === analysis.quality.unmappedFragments
+                && JSON.stringify(source.warningCodes)
+                    === JSON.stringify(analysis.quality.warnings.map(item => item.code))
+                && Number.isFinite(Date.parse(source.importedAt));
+        }
+
+        function validBbox(bbox) {
+            return Array.isArray(bbox)
+                && bbox.length === 4
+                && bbox.every(Number.isFinite)
+                && bbox[2] > bbox[0]
+                && bbox[3] > bbox[1];
+        }
+
+        function validOcrFragment(fragment, pagesExpected, requireTile) {
+            const meta = fragment.meta || {};
+            return fragment.kind === 'ocr-text'
+                && String(fragment.value || '').trim().length > 0
+                && validBbox(meta.bbox)
+                && Number.isFinite(meta.confidence)
+                && meta.confidence >= 0
+                && meta.confidence <= 100
+                && Array.isArray(meta.cells)
+                && meta.cells.some(value => String(value || '').trim())
+                && (!pagesExpected || (
+                    Number.isInteger(meta.page)
+                    && meta.page >= 1
+                    && meta.page <= pagesExpected
+                ))
+                && (!requireTile || (
+                    meta.tile
+                    && Number.isFinite(meta.tile.left)
+                    && Number.isFinite(meta.tile.top)
+                    && Number.isFinite(meta.tile.width)
+                    && Number.isFinite(meta.tile.height)
+                    && meta.tile.width > 0
+                    && meta.tile.height > 0
+                ));
+        }
+
+        function validateCsvExtraction(extraction, analysis) {
+            if (extraction.format !== 'csv') return null;
+            const cells = new Map(
+                extraction.fragments
+                    .filter(fragment => fragment.kind === 'cell')
+                    .map(fragment => [fragment.meta.address, fragment])
+            );
+            const table = extraction.tables.find(candidate => (
+                JSON.stringify(candidate.headers)
+                === JSON.stringify(['nomor', 'nama', 'jumlah', 'keterangan'])
+            ));
+            const a2 = cells.get('A2');
+            const a3 = cells.get('A3');
+            const b3 = cells.get('B3');
+            const d2 = cells.get('D2');
+            const rows = analysis.mapping.rows || [];
+            return {
+                multilineSingleCell: Boolean(
+                    d2?.value.includes('Baris pertama')
+                    && d2.value.includes('baris kedua tetap satu sel')
+                    && table?.rows.length === 2
+                    && table.rows[0].values[3] === d2.value
+                ),
+                leadingZerosPreserved: Boolean(
+                    a2?.value === '00123'
+                    && a2.meta.rawValue === '00123'
+                    && a3?.value === '00456'
+                    && a3.meta.rawValue === '00456'
+                ),
+                formulaLiteralNotExecuted: Boolean(
+                    b3?.value === '=HYPERLINK("https://invalid.example","jangan dieksekusi")'
+                    && b3.meta.rawValue === b3.value
+                    && b3.meta.formula === ''
+                    && !b3.meta.hyperlink
+                    && extraction.stats.formulas === 0
+                ),
+                forcedMapping: Boolean(
+                    analysis.target?.schemaId === 'bapp'
+                    && analysis.classification.mode === 'manual'
+                    && rows.length === 2
+                    && rows[0]?.nama === 'Filter, Oli'
+                    && rows[0]?.jumlah === '2'
+                    && rows[1]?.jumlah === '0'
+                )
+            };
+        }
+
+        function summarize(payload) {
+            const successful = payload.results.filter(item => item.ok);
+            const failed = payload.results.filter(item => !item.ok);
+            const byFormat = {};
+            successful.forEach(item => {
+                byFormat[item.format] = (byFormat[item.format] || 0) + 1;
+            });
+            const hashCounts = successful.reduce((counts, item) => {
+                counts[item.sha256] = (counts[item.sha256] || 0) + 1;
+                return counts;
+            }, {});
+            const duplicateGroups = Object.values(hashCounts).filter(count => count > 1).length;
+            const rawSuite = new URLSearchParams(location.search).get('suite') === 'raw-material';
+            const checks = [];
+            function check(name, passed, actual, expected) {
+                checks.push({ name, passed, actual, expected });
+            }
+            check('no_unhandled_extraction_exceptions', failed.length === 0, failed.length, 0);
+            check(
+                'fragment_source_refs_complete',
+                successful.every(item => item.blankSourceReferences === 0),
+                successful.filter(item => item.blankSourceReferences !== 0).map(item => ({
+                    path: item.path,
+                    blankSourceReferences: item.blankSourceReferences
+                })),
+                []
+            );
+            check(
+                'extraction_reference_integrity',
+                successful.every(item => item.invalidReferences === 0),
+                successful.filter(item => item.invalidReferences !== 0).map(item => item.path),
+                []
+            );
+            check(
+                'extraction_stats_integrity',
+                successful.every(item => item.statsConsistent),
+                successful.filter(item => !item.statsConsistent).map(item => item.path),
+                []
+            );
+            check(
+                'database_envelope_roundtrip',
+                successful.every(item => item.envelopeRoundtrip),
+                successful.filter(item => !item.envelopeRoundtrip).map(item => item.path),
+                []
+            );
+            check(
+                'mapping_provenance_integrity',
+                successful.every(item => item.mappingIntegrity),
+                successful.filter(item => !item.mappingIntegrity).map(item => item.path),
+                []
+            );
+            check(
+                'draft_payload_integrity',
+                successful.every(item => item.draftIntegrity),
+                successful.filter(item => !item.draftIntegrity).map(item => item.path),
+                []
+            );
+            check(
+                'never_auto_finalize',
+                successful.every(item => item.reviewRequired && !item.canFinalizeAutomatically),
+                successful.filter(item => !item.reviewRequired || item.canFinalizeAutomatically).map(item => item.path),
+                []
+            );
+            const csvResults = successful.filter(item => item.csvChecks);
+            if (csvResults.length) {
+                check(
+                    'csv_multiline_single_cell',
+                    csvResults.every(item => item.csvChecks.multilineSingleCell),
+                    csvResults.filter(item => !item.csvChecks.multilineSingleCell).map(item => item.path),
+                    []
+                );
+                check(
+                    'csv_leading_zeros_preserved',
+                    csvResults.every(item => item.csvChecks.leadingZerosPreserved),
+                    csvResults.filter(item => !item.csvChecks.leadingZerosPreserved).map(item => item.path),
+                    []
+                );
+                check(
+                    'csv_formula_literal_not_executed',
+                    csvResults.every(item => item.csvChecks.formulaLiteralNotExecuted),
+                    csvResults.filter(item => !item.csvChecks.formulaLiteralNotExecuted).map(item => item.path),
+                    []
+                );
+                check(
+                    'csv_forced_mapping_to_draft_rows',
+                    csvResults.every(item => item.csvChecks.forcedMapping),
+                    csvResults.filter(item => !item.csvChecks.forcedMapping).map(item => item.path),
+                    []
+                );
+            }
+            if (payload.ocrMode !== 'off') {
+                const ocrTargets = successful.filter(
+                    item => item.supported && ['pdf', 'jpeg', 'jpg', 'png', 'webp'].includes(item.format)
+                );
+                check(
+                    'ocr_target_files_present',
+                    ocrTargets.length > 0,
+                    ocrTargets.length,
+                    '> 0'
+                );
+                check(
+                    'ocr_supported_files_no_error_warnings',
+                    ocrTargets.every(item => item.errorWarnings === 0),
+                    ocrTargets.filter(item => item.errorWarnings !== 0).map(item => item.path),
+                    []
+                );
+                const pdfTargets = ocrTargets.filter(item => item.format === 'pdf');
+                if (pdfTargets.length) {
+                    check(
+                        'pdf_pages_fully_extracted',
+                        pdfTargets.every(item => item.pdfOcrComplete),
+                        pdfTargets.filter(item => !item.pdfOcrComplete).map(item => item.path),
+                        []
+                    );
+                    if (payload.ocrMode === 'all') {
+                        check(
+                            'pdf_all_pages_ocr',
+                            pdfTargets.every(item => (
+                                item.ocrPages === item.pagesExpected
+                                && item.pdfOcrFragmentPages === item.pagesExpected
+                            )),
+                            pdfTargets.filter(item => (
+                                item.ocrPages !== item.pagesExpected
+                                || item.pdfOcrFragmentPages !== item.pagesExpected
+                            )).map(item => item.path),
+                            []
+                        );
+                    }
+                }
+                const imageTargets = ocrTargets.filter(
+                    item => ['jpeg', 'jpg', 'png', 'webp'].includes(item.format)
+                );
+                if (imageTargets.length) {
+                    check(
+                        'image_ocr_fragments_with_coordinates',
+                        imageTargets.every(item => item.imageOcrComplete),
+                        imageTargets.filter(item => !item.imageOcrComplete).map(item => ({
+                            path: item.path,
+                            diagnostics: item.imageOcrDiagnostics
+                        })),
+                        []
+                    );
+                }
+            }
+            if (rawSuite) {
+                const expectedFormats = { docx: 5, pdf: 33, xlsx: 20, jpeg: 1, xls: 7, doc: 2, rar: 1 };
+                check('manifest_entries_loaded', payload.total === 69, payload.total, 69);
+                check(
+                    'supported_documents_parsed',
+                    successful.filter(item => item.supported).length === 68,
+                    successful.filter(item => item.supported).length,
+                    68
+                );
+                check(
+                    'format_distribution',
+                    JSON.stringify(byFormat) === JSON.stringify(expectedFormats),
+                    byFormat,
+                    expectedFormats
+                );
+                check(
+                    'pdf_structural_pages_processed',
+                    successful.reduce((sum, item) => sum + item.pagesProcessed, 0) === 198,
+                    successful.reduce((sum, item) => sum + item.pagesProcessed, 0),
+                    198
+                );
+                check(
+                    'pdf_page_sections',
+                    successful.filter(item => item.format === 'pdf').reduce((sum, item) => sum + item.sections, 0) === 198,
+                    successful.filter(item => item.format === 'pdf').reduce((sum, item) => sum + item.sections, 0),
+                    198
+                );
+                check(
+                    'workbook_structural_sheets',
+                    successful.reduce((sum, item) => sum + item.sheets, 0) === 129,
+                    successful.reduce((sum, item) => sum + item.sheets, 0),
+                    129
+                );
+                check(
+                    'hidden_sheets',
+                    successful.reduce((sum, item) => sum + item.hiddenSheets, 0) === 14,
+                    successful.reduce((sum, item) => sum + item.hiddenSheets, 0),
+                    14
+                );
+                check(
+                    'word_tables',
+                    successful.filter(item => ['doc', 'docx'].includes(item.format))
+                        .reduce((sum, item) => sum + item.tables, 0) === 77,
+                    successful.filter(item => ['doc', 'docx'].includes(item.format))
+                        .reduce((sum, item) => sum + item.tables, 0),
+                    77
+                );
+                check(
+                    'canonical_fragments',
+                    successful.reduce((sum, item) => sum + item.fragments, 0) === 585080,
+                    successful.reduce((sum, item) => sum + item.fragments, 0),
+                    585080
+                );
+                check(
+                    'tabular_structures',
+                    successful.reduce((sum, item) => sum + item.tables, 0) === 3153,
+                    successful.reduce((sum, item) => sum + item.tables, 0),
+                    3153
+                );
+                const legacyWordShapes = successful
+                    .filter(item => item.format === 'doc')
+                    .map(item => ({
+                        name: decodeURIComponent(item.path.split('/').pop()),
+                        shapes: item.tableShapes.map(table => `${table.rows}x${table.columns}`)
+                    }));
+                const expectedLegacyWordShapes = [
+                    {
+                        name: 'Form BAST MDE-1 ( Milik Dept Equipment ).doc',
+                        shapes: ['2x1', '3x7', '9x5', '5x3']
+                    },
+                    {
+                        name: 'Form Kartu Pemeriksaan A2B  MDE-02 ( Milik Dept Equipt ).doc',
+                        shapes: ['2x1', '3x7', '9x5', '4x1', '6x2', '3x12', '4x3', '6x3']
+                    }
+                ];
+                check(
+                    'legacy_word_table_shapes',
+                    JSON.stringify(legacyWordShapes) === JSON.stringify(expectedLegacyWordShapes),
+                    legacyWordShapes,
+                    expectedLegacyWordShapes
+                );
+                check('unique_hashes', Object.keys(hashCounts).length === 67, Object.keys(hashCounts).length, 67);
+                check('duplicate_groups', duplicateGroups === 2, duplicateGroups, 2);
+                check(
+                    'rar_explicitly_audited',
+                    successful.filter(item => item.warningCodes.includes('archive_requires_unpack')).length === 1,
+                    successful.filter(item => item.warningCodes.includes('archive_requires_unpack')).length,
+                    1
+                );
+                check(
+                    'automatic_mapping_exercised',
+                    successful.some(item => item.selectedSchemaId && item.mappedFragmentCount > 0),
+                    successful.filter(item => item.selectedSchemaId && item.mappedFragmentCount > 0).length,
+                    '> 0'
+                );
+                const expectedSchemas = {
+                    'FORM BAPP ( Penerimaan penyerahan barangParts ).xls': 'bapp',
+                    'Form BAST MDE-1 ( Milik Dept Equipment ).doc': 'bast-mde1',
+                    'FORM BHW -IN.xlsx': 'bhw-in',
+                    'FORM BHW -OUT.xlsx': 'bhw-out',
+                    'Form Kartu Pemeriksaan A2B  MDE-02 ( Milik Dept Equipt ).doc': 'mde-02',
+                    'FORM PPB ( Pengadaan Barang ).xls': 'ppb',
+                    'FORM SPB ( Permintaan Parts ).xls': 'spb',
+                    'FORM SPPU YARD.xlsx': 'sppu',
+                    'Form_P2H HYDRAULIC EXCAVATOR.xls': 'p2h-excavator',
+                    'Form_P2H SINGLE DRUM ROLLERS.xls': 'p2h-roller'
+                };
+                const classificationSentinels = Object.entries(expectedSchemas).map(
+                    ([fileName, expectedSchemaId]) => {
+                        const item = successful.find(candidate => (
+                            decodeURIComponent(candidate.path.split('/').pop()) === fileName
+                        ));
+                        return {
+                            fileName,
+                            expectedSchemaId,
+                            actualSchemaId: item?.selectedSchemaId || null,
+                            mappedFragments: item?.mappedFragmentCount || 0
+                        };
+                    }
+                );
+                check(
+                    'representative_report_classification',
+                    classificationSentinels.every(item => (
+                        item.actualSchemaId === item.expectedSchemaId
+                        && item.mappedFragments > 0
+                    )),
+                    classificationSentinels,
+                    Object.entries(expectedSchemas).map(([fileName, schemaId]) => ({
+                        fileName,
+                        schemaId,
+                        mappedFragments: '> 0'
+                    }))
+                );
+            }
+            return {
+                total: payload.total,
+                passed: payload.total - payload.failures,
+                failures: payload.failures,
+                ocrMode: payload.ocrMode,
+                byFormat,
+                pagesExpected: successful.reduce((sum, item) => sum + item.pagesExpected, 0),
+                pagesProcessed: successful.reduce((sum, item) => sum + item.pagesProcessed, 0),
+                sheets: successful.reduce((sum, item) => sum + item.sheets, 0),
+                fragments: successful.reduce((sum, item) => sum + item.fragments, 0),
+                tables: successful.reduce((sum, item) => sum + item.tables, 0),
+                wordTables: successful.filter(item => ['doc', 'docx'].includes(item.format))
+                    .reduce((sum, item) => sum + item.tables, 0),
+                wordTableCounts: successful.filter(item => ['doc', 'docx'].includes(item.format))
+                    .map(item => ({ path: item.path, tables: item.tables })),
+                wordTableShapes: successful.filter(item => ['doc', 'docx'].includes(item.format))
+                    .map(item => ({ path: item.path, tableShapes: item.tableShapes })),
+                hiddenSheets: successful.reduce((sum, item) => sum + item.hiddenSheets, 0),
+                uniqueHashes: Object.keys(hashCounts).length,
+                duplicateGroups,
+                errorWarnings: successful.reduce((sum, item) => sum + item.errorWarnings, 0),
+                failedFiles: failed.map(item => ({ path: item.path, error: item.error })),
+                checks,
+                assertionsPassed: checks.every(item => item.passed)
+            };
+        }
+
+        function validateReferences(extraction) {
+            const fragmentIds = new Set(extraction.fragments.map(fragment => fragment.id));
+            const references = [
+                ...extraction.sections.flatMap(section => section.fragmentRefs || []),
+                ...extraction.tables.flatMap(table => [
+                    ...(table.headerFragmentRefs || []),
+                    ...(table.preamble || []).flatMap(row => row.fragmentRefs || []),
+                    ...(table.rows || []).flatMap(row => row.fragmentRefs || [])
+                ])
+            ].filter(Boolean);
+            return references.filter(reference => !fragmentIds.has(reference)).length;
+        }
+
+        function withTimeout(promise, milliseconds, label) {
+            let timer;
+            return Promise.race([
+                promise.finally(() => clearTimeout(timer)),
+                new Promise((unused, reject) => {
+                    timer = setTimeout(() => reject(new Error(`${label} melewati timeout ${milliseconds} ms`)), milliseconds);
+                })
+            ]);
+        }
+
+        async function run() {
+            const parameters = new URLSearchParams(location.search);
+            const files = await resolveFiles(parameters);
+            const ocrMode = parameters.get('ocr') || 'off';
+            const results = [];
+            let failures = 0;
+
+            for (let index = 0; index < files.length; index += 1) {
+                const path = files[index];
+                document.title = `RUN ${index + 1}/${files.length} ${path.split('/').pop()}`;
+                document.getElementById('progress').textContent = document.title;
+                try {
+                    const response = await fetch(encodeURI(path));
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const blob = await response.blob();
+                    const name = decodeURIComponent(path.split('/').pop());
+                    const file = new File([blob], name, { type: mimeFor(path), lastModified: Date.now() });
+                    Object.defineProperty(file, 'relativePath', { value: path.replace(/^\.\.\//, ''), configurable: true });
+                    const output = await withTimeout(
+                        FleetDocumentImportEngine.extractFile(file, { ocrMode }, progress => {
+                            document.getElementById('progress').textContent =
+                                `${index + 1}/${files.length} ${name}\n${progress.stage}: ${progress.message || ''}`;
+                        }),
+                        ocrMode === 'off' ? 180000 : 900000,
+                        name
+                    );
+                    const extraction = output.extraction;
+                    const schemas = FleetReportForms.getSchemas();
+                    const isCsvFixture = extraction.format === 'csv'
+                        && name === 'document-import-multiline.csv';
+                    const analysis = FleetDocumentImportEngine.analyzeImport(
+                        output,
+                        schemas,
+                        isCsvFixture ? { targetSchemaId: 'bapp' } : {}
+                    );
+                    const mappingIntegrity = validateAnalysisMapping(analysis);
+                    let draftIntegrity = true;
+                    if (analysis.target) {
+                        const draft = FleetDocumentImportEngine.prepareDraftPayload(analysis);
+                        draftIntegrity = validateDraftPayload(analysis, draft);
+                    } else {
+                        try {
+                            FleetDocumentImportEngine.prepareDraftPayload(analysis);
+                            draftIntegrity = false;
+                        } catch (error) {
+                            draftIntegrity = true;
+                        }
+                    }
+                    if (isCsvFixture) {
+                        const noTargetAnalysis = FleetDocumentImportEngine.analyzeImport(
+                            output,
+                            schemas,
+                            { targetSchemaId: '__none__' }
+                        );
+                        try {
+                            FleetDocumentImportEngine.prepareDraftPayload(noTargetAnalysis);
+                            draftIntegrity = false;
+                        } catch (error) {
+                            // The no-target guard is expected to reject draft creation.
+                        }
+                    }
+                    const envelope = FleetDocumentImportEngine.buildDatabaseEnvelope(analysis);
+                    const envelopeJson = JSON.stringify(envelope);
+                    const restoredEnvelope = JSON.parse(envelopeJson);
+                    const envelopeRoundtrip = JSON.stringify(restoredEnvelope) === envelopeJson
+                        && restoredEnvelope.sourceDocument.sha256 === output.source.sha256
+                        && restoredEnvelope.extraction.fragments.length === extraction.fragments.length
+                        && restoredEnvelope.extraction.tables.length === extraction.tables.length
+                        && JSON.stringify(restoredEnvelope.mapping.mappedFragmentIds)
+                            === JSON.stringify(analysis.mapping.mappedFragmentIds)
+                        && restoredEnvelope.target?.schemaId === analysis.target?.schemaId
+                        && restoredEnvelope.quality.sourceFragments === analysis.quality.sourceFragments;
+                    const errorWarnings = extraction.warnings.filter(item => item.severity === 'error').length;
+                    const csvChecks = validateCsvExtraction(extraction, analysis);
+                    const pdfOcrFragments = extraction.fragments.filter(fragment => (
+                        fragment.kind === 'ocr-text' && Number.isInteger(fragment.meta?.page)
+                    ));
+                    const pdfOcrFragmentPages = new Set(
+                        pdfOcrFragments.map(fragment => fragment.meta.page)
+                    );
+                    const pdfOcrComplete = extraction.format !== 'pdf' || (
+                        extraction.stats.pagesProcessed === extraction.stats.pagesExpected
+                        && extraction.stats.pagesFullyExtracted === extraction.stats.pagesExpected
+                        && Number(extraction.stats.pagesFailed || 0) === 0
+                        && Number(extraction.stats.ocrFailedPages || 0) === 0
+                        && errorWarnings === 0
+                        && pdfOcrFragments.every(fragment => (
+                            validOcrFragment(fragment, extraction.stats.pagesExpected, true)
+                        ))
+                        && pdfOcrFragmentPages.size === Number(extraction.stats.ocrPages || 0)
+                    );
+                    const imageSection = extraction.sections.find(
+                        section => section.kind === 'image-ocr'
+                    );
+                    const imageOcrFragments = extraction.fragments.filter(
+                        fragment => fragment.kind === 'ocr-text' && !fragment.meta?.page
+                    );
+                    const imageOcrComplete = !['jpeg', 'jpg', 'png', 'webp'].includes(extraction.format)
+                        || (
+                            extraction.stats.ocrImages === 1
+                            && imageOcrFragments.length > 0
+                            && imageSection?.meta.lines === imageOcrFragments.length
+                            && imageSection.fragmentRefs.length === imageOcrFragments.length
+                            && imageOcrFragments.every(fragment => (
+                                validOcrFragment(fragment, 0, false)
+                            ))
+                            && errorWarnings === 0
+                        );
+                    const imageOcrDiagnostics = ['jpeg', 'jpg', 'png', 'webp'].includes(extraction.format)
+                        ? {
+                            ocrImages: extraction.stats.ocrImages || 0,
+                            sectionLines: imageSection?.meta.lines ?? null,
+                            sectionReferences: imageSection?.fragmentRefs.length ?? null,
+                            fragments: imageOcrFragments.length,
+                            invalidFragments: imageOcrFragments
+                                .filter(fragment => !validOcrFragment(fragment, 0, false))
+                                .slice(0, 8)
+                                .map(fragment => ({
+                                    sourceRef: fragment.sourceRef,
+                                    value: fragment.value.slice(0, 80),
+                                    confidence: fragment.meta?.confidence,
+                                    bbox: fragment.meta?.bbox,
+                                    cells: fragment.meta?.cells
+                                }))
+                        }
+                        : null;
+                    results.push({
+                        path,
+                        ok: true,
+                        format: extraction.format,
+                        supported: extraction.stats.supported !== false,
+                        signature: output.source.signature,
+                        sha256: output.source.sha256,
+                        sections: extraction.sections.length,
+                        tables: extraction.tables.length,
+                        fragments: extraction.fragments.length,
+                        artifacts: extraction.artifacts.length,
+                        blankSourceReferences: extraction.fragments.filter(
+                            fragment => !String(fragment.sourceRef || '').trim()
+                        ).length,
+                        pagesExpected: extraction.stats.pagesExpected || 0,
+                        pagesProcessed: extraction.stats.pagesProcessed || 0,
+                        pagesFullyExtracted: extraction.stats.pagesFullyExtracted || 0,
+                        pagesFailed: extraction.stats.pagesFailed || 0,
+                        ocrPages: extraction.stats.ocrPages || 0,
+                        ocrFailedPages: extraction.stats.ocrFailedPages || 0,
+                        pdfOcrFragmentPages: pdfOcrFragmentPages.size,
+                        pdfOcrComplete,
+                        imageOcrComplete,
+                        imageOcrDiagnostics,
+                        sheets: extraction.stats.sheets || 0,
+                        hiddenSheets: extraction.stats.hiddenSheets || 0,
+                        formulas: extraction.stats.formulas || 0,
+                        errorWarnings,
+                        warningCodes: extraction.warnings.map(item => item.code),
+                        tableShapes: extraction.format === 'doc'
+                            ? extraction.tables.map(table => ({
+                                rows: table.rows.length,
+                                columns: table.headers.length,
+                                firstRow: (table.rows[0]?.values || []).join(' | ').slice(0, 160),
+                                lastRow: (table.rows.at(-1)?.values || []).join(' | ').slice(0, 160)
+                            }))
+                            : [],
+                        invalidReferences: validateReferences(extraction),
+                        statsConsistent: extraction.stats.sections === extraction.sections.length
+                            && extraction.stats.tables === extraction.tables.length
+                            && extraction.stats.fragments === extraction.fragments.length
+                            && extraction.stats.characters === extraction.fragments.reduce(
+                                (sum, fragment) => sum + String(fragment.value || '').length,
+                                0
+                            ),
+                        envelopeRoundtrip,
+                        mappingIntegrity,
+                        draftIntegrity,
+                        selectedSchemaId: analysis.target?.schemaId || null,
+                        mappedFragmentCount: analysis.mapping.mappedFragmentIds.length,
+                        mappedRowCount: analysis.mapping.rows.length,
+                        csvChecks,
+                        reviewRequired: analysis.quality.reviewRequired,
+                        canFinalizeAutomatically: analysis.quality.canFinalizeAutomatically,
+                        sample: extraction.fragments.slice(0, 3).map(item => ({
+                            sourceRef: item.sourceRef,
+                            value: item.value.slice(0, 100)
+                        }))
+                    });
+                } catch (error) {
+                    failures += 1;
+                    results.push({ path, ok: false, error: error.message, stack: error.stack || '' });
+                }
+            }
+            const payload = { total: files.length, failures, ocrMode, results };
+            const summary = summarize(payload);
+            window.__IMPORT_TEST_RESULTS__ = payload;
+            window.__IMPORT_TEST_SUMMARY__ = summary;
+            document.getElementById('result').textContent = JSON.stringify(payload, null, 2);
+            history.replaceState(null, '', `${location.pathname}${location.search}#result=${encodeURIComponent(JSON.stringify(summary))}`);
+            document.title = `${summary.assertionsPassed ? 'PASS' : 'FAIL'} ${summary.passed}/${summary.total} P${summary.pagesProcessed} S${summary.sheets} F${summary.fragments}`;
+            document.getElementById('progress').textContent = document.title;
+        }
+
+        run().catch(error => {
+            document.title = 'FATAL';
+            document.getElementById('result').textContent = error.stack || error.message;
+        });
+    </script>
+</body>
+</html>

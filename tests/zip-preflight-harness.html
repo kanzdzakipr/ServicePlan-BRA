@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <title>RUN ZIP preflight</title>
+    <script src="../scripts/vendor/jszip-3.10.1.min.js"></script>
+    <script src="../scripts/document-import-zip-preflight.js"></script>
+</head>
+<body>
+    <pre id="result">Menjalankan...</pre>
+    <script>
+        (async () => {
+            const output = {
+                startedAt: new Date().toISOString(),
+                files: [],
+                syntheticChecks: [],
+                errors: []
+            };
+            const rejectCheck = async (name, factory, expectedPattern) => {
+                let rejected = false;
+                let message = '';
+                try {
+                    FleetZipPreflight.inspect(await factory(), name);
+                } catch (error) {
+                    rejected = expectedPattern.test(error.message);
+                    message = error.message;
+                }
+                output.syntheticChecks.push({ name, passed: rejected, message });
+            };
+            const acceptCheck = async (name, factory) => {
+                let passed = false;
+                let message = '';
+                try {
+                    const bytes = await factory();
+                    const audit = FleetZipPreflight.inspect(bytes, name);
+                    const zip = await JSZip.loadAsync(bytes);
+                    try {
+                        FleetZipPreflight.verifyJsZip(zip, audit, name);
+                    } catch (error) {
+                        const diagnostics = Object.values(zip.files).map(entry => ({
+                            name: entry.name,
+                            dir: entry.dir,
+                            unsafeOriginalName: entry.unsafeOriginalName,
+                            compressedSize: entry._data?.compressedSize,
+                            uncompressedSize: entry._data?.uncompressedSize,
+                            crc32: entry._data?.crc32
+                        }));
+                        throw new Error(`${error.message} ${JSON.stringify(diagnostics)}`);
+                    }
+                    passed = true;
+                } catch (error) {
+                    message = error.message;
+                }
+                output.syntheticChecks.push({ name, passed, message });
+            };
+            const findSignatures = (bytes, signature) => {
+                const matches = [];
+                for (let offset = 0; offset + 4 <= bytes.length; offset += 1) {
+                    const value = bytes[offset]
+                        + bytes[offset + 1] * 0x100
+                        + bytes[offset + 2] * 0x10000
+                        + bytes[offset + 3] * 0x1000000;
+                    if (value === signature) matches.push(offset);
+                }
+                return matches;
+            };
+            const put16 = (bytes, offset, value) => {
+                bytes[offset] = value & 0xff;
+                bytes[offset + 1] = (value >>> 8) & 0xff;
+            };
+            const put32 = (bytes, offset, value) => {
+                bytes[offset] = value & 0xff;
+                bytes[offset + 1] = (value >>> 8) & 0xff;
+                bytes[offset + 2] = (value >>> 16) & 0xff;
+                bytes[offset + 3] = (value >>> 24) & 0xff;
+            };
+
+            try {
+                const manifest = await fetch('raw-material-manifest.json').then(response => response.json());
+                const paths = manifest.filter(path => /\.(docx|xlsx|xlsm|xltx|xltm)$/i.test(path));
+                for (const path of paths) {
+                    try {
+                        const response = await fetch(path);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const buffer = await response.arrayBuffer();
+                        const audit = FleetZipPreflight.inspect(new Uint8Array(buffer), path);
+                        const zip = await JSZip.loadAsync(buffer);
+                        FleetZipPreflight.verifyJsZip(zip, audit, path);
+                        const files = Object.values(zip.files);
+                        const recordNames = audit.records.map(record => record.name);
+                        const jsZipNames = files.map(entry => entry.name);
+                        output.files.push({
+                            path,
+                            passed: JSON.stringify(recordNames) === JSON.stringify(jsZipNames),
+                            records: audit.entries,
+                            files: audit.records.filter(record => !record.isDirectory).length,
+                            directories: audit.records.filter(record => record.isDirectory).length,
+                            uncompressedBytes: audit.uncompressedBytes
+                        });
+                    } catch (error) {
+                        output.files.push({ path, passed: false, error: error.message });
+                    }
+                    document.title = `RUN ZIP ${output.files.length}/${paths.length}`;
+                }
+
+                const baseZip = new Uint8Array(await (() => {
+                    const zip = new JSZip();
+                    zip.file('aa.txt', 'A');
+                    zip.file('bb.txt', 'B');
+                    return zip.generateAsync({ type: 'uint8array', compression: 'STORE' });
+                })());
+                await rejectCheck('path traversal', async () => {
+                    const zip = new JSZip();
+                    zip.file('../evil.txt', 'x');
+                    return zip.generateAsync({ type: 'uint8array', compression: 'STORE' });
+                }, /ambigu|tidak aman/i);
+                await rejectCheck('duplicate normalized path', async () => {
+                    const bytes = baseZip.slice();
+                    const locals = findSignatures(bytes, 0x04034b50);
+                    const centrals = findSignatures(bytes, 0x02014b50);
+                    ['local', 'central'].forEach((kind, groupIndex) => {
+                        const offsets = groupIndex ? centrals : locals;
+                        const nameOffset = offsets[1] + (groupIndex ? 46 : 30);
+                        bytes.set(new TextEncoder().encode('aa.txt'), nameOffset);
+                    });
+                    return bytes;
+                }, /collision/i);
+                await rejectCheck('unsupported method', async () => {
+                    const bytes = baseZip.slice();
+                    findSignatures(bytes, 0x04034b50).forEach(offset => put16(bytes, offset + 8, 99));
+                    findSignatures(bytes, 0x02014b50).forEach(offset => put16(bytes, offset + 10, 99));
+                    return bytes;
+                }, /metode kompresi/i);
+                await rejectCheck('ZIP64 sentinel', async () => {
+                    const bytes = baseZip.slice();
+                    const eocd = findSignatures(bytes, 0x06054b50).at(-1);
+                    put32(bytes, eocd + 16, 0xffffffff);
+                    return bytes;
+                }, /ZIP64/i);
+                await rejectCheck('oversized declared entry', async () => {
+                    const bytes = baseZip.slice();
+                    const local = findSignatures(bytes, 0x04034b50)[0];
+                    const central = findSignatures(bytes, 0x02014b50)[0];
+                    put32(bytes, local + 22, 32 * 1024 * 1024 + 1);
+                    put32(bytes, central + 24, 32 * 1024 * 1024 + 1);
+                    return bytes;
+                }, /batas aman/i);
+                await rejectCheck('STORE size mismatch', async () => {
+                    const bytes = baseZip.slice();
+                    const local = findSignatures(bytes, 0x04034b50)[0];
+                    const central = findSignatures(bytes, 0x02014b50)[0];
+                    put32(bytes, local + 18, 0);
+                    put32(bytes, central + 20, 0);
+                    return bytes;
+                }, /STORE/i);
+                await rejectCheck('unsupported general-purpose flag', async () => {
+                    const bytes = baseZip.slice();
+                    const local = findSignatures(bytes, 0x04034b50)[0];
+                    const central = findSignatures(bytes, 0x02014b50)[0];
+                    put16(bytes, local + 6, 0x0020);
+                    put16(bytes, central + 8, 0x0020);
+                    return bytes;
+                }, /general-purpose flag/i);
+                await acceptCheck('explicit directory compatibility', async () => {
+                    const zip = new JSZip();
+                    zip.folder('safe').file('file.txt', 'ok');
+                    return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+                });
+
+                const fileFailures = output.files.filter(item => !item.passed);
+                const syntheticFailures = output.syntheticChecks.filter(item => !item.passed);
+                output.passed = fileFailures.length === 0 && syntheticFailures.length === 0;
+                output.summary = {
+                    rawFiles: output.files.length,
+                    rawPassed: output.files.length - fileFailures.length,
+                    totalEntries: output.files.reduce((sum, item) => sum + Number(item.records || 0), 0),
+                    syntheticPassed: output.syntheticChecks.length - syntheticFailures.length,
+                    syntheticTotal: output.syntheticChecks.length
+                };
+            } catch (error) {
+                output.errors.push({ message: error.message, stack: error.stack });
+                output.passed = false;
+            }
+            output.finishedAt = new Date().toISOString();
+            window.__zipPreflightResults = output;
+            document.getElementById('result').textContent = JSON.stringify(output, null, 2);
+            document.title = output.passed
+                ? `PASS ZIP ${output.summary.rawPassed}/${output.summary.rawFiles}`
+                : 'FAIL ZIP preflight';
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+nomor;nama;jumlah;keterangan
+00123;"Filter, Oli";2;"Baris pertama
+baris kedua tetap satu sel"
+00456;"=HYPERLINK(""https://invalid.example"",""jangan dieksekusi"")";0;"Leading zero dan formula-like text harus tetap data"

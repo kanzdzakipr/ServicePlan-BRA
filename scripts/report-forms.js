@@ -565,6 +565,8 @@
     const maxSourceImageBytes = 8 * 1024 * 1024;
     const minImageLongSide = 1280;
     const minImageShortSide = 720;
+    const maxStoredImportTypeIssues = 200;
+    const maxTypeIssueRawLength = 240;
 
     function cloneData(value) {
         return JSON.parse(JSON.stringify(value));
@@ -616,6 +618,178 @@
         return Number.isFinite(number) ? number : 0;
     }
 
+    function importedValueIsEmpty(value) {
+        return value == null || (typeof value === 'string' && !value.trim());
+    }
+
+    function importedScalarText(value) {
+        if (['string', 'number', 'boolean', 'bigint'].includes(typeof value)) {
+            return String(value);
+        }
+        return null;
+    }
+
+    function comparableImportedValue(value) {
+        return String(value == null ? '' : value)
+            .normalize('NFKC')
+            .toLocaleLowerCase('id')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function canonicalDateParts(yearValue, monthValue, dayValue) {
+        const year = Number(yearValue);
+        const month = Number(monthValue);
+        const day = Number(dayValue);
+        if (
+            !Number.isInteger(year)
+            || !Number.isInteger(month)
+            || !Number.isInteger(day)
+            || year < 1000
+            || year > 9999
+            || month < 1
+            || month > 12
+            || day < 1
+            || day > 31
+        ) return '';
+        const probe = new Date(0);
+        probe.setUTCHours(0, 0, 0, 0);
+        probe.setUTCFullYear(year, month - 1, day);
+        if (
+            probe.getUTCFullYear() !== year
+            || probe.getUTCMonth() !== month - 1
+            || probe.getUTCDate() !== day
+        ) return '';
+        return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    function normalizeImportedDate(value) {
+        const text = importedScalarText(value)?.trim() || '';
+        let match = text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+        if (match) return canonicalDateParts(match[1], match[2], match[3]);
+        match = text.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+        return match ? canonicalDateParts(match[3], match[2], match[1]) : '';
+    }
+
+    function normalizeImportedMonth(value) {
+        const text = importedScalarText(value)?.trim() || '';
+        const date = normalizeImportedDate(text);
+        if (date) return date.slice(0, 7);
+        let match = text.match(/^(\d{4})[-/.](\d{1,2})$/);
+        if (!match) {
+            match = text.match(/^(\d{1,2})[-/.](\d{4})$/);
+            if (match) match = [match[0], match[2], match[1]];
+        }
+        if (!match) return '';
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        if (year < 1000 || year > 9999 || month < 1 || month > 12) return '';
+        return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}`;
+    }
+
+    function normalizeImportedTime(value) {
+        const text = importedScalarText(value)?.trim() || '';
+        const match = text.match(/^([01]?\d|2[0-3])[:.]([0-5]\d)(?::([0-5]\d))?$/);
+        if (!match || (match[3] && match[3] !== '00')) return '';
+        return `${String(match[1]).padStart(2, '0')}:${match[2]}`;
+    }
+
+    function normalizeImportedNumber(value, options = {}) {
+        if (typeof value === 'number') {
+            if (!Number.isFinite(value) || (!options.allowNegative && value < 0)) return '';
+            return String(Object.is(value, -0) ? 0 : value);
+        }
+        const text = importedScalarText(value)?.trim() || '';
+        const sign = options.allowNegative ? '[+-]?' : '\\+?';
+        const pattern = new RegExp(`^${sign}(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$`);
+        if (!pattern.test(text)) return '';
+        const number = Number(text);
+        if (!Number.isFinite(number) || (!options.allowNegative && number < 0)) return '';
+        return String(Object.is(number, -0) ? 0 : number);
+    }
+
+    function normalizeImportedValue(definition, rawValue, options = {}) {
+        if (definition?.readonly && !options.allowReadonly) {
+            return {
+                value: undefined,
+                issue: importedValueIsEmpty(rawValue) ? null : 'readonly_ignored'
+            };
+        }
+        if (importedValueIsEmpty(rawValue)) return { value: '', issue: null };
+        const scalar = importedScalarText(rawValue);
+        if (scalar == null) return { value: '', issue: 'unsupported_value_type' };
+        const type = definition?.type || 'text';
+        if (type === 'select') {
+            const comparable = comparableImportedValue(scalar);
+            const option = (definition.options || []).find(candidate => (
+                comparableImportedValue(candidate) === comparable
+            ));
+            return option == null
+                ? { value: '', issue: 'select_option_mismatch' }
+                : { value: option, issue: null };
+        }
+        if (type === 'number') {
+            const value = normalizeImportedNumber(rawValue, {
+                allowNegative: Boolean(options.allowNegative)
+            });
+            return value === ''
+                ? { value: '', issue: 'invalid_number' }
+                : { value, issue: null };
+        }
+        if (type === 'date') {
+            const value = normalizeImportedDate(rawValue);
+            return value
+                ? { value, issue: null }
+                : { value: '', issue: 'invalid_date' };
+        }
+        if (type === 'month') {
+            const value = normalizeImportedMonth(rawValue);
+            return value
+                ? { value, issue: null }
+                : { value: '', issue: 'invalid_month' };
+        }
+        if (type === 'time') {
+            const value = normalizeImportedTime(rawValue);
+            return value
+                ? { value, issue: null }
+                : { value: '', issue: 'invalid_time' };
+        }
+        return {
+            value: type === 'textarea'
+                ? scalar.replace(/\r\n?/g, '\n').trim()
+                : scalar.trim(),
+            issue: null
+        };
+    }
+
+    function draftValueTypeIssue(definition, value) {
+        if (importedValueIsEmpty(value)) return null;
+        const normalized = normalizeImportedValue(definition, value, {
+            allowReadonly: true,
+            allowNegative: Boolean(definition.readonly)
+        });
+        if (normalized.issue) return normalized.issue;
+        if (
+            ['select', 'date', 'month', 'time'].includes(definition.type)
+            && String(value).trim() !== String(normalized.value)
+        ) return 'non_canonical_value';
+        return null;
+    }
+
+    function importTypeIssueRawPreview(value) {
+        let text;
+        try {
+            text = typeof value === 'string' ? value : JSON.stringify(value);
+        } catch (error) {
+            text = String(value);
+        }
+        if (text == null) text = String(value);
+        return {
+            value: text.slice(0, maxTypeIssueRawLength),
+            truncated: text.length > maxTypeIssueRawLength
+        };
+    }
+
     function timeDifference(start, end) {
         if (!start || !end) return 0;
         const startParts = start.split(':').map(Number);
@@ -630,10 +804,14 @@
         if (!module) return;
         module.innerHTML = `
             <nav class="report-view-tabs" aria-label="Navigasi laporan">
-                <button class="report-view-tab active" type="button" data-report-panel="templates">
+                <button class="report-view-tab active" type="button" role="tab" aria-selected="true" data-report-panel="templates">
                     <i class="fa-regular fa-file-lines"></i> Template Form
                 </button>
-                <button class="report-view-tab" type="button" data-report-panel="history">
+                <button class="report-view-tab" type="button" role="tab" aria-selected="false" data-report-panel="import">
+                    <i class="fa-solid fa-file-import"></i> Impor Dokumen
+                    <span id="reportImportCount">0</span>
+                </button>
+                <button class="report-view-tab" type="button" role="tab" aria-selected="false" data-report-panel="history">
                     <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Laporan
                     <span id="reportHistoryCount">0</span>
                 </button>
@@ -700,8 +878,11 @@
                 <div id="historyList"></div>
                 <div class="form-preview" id="historyPrintArea"></div>
             </section>
+            <section class="report-import-workspace hidden" id="reportImport">
+                <div id="documentImportModule"></div>
+            </section>
             <section class="form-workspace" id="formWorkspace"></section>
-            <div class="report-toast" id="reportToast"><i class="fa-solid fa-circle-check"></i><span></span></div>
+            <div class="report-toast" id="reportToast" role="status" aria-live="polite"><i class="fa-solid fa-circle-check"></i><span></span></div>
         `;
 
         module.querySelectorAll('[data-report-panel]').forEach(button => {
@@ -741,7 +922,13 @@
             document.getElementById('view-reports').classList.add('active');
             document.querySelectorAll('.sidebar-menu a').forEach(link => link.classList.remove('active'));
             document.getElementById('menu-reports').classList.add('active');
-            if (route[1] && formSchemas.some(item => item.id === route[1])) openForm(route[1]);
+            if (route[1] === 'import') {
+                switchReportPanel('import');
+            } else if (route[1] === 'history') {
+                switchReportPanel('history');
+            } else if (route[1] && formSchemas.some(item => item.id === route[1])) {
+                openForm(route[1]);
+            }
         }
     }
 
@@ -768,22 +955,34 @@
 
     function isRowPopulated(row) {
         return Object.entries(row).some(([key, value]) => {
-            if (key === '_evidence' || calculatedRowKeys.has(key)) return false;
+            if (key.startsWith('_') || calculatedRowKeys.has(key)) return false;
             return String(value == null ? '' : value).trim();
         });
     }
 
     function switchReportPanel(panel) {
         const showHistory = panel === 'history';
+        const showImport = panel === 'import';
+        const showTemplates = !showHistory && !showImport;
         document.body.classList.remove('guide-modal-open');
-        document.getElementById('reportCatalog').classList.toggle('hidden', showHistory);
+        document.getElementById('reportCatalog').classList.toggle('hidden', !showTemplates);
         document.getElementById('reportHistory').classList.toggle('hidden', !showHistory);
+        document.getElementById('reportImport').classList.toggle('hidden', !showImport);
         document.getElementById('formWorkspace').classList.remove('active');
         document.getElementById('formWorkspace').innerHTML = '';
         document.querySelectorAll('[data-report-panel]').forEach(button => {
-            button.classList.toggle('active', button.dataset.reportPanel === panel);
+            const selected = button.dataset.reportPanel === panel;
+            button.classList.toggle('active', selected);
+            button.setAttribute('aria-selected', String(selected));
         });
+        const panelRoute = showImport ? '#reports/import' : showHistory ? '#reports/history' : '#reports';
+        if (window.location.hash !== panelRoute) {
+            window.history.replaceState(null, '', panelRoute);
+        }
         if (showHistory) renderHistory();
+        if (showImport) {
+            document.dispatchEvent(new CustomEvent('fleetreport:import-visible'));
+        }
         activeSchema = null;
         activeDraft = null;
     }
@@ -1540,6 +1739,23 @@
                     </div>
                     <div class="autosave-badge" id="autosaveBadge"><i class="fa-solid fa-cloud"></i> Auto-save aktif</div>
                 </div>
+                ${activeDraft.importSource ? `
+                    <div class="imported-source-banner">
+                        <i class="fa-solid fa-file-shield"></i>
+                        <div>
+                            <strong>Draft dibuat dari ${escapeHtml(activeDraft.importSource.fileName || 'dokumen impor')}</strong>
+                            <span>SHA-256 ${escapeHtml(String(activeDraft.importSource.sha256 || '').slice(0, 16))}… ·
+                            pemetaan ${Math.round(Number(activeDraft.importSource.mappingCoverage || 0) * 100)}% ·
+                            ${Number(activeDraft.importSource.unmappedFragments || 0)} fragmen tetap tersimpan di arsip impor.
+                            ${activeDraft.importSource.rowsLimited
+                                ? ` Draft memakai ${Number(activeDraft.importSource.appliedRows || 0).toLocaleString('id-ID')} dari ${Number(activeDraft.importSource.totalMappedRows || 0).toLocaleString('id-ID')} baris terpetakan.`
+                                : ''}
+                            ${Number(activeDraft.importSource.typeIssueCount || 0)
+                                ? ` ${Number(activeDraft.importSource.typeIssueCount).toLocaleString('id-ID')} nilai tidak diterapkan langsung karena tipe, opsi, atau kolomnya tidak cocok dengan schema dan perlu direview.`
+                                : ''}</span>
+                        </div>
+                    </div>
+                ` : ''}
                 <form id="dynamicReportForm" novalidate>
                     <div class="form-builder-body">
                         <section class="builder-section">
@@ -1663,14 +1879,17 @@
     }
 
     function validateDraft() {
-        const missingNumberPart = document.querySelector('.template-number-part:invalid')
-            || [...document.querySelectorAll('.template-number-part')].find(input => !input.value.trim());
+        const form = document.getElementById('dynamicReportForm');
+        const missingNumberPart = form?.querySelector('.template-number-part:invalid')
+            || [...(form?.querySelectorAll('.template-number-part') || [])].find(input => !input.value.trim());
         if (missingNumberPart) {
             missingNumberPart.focus();
             showToast('Lengkapi seluruh bagian dinamis pada nomor dokumen.', true);
             return null;
         }
-        const missing = activeSchema.fields.filter(item => item.required && !String(activeDraft.fields[item.key] || '').trim());
+        const missing = activeSchema.fields.filter(item => (
+            item.required && !String(activeDraft.fields[item.key] ?? '').trim()
+        ));
         if (missing.length) {
             const input = document.querySelector(`[data-field="${missing[0].key}"]`);
             if (input) {
@@ -1680,10 +1899,20 @@
             showToast(`Lengkapi field wajib: ${missing[0].label}.`, true);
             return null;
         }
-        const invalidNumber = [...document.querySelectorAll('input[type="number"]')].find(input => !input.checkValidity());
-        if (invalidNumber) {
-            invalidNumber.focus();
-            showToast('Nilai angka tidak boleh negatif atau menggunakan format yang tidak valid.', true);
+        const invalidField = activeSchema.fields
+            .map(item => ({
+                item,
+                issue: draftValueTypeIssue(item, activeDraft.fields[item.key])
+            }))
+            .find(candidate => candidate.issue);
+        if (invalidField) {
+            const input = document.querySelector(`[data-field="${invalidField.item.key}"]`);
+            input?.focus();
+            input?.reportValidity?.();
+            showToast(
+                `Format ${invalidField.item.label} tidak sesuai tipe ${invalidField.item.type}. Periksa kembali nilai impor.`,
+                true
+            );
             return null;
         }
         const populatedRows = activeDraft.rows.filter(isRowPopulated);
@@ -1705,6 +1934,31 @@
                 showToast(`Lengkapi kolom ${missingColumn.label} pada baris ${rowIndex + 1}.`, true);
                 return null;
             }
+            const invalidColumn = activeSchema.columns
+                .map(item => ({
+                    item,
+                    issue: draftValueTypeIssue(item, row[item.key])
+                }))
+                .find(candidate => candidate.issue);
+            if (invalidColumn) {
+                const input = document.querySelector(
+                    `[data-row="${rowIndex}"][data-key="${invalidColumn.item.key}"]`
+                );
+                input?.focus();
+                input?.reportValidity?.();
+                showToast(
+                    `Format kolom ${invalidColumn.item.label} pada baris ${rowIndex + 1} tidak sesuai tipe ${invalidColumn.item.type}.`,
+                    true
+                );
+                return null;
+            }
+        }
+        const invalidControl = form?.querySelector(':invalid');
+        if (invalidControl) {
+            invalidControl.focus();
+            invalidControl.reportValidity?.();
+            showToast('Periksa isian yang kosong atau menggunakan format yang tidak valid.', true);
+            return null;
         }
         if (requiresEvidence()) {
             const missingEvidenceIndex = activeDraft.rows.findIndex(row => isRowPopulated(row) && !row._evidence?.dataUrl);
@@ -1953,6 +2207,212 @@
         window.clearTimeout(showToast.timeout);
         showToast.timeout = window.setTimeout(() => toast.classList.remove('show'), 2800);
     }
+
+    function draftHasUserData(draft, schema = activeSchema) {
+        if (!draft || !schema) return false;
+        if (draft.importSource) return true;
+        const empty = createEmptyDraft(schema);
+        const fieldValues = (schema.fields || []).some(item => (
+            String(draft.fields?.[item.key] ?? '') !== String(empty.fields?.[item.key] ?? '')
+        ));
+        if (fieldValues) return true;
+        const draftRows = Array.isArray(draft.rows) ? draft.rows : [];
+        const seedRows = empty.rows || [];
+        const columns = schema.columns || [];
+        const rowCount = Math.max(draftRows.length, seedRows.length);
+        for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+            const draftRow = draftRows[rowIndex] || {};
+            const seedRow = seedRows[rowIndex] || {};
+            const differs = columns.some(column => (
+                String(draftRow[column.key] ?? '') !== String(seedRow[column.key] ?? '')
+            ));
+            if (differs) return true;
+        }
+        return false;
+    }
+
+    function importDraft(payload, options = {}) {
+        const schemaId = payload?.schemaId;
+        const schema = formSchemas.find(item => item.id === schemaId);
+        if (!schema) throw new Error('Tipe laporan tujuan tidak ditemukan.');
+        const existing = loadDraft(schema);
+        const replace = options.replace !== false;
+        const typeIssues = [];
+        let typeIssueCount = 0;
+        const recordTypeIssue = (path, definition, rawValue, reason) => {
+            typeIssueCount += 1;
+            if (typeIssues.length >= maxStoredImportTypeIssues) return;
+            const preview = importTypeIssueRawPreview(rawValue);
+            typeIssues.push({
+                path,
+                key: definition?.key || '',
+                label: definition?.label || path,
+                expectedType: definition?.type || 'schema-value',
+                reason,
+                rawValue: preview.value,
+                rawValueTruncated: preview.truncated
+            });
+        };
+
+        const sourceFields = payload?.fields;
+        const importedFieldValues = (
+            sourceFields
+            && typeof sourceFields === 'object'
+            && !Array.isArray(sourceFields)
+        ) ? sourceFields : {};
+        if (sourceFields != null && importedFieldValues !== sourceFields) {
+            recordTypeIssue(
+                'fields',
+                { key: 'fields', label: 'Field laporan', type: 'object' },
+                sourceFields,
+                'invalid_field_container'
+            );
+        }
+        const fieldDefinitions = new Map(schema.fields.map(item => [item.key, item]));
+        Object.keys(importedFieldValues).forEach(key => {
+            if (!fieldDefinitions.has(key)) {
+                recordTypeIssue(
+                    `fields.${String(key).slice(0, 100)}`,
+                    { key, label: key, type: 'schema-field' },
+                    importedFieldValues[key],
+                    'unknown_field_ignored'
+                );
+            }
+        });
+        const normalizedFields = {};
+        schema.fields.forEach(item => {
+            if (!Object.prototype.hasOwnProperty.call(importedFieldValues, item.key)) return;
+            const normalized = normalizeImportedValue(item, importedFieldValues[item.key]);
+            if (normalized.issue) {
+                recordTypeIssue(
+                    `fields.${item.key}`,
+                    item,
+                    importedFieldValues[item.key],
+                    normalized.issue
+                );
+            }
+            if (normalized.value !== undefined) normalizedFields[item.key] = normalized.value;
+        });
+
+        let importedRows;
+        if (Array.isArray(payload?.rows) && payload.rows.length) {
+            const columnDefinitions = new Map(schema.columns.map(item => [item.key, item]));
+            importedRows = payload.rows.map((sourceRow, rowIndex) => {
+                if (!sourceRow || typeof sourceRow !== 'object' || Array.isArray(sourceRow)) {
+                    recordTypeIssue(
+                        `rows[${rowIndex}]`,
+                        { key: '', label: `Baris ${rowIndex + 1}`, type: 'object' },
+                        sourceRow,
+                        'invalid_row'
+                    );
+                    return {};
+                }
+                Object.keys(sourceRow).forEach(key => {
+                    if (!columnDefinitions.has(key)) {
+                        recordTypeIssue(
+                            `rows[${rowIndex}].${String(key).slice(0, 100)}`,
+                            { key, label: key, type: 'schema-column' },
+                            sourceRow[key],
+                            'unknown_column_ignored'
+                        );
+                    }
+                });
+                const normalizedRow = {};
+                schema.columns.forEach(item => {
+                    if (!Object.prototype.hasOwnProperty.call(sourceRow, item.key)) return;
+                    const normalized = normalizeImportedValue(item, sourceRow[item.key]);
+                    if (normalized.issue) {
+                        recordTypeIssue(
+                            `rows[${rowIndex}].${item.key}`,
+                            item,
+                            sourceRow[item.key],
+                            normalized.issue
+                        );
+                    }
+                    if (normalized.value !== undefined) normalizedRow[item.key] = normalized.value;
+                });
+                return normalizedRow;
+            });
+        } else {
+            if (payload?.rows != null && !Array.isArray(payload.rows)) {
+                recordTypeIssue(
+                    'rows',
+                    { key: 'rows', label: 'Baris laporan', type: 'array' },
+                    payload.rows,
+                    'invalid_row_container'
+                );
+            }
+            importedRows = (schema.seedRows || [{}]).map(row => ({ ...row }));
+        }
+
+        const sourceMetadata = (
+            payload?.importSource
+            && typeof payload.importSource === 'object'
+            && !Array.isArray(payload.importSource)
+        ) ? { ...payload.importSource } : {};
+        const importSource = {
+            ...sourceMetadata,
+            typeIssues,
+            typeIssueCount,
+            typeIssuesTruncated: typeIssueCount > typeIssues.length
+        };
+        const draft = {
+            fields: replace
+                ? { ...(schema.seedFields || {}), ...normalizedFields }
+                : { ...(schema.seedFields || {}), ...(existing.fields || {}), ...normalizedFields },
+            rows: replace
+                ? importedRows
+                : [
+                    ...(existing.rows || []).filter(isRowPopulated),
+                    ...importedRows
+                ],
+            importSource,
+            updatedAt: new Date().toISOString()
+        };
+        if (!draft.rows.length) draft.rows = [{}];
+        try {
+            localStorage.setItem(storagePrefix + schema.id, JSON.stringify(draft));
+        } catch (error) {
+            throw new Error(`Draft tidak dapat disimpan di browser: ${error.message}`);
+        }
+        switchReportPanel('templates');
+        openForm(schema.id);
+        showToast(
+            typeIssueCount
+                ? `${typeIssueCount.toLocaleString('id-ID')} nilai impor tidak diterapkan langsung karena tipe, opsi, atau kolomnya tidak cocok dengan schema. Review nilai tersebut.`
+                : 'Hasil ekstraksi diterapkan sebagai draft. Review field bertanda wajib sebelum menyimpan laporan.',
+            typeIssueCount > 0
+        );
+        return cloneData(draft);
+    }
+
+    function isImportReferenced(importId) {
+        if (!importId) return false;
+        const referencedByDraft = formSchemas.some(schema => (
+            loadDraft(schema)?.importSource?.importId === importId
+        ));
+        if (referencedByDraft) return true;
+        return readHistory().some(record => (
+            record?.draft?.importSource?.importId === importId
+        ));
+    }
+
+    window.FleetReportForms = Object.freeze({
+        version: '1.0.0',
+        getSchemas: () => cloneData(formSchemas),
+        getDraftState(schemaId) {
+            const schema = formSchemas.find(item => item.id === schemaId);
+            if (!schema) return null;
+            const draft = loadDraft(schema);
+            const hasData = draftHasUserData(draft, schema);
+            return { hasData, draft: cloneData(draft) };
+        },
+        importDraft,
+        isImportReferenced,
+        openForm,
+        selectPanel: switchReportPanel,
+        notify: showToast
+    });
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', createModuleMarkup);
