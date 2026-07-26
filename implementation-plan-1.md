@@ -389,34 +389,52 @@ LPH = Total Liter BBM / (HM Pengisian Sekarang - HM Pengisian Sebelumnya)
 
 ---
 
-### 3.10 Produktivitas (`view-uc` -> Produktivitas)
+### 3.10 Produktivitas (`#view-productivity`)
 
 #### A. Analisis & Scope HTML (`dashboard.html`)
-Ditempatkan pada seksi `#view-uc` dengan judul "Produktivitas".
+Diterapkan pada seksi khusus `#view-productivity` dengan modul independen `scripts/productivity.js` dan `scripts/productivity.css`, terakses secara langsung dari sidebar navigasi `onclick="showView('productivity', '', 'menu-productivity')"`.
 
-#### B. Pemahaman Alur Bisnis & Aturan Sistem
-Mengacu pada `20_BRA_KOMTRAX_Januari_2026.md` dan data telematika.
-Modul ini mengukur Physical Availability (PA), Use of Availability (UA), Breakdown Rate (BR), dan Utilization Rate (UT).
-* **Formula PA**: `(Scheduled Hours - Breakdown Hours) / Scheduled Hours * 100%`
+#### B. Pemahaman Alur Bisnis & Integration Context (`20_BRA_KOMTRAX...md` & `REKAP_UNIT_STANDBY.md`)
+Modul ini mengintegrasikan secara komprehensif data telematika satelit KOMTRAX dan audit armada standby:
+1. **`20_BRA_KOMTRAX_Januari_2026.md`**: Rekonsiliasi data telematika 18 unit (Komatsu PC200-10M0, PC210-10M0, GD535, D85ESS). Memantau pembacaan SMR (HM), jam kerja aktual, *Actual Working Hour Ratio %*, *E Mode Ratio %*, *Digging Ratio %*, *Travel Ratio %*, konsumsi bahan bakar (L/H), serta deteksi *idling ratio anomaly* (> 50%).
+2. **`REKAP_UNIT_STANDBY.md`**: Analisis kerugian operasional dan potensi pemanfaatan dari 48 unit armada standby di Yard Duri (35 unit) dan Yard Prabumulih (13 unit) yang didominasi Dump Truck (27 unit) dan Excavator (8 unit).
 
 #### C. Spesifikasi Teknis Frontend
-* Gauge Chart UI untuk skor PA %, UA %, dan Utilization %.
-* Comparison Table: Jam Kerja Telematika (KOMTRAX) vs Jam Kerja Laporan Operator.
+* **4 Sub-Modul Navigasi**: Tab 1 (Dashboard Availability & KPI), Tab 2 (Rekonsiliasi Telematika KOMTRAX 18 Unit), Tab 3 (Idling Anomaly & Fuel Loss Matrix), Tab 4 (Audit Fleet Standby 48 Unit).
+* **Visualisasi Availability Gauges**: Kartu ringkasan Physical Availability (92.4%), Use of Availability (81.8%), Breakdown Rate (7.6%), Utilization Rate (52.1%), MTBF (114.5 Jam), dan MTTR (3.8 Jam).
+* **Deteksi Anomali Pemborosan Solar**: Penandaan baris merah otomatis (*anomaly row highlight*) untuk unit dengan rasio idling > 50% (contoh: PC200 DBCH2941 61.0%, DBCH1801 59.5%, DBCH0366 57.9%) beserta kalkulasi kerugian finansial solar (Rp 14.500/L).
 
 #### D. Spesifikasi Backend & Aggregator
-* Data Ingestion Worker dari data telematika GPS / KOMTRAX.
-* **Endpoint**: `GET /api/v1/productivity/fleet-kpi`.
+```sql
+CREATE TABLE telematics_logs (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    asset_id VARCHAR(50),
+    serial_number VARCHAR(50),
+    period_date DATE,
+    smr_hours DECIMAL(10,2),
+    working_hours DECIMAL(10,2),
+    actual_working_hours DECIMAL(10,2),
+    actual_working_ratio DECIMAL(5,2),
+    e_mode_ratio DECIMAL(5,2),
+    idling_ratio DECIMAL(5,2),
+    fuel_consumed_liters DECIMAL(10,2),
+    fuel_lph DECIMAL(5,2),
+    FOREIGN KEY (asset_id) REFERENCES assets(asset_id)
+);
+```
 
 #### E. Tabulasi Formula KPI Availability & Utilization
-| Indikator KPI | Rumus Perhitungan | Target Standard BRA |
-|:---|:---|:---|
-| Physical Availability (PA) | `(Scheduled Time - Downtime) / Scheduled Time * 100%` | >= 90% |
-| Use of Availability (UA) | `Operating Hours / (Scheduled Time - Downtime) * 100%` | >= 80% |
-| Breakdown Rate (BR) | `Breakdown Hours / Scheduled Time * 100%` | <= 10% |
-| Mean Time Between Failures (MTBF) | `Total Operating Time / Total Breakdown Occurrences` | >= 100 Jam |
+| Indikator KPI | Rumus Perhitungan | Target Standard BRA | Status Aktual Armada |
+|:---|:---|:---|:---|
+| **Physical Availability (PA)** | `(Scheduled Time - Downtime) / Scheduled Time * 100%` | ≥ 90% | **92.4%** (Achieved) |
+| **Use of Availability (UA)** | `Operating Hours / (Scheduled Time - Downtime) * 100%` | ≥ 80% | **81.8%** (Achieved) |
+| **Breakdown Rate (BR)** | `Breakdown Hours / Scheduled Time * 100%` | ≤ 10% | **7.6%** (Achieved) |
+| **Utilization Rate (UT)** | `Actual Working Hours / Total Calendar Hours * 100%` | ≥ 60% | **52.1%** (Needs Improvement) |
+| **MTBF** | `Total Operating Time / Total Breakdown Occurrences` | ≥ 100 Jam | **114.5 Jam** (Achieved) |
+| **MTTR** | `Total Repair Time / Total Breakdown Occurrences` | ≤ 4.0 Jam | **3.8 Jam** (Achieved) |
 
 #### F. Supporting AI Prompt (Production Ready)
-> "Buatkan komponen UI Produktivitas Alat Berat yang memuat 3 buah Gauge Chart (menggunakan Chart.js atau Pure CSS SVG) untuk menampilkan persentase Physical Availability (PA), Use of Availability (UA), dan Utilization Rate. Sertakan tabel komparasi HM Operasional vs Jam Idling."
+> "Terapkan modul `scripts/productivity.js` dan `scripts/productivity.css` pada container `#productivityModule`. Render kartu KPI PA/UA/BR/MTBF/MTTR, tabel rekonsiliasi telematika KOMTRAX 18 unit, tabel penandaan idling anomaly (>50%), serta audit 48 unit fleet standby."
 
 ---
 

@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="scripts/preventive-maintenance.css">
     <link rel="stylesheet" href="scripts/people-kpi.css">
     <link rel="stylesheet" href="scripts/hse-accident.css">
+    <link rel="stylesheet" href="scripts/productivity.css">
     <style>
         :root {
             --primary: #007bff;
@@ -368,7 +369,7 @@
             <li><a onclick="showView('uc', 'Spare Part & Logistik', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0" title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare Part & Logistik</span></a></li>
             <li><a onclick="showView('uc', 'Condition Monitoring', 'menu-condition')" id="menu-condition" role="button" tabindex="0" title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span class="nav-label">Condition Monitoring</span></a></li>
             <li><a onclick="showView('uc', 'Fuel Management', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0" title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a></li>
-            <li><a onclick="showView('uc', 'Produktivitas', 'menu-productivity')" id="menu-productivity" role="button" tabindex="0" title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Produktivitas</span></a></li>
+            <li><a onclick="showView('productivity', '', 'menu-productivity')" id="menu-productivity" role="button" tabindex="0" title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Produktivitas</span></a></li>
             <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" title="Biaya"><i class="fa-solid fa-money-bill-trend-up"></i><span class="nav-label">Biaya</span></a></li>
             <li><a onclick="showView('people', '', 'menu-people')" id="menu-people" role="button" tabindex="0" title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People & KPI</span></a></li>
             <li><a onclick="showView('hse', '', 'menu-hse')" id="menu-hse" role="button" tabindex="0" title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE / Accident</span></a></li>
@@ -610,6 +611,11 @@
             <!-- VIEW: HSE / ACCIDENT -->
             <div id="view-hse" class="view-section">
                 <div id="hseAccidentModule"></div>
+            </div>
+
+            <!-- VIEW: PRODUKTIVITAS -->
+            <div id="view-productivity" class="view-section">
+                <div id="productivityModule"></div>
             </div>
 
             <!-- VIEW: UNDER CONSTRUCTION -->
@@ -1139,5 +1145,6 @@
     <script src="scripts/preventive-maintenance.js"></script>
     <script src="scripts/people-kpi.js"></script>
     <script src="scripts/hse-accident.js"></script>
+    <script src="scripts/productivity.js"></script>
 </body>
 </html>
