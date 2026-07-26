@@ -1072,47 +1072,216 @@
 
             <!-- VIEW: FUEL MANAGEMENT -->
             <div id="view-fuel" class="view-section">
-                <h1 class="page-title">Fuel Management</h1>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h1 class="page-title">Dashboard Monitoring BBM</h1>
+                    <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> Input Pengisian</button>
+                </div>
+                
+                <!-- Filter Bar -->
+                <div class="panel" style="margin-bottom: 15px;">
+                    <div class="panel-body" style="padding: 10px 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <strong>Filter:</strong>
+                        <select class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;"><option>Periode: Hari Ini</option><option>Periode: Bulan Ini</option></select>
+                        <select class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;"><option>Lokasi: Semua</option><option>Pit</option><option>Borrow Pit</option><option>Yard KM 12</option></select>
+                        <select class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;"><option>Kategori: Semua</option><option>Excavator</option><option>Dump Truck</option></select>
+                        <button class="btn btn-primary" style="padding: 5px 15px;">Terapkan</button>
+                    </div>
+                </div>
+
+                <!-- KPI Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card total">
+                        <div class="kpi-info">
+                            <h3>Liter Hari Ini</h3>
+                            <div class="value">2,450 L</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-gas-pump" style="color: var(--primary);"></i></div>
+                    </div>
+                    <div class="kpi-card operating">
+                        <div class="kpi-info">
+                            <h3>Liter Bulan Ini</h3>
+                            <div class="value">45,200 L</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-droplet" style="color: var(--info);"></i></div>
+                    </div>
+                    <div class="kpi-card standby">
+                        <div class="kpi-info">
+                            <h3>Biaya Bulan Ini</h3>
+                            <div class="value">Rp 542 Jt</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-money-bill-trend-up" style="color: var(--success);"></i></div>
+                    </div>
+                    <div class="kpi-card breakdown">
+                        <div class="kpi-info">
+                            <h3>Unit Boros</h3>
+                            <div class="value" style="color: var(--danger);">4 Unit</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-fire" style="color: var(--danger);"></i></div>
+                    </div>
+                    <div class="kpi-card pm">
+                        <div class="kpi-info">
+                            <h3>Belum Diverifikasi</h3>
+                            <div class="value" style="color: var(--warning);">12 Trx</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-clipboard-question" style="color: var(--warning);"></i></div>
+                    </div>
+                </div>
+
                 <div class="dashboard-layout">
+                    <!-- Grafik A & B Placeholder -->
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-gas-pump"></i> Form Pengisian BBM</span></div>
-                        <div class="panel-body form-group">
-                            <label>Pilih Unit</label>
-                            <select id="fuel-asset-id" class="form-control"></select>
-                            <label>Flowmeter Awal</label>
-                            <input type="number" id="fuel-flow-start" class="form-control" placeholder="0" onkeyup="calcFuelLiter()">
-                            <label>Flowmeter Akhir</label>
-                            <input type="number" id="fuel-flow-end" class="form-control" placeholder="0" onkeyup="calcFuelLiter()">
-                            <label>Total Liter</label>
-                            <input type="number" id="fuel-liter-total" class="form-control" readonly style="background: #e9ecef;">
-                            <label>HM / KM Pengisian Sebelumnya</label>
-                            <input type="number" id="fuel-hm-prev" class="form-control" placeholder="0" onkeyup="calcFuelLPH()">
-                            <label>HM / KM Saat Ini</label>
-                            <input type="number" id="fuel-hm-curr" class="form-control" placeholder="0" onkeyup="calcFuelLPH()">
-                            <label>LPH (Liter per Hour) / KPL (KM per Liter)</label>
-                            <input type="text" id="fuel-lph" class="form-control" readonly style="background: #e9ecef;">
-                            <div id="fuel-alert" style="display: none; padding: 10px; background: var(--danger); color: white; border-radius: 5px; margin-bottom: 15px;">
-                                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Peringatan:</strong> LPH melampaui toleransi 15% dari baseline standard! Indikasi anomali/kebocoran.
-                            </div>
-                            <button class="btn btn-primary" onclick="submitFuel()" style="width: 100%;">Simpan Log BBM</button>
+                        <div class="panel-header"><span><i class="fa-solid fa-chart-area"></i> Tren Pemakaian Harian</span></div>
+                        <div class="panel-body" style="height: 250px; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid var(--border); padding-top: 40px; position: relative;">
+                             <div style="position:absolute; top: 10px; right: 20px; font-size: 0.8rem; display:flex; gap:10px;">
+                                 <div><span style="display:inline-block; width:12px; height:12px; background:var(--primary);"></span> Liter</div>
+                             </div>
+                             <!-- Dummy Bars -->
+                             <div style="width: 15%; background: var(--primary); height: 60%;" title="Tgl 1: 1500L"></div>
+                             <div style="width: 15%; background: var(--primary); height: 80%;" title="Tgl 2: 2000L"></div>
+                             <div style="width: 15%; background: var(--primary); height: 50%;" title="Tgl 3: 1200L"></div>
+                             <div style="width: 15%; background: var(--primary); height: 90%;" title="Tgl 4: 2200L"></div>
+                             <div style="width: 15%; background: var(--primary); height: 100%;" title="Tgl 5: 2450L"></div>
                         </div>
                     </div>
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-chart-line"></i> Riwayat Pengisian (Anomali Suspect)</span></div>
+                        <div class="panel-header"><span><i class="fa-solid fa-ranking-star"></i> Top Unit Boros (vs Standar)</span></div>
+                        <div class="panel-body" style="padding: 15px;">
+                            <div style="margin-bottom: 15px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;"><span>EXC-210 (Pit)</span> <span style="color: var(--danger); font-weight: bold;">+26.7% (19 L/HM)</span></div>
+                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;"><div style="width: 85%; background: var(--danger); height:100%; border-radius:4px;"></div></div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;"><span>DT-054 (Borrow Pit)</span> <span style="color: var(--danger); font-weight: bold;">-20.0% (2.8 km/L)</span></div>
+                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;"><div style="width: 75%; background: var(--danger); height:100%; border-radius:4px;"></div></div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;"><span>DZ-088 (Yard)</span> <span style="color: #fd7e14; font-weight: bold;">+12.5% (18 L/HM)</span></div>
+                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;"><div style="width: 60%; background: #fd7e14; height:100%; border-radius:4px;"></div></div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;"><span>GRD-12 (Minas)</span> <span style="color: #fd7e14; font-weight: bold;">+8.2% (14 L/HM)</span></div>
+                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;"><div style="width: 45%; background: #fd7e14; height:100%; border-radius:4px;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header"><span><i class="fa-solid fa-table-list"></i> Tabel Anomali Prioritas</span></div>
+                    <div class="panel-body" style="padding: 0;">
+                        <div class="table-responsive">
+                            <table style="margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th>Unit</th>
+                                        <th>Lokasi</th>
+                                        <th>Waktu Trx</th>
+                                        <th>Aktual</th>
+                                        <th>Standar</th>
+                                        <th>Deviasi</th>
+                                        <th>Biaya</th>
+                                        <th>Status Kewajaran</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>EXC-210</strong></td>
+                                        <td>Pit</td>
+                                        <td>Hari ini, 10:15</td>
+                                        <td>19 L/HM</td>
+                                        <td>15 L/HM</td>
+                                        <td style="color: var(--danger); font-weight: bold;">+26.7%</td>
+                                        <td>Rp 2.280.000</td>
+                                        <td><span class="badge bg-breakdown">Merah</span></td>
+                                        <td><button class="btn" style="padding: 3px 8px; font-size: 0.8rem; background: var(--light); border: 1px solid var(--border);">Detail</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DT-054</strong></td>
+                                        <td>Borrow Pit</td>
+                                        <td>Kemarin, 16:30</td>
+                                        <td>2.8 km/L</td>
+                                        <td>3.5 km/L</td>
+                                        <td style="color: var(--danger); font-weight: bold;">-20.0%</td>
+                                        <td>Rp 1.540.000</td>
+                                        <td><span class="badge" style="background: #fd7e14;">Oranye</span></td>
+                                        <td><button class="btn" style="padding: 3px 8px; font-size: 0.8rem; background: var(--light); border: 1px solid var(--border);">Detail</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>GRD-120K</strong></td>
+                                        <td>Yard KM 12</td>
+                                        <td>Kemarin, 14:00</td>
+                                        <td>12 L/HM</td>
+                                        <td>13 L/HM</td>
+                                        <td style="color: var(--success); font-weight: bold;">-7.7%</td>
+                                        <td>Rp 1.100.000</td>
+                                        <td><span class="badge bg-operating">Hijau</span></td>
+                                        <td><button class="btn" style="padding: 3px 8px; font-size: 0.8rem; background: var(--light); border: 1px solid var(--border);">Detail</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-layout">
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-warehouse"></i> Stok Tangki & Rekonsiliasi</span></div>
                         <div class="panel-body" style="padding: 0;">
-                            <div class="table-responsive">
-                                <table style="margin: 0;">
+                             <div class="table-responsive">
+                                <table style="margin: 0; font-size: 0.85rem;">
                                     <thead>
                                         <tr>
-                                            <th>Unit ID</th>
-                                            <th>Total Liter</th>
-                                            <th>LPH / KPL</th>
-                                            <th>Status</th>
+                                            <th>Tangki</th>
+                                            <th>Lokasi</th>
+                                            <th>Stok Sistem</th>
+                                            <th>Sounding Fisik</th>
+                                            <th>Selisih</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="fuel-history"></tbody>
+                                    <tbody>
+                                        <tr>
+                                            <td>Tank-01</td>
+                                            <td>Yard KM 12</td>
+                                            <td>12,450 L</td>
+                                            <td>12,430 L</td>
+                                            <td><span style="color: var(--success);">-20 L (Aman)</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Fuel Truck 1</td>
+                                            <td>Pit</td>
+                                            <td>4,000 L</td>
+                                            <td>3,850 L</td>
+                                            <td><span style="color: var(--danger); font-weight:bold;">-150 L (Warning)</span></td>
+                                        </tr>
+                                    </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-list-check"></i> Panel Tindakan Manager</span></div>
+                        <div class="panel-body" style="padding: 10px;">
+                            <ul class="attention-list">
+                                <li style="border-left: 4px solid var(--warning); padding-left: 10px; margin-bottom: 5px;">
+                                    <div class="attention-details">
+                                        <strong style="color: var(--warning);"><i class="fa-solid fa-clipboard-question"></i> 12 Transaksi Menunggu Verifikasi</strong>
+                                        <span>Perlu diperiksa oleh Supervisi sebelum masuk laporan resmi.</span>
+                                    </div>
+                                </li>
+                                <li style="border-left: 4px solid var(--danger); padding-left: 10px; margin-bottom: 5px;">
+                                    <div class="attention-details">
+                                        <strong style="color: var(--danger);"><i class="fa-solid fa-fire"></i> 1 Unit Melewati Batas Deviasi (Merah)</strong>
+                                        <span>EXC-210 pemakaian BBM sangat boros (+26.7%).</span>
+                                    </div>
+                                </li>
+                                <li style="border-left: 4px solid var(--danger); padding-left: 10px; margin-bottom: 5px;">
+                                    <div class="attention-details">
+                                        <strong style="color: var(--danger);"><i class="fa-solid fa-droplet-slash"></i> Selisih Stok Fuel Truck 1</strong>
+                                        <span>Terdapat selisih -150L saat sounding fisik. Perlu investigasi.</span>
+                                    </div>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
