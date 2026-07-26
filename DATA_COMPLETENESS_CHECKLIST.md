@@ -61,6 +61,7 @@ Pemeriksaan kualitas & Fitur Spasial:
 
 Sumber tambahan:
 
+- `material/REKAP_DAFTAR_ASET_STANDBY_ALAT_BERAT.md` & `raw-material/ASSET/DAFTAR_ASET_STANDBY_ALAT_BERAT.png` (31 baris armada standby lengkap dengan dealer, kapasitas HP/kW/M3/TON, kode unit, nomor lambung aktual, project, dan lokasi).
 - `material/ASSET_REKAP_MUTASI_UNIT_DURI_sheet_REKAP.md` memiliki informasi jenis dan project untuk proses mutasi, tetapi bukan master kondisi aset.
 - `material/AVAILABILITY_UNIT/REKAP_UNIT_STANDBY.md` memiliki daftar unit standby, tetapi tidak menyediakan HM/KM dan alasan/status terstruktur untuk semua unit.
 - `arsip/database/schema.sql` memiliki tabel `units` dengan kode, kategori, lokasi, status, tipe meter, dan meter aktual, tetapi belum memiliki project.
