@@ -457,3 +457,56 @@ Tabel di bawah ini menggambarkan pemetaan 16 menu navigasi `dashboard.html` terh
 | 15 | **Approval** | `approvals`, `purchase_requests`, `accidents` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Inbox otorisasi SPB, WO, & Unit Release ready |
 | 16 | **Pengaturan** | `roles`, `users`, `locations` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Pengaturan RBAC, hak akses user, & master lokasi ready |
 
+---
+
+## 9. Checklist Persiapan Berkas Backend PHP (Bridge Layer Architecture)
+
+Tabel di bawah ini menginventarisasi seluruh berkas PHP (*Core Framework*, *PDO Data Models*, dan *API Controllers*) yang dibutuhkan untuk menjembatani antarmuka frontend (`dashboard.html`) dengan basis data MySQL ([scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql)).
+
+### 9.1 Core Framework & Helpers (`/core/`)
+
+| File PHP | Tanggung Jawab Utama | Status Persiapan | Depended Table / Target Entity |
+|:---|:---|:---:|:---|
+| `core/Database.php` | Singleton PDO Database Connection Manager & Transaction Handler | `[x] Siap` | Database `serviceplan_bra` |
+| `core/Response.php` | Formatter standar JSON HTTP Response (`{success, data, message, errors}`) | `[x] Siap` | Generic API Output |
+| `core/AuthMiddleware.php` | Verifikasi Bearer Token / JWT, verifikasi role RBAC & lokasi user | `[x] Siap` | `users`, `roles` |
+| `core/Validator.php` | Sanitasi input request (XSS protection) & aturan validasi tipe data | `[x] Siap` | Generic Request Payload |
+
+### 9.2 PDO Data Access Models (`/models/`)
+
+| File PDO Model | Primary Responsibility & Method Core | Status Model | Affected Table (`scripts/schema.sql`) | Affected UI Menu (`dashboard.html`) |
+|:---|:---|:---:|:---|:---|
+| `models/AssetModel.php` | `getAll()`, `getById()`, `get360Details()`, `updateStatus()`, `logMutation()` | `[x] Siap` | `assets`, `asset_movements`, `locations` | Executive, Monitoring, Master Asset |
+| `models/WorkOrderModel.php` | `getKanbanBoard()`, `createWO()`, `updateStatus()`, `logTime()`, `verifyClosed()` | `[x] Siap` | `work_orders`, `wo_time_logs` | Executive, Work Order, Laporan |
+| `models/InspectionModel.php` | `submitP2H()`, `getInspectionHistory()`, `flagCriticalFindings()` | `[x] Siap` | `inspections`, `assets`, `work_orders` | Inspeksi & P2H, Laporan |
+| `models/MaintenanceModel.php` | `getPMForecast()`, `schedulePM()`, `completePM()`, `checkOverdue()` | `[x] Siap` | `pm_plans`, `assets`, `parts` | Preventive Maintenance |
+| `models/InventoryModel.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()` | `[x] Siap` | `parts`, `purchase_requests` | Spare Part & Logistik, PM Kitting |
+| `models/ComponentModel.php` | `getTireLayout()`, `logTreadDepth()`, `logBattery()`, `logCuttingBit()` | `[x] Siap` | `tire_inspections`, `battery_logs`, `cutting_bit_logs` | Condition Monitoring |
+| `models/FuelModel.php` | `logRefuel()`, `getLPHReport()`, `detectFuelAnomaly()` | `[x] Siap` | `fuel_logs`, `assets` | Fuel Management |
+| `models/CostModel.php` | `getBudgetVsActual()`, `getUnitValuations()`, `logExpenseTransaction()` | `[x] Siap` | `cost_financial_monthly`, `unit_valuations` | Biaya |
+| `models/KPIModel.php` | `getHeadKPIScorecard()`, `getMechanicLeaderboard()`, `getPlannerEval()` | `[x] Siap` | `head_kpi_assessments`, `planner_evaluations` | People & KPI, Work Order |
+| `models/AccidentModel.php` | `reportAccident()`, `updateCAPA()`, `releaseUnitHold()` | `[x] Siap` | `accidents`, `assets`, `locations` | HSE / Accident, Master Asset |
+| `models/TelematicsModel.php` | `getKomtraxSummary()`, `detectIdlingAnomaly()`, `getStandbyFleet()` | `[x] Siap` | `telematics_logs`, `assets`, `locations` | Produktivitas |
+| `models/ApprovalModel.php` | `getPendingInbox()`, `approveDocument()`, `rejectDocument()` | `[x] Siap` | `approvals`, `purchase_requests`, `accidents` | Approval Inbox |
+| `models/UserModel.php` | `authenticate()`, `getPermissions()`, `getUserLocations()` | `[x] Siap` | `users`, `roles`, `locations` | Pengaturan, Authentication |
+
+### 9.3 REST API Controllers (`/api/`)
+
+| Endpoint File (`/api/`) | Supported HTTP Methods | Endpoint Responsibility | Status Controller |
+|:---|:---|:---|:---:|
+| `api/auth.php` | `POST` | User login, JWT token generation, user session profile | `[x] Siap` |
+| `api/dashboard.php` | `GET` | Aggregated executive KPI metrics, emergency WOs, live map markers | `[x] Siap` |
+| `api/assets.php` | `GET`, `POST`, `PUT` | Fleet listing, asset 360 details, status override, location mutation BAST | `[x] Siap` |
+| `api/work_orders.php` | `GET`, `POST`, `PUT` | Kanban board fetch, create WO ticket, mechanic timer logging, closing verification | `[x] Siap` |
+| `api/pm.php` | `GET`, `POST`, `PUT` | PM 500h-10000h interval forecast, PM kitting reservation, completion logging | `[x] Siap` |
+| `api/spareparts.php` | `GET`, `POST`, `PUT` | Stock inventory search, SPB purchase request submission, part issuance | `[x] Siap` |
+| `api/condition.php` | `GET`, `POST` | Tire tread depth inspection submit, battery voltage logging, cutting bit wear | `[x] Siap` |
+| `api/fuel.php` | `GET`, `POST` | Flowmeter refuel entry, LPH report generator, fuel anomaly alert flagging | `[x] Siap` |
+| `api/productivity.php` | `GET` | Komtrax telematics table, idling anomaly detector (>50%), standby fleet audit | `[x] Siap` |
+| `api/costs.php` | `GET`, `POST` | Budget vs Actual monthly cost data, unit valuations market price range parser | `[x] Siap` |
+| `api/kpi.php` | `GET`, `POST` | Head KPI scorecard assessment (10 indicators), mechanic 208h leaderboard | `[x] Siap` |
+| `api/accidents.php` | `GET`, `POST`, `PUT` | HSE accident incident reporting, CAPA status update, unit lock/release request | `[x] Siap` |
+| `api/approvals.php` | `GET`, `POST` | Centralized approval inbox, SPB approval, unit release authorization | `[x] Siap` |
+| `api/reports.php` | `GET`, `POST` | Multi-form generator submit, export PDF/Excel data builder | `[x] Siap` |
+
+
