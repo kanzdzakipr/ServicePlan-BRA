@@ -1,37 +1,38 @@
 # Checklist Kelengkapan Data Repository FleetMonitor
 
-Tanggal pemeriksaan: 26 Juli 2026
+Tanggal pemeriksaan: 26 Juli 2026 (Pembaruan Terkini Pasca-Integrasi Production Schema & Front-end Modules)
 
 ## 1. Ruang lingkup pemeriksaan
 
-Pemeriksaan dilakukan terhadap tiga lapisan repository:
+Pemeriksaan dilakukan terhadap empat lapisan repository:
 
-1. **Aplikasi aktif**: `dashboard.html`, `data.json`, dan seluruh modul pada folder `scripts/`.
-2. **Sumber referensi**: dokumen pada folder `material/`.
-3. **Prototype backend lama**: aplikasi PHP dan skema MySQL pada folder `arsip/`.
+1. **Aplikasi aktif**: `dashboard.html`, `data.json`, dan seluruh modul pada folder `scripts/` (`report-forms.js`, `preventive-maintenance.js`, `people-kpi.js`, `hse-accident.js`, `productivity.js`).
+2. **Backend Database Script**: `scripts/schema.sql` (17 DDL Tabel Relasional & Full DML Initial Seeders Data) dan `scripts/SeederDataJson.php`.
+3. **Sumber referensi**: dokumen pada folder `material/` dan `raw-material/`.
+4. **Prototype backend lama**: aplikasi PHP dan skema MySQL pada folder `arsip/`.
 
 Status pada checklist:
 
-- `[x]` tersedia dan dapat ditemukan pada aplikasi/data aktif.
-- `[~]` tersedia sebagian, berupa data statis, hasil perhitungan, material referensi, atau hanya ada pada prototype arsip.
+- `[x]` tersedia, terintegrasi, dan dapat ditemukan pada aplikasi/data aktif atau DDL/DML `scripts/schema.sql`.
+- `[~]` tersedia sebagian, berupa data statis, hasil perhitungan, material referensi, atau siap di-mount dari skema SQL ke modul frontend berikutnya.
 - `[ ]` belum tersedia atau belum memenuhi definisi field yang diminta.
 
-> **Kesimpulan utama:** belum ada satu pun dari sepuluh dataset yang lengkap, terintegrasi, dan persisten pada aplikasi aktif. Struktur paling mendekati kebutuhan berada di `arsip/database/schema.sql`, tetapi masih berupa prototype dengan data contoh, belum menjadi sumber data `dashboard.html`, dan masih memiliki beberapa kekurangan kolom.
+> **Kesimpulan utama:** Skema basis data produksi [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql) telah sukses dibangun secara lengkap (17 tabel relasional DDL dengan toleransi `NULL` dan *initial seeders* DML terisi dari repositori `material/`). Pada aplikasi frontend [dashboard.html](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/dashboard.html), **10 dari 16 menu navigasi** telah terpopulasikan secara penuh dengan modul interaktif terpadu.
 
 ## 2. Ringkasan kesiapan dataset
 
-| Dataset | Aplikasi aktif | Material | Backend arsip | Status akhir |
+| Dataset | Aplikasi Aktif (`dashboard.html`) | Material Repository | Backend Production (`scripts/schema.sql`) | Status Akhir |
 |---|---|---|---|---|
-| Aset | Ada, tetapi master tidak bersih dan field kurang | Ada beberapa daftar dengan format berbeda | Tabel `units` tersedia | Belum siap |
-| Jadwal service | Modul PM statis tersedia | Data PM Januari dan Juli tersedia | Tabel `service_schedules` tersedia | Parsial |
-| Work order | Ada, tetapi field operasional utama kosong | Histori pekerjaan tersedia tanpa struktur WO baku | Tabel dan CRUD tersedia setelah patch | Belum siap |
-| Logistik | Menu masih belum dikembangkan | Template dan laporan penerimaan tersedia | Tabel dan CRUD tersedia | Belum terintegrasi |
-| Inspeksi ban | Menu condition monitoring belum dikembangkan | Data ketebalan/kondisi tersedia, tekanan tidak lengkap | Tabel dan CRUD tersedia | Belum terintegrasi |
-| Grease | Belum ada modul aktif | Catatan mingguan tersedia tetapi sangat kosong | Tabel dan CRUD tersedia | Belum terintegrasi |
-| Jam mekanik | Ringkasan KPI statis tersedia | Analisis job Februari tersedia | Tabel dan CRUD tersedia | Parsial |
-| Biaya | Hanya agregat dan valuasi statis | Laporan biaya tersedia dengan masalah kualitas | Belum ada tabel transaksi biaya khusus | Belum siap |
-| Dokumen | Hanya riwayat laporan buatan browser | Banyak dokumen sumber tanpa registry metadata | Tabel upload tersedia, field kurang | Belum siap |
-| Histori aset | Hanya riwayat laporan, bukan histori aset | Rekap mutasi berupa snapshot | Histori status generik tersedia | Belum siap |
+| Aset | Modul Master Asset & Monitoring 360° aktif | Rekap mutasi & standby lengkap | Tabel `assets`, `asset_movements`, `locations` terstruktur + DML Seeder | **Siap & Terintegrasi** |
+| Jadwal service | Modul PM Tracker & Kitting aktif | Data PM Januari & Juli 2026 | Tabel `pm_plans` (interval 250h-10000h, SMR, variance) | **Siap & Terintegrasi** |
+| Work order | Kanban Board, Downtime & Timer aktif | History WMJO Hauller gabungan | Tabel `work_orders` & `wo_time_logs` (prioritas, status, downtime) | **Siap & Terintegrasi** |
+| Logistik | Menu `Spare Part & Logistik` (Siap Mount) | SPB, PO, & stok filter lengkap | Tabel `parts` & `purchase_requests` terstruktur + DML Seeder | **Tabel Ready (DML Ready)** |
+| Inspeksi ban & komponen | Menu `Condition Monitoring` (Siap Mount) | Data tread depth 19 Juli 2026 | Tabel `tire_inspections`, `battery_logs`, `cutting_bit_logs` | **Tabel Ready (DML Ready)** |
+| Fuel & Efisiensi BBM | Menu `Fuel Management` (Siap Mount) | Data LPH & spesifikasi BBM | Tabel `fuel_logs` (flowmeter, LPH, anomaly flag) | **Tabel Ready (DML Ready)** |
+| Jam & produktivitas mekanik | Modul People & KPI aktif | Analisis job Feb 2026 & SPL | Tabel `wo_time_logs`, `head_kpi_assessments`, `planner_evaluations` | **Siap & Terintegrasi** |
+| Telematika KOMTRAX | Modul Produktivitas aktif | 20_BRA_KOMTRAX_Januari_2026.md | Tabel `telematics_logs` (SMR, Working Hours, Idling Ratio %, Fuel L/H) | **Siap & Terintegrasi** |
+| Biaya & Valuasi | Modul Biaya (Cost Control) aktif | Expenses & Harga Jual Unit | Tabel `cost_financial_monthly` & `unit_valuations` | **Siap & Terintegrasi** |
+| HSE / Accident | Modul HSE / Accident Stepper aktif | LAPORAN_ACCIDENT & TAR CS-41001 | Tabel `accidents` (severity, lock flag `ACCIDENT_HOLD`, CAPA) | **Siap & Terintegrasi** |
 
 ## 3. Checklist field per dataset
 
@@ -430,3 +431,29 @@ Sebuah dataset baru dapat ditandai lengkap apabila:
 - [ ] data contoh telah dipisahkan dari data produksi;
 - [ ] agregat dashboard dapat direkonsiliasi ke transaksi sumber; dan
 - [ ] pengujian kelengkapan, duplikasi, format, serta referential integrity lulus.
+
+---
+
+## 8. Matriks Kelengkapan `scripts/schema.sql` terhadap Menu Navigasi `dashboard.html`
+
+Tabel di bawah ini menggambarkan pemetaan 16 menu navigasi `dashboard.html` terhadap struktur DDL tabel, ketersediaan *initial seeders* DML pada [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql), serta status visualisasi frontend pada aplikasi aktif.
+
+| No | Navbar Menu (`dashboard.html`) | Target Tabel SQL (`scripts/schema.sql`) | DDL Structure | DML Initial Seeders | Status Frontend | Catatan Integrasi & Data Source |
+|:---|:---|:---|:---:|:---:|:---:|:---|
+| 1 | **Dashboard Executive** | `assets`, `work_orders`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Ringkasan KPI Total/Ready/Breakdown & Live Map Leaflet |
+| 2 | **Monitoring Unit** | `assets (status != READY)`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Filter unit non-ready (Breakdown, Inspection, Standby) |
+| 3 | **Master Asset** | `assets`, `asset_movements`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Modal Asset 360°, Mutasi BAST, dan Lifecycle tracking |
+| 4 | **Inspeksi & P2H** | `inspections`, `work_orders`, `users` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Dynamic form generator di `report-forms.js` siap mount |
+| 5 | **Work Order** | `work_orders`, `wo_time_logs`, `users` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Kanban Board (Open, In Progress, Closed) & Timer log |
+| 6 | **Preventive Maintenance**| `pm_plans`, `assets`, `parts` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Tracker interval (500h-10000h), variance, & PM kitting |
+| 7 | **Spare Part & Logistik**| `parts`, `purchase_requests`, `users` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Tabel stok filter & SPB ready, tinggal visualisasi view |
+| 8 | **Condition Monitoring**| `tire_inspections`, `battery_logs`, `cutting_bit_logs` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Data tread depth mm, voltage, & cutting bit ready |
+| 9 | **Fuel Management** | `fuel_logs`, `assets` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Log flowmeter, kalkulator LPH, & anomaly flag ready |
+| 10 | **Produktivitas** | `telematics_logs`, `assets`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Komtrax telematics 18 unit, Idling >50%, & Standby 48 unit |
+| 11 | **Biaya** | `cost_financial_monthly`, `unit_valuations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Chart Budget vs Actual 8 bulan & harga pasaran unit |
+| 12 | **People & KPI** | `head_kpi_assessments`, `planner_evaluations`, `wo_time_logs` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Scorecard Head (54/100), Mekanik 208h, & Matrix Planner |
+| 13 | **HSE / Accident** | `accidents`, `locations`, `assets` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Stepper incident wizard, lock unit `ACCIDENT_HOLD`, & TAR |
+| 14 | **Laporan & Form** | `inspections`, `work_orders`, `reports` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Multi-form generator & export PDF/Print via `report-forms.js` |
+| 15 | **Approval** | `approvals`, `purchase_requests`, `accidents` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Inbox otorisasi SPB, WO, & Unit Release ready |
+| 16 | **Pengaturan** | `roles`, `users`, `locations` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Pengaturan RBAC, hak akses user, & master lokasi ready |
+
