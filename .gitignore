@@ -38,3 +38,7 @@ desktop.ini
 brain/
 scratch/
 .gemini/
+
+# Eksklusi Mutlak Pemindaian AI Antigravity
+scripts/vendor/
+tests/fixtures/ # (Jika folder testing memiliki sampel payload dokumen berukuran besar)
