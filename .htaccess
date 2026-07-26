@@ -28,8 +28,8 @@ DirectoryIndex dashboard.html index.html index.php
     RewriteRule ^(core|config|models)/ - [F,L]
 </IfModule>
 
-# 5. Deny Direct Web Access to Sensitive Files & Data Sources
-<FilesMatch "\.(env|json|sql|log|md|git|gitignore|htaccess|ini|sh|phps)$">
+# 5. Deny Direct Web Access to Sensitive Credentials & SQL Schemas
+<FilesMatch "\.(env|sql|log|git|gitignore|htaccess|ini|sh|phps)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -38,15 +38,6 @@ DirectoryIndex dashboard.html index.html index.php
         Deny from all
     </IfModule>
 </FilesMatch>
-
-# Explicitly Block Public Access to data.json & schema.sql
-<Files "data.json">
-    Require all denied
-</Files>
-
-<Files "schema.sql">
-    Require all denied
-</Files>
 
 # 6. Character Encoding Enforcement
 AddDefaultCharset UTF-8
