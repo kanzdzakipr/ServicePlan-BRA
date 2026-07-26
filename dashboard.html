@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,13 +34,17 @@
             --header-height: 60px;
             --nav-item-height: 46px;
         }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: var(--bg-body); 
-            color: var(--text-main); 
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
             display: flex;
             height: 100vh;
             overflow: hidden;
@@ -57,6 +62,7 @@
             overflow: hidden;
             transition: flex-basis 0.3s, min-width 0.3s, width 0.3s;
         }
+
         .sidebar-header {
             align-items: center;
             background-color: #23272b;
@@ -72,7 +78,12 @@
             padding: 0 18px;
             white-space: nowrap;
         }
-        .sidebar-header i { color: var(--primary); margin-right: 10px; }
+
+        .sidebar-header i {
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
         .sidebar-menu {
             list-style: none;
             overflow-y: auto;
@@ -82,6 +93,7 @@
             scrollbar-color: #59616a transparent;
             scrollbar-width: thin;
         }
+
         .sidebar-menu li a {
             align-items: center;
             border-left: 4px solid transparent;
@@ -96,6 +108,7 @@
             transition: background-color 0.2s, color 0.2s, border-color 0.2s;
             width: 100%;
         }
+
         .sidebar-menu li a i {
             flex: 0 0 28px;
             font-size: 0.95rem;
@@ -103,6 +116,7 @@
             text-align: center;
             width: 28px;
         }
+
         .sidebar-menu .nav-label {
             display: block;
             line-height: 1.2;
@@ -111,13 +125,16 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .sidebar-menu li a:hover, .sidebar-menu li a.active {
-            background-color: rgba(255,255,255,0.1);
+
+        .sidebar-menu li a:hover,
+        .sidebar-menu li a.active {
+            background-color: rgba(255, 255, 255, 0.1);
             color: #fff;
             border-left-color: var(--primary);
         }
+
         .sidebar-menu li a:focus-visible {
-            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55);
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
             color: #fff;
             outline: none;
         }
@@ -142,9 +159,17 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
         }
-        .header-left, .header-right { display: flex; align-items: center; gap: 20px; min-width: 0; }
+
+        .header-left,
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            min-width: 0;
+        }
+
         .search-bar input {
             padding: 8px 15px;
             border: 1px solid var(--border);
@@ -152,6 +177,7 @@
             width: 250px;
             outline: none;
         }
+
         .dropdown select {
             padding: 8px 12px;
             border: 1px solid var(--border);
@@ -159,8 +185,19 @@
             background: #fff;
             outline: none;
         }
-        .profile { display: flex; align-items: center; gap: 10px; font-weight: bold; }
-        .profile img { width: 35px; height: 35px; border-radius: 50%; }
+
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .profile img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+        }
 
         /* Generic Views */
         .content {
@@ -171,11 +208,13 @@
             position: relative;
             width: 100%;
         }
+
         .page-title {
             margin-bottom: 20px;
             font-size: 1.5rem;
             color: var(--dark);
         }
+
         .view-section {
             display: none;
             margin: 0 auto;
@@ -183,18 +222,26 @@
             min-width: 0;
             width: 100%;
         }
-        .view-section.active { display: block; }
+
+        .view-section.active {
+            display: block;
+        }
+
         #reportModule,
-        #preventiveMaintenanceModule { max-width: none; width: 100%; }
-        
+        #preventiveMaintenanceModule {
+            max-width: none;
+            width: 100%;
+        }
+
         .panel {
             background: #fff;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             margin-bottom: 20px;
         }
+
         .panel-header {
             padding: 15px 20px;
             border-bottom: 1px solid var(--border);
@@ -204,7 +251,11 @@
             justify-content: space-between;
             align-items: center;
         }
-        .panel-body { padding: 20px; flex-grow: 1; }
+
+        .panel-body {
+            padding: 20px;
+            flex-grow: 1;
+        }
 
         /* Dashboard View specific styles */
         .kpi-grid {
@@ -213,97 +264,327 @@
             gap: 15px;
             margin-bottom: 20px;
         }
+
         .kpi-card {
             background: #fff;
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-left: 5px solid #ccc;
         }
-        .kpi-card.total { border-color: var(--dark); }
-        .kpi-card.operating { border-color: var(--success); }
-        .kpi-card.standby { border-color: var(--info); }
-        .kpi-card.breakdown { border-color: var(--danger); }
-        .kpi-card.pm { border-color: var(--warning); }
-        
-        .kpi-info h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
-        .kpi-info .value { font-size: 1.8rem; font-weight: bold; color: var(--text-main); }
-        .kpi-icon i { font-size: 2.5rem; color: #e9ecef; }
-        
-        .dashboard-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
-        #map { width: 100%; height: 350px; border-radius: 5px; z-index: 1;}
 
-        .attention-list { list-style: none; max-height: 350px; overflow-y: auto; }
-        .attention-list li { padding: 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-        .attention-list .danger i { color: var(--danger); font-size: 1.2rem;}
-        .attention-details { flex-grow: 1; }
-        .attention-details strong { display: block; font-size: 0.95rem; }
-        .attention-details span { font-size: 0.85rem; color: var(--text-muted); }
+        .kpi-card.total {
+            border-color: var(--dark);
+        }
+
+        .kpi-card.operating {
+            border-color: var(--success);
+        }
+
+        .kpi-card.standby {
+            border-color: var(--info);
+        }
+
+        .kpi-card.breakdown {
+            border-color: var(--danger);
+        }
+
+        .kpi-card.pm {
+            border-color: var(--warning);
+        }
+
+        .kpi-info h3 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .kpi-info .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .kpi-icon i {
+            font-size: 2.5rem;
+            color: #e9ecef;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        #map {
+            width: 100%;
+            height: 350px;
+            border-radius: 5px;
+            z-index: 1;
+        }
+
+        .attention-list {
+            list-style: none;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .attention-list li {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .attention-list .danger i {
+            color: var(--danger);
+            font-size: 1.2rem;
+        }
+
+        .attention-details {
+            flex-grow: 1;
+        }
+
+        .attention-details strong {
+            display: block;
+            font-size: 0.95rem;
+        }
+
+        .attention-details span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
 
         /* Master Asset View specific styles */
-        .table-responsive { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { background-color: #f8f9fa; font-weight: 600; color: var(--text-muted); font-size: 0.85rem; }
-        tr:hover { background-color: #f1f3f5; cursor: pointer;}
-        
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: #fff; display: inline-block; }
-        .bg-operating { background-color: var(--success); }
-        .bg-breakdown { background-color: var(--danger); }
-        .bg-standby { background-color: var(--info); }
-        .bg-inspeksi { background-color: var(--warning); }
-        .bg-draft { background-color: #6c757d; }
-        .bg-progress { background-color: var(--primary); }
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        tr:hover {
+            background-color: #f1f3f5;
+            cursor: pointer;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #fff;
+            display: inline-block;
+        }
+
+        .bg-operating {
+            background-color: var(--success);
+        }
+
+        .bg-breakdown {
+            background-color: var(--danger);
+        }
+
+        .bg-standby {
+            background-color: var(--info);
+        }
+
+        .bg-inspeksi {
+            background-color: var(--warning);
+        }
+
+        .bg-draft {
+            background-color: #6c757d;
+        }
+
+        .bg-progress {
+            background-color: var(--primary);
+        }
 
         /* Asset Detail Modal */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5); z-index: 1000;
-            display: none; align-items: center; justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
         }
-        .modal-overlay.active { display: flex; }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
         .modal-content {
-            background: #fff; border-radius: 8px; width: 80%; max-width: 900px;
-            max-height: 90vh; display: flex; flex-direction: column;
+            background: #fff;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 900px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
         }
+
         .modal-header {
-            padding: 20px; border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .modal-body { padding: 20px; overflow-y: auto; }
-        .asset-360-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        .asset-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-        .asset-tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; }
-        .asset-tab.active { border-color: var(--primary); color: var(--primary); font-weight: bold;}
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .asset-360-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .asset-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .asset-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .asset-tab.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
 
         /* Work Order Kanban Styles */
         .kanban-board {
-            display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 20px;
         }
-        .kanban-column {
-            background: #f4f6f9; border-radius: 8px; min-width: 300px; max-width: 300px;
-            display: flex; flex-direction: column; padding: 15px; border: 1px solid var(--border);
-        }
-        .kanban-column h3 { font-size: 1rem; margin-bottom: 15px; display: flex; justify-content: space-between; color: var(--text-muted);}
-        .kanban-card {
-            background: #fff; border-radius: 6px; padding: 15px; margin-bottom: 10px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1); border-left: 4px solid var(--primary);
-        }
-        .kanban-card.High { border-left-color: var(--danger); }
-        .kanban-card-title { font-weight: bold; margin-bottom: 5px; }
-        .kanban-card-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;}
-        
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem;}
-        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 15px; outline: none;}
-        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-primary { background: var(--primary); color: #fff; }
-        .btn-danger { background: var(--danger); color: #fff; }
 
-        .uc-container { text-align: center; padding: 100px 20px; color: var(--text-muted); }
-        .uc-container i { font-size: 4rem; color: #dee2e6; margin-bottom: 20px; }
+        .kanban-column {
+            background: #f4f6f9;
+            border-radius: 8px;
+            min-width: 300px;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .kanban-column h3 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+        }
+
+        .kanban-card {
+            background: #fff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .kanban-card.High {
+            border-left-color: var(--danger);
+        }
+
+        .kanban-card-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .kanban-card-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-bottom: 15px;
+            outline: none;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .uc-container {
+            text-align: center;
+            padding: 100px 20px;
+            color: var(--text-muted);
+        }
+
+        .uc-container i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 20px;
+        }
 
         @media (max-width: 900px) {
             .sidebar {
@@ -311,25 +592,31 @@
                 min-width: var(--sidebar-collapsed-width);
                 width: var(--sidebar-collapsed-width);
             }
+
             .sidebar-header {
                 padding: 0;
             }
+
             .sidebar-header i {
                 font-size: 1.25rem;
                 margin: 0;
             }
+
             .brand-label,
             .sidebar-menu .nav-label {
                 display: none;
             }
+
             .sidebar-menu li a {
                 justify-content: center;
                 padding: 0;
             }
+
             .sidebar-menu li a i {
                 font-size: 1rem;
                 margin: 0;
             }
+
             .content {
                 padding: 16px;
             }
@@ -339,14 +626,17 @@
             .top-header {
                 padding: 0 12px;
             }
+
             .top-header .search-bar,
             .profile span {
                 display: none;
             }
+
             .dropdown select {
                 max-width: 210px;
                 width: 100%;
             }
+
             .content {
                 padding: 12px;
             }
@@ -360,6 +650,7 @@
 
     </style>
 </head>
+
 <body>
 
     <!-- Sidebar -->
@@ -368,28 +659,56 @@
             <i class="fa-solid fa-truck-monster"></i><span class="brand-label">FleetMonitor</span>
         </div>
         <ul class="sidebar-menu">
-            <li><a onclick="showView('dashboard')" id="menu-dashboard" class="active" role="button" tabindex="0" aria-current="page" title="Dashboard"><i class="fa-solid fa-gauge-high"></i><span class="nav-label">Dashboard</span></a></li>
-            <li><a onclick="showView('monitoring')" id="menu-monitoring" role="button" tabindex="0" title="Monitoring Unit"><i class="fa-solid fa-location-dot"></i><span class="nav-label">Monitoring Unit</span></a></li>
-            <li><a onclick="showView('asset')" id="menu-asset" role="button" tabindex="0" title="Master Asset"><i class="fa-solid fa-cubes"></i><span class="nav-label">Master Asset</span></a></li>
-            <li><a onclick="showView('uc', 'Inspeksi & P2H', 'menu-inspection')" id="menu-inspection" role="button" tabindex="0" title="Inspeksi & P2H"><i class="fa-solid fa-clipboard-check"></i><span class="nav-label">Inspeksi & P2H</span></a></li>
-            <li><a onclick="showView('wo')" id="menu-wo" role="button" tabindex="0" title="Work Order"><i class="fa-solid fa-screwdriver-wrench"></i><span class="nav-label">Work Order</span></a></li>
-            <li><a onclick="showView('pm')" id="menu-pm" role="button" tabindex="0" title="Preventive Maintenance"><i class="fa-regular fa-calendar-check"></i><span class="nav-label">Preventive Maint.</span></a></li>
-            <li><a onclick="showView('logistics', '', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0" title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare Part & Logistik</span></a></li>
-            <li><a onclick="showView('condition', '', 'menu-condition')" id="menu-condition" role="button" tabindex="0" title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span class="nav-label">Condition Monitoring</span></a></li>
-            <li><a onclick="showView('fuel', '', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0" title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a></li>
-            <li><a onclick="showView('productivity', '', 'menu-productivity')" id="menu-productivity" role="button" tabindex="0" title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Produktivitas</span></a></li>
-            <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" title="Biaya"><i class="fa-solid fa-money-bill-trend-up"></i><span class="nav-label">Biaya</span></a></li>
-            <li><a onclick="showView('people', '', 'menu-people')" id="menu-people" role="button" tabindex="0" title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People & KPI</span></a></li>
-            <li><a onclick="showView('hse', '', 'menu-hse')" id="menu-hse" role="button" tabindex="0" title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE / Accident</span></a></li>
-            <li><a onclick="showView('reports')" id="menu-reports" role="button" tabindex="0" title="Laporan & Form"><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Laporan & Form</span></a></li>
-            <li><a onclick="showView('approval', '', 'menu-approval')" id="menu-approval" role="button" tabindex="0" title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a></li>
-            <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" role="button" tabindex="0" title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a></li>
+            <li><a onclick="showView('dashboard')" id="menu-dashboard" class="active" role="button" tabindex="0"
+                    aria-current="page" title="Dashboard"><i class="fa-solid fa-gauge-high"></i><span
+                        class="nav-label">Dashboard</span></a></li>
+            <li><a onclick="showView('monitoring')" id="menu-monitoring" role="button" tabindex="0"
+                    title="Monitoring Unit"><i class="fa-solid fa-location-dot"></i><span class="nav-label">Monitoring
+                        Unit</span></a></li>
+            <li><a onclick="showView('asset')" id="menu-asset" role="button" tabindex="0" title="Master Asset"><i
+                        class="fa-solid fa-cubes"></i><span class="nav-label">Master Asset</span></a></li>
+            <li><a onclick="showView('uc', 'Inspeksi & P2H', 'menu-inspection')" id="menu-inspection" role="button"
+                    tabindex="0" title="Inspeksi & P2H"><i class="fa-solid fa-clipboard-check"></i><span
+                        class="nav-label">Inspeksi & P2H</span></a></li>
+            <li><a onclick="showView('wo')" id="menu-wo" role="button" tabindex="0" title="Work Order"><i
+                        class="fa-solid fa-screwdriver-wrench"></i><span class="nav-label">Work Order</span></a></li>
+            <li><a onclick="showView('pm')" id="menu-pm" role="button" tabindex="0" title="Preventive Maintenance"><i
+                        class="fa-regular fa-calendar-check"></i><span class="nav-label">Preventive Maint.</span></a>
+            </li>
+            <li><a onclick="showView('logistics', '', 'menu-logistics')" id="menu-logistics" role="button"
+                    tabindex="0" title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span
+                        class="nav-label">Spare Part & Logistik</span></a></li>
+            <li><a onclick="showView('condition', '', 'menu-condition')" id="menu-condition" role="button"
+                    tabindex="0" title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span
+                        class="nav-label">Condition Monitoring</span></a></li>
+            <li><a onclick="showView('fuel', '', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0"
+                    title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a>
+            </li>
+            <li><a onclick="showView('productivity', '', 'menu-productivity')" id="menu-productivity" role="button"
+                    tabindex="0" title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span
+                        class="nav-label">Produktivitas</span></a></li>
+            <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" title="Biaya"><i
+                        class="fa-solid fa-money-bill-trend-up"></i><span class="nav-label">Biaya</span></a></li>
+            <li><a onclick="showView('people', '', 'menu-people')" id="menu-people" role="button" tabindex="0"
+                    title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People &
+                        KPI</span></a></li>
+            <li><a onclick="showView('hse', '', 'menu-hse')" id="menu-hse" role="button" tabindex="0"
+                    title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE /
+                        Accident</span></a></li>
+            <li><a onclick="showView('reports')" id="menu-reports" role="button" tabindex="0" title="Laporan & Form"><i
+                        class="fa-solid fa-file-invoice"></i><span class="nav-label">Laporan & Form</span></a></li>
+            <li><a onclick="showView('approval', '', 'menu-approval')" id="menu-approval" role="button" tabindex="0"
+                    title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a>
+            </li>
+            <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" role="button" tabindex="0"
+                    title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a>
+            </li>
         </ul>
     </aside>
 
     <!-- Main Wrapper -->
     <div class="main-wrapper">
-        
+
         <!-- Header -->
         <header class="top-header">
             <div class="header-left">
@@ -414,7 +733,7 @@
 
         <!-- Main Content -->
         <main class="content">
-            
+
             <!-- VIEW: DASHBOARD (MVP 1) -->
             <div id="view-dashboard" class="view-section active">
                 <h1 class="page-title">Executive Dashboard</h1>
@@ -422,34 +741,53 @@
                 <!-- Ringkasan status unit -->
                 <div class="kpi-grid">
                     <div class="kpi-card total">
-                        <div class="kpi-info"><h3>Total Unit</h3><div class="value" id="kpiTotal">-</div></div>
+                        <div class="kpi-info">
+                            <h3>Total Unit</h3>
+                            <div class="value" id="kpiTotal">-</div>
+                        </div>
                         <div class="kpi-icon"><i class="fa-solid fa-truck"></i></div>
                     </div>
                     <div class="kpi-card operating">
-                        <div class="kpi-info"><h3>Operating/Ready</h3><div class="value" id="kpiReady">-</div></div>
+                        <div class="kpi-info">
+                            <h3>Operating/Ready</h3>
+                            <div class="value" id="kpiReady">-</div>
+                        </div>
                         <div class="kpi-icon"><i class="fa-solid fa-person-digging"></i></div>
                     </div>
                     <div class="kpi-card standby">
-                        <div class="kpi-info"><h3>Standby</h3><div class="value" id="kpiStandby">-</div></div>
+                        <div class="kpi-info">
+                            <h3>Standby</h3>
+                            <div class="value" id="kpiStandby">-</div>
+                        </div>
                         <div class="kpi-icon"><i class="fa-solid fa-pause"></i></div>
                     </div>
                     <div class="kpi-card breakdown">
-                        <div class="kpi-info"><h3>Breakdown</h3><div class="value" id="kpiBreakdown">-</div></div>
+                        <div class="kpi-info">
+                            <h3>Breakdown</h3>
+                            <div class="value" id="kpiBreakdown">-</div>
+                        </div>
                         <div class="kpi-icon"><i class="fa-solid fa-wrench"></i></div>
                     </div>
                     <div class="kpi-card pm">
-                        <div class="kpi-info"><h3>Inspec./PM</h3><div class="value" id="kpiInspeksi">-</div></div>
+                        <div class="kpi-info">
+                            <h3>Inspec./PM</h3>
+                            <div class="value" id="kpiInspeksi">-</div>
+                        </div>
                         <div class="kpi-icon"><i class="fa-solid fa-clipboard-list"></i></div>
                     </div>
                 </div>
 
                 <div class="dashboard-layout">
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-map-location-dot"></i> Live Map (Posisi Terakhir Unit)</span></div>
-                        <div class="panel-body" style="padding: 0;"><div id="map"></div></div>
+                        <div class="panel-header"><span><i class="fa-solid fa-map-location-dot"></i> Live Map (Posisi
+                                Terakhir Unit)</span></div>
+                        <div class="panel-body" style="padding: 0;">
+                            <div id="map"></div>
+                        </div>
                     </div>
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-triangle-exclamation"></i> Panel Perhatian (WO Emergency)</span></div>
+                        <div class="panel-header"><span><i class="fa-solid fa-triangle-exclamation"></i> Panel Perhatian
+                                (WO Emergency)</span></div>
                         <div class="panel-body" style="padding: 10px;">
                             <ul class="attention-list" id="attentionList"></ul>
                         </div>
@@ -462,14 +800,16 @@
                 <h1 class="page-title">Monitoring Unit Bermasalah (Non-Ready)</h1>
                 <div class="panel">
                     <div class="panel-body" style="padding-bottom: 0;">
-                        <p style="color:var(--text-muted); margin-bottom: 20px;">Halaman ini difilter khusus untuk menampilkan alat berat yang membutuhkan perhatian (Breakdown, Inspeksi/PM, dan Standby).</p>
+                        <p style="color:var(--text-muted); margin-bottom: 20px;">Halaman ini difilter khusus untuk
+                            menampilkan alat berat yang membutuhkan perhatian (Breakdown, Inspeksi/PM, dan Standby).</p>
                     </div>
                 </div>
                 <div class="panel">
                     <div class="panel-header">
                         <span><i class="fa-solid fa-triangle-exclamation"></i> Daftar Unit Tidak Ready</span>
                         <div class="search-bar">
-                            <input type="text" id="searchMonitoring" placeholder="Cari unit bermasalah..." onkeyup="searchTableMonitoring()">
+                            <input type="text" id="searchMonitoring" placeholder="Cari unit bermasalah..."
+                                onkeyup="searchTableMonitoring()">
                         </div>
                     </div>
                     <div class="panel-body" style="padding:0;">
@@ -499,7 +839,8 @@
                 <div class="panel">
                     <div class="panel-header">
                         <span>Daftar Unit</span>
-                        <button class="btn btn-primary" onclick="openModal('modalNewAsset')"><i class="fa-solid fa-plus"></i> Unit Baru</button>
+                        <button class="btn btn-primary" onclick="openModal('modalNewAsset')"><i
+                                class="fa-solid fa-plus"></i> Unit Baru</button>
                     </div>
                     <div class="panel-body">
                         <div class="table-responsive">
@@ -527,7 +868,8 @@
             <div id="view-wo" class="view-section">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h1 class="page-title">Manajemen Work Order</h1>
-                    <button class="btn btn-danger" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Buat Tiket WO</button>
+                    <button class="btn btn-danger" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Buat
+                        Tiket WO</button>
                 </div>
                 <div class="kanban-board" id="woKanbanBoard">
                     <!-- Populated via JS -->
@@ -536,7 +878,8 @@
                         <div class="card-container"></div>
                     </div>
                     <div class="kanban-column" id="col-In-Progress">
-                        <h3><span>In Progress (Mekanik)</span> <span class="badge bg-progress" id="count-InProgress">0</span></h3>
+                        <h3><span>In Progress (Mekanik)</span> <span class="badge bg-progress"
+                                id="count-InProgress">0</span></h3>
                         <div class="card-container"></div>
                     </div>
                     <div class="kanban-column" id="col-Closed">
@@ -554,37 +897,51 @@
             <!-- VIEW: BIAYA (MVP 2/3) -->
             <div id="view-biaya" class="view-section">
                 <h1 class="page-title">Modul Biaya (Cost Control)</h1>
-                
+
                 <div class="kpi-grid">
                     <div class="kpi-card total">
-                        <div class="kpi-info"><h3>Total Budget Berjalan</h3><div class="value" id="kpiBudget">Rp 0</div></div>
+                        <div class="kpi-info">
+                            <h3>Total Budget Berjalan</h3>
+                            <div class="value" id="kpiBudget">Rp 0</div>
+                        </div>
                         <div class="kpi-icon"><i class="fa-solid fa-vault"></i></div>
                     </div>
                     <div class="kpi-card breakdown">
-                        <div class="kpi-info"><h3>Total Pengeluaran Aktual</h3><div class="value" id="kpiActual">Rp 0</div></div>
+                        <div class="kpi-info">
+                            <h3>Total Pengeluaran Aktual</h3>
+                            <div class="value" id="kpiActual">Rp 0</div>
+                        </div>
                         <div class="kpi-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
                     </div>
                 </div>
 
                 <div class="dashboard-layout">
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-chart-bar"></i> Budget vs Actual (8 Bulan Terakhir)</span></div>
+                        <div class="panel-header"><span><i class="fa-solid fa-chart-bar"></i> Budget vs Actual (8 Bulan
+                                Terakhir)</span></div>
                         <div class="panel-body" style="padding: 20px;">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-end; height:250px; border-bottom:1px solid #ccc; padding-bottom:10px;" id="chartContainer">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-end; height:250px; border-bottom:1px solid #ccc; padding-bottom:10px;"
+                                id="chartContainer">
                                 <!-- Bars populated via JS -->
                             </div>
-                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.8rem; color:var(--text-muted);" id="chartLabels">
+                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.8rem; color:var(--text-muted);"
+                                id="chartLabels">
                                 <!-- Labels via JS -->
                             </div>
                             <div style="margin-top:20px; font-size:0.8rem; display:flex; gap:20px;">
-                                <div><span style="display:inline-block; width:15px; height:15px; background:var(--primary); margin-right:5px;"></span> Budget</div>
-                                <div><span style="display:inline-block; width:15px; height:15px; background:var(--danger); margin-right:5px;"></span> Actual</div>
+                                <div><span
+                                        style="display:inline-block; width:15px; height:15px; background:var(--primary); margin-right:5px;"></span>
+                                    Budget</div>
+                                <div><span
+                                        style="display:inline-block; width:15px; height:15px; background:var(--danger); margin-right:5px;"></span>
+                                    Actual</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-list-check"></i> Daftar Harga Jual & Nilai Aset</span></div>
+                        <div class="panel-header"><span><i class="fa-solid fa-list-check"></i> Daftar Harga Jual & Nilai
+                                Aset</span></div>
                         <div class="panel-body" style="padding:0;">
                             <div class="table-responsive">
                                 <table style="margin-top:0;">
@@ -633,7 +990,8 @@
                     <div class="panel-body uc-container">
                         <i class="fa-solid fa-person-digging"></i>
                         <h2>Modul Dalam Pengembangan</h2>
-                        <p>Modul ini masuk dalam antrean MVP berikutnya berdasarkan dokumen Blueprint.<br>Fokus saat ini berada di Master Asset dan Work Order (Core Maintenance).</p>
+                        <p>Modul ini masuk dalam antrean MVP berikutnya berdasarkan dokumen Blueprint.<br>Fokus saat ini
+                            berada di Master Asset dan Work Order (Core Maintenance).</p>
                     </div>
                 </div>
             </div>
@@ -854,7 +1212,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Detail 360° Unit: <span id="modalAssetId"></span></h2>
-                <button onclick="document.getElementById('assetModal').classList.remove('active')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                <button onclick="document.getElementById('assetModal').classList.remove('active')"
+                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="asset-tabs">
@@ -865,7 +1224,8 @@
                 </div>
                 <div class="asset-360-grid">
                     <div>
-                        <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
+                        <div
+                            style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
                             <p style="color:var(--text-muted); font-size:0.85rem;">Status</p>
                             <h3 id="modalStatus" style="margin-bottom:15px;">-</h3>
                             <p style="color:var(--text-muted); font-size:0.85rem;">Kategori</p>
@@ -873,16 +1233,30 @@
                             <p style="color:var(--text-muted); font-size:0.85rem;">Lokasi Terakhir</p>
                             <h4 id="modalLokasi">-</h4>
                         </div>
-                        <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="triggerUpdateStatus()">Update Status</button>
+                        <button class="btn btn-primary" style="width:100%; margin-bottom:10px;"
+                            onclick="triggerUpdateStatus()">Update Status</button>
                     </div>
                     <div>
                         <h3 style="margin-bottom:10px;">Informasi Detail</h3>
-                        <p style="color:var(--text-muted); margin-bottom:15px;">(Simulasi data detail 360 derajat sesuai Blueprint. Informasi yang ditampilkan di sini mencakup seluruh life-cycle alat).</p>
+                        <p style="color:var(--text-muted); margin-bottom:15px;">(Simulasi data detail 360 derajat sesuai
+                            Blueprint. Informasi yang ditampilkan di sini mencakup seluruh life-cycle alat).</p>
                         <table style="width:100%; border:1px solid var(--border);">
-                            <tr><td style="width:40%; font-weight:bold; background:#f8f9fa;">Merek / Model</td><td>Komatsu (Simulasi)</td></tr>
-                            <tr><td style="font-weight:bold; background:#f8f9fa;">Tahun</td><td>2021</td></tr>
-                            <tr><td style="font-weight:bold; background:#f8f9fa;">Ownership</td><td>Milik Sendiri</td></tr>
-                            <tr><td style="font-weight:bold; background:#f8f9fa;">HM / KM Terakhir</td><td>8.450 Jam</td></tr>
+                            <tr>
+                                <td style="width:40%; font-weight:bold; background:#f8f9fa;">Merek / Model</td>
+                                <td>Komatsu (Simulasi)</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:bold; background:#f8f9fa;">Tahun</td>
+                                <td>2021</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:bold; background:#f8f9fa;">Ownership</td>
+                                <td>Milik Sendiri</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:bold; background:#f8f9fa;">HM / KM Terakhir</td>
+                                <td>8.450 Jam</td>
+                            </tr>
                         </table>
                     </div>
                 </div>
@@ -895,7 +1269,8 @@
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
                 <h2>Registrasi Aset Baru</h2>
-                <button onclick="closeModal('modalNewAsset')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                <button onclick="closeModal('modalNewAsset')"
+                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             <div class="modal-body form-group">
                 <label>Unit ID / Kode Lambung</label>
@@ -920,7 +1295,8 @@
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
                 <h2>Update Status Unit: <span id="us-id-label"></span></h2>
-                <button onclick="closeModal('modalUpdateStatus')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                <button onclick="closeModal('modalUpdateStatus')"
+                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             <div class="modal-body form-group">
                 <input type="hidden" id="us-id">
@@ -934,8 +1310,10 @@
                 <label>Update Lokasi (Opsional)</label>
                 <input type="text" id="us-loc" placeholder="Biarkan kosong jika tidak pindah" class="form-control">
                 <label>Keterangan / Kondisi Fisik</label>
-                <textarea id="us-notes" rows="3" class="form-control" placeholder="Tuliskan keterangan perpindahan atau alasan status..."></textarea>
-                <button class="btn btn-primary" onclick="submitUpdateStatus()" style="width:100%;">Update Status</button>
+                <textarea id="us-notes" rows="3" class="form-control"
+                    placeholder="Tuliskan keterangan perpindahan atau alasan status..."></textarea>
+                <button class="btn btn-primary" onclick="submitUpdateStatus()" style="width:100%;">Update
+                    Status</button>
             </div>
         </div>
     </div>
@@ -945,7 +1323,8 @@
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
                 <h2>Lapor Breakdown / Buat Work Order</h2>
-                <button onclick="closeModal('modalNewWO')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                <button onclick="closeModal('modalNewWO')"
+                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             <div class="modal-body form-group">
                 <label>Pilih Unit</label>
@@ -958,7 +1337,8 @@
                     <option value="High">High (Darurat / Breakdown)</option>
                 </select>
                 <label>Keluhan / Diagnosis Awal</label>
-                <textarea id="nwo-issue" rows="3" class="form-control" placeholder="Jelaskan secara detail kerusakan yang terjadi..."></textarea>
+                <textarea id="nwo-issue" rows="3" class="form-control"
+                    placeholder="Jelaskan secara detail kerusakan yang terjadi..."></textarea>
                 <label>Apakah unit berhenti total (downtime)?</label>
                 <select id="nwo-down" class="form-control">
                     <option value="Yes">Ya, Breakdown</option>
@@ -997,7 +1377,7 @@
                 const response = await fetch('data.json');
                 if (!response.ok) throw new Error('Data not found');
                 globalData = await response.json();
-                
+
                 initDashboard(globalData);
                 initMonitoringView(globalData.assets);
                 initAssetView(globalData.assets);
@@ -1029,11 +1409,11 @@
             document.getElementById('kpiStandby').textContent = summary.status_counts.STANDBY || 0;
             document.getElementById('kpiBreakdown').textContent = summary.status_counts.BREAKDOWN || 0;
             document.getElementById('kpiInspeksi').textContent = summary.status_counts.INSPEKSI || 0;
-            
+
             const attentionList = document.getElementById('attentionList');
             // Show only high priority / breakdown WOs as attention
             const emergencyWOs = data.work_orders.filter(wo => wo.priority === 'High' && wo.status !== 'Closed');
-            
+
             if (emergencyWOs.length > 0) {
                 attentionList.innerHTML = emergencyWOs.slice(0, 5).map(wo => `
                     <li class="danger">
@@ -1057,7 +1437,7 @@
                 else if (asset.status === 'STANDBY') badge = '<span class="badge bg-standby">STANDBY</span>';
                 else if (asset.status === 'BREAKDOWN') badge = '<span class="badge bg-breakdown">BREAKDOWN</span>';
                 else if (asset.status === 'INSPEKSI') badge = '<span class="badge bg-inspeksi">INSPECTION</span>';
-                
+
                 return `
                     <tr onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')">
                         <td><strong>${escapeHtml(asset.id)}</strong></td>
@@ -1075,10 +1455,10 @@
             const colOpen = document.querySelector('#col-Open .card-container');
             const colProgress = document.querySelector('#col-In-Progress .card-container');
             const colClosed = document.querySelector('#col-Closed .card-container');
-            
-            let countO=0, countP=0, countC=0;
 
-            let htmlO='', htmlP='', htmlC='';
+            let countO = 0, countP = 0, countC = 0;
+
+            let htmlO = '', htmlP = '', htmlC = '';
 
             wos.slice(0, 50).forEach(wo => { // limit to 50 for performance
                 const card = `
@@ -1088,12 +1468,12 @@
                             <i class="fa-solid fa-truck"></i> ${escapeHtml(wo.assetId)}<br>
                             <i class="fa-solid fa-wrench"></i> ${escapeHtml(wo.issue.substring(0, 30))}...
                         </div>
-                        <span class="badge ${wo.priority==='High'?'bg-breakdown':'bg-operating'}">${wo.priority}</span>
+                        <span class="badge ${wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating'}">${wo.priority}</span>
                     </div>
                 `;
-                if(wo.status === 'Open') { htmlO += card; countO++; }
-                else if(wo.status === 'In Progress') { htmlP += card; countP++; }
-                else if(wo.status === 'Closed') { htmlC += card; countC++; }
+                if (wo.status === 'Open') { htmlO += card; countO++; }
+                else if (wo.status === 'In Progress') { htmlP += card; countP++; }
+                else if (wo.status === 'Closed') { htmlC += card; countC++; }
             });
 
             colOpen.innerHTML = htmlO;
@@ -1120,7 +1500,7 @@
             const id = document.getElementById('na-id').value;
             const cat = document.getElementById('na-cat').value;
             const loc = document.getElementById('na-loc').value;
-            if(!id) return alert('ID harus diisi');
+            if (!id) return alert('ID harus diisi');
             globalData.assets.unshift({
                 id: id, type: 'Heavy Equipment', category: cat, status: 'READY', location: loc || 'Yard', lastUpdate: 'Baru saja'
             });
@@ -1143,18 +1523,18 @@
             const id = document.getElementById('us-id').value;
             const status = document.getElementById('us-status').value;
             const loc = document.getElementById('us-loc').value;
-            
+
             const asset = globalData.assets.find(a => a.id === id);
-            if(asset) {
-                if(globalData.summary.status_counts[asset.status]) globalData.summary.status_counts[asset.status]--;
-                if(globalData.summary.status_counts[status] !== undefined) globalData.summary.status_counts[status]++;
-                
+            if (asset) {
+                if (globalData.summary.status_counts[asset.status]) globalData.summary.status_counts[asset.status]--;
+                if (globalData.summary.status_counts[status] !== undefined) globalData.summary.status_counts[status]++;
+
                 asset.status = status;
-                if(loc) asset.location = loc;
+                if (loc) asset.location = loc;
                 asset.lastUpdate = 'Baru saja';
 
-                if(status === 'BREAKDOWN') {
-                    const woId = 'WO-26-' + Math.floor(Math.random()*1000);
+                if (status === 'BREAKDOWN') {
+                    const woId = 'WO-26-' + Math.floor(Math.random() * 1000);
                     globalData.work_orders.unshift({
                         woId: woId, assetId: asset.id, location: asset.location, issue: document.getElementById('us-notes').value || 'Status diupdate ke Breakdown', downtime: '0', status: 'Open', priority: 'High', assignedTo: 'Pending'
                     });
@@ -1178,23 +1558,23 @@
             const prio = document.getElementById('nwo-prio').value;
             const issue = document.getElementById('nwo-issue').value;
             const down = document.getElementById('nwo-down').value;
-            
-            if(!issue) return alert('Keluhan harus diisi');
-            
-            const woId = 'WO-26-' + Math.floor(Math.random()*1000);
+
+            if (!issue) return alert('Keluhan harus diisi');
+
+            const woId = 'WO-26-' + Math.floor(Math.random() * 1000);
             const asset = globalData.assets.find(a => a.id === id);
-            
-            if(down === 'Yes' && asset && asset.status !== 'BREAKDOWN') {
-                if(globalData.summary.status_counts[asset.status]) globalData.summary.status_counts[asset.status]--;
+
+            if (down === 'Yes' && asset && asset.status !== 'BREAKDOWN') {
+                if (globalData.summary.status_counts[asset.status]) globalData.summary.status_counts[asset.status]--;
                 asset.status = 'BREAKDOWN';
                 globalData.summary.status_counts['BREAKDOWN']++;
                 alert(`Unit ${id} otomatis diubah statusnya menjadi BREAKDOWN karena laporan downtime`);
             }
 
             globalData.work_orders.unshift({
-                woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: issue, downtime: down==='Yes'?'0':'-', status: 'Open', priority: prio, assignedTo: 'Pending'
+                woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: issue, downtime: down === 'Yes' ? '0' : '-', status: 'Open', priority: prio, assignedTo: 'Pending'
             });
-            
+
             closeModal('modalNewWO');
             alert('Work Order berhasil dibuat');
             refreshAllViews();
@@ -1225,7 +1605,7 @@
                 activeMenu.setAttribute('aria-current', 'page');
             }
 
-            if(viewName === 'uc') {
+            if (viewName === 'uc') {
                 document.getElementById('ucTitle').innerText = title;
             }
 
@@ -1237,7 +1617,7 @@
             const content = document.querySelector('.content');
             if (content) content.scrollTop = 0;
 
-            if(viewName === 'dashboard' && !mapInitialized && globalData) {
+            if (viewName === 'dashboard' && !mapInitialized && globalData) {
                 initMap(globalData.assets);
                 mapInitialized = true;
             }
@@ -1261,28 +1641,28 @@
         });
 
         function initMap(assets) {
-            const map = L.map('map').setView([1.2721, 101.2173], 12); 
+            const map = L.map('map').setView([1.2721, 101.2173], 12);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-            const iconOperating = L.divIcon({className: 'custom-div-icon', html: "<div style='background-color:#28a745; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15]});
-            const iconBreakdown = L.divIcon({className: 'custom-div-icon', html: "<div style='background-color:#dc3545; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15]});
-            const iconStandby = L.divIcon({className: 'custom-div-icon', html: "<div style='background-color:#17a2b8; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15]});
-            const iconInspeksi = L.divIcon({className: 'custom-div-icon', html: "<div style='background-color:#ffc107; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15]});
+            const iconOperating = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#28a745; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15] });
+            const iconBreakdown = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#dc3545; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15] });
+            const iconStandby = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#17a2b8; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15] });
+            const iconInspeksi = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#ffc107; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15] });
 
             const dummyCenter = { lat: 1.2721, lng: 101.2173 };
             const sampleUnits = assets.slice(0, 25); // map 25 units
-            
+
             sampleUnits.forEach((unit) => {
                 const lat = dummyCenter.lat + (Math.random() - 0.5) * 0.05;
                 const lng = dummyCenter.lng + (Math.random() - 0.5) * 0.05;
-                
-                let icon = iconOperating;
-                if(unit.status === 'BREAKDOWN') icon = iconBreakdown;
-                else if(unit.status === 'STANDBY') icon = iconStandby;
-                else if(unit.status === 'INSPEKSI') icon = iconInspeksi;
 
-                L.marker([lat, lng], {icon: icon}).addTo(map)
+                let icon = iconOperating;
+                if (unit.status === 'BREAKDOWN') icon = iconBreakdown;
+                else if (unit.status === 'STANDBY') icon = iconStandby;
+                else if (unit.status === 'INSPEKSI') icon = iconInspeksi;
+
+                L.marker([lat, lng], { icon: icon }).addTo(map)
                     .bindPopup(`<b>${escapeHtml(unit.id)}</b><br>Kategori: ${escapeHtml(unit.category)}<br>Status: ${escapeHtml(unit.status)}`);
             });
             setTimeout(() => { map.invalidateSize(); }, 500);
@@ -1291,7 +1671,7 @@
         function initMonitoringView(assets) {
             // Filter out 'READY' units, keep BREAKDOWN, INSPEKSI, STANDBY
             const problematic = assets.filter(a => a.status !== 'READY');
-            
+
             const tbody = document.getElementById('monTableBody');
             tbody.innerHTML = problematic.map(asset => {
                 let badge = '';
@@ -1308,7 +1688,7 @@
                     badge = '<span class="badge bg-inspeksi">INSPECTION</span>';
                     action = '<button class="badge bg-draft" style="border:none; cursor:pointer;" onclick="alert(\'Menunggu verifikasi inspector\')">Review P2H</button>';
                 }
-                
+
                 return `
                     <tr>
                         <td><strong>${escapeHtml(asset.id)}</strong></td>
@@ -1342,14 +1722,14 @@
         }
 
         function initBiayaView(costs) {
-            if(!costs) return;
-            
+            if (!costs) return;
+
             // Format currency
-            const fmt = (num) => 'Rp ' + (num/1000000).toFixed(0) + ' Jt';
-            
-            let totalB = costs.budget.reduce((a,b)=>a+b, 0);
-            let totalA = costs.actual.reduce((a,b)=>a+b, 0);
-            
+            const fmt = (num) => 'Rp ' + (num / 1000000).toFixed(0) + ' Jt';
+
+            let totalB = costs.budget.reduce((a, b) => a + b, 0);
+            let totalA = costs.actual.reduce((a, b) => a + b, 0);
+
             document.getElementById('kpiBudget').innerText = fmt(totalB);
             document.getElementById('kpiActual').innerText = fmt(totalA);
 
@@ -1357,11 +1737,11 @@
             const maxVal = Math.max(...costs.budget, ...costs.actual);
             let chartHtml = '';
             let labelHtml = '';
-            
-            for(let i=0; i<costs.labels.length; i++) {
+
+            for (let i = 0; i < costs.labels.length; i++) {
                 const bH = (costs.budget[i] / maxVal) * 100;
                 const aH = (costs.actual[i] / maxVal) * 100;
-                
+
                 chartHtml += `
                     <div style="display:flex; flex-direction:column; justify-content:flex-end; align-items:center; width:30px; margin:0 5px;">
                         <div style="display:flex; gap:2px; align-items:flex-end; height:200px;">
@@ -1588,4 +1968,5 @@
     <script src="scripts/hse-accident.js"></script>
     <script src="scripts/productivity.js"></script>
 </body>
+
 </html>
