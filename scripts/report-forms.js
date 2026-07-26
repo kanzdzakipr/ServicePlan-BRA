@@ -1815,6 +1815,8 @@
     async function printReportPreview(preview, button) {
         if (!preview || !button) return;
         const originalMarkup = button.innerHTML;
+        const printAnchor = document.createComment('report-print-anchor');
+        const originalParent = preview.parentNode;
         button.disabled = true;
         button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan halaman...';
         try {
@@ -1829,11 +1831,19 @@
                     image.addEventListener('error', resolve, { once: true });
                 });
             }));
+            originalParent.insertBefore(printAnchor, preview);
+            document.body.appendChild(preview);
+            preview.classList.add('print-root-active');
             document.body.classList.add('report-printing');
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
             window.print();
         } finally {
             document.body.classList.remove('report-printing');
+            preview.classList.remove('print-root-active');
+            if (printAnchor.parentNode) {
+                printAnchor.parentNode.insertBefore(preview, printAnchor);
+                printAnchor.remove();
+            }
             button.disabled = false;
             button.innerHTML = originalMarkup;
         }
@@ -1853,11 +1863,6 @@
         const reportNumber = getReportNumber(schema, draft.fields);
         const projectName = draft.fields.project || draft.fields.lokasi || 'PROJECT / MITRA';
         const summary = summaryMarkup(schema, draft);
-        const tableDensity = schema.columns.length >= 10
-            ? 'print-table-ultra'
-            : schema.columns.length >= 7
-                ? 'print-table-dense'
-                : '';
         preview.innerHTML = `
             <div class="preview-toolbar">
                 <strong><i class="fa-regular fa-file-pdf"></i> ${options.finalized ? 'Laporan final' : 'Preview dokumen terstandarisasi'}</strong>
@@ -1900,7 +1905,7 @@
                             <span>${escapeHtml(reportNumber)}</span>
                         </div>
                     </header>
-                <table class="print-table ${tableDensity}">
+                <table class="print-table">
                     <thead><tr>
                         <th>No.</th>
                         ${schema.columns.map(item => `<th>${escapeHtml(item.label)}</th>`).join('')}

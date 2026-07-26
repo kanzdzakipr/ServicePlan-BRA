@@ -98,9 +98,13 @@ Layout cetak baku terdiri dari:
 
 Aturan pagination PDF:
 
-- ukuran halaman A4 landscape dengan margin 10 mm;
-- halaman identitas dan rincian tabel dipisahkan agar kepala tabel tidak tertinggal di dasar halaman;
-- tabel menggunakan layout tetap dan ukuran font adaptif berdasarkan jumlah kolom;
+- ukuran halaman A4 portrait (210 × 297 mm) dengan margin atas, kanan, bawah, dan kiri masing-masing 30 mm;
+- kop laporan utama dan kop halaman dokumentasi memiliki jarak internal atas 10 mm, sehingga posisi awal kop konsisten dan tidak menempel pada batas atas area cetak;
+- seluruh laporan menggunakan Arial, ukuran isi 11 pt, judul 14 pt, dan teks isi rata kiri-kanan;
+- saat tombol cetak digunakan, elemen laporan dipindahkan sementara ke root dokumen agar tidak mewarisi lebar sidebar, padding konten, atau batas layout dashboard;
+- lebar area laporan dikunci 150 mm, yaitu lebar bersih A4 setelah margin kiri dan kanan masing-masing 30 mm;
+- rincian tabel tetap melanjutkan halaman identitas selama ruangnya mencukupi; judul rincian dan kepala tabel dipindahkan ke halaman berikutnya bila ruang tersisa tidak cukup;
+- tabel menggunakan layout tetap; teks dibungkus di dalam sel tanpa mengecilkan ukuran font untuk template yang memiliki banyak kolom;
 - header tabel diulang pada setiap halaman lanjutan;
 - setiap baris dijaga tetap utuh; blok rekap, tanda tangan, dan footer dipindahkan bersama ke halaman berikutnya bila ruang tersisa tidak cukup;
 - setiap gambar dokumentasi dimulai pada halaman baru;
@@ -130,9 +134,12 @@ Contoh aturan CSS cetak:
 
 ```css
 @media print {
-  @page { size: A4 landscape; margin: 10mm; }
+  @page { size: A4 portrait; margin: 30mm; }
   .preview-toolbar { display: none !important; }
-  .print-data-section { break-before: page; }
+  .print-sheet { font: 11pt/1.45 Arial, sans-serif; }
+  .print-title h1,
+  .print-section-header h2 { font-size: 14pt; }
+  .print-section-header { break-after: avoid; }
   .print-table tr { break-inside: avoid; }
   .print-closing-section { break-inside: avoid; }
 }
