@@ -34,6 +34,7 @@ Sistem dirancang mengusung prinsip **Single Source of Truth (SSOT)** dan **Event
 1. **Event-Driven Status Transmutation**: Status unit (`READY`, `OPERATING`, `STANDBY`, `INSPEKSI`, `BREAKDOWN`, `WAITING_PART`, `ACCIDENT_HOLD`, `INACTIVE`) **TIDAK BISA** diubah secara manual tanpa transaksi yang valid. Contoh: Pembuatan Work Order (WO) dengan flag `downtime=true` otomatis mengubah status unit menjadi `BREAKDOWN`.
 2. **Workflow Gatekeeper & SLA**: Transisi status WO/SPB memerlukan *gate validation*. WO tidak dapat berstatus `CLOSED` tanpa bukti foto *before-after*, catatan jam mekanik, diagnosis akar masalah, dan verifikasi supervisor (SLA identifikasi 30 menit).
 3. **Relasi ID Unik Lintas Modul**: Asset ID (Kode Lambung) dan WO ID menjadi kunci relasi utama (*primary/foreign key*) yang menghubungkan modul Aset, Pemeliharaan, Logistik, Biaya, HSE, hingga KPI.
+4. **Multi-User Role Access Control (RBAC) & Scope Sensitivity**: Sistem memisahkan secara tegas informasi **Umum / Publik** (dapat diakses oleh seluruh peran untuk kesadaran operasional) vs **Terbatas / Rahasia** (hanya dapat diakses oleh peran eksekutif tertentu seperti Equipment Manager, Asset Manager, Logistic Head, HRD, dan Administrator). Matriks kewenangan aksi (*Read, Create, Edit, Approve, Override*) dipetakan secara presisi per 16 menu `dashboard.html` pada [DATA_COMPLETENESS_CHECKLIST.md](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/DATA_COMPLETENESS_CHECKLIST.md) Seksi 10.2.
 
 ---
 

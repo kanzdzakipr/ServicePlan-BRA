@@ -45,12 +45,45 @@ CREATE TABLE `users` (
     `username` VARCHAR(50) NOT NULL UNIQUE,
     `password_hash` VARCHAR(255) NOT NULL,
     `full_name` VARCHAR(100) NOT NULL,
-    `role_id` INT NOT NULL,
+    `role_id` INT NOT NULL, -- Primary default role
     `assigned_location_id` INT NULL,
     `is_active` BOOLEAN DEFAULT TRUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`role_id`) REFERENCES `roles`(`role_id`),
     FOREIGN KEY (`assigned_location_id`) REFERENCES `locations`(`location_id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2.1 MULTI-USER ROLE ASSIGNMENTS (Many-to-Many Role Mapping)
+DROP TABLE IF EXISTS `user_roles`;
+CREATE TABLE `user_roles` (
+    `user_role_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `role_id` INT NOT NULL,
+    `is_primary` BOOLEAN DEFAULT FALSE,
+    `assigned_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`role_id`) REFERENCES `roles`(`role_id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_user_role` (`user_id`, `role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2.2 GRANULAR PERMISSIONS & ROLE PERMISSIONS MATRIX
+DROP TABLE IF EXISTS `permissions`;
+CREATE TABLE `permissions` (
+    `permission_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `permission_key` VARCHAR(100) NOT NULL UNIQUE, -- e.g., 'costs.view_sensitive', 'accidents.release_hold'
+    `menu_slug` VARCHAR(50) NOT NULL, -- e.g., 'costs', 'hse-accident', 'work-orders'
+    `action_type` ENUM('READ', 'CREATE', 'UPDATE', 'APPROVE', 'OVERRIDE') NOT NULL,
+    `description` VARCHAR(255) NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `role_permissions`;
+CREATE TABLE `role_permissions` (
+    `role_permission_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `role_id` INT NOT NULL,
+    `permission_id` INT NOT NULL,
+    FOREIGN KEY (`role_id`) REFERENCES `roles`(`role_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`permission_id`) REFERENCES `permissions`(`permission_id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_role_perm` (`role_id`, `permission_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -478,6 +511,29 @@ INSERT INTO `users` (`user_id`, `username`, `password_hash`, `full_name`, `role_
 (14, 'rani_simanungkalit', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Rani Simanungkalit (HRD)', 9, 4),
 (15, 'widya_apriani', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Widya Apriani (Asset Manager)', 10, 4),
 (16, 'm_fajar_dc', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'M. Fajar DC (Inspector K3L)', 7, 6);
+
+-- 3.1 SEED MULTI-USER ROLE ASSIGNMENTS (Junction Many-to-Many Mapping)
+INSERT INTO `user_roles` (`user_id`, `role_id`, `is_primary`) VALUES
+(1, 1, TRUE),  -- Admin -> Administrator
+(1, 2, FALSE), -- Admin -> Equipment Manager (Secondary)
+(2, 2, TRUE),  -- Dany Agung -> Equipment Manager
+(2, 3, FALSE), -- Dany Agung -> Maintenance Planner (Secondary)
+(3, 3, TRUE),  -- P. Martin -> Maintenance Planner
+(4, 4, TRUE),  -- Rahmad K -> Mekanik Senior
+(5, 5, TRUE),  -- Urwatul Uska -> Helper Mekanik
+(6, 4, TRUE),  -- Joni -> Mekanik Senior
+(7, 4, TRUE),  -- Afriyandi -> Mekanik Senior
+(8, 4, TRUE),  -- Darmawan -> Mekanik Senior
+(9, 6, TRUE),  -- Hendrik -> Welder / Fabrikator
+(9, 4, FALSE), -- Hendrik -> Mekanik Senior (Secondary)
+(10, 4, TRUE), -- Rezeki -> Mekanik
+(11, 6, TRUE), -- Suwardi -> Welder / Fabrikator
+(12, 7, TRUE), -- Taufiq H -> Security / Safety
+(13, 8, TRUE), -- Guswan -> Logistic Head
+(14, 9, TRUE), -- Rani -> HRD Manager
+(15, 10, TRUE),-- Widya Apriani -> Asset Manager
+(15, 2, FALSE),-- Widya Apriani -> Equipment Manager (Secondary)
+(16, 7, TRUE); -- M. Fajar DC -> Inspector K3L
 
 -- 4. SEED MASTER ASSETS (With Individual Real-Time Spatial Lat/Lng Coordinates)
 INSERT INTO `assets` (`asset_id`, `asset_code`, `serial_number`, `license_plate`, `category`, `make_model`, `sub_group_branch`, `year_manufacture`, `status`, `current_location_id`, `last_hm_km`, `last_latitude`, `last_longitude`, `gps_updated_at`) VALUES

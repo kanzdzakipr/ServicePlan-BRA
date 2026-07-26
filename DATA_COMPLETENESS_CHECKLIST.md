@@ -508,4 +508,69 @@ Tabel di bawah ini menginventarisasi seluruh berkas PHP (*Core Framework*, *PDO 
 | `api/approvals.php` | `GET`, `POST` | Centralized approval inbox, SPB approval, unit release authorization | `[x] Siap` |
 | `api/reports.php` | `GET`, `POST` | Multi-form generator submit, export PDF/Excel data builder | `[x] Siap` |
 
+---
+
+## 10. Evaluasi & Matriks Hak Akses Multi-User Role (RBAC Scope Matrix)
+
+Tabel di bawah ini merinci klasifikasi informasi **Umum / Publik** (dapat diakses oleh seluruh peran pengguna untuk kesadaran operasional) vs **Terbatas / Confidential** (hanya dapat diakses/diubah oleh peran tertentu), serta matriks kewenangan aksi (*Read, Create, Edit, Approve, Delete/Override*) pada 16 menu `dashboard.html`.
+
+### 10.1 Klasifikasi Sensitivitas Informasi per Menu
+
+| Navbar Menu | Klasifikasi Informasi Umum (Publik / View-Only All Roles) | Klasifikasi Informasi Terbatas (Restricted / Restricted Roles) | Peran Berwenang (Restricted Access) |
+|:---|:---|:---|:---|
+| **1. Executive Dashboard** | Ringkasan jumlah total unit, status umum (Ready, Breakdown, Standby), Map Leaflet lokasi unit. | Daftar WO Emergency High Priority, estimasi downtime kritis, & nilai finansial kerugian. | Administrator, Equipment Manager, Maintenance Planner |
+| **2. Monitoring Unit** | Daftar unit non-ready, lokasi perbaikan, & kategori alat. | Alasan kronis breakdown, estimasi tanggal selesai RTW, PIC Mekanik. | Equipment Manager, Maintenance Planner, Inspector K3L |
+| **3. Master Asset** | Profil unit, tipe, foto, lokasi terkini, status operasi, & riwayat mutasi BAST. | Harga beli unit, nilai buku akuntansi, total perbaikan kumulatif, & harga pasaran (valuasi). | Asset Manager, Equipment Manager, Administrator |
+| **4. Inspeksi & P2H** | Hasil tes akhir P2H (PASS/FAIL), tanggal inspeksi, HM/KM aktual. | Temuan kritis teknis, identitas inspector, & pembuatan WO otomatis. | Inspector K3L, Maintenance Planner, Mekanik |
+| **5. Work Order** | Status papan Kanban (Open, In Progress, Closed), nomor WO, deskripsi isu. | Log jam lembur SPL mekanik, alokasi jam kerja internal, & verifikasi supervisor. | Maintenance Planner, Mekanik Senior, Equipment Mgr |
+| **6. Preventive Maint.** | Jadwal service (250h-10000h), SMR aktual, & status ketersediaan filter/spare part. | Estimasi biaya PM, garansi diler, & catatan internal planner. | Maintenance Planner, Equipment Manager, Logistic Head |
+| **7. Spare Part & Logistik**| Katalog *part number*, nama barang, & stok tersedia di gudang Yard. | Harga beli satuan (unit cost), status SPB nilai tinggi, & vendor supplier. | Logistic Head, Equipment Manager, Maintenance Planner |
+| **8. Condition Monitoring**| Kondisi ban (Hijau/Kuning/Merah), voltase aki, & pemakaian cutting bit. | Biaya penggantian ban/komponen, rotasi rekomendasi, & audit klaim garansi. | Maintenance Planner, Equipment Mgr, Asset Mgr |
+| **9. Fuel Management** | Total liter pengisian solar, tanggal refuel, & konsumsi rata-rata LPH unit. | Deteksi anomali pemborosan BBM, indikasi pencurian, & kalkulasi kerugian Rp. | Equipment Manager, Logistic Head, Inspector K3L |
+| **10. Produktivitas** | SMR Komtrax, jam kerja aktual, *Utilization Rate %*, & unit standby. | Indikator *Idling Ratio >50%*, estimasi liter solar terbuang, & nilai finansial rugi. | Equipment Manager, Asset Manager, Administrator |
+| **11. Biaya** | *TIDAK ADA (100% Sensitif & Rahasia Perusahaan)* | Grafik Budget vs Actual bulanan, *Expense Breakdown*, & Valuasi Harga Pasaran Unit. | **HANYA**: Equipment Manager, Asset Manager, Administrator |
+| **12. People & KPI** | Leaderboard jam kerja mekanik (total jam), tren kinerja mingguan. | Scorecard Head (54/100), Evaluasi Kompetensi P. Martin, jam lembur SPL Rp, & audit SDM. | **HANYA**: Equipment Manager, HRD Manager, Administrator |
+| **13. HSE / Accident** | Status keteruncian unit (`ACCIDENT_HOLD`), tanggal insiden, lokasi kejadian. | Kronologi detail kecelakaan, identitas driver, estimasi biaya kerusakan, & tombol Rilis Hold. | Inspector K3L, Equipment Mgr, Asset Mgr, Admin |
+| **14. Laporan & Form** | Template form laporan standar & pencetakan PDF ringkasan operasional. | Export data sensitif biaya, laporan SDM lembur, & audit log transaksi. | Berdasarkan hak akses masing-masing modul sumber |
+| **15. Approval Inbox** | *TIDAK ADA (100% Otorisasi Eksekutif)* | Kotak masuk persetujuan SPB, Work Order Closing, Unit Release Hold, & Mutasi BAST. | **HANYA**: Equipment Mgr, Asset Mgr, Logistic Head, HRD |
+| **16. Pengaturan System**| *TIDAK ADA (100% System Control)* | Manajemen Akun User, Password Reset, Hak Akses RBAC, & Master Lokasi. | **HANYA**: Administrator Utama |
+
+---
+
+### 10.2 Matriks Kewenangan Aksi Role per 16 Menu Navigasi `dashboard.html`
+
+> **Keterangan Kode Akses**: `R` = Read/View, `C` = Create, `U` = Update/Edit, `A` = Approve/Release, `O` = Admin Override/Delete, `-` = No Access (Akses Ditolak/Menu Tersembunyi).
+
+#### Bagian 1: Menu 1 s.d. 8 (`dashboard.html`)
+
+| User Role (10 Roles) | 1. Executive Dashboard | 2. Monitoring Unit | 3. Master Asset | 4. Inspeksi & P2H | 5. Work Order | 6. Preventive Maint. | 7. Spare Part & Logistik | 8. Condition Monitoring |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **1. Administrator** | R C U O | R C U O | R C U O | R C U O | R C U O | R C U O | R C U O | R C U O |
+| **2. Equipment Manager** | R U A | R U A | R U A | R U A | R C U A | R C U A | R A | R U A |
+| **3. Maintenance Planner** | R U | R U | R U | R U | R C U A | R C U A | R C U | R C U |
+| **4. Mekanik Senior** | R | R | R | R C | R C U | R | R C | R |
+| **5. Mekanik Junior / Helper**| R | R | R | R C | R U | R | - | - |
+| **6. Welder / Fabrikator** | R | R | R | R C | R U | - | - | - |
+| **7. Inspector K3L / Safety**| R | R U | R | R C U A | R C | - | - | R C U |
+| **8. Logistic Head** | R | R | R | - | R | R | R C U A | R |
+| **9. HRD Manager** | R | - | - | - | - | - | - | - |
+| **10. Asset Manager** | R | R U A | R C U A | - | R | - | - | R U |
+
+#### Bagian 2: Menu 9 s.d. 16 (`dashboard.html`)
+
+| User Role (10 Roles) | 9. Fuel Management | 10. Produktivitas | 11. Biaya | 12. People & KPI | 13. HSE / Accident | 14. Laporan & Form | 15. Approval Inbox | 16. Pengaturan System |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **1. Administrator** | R C U O | R C U O | R C U O | R C U O | R C U O | R C U O | R A O | R C U O |
+| **2. Equipment Manager** | R U A | R U A | R U A | R C U A | R C U A | R C U | R A | - |
+| **3. Maintenance Planner** | R U | R U | - | R U | R | R C U | R | - |
+| **4. Mekanik Senior** | R | R | - | R | R | R | - | - |
+| **5. Mekanik Junior / Helper**| - | R | - | R | - | R | - | - |
+| **6. Welder / Fabrikator** | - | R | - | R | - | R | - | - |
+| **7. Inspector K3L / Safety**| R C U | R | - | - | R C U A | R C U | - | - |
+| **8. Logistic Head** | R C U | R | - | - | - | R C U | R A | - |
+| **9. HRD Manager** | - | - | - | R C U A | - | R C U | R A | - |
+| **10. Asset Manager** | R | R U A | R C U A | R | R A | R C U | R A | - |
+
+
+
 
