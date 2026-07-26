@@ -352,6 +352,12 @@
             }
         }
 
+        .tire-indicator {
+            position: absolute; width: 25px; height: 50px; background: var(--success); border-radius: 5px; border: 2px solid #333; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold;
+        }
+        .tire-indicator.warning { background: var(--warning); }
+        .tire-indicator.danger { background: var(--danger); }
+
     </style>
 </head>
 <body>
@@ -368,16 +374,16 @@
             <li><a onclick="showView('uc', 'Inspeksi & P2H', 'menu-inspection')" id="menu-inspection" role="button" tabindex="0" title="Inspeksi & P2H"><i class="fa-solid fa-clipboard-check"></i><span class="nav-label">Inspeksi & P2H</span></a></li>
             <li><a onclick="showView('wo')" id="menu-wo" role="button" tabindex="0" title="Work Order"><i class="fa-solid fa-screwdriver-wrench"></i><span class="nav-label">Work Order</span></a></li>
             <li><a onclick="showView('pm')" id="menu-pm" role="button" tabindex="0" title="Preventive Maintenance"><i class="fa-regular fa-calendar-check"></i><span class="nav-label">Preventive Maint.</span></a></li>
-            <li><a onclick="showView('uc', 'Spare Part & Logistik', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0" title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare Part & Logistik</span></a></li>
-            <li><a onclick="showView('uc', 'Condition Monitoring', 'menu-condition')" id="menu-condition" role="button" tabindex="0" title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span class="nav-label">Condition Monitoring</span></a></li>
-            <li><a onclick="showView('uc', 'Fuel Management', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0" title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a></li>
+            <li><a onclick="showView('logistics', '', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0" title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare Part & Logistik</span></a></li>
+            <li><a onclick="showView('condition', '', 'menu-condition')" id="menu-condition" role="button" tabindex="0" title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span class="nav-label">Condition Monitoring</span></a></li>
+            <li><a onclick="showView('fuel', '', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0" title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a></li>
             <li><a onclick="showView('productivity', '', 'menu-productivity')" id="menu-productivity" role="button" tabindex="0" title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Produktivitas</span></a></li>
             <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" title="Biaya"><i class="fa-solid fa-money-bill-trend-up"></i><span class="nav-label">Biaya</span></a></li>
             <li><a onclick="showView('people', '', 'menu-people')" id="menu-people" role="button" tabindex="0" title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People & KPI</span></a></li>
             <li><a onclick="showView('hse', '', 'menu-hse')" id="menu-hse" role="button" tabindex="0" title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE / Accident</span></a></li>
             <li><a onclick="showView('reports')" id="menu-reports" role="button" tabindex="0" title="Laporan & Form"><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Laporan & Form</span></a></li>
-            <li><a onclick="showView('uc', 'Approval', 'menu-approval')" id="menu-approval" role="button" tabindex="0" title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a></li>
-            <li><a onclick="showView('uc', 'Pengaturan', 'menu-settings')" id="menu-settings" role="button" tabindex="0" title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a></li>
+            <li><a onclick="showView('approval', '', 'menu-approval')" id="menu-approval" role="button" tabindex="0" title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a></li>
+            <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" role="button" tabindex="0" title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a></li>
         </ul>
     </aside>
 
@@ -632,6 +638,214 @@
                 </div>
             </div>
 
+            <!-- VIEW: LOGISTICS -->
+            <div id="view-logistics" class="view-section">
+                <h1 class="page-title">Spare Part & Logistik</h1>
+                <div class="panel">
+                    <div class="panel-header"><span><i class="fa-solid fa-file-invoice"></i> Form Pembuatan Surat Permintaan Barang (SPB)</span></div>
+                    <div class="panel-body form-group">
+                        <label>Pilih Work Order (WO) Aktif</label>
+                        <select id="spb-wo-id" class="form-control"></select>
+                        <div style="margin-bottom: 15px;">
+                            <label>Daftar Item Spare Part</label>
+                            <table style="width: 100%; border: 1px solid var(--border); margin-bottom: 10px;" id="spb-item-table">
+                                <thead style="background: #f8f9fa;">
+                                    <tr>
+                                        <th>Part Number</th>
+                                        <th>Deskripsi</th>
+                                        <th>Qty</th>
+                                        <th>Satuan</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="spb-items"></tbody>
+                            </table>
+                            <button class="btn btn-primary" onclick="addSpbItem()"><i class="fa-solid fa-plus"></i> Tambah Item</button>
+                        </div>
+                        <button class="btn btn-success" onclick="submitSpb()" style="width: 100%;"><i class="fa-solid fa-paper-plane"></i> Submit SPB</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: CONDITION MONITORING -->
+            <div id="view-condition" class="view-section">
+                <h1 class="page-title">Condition Monitoring</h1>
+                <div class="dashboard-layout">
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-truck"></i> Skematik Ban 10-Wheeler</span></div>
+                        <div class="panel-body" style="display: flex; justify-content: center; align-items: center; padding: 40px; position: relative;">
+                            <div style="width: 150px; height: 350px; border: 2px solid #ccc; border-radius: 10px; position: relative; background: #f8f9fa;">
+                                <div style="position: absolute; top: -25px; width: 100%; text-align: center; font-weight: bold;">Depan</div>
+                                <div class="tire-indicator" id="tire-fl" onclick="inspectTire('FL')" style="top: 20px; left: -30px;">FL</div>
+                                <div class="tire-indicator" id="tire-fr" onclick="inspectTire('FR')" style="top: 20px; right: -30px;">FR</div>
+                                <div class="tire-indicator" id="tire-r1l" onclick="inspectTire('R1L')" style="top: 150px; left: -30px;">R1L</div>
+                                <div class="tire-indicator" id="tire-r1li" onclick="inspectTire('R1LI')" style="top: 150px; left: -5px; z-index: 1;">R1LI</div>
+                                <div class="tire-indicator" id="tire-r1r" onclick="inspectTire('R1R')" style="top: 150px; right: -30px;">R1R</div>
+                                <div class="tire-indicator" id="tire-r1ri" onclick="inspectTire('R1RI')" style="top: 150px; right: -5px; z-index: 1;">R1RI</div>
+                                <div class="tire-indicator" id="tire-r2l" onclick="inspectTire('R2L')" style="bottom: 20px; left: -30px;">R2L</div>
+                                <div class="tire-indicator" id="tire-r2li" onclick="inspectTire('R2LI')" style="bottom: 20px; left: -5px; z-index: 1;">R2LI</div>
+                                <div class="tire-indicator" id="tire-r2r" onclick="inspectTire('R2R')" style="bottom: 20px; right: -30px;">R2R</div>
+                                <div class="tire-indicator" id="tire-r2ri" onclick="inspectTire('R2RI')" style="bottom: 20px; right: -5px; z-index: 1;">R2RI</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-pen"></i> Form Inspeksi Ban (<span id="selected-tire-label">FL</span>)</span></div>
+                        <div class="panel-body form-group">
+                            <input type="hidden" id="selected-tire" value="FL">
+                            <label>Tread Depth (mm)</label>
+                            <input type="number" id="tire-tread" class="form-control" placeholder="Misal: 9.5" step="0.1">
+                            <label>Tekanan Angin (PSI)</label>
+                            <input type="number" id="tire-pressure" class="form-control" placeholder="Misal: 110">
+                            <button class="btn btn-primary" onclick="saveTireInspection()" style="width: 100%;">Simpan Inspeksi</button>
+                            
+                            <div style="margin-top: 20px;">
+                                <p style="font-weight: bold;">Legenda Ambang Batas:</p>
+                                <div style="display: flex; gap: 10px; margin-top: 10px; font-size: 0.85rem;">
+                                    <div><span style="display:inline-block; width:15px; height:15px; background:var(--success); margin-right:5px; border-radius:3px; vertical-align:middle;"></span> &gt; 8.5 mm (Aman)</div>
+                                    <div><span style="display:inline-block; width:15px; height:15px; background:var(--warning); margin-right:5px; border-radius:3px; vertical-align:middle;"></span> 3.2 - 8.5 mm (Warning)</div>
+                                    <div><span style="display:inline-block; width:15px; height:15px; background:var(--danger); margin-right:5px; border-radius:3px; vertical-align:middle;"></span> &lt; 3.2 mm (Bahaya)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: FUEL MANAGEMENT -->
+            <div id="view-fuel" class="view-section">
+                <h1 class="page-title">Fuel Management</h1>
+                <div class="dashboard-layout">
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-gas-pump"></i> Form Pengisian BBM</span></div>
+                        <div class="panel-body form-group">
+                            <label>Pilih Unit</label>
+                            <select id="fuel-asset-id" class="form-control"></select>
+                            <label>Flowmeter Awal</label>
+                            <input type="number" id="fuel-flow-start" class="form-control" placeholder="0" onkeyup="calcFuelLiter()">
+                            <label>Flowmeter Akhir</label>
+                            <input type="number" id="fuel-flow-end" class="form-control" placeholder="0" onkeyup="calcFuelLiter()">
+                            <label>Total Liter</label>
+                            <input type="number" id="fuel-liter-total" class="form-control" readonly style="background: #e9ecef;">
+                            <label>HM / KM Pengisian Sebelumnya</label>
+                            <input type="number" id="fuel-hm-prev" class="form-control" placeholder="0" onkeyup="calcFuelLPH()">
+                            <label>HM / KM Saat Ini</label>
+                            <input type="number" id="fuel-hm-curr" class="form-control" placeholder="0" onkeyup="calcFuelLPH()">
+                            <label>LPH (Liter per Hour) / KPL (KM per Liter)</label>
+                            <input type="text" id="fuel-lph" class="form-control" readonly style="background: #e9ecef;">
+                            <div id="fuel-alert" style="display: none; padding: 10px; background: var(--danger); color: white; border-radius: 5px; margin-bottom: 15px;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Peringatan:</strong> LPH melampaui toleransi 15% dari baseline standard! Indikasi anomali/kebocoran.
+                            </div>
+                            <button class="btn btn-primary" onclick="submitFuel()" style="width: 100%;">Simpan Log BBM</button>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header"><span><i class="fa-solid fa-chart-line"></i> Riwayat Pengisian (Anomali Suspect)</span></div>
+                        <div class="panel-body" style="padding: 0;">
+                            <div class="table-responsive">
+                                <table style="margin: 0;">
+                                    <thead>
+                                        <tr>
+                                            <th>Unit ID</th>
+                                            <th>Total Liter</th>
+                                            <th>LPH / KPL</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fuel-history"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: APPROVAL -->
+            <div id="view-approval" class="view-section">
+                <h1 class="page-title">Approval Inbox</h1>
+                <div class="panel">
+                    <div class="panel-header">
+                        <span><i class="fa-solid fa-inbox"></i> Menunggu Persetujuan Anda</span>
+                    </div>
+                    <div class="panel-body" style="padding: 0;">
+                        <div class="table-responsive">
+                            <table style="margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th>ID Dokumen</th>
+                                        <th>Jenis</th>
+                                        <th>Pemohon</th>
+                                        <th>Detail / Nominal</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="approval-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: PENGATURAN -->
+            <div id="view-settings" class="view-section">
+                <h1 class="page-title">System Settings</h1>
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="asset-tabs" style="margin-bottom: 20px;">
+                            <div class="asset-tab active" onclick="switchSettingsTab('rbac', this)">User & Role RBAC</div>
+                            <div class="asset-tab" onclick="switchSettingsTab('threshold', this)">Konfigurasi Threshold & SLA</div>
+                            <div class="asset-tab" onclick="switchSettingsTab('location', this)">Master Lokasi Project</div>
+                        </div>
+                        
+                        <div id="settings-rbac">
+                            <h3 style="margin-bottom: 15px;">Manajemen Hak Akses</h3>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Role</th>
+                                            <th>Read</th>
+                                            <th>Create</th>
+                                            <th>Edit</th>
+                                            <th>Approve</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Equipment Manager</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>
+                                        <tr><td>Maintenance Planner</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox"></td></tr>
+                                        <tr><td>Mekanik</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div id="settings-threshold" style="display: none;">
+                            <h3 style="margin-bottom: 15px;">Threshold & SLA Parameter</h3>
+                            <div class="form-group" style="max-width: 500px;">
+                                <label>SLA Pembuatan Tiket WO sejak Unit Down (Menit)</label>
+                                <input type="number" id="cfg-sla-wo" class="form-control" value="30">
+                                <label>Batas Merah Aus Ban (mm)</label>
+                                <input type="number" id="cfg-tire-red" class="form-control" value="3.2" step="0.1">
+                                <label>Batas HM Warning PM Due Soon</label>
+                                <input type="number" id="cfg-pm-warning" class="form-control" value="50">
+                                <label>Toleransi % Anomali BBM</label>
+                                <input type="number" id="cfg-fuel-anomali" class="form-control" value="15" step="0.1">
+                                <button class="btn btn-primary" onclick="saveSettings()">Simpan Konfigurasi</button>
+                            </div>
+                        </div>
+                        
+                        <div id="settings-location" style="display: none;">
+                            <h3 style="margin-bottom: 15px;">Master Site / Lokasi</h3>
+                            <ul class="attention-list">
+                                <li><div class="attention-details"><strong>Site Alpha (Yard Duri)</strong></div></li>
+                                <li><div class="attention-details"><strong>Site Beta (Yard Prabumulih)</strong></div></li>
+                                <li><div class="attention-details"><strong>Sunter Area Stadium</strong></div></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -755,6 +969,22 @@
         </div>
     </div>
 
+    <!-- Modal Reject Approval -->
+    <div class="modal-overlay" id="modalRejectApproval">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Tolak Dokumen: <span id="reject-doc-id"></span></h2>
+                <button onclick="closeModal('modalRejectApproval')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body form-group">
+                <input type="hidden" id="reject-doc-row">
+                <label>Alasan Penolakan (Wajib)</label>
+                <textarea id="reject-reason" rows="3" class="form-control" placeholder="Tuliskan alasan penolakan..."></textarea>
+                <button class="btn btn-danger" onclick="submitRejectApproval()" style="width: 100%;">Tolak Dokumen</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Leaflet Map Script -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -773,6 +1003,7 @@
                 initAssetView(globalData.assets);
                 initWorkOrderView(globalData.work_orders);
                 initBiayaView(globalData.costs);
+                initNewViews();
 
                 const queryView = new URLSearchParams(window.location.search).get('view') || '';
                 const hashView = window.location.hash.replace(/^#/, '');
@@ -974,6 +1205,7 @@
             initMonitoringView(globalData.assets);
             initAssetView(globalData.assets);
             initWorkOrderView(globalData.work_orders);
+            initNewViews();
         }
 
         function clearActiveMenus() {
@@ -1152,6 +1384,187 @@
                     <td><span class="badge bg-operating">${escapeHtml(val.harga_pasaran)}</span></td>
                 </tr>
             `).join('');
+        }
+
+        function addSpbItem() {
+            const tbody = document.getElementById('spb-items');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="form-control" placeholder="Part No" style="margin-bottom:0;"></td>
+                <td><input type="text" class="form-control" placeholder="Deskripsi" style="margin-bottom:0;"></td>
+                <td><input type="number" class="form-control" placeholder="Qty" style="margin-bottom:0; width:70px;"></td>
+                <td><input type="text" class="form-control" placeholder="Satuan" style="margin-bottom:0; width:70px;"></td>
+                <td><button class="btn btn-danger" onclick="this.parentElement.parentElement.remove()" style="padding: 8px;"><i class="fa-solid fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function submitSpb() {
+            const items = document.getElementById('spb-items').children.length;
+            if (items === 0) {
+                alert('Minimal 1 item spare part harus diinput.');
+                return;
+            }
+            alert('SPB berhasil di-submit dan masuk ke Approval Inbox.');
+            document.getElementById('spb-items').innerHTML = '';
+        }
+
+        function inspectTire(pos) {
+            document.getElementById('selected-tire-label').innerText = pos;
+            document.getElementById('selected-tire').value = pos;
+            document.getElementById('tire-tread').value = '';
+            document.getElementById('tire-pressure').value = '';
+        }
+
+        function saveTireInspection() {
+            const pos = document.getElementById('selected-tire').value;
+            const tread = parseFloat(document.getElementById('tire-tread').value);
+            if(isNaN(tread)) { alert('Masukkan nilai tread depth'); return; }
+            const el = document.getElementById('tire-' + pos.toLowerCase());
+            if(el) {
+                el.classList.remove('warning', 'danger');
+                if(tread < 3.2) el.classList.add('danger');
+                else if(tread <= 8.5) el.classList.add('warning');
+            }
+            alert('Inspeksi ban posisi ' + pos + ' tersimpan.');
+        }
+
+        function calcFuelLiter() {
+            const start = parseFloat(document.getElementById('fuel-flow-start').value) || 0;
+            const end = parseFloat(document.getElementById('fuel-flow-end').value) || 0;
+            document.getElementById('fuel-liter-total').value = Math.max(0, end - start);
+            calcFuelLPH();
+        }
+
+        function calcFuelLPH() {
+            const liter = parseFloat(document.getElementById('fuel-liter-total').value) || 0;
+            const hmPrev = parseFloat(document.getElementById('fuel-hm-prev').value) || 0;
+            const hmCurr = parseFloat(document.getElementById('fuel-hm-curr').value) || 0;
+            const hmDiff = hmCurr - hmPrev;
+            if (hmDiff > 0 && liter > 0) {
+                const lph = (liter / hmDiff).toFixed(2);
+                document.getElementById('fuel-lph').value = lph;
+                const baseline = 28.0;
+                if (parseFloat(lph) > baseline * 1.15) {
+                    document.getElementById('fuel-alert').style.display = 'block';
+                } else {
+                    document.getElementById('fuel-alert').style.display = 'none';
+                }
+            } else {
+                document.getElementById('fuel-lph').value = '';
+                document.getElementById('fuel-alert').style.display = 'none';
+            }
+        }
+
+        function submitFuel() {
+            const id = document.getElementById('fuel-asset-id').value;
+            const liter = document.getElementById('fuel-liter-total').value;
+            const hmDiff = (parseFloat(document.getElementById('fuel-hm-curr').value) || 0) - (parseFloat(document.getElementById('fuel-hm-prev').value) || 0);
+            const lph = document.getElementById('fuel-lph').value;
+            if(!id || !liter) return alert('Data tidak lengkap');
+            
+            const isAnomaly = document.getElementById('fuel-alert').style.display === 'block';
+            const tbody = document.getElementById('fuel-history');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${id}</td>
+                <td>${liter} L</td>
+                <td>${hmDiff > 0 ? lph : '-'}</td>
+                <td>${isAnomaly ? '<span class="badge bg-danger">ANOMALI</span>' : '<span class="badge bg-success">NORMAL</span>'}</td>
+            `;
+            tbody.prepend(tr);
+            alert('Log pengisian BBM tersimpan.');
+        }
+
+        function approveDoc(btn) {
+            btn.parentElement.parentElement.remove();
+            alert('Dokumen disetujui.');
+        }
+
+        function rejectDoc(btn, docId) {
+            document.getElementById('reject-doc-id').innerText = docId;
+            document.getElementById('reject-reason').value = '';
+            document.getElementById('reject-doc-row').value = Math.random().toString();
+            btn.parentElement.parentElement.setAttribute('data-id', document.getElementById('reject-doc-row').value);
+            openModal('modalRejectApproval');
+        }
+
+        function submitRejectApproval() {
+            const reason = document.getElementById('reject-reason').value;
+            if(!reason) return alert('Alasan penolakan wajib diisi!');
+            const rowId = document.getElementById('reject-doc-row').value;
+            const row = document.querySelector(`tr[data-id="${rowId}"]`);
+            if(row) row.remove();
+            closeModal('modalRejectApproval');
+            alert('Dokumen ditolak.');
+        }
+
+        function switchSettingsTab(tabName, el) {
+            document.querySelectorAll('#view-settings .asset-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('settings-rbac').style.display = 'none';
+            document.getElementById('settings-threshold').style.display = 'none';
+            document.getElementById('settings-location').style.display = 'none';
+            document.getElementById('settings-' + tabName).style.display = 'block';
+        }
+
+        function saveSettings() {
+            alert('Konfigurasi sistem berhasil disimpan.');
+        }
+
+        function initNewViews() {
+            if(globalData) {
+                const woSelect = document.getElementById('spb-wo-id');
+                if(woSelect) {
+                    woSelect.innerHTML = globalData.work_orders
+                        .filter(wo => wo.status !== 'Closed')
+                        .map(wo => `<option value="${escapeHtml(wo.woId)}">${escapeHtml(wo.woId)} - ${escapeHtml(wo.assetId)}</option>`)
+                        .join('');
+                }
+                    
+                const fuelSelect = document.getElementById('fuel-asset-id');
+                if(fuelSelect) {
+                    fuelSelect.innerHTML = globalData.assets
+                        .map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.id)} (${escapeHtml(a.category)})</option>`)
+                        .join('');
+                }
+            }
+                
+            const tbody = document.getElementById('approval-list');
+            if (tbody && tbody.innerHTML.trim() === '') {
+                tbody.innerHTML = `
+                    <tr>
+                        <td>SPB-2026-07-101</td>
+                        <td>SPB Sparepart</td>
+                        <td>Foreman A</td>
+                        <td>Rp 7.500.000 (Filter Set)</td>
+                        <td>
+                            <button class="btn btn-success" style="padding: 5px 10px;" onclick="approveDoc(this)"><i class="fa-solid fa-check"></i></button>
+                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="rejectDoc(this, 'SPB-2026-07-101')"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>WO-26-892</td>
+                        <td>Work Order Major</td>
+                        <td>Maintenance Planner</td>
+                        <td>Est. Rp 25.000.000 (Overhaul)</td>
+                        <td>
+                            <button class="btn btn-success" style="padding: 5px 10px;" onclick="approveDoc(this)"><i class="fa-solid fa-check"></i></button>
+                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="rejectDoc(this, 'WO-26-892')"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>TAR-01/05/2026</td>
+                        <td>Rilis Unit Insiden</td>
+                        <td>HSE Head</td>
+                        <td>Insiden Moderate (CS-41001)</td>
+                        <td>
+                            <button class="btn btn-success" style="padding: 5px 10px;" onclick="approveDoc(this)"><i class="fa-solid fa-check"></i></button>
+                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="rejectDoc(this, 'TAR-01/05/2026')"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }
         }
 
         function escapeHtml(unsafe) {
