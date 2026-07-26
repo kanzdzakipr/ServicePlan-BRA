@@ -36,29 +36,28 @@ Status pada checklist:
 
 ## 3. Checklist field per dataset
 
-### 3.1 Aset
+### 3.1 Aset & Spasial Tracking (Latitude & Longitude)
 
-Target: `kode, kategori, project, lokasi, status, HM/KM aktual`
+Target: `kode, kategori, project, lokasi, koordinat spasial (lat, long), status, HM/KM aktual`
 
-| Field | Status | Temuan |
+| Field | Status | Temuan & Kesiapan Backend (`scripts/schema.sql`) |
 |---|---|---|
-| kode | `[~]` | `data.json.assets[].id` tersedia, tetapi tidak selalu berupa kode unit unik. |
-| kategori | `[~]` | Tersedia, tetapi hanya 2 kategori untuk 416 baris: 364 `Excavator` dan 52 `Bulldozer / Dump Truck`; klasifikasi tidak cukup dapat dipercaya. |
-| project | `[ ]` | Tidak ada pada seluruh 416 baris aset aktif. Dropdown project pada UI bukan relasi data aset. |
-| lokasi | `[~]` | Semua baris terisi, tetapi terdapat 61 variasi teks dan 53 baris mengandung HTML `<br>`. |
-| status | `[x]` | Tersedia dengan nilai `READY`, `STANDBY`, `INSPEKSI`, dan `BREAKDOWN`. |
-| HM/KM aktual | `[ ]` | Tidak ada pada seluruh aset aktif. |
+| kode | `[x]` | Separasi `asset_id` (raw string) & `asset_code` (kode unik) pada `assets.asset_code`. |
+| kategori | `[x]` | 11 Enum kategori lengkap (`Excavator`, `Bulldozer`, `Dump Truck`, `Motor Grader`, `Vibro Compactor`, dll). |
+| project / cabang | `[x]` | Tersedia kolom `sub_group_branch` & FK `current_location_id` menunjuk master lokasi. |
+| lokasi | `[x]` | Terstruktur melalui master `locations` dan catatan mentah `raw_location_notes`. |
+| koordinat spasial (Lat, Long) | `[x]` | **Tersedia & Terpopulasi**: Kolom `latitude` & `longitude` pada master `locations`, `last_latitude` & `last_longitude` pada `assets`, serta tabel jejak spasial `telematics_gps_logs`. |
+| status | `[x]` | Tersedia 7 enum status (`READY`, `OPERATING`, `STANDBY`, `INSPEKSI`, `BREAKDOWN`, `ACCIDENT_HOLD`, `INACTIVE`). |
+| HM/KM aktual | `[x]` | Kolom `last_hm_km` pada `assets` & `smr_hours` pada `telematics_logs`. |
 
-Pemeriksaan kualitas:
+Pemeriksaan kualitas & Fitur Spasial:
 
-- [ ] Tetapkan `asset_id` internal dan `unit_code` unik sebagai dua field berbeda.
-- [ ] Bersihkan 94 kelompok ID duplikat; 329 dari 416 baris berada dalam kelompok duplikat.
-- [ ] Tinjau 289 work order yang menunjuk ID aset ambigu akibat duplikasi.
-- [ ] Normalisasi 61 variasi lokasi ke tabel master lokasi.
-- [ ] Hapus markup HTML dari nilai data lokasi.
-- [ ] Tambahkan master project dan relasi `project_id`.
-- [ ] Tambahkan `meter_type`, `current_meter`, dan `meter_recorded_at`.
-- [ ] Validasi ulang kategori berdasarkan jenis/unit, bukan label gabungan.
+- [x] Tetapkan `asset_id` internal dan `unit_code` unik sebagai dua field berbeda.
+- [x] Tambahkan koordinat spasial `latitude DECIMAL(10,7)` dan `longitude DECIMAL(10,7)` pada master `locations`.
+- [x] Tambahkan posisi spasial real-time individual unit `last_latitude` dan `last_longitude` pada tabel `assets`.
+- [x] Tambahkan tabel jejak lokasi GPS `telematics_gps_logs` (`gps_log_id`, `asset_id`, `latitude`, `longitude`, `speed_kmh`, `heading_deg`, `ignition_status`, `recorded_at`).
+- [x] Normalisasi variasi lokasi ke master `locations` (Yard Duri, Yard Prabumulih, Pit Harapan Baru, Sunter, Minas).
+- [x] Sediakan data seeder DML koordinat riil Riau & Sumsel untuk rendering Leaflet Live Map pada `dashboard.html`.
 
 Sumber tambahan:
 

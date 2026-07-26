@@ -23,6 +23,8 @@ CREATE TABLE `locations` (
     `location_name` VARCHAR(100) NOT NULL UNIQUE,
     `location_type` ENUM('Yard', 'Pit', 'Borrow Pit', 'Workshop', 'Branch', 'Site Area') DEFAULT 'Site Area',
     `region` VARCHAR(50) DEFAULT 'Riau / Pekanbaru',
+    `latitude` DECIMAL(10,7) NULL,  -- Center Latitude (e.g. 1.2854300)
+    `longitude` DECIMAL(10,7) NULL, -- Center Longitude (e.g. 101.2185400)
     `is_active` BOOLEAN DEFAULT TRUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -52,7 +54,7 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 3. MASTER ASSETS (Fleet & Equipment Inventory)
+-- 3. MASTER ASSETS (Fleet & Equipment Inventory with Real-Time Spatial Tracking)
 -- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `assets`;
 CREATE TABLE `assets` (
@@ -72,6 +74,9 @@ CREATE TABLE `assets` (
     `current_location_id` INT NULL,
     `raw_location_notes` TEXT NULL,       -- Preserves raw HTML notes
     `last_hm_km` DECIMAL(10,2) DEFAULT 0.00,
+    `last_latitude` DECIMAL(10,7) NULL,   -- Real-time Individual Unit Spatial Latitude
+    `last_longitude` DECIMAL(10,7) NULL,  -- Real-time Individual Unit Spatial Longitude
+    `gps_updated_at` TIMESTAMP NULL,      -- Timestamp of last GPS ping
     `telematics_last_comm` TIMESTAMP NULL,
     `is_active` BOOLEAN DEFAULT TRUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -79,7 +84,8 @@ CREATE TABLE `assets` (
     FOREIGN KEY (`current_location_id`) REFERENCES `locations`(`location_id`) ON DELETE SET NULL,
     INDEX `idx_asset_status` (`status`),
     INDEX `idx_asset_category` (`category`),
-    INDEX `idx_asset_code` (`asset_code`)
+    INDEX `idx_asset_code` (`asset_code`),
+    INDEX `idx_asset_spatial` (`last_latitude`, `last_longitude`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -301,7 +307,7 @@ CREATE TABLE `unit_valuations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 13. TELEMATICS SATELLITE LOGS (KOMTRAX Ingestion Engine)
+-- 13. TELEMATICS SATELLITE LOGS (KOMTRAX Ingestion Engine & GPS Breadcrumbs)
 -- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `telematics_logs`;
 CREATE TABLE `telematics_logs` (
@@ -324,6 +330,20 @@ CREATE TABLE `telematics_logs` (
     `idling_ratio` DECIMAL(5,2) DEFAULT 0.00,
     `last_comm_date` TIMESTAMP NULL,
     `period_month` VARCHAR(20) DEFAULT 'Januari 2026'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `telematics_gps_logs`;
+CREATE TABLE `telematics_gps_logs` (
+    `gps_log_id` INT AUTO_INCREMENT PRIMARY KEY,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `latitude` DECIMAL(10,7) NOT NULL,
+    `longitude` DECIMAL(10,7) NOT NULL,
+    `speed_kmh` DECIMAL(5,2) DEFAULT 0.00,
+    `heading_deg` INT DEFAULT 0,
+    `ignition_status` ENUM('ON', 'OFF', 'IDLING') DEFAULT 'OFF',
+    `recorded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE,
+    INDEX `idx_gps_asset_time` (`asset_id`, `recorded_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -426,19 +446,19 @@ INSERT INTO `roles` (`role_id`, `role_name`, `description`) VALUES
 (9, 'HRD Manager', 'Responsible for personnel timesheet & SPL authorization'),
 (10, 'Asset Manager', 'Responsible for asset valuation, mutation BAST, & release approval');
 
--- 2. SEED LOCATIONS
-INSERT INTO `locations` (`location_id`, `location_name`, `location_type`, `region`) VALUES
-(1, 'Yard Duri', 'Yard', 'Duri, Riau'),
-(2, 'Yard Prabumulih', 'Yard', 'Prabumulih, Sumsel'),
-(3, 'Borrow Pit Harapan Baru', 'Borrow Pit', 'Duri, Riau'),
-(4, 'Workshop Bay KM 12', 'Workshop', 'Duri, Riau'),
-(5, 'Site Sunter Area Stadium', 'Site Area', 'Jakarta / Sunter'),
-(6, 'Site Alpha Duri', 'Site Area', 'Duri, Riau'),
-(7, 'PKB PEKANBARU Branch', 'Branch', 'Pekanbaru, Riau'),
-(8, 'PLB PALEMBANG Branch', 'Branch', 'Palembang, Sumsel'),
-(9, 'MDN MEDAN Branch', 'Branch', 'Medan, Sumut'),
-(10, 'SMG SEMARANG Rep Office', 'Branch', 'Semarang, Jateng'),
-(11, 'Minas Field Project', 'Site Area', 'Minas, Riau');
+-- 2. SEED LOCATIONS (With Real Geographic Spatial Coordinates)
+INSERT INTO `locations` (`location_id`, `location_name`, `location_type`, `region`, `latitude`, `longitude`) VALUES
+(1, 'Yard Duri', 'Yard', 'Duri, Riau', 1.2854300, 101.2185400),
+(2, 'Yard Prabumulih', 'Yard', 'Prabumulih, Sumsel', -3.4354200, 104.2384500),
+(3, 'Borrow Pit Harapan Baru', 'Borrow Pit', 'Duri, Riau', 1.3124500, 101.2451200),
+(4, 'Workshop Bay KM 12', 'Workshop', 'Duri, Riau', 1.2789000, 101.2112000),
+(5, 'Site Sunter Area Stadium', 'Site Area', 'Jakarta / Sunter', -6.1451200, 106.8741500),
+(6, 'Site Alpha Duri', 'Site Area', 'Duri, Riau', 1.2991000, 101.2311000),
+(7, 'PKB PEKANBARU Branch', 'Branch', 'Pekanbaru, Riau', 0.5070680, 101.4477790),
+(8, 'PLB PALEMBANG Branch', 'Branch', 'Palembang, Sumsel', -2.9760740, 104.7754310),
+(9, 'MDN MEDAN Branch', 'Branch', 'Medan, Sumut', 3.5951960, 98.6722230),
+(10, 'SMG SEMARANG Rep Office', 'Branch', 'Semarang, Jateng', -6.9666670, 110.4166640),
+(11, 'Minas Field Project', 'Site Area', 'Minas, Riau', 0.7321400, 101.4421100);
 
 -- 3. SEED USERS & TEAM PERSONNEL
 INSERT INTO `users` (`user_id`, `username`, `password_hash`, `full_name`, `role_id`, `assigned_location_id`) VALUES
@@ -459,18 +479,18 @@ INSERT INTO `users` (`user_id`, `username`, `password_hash`, `full_name`, `role_
 (15, 'widya_apriani', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Widya Apriani (Asset Manager)', 10, 4),
 (16, 'm_fajar_dc', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'M. Fajar DC (Inspector K3L)', 7, 6);
 
--- 4. SEED MASTER ASSETS (Extracted from Komtrax & Standby Rekap)
-INSERT INTO `assets` (`asset_id`, `asset_code`, `serial_number`, `license_plate`, `category`, `make_model`, `sub_group_branch`, `year_manufacture`, `status`, `current_location_id`, `last_hm_km`) VALUES
-('DZ-00002 SN P6G01656', 'DZ-00002', 'P6G01656', NULL, 'Bulldozer', 'Caterpillar D6G 2XL', 'PKB PEKANBARU Branch', 2024, 'READY', 3, 2177.00),
-('DT-00049 - B 9104 ZYT', 'DT-00049', NULL, 'B 9104 ZYT', 'Dump Truck', 'Hino Ranger FM 280 JD', 'PKB PEKANBARU Branch', 2024, 'BREAKDOWN', 4, 34500.00),
-('EXC-00001', 'EXC-00001', 'C51502', NULL, 'Excavator', 'Komatsu PC200-10M0 CE', 'PKB PEKANBARU Branch', 2024, 'OPERATING', 6, 2443.00),
-('CS-41001', 'CS-41001', 'XK185-001', 'BM 9012 RWI', 'Other', 'Powder Binder Spreader XCMG XKC185', 'PKB PEKANBARU Branch', 2026, 'ACCIDENT_HOLD', 6, 150.00),
-('PF-00001', 'PF-00001', '961884301016', NULL, 'Vibro Compactor', 'Vibro Bomag Pad Foot BW 211D-40SL', 'PKB PEKANBARU Branch', 2024, 'INSPEKSI', 1, 1894.20),
-('MG-00004', 'MG-00004', 'GR135-99', NULL, 'Motor Grader', 'Motor Grader XCMG GR135 MAX', 'PKB PEKANBARU Branch', 2025, 'STANDBY', 1, 2446.10),
-('VIBRO BW BRA-01', 'BRA-01', '961582391008', NULL, 'Vibro Compactor', 'Bomag Smooth Drum BW211D-40 SL', 'PKB PEKANBARU Branch', 2020, 'STANDBY', 1, 6365.00),
-('DT-00031', 'DT-00031', NULL, 'BG8976IX', 'Dump Truck', 'Hino Ranger FM 260 JD', 'PKB PEKANBARU Branch', 2019, 'STANDBY', 1, 77131.00),
-('DT-00052', 'DT-00052', NULL, 'B 9642 KYW', 'Dump Truck', 'Hino Ranger FM 260 JD', 'PKB PEKANBARU Branch', 2018, 'STANDBY', 1, 38146.00),
-('SL-01', 'SL-01', 'BK 8143 XE', NULL, 'Trado', 'Mitsubishi FV 419 P', 'PLB PALEMBANG Branch', 2006, 'STANDBY', 2, 98230.00);
+-- 4. SEED MASTER ASSETS (With Individual Real-Time Spatial Lat/Lng Coordinates)
+INSERT INTO `assets` (`asset_id`, `asset_code`, `serial_number`, `license_plate`, `category`, `make_model`, `sub_group_branch`, `year_manufacture`, `status`, `current_location_id`, `last_hm_km`, `last_latitude`, `last_longitude`, `gps_updated_at`) VALUES
+('DZ-00002 SN P6G01656', 'DZ-00002', 'P6G01656', NULL, 'Bulldozer', 'Caterpillar D6G 2XL', 'PKB PEKANBARU Branch', 2024, 'READY', 3, 2177.00, 1.3124500, 101.2451200, CURRENT_TIMESTAMP),
+('DT-00049 - B 9104 ZYT', 'DT-00049', NULL, 'B 9104 ZYT', 'Dump Truck', 'Hino Ranger FM 280 JD', 'PKB PEKANBARU Branch', 2024, 'BREAKDOWN', 4, 34500.00, 1.2789000, 101.2112000, CURRENT_TIMESTAMP),
+('EXC-00001', 'EXC-00001', 'C51502', NULL, 'Excavator', 'Komatsu PC200-10M0 CE', 'PKB PEKANBARU Branch', 2024, 'OPERATING', 6, 2443.00, 1.2991000, 101.2311000, CURRENT_TIMESTAMP),
+('CS-41001', 'CS-41001', 'XK185-001', 'BM 9012 RWI', 'Other', 'Powder Binder Spreader XCMG XKC185', 'PKB PEKANBARU Branch', 2026, 'ACCIDENT_HOLD', 6, 150.00, 1.2991500, 101.2311500, CURRENT_TIMESTAMP),
+('PF-00001', 'PF-00001', '961884301016', NULL, 'Vibro Compactor', 'Vibro Bomag Pad Foot BW 211D-40SL', 'PKB PEKANBARU Branch', 2024, 'INSPEKSI', 1, 1894.20, 1.2854300, 101.2185400, CURRENT_TIMESTAMP),
+('MG-00004', 'MG-00004', 'GR135-99', NULL, 'Motor Grader', 'Motor Grader XCMG GR135 MAX', 'PKB PEKANBARU Branch', 2025, 'STANDBY', 1, 2446.10, 1.2855000, 101.2186000, CURRENT_TIMESTAMP),
+('VIBRO BW BRA-01', 'BRA-01', '961582391008', NULL, 'Vibro Compactor', 'Bomag Smooth Drum BW211D-40 SL', 'PKB PEKANBARU Branch', 2020, 'STANDBY', 1, 6365.00, 1.2854100, 101.2185200, CURRENT_TIMESTAMP),
+('DT-00031', 'DT-00031', NULL, 'BG8976IX', 'Dump Truck', 'Hino Ranger FM 260 JD', 'PKB PEKANBARU Branch', 2019, 'STANDBY', 1, 77131.00, 1.2854500, 101.2185600, CURRENT_TIMESTAMP),
+('DT-00052', 'DT-00052', NULL, 'B 9642 KYW', 'Dump Truck', 'Hino Ranger FM 260 JD', 'PKB PEKANBARU Branch', 2018, 'STANDBY', 1, 38146.00, 1.2854600, 101.2185700, CURRENT_TIMESTAMP),
+('SL-01', 'SL-01', 'BK 8143 XE', NULL, 'Trado', 'Mitsubishi FV 419 P', 'PLB PALEMBANG Branch', 2006, 'STANDBY', 2, 98230.00, -3.4354200, 104.2384500, CURRENT_TIMESTAMP);
 
 -- 5. SEED WORK ORDERS (Extracted from WMJO History & data.json)
 INSERT INTO `work_orders` (`wo_id`, `asset_id`, `location_id`, `issue_description`, `downtime_formatted`, `downtime_minutes`, `status`, `priority`, `assigned_mechanic`) VALUES
