@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="scripts/people-kpi.css">
     <link rel="stylesheet" href="scripts/hse-accident.css">
     <link rel="stylesheet" href="scripts/productivity.css">
+    <link rel="stylesheet" href="scripts/p2h-inspection.css">
     <style>
         :root {
             --primary: #007bff;
@@ -710,7 +711,7 @@
                         Unit</span></a></li>
             <li><a onclick="showView('asset')" id="menu-asset" role="button" tabindex="0" title="Master Asset"><i
                         class="fa-solid fa-cubes"></i><span class="nav-label">Master Asset</span></a></li>
-            <li><a onclick="showView('uc', 'Inspeksi & P2H', 'menu-inspection')" id="menu-inspection" role="button"
+            <li><a onclick="showView('inspection', '', 'menu-inspection')" id="menu-inspection" role="button"
                     tabindex="0" title="Inspeksi & P2H"><i class="fa-solid fa-clipboard-check"></i><span
                         class="nav-label">Inspeksi & P2H</span></a></li>
             <li><a onclick="showView('wo')" id="menu-wo" role="button" tabindex="0" title="Work Order"><i
@@ -1081,6 +1082,11 @@
             <!-- VIEW: PRODUKTIVITAS -->
             <div id="view-productivity" class="view-section">
                 <div id="productivityModule"></div>
+            </div>
+
+            <!-- VIEW: INSPEKSI & P2H -->
+            <div id="view-inspection" class="view-section">
+                <div id="inspectionModule"></div>
             </div>
 
             <!-- VIEW: UNDER CONSTRUCTION -->
@@ -2560,6 +2566,7 @@
     <script src="scripts/people-kpi.js"></script>
     <script src="scripts/hse-accident.js"></script>
     <script src="scripts/productivity.js"></script>
+    <script src="scripts/p2h-inspection.js"></script>
 </body>
 
 </html>

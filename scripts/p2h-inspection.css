@@ -1,0 +1,244 @@
+/* ==========================================================================
+   Inspeksi & P2H Module Styles (p2h-inspection.css)
+   Equipment Maintenance & Fleet Monitoring System - PT BRA
+   ========================================================================== */
+
+:root {
+    --p2h-pass: #28a745;
+    --p2h-fail: #dc3545;
+    --p2h-warn: #ffc107;
+    --p2h-bg: #f8f9fa;
+    --p2h-border: #dee2e6;
+    --p2h-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.p2h-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.p2h-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.p2h-kpi-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: var(--p2h-card-shadow);
+    border-left: 5px solid var(--primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.p2h-kpi-card.pass { border-left-color: var(--p2h-pass); }
+.p2h-kpi-card.fail { border-left-color: var(--p2h-fail); }
+.p2h-kpi-card.warn { border-left-color: var(--p2h-warn); }
+.p2h-kpi-card.info { border-left-color: var(--info); }
+
+.p2h-kpi-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.p2h-kpi-info .value {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--dark);
+}
+
+.p2h-kpi-icon {
+    font-size: 2.2rem;
+    opacity: 0.25;
+}
+
+/* Nav Tabs */
+.p2h-nav-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--p2h-border);
+    margin-bottom: 20px;
+    gap: 10px;
+    background: #fff;
+    padding: 10px 15px 0 15px;
+    border-radius: 8px 8px 0 0;
+}
+
+.p2h-tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.p2h-tab-btn:hover {
+    color: var(--primary);
+}
+
+.p2h-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: rgba(0, 123, 255, 0.05);
+    border-radius: 6px 6px 0 0;
+}
+
+/* Form Styles */
+.p2h-form-header {
+    background: #f1f5f9;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--p2h-border);
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.p2h-form-section {
+    background: #ffffff;
+    border: 1px solid var(--p2h-border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.p2h-form-section-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--dark);
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--p2h-bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.p2h-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    border-bottom: 1px dashed #e9ecef;
+    transition: background 0.15s ease;
+}
+
+.p2h-item-row:hover {
+    background-color: #f8fafc;
+}
+
+.p2h-item-row:last-child {
+    border-bottom: none;
+}
+
+.p2h-item-label {
+    font-weight: 500;
+    font-size: 0.92rem;
+    color: #334155;
+    flex-grow: 1;
+    padding-right: 15px;
+}
+
+.p2h-item-label .p2h-critical-tag {
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    margin-left: 6px;
+    display: inline-block;
+}
+
+.p2h-item-options {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-width: 220px;
+    justify-content: flex-end;
+}
+
+.p2h-radio-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--p2h-border);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fff;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.p2h-radio-btn.pass.active {
+    background: var(--p2h-pass);
+    color: #fff;
+    border-color: var(--p2h-pass);
+}
+
+.p2h-radio-btn.fail.active {
+    background: var(--p2h-fail);
+    color: #fff;
+    border-color: var(--p2h-fail);
+}
+
+.p2h-radio-btn.warn.active {
+    background: var(--p2h-warn);
+    color: #212529;
+    border-color: var(--p2h-warn);
+}
+
+.p2h-notes-input {
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    border: 1px solid var(--p2h-border);
+    border-radius: 4px;
+    display: none;
+}
+
+/* History Table Badge */
+.p2h-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.p2h-badge-pass { background: #d1e7dd; color: #0f5132; }
+.p2h-badge-fail { background: #f8d7da; color: #842029; }
+.p2h-badge-warn { background: #fff3cd; color: #664d03; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .p2h-item-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .p2h-item-options {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
