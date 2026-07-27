@@ -392,18 +392,50 @@
 
                     <!-- Panel 3C: Jam Kerja Aktual Mekanik -->
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-user-clock"></i> Jam Kerja Aktual Mekanik</span></div>
+                        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span><i class="fa-solid fa-user-clock"></i> Jam Kerja Aktual Mekanik</span>
+                            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">
+                                <span style="display:inline-block; width:16px; border-top:2px dashed #dc2626; margin-right:4px; vertical-align:middle;"></span> Baseline Target (176 Jam)
+                            </span>
+                        </div>
                         <div class="panel-body" style="padding:15px;">
-                            <div class="mechanic-bar-chart">
-                                ${mechanicProductivityData.map(m => `
-                                    <div class="mechanic-bar-group">
-                                        <div class="mechanic-bars-pair">
-                                            <div class="bar-actual" style="height:${(m.actual/200)*100}%;" title="Aktual: ${m.actual} Jam"></div>
-                                            <div class="bar-target" style="height:${(m.target/200)*100}%;" title="Target: ${m.target} Jam"></div>
-                                        </div>
-                                        <div class="mechanic-name-lbl">${escapeHtml(m.name)}</div>
+                            <div style="margin-bottom:15px;">
+                                <!-- Shared Track Container (150px height) -->
+                                <div style="position:relative; height:150px; width:100%; border-bottom:2px solid var(--border); box-sizing:border-box;">
+                                    
+                                    <!-- Red Dashed Baseline Line at EXACT 132px from bottom (176 / 200 * 150px = 132px) -->
+                                    <div style="position:absolute; bottom:132px; left:0; right:0; border-top:2px dashed #dc2626; z-index:10; pointer-events:none;" title="Target Baseline: 176 Jam">
+                                        <span style="position:absolute; right:4px; top:-16px; font-size:0.68rem; font-weight:bold; color:#dc2626; background:#ffffff; padding:1px 6px; border-radius:3px; border:1px solid #fca5a5; box-shadow:0 1px 3px rgba(0,0,0,0.1);">Target: 176 Jam</span>
                                     </div>
-                                `).join('')}
+
+                                    <!-- Bars Grid (Full 150px track height) -->
+                                    <div style="display:flex; justify-content:space-around; align-items:flex-end; height:150px; width:100%; position:relative; z-index:5;">
+                                        ${mechanicProductivityData.map(m => {
+                                            const barPx = Math.round((m.actual / 200) * 150);
+                                            const isExceed = m.actual >= m.target;
+                                            let barBg = '#0284c7';
+                                            if (!isExceed) {
+                                                if (m.pct >= 95) barBg = '#38bdf8';
+                                                else if (m.pct >= 88) barBg = '#f59e0b';
+                                                else barBg = '#ef4444';
+                                            }
+                                            return `
+                                                <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; width:18%;">
+                                                    <div class="bar-actual" style="width:34px; height:${barPx}px; background-color:${barBg} !important; border-radius:4px 4px 0 0; box-shadow:0 3px 6px rgba(0,0,0,0.18); transition:all 0.3s ease; cursor:pointer; display:flex; justify-content:center; align-items:flex-start; padding-top:4px;" title="${escapeHtml(m.name)}: ${m.actual} Jam (${m.pct}% dari Target 176 Jam)">
+                                                        <span style="font-size:0.7rem; font-weight:bold; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,0.6);">${m.actual}j</span>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Mechanic Names under the bottom border -->
+                                <div style="display:flex; justify-content:space-around; width:100%; margin-top:8px;">
+                                    ${mechanicProductivityData.map(m => `
+                                        <div style="width:18%; text-align:center; font-size:0.8rem; color:var(--text-main); font-weight:700;">${escapeHtml(m.name)}</div>
+                                    `).join('')}
+                                </div>
                             </div>
 
                             <table style="width:100%; font-size:0.8rem;">
@@ -513,6 +545,9 @@
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
+
+    // Expose Globally
+    window.initExecutiveAnalyticsPanels = initExecutiveAnalyticsPanels;
 
     // Auto Mount
     if (document.readyState === 'loading') {

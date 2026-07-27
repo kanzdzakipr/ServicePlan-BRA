@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="scripts/hse-accident.css">
     <link rel="stylesheet" href="scripts/productivity.css">
     <link rel="stylesheet" href="scripts/p2h-inspection.css">
-    <link rel="stylesheet" href="scripts/dashboard-analytics.css">
+    <link rel="stylesheet" href="scripts/dashboard-analytics.css?v=20260727-v7">
     <style>
         :root {
             --primary: #007bff;
@@ -708,6 +708,12 @@
             justify-content: center;
             font-size: 0.6rem;
             font-weight: bold;
+            transition: all 0.25s ease;
+        }
+
+        .tire-indicator:hover {
+            transform: scale(1.1);
+            z-index: 15 !important;
         }
 
         .tire-indicator.warning {
@@ -716,6 +722,28 @@
 
         .tire-indicator.danger {
             background: var(--danger);
+        }
+
+        /* Select Ring Highlight Indicator */
+        .tire-indicator.selected-tire-ring {
+            border: 3px solid #007bff !important;
+            outline: 3px solid rgba(0, 123, 255, 0.5);
+            outline-offset: 2px;
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.9), 0 0 30px rgba(0, 123, 255, 0.7) !important;
+            transform: scale(1.22) !important;
+            z-index: 25 !important;
+            animation: tirePulseRing 1.4s infinite alternate;
+        }
+
+        @keyframes tirePulseRing {
+            0% {
+                outline-color: rgba(0, 123, 255, 0.4);
+                box-shadow: 0 0 10px rgba(0, 123, 255, 0.6), 0 0 18px rgba(0, 123, 255, 0.5);
+            }
+            100% {
+                outline-color: rgba(0, 123, 255, 0.9);
+                box-shadow: 0 0 18px rgba(0, 123, 255, 1), 0 0 35px rgba(0, 123, 255, 0.85);
+            }
         }
     </style>
 </head>
@@ -2310,6 +2338,7 @@
                 globalData = await response.json();
 
                 initDashboard(globalData);
+                if (window.initExecutiveAnalyticsPanels) window.initExecutiveAnalyticsPanels();
                 initMonitoringView(globalData.assets);
                 initAssetView(globalData.assets);
                 initWorkOrderView(globalData.work_orders);
@@ -3976,11 +4005,90 @@
             document.getElementById('settings-' + tabName).style.display = 'block';
         }
 
+        // Condition Monitoring: Tire Inspection Data Store & Highlight Engine
+        let tireInspectionStore = {
+            'FL': { tread: 11.2, pressure: 110 },
+            'FR': { tread: 10.8, pressure: 108 },
+            'R1L': { tread: 9.5, pressure: 112 },
+            'R1LI': { tread: 8.2, pressure: 105 },
+            'R1R': { tread: 9.0, pressure: 110 },
+            'R1RI': { tread: 7.8, pressure: 104 },
+            'R2L': { tread: 6.5, pressure: 98 },
+            'R2LI': { tread: 5.4, pressure: 95 },
+            'R2R': { tread: 3.0, pressure: 85 },
+            'R2RI': { tread: 2.8, pressure: 82 }
+        };
+
+        window.inspectTire = function(tireCode) {
+            if (!tireCode) return;
+            const code = tireCode.toUpperCase();
+            
+            // 1. Remove ring highlight from all tires
+            document.querySelectorAll('.tire-indicator').forEach(el => {
+                el.classList.remove('selected-tire-ring');
+            });
+            
+            // 2. Add ring highlight indicator to targeted tire
+            const targetId = 'tire-' + code.toLowerCase();
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.classList.add('selected-tire-ring');
+            }
+
+            // 3. Update form title and hidden input
+            const labelEl = document.getElementById('selected-tire-label');
+            if (labelEl) labelEl.textContent = code;
+            
+            const hiddenEl = document.getElementById('selected-tire');
+            if (hiddenEl) hiddenEl.value = code;
+
+            // 4. Populate form inputs with store data
+            const data = tireInspectionStore[code] || { tread: '', pressure: '' };
+            const treadInput = document.getElementById('tire-tread');
+            const pressureInput = document.getElementById('tire-pressure');
+            if (treadInput) treadInput.value = data.tread;
+            if (pressureInput) pressureInput.value = data.pressure;
+        };
+
+        window.saveTireInspection = function() {
+            const hiddenEl = document.getElementById('selected-tire');
+            const code = hiddenEl ? hiddenEl.value.toUpperCase() : 'FL';
+            const treadInput = document.getElementById('tire-tread');
+            const pressureInput = document.getElementById('tire-pressure');
+            
+            const tread = parseFloat(treadInput ? treadInput.value : 0);
+            const pressure = parseFloat(pressureInput ? pressureInput.value : 0);
+
+            if (isNaN(tread) || tread <= 0) {
+                alert('Silakan masukkan kedalaman alur ban (Tread Depth) yang valid!');
+                return;
+            }
+
+            tireInspectionStore[code] = { tread, pressure };
+
+            // Dynamically update tire indicator status badge color
+            const targetId = 'tire-' + code.toLowerCase();
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.classList.remove('warning', 'danger');
+                if (tread < 3.2) {
+                    targetEl.classList.add('danger');
+                } else if (tread <= 8.5) {
+                    targetEl.classList.add('warning');
+                }
+            }
+
+            alert(`✅ Inspeksi Ban (${code}) Berhasil Disimpan:\n- Tread Depth: ${tread} mm\n- Tekanan Angin: ${pressure || '-'} PSI`);
+        };
+
         function saveSettings() {
             alert('Konfigurasi sistem berhasil disimpan.');
         }
 
         function initNewViews() {
+            // Initialize default tire selection (FL)
+            window.inspectTire('FL');
+
             if (globalData) {
                 const woSelect = document.getElementById('spb-wo-id');
                 if (woSelect) {
@@ -4056,7 +4164,7 @@
     <script src="scripts/hse-accident.js"></script>
     <script src="scripts/productivity.js"></script>
     <script src="scripts/p2h-inspection.js"></script>
-    <script src="scripts/dashboard-analytics.js"></script>
+    <script src="scripts/dashboard-analytics.js?v=20260727-v7"></script>
 </body>
 
 </html>
