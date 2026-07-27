@@ -1,0 +1,373 @@
+/* ==========================================================================
+   Executive Dashboard Analytics Panels Styles (dashboard-analytics.css)
+   Equipment Maintenance & Fleet Monitoring System - PT BRA
+   Based on AssetPro Executive Analytics Design System
+   ========================================================================== */
+
+/* General Container & Row Layouts */
+.dash-analytics-row {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dash-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+}
+
+.dash-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.dash-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.dash-grid-2-equal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Service Counter Badges (Row 1 Header) */
+.service-counter-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.service-counter-card {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    flex: 1;
+    min-width: 110px;
+    text-align: center;
+}
+
+.service-counter-card .lbl {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.service-counter-card .val {
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.service-counter-card.danger .val { color: var(--danger); }
+.service-counter-card.warning .val { color: #f59e0b; }
+.service-counter-card.info .val { color: var(--primary); }
+.service-counter-card.success .val { color: var(--success); }
+.service-counter-card.muted .val { color: var(--text-muted); }
+
+/* SVG Donut Chart Components */
+.donut-chart-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 0;
+}
+
+.donut-svg {
+    width: 180px;
+    height: 180px;
+    transform: rotate(-90deg);
+    border-radius: 50%;
+}
+
+.donut-legend {
+    width: 100%;
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.83rem;
+}
+
+.donut-legend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.donut-legend-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.donut-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Compliance Metrics List */
+.compliance-list {
+    margin-top: 15px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.compliance-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.compliance-item .lbl {
+    color: var(--text-muted);
+}
+
+.compliance-item .val {
+    font-weight: 700;
+}
+
+/* Alert Banner Box */
+.dash-alert-banner {
+    background: #fffbe6;
+    border: 1px solid #ffe58f;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    color: #8c6b00;
+    margin-top: 12px;
+    line-height: 1.4;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.dash-alert-banner.pink {
+    background: #fff1f0;
+    border-color: #ffccc7;
+    color: #cf1322;
+}
+
+/* Tire Inspection Top Cards */
+.tire-kpi-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tire-kpi-box {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+}
+
+.tire-kpi-box .lbl {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.tire-kpi-box .val {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--dark);
+    margin-top: 2px;
+}
+
+/* Grease Progress Bar List */
+.grease-progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.grease-progress-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.82rem;
+}
+
+.grease-progress-hdr {
+    display: flex;
+    justify-content: space-between;
+}
+
+.grease-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.grease-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+/* Mechanic Productivity Chart & Table */
+.mechanic-bar-chart {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 160px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.mechanic-bar-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 16%;
+}
+
+.mechanic-bars-pair {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+}
+
+.bar-actual {
+    background: #0284c7;
+    width: 14px;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.3s ease;
+}
+
+.bar-target {
+    background: #e0f2fe;
+    width: 14px;
+    border-radius: 3px 3px 0 0;
+}
+
+.mechanic-name-lbl {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Monthly Cost Bar Chart (Row 4) */
+.cost-bar-chart {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 220px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    padding-left: 45px;
+    position: relative;
+}
+
+.cost-y-axis {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.cost-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    height: 100%;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.cost-bar-fill {
+    width: 60%;
+    max-width: 24px;
+    background: var(--primary);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.4s ease;
+}
+
+.cost-bar-fill:hover {
+    background: #0056b3;
+}
+
+.cost-month-lbl {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+/* Quick Actions List */
+.quick-action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.quick-action-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.88rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quick-action-item:hover {
+    background: #e0f2fe;
+    border-color: #38bdf8;
+    transform: translateX(3px);
+}
+
+.quick-action-item i {
+    font-size: 1rem;
+}
+
+/* Table Text & Badges Helpers */
+.badge-soft-danger { background: #fee2e2; color: #dc2626; }
+.badge-soft-warning { background: #fef3c7; color: #d97706; }
+.badge-soft-info { background: #e0f2fe; color: #0284c7; }
+.badge-soft-success { background: #dcfce7; color: #16a34a; }
+.badge-soft-muted { background: #f1f5f9; color: #64748b; }
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .dash-grid-2 { grid-template-columns: 1fr; }
+    .dash-grid-3 { grid-template-columns: 1fr; }
+    .dash-grid-2-equal { grid-template-columns: 1fr; }
+}
