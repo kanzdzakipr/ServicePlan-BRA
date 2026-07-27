@@ -1608,7 +1608,7 @@
 
     <!-- Modal Detail 360 -->
     <div class="modal-overlay" id="assetModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 850px;">
             <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="btnBackAssetModal" onclick="backToStatusDetailModal()" style="border: 1px solid var(--border); background: #f8f9fa; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: none; align-items: center; gap: 5px;" title="Kembali ke Daftar Tabulasi Unit">
@@ -1620,47 +1620,169 @@
                     style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="asset-tabs">
-                    <div class="asset-tab active">Ringkasan</div>
-                    <div class="asset-tab">Lokasi</div>
-                    <div class="asset-tab">Breakdown & WO</div>
-                    <div class="asset-tab">Inspeksi & P2H</div>
+                <div class="asset-tabs" id="assetModalTabs">
+                    <div class="asset-tab active" onclick="window.switchAssetModalTab('ringkasan', this)">Ringkasan</div>
+                    <div class="asset-tab" onclick="window.switchAssetModalTab('lokasi', this)">Lokasi</div>
+                    <div class="asset-tab" onclick="window.switchAssetModalTab('wo', this)">Breakdown & WO</div>
+                    <div class="asset-tab" onclick="window.switchAssetModalTab('p2h', this)">Inspeksi & P2H</div>
                 </div>
-                <div class="asset-360-grid">
-                    <div>
-                        <div
-                            style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
-                            <p style="color:var(--text-muted); font-size:0.85rem;">Status</p>
-                            <h3 id="modalStatus" style="margin-bottom:15px;">-</h3>
-                            <p style="color:var(--text-muted); font-size:0.85rem;">Kategori</p>
-                            <h4 id="modalKategori" style="margin-bottom:15px;">-</h4>
-                            <p style="color:var(--text-muted); font-size:0.85rem;">Lokasi Terakhir</p>
-                            <h4 id="modalLokasi">-</h4>
+
+                <!-- TAB 1: RINGKASAN & GALERI 3 SUDUT PANDANG -->
+                <div id="assetTabSecRingkasan" class="asset-tab-sec">
+                    <div class="asset-360-grid">
+                        <div>
+                            <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
+                                <p style="color:var(--text-muted); font-size:0.85rem;">Status Efektif</p>
+                                <h3 id="modalStatus" style="margin-bottom:15px;">-</h3>
+                                <p style="color:var(--text-muted); font-size:0.85rem;">Kategori Alat</p>
+                                <h4 id="modalKategori" style="margin-bottom:15px;">-</h4>
+                                <p style="color:var(--text-muted); font-size:0.85rem;">Lokasi Terakhir</p>
+                                <h4 id="modalLokasi">-</h4>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%; margin-bottom:10px;"
+                                onclick="triggerUpdateStatus()">Update Status</button>
                         </div>
-                        <button class="btn btn-primary" style="width:100%; margin-bottom:10px;"
-                            onclick="triggerUpdateStatus()">Update Status</button>
+                        <div>
+                            <h3 style="margin-bottom:10px;">Spesifikasi Unit</h3>
+                            <table style="width:100%; border:1px solid var(--border); font-size:0.9rem;">
+                                <tr>
+                                    <td style="width:40%; font-weight:bold; background:#f8f9fa;">Merek / Model</td>
+                                    <td id="modalModelSpec">Komatsu / Heavy Equipment</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold; background:#f8f9fa;">Tahun Manufaktur</td>
+                                    <td id="modalYearSpec">2021</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold; background:#f8f9fa;">Ownership</td>
+                                    <td>Milik Sendiri (PT BRA)</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold; background:#f8f9fa;">HM / KM Terakhir</td>
+                                    <td id="modalHmSpec">8.450 Jam</td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
-                    <div>
-                        <h3 style="margin-bottom:10px;">Informasi Detail</h3>
-                        <p style="color:var(--text-muted); margin-bottom:15px;">(Simulasi data detail 360 derajat sesuai
-                            Blueprint. Informasi yang ditampilkan di sini mencakup seluruh life-cycle alat).</p>
-                        <table style="width:100%; border:1px solid var(--border);">
-                            <tr>
-                                <td style="width:40%; font-weight:bold; background:#f8f9fa;">Merek / Model</td>
-                                <td>Komatsu (Simulasi)</td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:bold; background:#f8f9fa;">Tahun</td>
-                                <td>2021</td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:bold; background:#f8f9fa;">Ownership</td>
-                                <td>Milik Sendiri</td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:bold; background:#f8f9fa;">HM / KM Terakhir</td>
-                                <td>8.450 Jam</td>
-                            </tr>
+
+                    <!-- Placeholder View Tampak Depan, Belakang & Samping -->
+                    <h3 style="margin-top:20px; margin-bottom:10px; font-size:1.05rem;"><i class="fa-solid fa-camera"></i> Visualisasi 360° Sudut Pandang Unit</h3>
+                    <div class="asset-view-gallery">
+                        <!-- Tampak Depan -->
+                        <div class="asset-view-card">
+                            <div class="asset-view-header">
+                                <span class="asset-angle-badge">TAMPAK DEPAN</span>
+                                <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-eye"></i> Front View</span>
+                            </div>
+                            <div class="asset-view-img-box">
+                                <div class="asset-view-svg-demo">
+                                    <i class="fa-solid fa-truck-front"></i>
+                                    <span style="font-size:0.75rem; font-weight:bold;">FRONT VIEW</span>
+                                </div>
+                            </div>
+                            <div class="asset-view-spec-tag">Kabin, Lampu Utama & Attachment Depan</div>
+                        </div>
+
+                        <!-- Tampak Belakang -->
+                        <div class="asset-view-card">
+                            <div class="asset-view-header">
+                                <span class="asset-angle-badge" style="background:#059669;">TAMPAK BELAKANG</span>
+                                <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-eye"></i> Rear View</span>
+                            </div>
+                            <div class="asset-view-img-box">
+                                <div class="asset-view-svg-demo">
+                                    <i class="fa-solid fa-truck-monster" style="color:#059669;"></i>
+                                    <span style="font-size:0.75rem; font-weight:bold; color:#059669;">REAR VIEW</span>
+                                </div>
+                            </div>
+                            <div class="asset-view-spec-tag">Counterweight, Engine Hood & Exhaust</div>
+                        </div>
+
+                        <!-- Tampak Samping -->
+                        <div class="asset-view-card">
+                            <div class="asset-view-header">
+                                <span class="asset-angle-badge" style="background:#d97706;">TAMPAK SAMPING</span>
+                                <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-eye"></i> Side View</span>
+                            </div>
+                            <div class="asset-view-img-box">
+                                <div class="asset-view-svg-demo">
+                                    <i class="fa-solid fa-truck-pickup" style="color:#d97706;"></i>
+                                    <span style="font-size:0.75rem; font-weight:bold; color:#d97706;">SIDE VIEW</span>
+                                </div>
+                            </div>
+                            <div class="asset-view-spec-tag">Profile Undercarriage Track / Roda & Boom</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: LOKASI (LEAFLET MAP & TIMELINE REKAP) -->
+                <div id="assetTabSecLokasi" class="asset-tab-sec" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h3 style="margin:0; font-size:1.05rem;"><i class="fa-solid fa-location-dot"></i> Peta Posisi GPS Terkini Unit</h3>
+                        <span id="modalGpsCoord" style="font-size:0.8rem; background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold;">GPS: 1.4851, 101.3524</span>
+                    </div>
+
+                    <!-- Individual Unit Leaflet Map -->
+                    <div id="modalUnitMap"></div>
+
+                    <h4 style="margin-top:15px; margin-bottom:10px;"><i class="fa-solid fa-route"></i> Riwayat Perpindahan Lokasi & BAST</h4>
+                    <div class="movement-timeline">
+                        <div class="movement-timeline-item latest">
+                            <div class="movement-timeline-title" id="timelineLoc1">Yard KM 12 Duri (Site Alpha)</div>
+                            <div class="movement-timeline-meta">BAST Mutasi Unit #BAST-2026-07-02 | Penanggung Jawab: Site Manager Alpha</div>
+                        </div>
+                        <div class="movement-timeline-item">
+                            <div class="movement-timeline-title">Borrow Pit Harapan Baru</div>
+                            <div class="movement-timeline-meta">Pekerjaan Cut & Fill Project | 15 Mei 2026 – 01 Juli 2026</div>
+                        </div>
+                        <div class="movement-timeline-item">
+                            <div class="movement-timeline-title">Yard Prabumulih (Penerimaan Aset)</div>
+                            <div class="movement-timeline-meta">Registrasi BAST Awal Masuk Armada | 10 Januari 2026</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: BREAKDOWN & WORK ORDER -->
+                <div id="assetTabSecWo" class="asset-tab-sec" style="display:none;">
+                    <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-wrench"></i> Riwayat Work Order (WO) Unit</h3>
+                    <div class="table-responsive">
+                        <table style="width:100%; font-size:0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th>WO ID</th>
+                                    <th>Tanggal Down</th>
+                                    <th>Trouble / Issue Diagnosis</th>
+                                    <th>Downtime</th>
+                                    <th>Prioritas</th>
+                                    <th>Status WO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbModalUnitWoBody">
+                                <!-- Rendered via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 4: INSPEKSI & P2H -->
+                <div id="assetTabSecP2h" class="asset-tab-sec" style="display:none;">
+                    <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-clipboard-check"></i> Riwayat Inspeksi & P2H Unit</h3>
+                    <div class="table-responsive">
+                        <table style="width:100%; font-size:0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th>Tiket P2H</th>
+                                    <th>Tanggal / Waktu</th>
+                                    <th>Operator / NRP</th>
+                                    <th>Reading HM</th>
+                                    <th>Status Kelayakan</th>
+                                    <th>Catatan Temuan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbModalUnitP2hBody">
+                                <!-- Rendered via JS -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -2073,6 +2195,7 @@
         }
 
         let previousModalId = null;
+        let modalUnitMapInstance = null;
 
         function openAssetModal(id, status, category, location, fromModal = null) {
             previousModalId = fromModal;
@@ -2081,12 +2204,172 @@
             document.getElementById('modalKategori').textContent = category;
             document.getElementById('modalLokasi').textContent = location;
 
+            // Populate Specs based on category
+            const modelSpec = document.getElementById('modalModelSpec');
+            const hmSpec = document.getElementById('modalHmSpec');
+            if (modelSpec) {
+                if (category.toLowerCase().includes('excavator')) modelSpec.innerText = 'Komatsu PC200-10M0 / CAT 320GX';
+                else if (category.toLowerCase().includes('truck')) modelSpec.innerText = 'Mercedes Axor / Hino 500 Dump';
+                else if (category.toLowerCase().includes('grader')) modelSpec.innerText = 'Komatsu GD535-5 Motor Grader';
+                else if (category.toLowerCase().includes('vibro') || category.toLowerCase().includes('compactor')) modelSpec.innerText = 'Sakai SV512 / Bomag Single Drum';
+                else modelSpec.innerText = 'Komatsu D85ESS Bulldozer';
+            }
+            if (hmSpec) {
+                const assetObj = globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null;
+                hmSpec.innerText = (assetObj && assetObj.last_hm_km ? assetObj.last_hm_km : '8.450') + ' Jam';
+            }
+
             const backBtn = document.getElementById('btnBackAssetModal');
             if (backBtn) {
                 backBtn.style.display = previousModalId ? 'inline-flex' : 'none';
             }
 
+            // Reset tab to Ringkasan
+            const firstTab = document.querySelector('#assetModalTabs .asset-tab');
+            if (firstTab) window.switchAssetModalTab('ringkasan', firstTab);
+
+            // Pre-render WO & P2H data for unit
+            renderModalUnitWo(id);
+            renderModalUnitP2h(id);
+            updateModalMovementTimeline(location);
+
             openModal('assetModal');
+        }
+
+        window.switchAssetModalTab = function(tabName, el) {
+            if (el) {
+                document.querySelectorAll('#assetModalTabs .asset-tab').forEach(t => t.classList.remove('active'));
+                el.classList.add('active');
+            }
+
+            document.getElementById('assetTabSecRingkasan').style.display = 'none';
+            document.getElementById('assetTabSecLokasi').style.display = 'none';
+            document.getElementById('assetTabSecWo').style.display = 'none';
+            document.getElementById('assetTabSecP2h').style.display = 'none';
+
+            if (tabName === 'lokasi') {
+                document.getElementById('assetTabSecLokasi').style.display = 'block';
+                setTimeout(() => {
+                    initModalUnitMap();
+                }, 150);
+            } else if (tabName === 'wo') {
+                document.getElementById('assetTabSecWo').style.display = 'block';
+            } else if (tabName === 'p2h') {
+                document.getElementById('assetTabSecP2h').style.display = 'block';
+            } else {
+                document.getElementById('assetTabSecRingkasan').style.display = 'block';
+            }
+        };
+
+        function initModalUnitMap() {
+            const mapContainer = document.getElementById('modalUnitMap');
+            if (!mapContainer || typeof L === 'undefined') return;
+
+            const unitId = document.getElementById('modalAssetId').textContent || 'EXC-201';
+            const locName = document.getElementById('modalLokasi').textContent || 'Yard Duri';
+            const statusName = document.getElementById('modalStatus').textContent || 'READY';
+
+            // Coordinates mapping based on location
+            let lat = 1.4851, lng = 101.3524; // Default Duri
+            if (locName.toLowerCase().includes('prabumulih')) { lat = -3.4283; lng = 104.2291; }
+            else if (locName.toLowerCase().includes('borrow') || locName.toLowerCase().includes('pit')) { lat = 1.4920; lng = 101.3610; }
+            else if (locName.toLowerCase().includes('sunter')) { lat = -6.1352; lng = 106.8654; }
+
+            const gpsCoordEl = document.getElementById('modalGpsCoord');
+            if (gpsCoordEl) gpsCoordEl.innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            if (modalUnitMapInstance) {
+                modalUnitMapInstance.remove();
+                modalUnitMapInstance = null;
+            }
+
+            modalUnitMapInstance = L.map('modalUnitMap').setView([lat, lng], 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(modalUnitMapInstance);
+
+            const markerColor = statusName === 'READY' ? '#28a745' : (statusName === 'BREAKDOWN' ? '#dc3545' : '#17a2b8');
+            const customIcon = L.divIcon({
+                className: 'custom-unit-marker',
+                html: `<div style="background:${markerColor}; color:#fff; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:11px; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.3); font-family:sans-serif;">
+                        <i class="fa-solid fa-location-dot"></i> ${escapeHtml(unitId)}
+                       </div>`,
+                iconSize: [80, 30],
+                iconAnchor: [40, 15]
+            });
+
+            L.marker([lat, lng], { icon: customIcon })
+                .addTo(modalUnitMapInstance)
+                .bindPopup(`<b>${escapeHtml(unitId)}</b><br>Lokasi: ${escapeHtml(locName)}<br>Status: <b>${escapeHtml(statusName)}</b>`)
+                .openPopup();
+
+            setTimeout(() => {
+                if (modalUnitMapInstance) modalUnitMapInstance.invalidateSize();
+            }, 200);
+        }
+
+        function renderModalUnitWo(unitId) {
+            const tbody = document.getElementById('tbModalUnitWoBody');
+            if (!tbody) return;
+
+            let wos = [];
+            if (globalData && globalData.work_orders) {
+                wos = globalData.work_orders.filter(w => (w.assetId || w.unitId) === unitId);
+            }
+
+            if (wos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:var(--text-muted);">Belum ada riwayat Work Order untuk unit ini.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = wos.map(w => `
+                <tr>
+                    <td><strong>${escapeHtml(w.woId)}</strong></td>
+                    <td>${escapeHtml(w.date || '2026-07-26')}</td>
+                    <td>${escapeHtml(w.issue || w.description || 'Perbaikan Rutin')}</td>
+                    <td style="font-weight:bold;">${w.downtime || '0'} Jam</td>
+                    <td><span class="badge ${w.priority === 'High' ? 'bg-breakdown' : 'bg-operating'}">${w.priority}</span></td>
+                    <td><span class="p2h-badge ${w.status === 'Closed' ? 'p2h-badge-pass' : 'p2h-badge-fail'}">${w.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderModalUnitP2h(unitId) {
+            const tbody = document.getElementById('tbModalUnitP2hBody');
+            if (!tbody) return;
+
+            let p2hs = [];
+            if (globalData && globalData.inspections) {
+                p2hs = globalData.inspections.filter(i => i.unitId === unitId);
+            }
+
+            if (p2hs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:var(--text-muted);">Belum ada riwayat P2H untuk unit ini.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = p2hs.map(p => `
+                <tr>
+                    <td><strong>${escapeHtml(p.id)}</strong></td>
+                    <td>${escapeHtml(p.date)}</td>
+                    <td>${escapeHtml(p.operator)} (${escapeHtml(p.nrp)})</td>
+                    <td style="font-weight:bold;">${p.hmStart} Jam</td>
+                    <td><span class="p2h-badge ${p.status.includes('PASS') || p.status.includes('LULUS') ? 'p2h-badge-pass' : 'p2h-badge-fail'}">${escapeHtml(p.status)}</span></td>
+                    <td style="font-size:0.8rem; max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(p.notes)}">${escapeHtml(p.notes)}</td>
+                    <td>
+                        <button type="button" class="btn" style="padding:2px 6px; font-size:0.75rem; background:var(--primary); color:#fff;" onclick="window.viewP2HDetail('${escapeHtml(p.id)}')">
+                            <i class="fa-solid fa-eye"></i> Detail
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateModalMovementTimeline(currentLoc) {
+            const loc1 = document.getElementById('timelineLoc1');
+            if (loc1) loc1.innerText = `${currentLoc || 'Yard KM 12 Duri'} (Lokasi Aktif)`;
         }
 
         function backToStatusDetailModal() {
