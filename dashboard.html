@@ -268,12 +268,38 @@
         .kpi-card {
             background: #fff;
             border-radius: 8px;
-            padding: 20px;
+            padding: 16px 20px 28px 20px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-left: 5px solid #ccc;
+            position: relative;
+        }
+
+        .kpi-action-btn {
+            position: absolute;
+            bottom: 6px;
+            right: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary);
+            padding: 3px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 10;
+        }
+
+        .kpi-action-btn:hover {
+            background: #0b5ed7;
+            transform: scale(1.05);
         }
 
         .kpi-card.total {
@@ -432,14 +458,14 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            z-index: 9999;
             display: none;
             align-items: center;
             justify-content: center;
         }
 
         .modal-overlay.active {
-            display: flex;
+            display: flex !important;
         }
 
         .modal-content {
@@ -763,6 +789,9 @@
                             <div class="value" id="kpiTotal">-</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-truck"></i></div>
+                        <button type="button" onclick="openStatusDetailModal('ALL')" class="kpi-action-btn" title="Lihat Tabulasi Semua Unit">
+                            Detail <i class="fa-solid fa-arrow-right"></i>
+                        </button>
                     </div>
                     <div class="kpi-card operating">
                         <div class="kpi-info">
@@ -770,6 +799,9 @@
                             <div class="value" id="kpiReady">-</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-person-digging"></i></div>
+                        <button type="button" onclick="openStatusDetailModal('READY')" class="kpi-action-btn" title="Lihat Tabulasi Unit Ready">
+                            Detail <i class="fa-solid fa-arrow-right"></i>
+                        </button>
                     </div>
                     <div class="kpi-card standby">
                         <div class="kpi-info">
@@ -777,6 +809,9 @@
                             <div class="value" id="kpiStandby">-</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-pause"></i></div>
+                        <button type="button" onclick="openStatusDetailModal('STANDBY')" class="kpi-action-btn" title="Lihat Tabulasi Unit Standby">
+                            Detail <i class="fa-solid fa-arrow-right"></i>
+                        </button>
                     </div>
                     <div class="kpi-card breakdown">
                         <div class="kpi-info">
@@ -784,6 +819,9 @@
                             <div class="value" id="kpiBreakdown">-</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-wrench"></i></div>
+                        <button type="button" onclick="openStatusDetailModal('BREAKDOWN')" class="kpi-action-btn" title="Lihat Tabulasi Unit Breakdown">
+                            Detail <i class="fa-solid fa-arrow-right"></i>
+                        </button>
                     </div>
                     <div class="kpi-card pm">
                         <div class="kpi-info">
@@ -791,6 +829,9 @@
                             <div class="value" id="kpiInspeksi">-</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                        <button type="button" onclick="openStatusDetailModal('INSPEKSI')" class="kpi-action-btn" title="Lihat Tabulasi Unit Inspeksi/PM">
+                            Detail <i class="fa-solid fa-arrow-right"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -1558,9 +1599,14 @@
     <!-- Modal Detail 360 -->
     <div class="modal-overlay" id="assetModal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>Detail 360° Unit: <span id="modalAssetId"></span></h2>
-                <button onclick="document.getElementById('assetModal').classList.remove('active')"
+            <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button id="btnBackAssetModal" onclick="backToStatusDetailModal()" style="border: 1px solid var(--border); background: #f8f9fa; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: none; align-items: center; gap: 5px;" title="Kembali ke Daftar Tabulasi Unit">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali
+                    </button>
+                    <h2 style="margin: 0; font-size: 1.2rem;">Detail 360° Unit: <span id="modalAssetId"></span></h2>
+                </div>
+                <button onclick="closeModal('assetModal')"
                     style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             <div class="modal-body">
@@ -1716,10 +1762,71 @@
         </div>
     </div>
 
+    <!-- Modal Tabulasi Detail Status Unit -->
+    <div class="modal-overlay" id="modalStatusDetail">
+        <div class="modal-content" style="max-width: 900px; width: 95%;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; font-size: 1.25rem;"><i class="fa-solid fa-table-list"></i> <span id="statusDetailTitle">Tabulasi Unit Alat</span></h2>
+                <button onclick="closeModal('modalStatusDetail')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <input type="text" id="statusDetailSearch" class="form-control" placeholder="Cari unit ID, kategori, atau lokasi..." style="max-width: 350px; margin-bottom: 0;" onkeyup="filterStatusDetailTable()">
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Total Ditemukan: <strong id="statusDetailCount" style="color: var(--dark);">0</strong> Unit
+                    </div>
+                </div>
+                <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                    <table style="width: 100%; margin: 0; font-size: 0.88rem;">
+                        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 2;">
+                            <tr>
+                                <th>Unit ID / Kode Lambung</th>
+                                <th>Kategori Alat</th>
+                                <th>Lokasi Aktif</th>
+                                <th>Last Update</th>
+                                <th>Status</th>
+                                <th style="text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statusDetailTableBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Leaflet Map Script -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
+        window.escapeHtml = function(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        };
+
+        window.openModal = function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.add('active');
+                el.style.display = 'flex';
+            }
+        };
+
+        window.closeModal = function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('active');
+                el.style.display = 'none';
+            }
+        };
+
         let globalData = null;
         let mapInitialized = false;
 
@@ -1766,15 +1873,19 @@
             const emergencyWOs = data.work_orders.filter(wo => wo.priority === 'High' && wo.status !== 'Closed');
 
             if (emergencyWOs.length > 0) {
-                attentionList.innerHTML = emergencyWOs.slice(0, 5).map(wo => `
-                    <li class="danger">
-                        <i class="fa-solid fa-fire"></i>
-                        <div class="attention-details">
-                            <strong>${wo.woId} - ${escapeHtml(wo.assetId)}</strong>
-                            <span>${escapeHtml(wo.issue.substring(0, 60))}... (Down: ${wo.downtime} jam)</span>
-                        </div>
-                    </li>
-                `).join('');
+                attentionList.innerHTML = emergencyWOs.slice(0, 5).map(wo => {
+                    const cleanDown = (wo.downtime || '-').toString().replace(/\s*jam$/i, '');
+                    const downLabel = cleanDown.includes('jam') ? cleanDown : `${cleanDown} jam`;
+                    return `
+                        <li class="danger">
+                            <i class="fa-solid fa-fire"></i>
+                            <div class="attention-details">
+                                <strong>${wo.woId} - ${escapeHtml(wo.assetId)}</strong>
+                                <span>${escapeHtml(wo.issue.substring(0, 60))}... (Down: ${downLabel})</span>
+                            </div>
+                        </li>
+                    `;
+                }).join('');
             } else {
                 attentionList.innerHTML = '<li><i class="fa-solid fa-check text-success"></i><div class="attention-details"><strong>Aman</strong><span>Tidak ada WO darurat.</span></div></li>';
             }
@@ -1814,6 +1925,86 @@
                 }).join('');
             }
         }
+
+        window.openStatusDetailModal = function(statusKey) {
+            if (!globalData || !globalData.assets) {
+                alert("Data aset sedang dimuat, silakan coba beberapa saat lagi.");
+                return;
+            }
+
+            let titleText = "Tabulasi Semua Unit Alat";
+            let filtered = globalData.assets;
+
+            if (statusKey === 'READY') {
+                titleText = "Tabulasi Unit Status: OPERATING / READY";
+                filtered = globalData.assets.filter(a => a.status === 'READY');
+            } else if (statusKey === 'STANDBY') {
+                titleText = "Tabulasi Unit Status: STANDBY";
+                filtered = globalData.assets.filter(a => a.status === 'STANDBY');
+            } else if (statusKey === 'BREAKDOWN') {
+                titleText = "Tabulasi Unit Status: BREAKDOWN";
+                filtered = globalData.assets.filter(a => a.status === 'BREAKDOWN');
+            } else if (statusKey === 'INSPEKSI') {
+                titleText = "Tabulasi Unit Status: INSPEKSI / PM";
+                filtered = globalData.assets.filter(a => a.status === 'INSPEKSI');
+            }
+
+            document.getElementById('statusDetailTitle').textContent = titleText + ` (${filtered.length} Unit)`;
+            document.getElementById('statusDetailSearch').value = '';
+
+            currentStatusDetailList = filtered;
+            window.renderStatusDetailTable(filtered);
+            window.openModal('modalStatusDetail');
+        };
+
+        window.renderStatusDetailTable = function(assets) {
+            const tbody = document.getElementById('statusDetailTableBody');
+            document.getElementById('statusDetailCount').textContent = assets.length;
+
+            if (assets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--text-muted);">Tidak ada unit ditemukan untuk kriteria ini.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = assets.map(asset => {
+                let badge = '';
+                if (asset.status === 'READY') badge = '<span class="badge bg-operating">READY</span>';
+                else if (asset.status === 'STANDBY') badge = '<span class="badge bg-standby">STANDBY</span>';
+                else if (asset.status === 'BREAKDOWN') badge = '<span class="badge bg-breakdown">BREAKDOWN</span>';
+                else if (asset.status === 'INSPEKSI') badge = '<span class="badge bg-inspeksi">INSPECTION</span>';
+
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(asset.id)}</strong></td>
+                        <td>${escapeHtml(asset.category)}</td>
+                        <td>${escapeHtml(asset.location)}</td>
+                        <td>${escapeHtml(asset.lastUpdate || '2 jam lalu')}</td>
+                        <td>${badge}</td>
+                        <td style="text-align: center;">
+                            <button onclick="closeModal('modalStatusDetail'); openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}', 'modalStatusDetail')" 
+                                style="border:1px solid var(--border); background:#fff; padding:4px 8px; border-radius:4px; cursor:pointer;" title="Lihat Detail Asset 360°">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.filterStatusDetailTable = function() {
+            const query = document.getElementById('statusDetailSearch').value.toLowerCase().trim();
+            if (!query) {
+                window.renderStatusDetailTable(currentStatusDetailList);
+                return;
+            }
+
+            const filtered = currentStatusDetailList.filter(a =>
+                (a.id || '').toLowerCase().includes(query) ||
+                (a.category || '').toLowerCase().includes(query) ||
+                (a.location || '').toLowerCase().includes(query)
+            );
+            window.renderStatusDetailTable(filtered);
+        };
 
         function initAssetView(assets) {
             const tbody = document.getElementById('assetTableBody');
@@ -1871,16 +2062,32 @@
             document.getElementById('count-Closed').innerText = countC;
         }
 
-        function openAssetModal(id, status, category, location) {
+        let previousModalId = null;
+
+        function openAssetModal(id, status, category, location, fromModal = null) {
+            previousModalId = fromModal;
             document.getElementById('modalAssetId').textContent = id;
             document.getElementById('modalStatus').textContent = status;
             document.getElementById('modalKategori').textContent = category;
             document.getElementById('modalLokasi').textContent = location;
+
+            const backBtn = document.getElementById('btnBackAssetModal');
+            if (backBtn) {
+                backBtn.style.display = previousModalId ? 'inline-flex' : 'none';
+            }
+
             openModal('assetModal');
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function backToStatusDetailModal() {
+            closeModal('assetModal');
+            if (previousModalId) {
+                openModal(previousModalId);
+            }
+        }
+
+        function openModal(id) { window.openModal(id); }
+        function closeModal(id) { window.closeModal(id); }
 
         function submitNewAsset() {
             const id = document.getElementById('na-id').value;
