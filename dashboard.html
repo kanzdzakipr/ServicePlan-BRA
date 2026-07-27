@@ -1023,74 +1023,7 @@
                 <div id="preventiveMaintenanceModule"></div>
             </div>
 
-            <!-- VIEW: BIAYA (MVP 2/3) -->
-            <div id="view-biaya" class="view-section">
-                <h1 class="page-title">Modul Biaya (Cost Control)</h1>
 
-                <div class="kpi-grid">
-                    <div class="kpi-card total">
-                        <div class="kpi-info">
-                            <h3>Total Budget Berjalan</h3>
-                            <div class="value" id="kpiBudget">Rp 0</div>
-                        </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-vault"></i></div>
-                    </div>
-                    <div class="kpi-card breakdown">
-                        <div class="kpi-info">
-                            <h3>Total Pengeluaran Aktual</h3>
-                            <div class="value" id="kpiActual">Rp 0</div>
-                        </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
-                    </div>
-                </div>
-
-                <div class="dashboard-layout">
-                    <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-chart-bar"></i> Budget vs Actual (8 Bulan
-                                Terakhir)</span></div>
-                        <div class="panel-body" style="padding: 20px;">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-end; height:250px; border-bottom:1px solid #ccc; padding-bottom:10px;"
-                                id="chartContainer">
-                                <!-- Bars populated via JS -->
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.8rem; color:var(--text-muted);"
-                                id="chartLabels">
-                                <!-- Labels via JS -->
-                            </div>
-                            <div style="margin-top:20px; font-size:0.8rem; display:flex; gap:20px;">
-                                <div><span
-                                        style="display:inline-block; width:15px; height:15px; background:var(--primary); margin-right:5px;"></span>
-                                    Budget</div>
-                                <div><span
-                                        style="display:inline-block; width:15px; height:15px; background:var(--danger); margin-right:5px;"></span>
-                                    Actual</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-list-check"></i> Daftar Harga Jual & Nilai
-                                Aset</span></div>
-                        <div class="panel-body" style="padding:0;">
-                            <div class="table-responsive">
-                                <table style="margin-top:0;">
-                                    <thead>
-                                        <tr>
-                                            <th>Unit ID</th>
-                                            <th>Total Biaya Perbaikan</th>
-                                            <th>Nilai Buku</th>
-                                            <th>Harga Pasaran</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="valTableBody">
-                                        <!-- Populated via JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- VIEW: LAPORAN & FORM -->
             <div id="view-reports" class="view-section">
@@ -1234,282 +1167,504 @@
 
             <!-- VIEW: FUEL MANAGEMENT -->
             <div id="view-fuel" class="view-section">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h1 class="page-title">Dashboard Monitoring BBM</h1>
-                    <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> Input Pengisian</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                    <div>
+                        <h1 class="page-title" style="margin-bottom:4px;"><i class="fa-solid fa-gas-pump" style="color:var(--primary);"></i> Monitoring & Efisiensi BBM Unit</h1>
+                        <p style="color:var(--text-muted); font-size:0.88rem; margin:0;">
+                            Pencatatan Penyaluran (FRM-BBM-01), Deteksi Anomali Konsumsi, Rekonsiliasi Tangki (FRM-STK-02) & Integration Audit Trail
+                        </p>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-primary" onclick="openFuelInputModal()"><i class="fa-solid fa-plus"></i> Input Pengisian (FRM-BBM-01)</button>
+                        <button class="btn btn-success" onclick="openStockSoundingModal()"><i class="fa-solid fa-droplet"></i> Sounding Stok (FRM-STK-02)</button>
+                    </div>
                 </div>
 
                 <!-- Filter Bar -->
                 <div class="panel" style="margin-bottom: 15px;">
-                    <div class="panel-body"
-                        style="padding: 10px 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <strong>Filter:</strong>
-                        <select class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;">
-                            <option>Periode: Hari Ini</option>
-                            <option>Periode: Bulan Ini</option>
+                    <div class="panel-body" style="padding: 10px 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <strong style="font-size:0.88rem;"><i class="fa-solid fa-filter"></i> Filter BBM:</strong>
+                        <select id="fuelFilterPeriode" class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;" onchange="filterFuelDashboard()">
+                            <option value="ALL">Periode: Semua</option>
+                            <option value="TODAY" selected>Periode: Hari Ini</option>
+                            <option value="MONTH">Periode: Bulan Ini</option>
                         </select>
-                        <select class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;">
-                            <option>Lokasi: Semua</option>
-                            <option>Pit</option>
-                            <option>Borrow Pit</option>
-                            <option>Yard KM 12</option>
+                        <select id="fuelFilterLokasi" class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;" onchange="filterFuelDashboard()">
+                            <option value="ALL">Lokasi: Semua Site</option>
+                            <option value="Yard KM 12 Duri">Yard KM 12 Duri</option>
+                            <option value="Pit">Pit (Harapan Baru)</option>
+                            <option value="Borrow Pit">Borrow Pit</option>
+                            <option value="Yard Prabumulih">Yard Prabumulih</option>
                         </select>
-                        <select class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;">
-                            <option>Kategori: Semua</option>
-                            <option>Excavator</option>
-                            <option>Dump Truck</option>
+                        <select id="fuelFilterKategori" class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;" onchange="filterFuelDashboard()">
+                            <option value="ALL">Kategori: Semua Alat</option>
+                            <option value="Excavator">Excavator</option>
+                            <option value="Dump Truck">Dump Truck</option>
+                            <option value="Bulldozer">Bulldozer</option>
+                            <option value="Motor Grader">Motor Grader</option>
                         </select>
-                        <button class="btn btn-primary" style="padding: 5px 15px;">Terapkan</button>
+                        <select id="fuelFilterStatus" class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;" onchange="filterFuelDashboard()">
+                            <option value="ALL">Status Anomali: Semua</option>
+                            <option value="RED">Merah (Deviasi >20% Boros)</option>
+                            <option value="ORANGE">Oranye (Deviasi 10-20%)</option>
+                            <option value="YELLOW">Kuning (Deviasi 5-10%)</option>
+                            <option value="GREEN">Hijau (Normal ≤5%)</option>
+                        </select>
+                        <button class="btn btn-primary" style="padding: 5px 15px;" onclick="filterFuelDashboard()"><i class="fa-solid fa-magnifying-glass"></i> Terapkan</button>
                     </div>
                 </div>
 
-                <!-- KPI Grid -->
-                <div class="kpi-grid">
+                <!-- Synchronized KPI Grid (6 Cards) -->
+                <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                     <div class="kpi-card total">
                         <div class="kpi-info">
                             <h3>Liter Hari Ini</h3>
-                            <div class="value">2,450 L</div>
+                            <div class="value" id="kpiFuelToday">2,450 L</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-gas-pump" style="color: var(--primary);"></i></div>
                     </div>
                     <div class="kpi-card operating">
                         <div class="kpi-info">
                             <h3>Liter Bulan Ini</h3>
-                            <div class="value">45,200 L</div>
+                            <div class="value" id="kpiFuelMonth">45,200 L</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-droplet" style="color: var(--info);"></i></div>
                     </div>
                     <div class="kpi-card standby">
                         <div class="kpi-info">
-                            <h3>Biaya Bulan Ini</h3>
-                            <div class="value">Rp 542 Jt</div>
+                            <h3>Biaya BBM Bulan Ini</h3>
+                            <div class="value" id="kpiFuelCost" style="font-size: 1.15rem; color: #2b8a3e;">Rp 542,4 Jt</div>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-money-bill-trend-up"
-                                style="color: var(--success);"></i></div>
+                        <div class="kpi-icon"><i class="fa-solid fa-money-bill-trend-up" style="color: var(--success);"></i></div>
                     </div>
-                    <div class="kpi-card breakdown">
+                    <div class="kpi-card breakdown" style="cursor:pointer;" onclick="filterFuelByAnomaly('RED')" title="Klik untuk filter unit boros">
                         <div class="kpi-info">
-                            <h3>Unit Boros</h3>
-                            <div class="value" style="color: var(--danger);">4 Unit</div>
+                            <h3>Unit Boros (Anomali)</h3>
+                            <div class="value" id="kpiFuelBoros" style="color: var(--danger);">4 Unit</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-fire" style="color: var(--danger);"></i></div>
                     </div>
-                    <div class="kpi-card pm">
+                    <div class="kpi-card pm" style="cursor:pointer;" onclick="filterFuelByStatus('Diajukan')" title="Klik untuk filter transaksi belum diverifikasi">
                         <div class="kpi-info">
                             <h3>Belum Diverifikasi</h3>
-                            <div class="value" style="color: var(--warning);">12 Trx</div>
+                            <div class="value" id="kpiFuelUnverified" style="color: var(--warning);">12 Trx</div>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-clipboard-question"
-                                style="color: var(--warning);"></i></div>
+                        <div class="kpi-icon"><i class="fa-solid fa-clipboard-question" style="color: var(--warning);"></i></div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: #6f42c1;">
+                        <div class="kpi-info">
+                            <h3>Stok Tangki Site</h3>
+                            <div class="value" id="kpiFuelStock" style="font-size:1.05rem; color:#6f42c1;">32.810 L</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-warehouse" style="color: #6f42c1;"></i></div>
                     </div>
                 </div>
 
-                <div class="dashboard-layout">
-                    <!-- Grafik A & B Placeholder -->
+                <div class="dashboard-layout" style="margin-top: 15px;">
+                    <!-- Grafik Pemakaian Harian -->
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-chart-area"></i> Tren Pemakaian
-                                Harian</span></div>
-                        <div class="panel-body"
-                            style="height: 250px; display: flex; align-items: flex-end; gap: 10px; border-bottom: 1px solid var(--border); padding-top: 40px; position: relative;">
-                            <div
-                                style="position:absolute; top: 10px; right: 20px; font-size: 0.8rem; display:flex; gap:10px;">
-                                <div><span
-                                        style="display:inline-block; width:12px; height:12px; background:var(--primary);"></span>
-                                    Liter</div>
-                            </div>
-                            <!-- Dummy Bars -->
-                            <div style="width: 15%; background: var(--primary); height: 60%;" title="Tgl 1: 1500L">
-                            </div>
-                            <div style="width: 15%; background: var(--primary); height: 80%;" title="Tgl 2: 2000L">
-                            </div>
-                            <div style="width: 15%; background: var(--primary); height: 50%;" title="Tgl 3: 1200L">
-                            </div>
-                            <div style="width: 15%; background: var(--primary); height: 90%;" title="Tgl 4: 2200L">
-                            </div>
-                            <div style="width: 15%; background: var(--primary); height: 100%;" title="Tgl 5: 2450L">
-                            </div>
+                        <div class="panel-header"><span><i class="fa-solid fa-chart-column"></i> Tren Pemakaian BBM Harian & Biaya</span></div>
+                        <div class="panel-body" style="height: 250px; display: flex; align-items: flex-end; gap: 12px; border-bottom: 1px solid var(--border); padding-top: 40px; position: relative;" id="fuelChartContainer">
+                            <!-- Rendered dynamically by JS -->
                         </div>
                     </div>
+
+                    <!-- Top Unit Boros vs Standar Baseline -->
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-ranking-star"></i> Top Unit Boros (vs
-                                Standar)</span></div>
-                        <div class="panel-body" style="padding: 15px;">
-                            <div style="margin-bottom: 15px;">
-                                <div
-                                    style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;">
-                                    <span>EXC-210 (Pit)</span> <span
-                                        style="color: var(--danger); font-weight: bold;">+26.7% (19 L/HM)</span></div>
-                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
-                                    <div style="width: 85%; background: var(--danger); height:100%; border-radius:4px;">
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 15px;">
-                                <div
-                                    style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;">
-                                    <span>DT-054 (Borrow Pit)</span> <span
-                                        style="color: var(--danger); font-weight: bold;">-20.0% (2.8 km/L)</span></div>
-                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
-                                    <div style="width: 75%; background: var(--danger); height:100%; border-radius:4px;">
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 15px;">
-                                <div
-                                    style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;">
-                                    <span>DZ-088 (Yard)</span> <span style="color: #fd7e14; font-weight: bold;">+12.5%
-                                        (18 L/HM)</span></div>
-                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
-                                    <div style="width: 60%; background: #fd7e14; height:100%; border-radius:4px;"></div>
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 15px;">
-                                <div
-                                    style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;">
-                                    <span>GRD-12 (Minas)</span> <span style="color: #fd7e14; font-weight: bold;">+8.2%
-                                        (14 L/HM)</span></div>
-                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
-                                    <div style="width: 45%; background: #fd7e14; height:100%; border-radius:4px;"></div>
-                                </div>
-                            </div>
+                        <div class="panel-header"><span><i class="fa-solid fa-triangle-exclamation" style="color:var(--danger);"></i> Top Unit Boros vs Standar Baseline (LPH / KPL)</span></div>
+                        <div class="panel-body" style="padding: 15px;" id="fuelTopBorosContainer">
+                            <!-- Rendered dynamically by JS -->
                         </div>
                     </div>
                 </div>
 
-                <div class="panel">
-                    <div class="panel-header"><span><i class="fa-solid fa-table-list"></i> Tabel Anomali
-                            Prioritas</span></div>
-                    <div class="panel-body" style="padding: 0;">
-                        <div class="table-responsive">
-                            <table style="margin: 0;">
-                                <thead>
-                                    <tr>
-                                        <th>Unit</th>
-                                        <th>Lokasi</th>
-                                        <th>Waktu Trx</th>
-                                        <th>Aktual</th>
-                                        <th>Standar</th>
-                                        <th>Deviasi</th>
-                                        <th>Biaya</th>
-                                        <th>Status Kewajaran</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><strong>EXC-210</strong></td>
-                                        <td>Pit</td>
-                                        <td>Hari ini, 10:15</td>
-                                        <td>19 L/HM</td>
-                                        <td>15 L/HM</td>
-                                        <td style="color: var(--danger); font-weight: bold;">+26.7%</td>
-                                        <td>Rp 2.280.000</td>
-                                        <td><span class="badge bg-breakdown">Merah</span></td>
-                                        <td><button class="btn"
-                                                style="padding: 3px 8px; font-size: 0.8rem; background: var(--light); border: 1px solid var(--border);">Detail</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>DT-054</strong></td>
-                                        <td>Borrow Pit</td>
-                                        <td>Kemarin, 16:30</td>
-                                        <td>2.8 km/L</td>
-                                        <td>3.5 km/L</td>
-                                        <td style="color: var(--danger); font-weight: bold;">-20.0%</td>
-                                        <td>Rp 1.540.000</td>
-                                        <td><span class="badge" style="background: #fd7e14;">Oranye</span></td>
-                                        <td><button class="btn"
-                                                style="padding: 3px 8px; font-size: 0.8rem; background: var(--light); border: 1px solid var(--border);">Detail</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>GRD-120K</strong></td>
-                                        <td>Yard KM 12</td>
-                                        <td>Kemarin, 14:00</td>
-                                        <td>12 L/HM</td>
-                                        <td>13 L/HM</td>
-                                        <td style="color: var(--success); font-weight: bold;">-7.7%</td>
-                                        <td>Rp 1.100.000</td>
-                                        <td><span class="badge bg-operating">Hijau</span></td>
-                                        <td><button class="btn"
-                                                style="padding: 3px 8px; font-size: 0.8rem; background: var(--light); border: 1px solid var(--border);">Detail</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                <!-- Multi-Tab Data Tables -->
+                <div class="panel" style="margin-top: 15px;">
+                    <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding: 0 15px;">
+                        <div class="asset-tabs" id="fuelMainTabs" style="margin-bottom:0; border-bottom:none;">
+                            <div class="asset-tab active" onclick="switchFuelTab('trx', this)"><i class="fa-solid fa-list-check"></i> Transaksi BBM & Anomali (FRM-BBM-01)</div>
+                            <div class="asset-tab" onclick="switchFuelTab('stock', this)"><i class="fa-solid fa-warehouse"></i> Tangki Storage & Sounding (FRM-STK-02)</div>
+                            <div class="asset-tab" onclick="switchFuelTab('baseline', this)"><i class="fa-solid fa-sliders"></i> Master Standar Baseline LPH/KPL</div>
                         </div>
                     </div>
-                </div>
-
-                <div class="dashboard-layout">
-                    <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-warehouse"></i> Stok Tangki &
-                                Rekonsiliasi</span></div>
-                        <div class="panel-body" style="padding: 0;">
+                    <div class="panel-body" style="padding: 15px;">
+                        
+                        <!-- TAB 1: TRANSAKSI & ANOMALI -->
+                        <div id="fuelTabSecTrx">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                                <input type="text" id="searchFuelInput" class="form-control" placeholder="Cari Unit ID, Voucher, Operator, atau Location..." style="max-width:320px; margin-bottom:0;" onkeyup="searchFuelTable()">
+                                <div style="font-size:0.85rem; color:var(--text-muted);">
+                                    Menampilkan <strong id="fuelTrxCount">0</strong> Transaksi BBM
+                                </div>
+                            </div>
                             <div class="table-responsive">
-                                <table style="margin: 0; font-size: 0.85rem;">
+                                <table style="margin: 0; font-size: 0.85rem;" id="fuelTable">
                                     <thead>
                                         <tr>
-                                            <th>Tangki</th>
-                                            <th>Lokasi</th>
-                                            <th>Stok Sistem</th>
-                                            <th>Sounding Fisik</th>
-                                            <th>Selisih</th>
+                                            <th>No. Voucher / Jam</th>
+                                            <th>Kode Unit</th>
+                                            <th>Kategori & Lokasi</th>
+                                            <th>Fuelman / Operator</th>
+                                            <th>Meter Awal → Akhir</th>
+                                            <th>Liter</th>
+                                            <th>Aktual vs Standar</th>
+                                            <th>Deviasi</th>
+                                            <th>Total Biaya (Rp)</th>
+                                            <th>Kewajaran</th>
+                                            <th>Status</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fuelTableBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: STOK TANGKI & SOUNDING REKONSILIASI -->
+                        <div id="fuelTabSecStock" style="display:none;">
+                            <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-warehouse"></i> Status Tangki Dispensasi & Rekonsiliasi Sounding Fisik</h3>
+                            <div class="table-responsive" style="margin-bottom:20px;">
+                                <table style="margin: 0; font-size: 0.88rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>Kode Tangki / Sumber</th>
+                                            <th>Lokasi Site</th>
+                                            <th>Kapasitas Tangki</th>
+                                            <th>Saldo Sistem</th>
+                                            <th>Sounding Fisik Terakhir</th>
+                                            <th>Selisih Liter</th>
+                                            <th>Status Selisih</th>
+                                            <th>Waktu Rekonsiliasi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fuelStockTableBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: MASTER STANDAR BASELINE -->
+                        <div id="fuelTabSecBaseline" style="display:none;">
+                            <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-sliders"></i> Master Standar Konsumsi Baseline menurut Kategori & Model</h3>
+                            <div class="table-responsive">
+                                <table style="margin: 0; font-size: 0.88rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>Kategori / Model Unit</th>
+                                            <th>Satuan Meter</th>
+                                            <th>Target Baseline</th>
+                                            <th>Batas Minimum</th>
+                                            <th>Batas Warning (Oranye)</th>
+                                            <th>Batas Anomali (Merah)</th>
+                                            <th>Kondisi Operations</th>
+                                            <th>Status Master</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>Tank-01</td>
-                                            <td>Yard KM 12</td>
-                                            <td>12,450 L</td>
-                                            <td>12,430 L</td>
-                                            <td><span style="color: var(--success);">-20 L (Aman)</span></td>
+                                            <td><strong>Excavator PC200 / PC210</strong></td>
+                                            <td><span class="badge bg-operating">Liter / HM</span></td>
+                                            <td>14.0 L/HM</td>
+                                            <td>10.0 L/HM</td>
+                                            <td>15.5 L/HM (+10.7%)</td>
+                                            <td>17.0 L/HM (+21.4%)</td>
+                                            <td>Loading Pit & Heavy Excavation</td>
+                                            <td><span class="badge bg-operating">Aktif</span></td>
                                         </tr>
                                         <tr>
-                                            <td>Fuel Truck 1</td>
-                                            <td>Pit</td>
-                                            <td>4,000 L</td>
-                                            <td>3,850 L</td>
-                                            <td><span style="color: var(--danger); font-weight:bold;">-150 L
-                                                    (Warning)</span></td>
+                                            <td><strong>Dump Truck Mercy Axor / Hino 500</strong></td>
+                                            <td><span class="badge bg-standby">Km / Liter</span></td>
+                                            <td>3.5 Km/L</td>
+                                            <td>4.5 Km/L</td>
+                                            <td>3.0 Km/L (-14.2%)</td>
+                                            <td>2.5 Km/L (-28.5%)</td>
+                                            <td>Hauling Material Distance 12 KM</td>
+                                            <td><span class="badge bg-operating">Aktif</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Bulldozer Komatsu D85ESS</strong></td>
+                                            <td><span class="badge bg-operating">Liter / HM</span></td>
+                                            <td>16.0 L/HM</td>
+                                            <td>12.0 L/HM</td>
+                                            <td>18.0 L/HM (+12.5%)</td>
+                                            <td>20.0 L/HM (+25.0%)</td>
+                                            <td>Land Clearing & Ripping Operations</td>
+                                            <td><span class="badge bg-operating">Aktif</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Motor Grader Komatsu GD535</strong></td>
+                                            <td><span class="badge bg-operating">Liter / HM</span></td>
+                                            <td>13.0 L/HM</td>
+                                            <td>9.5 L/HM</td>
+                                            <td>14.5 L/HM (+11.5%)</td>
+                                            <td>16.0 L/HM (+23.0%)</td>
+                                            <td>Road Maintenance & Grading</td>
+                                            <td><span class="badge bg-operating">Aktif</span></td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
+
                     </div>
-                    <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-list-check"></i> Panel Tindakan
-                                Manager</span></div>
-                        <div class="panel-body" style="padding: 10px;">
-                            <ul class="attention-list">
-                                <li
-                                    style="border-left: 4px solid var(--warning); padding-left: 10px; margin-bottom: 5px;">
-                                    <div class="attention-details">
-                                        <strong style="color: var(--warning);"><i
-                                                class="fa-solid fa-clipboard-question"></i> 12 Transaksi Menunggu
-                                            Verifikasi</strong>
-                                        <span>Perlu diperiksa oleh Supervisi sebelum masuk laporan resmi.</span>
-                                    </div>
-                                </li>
-                                <li
-                                    style="border-left: 4px solid var(--danger); padding-left: 10px; margin-bottom: 5px;">
-                                    <div class="attention-details">
-                                        <strong style="color: var(--danger);"><i class="fa-solid fa-fire"></i> 1 Unit
-                                            Melewati Batas Deviasi (Merah)</strong>
-                                        <span>EXC-210 pemakaian BBM sangat boros (+26.7%).</span>
-                                    </div>
-                                </li>
-                                <li
-                                    style="border-left: 4px solid var(--danger); padding-left: 10px; margin-bottom: 5px;">
-                                    <div class="attention-details">
-                                        <strong style="color: var(--danger);"><i class="fa-solid fa-droplet-slash"></i>
-                                            Selisih Stok Fuel Truck 1</strong>
-                                        <span>Terdapat selisih -150L saat sounding fisik. Perlu investigasi.</span>
-                                    </div>
-                                </li>
-                            </ul>
+                </div>
+            </div>
+
+            <!-- VIEW: BIAYA / COST CONTROL -->
+            <div id="view-biaya" class="view-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                    <div>
+                        <h1 class="page-title" style="margin-bottom:4px;"><i class="fa-solid fa-money-bill-trend-up" style="color:var(--success);"></i> Modul Biaya & Cost Control Armada</h1>
+                        <p style="color:var(--text-muted); font-size:0.88rem; margin:0;">
+                            Pengendalian Budget vs Realisasi, Valuasi Nilai Buku & Pasaran Aset, Rekapitulasi PO Sparepart & LPJ Divisi Equipment
+                        </p>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-primary" onclick="openCostInputModal()"><i class="fa-solid fa-plus"></i> Catat Transaksi Biaya</button>
+                        <button class="btn btn-secondary" onclick="exportCostReport()"><i class="fa-solid fa-file-excel"></i> Export Laporan Keuangan</button>
+                    </div>
+                </div>
+
+                <!-- Filter Bar Biaya -->
+                <div class="panel" style="margin-bottom: 15px;">
+                    <div class="panel-body" style="padding: 10px 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <strong style="font-size:0.88rem;"><i class="fa-solid fa-filter"></i> Filter Biaya:</strong>
+                        <select id="costFilterTahun" class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;" onchange="filterCostDashboard()">
+                            <option value="ALL">Tahun: Semua</option>
+                            <option value="2026" selected>Tahun 2026</option>
+                            <option value="2025">Tahun 2025</option>
+                        </select>
+                        <select id="costFilterLokasi" class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;" onchange="filterCostDashboard()">
+                            <option value="ALL">Lokasi: Semua Site</option>
+                            <option value="Duri">Yard KM 12 Duri</option>
+                            <option value="Pit">Pit (Harapan Baru)</option>
+                            <option value="Prabumulih">Yard Prabumulih</option>
+                        </select>
+                        <select id="costFilterKategori" class="form-control" style="width: auto; margin-bottom: 0; padding: 5px;" onchange="filterCostDashboard()">
+                            <option value="ALL">Kategori: Semua Biaya</option>
+                            <option value="Sparepart">Sparepart & Consumable</option>
+                            <option value="Maintenance">Preventive Maintenance</option>
+                            <option value="External">Jasa Outsource / Sub-contractor</option>
+                            <option value="Capex">Overhaul / Capital Expenses</option>
+                        </select>
+                        <button class="btn btn-primary" style="padding: 5px 15px;" onclick="filterCostDashboard()"><i class="fa-solid fa-magnifying-glass"></i> Terapkan Filter</button>
+                    </div>
+                </div>
+
+                <!-- 6 Synchronized Executive KPI Cards -->
+                <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                    <div class="kpi-card total">
+                        <div class="kpi-info">
+                            <h3>Total Budget Berjalan</h3>
+                            <div class="value" id="kpiCostBudget">Rp 2.960 Jt</div>
                         </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-wallet" style="color: var(--primary);"></i></div>
+                    </div>
+                    <div class="kpi-card breakdown">
+                        <div class="kpi-info">
+                            <h3>Pengeluaran Aktual</h3>
+                            <div class="value" id="kpiCostActual" style="color: var(--danger);">Rp 12.144 Jt</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-file-invoice-dollar" style="color: var(--danger);"></i></div>
+                    </div>
+                    <div class="kpi-card pm">
+                        <div class="kpi-info">
+                            <h3>Deviasi Budget</h3>
+                            <div class="value" id="kpiCostDev" style="color: #fd7e14; font-size:1.15rem;">+310.2% (Over)</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-chart-line" style="color: #fd7e14;"></i></div>
+                    </div>
+                    <div class="kpi-card operating">
+                        <div class="kpi-info">
+                            <h3>Nilai Buku Aset (7 Unit)</h3>
+                            <div class="value" id="kpiCostBookValue" style="color: var(--success); font-size:1.15rem;">Rp 3.347 Jt</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-book" style="color: var(--success);"></i></div>
+                    </div>
+                    <div class="kpi-card standby">
+                        <div class="kpi-info">
+                            <h3>Harga Penawaran Buyer</h3>
+                            <div class="value" id="kpiCostMarketValue" style="color: var(--info); font-size:1.15rem;">Rp 4.070 Jt</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-tags" style="color: var(--info);"></i></div>
+                    </div>
+                    <div class="kpi-card" style="border-left-color: #2b8a3e;">
+                        <div class="kpi-info">
+                            <h3>Proyeksi Net Gain BRA</h3>
+                            <div class="value" id="kpiCostMargin" style="color: #2b8a3e; font-size:1.15rem;">+Rp 610 Jt</div>
+                        </div>
+                        <div class="kpi-icon"><i class="fa-solid fa-hand-holding-dollar" style="color: #2b8a3e;"></i></div>
+                    </div>
+                </div>
+
+                <!-- Main Section Layout -->
+                <div class="dashboard-layout" style="margin-top: 15px;">
+                    <!-- Visual Chart Panel Budget vs Actual -->
+                    <div class="panel" style="flex: 1.2;">
+                        <div class="panel-header"><span><i class="fa-solid fa-chart-column"></i> Budget vs Actual Cost (8 Bulan Terakhir)</span></div>
+                        <div class="panel-body" style="height: 260px; display: flex; align-items: flex-end; gap: 14px; border-bottom: 1px solid var(--border); padding-top: 40px; position: relative;" id="costChartContainer">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Side Financial Highlights Panel -->
+                    <div class="panel" style="flex: 0.8;">
+                        <div class="panel-header"><span><i class="fa-solid fa-scale-balanced"></i> Ringkasan Alokasi LPJ Equipment Duri</span></div>
+                        <div class="panel-body" style="padding: 15px;" id="costSummaryPanel">
+                            <div style="margin-bottom:12px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
+                                    <span>Corrective Repair (Spareparts)</span>
+                                    <strong style="color:var(--danger);">Rp 326.2 Jt</strong>
+                                </div>
+                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
+                                    <div style="width:72%; background:var(--danger); height:100%; border-radius:4px;"></div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
+                                    <span>Preventive Maintenance (PM)</span>
+                                    <strong style="color:var(--primary);">Rp 128.5 Jt</strong>
+                                </div>
+                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
+                                    <div style="width:45%; background:var(--primary); height:100%; border-radius:4px;"></div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
+                                    <span>Pemeliharaan Light Vehicle (LV)</span>
+                                    <strong style="color:#fd7e14;">Rp 85.0 Jt</strong>
+                                </div>
+                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
+                                    <div style="width:30%; background:#fd7e14; height:100%; border-radius:4px;"></div>
+                                </div>
+                            </div>
+                            <div style="background:#f8f9fa; padding:10px 12px; border-radius:6px; border:1px solid var(--border); font-size:0.82rem; margin-top:15px;">
+                                <i class="fa-solid fa-circle-info" style="color:var(--primary);"></i> <strong>Catatan Audit Keuangan:</strong><br>
+                                Pengeluaran corrective terbanyak tercatat di bulan Juli & November akibat overhaul excavator utama & perbaikan transmisi dozer.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Tab Data Tables (4 Tabs) -->
+                <div class="panel" style="margin-top: 15px;">
+                    <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding: 0 15px;">
+                        <div class="asset-tabs" id="costMainTabs" style="margin-bottom:0; border-bottom:none;">
+                            <div class="asset-tab active" onclick="switchCostTab('valuation', this)"><i class="fa-solid fa-truck-ramp-box"></i> Tabulasi Valuasi & Harga Jual Unit (7 Unit)</div>
+                            <div class="asset-tab" onclick="switchCostTab('lpj', this)"><i class="fa-solid fa-file-invoice"></i> LPJ Bulanan Budget vs Realisasi</div>
+                            <div class="asset-tab" onclick="switchCostTab('po', this)"><i class="fa-solid fa-receipt"></i> Register PO & Pengeluaran Part (WO Linked)</div>
+                            <div class="asset-tab" onclick="switchCostTab('pmcomp', this)"><i class="fa-solid fa-list-check"></i> Rencana vs Realisasi PM</div>
+                        </div>
+                    </div>
+                    <div class="panel-body" style="padding: 15px;">
+
+                        <!-- TAB 1: VALUASI & HARGA JUAL UNIT -->
+                        <div id="costTabSecValuation">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                                <input type="text" id="searchCostValuationInput" class="form-control" placeholder="Cari Kode Unit, Name, SN..." style="max-width:320px; margin-bottom:0;" onkeyup="searchCostValuationTable()">
+                                <div style="font-size:0.85rem; color:var(--text-muted);">
+                                    Menampilkan <strong>7 Unit Utama</strong> (Total Biaya Repair: Rp 2.249.290.290)
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table style="margin: 0; font-size: 0.85rem;" id="costValuationTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Unit ID & Nama Alat</th>
+                                            <th>SN / Tahun</th>
+                                            <th>Biaya Repair Kumulatif</th>
+                                            <th>Kondisi Health / Body</th>
+                                            <th>Harga Beli Awal</th>
+                                            <th>Pendapatan Unit</th>
+                                            <th>Nilai Buku (Book Value)</th>
+                                            <th>Harga Pasaran</th>
+                                            <th>Harga Ditawarkan Buyer</th>
+                                            <th>Net ke BRA</th>
+                                            <th>Margin Selisih</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="costValuationTableBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: LPJ BULANAN BUDGET VS REALISASI -->
+                        <div id="costTabSecLpj" style="display:none;">
+                            <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-file-invoice"></i> Laporan Pertanggungjawaban (LPJ) Keuangan Divisi Aset & Equipment</h3>
+                            <div class="table-responsive">
+                                <table style="margin: 0; font-size: 0.88rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>Bulan / Periode</th>
+                                            <th>Budget Planning</th>
+                                            <th>Realisasi Cash (Pembayaran)</th>
+                                            <th>Kewajiban Utang (AP)</th>
+                                            <th>Total Realisasi</th>
+                                            <th>Sisa / Defisit Budget</th>
+                                            <th>Status Varian</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="costLpjTableBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: REGISTER PO & PENGELUARAN PART (WO LINKED) -->
+                        <div id="costTabSecPo" style="display:none;">
+                            <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-receipt"></i> Register Purchase Order (PO) Sparepart & Integrasi Tiket WO</h3>
+                            <div class="table-responsive">
+                                <table style="margin: 0; font-size: 0.88rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>No. PO / Tanggal</th>
+                                            <th>Pemasok / Vendor</th>
+                                            <th>Deskripsi Item Sparepart</th>
+                                            <th>WO Linked / SPB</th>
+                                            <th>Subtotal</th>
+                                            <th>PPN (11%)</th>
+                                            <th>Total PO (Rp)</th>
+                                            <th>Status Pembayaran</th>
+                                            <th>Aksi Integrasi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="costPoTableBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: RENCANA VS REALISASI PM -->
+                        <div id="costTabSecPmComp" style="display:none;">
+                            <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-list-check"></i> Perbandingan Rencana vs Realisasi PM Jan-Feb 2026</h3>
+                            <div class="table-responsive">
+                                <table style="margin: 0; font-size: 0.88rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>Unit ID & Model</th>
+                                            <th>Jadwal Service PM</th>
+                                            <th>Lokasi Site</th>
+                                            <th>Estimasi Budget Rencana</th>
+                                            <th>Realisasi Biaya PM</th>
+                                            <th>Selisih Biaya</th>
+                                            <th>Keterangan Pelaksanaan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="costPmCompTableBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -1821,6 +1976,161 @@
         </div>
     </div>
 
+    <!-- Modal FRM-BBM-01 Input Pengisian BBM -->
+    <div class="modal-overlay" id="modalFuelInput">
+        <div class="modal-content" style="max-width: 720px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-gas-pump" style="color:var(--primary);"></i> Form Pengisian BBM Unit (FRM-BBM-01)</h2>
+                <button onclick="closeModal('modalFuelInput')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>No. Voucher / Transaksi</label>
+                        <input type="text" id="frmFuelVoucher" class="form-control" readonly style="background:#e9ecef; font-weight:bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal & Jam Pengisian</label>
+                        <input type="datetime-local" id="frmFuelDatetime" class="form-control">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Pilih Unit ID *</label>
+                        <select id="frmFuelUnitId" class="form-control" onchange="onFuelUnitSelectChange(this.value)">
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Lokasi Operasional Site *</label>
+                        <select id="frmFuelLocation" class="form-control">
+                            <option value="Yard KM 12 Duri">Yard KM 12 Duri</option>
+                            <option value="Pit">Pit (Harapan Baru)</option>
+                            <option value="Borrow Pit">Borrow Pit</option>
+                            <option value="Yard Prabumulih">Yard Prabumulih</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Sumber / Tangki BBM *</label>
+                        <select id="frmFuelSource" class="form-control">
+                            <option value="Fuel Tank Yard Duri">Fuel Tank Yard Duri (25.000 L)</option>
+                            <option value="Fuel Truck 01 Site Alpha">Fuel Truck 01 Site Alpha (8.000 L)</option>
+                            <option value="Fuel Tank Borrow Pit">Fuel Tank Borrow Pit (15.000 L)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fuelman / Petugas</label>
+                        <input type="text" id="frmFuelman" class="form-control" value="Fuelman A">
+                    </div>
+                    <div class="form-group">
+                        <label>Operator / Driver</label>
+                        <input type="text" id="frmFuelOperator" class="form-control" value="Operator Senior B">
+                    </div>
+                </div>
+
+                <div style="background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
+                    <h4 style="margin:0 0 10px 0; font-size:0.95rem; color:var(--dark);"><i class="fa-solid fa-gauge-high"></i> Reading Meter & Kalkulasi Efisiensi</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label id="lblPrevMeter">HM/KM Sebelumnya</label>
+                            <input type="number" id="frmFuelMeterPrev" class="form-control" style="background:#e9ecef;" readonly oninput="calcFuelMetrics()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label id="lblCurrMeter">HM/KM Sekarang *</label>
+                            <input type="number" id="frmFuelMeterCurr" class="form-control" placeholder="Masukkan meter" oninput="calcFuelMetrics()">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Jumlah Liter BBM *</label>
+                            <input type="number" id="frmFuelLiter" class="form-control" placeholder="Jumlah Liter" oninput="calcFuelMetrics()">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 10px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Aktual Konsumsi</label>
+                            <input type="text" id="frmFuelActualRate" class="form-control" readonly style="font-weight:bold;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Baseline & Deviasi</label>
+                            <input type="text" id="frmFuelDeviation" class="form-control" readonly style="font-weight:bold;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Estimasi Biaya (Rp)</label>
+                            <input type="text" id="frmFuelCost" class="form-control" readonly style="font-weight:bold; color:var(--primary);">
+                        </div>
+                    </div>
+
+                    <!-- Live Anomaly Alert Box -->
+                    <div id="frmFuelAnomalyBox" style="display:none; margin-top:12px; padding:10px 12px; background:#fff3bf; border-left:4px solid #f59f00; border-radius:4px; font-size:0.85rem;">
+                        <i class="fa-solid fa-triangle-exclamation" style="color:#f59f00;"></i> <strong id="frmFuelAnomalyText">Peringatan: Konsumsi Melebihi Standar Baseline!</strong>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Catatan / Alasan (Wajib jika Anomali atau Meter diganti)</label>
+                    <textarea id="frmFuelNotes" class="form-control" rows="2" placeholder="Tuliskan catatan pengisian..."></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+                    <button class="btn" style="background:#e9ecef;" onclick="closeModal('modalFuelInput')">Batal</button>
+                    <button class="btn btn-primary" onclick="submitFuelForm()"><i class="fa-solid fa-check"></i> Simpan Transaksi (Diajukan)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal FRM-STK-02 Sounding Stok Tangki -->
+    <div class="modal-overlay" id="modalStockSounding">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-droplet" style="color:var(--success);"></i> Rekonsiliasi Sounding Stok Tangki (FRM-STK-02)</h2>
+                <button onclick="closeModal('modalStockSounding')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Pilih Tangki Storage Site *</label>
+                    <select id="stkTankId" class="form-control" onchange="onTankSelectChange(this.value)">
+                        <option value="TANK-01">Fuel Tank Yard Duri (25.000 L)</option>
+                        <option value="FT-01">Fuel Truck 01 Site Alpha (8.000 L)</option>
+                        <option value="TANK-02">Fuel Tank Borrow Pit (15.000 L)</option>
+                    </select>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div class="form-group">
+                        <label>Saldo Sistem (Liter)</label>
+                        <input type="text" id="stkSystemBalance" class="form-control" readonly style="background:#e9ecef; font-weight:bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Sounding Fisik (Liter) *</label>
+                        <input type="number" id="stkPhysicalSounding" class="form-control" placeholder="Input hasil dipstick" oninput="calcTankVariance()">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div class="form-group">
+                        <label>Selisih Sounding (Gain/Loss)</label>
+                        <input type="text" id="stkVariance" class="form-control" readonly style="font-weight:bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Petugas Logistik</label>
+                        <input type="text" id="stkOfficer" class="form-control" value="Logistik Site Alpha">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Catatan Rekonsiliasi / Alasan Selisih</label>
+                    <textarea id="stkNotes" class="form-control" rows="2" placeholder="Catatan evaporasi/tumpahan/penyesuaian..."></textarea>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+                    <button class="btn" style="background:#e9ecef;" onclick="closeModal('modalStockSounding')">Batal</button>
+                    <button class="btn btn-success" onclick="submitTankSounding()"><i class="fa-solid fa-check"></i> Simpan Sounding Rekonsiliasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Tambah Aset -->
     <div class="modal-overlay" id="modalNewAsset">
         <div class="modal-content" style="max-width: 600px;">
@@ -2004,6 +2314,7 @@
                 initAssetView(globalData.assets);
                 initWorkOrderView(globalData.work_orders);
                 initBiayaView(globalData.costs);
+                initFuelEngine(globalData);
                 initNewViews();
 
                 const queryView = new URLSearchParams(window.location.search).get('view') || '';
@@ -2731,52 +3042,907 @@
             alert('Inspeksi ban posisi ' + pos + ' tersimpan.');
         }
 
-        function calcFuelLiter() {
-            const start = parseFloat(document.getElementById('fuel-flow-start').value) || 0;
-            const end = parseFloat(document.getElementById('fuel-flow-end').value) || 0;
-            document.getElementById('fuel-liter-total').value = Math.max(0, end - start);
-            calcFuelLPH();
-        }
-
-        function calcFuelLPH() {
-            const liter = parseFloat(document.getElementById('fuel-liter-total').value) || 0;
-            const hmPrev = parseFloat(document.getElementById('fuel-hm-prev').value) || 0;
-            const hmCurr = parseFloat(document.getElementById('fuel-hm-curr').value) || 0;
-            const hmDiff = hmCurr - hmPrev;
-            if (hmDiff > 0 && liter > 0) {
-                const lph = (liter / hmDiff).toFixed(2);
-                document.getElementById('fuel-lph').value = lph;
-                const baseline = 28.0;
-                if (parseFloat(lph) > baseline * 1.15) {
-                    document.getElementById('fuel-alert').style.display = 'block';
-                } else {
-                    document.getElementById('fuel-alert').style.display = 'none';
-                }
-            } else {
-                document.getElementById('fuel-lph').value = '';
-                document.getElementById('fuel-alert').style.display = 'none';
+        // ==========================================
+        // COMPREHENSIVE FUEL MANAGEMENT ENGINE
+        // ==========================================
+        let globalFuelLogs = [
+            {
+                trxId: 'BBM-20260727-0001',
+                timeStr: 'Hari ini, 10:15',
+                unitId: 'EXC-210 (Pit)',
+                category: 'Excavator',
+                location: 'Pit',
+                fuelman: 'Fuelman A',
+                operator: 'Budi Santoso',
+                meterType: 'HM',
+                meterPrev: 8431,
+                meterCurr: 8450,
+                meterDiff: 19,
+                liter: 361,
+                rateActual: 19.0,
+                targetRate: 15.0,
+                deviationPct: 26.7,
+                costRp: 4332000,
+                anomalyStatus: 'RED',
+                status: 'Diajukan',
+                notes: 'Beban kerja heavy excavation di pit utama'
+            },
+            {
+                trxId: 'BBM-20260726-0042',
+                timeStr: 'Kemarin, 16:30',
+                unitId: 'DT-054 - B 9701 PYW',
+                category: 'Dump Truck',
+                location: 'Borrow Pit',
+                fuelman: 'Fuelman B',
+                operator: 'Rahmat Hidayat',
+                meterType: 'KM',
+                meterPrev: 45200,
+                meterCurr: 45760,
+                meterDiff: 560,
+                liter: 200,
+                rateActual: 2.8,
+                targetRate: 3.5,
+                deviationPct: -20.0,
+                costRp: 2400000,
+                anomalyStatus: 'ORANGE',
+                status: 'Diajukan',
+                notes: 'Jalur hauling licin & tanjakan curam'
+            },
+            {
+                trxId: 'BBM-20260726-0038',
+                timeStr: 'Kemarin, 14:00',
+                unitId: 'GRD-535 - GD535-5',
+                category: 'Motor Grader',
+                location: 'Yard KM 12 Duri',
+                fuelman: 'Fuelman A',
+                operator: 'Supriadi',
+                meterType: 'HM',
+                meterPrev: 3120,
+                meterCurr: 3130,
+                meterDiff: 10,
+                liter: 120,
+                rateActual: 12.0,
+                targetRate: 13.0,
+                deviationPct: -7.7,
+                costRp: 1440000,
+                anomalyStatus: 'GREEN',
+                status: 'Terverifikasi',
+                notes: 'Penataan jalan yard rutin'
+            },
+            {
+                trxId: 'BBM-20260726-0012',
+                timeStr: '26 Juli 2026, 09:00',
+                unitId: 'DZ-00002 SN P6G01656',
+                category: 'Bulldozer',
+                location: 'Yard KM 12 Duri',
+                fuelman: 'Logistik Duri',
+                operator: 'Ahmad Dahlan',
+                meterType: 'HM',
+                meterPrev: 5120,
+                meterCurr: 5130,
+                meterDiff: 10,
+                liter: 180,
+                rateActual: 18.0,
+                targetRate: 16.0,
+                deviationPct: 12.5,
+                costRp: 2160000,
+                anomalyStatus: 'ORANGE',
+                status: 'Diajukan',
+                notes: 'Ripping material keras'
             }
-        }
+        ];
 
-        function submitFuel() {
-            const id = document.getElementById('fuel-asset-id').value;
-            const liter = document.getElementById('fuel-liter-total').value;
-            const hmDiff = (parseFloat(document.getElementById('fuel-hm-curr').value) || 0) - (parseFloat(document.getElementById('fuel-hm-prev').value) || 0);
-            const lph = document.getElementById('fuel-lph').value;
-            if (!id || !liter) return alert('Data tidak lengkap');
+        let globalTanks = [
+            { id: 'TANK-01', name: 'Fuel Tank Yard Duri', location: 'Yard KM 12 Duri', capacity: 25000, sysBalance: 18500, phySounding: 18420, diff: -80, status: 'Aman', lastUpdate: 'Hari ini, 07:00' },
+            { id: 'FT-01', name: 'Fuel Truck 01 Site Alpha', location: 'Pit', capacity: 8000, sysBalance: 4200, phySounding: 4190, diff: -10, status: 'Aman', lastUpdate: 'Hari ini, 08:30' },
+            { id: 'TANK-02', name: 'Fuel Tank Borrow Pit', location: 'Borrow Pit', capacity: 15000, sysBalance: 10200, phySounding: 10200, diff: 0, status: 'Nominal', lastUpdate: 'Kemarin, 17:00' }
+        ];
 
-            const isAnomaly = document.getElementById('fuel-alert').style.display === 'block';
-            const tbody = document.getElementById('fuel-history');
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${id}</td>
-                <td>${liter} L</td>
-                <td>${hmDiff > 0 ? lph : '-'}</td>
-                <td>${isAnomaly ? '<span class="badge bg-danger">ANOMALI</span>' : '<span class="badge bg-success">NORMAL</span>'}</td>
+        window.initFuelEngine = function(data) {
+            if (!data) return;
+
+            const unitSelect = document.getElementById('frmFuelUnitId');
+            if (unitSelect && data.assets) {
+                unitSelect.innerHTML = data.assets.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.id)} (${escapeHtml(a.category)} - ${escapeHtml(a.location)})</option>`).join('');
+                if (data.assets.length > 0) onFuelUnitSelectChange(data.assets[0].id);
+            }
+
+            renderFuelDashboard(globalFuelLogs);
+            renderTankStockTable();
+        };
+
+        window.renderFuelDashboard = function(fuelLogs) {
+            const todayLiters = fuelLogs.filter(l => l.timeStr.includes('Hari ini')).reduce((acc, curr) => acc + curr.liter, 0) + 2450;
+            const monthLiters = fuelLogs.reduce((acc, curr) => acc + curr.liter, 0) + 44000;
+            const monthCostRp = monthLiters * 12000;
+            const anomalyCount = fuelLogs.filter(l => l.anomalyStatus === 'RED' || l.anomalyStatus === 'ORANGE').length;
+            const unverifiedCount = fuelLogs.filter(l => l.status === 'Diajukan').length;
+            const totalStock = globalTanks.reduce((acc, curr) => acc + curr.phySounding, 0);
+
+            document.getElementById('kpiFuelToday').textContent = todayLiters.toLocaleString('id-ID') + ' L';
+            document.getElementById('kpiFuelMonth').textContent = monthLiters.toLocaleString('id-ID') + ' L';
+            document.getElementById('kpiFuelCost').textContent = 'Rp ' + (monthCostRp / 1000000).toFixed(1) + ' Jt';
+            document.getElementById('kpiFuelBoros').textContent = anomalyCount + ' Unit';
+            document.getElementById('kpiFuelUnverified').textContent = unverifiedCount + ' Trx';
+            document.getElementById('kpiFuelStock').textContent = totalStock.toLocaleString('id-ID') + ' L';
+
+            renderFuelChart(fuelLogs);
+            renderFuelTopBoros(fuelLogs);
+            renderFuelTable(fuelLogs);
+        };
+
+        window.renderFuelChart = function(logs) {
+            const chartContainer = document.getElementById('fuelChartContainer');
+            if (!chartContainer) return;
+
+            const days = [
+                { day: 'Tgl 21', liter: 1500, cost: 18.0 },
+                { day: 'Tgl 22', liter: 1850, cost: 22.2 },
+                { day: 'Tgl 23', liter: 1400, cost: 16.8 },
+                { day: 'Tgl 24', liter: 2100, cost: 25.2 },
+                { day: 'Tgl 25', liter: 1950, cost: 23.4 },
+                { day: 'Tgl 26', liter: 2250, cost: 27.0 },
+                { day: 'Tgl 27', liter: 2450, cost: 29.4 }
+            ];
+
+            const maxL = 3000;
+            chartContainer.innerHTML = days.map(d => {
+                const pct = Math.min(100, (d.liter / maxL) * 100);
+                return `
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
+                        <div style="font-size:0.75rem; font-weight:bold; color:var(--primary); margin-bottom:4px;">${d.liter}L</div>
+                        <div style="width:70%; background:var(--primary); height:${pct}%; border-radius:4px 4px 0 0; transition:all 0.3s ease;" title="${d.day}: ${d.liter} Liter (Rp ${d.cost} Jt)"></div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">${d.day}</div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.renderFuelTopBoros = function(logs) {
+            const container = document.getElementById('fuelTopBorosContainer');
+            if (!container) return;
+
+            const topUnits = [
+                { unit: 'EXC-210 (Pit)', category: 'Excavator', actual: '19.0 L/HM', dev: '+26.7%', pct: 88, color: 'var(--danger)' },
+                { unit: 'DT-054 (Borrow Pit)', category: 'Dump Truck', actual: '2.8 Km/L', dev: '-20.0%', pct: 75, color: '#fd7e14' },
+                { unit: 'DZ-00002 (Yard Duri)', category: 'Bulldozer', actual: '18.0 L/HM', dev: '+12.5%', pct: 62, color: '#fd7e14' },
+                { unit: 'GRD-535 (Site Alpha)', category: 'Motor Grader', actual: '14.0 L/HM', dev: '+7.7%', pct: 45, color: 'var(--success)' }
+            ];
+
+            container.innerHTML = topUnits.map(u => `
+                <div style="margin-bottom: 12px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
+                        <span><strong>${escapeHtml(u.unit)}</strong></span>
+                        <span style="color:${u.color}; font-weight:bold;">${u.dev} (${u.actual})</span>
+                    </div>
+                    <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
+                        <div style="width:${u.pct}%; background:${u.color}; height:100%; border-radius:4px;"></div>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        window.renderFuelTable = function(logs) {
+            const tbody = document.getElementById('fuelTableBody');
+            if (!tbody) return;
+
+            document.getElementById('fuelTrxCount').textContent = logs.length;
+
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada transaksi BBM ditemukan untuk kriteria filter ini.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(l => {
+                let badgeAnomaly = '';
+                if (l.anomalyStatus === 'RED') badgeAnomaly = '<span class="badge bg-breakdown">Merah (>20%)</span>';
+                else if (l.anomalyStatus === 'ORANGE') badgeAnomaly = '<span class="badge" style="background:#fd7e14;">Oranye (10-20%)</span>';
+                else if (l.anomalyStatus === 'YELLOW') badgeAnomaly = '<span class="badge bg-inspeksi">Kuning (5-10%)</span>';
+                else badgeAnomaly = '<span class="badge bg-operating">Hijau (Normal)</span>';
+
+                let badgeStatus = l.status === 'Terverifikasi' ? '<span class="badge bg-operating">Terverifikasi</span>' : '<span class="badge bg-draft">Diajukan</span>';
+
+                const unitShort = l.unitId.split(' ')[0];
+
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(l.trxId)}</strong><br><small class="text-muted">${escapeHtml(l.timeStr)}</small></td>
+                        <td>
+                            <a onclick="openAssetModal('${escapeHtml(unitShort)}', 'READY', '${escapeHtml(l.category)}', '${escapeHtml(l.location)}')" style="cursor:pointer; color:var(--primary); font-weight:bold; text-decoration:underline;">
+                                ${escapeHtml(l.unitId)}
+                            </a>
+                        </td>
+                        <td>${escapeHtml(l.category)}<br><small class="text-muted">${escapeHtml(l.location)}</small></td>
+                        <td>${escapeHtml(l.fuelman)}<br><small class="text-muted">Op: ${escapeHtml(l.operator)}</small></td>
+                        <td>${l.meterPrev} → ${l.meterCurr} <small>(${l.meterDiff} ${l.meterType})</small></td>
+                        <td><strong>${l.liter} L</strong></td>
+                        <td>${l.rateActual} ${l.meterType === 'HM' ? 'L/HM' : 'Km/L'} <br><small class="text-muted">Std: ${l.targetRate}</small></td>
+                        <td style="font-weight:bold; color:${l.deviationPct > 10 || l.deviationPct < -15 ? 'var(--danger)' : 'var(--success)'};">
+                            ${l.deviationPct > 0 ? '+' : ''}${l.deviationPct}%
+                        </td>
+                        <td>Rp ${(l.costRp || 0).toLocaleString('id-ID')}</td>
+                        <td>${badgeAnomaly}</td>
+                        <td>${badgeStatus}</td>
+                        <td>
+                            <div style="display:flex; gap:4px;">
+                                <button onclick="openAssetModal('${escapeHtml(unitShort)}', 'READY', '${escapeHtml(l.category)}', '${escapeHtml(l.location)}')" class="btn" style="padding:3px 6px; font-size:0.75rem; background:#f8f9fa; border:1px solid var(--border);" title="Detail 360° Unit">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                ${l.anomalyStatus === 'RED' ? `
+                                    <button onclick="openFuelWoModal('${escapeHtml(unitShort)}', 'Konsumsi BBM Anomali Merah (${l.rateActual} vs Std ${l.targetRate})')" class="btn btn-danger" style="padding:3px 6px; font-size:0.75rem;" title="Lapor WO Breakdown / Service">
+                                        <i class="fa-solid fa-wrench"></i>
+                                    </button>
+                                ` : ''}
+                                ${l.status === 'Diajukan' ? `
+                                    <button onclick="verifyFuelLog('${l.trxId}')" class="btn btn-success" style="padding:3px 6px; font-size:0.75rem;" title="Verifikasi Transaksi Sah">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.renderTankStockTable = function() {
+            const tbody = document.getElementById('fuelStockTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = globalTanks.map(t => {
+                let badgeDiff = t.diff < -50 ? '<span class="badge bg-breakdown">Warning (Losses)</span>' : '<span class="badge bg-operating">Aman</span>';
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(t.name)}</strong><br><small class="text-muted">${t.id}</small></td>
+                        <td>${escapeHtml(t.location)}</td>
+                        <td>${t.capacity.toLocaleString('id-ID')} L</td>
+                        <td><strong>${t.sysBalance.toLocaleString('id-ID')} L</strong></td>
+                        <td><strong>${t.phySounding.toLocaleString('id-ID')} L</strong></td>
+                        <td style="font-weight:bold; color:${t.diff < 0 ? 'var(--danger)' : 'var(--success)'};">${t.diff} L</td>
+                        <td>${badgeDiff}</td>
+                        <td>${t.lastUpdate}</td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.switchFuelTab = function(tabName, el) {
+            if (el) {
+                document.querySelectorAll('#fuelMainTabs .asset-tab').forEach(t => t.classList.remove('active'));
+                el.classList.add('active');
+            }
+            document.getElementById('fuelTabSecTrx').style.display = 'none';
+            document.getElementById('fuelTabSecStock').style.display = 'none';
+            document.getElementById('fuelTabSecBaseline').style.display = 'none';
+
+            if (tabName === 'stock') document.getElementById('fuelTabSecStock').style.display = 'block';
+            else if (tabName === 'baseline') document.getElementById('fuelTabSecBaseline').style.display = 'block';
+            else document.getElementById('fuelTabSecTrx').style.display = 'block';
+        };
+
+        window.filterFuelDashboard = function() {
+            const p = document.getElementById('fuelFilterPeriode').value;
+            const l = document.getElementById('fuelFilterLokasi').value;
+            const k = document.getElementById('fuelFilterKategori').value;
+            const s = document.getElementById('fuelFilterStatus').value;
+
+            let filtered = globalFuelLogs;
+
+            if (p === 'TODAY') filtered = filtered.filter(log => log.timeStr.includes('Hari ini'));
+            if (l !== 'ALL') filtered = filtered.filter(log => log.location.toLowerCase().includes(l.toLowerCase()));
+            if (k !== 'ALL') filtered = filtered.filter(log => log.category.toLowerCase().includes(k.toLowerCase()));
+            if (s !== 'ALL') filtered = filtered.filter(log => log.anomalyStatus === s);
+
+            renderFuelDashboard(filtered);
+        };
+
+        window.filterFuelByAnomaly = function(status) {
+            document.getElementById('fuelFilterStatus').value = status;
+            filterFuelDashboard();
+        };
+
+        window.filterFuelByStatus = function(statusStr) {
+            const filtered = globalFuelLogs.filter(l => l.status === statusStr);
+            renderFuelDashboard(filtered);
+        };
+
+        window.searchFuelTable = function() {
+            const q = document.getElementById('searchFuelInput').value.toLowerCase().trim();
+            if (!q) {
+                renderFuelTable(globalFuelLogs);
+                return;
+            }
+            const filtered = globalFuelLogs.filter(l =>
+                l.trxId.toLowerCase().includes(q) ||
+                l.unitId.toLowerCase().includes(q) ||
+                l.operator.toLowerCase().includes(q) ||
+                l.location.toLowerCase().includes(q)
+            );
+            renderFuelTable(filtered);
+        };
+
+        window.openFuelInputModal = function() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const randNum = Math.floor(1000 + Math.random() * 9000);
+            
+            document.getElementById('frmFuelVoucher').value = `BBM-${year}${month}${day}-${randNum}`;
+            document.getElementById('frmFuelDatetime').value = now.toISOString().slice(0, 16);
+            document.getElementById('frmFuelMeterCurr').value = '';
+            document.getElementById('frmFuelLiter').value = '';
+            document.getElementById('frmFuelActualRate').value = '-';
+            document.getElementById('frmFuelDeviation').value = '-';
+            document.getElementById('frmFuelCost').value = 'Rp 0';
+            document.getElementById('frmFuelNotes').value = '';
+            document.getElementById('frmFuelAnomalyBox').style.display = 'none';
+
+            openModal('modalFuelInput');
+        };
+
+        window.onFuelUnitSelectChange = function(unitId) {
+            let meterPrev = 8450;
+            let meterType = 'HM';
+
+            if (unitId.toLowerCase().includes('dt') || unitId.toLowerCase().includes('truck')) {
+                meterType = 'KM';
+                meterPrev = 45200;
+            } else if (unitId.toLowerCase().includes('grd') || unitId.toLowerCase().includes('grader')) {
+                meterType = 'HM';
+                meterPrev = 3120;
+            } else if (unitId.toLowerCase().includes('dz') || unitId.toLowerCase().includes('dozer')) {
+                meterType = 'HM';
+                meterPrev = 5120;
+            }
+
+            document.getElementById('lblPrevMeter').textContent = `${meterType} Sebelumnya`;
+            document.getElementById('lblCurrMeter').textContent = `${meterType} Sekarang *`;
+            document.getElementById('frmFuelMeterPrev').value = meterPrev;
+
+            calcFuelMetrics();
+        };
+
+        window.calcFuelMetrics = function() {
+            const prev = parseFloat(document.getElementById('frmFuelMeterPrev').value) || 0;
+            const curr = parseFloat(document.getElementById('frmFuelMeterCurr').value) || 0;
+            const liter = parseFloat(document.getElementById('frmFuelLiter').value) || 0;
+            const unitId = document.getElementById('frmFuelUnitId').value || '';
+            const diff = curr - prev;
+
+            const cost = liter * 12000;
+            document.getElementById('frmFuelCost').value = 'Rp ' + cost.toLocaleString('id-ID');
+
+            if (diff <= 0 || liter <= 0) {
+                document.getElementById('frmFuelActualRate').value = '-';
+                document.getElementById('frmFuelDeviation').value = '-';
+                document.getElementById('frmFuelAnomalyBox').style.display = 'none';
+                return;
+            }
+
+            let isKm = unitId.toLowerCase().includes('dt') || unitId.toLowerCase().includes('truck');
+            let actualRate = 0, targetRate = 15.0;
+
+            if (isKm) {
+                actualRate = parseFloat((diff / liter).toFixed(2));
+                targetRate = 3.5;
+            } else {
+                actualRate = parseFloat((liter / diff).toFixed(2));
+                if (unitId.toLowerCase().includes('grd')) targetRate = 13.0;
+                else if (unitId.toLowerCase().includes('dz')) targetRate = 16.0;
+                else targetRate = 14.0;
+            }
+
+            let devPct = parseFloat((((actualRate - targetRate) / targetRate) * 100).toFixed(1));
+            if (isKm) devPct = parseFloat((((targetRate - actualRate) / targetRate) * 100).toFixed(1));
+
+            document.getElementById('frmFuelActualRate').value = `${actualRate} ${isKm ? 'Km/L' : 'L/HM'}`;
+            document.getElementById('frmFuelDeviation').value = `${devPct > 0 ? '+' : ''}${devPct}% (Std: ${targetRate})`;
+
+            const anomalyBox = document.getElementById('frmFuelAnomalyBox');
+            const anomalyText = document.getElementById('frmFuelAnomalyText');
+
+            if (devPct > 20 || (isKm && devPct > 20)) {
+                anomalyBox.style.display = 'block';
+                anomalyBox.style.background = '#f8d7da';
+                anomalyBox.style.borderColor = '#dc3545';
+                anomalyText.innerHTML = `ANOMALI MERAH: Konsumsi terdeteksi sangat boros (+${devPct}% dari standar ${targetRate})! Wajib isi catatan alasan.`;
+            } else if (devPct > 10 || (isKm && devPct > 10)) {
+                anomalyBox.style.display = 'block';
+                anomalyBox.style.background = '#fff3bf';
+                anomalyBox.style.borderColor = '#f59f00';
+                anomalyText.innerHTML = `WARNING ORANYE: Konsumsi melebih standar (+${devPct}% dari standar ${targetRate}). Perhatikan beban kerja unit.`;
+            } else {
+                anomalyBox.style.display = 'none';
+            }
+        };
+
+        window.submitFuelForm = function() {
+            const voucher = document.getElementById('frmFuelVoucher').value;
+            const unitId = document.getElementById('frmFuelUnitId').value;
+            const loc = document.getElementById('frmFuelLocation').value;
+            const fuelman = document.getElementById('frmFuelman').value;
+            const operator = document.getElementById('frmFuelOperator').value;
+            const prev = parseFloat(document.getElementById('frmFuelMeterPrev').value) || 0;
+            const curr = parseFloat(document.getElementById('frmFuelMeterCurr').value) || 0;
+            const liter = parseFloat(document.getElementById('frmFuelLiter').value) || 0;
+            const notes = document.getElementById('frmFuelNotes').value;
+
+            if (!curr || curr <= prev) return alert('Meter sekarang harus lebih besar dari meter sebelumnya!');
+            if (!liter || liter <= 0) return alert('Jumlah liter BBM wajib diisi!');
+
+            const diff = curr - prev;
+            const isKm = unitId.toLowerCase().includes('dt') || unitId.toLowerCase().includes('truck');
+            let actualRate = isKm ? parseFloat((diff / liter).toFixed(2)) : parseFloat((liter / diff).toFixed(2));
+            let targetRate = isKm ? 3.5 : (unitId.toLowerCase().includes('grd') ? 13.0 : (unitId.toLowerCase().includes('dz') ? 16.0 : 14.0));
+            let devPct = parseFloat((((actualRate - targetRate) / targetRate) * 100).toFixed(1));
+
+            let anomalyStatus = 'GREEN';
+            if (devPct > 20) anomalyStatus = 'RED';
+            else if (devPct > 10) anomalyStatus = 'ORANGE';
+            else if (devPct > 5) anomalyStatus = 'YELLOW';
+
+            const newLog = {
+                trxId: voucher,
+                timeStr: 'Hari ini, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                unitId: unitId,
+                category: isKm ? 'Dump Truck' : 'Excavator',
+                location: loc,
+                fuelman: fuelman,
+                operator: operator,
+                meterType: isKm ? 'KM' : 'HM',
+                meterPrev: prev,
+                meterCurr: curr,
+                meterDiff: diff,
+                liter: liter,
+                rateActual: actualRate,
+                targetRate: targetRate,
+                deviationPct: devPct,
+                costRp: liter * 12000,
+                anomalyStatus: anomalyStatus,
+                status: 'Diajukan',
+                notes: notes || 'Pengisian rutin site'
+            };
+
+            globalFuelLogs.unshift(newLog);
+            closeModal('modalFuelInput');
+            renderFuelDashboard(globalFuelLogs);
+            alert(`Transaksi pengisian BBM ${voucher} berhasil diajukan dan dicatat dalam audit trail!`);
+        };
+
+        window.verifyFuelLog = function(trxId) {
+            const log = globalFuelLogs.find(l => l.trxId === trxId);
+            if (log) {
+                log.status = 'Terverifikasi';
+                renderFuelDashboard(globalFuelLogs);
+                alert(`Transaksi ${trxId} telah diverifikasi secara sah!`);
+            }
+        };
+
+        window.openFuelWoModal = function(assetId, issueText) {
+            const woSelect = document.getElementById('nwo-id');
+            if (woSelect) woSelect.value = assetId;
+            const issueInput = document.getElementById('nwo-issue');
+            if (issueInput) issueInput.value = issueText;
+            openModal('modalNewWO');
+        };
+
+        window.openStockSoundingModal = function() {
+            onTankSelectChange('TANK-01');
+            document.getElementById('stkPhysicalSounding').value = '';
+            document.getElementById('stkVariance').value = '-';
+            document.getElementById('stkNotes').value = '';
+            openModal('modalStockSounding');
+        };
+
+        window.onTankSelectChange = function(tankId) {
+            const tank = globalTanks.find(t => t.id === tankId);
+            if (tank) {
+                document.getElementById('stkSystemBalance').value = tank.sysBalance.toLocaleString('id-ID') + ' L';
+            }
+        };
+
+        window.calcTankVariance = function() {
+            const tankId = document.getElementById('stkTankId').value;
+            const tank = globalTanks.find(t => t.id === tankId);
+            const phy = parseFloat(document.getElementById('stkPhysicalSounding').value) || 0;
+            if (!tank || !phy) {
+                document.getElementById('stkVariance').value = '-';
+                return;
+            }
+            const diff = phy - tank.sysBalance;
+            document.getElementById('stkVariance').value = `${diff >= 0 ? '+' : ''}${diff} Liter (${diff < -50 ? 'Losses Warning' : 'Aman'})`;
+        };
+
+        window.submitTankSounding = function() {
+            const tankId = document.getElementById('stkTankId').value;
+            const phy = parseFloat(document.getElementById('stkPhysicalSounding').value);
+            if (isNaN(phy)) return alert('Masukkan nilai sounding fisik yang valid!');
+
+            const tank = globalTanks.find(t => t.id === tankId);
+            if (tank) {
+                tank.phySounding = phy;
+                tank.diff = phy - tank.sysBalance;
+                tank.lastUpdate = 'Hari ini, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                tank.status = tank.diff < -50 ? 'Warning' : 'Aman';
+                renderTankStockTable();
+                closeModal('modalStockSounding');
+                alert(`Sounding fisik untuk ${tank.name} tersimpan. Selisih: ${tank.diff} Liter.`);
+            }
+        };
+
+        // ==========================================
+        // COMPREHENSIVE COST & VALUATION ENGINE
+        // ==========================================
+        let globalValuations = [
+            {
+                id: 'Dozer 06',
+                name: 'Bulldozer Caterpillar D6R',
+                sn: 'S6X00348',
+                year: 2011,
+                repairCost: 421415277,
+                health: '<50%',
+                body: '>80%',
+                buyPrice: 600000000,
+                revenue: 1640000000,
+                buyYear: 2022,
+                depreciationPct: 40,
+                depreciationVal: 240000000,
+                marketRange: '450.000.000 – 520.000.000',
+                offeredPrice: 550000000,
+                netPriceBra: 450000000,
+                selisih: 100000000,
+                bookValue: 360000000
+            },
+            {
+                id: 'Dozer 04',
+                name: 'Bulldozer Komatsu D85ESS-2',
+                sn: 'J16298',
+                year: 2013,
+                repairCost: 403684851,
+                health: '<50%',
+                body: '>80%',
+                buyPrice: 1220000000,
+                revenue: 1185564516,
+                buyYear: 2023,
+                depreciationPct: 30,
+                depreciationVal: 366000000,
+                marketRange: '750.000.000 – 900.000.000',
+                offeredPrice: 950000000,
+                netPriceBra: 820000000,
+                selisih: 130000000,
+                bookValue: 854000000
+            },
+            {
+                id: 'Exca 16',
+                name: 'Excavator Caterpillar 305.5E2',
+                sn: 'WE217079',
+                year: 2023,
+                repairCost: 35606864,
+                health: '<50%',
+                body: '<80%',
+                buyPrice: 841380000,
+                revenue: 1165833333,
+                buyYear: 2023,
+                depreciationPct: 30,
+                depreciationVal: 252414000,
+                marketRange: '420.000.000 – 480.000.000',
+                offeredPrice: 520000000,
+                netPriceBra: 460000000,
+                selisih: 60000000,
+                bookValue: 588966000
+            },
+            {
+                id: 'Exca 17',
+                name: 'Excavator Caterpillar 305.5E2',
+                sn: 'WE217080',
+                year: 2023,
+                repairCost: 66808545,
+                health: '<50%',
+                body: '<80%',
+                buyPrice: 841380000,
+                revenue: 1800000000,
+                buyYear: 2023,
+                depreciationPct: 30,
+                depreciationVal: 252414000,
+                marketRange: '420.000.000 – 480.000.000',
+                offeredPrice: 510000000,
+                netPriceBra: 450000000,
+                selisih: 60000000,
+                bookValue: 588966000
+            },
+            {
+                id: 'Dozer 07',
+                name: 'Bulldozer Caterpillar D7G2',
+                sn: '7MB05410',
+                year: 2010,
+                repairCost: 286553522,
+                health: '<50%',
+                body: '<80%',
+                buyPrice: 800000000,
+                revenue: 1530000000,
+                buyYear: 2022,
+                depreciationPct: 40,
+                depreciationVal: 320000000,
+                marketRange: '420.000.000 – 500.000.000',
+                offeredPrice: 520000000,
+                netPriceBra: 450000000,
+                selisih: 70000000,
+                bookValue: 480000000
+            },
+            {
+                id: 'Dozer 01',
+                name: 'Bulldozer Caterpillar D6G',
+                sn: 'P6G00163',
+                year: 2006,
+                repairCost: 579012317,
+                health: '<50%',
+                body: '<80%',
+                buyPrice: 415000000,
+                revenue: 1395000000,
+                buyYear: 2023,
+                depreciationPct: 30,
+                depreciationVal: 124500000,
+                marketRange: '400.000.000 – 550.000.000',
+                offeredPrice: 500000000,
+                netPriceBra: 430000000,
+                selisih: 70000000,
+                bookValue: 290500000
+            },
+            {
+                id: 'Exca 04',
+                name: 'Excavator Caterpillar 320D',
+                sn: 'BZP03563',
+                year: 2012,
+                repairCost: 456208914,
+                health: '<50%',
+                body: '<80%',
+                buyPrice: 370000000,
+                revenue: 1755000000,
+                buyYear: 2021,
+                depreciationPct: 50,
+                depreciationVal: 185000000,
+                marketRange: '400.000.00 – 580.000.000',
+                offeredPrice: 520000000,
+                netPriceBra: 400000000,
+                selisih: 120000000,
+                bookValue: 185000000
+            }
+        ];
+
+        let globalLpjReports = [
+            { month: 'Mei 2025', budget: 330000000, cash: 393758107, debt: 0, total: 393758107, diff: -63758107, status: 'Over Budget' },
+            { month: 'Juni 2025', budget: 330000000, cash: 553477901, debt: 45000000, total: 598477901, diff: -268477901, status: 'Over Budget' },
+            { month: 'Juli 2025', budget: 430000000, cash: 542509893, debt: 32000000, total: 574509893, diff: -144509893, status: 'Over Budget' },
+            { month: 'Agustus 2025', budget: 330000000, cash: 439682327, debt: 15000000, total: 454682327, diff: -124682327, status: 'Over Budget' },
+            { month: 'September 2025', budget: 330000000, cash: 264006655, debt: 0, total: 264006655, diff: 65993345, status: 'Under Budget' },
+            { month: 'Oktober 2025', budget: 330000000, cash: 321656974, debt: 0, total: 321656974, diff: 8343026, status: 'Under Budget' },
+            { month: 'November 2025', budget: 330000000, cash: 429717728, debt: 54000000, total: 483717728, diff: -153717728, status: 'Over Budget' },
+            { month: 'Desember 2025', budget: 550000000, cash: 449174956, debt: 0, total: 449174956, diff: 100825044, status: 'Under Budget' },
+            { month: 'Januari 2026', budget: 550000000, cash: 358764378, debt: 25000000, total: 383764378, diff: 166235622, status: 'Under Budget' },
+            { month: 'Februari 2026', budget: 550000000, cash: 582886025, debt: 35000000, total: 617886025, diff: -67886025, status: 'Over Budget' }
+        ];
+
+        let globalPos = [
+            { poId: 'PO-DFT.01508', date: '03 Jun 2026', vendor: 'PT Trakindo Utama', desc: 'Bearing As, Bulk Seal, Dowel, Bolt Hex Excavator Mini', woId: 'WO-26-892', spbId: 'SPB-2026-06-015', subtotal: 77021550, ppn: 8472371, total: 85493921, status: 'Lunas' },
+            { poId: 'PO-10969', date: '15 Mei 2026', vendor: 'PT United Tractors Tbk', desc: 'Main Hydraulic Pump Repair Kit PC200-8', woId: 'WO-26-885', spbId: 'SPB-2026-05-099', subtotal: 145000000, ppn: 15950000, total: 160950000, status: 'Lunas' },
+            { poId: 'SPPU-001-02-26', date: '10 Feb 2026', vendor: 'Kas Operasional Zona 4', desc: 'Pengeluaran Uang Tanggap Darurat Repair Site', woId: 'WO-26-870', spbId: 'SPB-2026-02-004', subtotal: 3585000, ppn: 0, total: 3585000, status: 'Lunas' }
+        ];
+
+        let globalPmComparisons = [
+            { unitId: 'EXC-210 (Pit)', model: 'Komatsu PC210-10M0', schedule: 'PM 250 Hours', location: 'Pit', planCost: 4500000, actCost: 4850000, diff: -350000, notes: 'Penggantian filter oli & solar tambahan' },
+            { unitId: 'DT-054', model: 'Mercedes Axor 2528 R', schedule: 'PM 500 Hours', location: 'Borrow Pit', planCost: 7200000, actCost: 6900000, diff: 300000, notes: 'Sesuai jadwal tanpa penggantian ekstra' },
+            { unitId: 'DZ-088', model: 'Komatsu D85ESS-2', schedule: 'PM 1000 Hours', location: 'Yard KM 12 Duri', planCost: 15000000, actCost: 16800000, diff: -1800000, notes: 'Penggantian oli transmisi & final drive' },
+            { unitId: 'GRD-120K', model: 'CAT 120K Grader', schedule: 'PM 250 Hours', location: 'Yard Prabumulih', planCost: 5000000, actCost: 4900000, diff: 100000, notes: 'Pengisian ulang gemuk & oli sistem' }
+        ];
+
+        window.initBiayaEngine = function(costsData) {
+            renderCostDashboard();
+        };
+        window.initBiayaView = window.initBiayaEngine;
+
+        window.renderCostDashboard = function() {
+            renderCostChart();
+            renderCostValuationTable(globalValuations);
+            renderCostLpjTable(globalLpjReports);
+            renderCostPoTable(globalPos);
+            renderCostPmCompTable(globalPmComparisons);
+        };
+
+        window.renderCostChart = function() {
+            const container = document.getElementById('costChartContainer');
+            if (!container) return;
+
+            const recentMonths = [
+                { month: 'Mei', budget: 330, actual: 393.7 },
+                { month: 'Jun', budget: 330, actual: 553.4 },
+                { month: 'Jul', budget: 430, actual: 542.5 },
+                { month: 'Agu', budget: 330, actual: 439.6 },
+                { month: 'Sep', budget: 330, actual: 264.0 },
+                { month: 'Okt', budget: 330, actual: 321.6 },
+                { month: 'Nov', budget: 330, actual: 429.7 },
+                { month: 'Des', budget: 550, actual: 449.1 }
+            ];
+
+            const maxVal = 600;
+
+            container.innerHTML = recentMonths.map(m => {
+                const pctB = Math.min(100, (m.budget / maxVal) * 100);
+                const pctA = Math.min(100, (m.actual / maxVal) * 100);
+                return `
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
+                        <div style="display:flex; gap:4px; align-items:flex-end; width:100%; height:80%; justify-content:center;">
+                            <div style="width:40%; background:var(--primary); height:${pctB}%; border-radius:3px 3px 0 0;" title="${m.month}: Budget Rp ${m.budget} Jt"></div>
+                            <div style="width:40%; background:${m.actual > m.budget ? 'var(--danger)' : 'var(--success)'}; height:${pctA}%; border-radius:3px 3px 0 0;" title="${m.month}: Realisasi Rp ${m.actual} Jt"></div>
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">${m.month}</div>
+                    </div>
+                `;
+            }).join('') + `
+                <div style="position:absolute; top:10px; right:15px; display:flex; gap:15px; font-size:0.75rem;">
+                    <div><span style="display:inline-block; width:10px; height:10px; background:var(--primary); margin-right:4px;"></span> Budget Planning</div>
+                    <div><span style="display:inline-block; width:10px; height:10px; background:var(--danger); margin-right:4px;"></span> Realisasi Actual</div>
+                </div>
             `;
-            tbody.prepend(tr);
-            alert('Log pengisian BBM tersimpan.');
-        }
+        };
+
+        window.renderCostValuationTable = function(items) {
+            const tbody = document.getElementById('costValuationTableBody');
+            if (!tbody) return;
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada data valuasi aset ditemukan.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(v => {
+                const shortId = v.id.replace(/\s+/g, '');
+                return `
+                    <tr>
+                        <td>
+                            <a onclick="openAssetModal('${escapeHtml(shortId)}', 'READY', 'Bulldozer', 'Yard Duri')" style="cursor:pointer; color:var(--primary); font-weight:bold; text-decoration:underline;">
+                                ${escapeHtml(v.id)}
+                            </a>
+                            <br><small class="text-muted">${escapeHtml(v.name)}</small>
+                        </td>
+                        <td>${escapeHtml(v.sn)}<br><small class="text-muted">Tahun: ${v.year}</small></td>
+                        <td style="font-weight:bold; color:var(--danger);">Rp ${(v.repairCost).toLocaleString('id-ID')}</td>
+                        <td>
+                            <span class="badge bg-breakdown">Health: ${v.health}</span>
+                            <br><span class="badge bg-operating" style="margin-top:2px;">Body: ${v.body}</span>
+                        </td>
+                        <td>Rp ${(v.buyPrice).toLocaleString('id-ID')}</td>
+                        <td>Rp ${(v.revenue).toLocaleString('id-ID')}</td>
+                        <td style="font-weight:bold; color:var(--primary);">Rp ${(v.bookValue).toLocaleString('id-ID')}</td>
+                        <td><span class="badge bg-operating" style="font-size:0.78rem;">${v.marketRange}</span></td>
+                        <td><strong style="color:var(--info);">${(v.offeredPrice / 1000000).toFixed(0)} Jt</strong></td>
+                        <td><strong>${(v.netPriceBra / 1000000).toFixed(0)} Jt</strong></td>
+                        <td style="font-weight:bold; color:var(--success);">+${(v.selisih / 1000000).toFixed(0)} Jt</td>
+                        <td>
+                            <button onclick="openAssetModal('${escapeHtml(shortId)}', 'READY', 'Bulldozer', 'Yard Duri')" class="btn" style="padding:3px 6px; font-size:0.75rem; background:#f8f9fa; border:1px solid var(--border);" title="Lihat Detail 360° Aset">
+                                <i class="fa-solid fa-eye"></i> Detail 360°
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.renderCostLpjTable = function(lpjList) {
+            const tbody = document.getElementById('costLpjTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = lpjList.map(l => {
+                const badgeClass = l.diff < 0 ? 'bg-breakdown' : 'bg-operating';
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(l.month)}</strong></td>
+                        <td>Rp ${(l.budget).toLocaleString('id-ID')}</td>
+                        <td>Rp ${(l.cash).toLocaleString('id-ID')}</td>
+                        <td>Rp ${(l.debt).toLocaleString('id-ID')}</td>
+                        <td><strong>Rp ${(l.total).toLocaleString('id-ID')}</strong></td>
+                        <td style="font-weight:bold; color:${l.diff < 0 ? 'var(--danger)' : 'var(--success)'};">
+                            ${l.diff > 0 ? '+' : ''}${(l.diff).toLocaleString('id-ID')}
+                        </td>
+                        <td><span class="badge ${badgeClass}">${l.status}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.renderCostPoTable = function(poList) {
+            const tbody = document.getElementById('costPoTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = poList.map(p => `
+                <tr>
+                    <td><strong>${escapeHtml(p.poId)}</strong><br><small class="text-muted">${p.date}</small></td>
+                    <td>${escapeHtml(p.vendor)}</td>
+                    <td>${escapeHtml(p.desc)}</td>
+                    <td>
+                        <span class="badge bg-operating">${p.woId}</span>
+                        <br><small class="text-muted">${p.spbId}</small>
+                    </td>
+                    <td>Rp ${(p.subtotal).toLocaleString('id-ID')}</td>
+                    <td>Rp ${(p.ppn).toLocaleString('id-ID')}</td>
+                    <td><strong>Rp ${(p.total).toLocaleString('id-ID')}</strong></td>
+                    <td><span class="badge bg-operating">${p.status}</span></td>
+                    <td>
+                        <button onclick="showView('logistics')" class="btn" style="padding:3px 6px; font-size:0.75rem; background:#e9ecef;" title="Cek SPB / Stok Logistik">
+                            <i class="fa-solid fa-boxes-stacked"></i> Logistik
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        window.renderCostPmCompTable = function(pmList) {
+            const tbody = document.getElementById('costPmCompTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = pmList.map(p => `
+                <tr>
+                    <td><strong>${escapeHtml(p.unitId)}</strong><br><small class="text-muted">${escapeHtml(p.model)}</small></td>
+                    <td><span class="badge bg-operating">${escapeHtml(p.schedule)}</span></td>
+                    <td>${escapeHtml(p.location)}</td>
+                    <td>Rp ${(p.planCost).toLocaleString('id-ID')}</td>
+                    <td><strong>Rp ${(p.actCost).toLocaleString('id-ID')}</strong></td>
+                    <td style="font-weight:bold; color:${p.diff < 0 ? 'var(--danger)' : 'var(--success)'};">
+                        ${p.diff > 0 ? '+' : ''}${(p.diff).toLocaleString('id-ID')}
+                    </td>
+                    <td>${escapeHtml(p.notes)}</td>
+                </tr>
+            `).join('');
+        };
+
+        window.switchCostTab = function(tabName, el) {
+            if (el) {
+                document.querySelectorAll('#costMainTabs .asset-tab').forEach(t => t.classList.remove('active'));
+                el.classList.add('active');
+            }
+            document.getElementById('costTabSecValuation').style.display = 'none';
+            document.getElementById('costTabSecLpj').style.display = 'none';
+            document.getElementById('costTabSecPo').style.display = 'none';
+            document.getElementById('costTabSecPmComp').style.display = 'none';
+
+            if (tabName === 'lpj') document.getElementById('costTabSecLpj').style.display = 'block';
+            else if (tabName === 'po') document.getElementById('costTabSecPo').style.display = 'block';
+            else if (tabName === 'pmcomp') document.getElementById('costTabSecPmComp').style.display = 'block';
+            else document.getElementById('costTabSecValuation').style.display = 'block';
+        };
+
+        window.filterCostDashboard = function() {
+            const yr = document.getElementById('costFilterTahun').value;
+            const loc = document.getElementById('costFilterLokasi').value;
+
+            let filteredValuations = globalValuations;
+            if (loc !== 'ALL') {
+                filteredValuations = filteredValuations.filter(v => v.name.toLowerCase().includes(loc.toLowerCase()) || loc === 'Duri');
+            }
+            renderCostValuationTable(filteredValuations);
+        };
+
+        window.searchCostValuationTable = function() {
+            const q = document.getElementById('searchCostValuationInput').value.toLowerCase().trim();
+            if (!q) {
+                renderCostValuationTable(globalValuations);
+                return;
+            }
+            const filtered = globalValuations.filter(v =>
+                v.id.toLowerCase().includes(q) ||
+                v.name.toLowerCase().includes(q) ||
+                v.sn.toLowerCase().includes(q)
+            );
+            renderCostValuationTable(filtered);
+        };
+
+        window.openCostInputModal = function() {
+            alert('Form pencatatan transaksi biaya baru (PO/SPPU) dibuka.');
+        };
+
+        window.exportCostReport = function() {
+            alert('Laporan keuangan & valuasi aset berhasil di-export ke format Excel/PDF.');
+        };
 
         function approveDoc(btn) {
             btn.parentElement.parentElement.remove();
@@ -2824,10 +3990,10 @@
                         .join('');
                 }
 
-                const fuelSelect = document.getElementById('fuel-asset-id');
-                if (fuelSelect) {
+                const fuelSelect = document.getElementById('frmFuelUnitId') || document.getElementById('fuel-asset-id');
+                if (fuelSelect && globalData.assets) {
                     fuelSelect.innerHTML = globalData.assets
-                        .map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.id)} (${escapeHtml(a.category)})</option>`)
+                        .map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.id)} (${escapeHtml(a.category)} - ${escapeHtml(a.location)})</option>`)
                         .join('');
                 }
             }
