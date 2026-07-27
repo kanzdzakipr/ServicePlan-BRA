@@ -304,6 +304,30 @@
             transform: scale(1.05);
         }
 
+        .btn-gmaps {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            color: #3c4043;
+            border: 1px solid var(--border);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .btn-gmaps:hover {
+            background: #f8f9fa;
+            border-color: #dadce0;
+            color: #1a73e8;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
         .kpi-card.total {
             border-color: var(--dark);
         }
@@ -1717,9 +1741,16 @@
 
                 <!-- TAB 2: LOKASI (LEAFLET MAP & TIMELINE REKAP) -->
                 <div id="assetTabSecLokasi" class="asset-tab-sec" style="display:none;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
                         <h3 style="margin:0; font-size:1.05rem;"><i class="fa-solid fa-location-dot"></i> Peta Posisi GPS Terkini Unit</h3>
-                        <span id="modalGpsCoord" style="font-size:0.8rem; background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold;">GPS: 1.4851, 101.3524</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span id="modalGpsCoord" style="font-size:0.8rem; background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:4px; font-weight:bold;">GPS: 1.4851, 101.3524</span>
+                            <a id="btnGoogleMaps" href="https://maps.google.com/?q=1.4851,101.3524" target="_blank" rel="noopener noreferrer" class="btn-gmaps" title="Buka Lokasi Unit di Google Maps">
+                                <i class="fa-solid fa-map-location-dot" style="color: #ea4335;"></i>
+                                <span>Google Maps</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.7rem; color: #6c757d;"></i>
+                            </a>
+                        </div>
                     </div>
 
                     <!-- Individual Unit Leaflet Map -->
@@ -2277,6 +2308,11 @@
 
             const gpsCoordEl = document.getElementById('modalGpsCoord');
             if (gpsCoordEl) gpsCoordEl.innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            const btnGmaps = document.getElementById('btnGoogleMaps');
+            if (btnGmaps) {
+                btnGmaps.href = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+            }
 
             if (modalUnitMapInstance) {
                 modalUnitMapInstance.remove();
