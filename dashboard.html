@@ -10,7 +10,7 @@
     <!-- Leaflet for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260728-2">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260728-6">
     
 </head>
 
@@ -1562,6 +1562,89 @@
                 </div>
             </div>
         </div>
+    <!-- Modal Detail Work Order 360° -->
+    <div class="modal-overlay" id="modalWoDetail">
+        <div class="modal-content" style="max-width: 650px; width: 95%;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+                <h2 style="margin: 0; font-size: 1.25rem;">
+                    <i class="fa-solid fa-screwdriver-wrench" style="color: var(--primary);"></i> 
+                    Detail Work Order: <span id="modalWoId"></span>
+                </h2>
+                <button onclick="closeModal('modalWoDetail')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; background: #f8f9fa; padding: 12px; border-radius: 8px; font-size: 0.88rem;">
+                    <div><strong>Unit ID:</strong> <span id="modalWoAsset"></span></div>
+                    <div><strong>Status:</strong> <span id="modalWoStatus"></span></div>
+                    <div><strong>Prioritas:</strong> <span id="modalWoPriority"></span></div>
+                    <div><strong>Downtime:</strong> <span id="modalWoDowntime" style="color:#dc3545; font-weight:bold;"></span></div>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold; display: block; margin-bottom: 4px; font-size: 0.9rem;">Keluhan / Detail Kerusakan:</label>
+                    <div id="modalWoIssue" style="background: #fff; border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 0.88rem; line-height: 1.5; max-height: 140px; overflow-y: auto;"></div>
+                </div>
+                <div id="modalWoFallbackNotice" style="display:none; background:#fff3cd; color:#856404; padding:8px 12px; border-radius:6px; font-size:0.82rem; margin-bottom:15px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Work Order ini dicatat langsung dari laporan insiden darurat. Silakan buat SPB atau cek histori unit.
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                    <button class="btn btn-secondary" onclick="closeModal('modalWoDetail')" style="padding: 6px 14px;">Tutup</button>
+                    <button class="btn btn-primary" id="modalWoAssetBtn" style="padding: 6px 14px;"><i class="fa-solid fa-truck"></i> Detail Aset 360°</button>
+                    <button class="btn btn-success" id="modalWoSpbBtn" style="padding: 6px 14px;"><i class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Perubahan Status WO & Form Laporan (FRM-WO-01) -->
+    <div class="modal-overlay" id="modalWoStatusConfirm">
+        <div class="modal-content" style="max-width: 650px; width: 95%;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+                <h2 style="margin: 0; font-size: 1.2rem;">
+                    <i class="fa-solid fa-arrows-rotate" style="color: var(--primary);"></i> 
+                    Konfirmasi Perubahan Status & Form Laporan (FRM-WO-01)
+                </h2>
+                <button onclick="closeModal('modalWoStatusConfirm')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body form-group" style="padding: 20px;">
+                <input type="hidden" id="woConfirmId">
+                <input type="hidden" id="woConfirmTargetStatus">
+                <input type="hidden" id="woConfirmAssetId">
+
+                <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.88rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span><strong>Work Order ID:</strong> <span id="woConfirmIdLabel" style="color:var(--primary); font-weight:bold;"></span></span>
+                        <span><strong>Asset ID:</strong> <span id="woConfirmAssetLabel"></span></span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #3730a3; font-weight:600;">
+                        Perubahan Status: <span class="badge bg-draft" id="woConfirmFromStatus"></span> <i class="fa-solid fa-arrow-right"></i> <span class="badge bg-progress" id="woConfirmToStatus"></span>
+                    </div>
+                </div>
+
+                <label style="font-weight:bold;">Mekanik / Teknisi Penanggung Jawab (FRM-WO-01)</label>
+                <select id="woConfirmMechanic" class="form-control" style="margin-bottom: 12px;">
+                    <option value="Apeng (Lead Mechanic)">Apeng (Lead Mechanic)</option>
+                    <option value="Maman (Senior Technician)">Maman (Senior Technician)</option>
+                    <option value="Soleh (Hydraulic Specialist)">Soleh (Hydraulic Specialist)</option>
+                    <option value="Darmawan (Electrical Mechanic)">Darmawan (Electrical Mechanic)</option>
+                    <option value="Regar (Junior Mechanic)">Regar (Junior Mechanic)</option>
+                </select>
+
+                <label style="font-weight:bold;">Tindakan Perbaikan & Kelengkapan Sparepart</label>
+                <textarea id="woConfirmAction" rows="3" class="form-control" placeholder="Tuliskan rincian tindakan perbaikan, penggantian sparepart, atau hasil inspeksi..." style="margin-bottom: 12px;"></textarea>
+
+                <label style="font-weight:bold;">Status Efektif Unit Setelah Perbaikan</label>
+                <select id="woConfirmUnitStatus" class="form-control" style="margin-bottom: 15px;">
+                    <option value="READY">READY - Unit Siap Operasi Full</option>
+                    <option value="STANDBY">STANDBY - Unit Siap Pakai Cadangan</option>
+                    <option value="BREAKDOWN">BREAKDOWN - Perbaikan Lanjutan Masih Dibutuhkan</option>
+                </select>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 15px;">
+                    <button class="btn btn-secondary" onclick="closeModal('modalWoStatusConfirm')">Batal</button>
+                    <button class="btn btn-primary" onclick="submitWoStatusChange()"><i class="fa-solid fa-check"></i> Simpan & Update Status WO</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Leaflet Map Script -->
@@ -1591,6 +1674,181 @@
             if (el) {
                 el.classList.remove('active');
                 el.style.display = 'none';
+            }
+        };
+
+        window.openSpbForWo = function(woId, assetId) {
+            showView('logistics');
+            const woSelect = document.getElementById('spb-wo-id');
+            if (woSelect && woId) {
+                woSelect.value = woId;
+            }
+        };
+
+        // Drag and Drop & Form Kelengkapan (FRM-WO-01) Engine
+        let currentDraggedWo = null;
+
+        window.handleWoDragStart = function(e, woId, currentStatus, assetId, issue) {
+            currentDraggedWo = { woId, currentStatus, assetId, issue };
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', woId);
+            e.currentTarget.classList.add('dragging');
+        };
+
+        window.handleWoDragEnd = function(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
+        };
+
+        window.handleWoDragOver = function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        };
+
+        window.handleWoDragEnter = function(e, statusKey) {
+            e.preventDefault();
+            const col = e.currentTarget.closest('.kanban-column') || e.currentTarget;
+            col.classList.add('drag-over');
+        };
+
+        window.handleWoDragLeave = function(e) {
+            const col = e.currentTarget.closest('.kanban-column') || e.currentTarget;
+            col.classList.remove('drag-over');
+        };
+
+        window.handleWoDrop = function(e, targetStatus) {
+            e.preventDefault();
+            document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
+
+            if (!currentDraggedWo) return;
+            if (currentDraggedWo.currentStatus === targetStatus) return; // Same status, ignore
+
+            openWoStatusConfirmModal(currentDraggedWo.woId, currentDraggedWo.currentStatus, targetStatus, currentDraggedWo.assetId, currentDraggedWo.issue);
+        };
+
+        window.openWoStatusConfirmModal = function(woId, fromStatus, toStatus, assetId, issue) {
+            document.getElementById('woConfirmId').value = woId;
+            document.getElementById('woConfirmTargetStatus').value = toStatus;
+            document.getElementById('woConfirmAssetId').value = assetId;
+
+            document.getElementById('woConfirmIdLabel').textContent = woId;
+            document.getElementById('woConfirmAssetLabel').textContent = assetId;
+
+            const fromBadge = document.getElementById('woConfirmFromStatus');
+            const toBadge = document.getElementById('woConfirmToStatus');
+            if (fromBadge) fromBadge.textContent = fromStatus;
+            if (toBadge) toBadge.textContent = toStatus;
+
+            const actionText = document.getElementById('woConfirmAction');
+            if (actionText) actionText.value = `[${toStatus.toUpperCase()}] Penanganan WO ${woId} pada unit ${assetId}.`;
+
+            const unitStatusSelect = document.getElementById('woConfirmUnitStatus');
+            if (unitStatusSelect) {
+                if (toStatus === 'Closed') unitStatusSelect.value = 'READY';
+                else if (toStatus === 'In Progress') unitStatusSelect.value = 'STANDBY';
+                else unitStatusSelect.value = 'BREAKDOWN';
+            }
+
+            openModal('modalWoStatusConfirm');
+        };
+
+        window.submitWoStatusChange = function() {
+            const woId = document.getElementById('woConfirmId').value;
+            const targetStatus = document.getElementById('woConfirmTargetStatus').value;
+            const assetId = document.getElementById('woConfirmAssetId').value;
+            const mechanic = document.getElementById('woConfirmMechanic').value;
+            const actionLog = document.getElementById('woConfirmAction').value;
+            const unitStatus = document.getElementById('woConfirmUnitStatus').value;
+
+            if (!globalData || !globalData.work_orders) return;
+
+            const wo = globalData.work_orders.find(w => w.woId === woId);
+            if (wo) {
+                wo.status = targetStatus;
+                wo.lastUpdate = new Date().toISOString();
+                if (actionLog) wo.issue = `${wo.issue} | [Log ${mechanic}]: ${actionLog}`;
+            }
+
+            // Update asset status if matched
+            if (assetId && globalData.assets) {
+                const asset = globalData.assets.find(a => a.id === assetId);
+                if (asset) {
+                    asset.status = unitStatus;
+                    asset.lastUpdate = 'Baru saja';
+                }
+            }
+
+            closeModal('modalWoStatusConfirm');
+
+            // Refresh Kanban board & Executive Dashboard
+            initWorkOrderView(globalData.work_orders);
+            initDashboard(globalData);
+
+            alert(`✅ Status Work Order (${woId}) Berhasil Diperbarui:\n- Status Baru: ${targetStatus}\n- Mekanik: ${mechanic}\n- Status Unit: ${unitStatus}`);
+        };
+
+        window.openWoDetailModal = function(woId, fallbackAssetId, fallbackIssue) {
+            if (!globalData || !globalData.work_orders) return;
+            const wo = globalData.work_orders.find(w => w.woId === woId);
+            
+            const modalWoId = document.getElementById('modalWoId');
+            const modalWoAsset = document.getElementById('modalWoAsset');
+            const modalWoStatus = document.getElementById('modalWoStatus');
+            const modalWoPriority = document.getElementById('modalWoPriority');
+            const modalWoDowntime = document.getElementById('modalWoDowntime');
+            const modalWoIssue = document.getElementById('modalWoIssue');
+            const noticeEl = document.getElementById('modalWoFallbackNotice');
+
+            const assetBtn = document.getElementById('modalWoAssetBtn');
+            const spbBtn = document.getElementById('modalWoSpbBtn');
+
+            if (wo) {
+                if (modalWoId) modalWoId.textContent = wo.woId;
+                if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(wo.assetId)}</strong>`;
+                if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge ${wo.status === 'Open' ? 'bg-breakdown' : wo.status === 'In Progress' ? 'bg-standby' : 'bg-operating'}">${escapeHtml(wo.status)}</span>`;
+                if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge ${wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(wo.priority)}</span>`;
+                if (modalWoDowntime) modalWoDowntime.textContent = wo.downtime || '0 jam 00 menit';
+                if (modalWoIssue) modalWoIssue.textContent = wo.issue || 'Tidak ada deskripsi.';
+                if (noticeEl) noticeEl.style.display = 'none';
+
+                if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); openAssetModal(wo.assetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
+                if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openSpbForWo(wo.woId, wo.assetId); };
+            } else {
+                // Fallback for emergency WOs created dynamically
+                if (modalWoId) modalWoId.textContent = woId || 'WO-EMERGENCY';
+                if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(fallbackAssetId || 'N/A')}</strong>`;
+                if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge bg-breakdown">Open (Emergency)</span>`;
+                if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge bg-breakdown">High Emergency</span>`;
+                if (modalWoDowntime) modalWoDowntime.textContent = 'Dalam Penanganan Operasional';
+                if (modalWoIssue) modalWoIssue.textContent = fallbackIssue || 'Penanganan darurat breakdown unit.';
+                if (noticeEl) noticeEl.style.display = 'block';
+
+                if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); if (fallbackAssetId) openAssetModal(fallbackAssetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
+                if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openSpbForWo(woId, fallbackAssetId); };
+            }
+
+            openModal('modalWoDetail');
+        };
+
+        window.openWoDetailView = function(woId, assetId, issueText) {
+            // First: Open Modal Detail for Instant 360° Visual Feedback
+            openWoDetailModal(woId, assetId, issueText);
+
+            // Second: Switch to Work Order Kanban view and highlight card if present
+            showView('wo');
+            if (woId) {
+                setTimeout(() => {
+                    const card = document.getElementById('wo-card-' + woId);
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.style.outline = '3px solid #dc3545';
+                        card.style.boxShadow = '0 0 20px rgba(220, 53, 69, 0.7)';
+                        setTimeout(() => {
+                            card.style.outline = '';
+                            card.style.boxShadow = '';
+                        }, 3500);
+                    }
+                }, 250);
             }
         };
 
@@ -1638,25 +1896,55 @@
             document.getElementById('kpiInspeksi').textContent = summary.status_counts.INSPEKSI || 0;
 
             const attentionList = document.getElementById('attentionList');
-            // Show only high priority / breakdown WOs as attention
+            // Show only high priority / breakdown WOs as emergency attention cards
             const emergencyWOs = data.work_orders.filter(wo => wo.priority === 'High' && wo.status !== 'Closed');
 
             if (emergencyWOs.length > 0) {
                 attentionList.innerHTML = emergencyWOs.slice(0, 5).map(wo => {
-                    const cleanDown = (wo.downtime || '-').toString().replace(/\s*jam$/i, '');
-                    const downLabel = cleanDown.includes('jam') ? cleanDown : `${cleanDown} jam`;
+                    const cleanDown = (wo.downtime || '0 jam 00 menit').toString().trim();
+                    const woIdEsc = escapeHtml(wo.woId);
+                    const assetIdEsc = escapeHtml(wo.assetId);
+                    const issueShort = escapeHtml(wo.issue.length > 70 ? wo.issue.substring(0, 70) + '...' : wo.issue);
+
                     return `
-                        <li class="danger">
-                            <i class="fa-solid fa-fire"></i>
-                            <div class="attention-details">
-                                <strong>${wo.woId} - ${escapeHtml(wo.assetId)}</strong>
-                                <span>${escapeHtml(wo.issue.substring(0, 60))}... (Down: ${downLabel})</span>
+                        <li class="attention-item">
+                            <div class="attention-header">
+                                <div class="attention-title">
+                                    <i class="fa-solid fa-fire" style="color: #dc3545;"></i>
+                                    <span style="font-weight: 700; color: var(--dark);">${woIdEsc}</span>
+                                    <span style="color: var(--text-muted); font-size: 0.8rem;">(${assetIdEsc})</span>
+                                </div>
+                                <div class="attention-downtime" title="Durasi Terhenti (Downtime)">
+                                    <i class="fa-regular fa-clock"></i> Down: ${cleanDown}
+                                </div>
+                            </div>
+                            <div class="attention-desc" title="${escapeHtml(wo.issue)}">
+                                ${issueShort}
+                            </div>
+                            <div class="attention-actions">
+                                <button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${assetIdEsc}')" title="Buka Modul Work Order">
+                                    <i class="fa-solid fa-wrench"></i> Detail WO
+                                </button>
+                                <button class="attention-action-btn" onclick="openAssetModal('${assetIdEsc}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat Riwayat & Detail 360° Unit">
+                                    <i class="fa-solid fa-truck"></i> Aset 360°
+                                </button>
+                                <button class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${assetIdEsc}')" title="Buat Permintaan Sparepart (SPB)">
+                                    <i class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)
+                                </button>
                             </div>
                         </li>
                     `;
                 }).join('');
             } else {
-                attentionList.innerHTML = '<li><i class="fa-solid fa-check text-success"></i><div class="attention-details"><strong>Aman</strong><span>Tidak ada WO darurat.</span></div></li>';
+                attentionList.innerHTML = `
+                    <li class="attention-item" style="border-left-color: #28a745;">
+                        <div class="attention-title" style="color: #28a745;">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <strong>Semua Unit Beroperasi Normal</strong>
+                        </div>
+                        <div class="attention-desc" style="margin-bottom: 0;">Tidak ada Work Order darurat (High Priority) yang aktif saat ini.</div>
+                    </li>
+                `;
             }
 
             // Populate Unit per Kategori
@@ -1797,38 +2085,108 @@
             }).join('');
         }
 
+        function renderKanbanCardHtml(wo, statusKey) {
+            const isEmergency = wo.priority === 'High';
+            const issueShort = escapeHtml(wo.issue.length > 45 ? wo.issue.substring(0, 45) + '...' : wo.issue);
+            const escapedIssue = escapeHtml(wo.issue).replace(/'/g, "&#039;");
+            const escapedAsset = escapeHtml(wo.assetId);
+
+            return `
+                <div class="kanban-card ${wo.priority}" 
+                     id="wo-card-${escapeHtml(wo.woId)}" 
+                     draggable="true"
+                     ondragstart="handleWoDragStart(event, '${escapeHtml(wo.woId)}', '${statusKey}', '${escapedAsset}', '${escapedIssue}')"
+                     ondragend="handleWoDragEnd(event)"
+                     onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapedAsset}', '${escapedIssue}')" 
+                     style="cursor:grab;" 
+                     title="Klik untuk Detail 360° | Drag ke kolom lain untuk ubah status">
+                    <div class="kanban-card-title" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span><strong>${escapeHtml(wo.woId)}</strong></span>
+                        ${isEmergency ? '<span class="badge bg-breakdown" style="font-size:0.68rem;"><i class="fa-solid fa-fire"></i> Emergency</span>' : ''}
+                    </div>
+                    <div class="kanban-card-meta">
+                        <i class="fa-solid fa-truck"></i> <strong>${escapedAsset}</strong><br>
+                        <i class="fa-solid fa-wrench"></i> ${issueShort}
+                        ${wo.downtime ? `<br><span style="color:#dc3545; font-size:0.75rem; font-weight:600;"><i class="fa-regular fa-clock"></i> ${escapeHtml(wo.downtime)}</span>` : ''}
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                        <span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(wo.priority)}</span>
+                        <span style="font-size:0.72rem; color:var(--primary); font-weight:600;"><i class="fa-solid fa-grip-vertical"></i> Drag / Detail <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+                </div>
+            `;
+        }
+
         function initWorkOrderView(wos) {
-            const colOpen = document.querySelector('#col-Open .card-container');
-            const colProgress = document.querySelector('#col-In-Progress .card-container');
-            const colClosed = document.querySelector('#col-Closed .card-container');
+            const kanbanBoard = document.getElementById('woKanbanBoard');
+            if (!kanbanBoard) return;
 
-            let countO = 0, countP = 0, countC = 0;
+            const openWos = wos.filter(w => w.status === 'Open');
+            const progressWos = wos.filter(w => w.status === 'In Progress');
+            const closedWos = wos.filter(w => w.status === 'Closed');
 
-            let htmlO = '', htmlP = '', htmlC = '';
+            // Update global badge counters
+            const badgeO = document.getElementById('count-Open');
+            const badgeP = document.getElementById('count-InProgress');
+            const badgeC = document.getElementById('count-Closed');
+            if (badgeO) badgeO.textContent = openWos.length;
+            if (badgeP) badgeP.textContent = progressWos.length;
+            if (badgeC) badgeC.textContent = closedWos.length;
 
-            wos.slice(0, 50).forEach(wo => { // limit to 50 for performance
-                const card = `
-                    <div class="kanban-card ${wo.priority}">
-                        <div class="kanban-card-title">${wo.woId}</div>
-                        <div class="kanban-card-meta">
-                            <i class="fa-solid fa-truck"></i> ${escapeHtml(wo.assetId)}<br>
-                            <i class="fa-solid fa-wrench"></i> ${escapeHtml(wo.issue.substring(0, 30))}...
+            function renderParentColumn(statusKey, titleText, badgeClass, woList) {
+                const count = woList.length;
+
+                if (count === 0) {
+                    return `
+                        <div class="kanban-column" id="col-${statusKey}" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                            <h3><span>${titleText}</span> <span class="badge ${badgeClass}">0</span></h3>
+                            <div class="card-container" style="padding:20px; color:var(--text-muted); text-align:center; font-size:0.85rem;">Tidak ada data WO.</div>
                         </div>
-                        <span class="badge ${wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating'}">${wo.priority}</span>
+                    `;
+                }
+
+                const chunkSize = 50;
+                let bodyHtml = '';
+
+                if (count <= chunkSize) {
+                    const cardsHtml = woList.map(wo => renderKanbanCardHtml(wo, statusKey)).join('');
+                    bodyHtml = `
+                        <div class="card-container" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                            ${cardsHtml}
+                        </div>
+                    `;
+                } else {
+                    let subListsHtml = '';
+                    for (let i = 0; i < count; i += chunkSize) {
+                        const chunk = woList.slice(i, i + chunkSize);
+                        const cardsHtml = chunk.map(wo => renderKanbanCardHtml(wo, statusKey)).join('');
+
+                        subListsHtml += `
+                            <div class="card-sublist" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                                ${cardsHtml}
+                            </div>
+                        `;
+                    }
+                    bodyHtml = `
+                        <div class="card-container multi-column-track" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                            ${subListsHtml}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="kanban-column ${count > chunkSize ? 'expanded-column' : ''}" id="col-${statusKey}">
+                        <h3><span>${titleText}</span> <span class="badge ${badgeClass}">${count}</span></h3>
+                        ${bodyHtml}
                     </div>
                 `;
-                if (wo.status === 'Open') { htmlO += card; countO++; }
-                else if (wo.status === 'In Progress') { htmlP += card; countP++; }
-                else if (wo.status === 'Closed') { htmlC += card; countC++; }
-            });
+            }
 
-            colOpen.innerHTML = htmlO;
-            colProgress.innerHTML = htmlP;
-            colClosed.innerHTML = htmlC;
+            const openCol = renderParentColumn('Open', 'Open / Submitted', 'bg-draft', openWos);
+            const progressCol = renderParentColumn('In Progress', 'In Progress (Mekanik)', 'bg-progress', progressWos);
+            const closedCol = renderParentColumn('Closed', 'Closed / Ready', 'bg-operating', closedWos);
 
-            document.getElementById('count-Open').innerText = countO;
-            document.getElementById('count-InProgress').innerText = countP;
-            document.getElementById('count-Closed').innerText = countC;
+            kanbanBoard.innerHTML = openCol + progressCol + closedCol;
         }
 
         let previousModalId = null;

@@ -7129,3 +7129,335 @@
     color: var(--text-muted);
 }
 
+/* Modern WO Emergency Attention Card Component */
+.attention-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.attention-item {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-left: 4px solid #dc3545;
+    border-radius: 8px;
+    padding: 12px 14px;
+    transition: all 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.attention-item:hover {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+    border-color: #f8d7da;
+    border-left-color: #dc3545;
+    transform: translateY(-2px);
+}
+
+.attention-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.attention-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+}
+
+.attention-downtime {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #dc3545;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.attention-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.attention-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+}
+
+.attention-action-btn {
+    font-size: 0.73rem;
+    padding: 4px 9px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #f8f9fa;
+    color: var(--dark);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    font-weight: 600;
+}
+
+.attention-action-btn:hover {
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.asset-angle-badge {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.asset-view-img-box {
+    width: 100%;
+    height: 120px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.asset-view-img-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.asset-view-svg-demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+
+.asset-view-svg-demo i {
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+    color: #0284c7;
+}
+
+.asset-view-spec-tag {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Modal Leaflet Map Container */
+#modalUnitMap {
+    width: 100%;
+    height: 320px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-bottom: 15px;
+    z-index: 1;
+}
+
+/* Vertical Timeline Tree for Movement / BAST History */
+.movement-timeline {
+    position: relative;
+    padding-left: 25px;
+    margin-top: 15px;
+    border-left: 2px dashed #cbd5e1;
+}
+
+.movement-timeline-item {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.movement-timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -31px;
+    top: 3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+.movement-timeline-item.latest::before {
+    background: var(--success);
+    box-shadow: 0 0 0 2px var(--success);
+}
+
+.movement-timeline-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--dark);
+}
+
+.movement-timeline-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* Modern WO Emergency Attention Card Component */
+.attention-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.attention-item {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-left: 4px solid #dc3545;
+    border-radius: 8px;
+    padding: 12px 14px;
+    transition: all 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.attention-item:hover {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+    border-color: #f8d7da;
+    border-left-color: #dc3545;
+    transform: translateY(-2px);
+}
+
+.attention-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.attention-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+}
+
+.attention-downtime {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #dc3545;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.attention-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.attention-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+}
+
+.attention-action-btn {
+    font-size: 0.73rem;
+    padding: 4px 9px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #f8f9fa;
+    color: var(--dark);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    font-weight: 600;
+}
+
+.attention-action-btn:hover {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+.attention-action-btn.btn-spb:hover {
+    background: #28a745;
+    color: #ffffff;
+    border-color: #28a745;
+}
+
+/* Kanban Drag & Drop Visual Feedback */
+.kanban-card.dragging {
+    opacity: 0.45;
+    transform: scale(0.97);
+    border: 2px dashed var(--primary) !important;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3) !important;
+}
+
+.kanban-column.drag-over {
+    background: #eef2ff !important;
+    border: 2px dashed var(--primary) !important;
+    box-shadow: inset 0 0 15px rgba(0, 123, 255, 0.25) !important;
+    transition: all 0.2s ease;
+}
+
+/* Expanded Parent Column for 50 x n cards */
+.kanban-column.expanded-column {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: none !important;
+}
+
+.multi-column-track {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+    padding-bottom: 6px;
+}
+
+.card-sublist {
+    flex: 0 0 280px;
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
