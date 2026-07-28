@@ -1,1 +1,0 @@
-SHOW DATABASES LIKE 'asset_manager';
