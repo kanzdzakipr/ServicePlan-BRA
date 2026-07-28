@@ -220,19 +220,41 @@
 
             <!-- VIEW: MONITORING UNIT (Sesuai Permintaan User) -->
             <div id="view-monitoring" class="view-section">
-                <h1 class="page-title">Monitoring Unit Bermasalah (Non-Ready)</h1>
+                <div class="monitoring-title-row">
+                    <div>
+                        <h1 class="page-title" style="margin-bottom:4px;">Monitoring Unit Terintegrasi</h1>
+                        <p class="monitoring-subtitle">Satu status efektif untuk Master Asset, P2H, dan Work Order.</p>
+                    </div>
+                    <span class="integration-live-badge"><i class="fa-solid fa-arrows-rotate"></i> Sinkron real-time</span>
+                </div>
                 <div class="panel">
-                    <div class="panel-body" style="padding-bottom: 0;">
-                        <p style="color:var(--text-muted); margin-bottom: 20px;">Halaman ini difilter khusus untuk
-                            menampilkan alat berat yang membutuhkan perhatian (Breakdown, Inspeksi/PM, dan Standby).</p>
+                    <div class="panel-body">
+                        <div class="integration-flow" aria-label="Alur integrasi status unit">
+                            <span><i class="fa-solid fa-cubes"></i> Master Asset</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <span><i class="fa-solid fa-clipboard-check"></i> Inspeksi & P2H</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <span><i class="fa-solid fa-screwdriver-wrench"></i> Work Order</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                            <span><i class="fa-solid fa-circle-check"></i> Status Efektif</span>
+                        </div>
+                        <div id="monitoringSummary" class="monitoring-summary"></div>
                     </div>
                 </div>
                 <div class="panel">
                     <div class="panel-header">
                         <span><i class="fa-solid fa-triangle-exclamation"></i> Daftar Unit Tidak Ready</span>
-                        <div class="search-bar">
+                        <div class="monitoring-toolbar">
+                            <select id="monitoringStatusFilter" class="form-control" onchange="initMonitoringView(globalData.assets)" aria-label="Filter status monitoring">
+                                <option value="ALL">Semua status non-ready</option>
+                                <option value="BREAKDOWN">Breakdown</option>
+                                <option value="INSPEKSI">Inspeksi / P2H</option>
+                                <option value="STANDBY">Standby</option>
+                            </select>
+                            <div class="search-bar">
                             <input type="text" id="searchMonitoring" placeholder="Cari unit bermasalah..."
                                 onkeyup="searchTableMonitoring()">
+                            </div>
                         </div>
                     </div>
                     <div class="panel-body" style="padding:0;">
@@ -1105,15 +1127,20 @@
                     <div class="asset-360-grid">
                         <div>
                             <div style="background:#f8f9fa; padding:20px; border-radius:8px; border:1px solid var(--border); margin-bottom:15px;">
-                                <p style="color:var(--text-muted); font-size:0.85rem;">Status Efektif</p>
-                                <h3 id="modalStatus" style="margin-bottom:15px;">-</h3>
+                                 <p style="color:var(--text-muted); font-size:0.85rem;">Status Efektif</p>
+                                 <h3 id="modalStatus" style="margin-bottom:4px;">-</h3>
+                                 <p id="modalStatusSource" class="status-source-line" style="margin-bottom:15px;">-</p>
                                 <p style="color:var(--text-muted); font-size:0.85rem;">Kategori Alat</p>
                                 <h4 id="modalKategori" style="margin-bottom:15px;">-</h4>
                                 <p style="color:var(--text-muted); font-size:0.85rem;">Lokasi Terakhir</p>
                                 <h4 id="modalLokasi">-</h4>
                             </div>
-                            <button class="btn btn-primary" style="width:100%; margin-bottom:10px;"
-                                onclick="triggerUpdateStatus()">Update Status</button>
+                             <button class="btn btn-primary" style="width:100%; margin-bottom:10px;"
+                                 onclick="triggerUpdateStatus()">Update Status</button>
+                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                 <button class="btn" style="background:#f59e0b; color:#fff;" onclick="openIntegratedP2H(document.getElementById('modalAssetId').textContent, 'history')"><i class="fa-solid fa-clipboard-check"></i> P2H</button>
+                                 <button class="btn" style="background:#dc3545; color:#fff;" onclick="openIntegratedWO(document.getElementById('modalAssetId').textContent)"><i class="fa-solid fa-wrench"></i> Work Order</button>
+                             </div>
                         </div>
                         <div>
                             <h3 style="margin-bottom:10px;">Spesifikasi Unit</h3>
@@ -1766,23 +1793,18 @@
             if (wo) {
                 wo.status = targetStatus;
                 wo.lastUpdate = new Date().toISOString();
+                wo.assignedTo = mechanic;
                 if (actionLog) wo.issue = `${wo.issue} | [Log ${mechanic}]: ${actionLog}`;
             }
 
             // Update asset status if matched
             if (assetId && globalData.assets) {
-                const asset = globalData.assets.find(a => a.id === assetId);
-                if (asset) {
-                    asset.status = unitStatus;
-                    asset.lastUpdate = 'Baru saja';
-                }
+                setIntegratedAssetStatus(assetId, unitStatus, 'Work Order', woId, actionLog);
             }
 
             closeModal('modalWoStatusConfirm');
 
-            // Refresh Kanban board & Executive Dashboard
-            initWorkOrderView(globalData.work_orders);
-            initDashboard(globalData);
+            window.syncFleetState();
 
             alert(`✅ Status Work Order (${woId}) Berhasil Diperbarui:\n- Status Baru: ${targetStatus}\n- Mekanik: ${mechanic}\n- Status Unit: ${unitStatus}`);
         };
@@ -1854,12 +1876,211 @@
 
         let globalData = null;
         let mapInitialized = false;
+        const FLEET_STATE_KEY = 'fleetmonitor-integrated-state-v1';
+        const ASSET_STATUS_PRIORITY = { READY: 1, STANDBY: 2, INSPEKSI: 3, BREAKDOWN: 4, ACCIDENT_HOLD: 5 };
+
+        function rebuildFleetSummary() {
+            if (!globalData || !globalData.assets) return;
+            const counts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, ACCIDENT_HOLD: 0 };
+            globalData.assets.forEach(asset => {
+                const key = asset.status || 'READY';
+                counts[key] = (counts[key] || 0) + 1;
+            });
+            globalData.summary = globalData.summary || {};
+            globalData.summary.total_units = globalData.assets.length;
+            globalData.summary.status_counts = counts;
+        }
+
+        function normalizeAssetRegistry(data) {
+            const registry = new Map();
+            (data.assets || []).forEach(rawAsset => {
+                const id = (rawAsset.id || rawAsset.asset_id || '').trim();
+                if (!id) return;
+                const candidate = { ...rawAsset, id };
+                const current = registry.get(id);
+                if (!current) {
+                    registry.set(id, candidate);
+                    return;
+                }
+                const currentRank = ASSET_STATUS_PRIORITY[current.status] || 0;
+                const candidateRank = ASSET_STATUS_PRIORITY[candidate.status] || 0;
+                if (candidateRank > currentRank) {
+                    registry.set(id, { ...current, ...candidate, id });
+                }
+            });
+            data.assets = Array.from(registry.values()).map(asset => ({
+                ...asset,
+                status: asset.status || 'READY',
+                statusSource: asset.statusSource || 'Master Asset',
+                statusReference: asset.statusReference || 'Data awal',
+                statusEvents: Array.isArray(asset.statusEvents) ? asset.statusEvents : []
+            }));
+        }
+
+        function restoreFleetState() {
+            if (!globalData) return;
+            try {
+                const saved = JSON.parse(localStorage.getItem(FLEET_STATE_KEY) || 'null');
+                if (!saved || saved.version !== 1) return;
+                const savedAssets = new Map((saved.assets || []).map(item => [item.id, item]));
+                globalData.assets.forEach(asset => {
+                    const override = savedAssets.get(asset.id);
+                    if (override) Object.assign(asset, override);
+                });
+                if (Array.isArray(saved.work_orders)) {
+                    const workOrders = new Map((globalData.work_orders || []).map(wo => [wo.woId, wo]));
+                    saved.work_orders.forEach(wo => workOrders.set(wo.woId, { ...(workOrders.get(wo.woId) || {}), ...wo }));
+                    globalData.work_orders = Array.from(workOrders.values());
+                }
+                if (Array.isArray(saved.inspections)) globalData.inspections = saved.inspections;
+            } catch (error) {
+                console.warn('State integrasi tidak dapat dipulihkan:', error);
+            }
+        }
+
+        function persistFleetState() {
+            if (!globalData) return;
+            try {
+                localStorage.setItem(FLEET_STATE_KEY, JSON.stringify({
+                    version: 1,
+                    assets: globalData.assets.map(asset => ({
+                        id: asset.id,
+                        status: asset.status,
+                        location: asset.location,
+                        lastUpdate: asset.lastUpdate,
+                        last_hm_km: asset.last_hm_km,
+                        statusSource: asset.statusSource,
+                        statusReference: asset.statusReference,
+                        statusNote: asset.statusNote,
+                        statusEvents: (asset.statusEvents || []).slice(0, 20)
+                    })),
+                    work_orders: globalData.work_orders || [],
+                    inspections: globalData.inspections || []
+                }));
+            } catch (error) {
+                console.warn('State integrasi tidak dapat disimpan:', error);
+            }
+        }
+
+        function setIntegratedAssetStatus(assetId, status, source, reference, note = '') {
+            if (!globalData || !globalData.assets) return null;
+            const asset = globalData.assets.find(item => item.id === assetId);
+            if (!asset) return null;
+            const now = new Date();
+            asset.status = status;
+            asset.lastUpdate = 'Baru saja';
+            asset.statusUpdatedAt = now.toISOString();
+            asset.statusSource = source || 'Master Asset';
+            asset.statusReference = reference || 'Update manual';
+            asset.statusNote = note;
+            asset.statusEvents = Array.isArray(asset.statusEvents) ? asset.statusEvents : [];
+            asset.statusEvents.unshift({
+                at: now.toISOString(),
+                status,
+                source: asset.statusSource,
+                reference: asset.statusReference,
+                note
+            });
+            rebuildFleetSummary();
+            return asset;
+        }
+        window.setIntegratedAssetStatus = setIntegratedAssetStatus;
+
+        function linkExistingWorkflowRecords() {
+            if (!globalData) return;
+            (globalData.assets || []).forEach(asset => {
+                if (asset.statusSource !== 'Master Asset' || asset.statusReference !== 'Data awal') return;
+                const unitWos = (globalData.work_orders || []).filter(wo =>
+                    wo.assetId === asset.id && wo.status !== 'Closed'
+                );
+                const activeWo = unitWos.find(wo => wo.priority === 'High')
+                    || unitWos.find(wo => wo.status === 'In Progress')
+                    || unitWos[0];
+                if (activeWo) {
+                    asset.statusSource = 'Work Order';
+                    asset.statusReference = activeWo.woId;
+                }
+            });
+        }
+
+        function getUnitIntegrationContext(asset) {
+            const inspections = (globalData && globalData.inspections) || [];
+            const workOrders = (globalData && globalData.work_orders) || [];
+            const latestInspection = inspections
+                .filter(item => item.unitId === asset.id)
+                .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0] || null;
+            const unitWos = workOrders.filter(wo => (wo.assetId || wo.unitId) === asset.id);
+            const activeWos = unitWos.filter(wo => wo.status !== 'Closed');
+            const activeWo = activeWos.find(wo => wo.priority === 'High')
+                || activeWos.find(wo => wo.status === 'In Progress')
+                || activeWos.find(wo => wo.status === 'Open')
+                || null;
+            return { asset, latestInspection, activeWo, unitWos };
+        }
+
+        window.syncFleetState = function(options = {}) {
+            if (!globalData) return;
+            rebuildFleetSummary();
+            persistFleetState();
+            refreshAllViews();
+            if (window.FleetInspectionModule && options.refreshInspection !== false) {
+                window.FleetInspectionModule.refresh();
+            }
+        };
+
+        window.openIntegratedStatusUpdate = function(assetId) {
+            const asset = globalData && globalData.assets.find(item => item.id === assetId);
+            if (!asset) return;
+            document.getElementById('us-id').value = asset.id;
+            document.getElementById('us-id-label').textContent = asset.id;
+            document.getElementById('us-status').value = asset.status;
+            document.getElementById('us-loc').value = '';
+            document.getElementById('us-notes').value = '';
+            closeModal('assetModal');
+            openModal('modalUpdateStatus');
+        };
+
+        window.openIntegratedP2H = function(assetId, mode = 'history') {
+            closeModal('assetModal');
+            showView('inspection');
+            setTimeout(() => {
+                if (window.FleetInspectionModule) {
+                    window.FleetInspectionModule.openForAsset(assetId, mode);
+                    return;
+                }
+                window.switchP2HTab?.(mode === 'form' ? 'form' : 'history');
+                const search = document.getElementById('searchP2HHistory');
+                if (search) {
+                    search.value = assetId;
+                    window.filterP2HHistoryTable?.();
+                }
+            }, 50);
+        };
+
+        window.openIntegratedWO = function(assetId) {
+            const asset = globalData && globalData.assets.find(item => item.id === assetId);
+            if (!asset) return;
+            closeModal('assetModal');
+            const { activeWo } = getUnitIntegrationContext(asset);
+            if (activeWo) {
+                openWoDetailView(activeWo.woId, assetId, activeWo.issue || activeWo.description || '');
+            } else {
+                openNewWOModal();
+                document.getElementById('nwo-id').value = assetId;
+                document.getElementById('nwo-down').value = asset.status === 'BREAKDOWN' ? 'Yes' : 'No';
+            }
+        };
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch('data.json');
                 if (!response.ok) throw new Error('Data not found');
                 globalData = await response.json();
+                normalizeAssetRegistry(globalData);
+                restoreFleetState();
+                linkExistingWorkflowRecords();
+                rebuildFleetSummary();
+                window.globalData = globalData;
 
                 initDashboard(globalData);
                 if (window.initExecutiveAnalyticsPanels) window.initExecutiveAnalyticsPanels();
@@ -1869,6 +2090,8 @@
                 initBiayaView(globalData.costs);
                 initFuelEngine(globalData);
                 initNewViews();
+                window.FleetInspectionModule?.refresh();
+                initMonitoringView(globalData.assets);
 
                 const queryView = new URLSearchParams(window.location.search).get('view') || '';
                 const hashView = window.location.hash.replace(/^#/, '');
@@ -1879,6 +2102,8 @@
                     if (reportPanel === 'import' || reportPanel === 'history') {
                         window.FleetReportForms?.selectPanel(reportPanel);
                     }
+                } else if (requestedView && document.getElementById(`view-${requestedView}`)) {
+                    showView(requestedView);
                 } else {
                     showView('dashboard');
                 }
@@ -1904,7 +2129,8 @@
                     const cleanDown = (wo.downtime || '0 jam 00 menit').toString().trim();
                     const woIdEsc = escapeHtml(wo.woId);
                     const assetIdEsc = escapeHtml(wo.assetId);
-                    const issueShort = escapeHtml(wo.issue.length > 70 ? wo.issue.substring(0, 70) + '...' : wo.issue);
+                    const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
+                    const issueShort = escapeHtml(issueText.length > 70 ? issueText.substring(0, 70) + '...' : issueText);
 
                     return `
                         <li class="attention-item">
@@ -1918,7 +2144,7 @@
                                     <i class="fa-regular fa-clock"></i> Down: ${cleanDown}
                                 </div>
                             </div>
-                            <div class="attention-desc" title="${escapeHtml(wo.issue)}">
+                            <div class="attention-desc" title="${escapeHtml(issueText)}">
                                 ${issueShort}
                             </div>
                             <div class="attention-actions">
@@ -2077,9 +2303,17 @@
                         <td><strong>${escapeHtml(asset.id)}</strong></td>
                         <td>${escapeHtml(asset.category)}</td>
                         <td>${escapeHtml(asset.location)}</td>
-                        <td>${escapeHtml(asset.lastUpdate)}</td>
+                        <td>
+                            ${escapeHtml(asset.lastUpdate)}
+                            <small class="status-source-line">${escapeHtml(asset.statusSource || 'Master Asset')}</small>
+                        </td>
                         <td>${badge}</td>
-                        <td><button style="border:1px solid var(--border); background:#fff; padding:5px; border-radius:4px; cursor:pointer;"><i class="fa-solid fa-eye"></i></button></td>
+                        <td>
+                            <div class="asset-row-actions">
+                                <button type="button" onclick="event.stopPropagation(); openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" title="Lihat detail unit"><i class="fa-solid fa-eye"></i></button>
+                                <button type="button" onclick="event.stopPropagation(); openIntegratedStatusUpdate('${escapeHtml(asset.id)}')" title="Update status efektif"><i class="fa-solid fa-pen-to-square"></i></button>
+                            </div>
+                        </td>
                     </tr>
                 `;
             }).join('');
@@ -2087,8 +2321,9 @@
 
         function renderKanbanCardHtml(wo, statusKey) {
             const isEmergency = wo.priority === 'High';
-            const issueShort = escapeHtml(wo.issue.length > 45 ? wo.issue.substring(0, 45) + '...' : wo.issue);
-            const escapedIssue = escapeHtml(wo.issue).replace(/'/g, "&#039;");
+            const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
+            const issueShort = escapeHtml(issueText.length > 45 ? issueText.substring(0, 45) + '...' : issueText);
+            const escapedIssue = escapeHtml(issueText).replace(/'/g, "&#039;");
             const escapedAsset = escapeHtml(wo.assetId);
 
             return `
@@ -2194,10 +2429,15 @@
 
         function openAssetModal(id, status, category, location, fromModal = null) {
             previousModalId = fromModal;
+            const assetObj = globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null;
             document.getElementById('modalAssetId').textContent = id;
             document.getElementById('modalStatus').textContent = status;
             document.getElementById('modalKategori').textContent = category;
             document.getElementById('modalLokasi').textContent = location;
+            const statusSource = document.getElementById('modalStatusSource');
+            if (statusSource) {
+                statusSource.innerHTML = `<i class="fa-solid fa-link"></i> ${escapeHtml(assetObj?.statusSource || 'Master Asset')} · ${escapeHtml(assetObj?.statusReference || 'Data awal')}`;
+            }
 
             // Populate Specs based on category
             const modelSpec = document.getElementById('modalModelSpec');
@@ -2210,7 +2450,6 @@
                 else modelSpec.innerText = 'Komatsu D85ESS Bulldozer';
             }
             if (hmSpec) {
-                const assetObj = globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null;
                 hmSpec.innerText = (assetObj && assetObj.last_hm_km ? assetObj.last_hm_km : '8.450') + ' Jam';
             }
 
@@ -2388,49 +2627,69 @@
             const loc = document.getElementById('na-loc').value;
             if (!id) return alert('ID harus diisi');
             globalData.assets.unshift({
-                id: id, type: 'Heavy Equipment', category: cat, status: 'READY', location: loc || 'Yard', lastUpdate: 'Baru saja'
+                id: id,
+                type: 'Heavy Equipment',
+                category: cat,
+                status: 'READY',
+                location: loc || 'Yard',
+                lastUpdate: 'Baru saja',
+                statusSource: 'Master Asset',
+                statusReference: 'Registrasi unit baru',
+                statusEvents: []
             });
-            globalData.summary.total_units++;
-            globalData.summary.status_counts['READY']++;
+            rebuildFleetSummary();
             closeModal('modalNewAsset');
             alert('Aset berhasil didaftarkan');
-            refreshAllViews();
+            window.syncFleetState();
         }
 
         function triggerUpdateStatus() {
             const id = document.getElementById('modalAssetId').textContent;
-            document.getElementById('us-id').value = id;
-            document.getElementById('us-id-label').textContent = id;
-            closeModal('assetModal');
-            openModal('modalUpdateStatus');
+            window.openIntegratedStatusUpdate(id);
         }
 
         function submitUpdateStatus() {
             const id = document.getElementById('us-id').value;
             const status = document.getElementById('us-status').value;
             const loc = document.getElementById('us-loc').value;
+            const notes = document.getElementById('us-notes').value.trim();
 
             const asset = globalData.assets.find(a => a.id === id);
             if (asset) {
-                if (globalData.summary.status_counts[asset.status]) globalData.summary.status_counts[asset.status]--;
-                if (globalData.summary.status_counts[status] !== undefined) globalData.summary.status_counts[status]++;
-
-                asset.status = status;
+                const activeWo = globalData.work_orders.find(wo => wo.assetId === asset.id && wo.status !== 'Closed');
+                if (status === 'READY' && activeWo) {
+                    alert(`Unit belum dapat diubah ke READY karena ${activeWo.woId} masih aktif. Tutup Work Order terlebih dahulu.`);
+                    return;
+                }
                 if (loc) asset.location = loc;
-                asset.lastUpdate = 'Baru saja';
+                setIntegratedAssetStatus(id, status, 'Master Asset', 'Update status manual', notes);
 
                 if (status === 'BREAKDOWN') {
-                    const woId = 'WO-26-' + Math.floor(Math.random() * 1000);
-                    globalData.work_orders.unshift({
-                        woId: woId, assetId: asset.id, location: asset.location, issue: document.getElementById('us-notes').value || 'Status diupdate ke Breakdown', downtime: '0', status: 'Open', priority: 'High', assignedTo: 'Pending'
-                    });
-                    alert(`Status diupdate ke BREAKDOWN. Tiket WO darurat dibuat otomatis: ${woId}`);
+                    if (!activeWo) {
+                        const woId = 'WO-26-' + String(Date.now()).slice(-5);
+                        globalData.work_orders.unshift({
+                            woId,
+                            assetId: asset.id,
+                            location: asset.location,
+                            issue: notes || 'Status unit diperbarui menjadi BREAKDOWN dari Master Asset',
+                            downtime: '0 jam',
+                            status: 'Open',
+                            priority: 'High',
+                            assignedTo: 'Pending',
+                            source: 'Master Asset'
+                        });
+                        asset.statusReference = woId;
+                        alert(`Status diupdate ke BREAKDOWN. Tiket WO darurat dibuat otomatis: ${woId}`);
+                    } else {
+                        asset.statusReference = activeWo.woId;
+                        alert(`Status diupdate ke BREAKDOWN dan ditautkan ke WO aktif ${activeWo.woId}.`);
+                    }
                 } else {
                     alert('Status berhasil diupdate');
                 }
             }
             closeModal('modalUpdateStatus');
-            refreshAllViews();
+            window.syncFleetState();
         }
 
         function openNewWOModal() {
@@ -2451,10 +2710,10 @@
             const asset = globalData.assets.find(a => a.id === id);
 
             if (down === 'Yes' && asset && asset.status !== 'BREAKDOWN') {
-                if (globalData.summary.status_counts[asset.status]) globalData.summary.status_counts[asset.status]--;
-                asset.status = 'BREAKDOWN';
-                globalData.summary.status_counts['BREAKDOWN']++;
+                setIntegratedAssetStatus(id, 'BREAKDOWN', 'Work Order', woId, issue);
                 alert(`Unit ${id} otomatis diubah statusnya menjadi BREAKDOWN karena laporan downtime`);
+            } else if (down === 'No' && asset && asset.status === 'READY') {
+                setIntegratedAssetStatus(id, 'STANDBY', 'Work Order', woId, issue);
             }
 
             globalData.work_orders.unshift({
@@ -2463,7 +2722,7 @@
 
             closeModal('modalNewWO');
             alert('Work Order berhasil dibuat');
-            refreshAllViews();
+            window.syncFleetState();
         }
 
         function refreshAllViews() {
@@ -2555,36 +2814,78 @@
         }
 
         function initMonitoringView(assets) {
-            // Filter out 'READY' units, keep BREAKDOWN, INSPEKSI, STANDBY
-            const problematic = assets.filter(a => a.status !== 'READY');
+            const filterEl = document.getElementById('monitoringStatusFilter');
+            const selectedStatus = filterEl ? filterEl.value : 'ALL';
+            const allProblematic = assets.filter(a => a.status !== 'READY');
+            const problematic = selectedStatus === 'ALL'
+                ? allProblematic
+                : allProblematic.filter(asset => asset.status === selectedStatus);
+
+            const summaryEl = document.getElementById('monitoringSummary');
+            if (summaryEl) {
+                const breakdown = allProblematic.filter(a => a.status === 'BREAKDOWN').length;
+                const inspection = allProblematic.filter(a => a.status === 'INSPEKSI').length;
+                const standby = allProblematic.filter(a => a.status === 'STANDBY').length;
+                const activeWos = (globalData?.work_orders || []).filter(wo => wo.status !== 'Closed').length;
+                summaryEl.innerHTML = `
+                    <div><strong>${assets.length}</strong><span>Unit unik</span></div>
+                    <div class="danger"><strong>${breakdown}</strong><span>Breakdown</span></div>
+                    <div class="warning"><strong>${inspection}</strong><span>Perlu P2H</span></div>
+                    <div class="info"><strong>${standby}</strong><span>Standby</span></div>
+                    <div><strong>${activeWos}</strong><span>WO aktif</span></div>
+                `;
+            }
 
             const tbody = document.getElementById('monTableBody');
+            if (!tbody) return;
+            if (problematic.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="monitoring-empty"><i class="fa-solid fa-circle-check"></i> Tidak ada unit untuk filter ini.</td></tr>';
+                return;
+            }
             tbody.innerHTML = problematic.map(asset => {
                 let badge = '';
                 let action = '';
+                const context = getUnitIntegrationContext(asset);
+                const activeWo = context.activeWo;
+                const inspection = context.latestInspection;
+                const source = asset.statusSource || (activeWo ? 'Work Order' : inspection ? 'Inspeksi & P2H' : 'Master Asset');
+                const reference = asset.statusReference || (activeWo ? activeWo.woId : inspection ? inspection.id : 'Data awal');
                 if (asset.status === 'STANDBY') {
                     badge = '<span class="badge bg-standby">STANDBY</span>';
-                    action = '<button class="badge bg-progress" style="border:none; cursor:pointer;" onclick="showView(\'wo\')">Assign WO</button>';
+                    action = `
+                        <button class="integrated-action primary" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Evaluasi Status</button>
+                        <button class="integrated-action" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'form')"><i class="fa-solid fa-clipboard-check"></i> Input P2H</button>`;
                 }
                 else if (asset.status === 'BREAKDOWN') {
                     badge = '<span class="badge bg-breakdown">BREAKDOWN</span>';
-                    action = '<button class="badge bg-danger" style="border:none; cursor:pointer;" onclick="showView(\'wo\')">Cek Mekanik</button>';
+                    action = `
+                        <button class="integrated-action danger" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-screwdriver-wrench"></i> ${activeWo ? escapeHtml(activeWo.woId) : 'Buat WO'}</button>
+                        <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
                 }
                 else if (asset.status === 'INSPEKSI') {
                     badge = '<span class="badge bg-inspeksi">INSPECTION</span>';
-                    action = '<button class="badge bg-draft" style="border:none; cursor:pointer;" onclick="alert(\'Menunggu verifikasi inspector\')">Review P2H</button>';
+                    action = `
+                        <button class="integrated-action warning" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'history')"><i class="fa-solid fa-clipboard-check"></i> Review P2H</button>
+                        ${activeWo ? `<button class="integrated-action" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-wrench"></i> ${escapeHtml(activeWo.woId)}</button>` : `<button class="integrated-action" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'form')"><i class="fa-solid fa-plus"></i> Inspeksi</button>`}`;
                 }
 
                 return `
-                    <tr>
-                        <td><strong>${escapeHtml(asset.id)}</strong></td>
+                    <tr class="monitoring-unit-row">
+                        <td>
+                            <button class="unit-link-button" onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')">${escapeHtml(asset.id)}</button>
+                            <small>${escapeHtml(asset.lastUpdate || 'Belum ada waktu update')}</small>
+                        </td>
                         <td>${escapeHtml(asset.category)}</td>
                         <td>${escapeHtml(asset.location)}</td>
-                        <td>${badge}</td>
-                        <td>${action}</td>
+                        <td>
+                            ${badge}
+                            <span class="status-source-line"><i class="fa-solid fa-link"></i> ${escapeHtml(source)} · ${escapeHtml(reference)}</span>
+                        </td>
+                        <td><div class="integrated-actions">${action}</div></td>
                     </tr>
                 `;
             }).join('');
+            searchTableMonitoring();
         }
 
         function searchTableMonitoring() {

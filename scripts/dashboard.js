@@ -10286,14 +10286,14 @@
         {
             id: 'P2H-20260727-001',
             date: '2026-07-27 06:45',
-            unitId: 'EXC-201',
+            unitId: 'DT-00027 - B 9136 ZYT',
             category: 'Excavator',
             operator: 'Budi Santoso',
             nrp: 'OP-BRA-089',
             site: 'Yard Duri',
             hmStart: 8450.0,
             hmEnd: 8458.5,
-            status: 'LULUS (PASS)',
+            status: 'LULUS DENGAN CATATAN',
             criticalFails: 0,
             warnings: 1,
             notes: 'Semua item kritikal normal. Ditemukan baut cover pelindung agak kendur, sudah dikencangkan.',
@@ -10302,8 +10302,8 @@
         {
             id: 'P2H-20260727-002',
             date: '2026-07-27 07:10',
-            unitId: 'DT-054',
-            category: 'Dump Truck',
+            unitId: 'DT-00050 - B 9105 ZYT',
+            category: 'Excavator',
             operator: 'Rudi Hermawan',
             nrp: 'OP-BRA-112',
             site: 'Borrow Pit',
@@ -10318,8 +10318,8 @@
         {
             id: 'P2H-20260726-003',
             date: '2026-07-26 16:30',
-            unitId: 'SD-101',
-            category: 'Compactor',
+            unitId: 'DT-04024 - BM 9285 JO',
+            category: 'Excavator',
             operator: 'Ahmad Dahlan',
             nrp: 'OP-BRA-045',
             site: 'Site Alpha',
@@ -10769,29 +10769,57 @@
             if (targetAsset) {
                 targetAsset.last_hm_km = hmEnd;
                 if (isCriticalFail) {
-                    targetAsset.status = 'INSPEKSI';
+                    if (window.setIntegratedAssetStatus) {
+                        window.setIntegratedAssetStatus(assetId, 'BREAKDOWN', 'Inspeksi & P2H', newP2H.id, newP2H.notes);
+                    } else {
+                        targetAsset.status = 'BREAKDOWN';
+                    }
+                } else if (warningsCount > 0) {
+                    const hasBlockingWo = (window.globalData.work_orders || []).some(wo =>
+                        wo.assetId === assetId && wo.status !== 'Closed' && targetAsset.status === 'BREAKDOWN'
+                    );
+                    if (!hasBlockingWo) {
+                        if (window.setIntegratedAssetStatus) {
+                            window.setIntegratedAssetStatus(assetId, 'INSPEKSI', 'Inspeksi & P2H', newP2H.id, newP2H.notes);
+                        } else {
+                            targetAsset.status = 'INSPEKSI';
+                        }
+                    }
+                } else {
+                    const hasActiveWo = (window.globalData.work_orders || []).some(wo => wo.assetId === assetId && wo.status !== 'Closed');
+                    if (!hasActiveWo) {
+                        if (window.setIntegratedAssetStatus) {
+                            window.setIntegratedAssetStatus(assetId, 'READY', 'Inspeksi & P2H', newP2H.id, 'P2H lulus tanpa temuan aktif.');
+                        } else {
+                            targetAsset.status = 'READY';
+                        }
+                    }
                 }
             }
 
             // AUTO-WORK ORDER TRIGGER RULE ENGINE
             if (isCriticalFail) {
-                const autoWoId = 'WO-P2H-' + Math.floor(1000 + Math.random() * 9000);
-                const autoWo = {
-                    woId: autoWoId,
-                    assetId: assetId,
-                    date: new Date().toISOString().slice(0, 10),
-                    status: 'Open',
-                    priority: 'High',
-                    type: 'Breakdown / Inspection Finding',
-                    description: `[AUTO-WO VIA P2H] Unit ditahan akibat temuan kritikal pada P2H (${newP2H.id}). Temuan: ${failedItemsList.join('; ')}`,
-                    downtime: 0,
-                    assignedTo: 'Mekanik Shift 1',
-                    source: 'P2H Trigger'
-                };
                 if (!window.globalData.work_orders) window.globalData.work_orders = [];
-                window.globalData.work_orders.unshift(autoWo);
+                const existingWo = window.globalData.work_orders.find(wo => wo.assetId === assetId && wo.status !== 'Closed');
+                const autoWoId = existingWo ? existingWo.woId : 'WO-P2H-' + Math.floor(1000 + Math.random() * 9000);
+                if (!existingWo) {
+                    window.globalData.work_orders.unshift({
+                        woId: autoWoId,
+                        assetId: assetId,
+                        date: new Date().toISOString().slice(0, 10),
+                        status: 'Open',
+                        priority: 'High',
+                        type: 'Breakdown / Inspection Finding',
+                        description: `[AUTO-WO VIA P2H] Unit ditahan akibat temuan kritikal pada P2H (${newP2H.id}). Temuan: ${failedItemsList.join('; ')}`,
+                        issue: `[AUTO-WO VIA P2H] Unit ditahan akibat temuan kritikal pada P2H (${newP2H.id}). Temuan: ${failedItemsList.join('; ')}`,
+                        downtime: 0,
+                        assignedTo: 'Mekanik Shift 1',
+                        source: 'P2H Trigger'
+                    });
+                }
+                if (targetAsset) targetAsset.statusReference = autoWoId;
 
-                alert(`⚠️ WARN / ATENSI AUTO-WO!\n\nP2H Ditolak karena ditemukan ${criticalFailsCount} item temuan KRITIKAL!\n\nSistem otomatis:\n1. Mengubah status unit ${assetId} -> 'INSPEKSI / BREAKDOWN'\n2. Membuat Tiket Work Order Darurat #${autoWoId}`);
+                alert(`⚠️ ATENSI AUTO-WO!\n\nP2H ditolak karena ditemukan ${criticalFailsCount} item kritikal.\n\nSistem otomatis:\n1. Mengubah status unit ${assetId} menjadi BREAKDOWN\n2. ${existingWo ? 'Menautkan temuan ke Work Order aktif' : 'Membuat tiket Work Order darurat'} #${autoWoId}`);
             } else {
                 alert(`✅ Successful!\n\nForm P2H #${newP2H.id} untuk unit ${assetId} berhasil disimpan dengan status: ${statusLabel}.`);
             }
@@ -10801,6 +10829,7 @@
 
         renderHistoryTable();
         updateKpiSummary();
+        window.syncFleetState?.({ refreshInspection: false });
         window.switchP2HTab('history');
     };
 
@@ -10946,6 +10975,37 @@
         link.download = `Laporan_P2H_PT_BRA_${new Date().toISOString().slice(0,10)}.csv`;
         link.click();
         alert('Laporan Rekapitulasi P2H berhasil di-export ke format CSV.');
+    };
+
+    window.FleetInspectionModule = {
+        refresh() {
+            if (window.globalData) {
+                if (!Array.isArray(window.globalData.inspections)) {
+                    window.globalData.inspections = [...inspectionHistory];
+                }
+                populateAssetDropdown();
+                renderHistoryTable();
+                updateKpiSummary();
+            }
+        },
+        openForAsset(assetId, mode = 'history') {
+            this.refresh();
+            if (mode === 'form') {
+                window.switchP2HTab('form');
+                const select = document.getElementById('p2hFormAssetSelect');
+                if (select) {
+                    select.value = assetId;
+                    window.onP2HAssetSelectChange(assetId);
+                }
+                return;
+            }
+            window.switchP2HTab('history');
+            const search = document.getElementById('searchP2HHistory');
+            if (search) {
+                search.value = assetId;
+                window.filterP2HHistoryTable();
+            }
+        }
     };
 
     function escapeHtml(unsafe) {
