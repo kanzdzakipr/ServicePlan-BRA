@@ -1,0 +1,586 @@
+/* MaintainX Dedicated Design System for Coba agung/dashboard copy (agung coba).html */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #1686fb;
+    --primary-hover: #0875e7;
+    --primary-soft: #eaf4ff;
+    --navy: #071e3d;
+    --navy-header: #0b2545;
+    --heading: #111827;
+    --body: #475467;
+    --muted: #667085;
+    --soft-muted: #98a2b3;
+    --bg-main: #f5f8fb;
+    --surface: #ffffff;
+    --border: #e3e8ef;
+    --border-subtle: #f0f4f8;
+    
+    --success: #17b26a;
+    --success-bg: #ecfdf3;
+    --success-text: #027a48;
+
+    --warning: #f79009;
+    --warning-bg: #fffaeb;
+    --warning-text: #b54708;
+
+    --danger: #f04438;
+    --danger-bg: #fef3f2;
+    --danger-text: #b42318;
+
+    --info: #0284c7;
+    --info-bg: #f0f9ff;
+    --info-text: #026aa2;
+
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 76px;
+    --header-height: 64px;
+    --nav-item-height: 44px;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --shadow-md: 0 2px 6px rgba(16, 24, 40, 0.04), 0 8px 16px rgba(16, 24, 40, 0.04);
+    --shadow-lg: 0 4px 12px rgba(16, 24, 40, 0.06), 0 16px 32px rgba(16, 24, 40, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    background-color: var(--bg-main) !important;
+    color: var(--heading) !important;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Sidebar Styling (MaintainX Enterprise Navy) */
+.sidebar {
+    flex: 0 0 var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    width: var(--sidebar-width);
+    background-color: var(--navy) !important;
+    color: #94a3b8 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: flex-basis 0.3s, min-width 0.3s, width 0.3s;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.sidebar-header {
+    align-items: center;
+    background-color: var(--navy-header) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    display: flex;
+    flex: 0 0 var(--header-height);
+    height: var(--header-height);
+    justify-content: flex-start;
+    min-height: var(--header-height);
+    padding: 0 20px;
+    white-space: nowrap;
+    gap: 12px;
+}
+
+.sidebar-header i {
+    color: var(--primary) !important;
+    font-size: 1.35rem;
+}
+
+.brand-label {
+    letter-spacing: -0.01em;
+    font-weight: 700 !important;
+    font-size: 1.15rem !important;
+    color: #ffffff !important;
+}
+
+.sidebar-menu {
+    list-style: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-grow: 1;
+    padding: 12px 10px;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-width: thin;
+}
+
+.sidebar-menu li {
+    margin-bottom: 3px;
+}
+
+.sidebar-menu li a {
+    align-items: center;
+    border-left: 3px solid transparent !important;
+    border-radius: var(--radius-sm) !important;
+    color: #94a3b8 !important;
+    cursor: pointer;
+    display: flex;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    height: var(--nav-item-height);
+    min-height: var(--nav-item-height);
+    padding: 0 14px !important;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.sidebar-menu li a i {
+    flex: 0 0 24px;
+    font-size: 0.98rem !important;
+    margin-right: 12px !important;
+    text-align: center;
+    width: 24px;
+    transition: color 0.2s;
+}
+
+.sidebar-menu li a:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: #f8fafc !important;
+}
+
+.sidebar-menu li a.active {
+    background-color: rgba(22, 134, 251, 0.15) !important;
+    color: #ffffff !important;
+    border-left-color: var(--primary) !important;
+    font-weight: 600 !important;
+}
+
+.sidebar-menu li a.active i {
+    color: var(--primary) !important;
+}
+
+/* Main Wrapper & Top Header */
+.main-wrapper {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.top-header {
+    background-color: #ffffff !important;
+    flex: 0 0 var(--header-height);
+    height: var(--header-height);
+    min-height: var(--header-height);
+    padding: 0 24px !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border) !important;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03) !important;
+}
+
+.search-bar input {
+    padding: 9px 16px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-full) !important;
+    width: 260px !important;
+    outline: none;
+    font-size: 0.875rem !important;
+    background: var(--bg-main) !important;
+    color: var(--heading) !important;
+    transition: all 0.2s ease;
+}
+
+.search-bar input:focus {
+    background: #ffffff !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(22, 134, 251, 0.15) !important;
+}
+
+.dropdown select {
+    padding: 8px 14px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    background: #ffffff !important;
+    outline: none;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: var(--heading) !important;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.dropdown select:focus {
+    border-color: var(--primary) !important;
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    color: var(--heading) !important;
+}
+
+.profile img {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    border: 2px solid var(--primary-soft) !important;
+}
+
+/* Content & Section */
+.content {
+    padding: 24px !important;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-width: 0;
+    position: relative;
+    width: 100%;
+}
+
+.page-title {
+    margin-bottom: 24px !important;
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    color: var(--heading) !important;
+}
+
+.panel {
+    background: #ffffff !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-md) !important;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 24px !important;
+    transition: box-shadow 0.2s ease;
+}
+
+.panel-header {
+    padding: 16px 20px !important;
+    border-bottom: 1px solid var(--border) !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    color: var(--heading) !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-body {
+    padding: 20px !important;
+    flex-grow: 1;
+}
+
+/* KPI Cards (MaintainX Floating Status Style) */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px !important;
+    margin-bottom: 24px !important;
+}
+
+.kpi-card {
+    background: #ffffff !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 18px 20px 32px 20px !important;
+    box-shadow: var(--shadow-md) !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--border) !important;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.kpi-card:hover {
+    box-shadow: var(--shadow-lg) !important;
+    transform: translateY(-2px) !important;
+}
+
+.kpi-card.total {
+    border-left-color: var(--navy) !important;
+}
+
+.kpi-card.operating {
+    border-left-color: var(--success) !important;
+}
+
+.kpi-card.standby {
+    border-left-color: var(--info) !important;
+}
+
+.kpi-card.breakdown {
+    border-left-color: var(--danger) !important;
+}
+
+.kpi-card.pm {
+    border-left-color: var(--warning) !important;
+}
+
+.kpi-info h3 {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    color: var(--muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    margin-bottom: 6px !important;
+}
+
+.kpi-info .value {
+    font-size: 1.85rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    color: var(--heading) !important;
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--bg-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kpi-icon i {
+    font-size: 1.35rem !important;
+    color: var(--muted) !important;
+}
+
+.kpi-action-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: var(--primary) !important;
+    background: var(--primary-soft) !important;
+    padding: 3px 12px !important;
+    border: none;
+    border-radius: var(--radius-full) !important;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 10;
+}
+
+.kpi-action-btn:hover {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+}
+
+/* Tables (MaintainX Asset Table Style) */
+.table-responsive {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem !important;
+}
+
+th,
+td {
+    padding: 13px 16px !important;
+    text-align: left;
+    border-bottom: 1px solid var(--border) !important;
+}
+
+th {
+    background-color: #f8fafc !important;
+    font-weight: 600 !important;
+    color: var(--muted) !important;
+    font-size: 0.78rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+}
+
+tr:hover {
+    background-color: #f6faff !important;
+    cursor: pointer;
+}
+
+/* Status Badges */
+.badge {
+    padding: 4px 12px !important;
+    border-radius: var(--radius-full) !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bg-operating {
+    background-color: var(--success-bg) !important;
+    color: var(--success-text) !important;
+}
+
+.bg-breakdown {
+    background-color: var(--danger-bg) !important;
+    color: var(--danger-text) !important;
+}
+
+.bg-standby {
+    background-color: var(--info-bg) !important;
+    color: var(--info-text) !important;
+}
+
+.bg-inspeksi {
+    background-color: var(--warning-bg) !important;
+    color: var(--warning-text) !important;
+}
+
+.bg-draft {
+    background-color: #f2f4f7 !important;
+    color: #344054 !important;
+}
+
+.bg-progress {
+    background-color: #eff8ff !important;
+    color: #175cd3 !important;
+}
+
+/* Form Controls & Buttons */
+.form-group label {
+    display: block;
+    margin-bottom: 6px !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    color: var(--heading) !important;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 14px !important;
+    border: 1px solid #d0d5dd !important;
+    border-radius: var(--radius-md) !important;
+    margin-bottom: 16px !important;
+    outline: none;
+    font-size: 0.88rem !important;
+    font-family: inherit;
+    color: var(--heading) !important;
+    background-color: #ffffff !important;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(22, 134, 251, 0.15) !important;
+}
+
+.btn {
+    padding: 10px 20px !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--radius-md) !important;
+    cursor: pointer;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(22, 134, 251, 0.25) !important;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-danger {
+    background: var(--danger) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(240, 68, 56, 0.25) !important;
+}
+
+.btn-danger:hover {
+    background: #d92d20 !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-success {
+    background: var(--success) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(23, 178, 106, 0.25) !important;
+}
+
+.btn-success:hover {
+    background: #129051 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Kanban Board */
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+}
+
+.kanban-column {
+    background: #f8fafc !important;
+    border-radius: var(--radius-lg) !important;
+    min-width: 300px;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    padding: 16px !important;
+    border: 1px solid var(--border) !important;
+}
+
+.kanban-column h3 {
+    font-size: 0.92rem !important;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted) !important;
+    font-weight: 600 !important;
+}
+
+.kanban-card {
+    background: #ffffff !important;
+    border-radius: var(--radius-md) !important;
+    padding: 16px !important;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm) !important;
+    border: 1px solid var(--border) !important;
+    border-left: 4px solid var(--primary) !important;
+    transition: all 0.2s ease;
+}
+
+.kanban-card:hover {
+    box-shadow: var(--shadow-md) !important;
+}
+
+.kanban-card.High {
+    border-left-color: var(--danger) !important;
+}
+
+.kanban-card-title {
+    font-weight: 600 !important;
+    margin-bottom: 6px;
+    color: var(--heading) !important;
+}
