@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logo-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-8">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-11">
     
 </head>
 
@@ -61,12 +61,14 @@
                     title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE /
                         Accident</span></a></li>
             <li class="sidebar-menu-group" id="reports-menu-group">
-                <a onclick="openReportPanel('templates')" id="menu-reports" class="reports-parent-link" role="button"
-                    tabindex="0" title="Laporan & Form" aria-haspopup="true">
+                <a onclick="toggleReportsMenu(event)" id="menu-reports" class="reports-parent-link" role="button"
+                    tabindex="0" title="Laporan & Form" aria-haspopup="true" aria-expanded="false"
+                    aria-controls="reports-submenu">
                     <i class="fa-solid fa-file-invoice"></i><span class="nav-label">Laporan & Form</span>
                     <i class="fa-solid fa-chevron-down reports-menu-toggle" aria-hidden="true"></i>
                 </a>
-                <ul class="sidebar-submenu" aria-label="Submenu Laporan & Form">
+                <ul class="sidebar-submenu" id="reports-submenu" aria-label="Submenu Laporan & Form"
+                    aria-hidden="true">
                     <li><a onclick="openReportPanel('templates')" id="menu-reports-templates" role="button" tabindex="0"
                             data-report-sidebar-panel="templates" title="Template Form">
                             <i class="fa-regular fa-file-lines"></i><span class="nav-label">Template Form</span>
@@ -364,30 +366,6 @@
 
             <!-- VIEW: LAPORAN & FORM -->
             <div id="view-reports" class="view-section">
-                <section class="manual-report-entry" aria-labelledby="manualReportEntryTitle">
-                    <div class="manual-report-entry-icon" aria-hidden="true">
-                        <i class="fa-solid fa-file-import"></i>
-                    </div>
-                    <div class="manual-report-entry-copy">
-                        <span class="manual-report-entry-label">Integrasi laporan mekanik</span>
-                        <h1 id="manualReportEntryTitle">Laporan manual Cutting Bit dapat dibaca langsung</h1>
-                        <p>
-                            Impor laporan Markdown RM XCMG BRR-RM-4101 atau CAT RM500 BRR-RM-4102.
-                            Identitas unit, planning, actual, dan safety stock akan dipetakan ke form CB-RM
-                            untuk ditinjau sebelum disimpan.
-                        </p>
-                        <div class="manual-report-flow" aria-label="Alur impor laporan">
-                            <span><b>1</b> Pilih file</span>
-                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-                            <span><b>2</b> Review pemetaan</span>
-                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-                            <span><b>3</b> Buat draft</span>
-                        </div>
-                    </div>
-                    <button class="manual-report-entry-action" type="button" onclick="openReportPanel('import')">
-                        <i class="fa-solid fa-upload"></i> Impor Laporan Mekanik
-                    </button>
-                </section>
                 <div id="reportModule"></div>
             </div>
 
@@ -3012,6 +2990,91 @@
             });
         }
 
+        const REPORTS_MENU_STATE_KEY = 'fleetmonitor-reports-menu-expanded';
+        const reportsMenuMedia = window.matchMedia('(max-width: 900px)');
+
+        function positionReportsFlyout() {
+            const group = document.getElementById('reports-menu-group');
+            const parent = document.getElementById('menu-reports');
+            const submenu = document.getElementById('reports-submenu');
+            if (!group || !parent || !submenu || !reportsMenuMedia.matches || !group.classList.contains('is-open')) {
+                submenu?.style.removeProperty('--reports-flyout-top');
+                return;
+            }
+            const rect = parent.getBoundingClientRect();
+            const flyoutHeight = Math.min(154, window.innerHeight - 16);
+            const top = Math.max(8, Math.min(rect.top, window.innerHeight - flyoutHeight - 8));
+            submenu.style.setProperty('--reports-flyout-top', `${Math.round(top)}px`);
+        }
+
+        function setReportsMenuExpanded(expanded, options = {}) {
+            const group = document.getElementById('reports-menu-group');
+            const parent = document.getElementById('menu-reports');
+            const submenu = document.getElementById('reports-submenu');
+            if (!group || !parent || !submenu) return;
+
+            const isExpanded = Boolean(expanded);
+            group.classList.toggle('is-open', isExpanded);
+            parent.setAttribute('aria-expanded', String(isExpanded));
+            submenu.setAttribute('aria-hidden', String(!isExpanded));
+            submenu.querySelectorAll('a[role="button"]').forEach(item => {
+                item.tabIndex = isExpanded ? 0 : -1;
+            });
+
+            if (options.persist !== false) {
+                try {
+                    localStorage.setItem(REPORTS_MENU_STATE_KEY, String(isExpanded));
+                } catch (error) {
+                    console.warn('Status menu Laporan & Form tidak dapat disimpan:', error);
+                }
+            }
+
+            if (isExpanded) {
+                requestAnimationFrame(() => {
+                    positionReportsFlyout();
+                    if (options.focusFirst) submenu.querySelector('a[role="button"]')?.focus();
+                });
+            } else {
+                submenu.style.removeProperty('--reports-flyout-top');
+                if (options.restoreFocus) parent.focus();
+            }
+        }
+
+        function toggleReportsMenu(event) {
+            event?.preventDefault();
+            event?.stopPropagation();
+            const group = document.getElementById('reports-menu-group');
+            setReportsMenuExpanded(!group?.classList.contains('is-open'));
+        }
+
+        function initializeReportsMenu() {
+            let storedOpen = false;
+            try {
+                storedOpen = localStorage.getItem(REPORTS_MENU_STATE_KEY) === 'true';
+            } catch (error) {
+                storedOpen = false;
+            }
+            const reportsRouteActive = /^#reports(?:\/|$)/i.test(window.location.hash);
+            setReportsMenuExpanded(reportsRouteActive || (!reportsMenuMedia.matches && storedOpen), { persist: false });
+
+            document.getElementById('menu-reports')?.addEventListener('keydown', event => {
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    setReportsMenuExpanded(true, { focusFirst: true });
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    setReportsMenuExpanded(false, { restoreFocus: true });
+                }
+            });
+
+            document.getElementById('reports-submenu')?.addEventListener('keydown', event => {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    setReportsMenuExpanded(false, { restoreFocus: true });
+                }
+            });
+        }
+
         function syncReportSidebarPanel(panel = 'templates') {
             const normalizedPanel = ['templates', 'import', 'history'].includes(panel)
                 ? panel
@@ -3029,6 +3092,7 @@
             showView('reports', '', 'menu-reports');
             window.FleetReportForms?.selectPanel(panel);
             syncReportSidebarPanel(panel);
+            if (reportsMenuMedia.matches) setReportsMenuExpanded(false, { persist: false });
         }
 
         function showView(viewName, title = '', menuId = '') {
@@ -3061,6 +3125,7 @@
                 window.ConditionMonitoring.refresh();
             }
             if (viewName === 'reports') {
+                if (!reportsMenuMedia.matches) setReportsMenuExpanded(true, { persist: false });
                 if (!/^#reports(?:\/|$)/i.test(window.location.hash)) {
                     window.history.replaceState(null, '', '#reports');
                     window.FleetReportForms?.selectPanel('templates');
@@ -3075,9 +3140,26 @@
 
         document.addEventListener('click', event => {
             const reportTab = event.target.closest('[data-report-panel]');
-            if (!reportTab) return;
-            syncReportSidebarPanel(reportTab.dataset.reportPanel);
+            if (reportTab) syncReportSidebarPanel(reportTab.dataset.reportPanel);
+
+            if (reportsMenuMedia.matches
+                && document.getElementById('reports-menu-group')?.classList.contains('is-open')
+                && !event.target.closest('#reports-menu-group')) {
+                setReportsMenuExpanded(false, { persist: false });
+            }
         });
+
+        window.addEventListener('resize', positionReportsFlyout);
+        reportsMenuMedia.addEventListener?.('change', () => {
+            const group = document.getElementById('reports-menu-group');
+            if (reportsMenuMedia.matches && !/^#reports(?:\/|$)/i.test(window.location.hash)) {
+                setReportsMenuExpanded(false, { persist: false });
+            } else if (group?.classList.contains('is-open')) {
+                positionReportsFlyout();
+            }
+        });
+
+        initializeReportsMenu();
 
         document.querySelectorAll('.sidebar-menu a[role="button"]').forEach(menuItem => {
             menuItem.addEventListener('keydown', event => {
@@ -4387,7 +4469,7 @@
     <script src="scripts/vendor/jszip-3.10.1.min.js"></script>
     <script src="scripts/vendor/pdf-3.11.174.min.js"></script>
     <script src="scripts/vendor/tesseract-5.1.1.min.js"></script>
-    <script src="scripts/dashboard.js?v=20260729-3"></script>
+    <script src="scripts/dashboard.js?v=20260729-4"></script>
 </body>
 
 </html>

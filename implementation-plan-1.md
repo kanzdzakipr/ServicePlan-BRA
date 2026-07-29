@@ -333,7 +333,7 @@ CREATE TABLE purchase_requests (
 ### 3.8 Condition Monitoring (`#view-condition`)
 
 #### A. Analisis & Scope HTML (`dashboard.html`)
-Condition Monitoring merupakan halaman kerja per-unit, bukan lagi sketsa ban yang berdiri sendiri. Selector menggunakan `asset.id` asli sebagai foreign key lintas modul, sedangkan prefix lambung (`DT-*`, `RM-*`, dan lain-lain) hanya dipakai untuk memilih layout/form yang relevan. Halaman terdiri dari identitas unit, health score, status empat domain, tab inspeksi, audit trail, serta tombol tindak lanjut.
+Condition Monitoring merupakan halaman tabulasi unit dan popup kerja per-unit, bukan lagi sketsa ban atau dropdown aset yang berdiri sendiri. Halaman utama mengikuti pola Inspeksi & P2H: KPI, pencarian/filter, tabel satu baris per kode lambung, dan tombol **Detail**. Popup Detail tetap menggunakan `asset.id` asli sebagai foreign key lintas modul, sedangkan prefix lambung (`DT-*`, `RM-*`, dan lain-lain) hanya dipakai untuk deduplikasi tampilan dan memilih layout/form yang relevan.
 
 #### B. Pemahaman Alur Bisnis & Aturan Sistem
 Acuan data berasal dari `material/BAN-GREASE-CUTTING_BIT-AKI/` dan dokumen mentah di `raw-material/BAN, GREASE, CUTTING BIT, AKI/`.
@@ -346,8 +346,11 @@ Acuan data berasal dari `material/BAN-GREASE-CUTTING_BIT-AKI/` dan dokumen menta
 
 #### C. Spesifikasi Teknis Frontend
 
-* Selector unit dilengkapi pencarian ID/kategori/lokasi dan menyimpan unit terpilih.
-* Ringkasan empat domain: Ban/Undercarriage, Grease, Cutting Bit, dan Aki; setiap kartu membuka form terkait.
+* Halaman utama menampilkan KPI jumlah unit tertabulasi, kondisi kritis, perhatian, dan aman.
+* Pencarian/filter tabel mengikuti pola P2H; kode lambung yang berulang pada master data ditampilkan satu kali, tetapi tetap membawa `asset.id` representatif dan fallback linkage berdasarkan kode lambung.
+* Kolom tabel menampilkan status Ban, Grease, Cutting Bit, Aki, inspeksi terakhir, WO aktif, dan tombol **Detail**.
+* Tombol **Detail** membuka popup ber-z-index tinggi; selector Ringkasan, Ban, Grease, Cutting Bit, Aki, serta Riwayat ditempatkan seluruhnya di dalam popup.
+* Ringkasan empat domain di popup dapat diklik untuk membuka form terkait.
 * Skematik ban adaptif: 10 posisi untuk dump truck dan 4 posisi untuk unit roda lain. Z-level ditetapkan: chassis `z-index:1`, ban `z-index:3`, ban terpilih `z-index:20`.
 * Form ban mencatat tread, PSI, kerusakan fisik, pola aus, dan rekomendasi.
 * Form grease mencatat HM, interval, jenis/jumlah grease, titik pelumasan, dan catatan mekanik.
