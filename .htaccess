@@ -21,8 +21,8 @@ DirectoryIndex dashboard.html index.html index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Block access to raw-material and arsip folders (material/ unblocked temporarily)
-    RewriteRule ^(raw-material|arsip)/ - [F,L]
+    # Block access to arsip folder (material/ & raw-material/ unblocked temporarily)
+    RewriteRule ^(arsip)/ - [F,L]
 
     # Block access to core backend PHP class folders & internal configs
     RewriteRule ^(core|config|models)/ - [F,L]
