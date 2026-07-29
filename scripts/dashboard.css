@@ -7465,6 +7465,54 @@
     box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3) !important;
 }
 
+.kanban-card[data-wo-id] {
+    user-select: none;
+    -webkit-user-drag: none;
+    touch-action: none;
+}
+
+.wo-pointer-drag-active,
+.wo-pointer-drag-active * {
+    cursor: grabbing !important;
+}
+
+.wo-pointer-drag-ghost {
+    position: fixed !important;
+    z-index: 999998 !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+    opacity: 0.92 !important;
+    transform: rotate(1deg) !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.28) !important;
+}
+
+.wo-card-status-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.wo-card-status-select {
+    width: 104px;
+    min-height: 27px;
+    padding: 3px 22px 3px 7px;
+    border: 1px solid #bfdbfe;
+    border-radius: 5px;
+    background: #eff6ff;
+    color: var(--primary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.wo-card-drag-label {
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 .kanban-column.drag-over {
     background: #eef2ff !important;
     border: 2px dashed var(--primary) !important;
