@@ -3691,6 +3691,9 @@
         const assets = allAssets();
         if (!assets.length) return null;
         let asset = assets.find(item => item.id === state.selectedAssetId);
+        if (!asset && state.selectedAssetId && typeof window.resolveAsset === 'function') {
+            asset = window.resolveAsset(state.selectedAssetId);
+        }
         if (!asset) {
             asset = assets.find(item => shortCode(item.id) === 'DT-04042')
                 || assets.find(item => /^DT-/i.test(item.id))
@@ -3983,7 +3986,7 @@
                                     <td>${conditionCell(summary.statuses.battery, `${fmt(profile.battery.voltage)} V · ${fmt(profile.battery.cca, 0)}%`)}</td>
                                     <td>${latest ? `<strong>${esc(formatDate(latest.at))}</strong><small>${esc(latest.domain)} · ${statusLabel(latest.status)}</small>` : '<span class="cm-no-record">Belum ada input baru</span>'}</td>
                                     <td>${activeWo ? `<button class="cm-wo-link" type="button" onclick="ConditionMonitoring.openLinkedWO('${esc(asset.id)}')"><i class="fa-solid fa-wrench"></i>${esc(activeWo.woId)}</button>` : `<span class="cm-overall-chip ${overall}">${statusLabel(overall)}</span>`}</td>
-                                    <td><button class="cm-detail-button" type="button" onclick="ConditionMonitoring.openDetail('${esc(asset.id)}')"><i class="fa-solid fa-eye"></i> Detail</button></td>
+                                    <td><button class="cm-detail-button" type="button" data-asset-id="${esc(asset.id)}" onclick="window.ConditionMonitoring && window.ConditionMonitoring.openDetail('${esc(asset.id)}'); event.stopPropagation();"><i class="fa-solid fa-eye"></i> Detail</button></td>
                                 </tr>`;
                             }).join('') : '<tr><td colspan="9" class="cm-empty-cell">Tidak ada unit yang sesuai dengan pencarian dan filter.</td></tr>'}
                         </tbody>
@@ -3997,57 +4000,84 @@
     }
 
     function renderDetailModal(asset, profile, summary) {
-        const activeWo = findActiveWo(asset.id);
-        return `
-            <div class="cm-detail-overlay" role="dialog" aria-modal="true" aria-label="Detail Condition Monitoring ${esc(shortCode(asset.id))}" onclick="ConditionMonitoring.handleOverlayClick(event)">
-                <div class="cm-detail-dialog">
-                    <header class="cm-detail-header">
-                        <div class="cm-detail-title">
-                            <span class="cm-unit-avatar"><i class="fa-solid ${supportsCuttingBit(asset) ? 'fa-road' : isDumpTruck(asset) ? 'fa-truck-moving' : 'fa-tractor'}"></i></span>
-                            <div><small>DETAIL CONDITION MONITORING</small><h2>${esc(shortCode(asset.id))}</h2><p>${esc(assetType(asset))} · ${esc(asset.location || 'Lokasi belum ditetapkan')}</p></div>
+        try {
+            const activeWo = findActiveWo(asset.id);
+            return `
+                <div class="cm-detail-overlay" role="dialog" aria-modal="true" aria-label="Detail Condition Monitoring ${esc(shortCode(asset.id))}" onclick="ConditionMonitoring.handleOverlayClick(event)">
+                    <div class="cm-detail-dialog">
+                        <header class="cm-detail-header">
+                            <div class="cm-detail-title">
+                                <span class="cm-unit-avatar"><i class="fa-solid ${supportsCuttingBit(asset) ? 'fa-road' : isDumpTruck(asset) ? 'fa-truck-moving' : 'fa-tractor'}"></i></span>
+                                <div><small>DETAIL CONDITION MONITORING</small><h2>${esc(shortCode(asset.id))}</h2><p>${esc(assetType(asset))} · ${esc(asset.location || 'Lokasi belum ditetapkan')}</p></div>
+                            </div>
+                            <div class="cm-detail-header-actions">
+                                <button type="button" onclick="ConditionMonitoring.openAsset()" title="Buka Asset 360°"><i class="fa-solid fa-truck"></i><span>Aset 360°</span></button>
+                                <button type="button" onclick="ConditionMonitoring.openP2H()" title="Buka P2H unit"><i class="fa-solid fa-clipboard-check"></i><span>P2H</span></button>
+                                <button type="button" class="${activeWo ? 'danger' : ''}" onclick="ConditionMonitoring.openOrCreateWO()" title="Buka atau buat Work Order"><i class="fa-solid fa-wrench"></i><span>${activeWo ? esc(activeWo.woId) : 'Buat WO'}</span></button>
+                                <button class="cm-detail-close" type="button" onclick="ConditionMonitoring.closeDetail()" aria-label="Tutup detail">&times;</button>
+                            </div>
+                        </header>
+                        <div class="cm-detail-scroll">
+                            ${state.notice ? `<div class="cm-notice ${esc(state.notice.type)}"><i class="fa-solid ${state.notice.type === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i><span>${esc(state.notice.text)}</span><button type="button" onclick="ConditionMonitoring.dismissNotice()" aria-label="Tutup">&times;</button></div>` : ''}
+                            <section class="cm-detail-summary">
+                                <div><span>Status aset</span><strong class="cm-asset-status ${esc(String(asset.status || 'READY').toLowerCase())}">${esc(asset.status || 'READY')}</strong></div>
+                                <div><span>Health score</span><strong>${summary ? summary.score : 100}<small>/100</small></strong></div>
+                                <div><span>Tindak lanjut</span><strong>${summary ? summary.critical : 0} kritis · ${summary ? summary.warning : 0} perhatian</strong></div>
+                                <div><span>WO aktif</span><strong>${activeWo ? esc(activeWo.woId) : 'Tidak ada'}</strong></div>
+                            </section>
+                            <section class="cm-domain-kpis">
+                                ${renderDomainKpi('tire', 'Ban / Undercarriage', 'fa-circle-dot', summary ? summary.statuses.tire : 'muted', `${summary ? summary.tireDanger : 0} kritis · ${summary ? summary.tireWarning : 0} warning`)}
+                                ${renderDomainKpi('grease', 'Grease', 'fa-oil-can', summary ? summary.statuses.grease : 'muted', `${profile && profile.grease ? Math.max(profile.grease.currentHm - profile.grease.lastHm, 0) : 0} HM sejak grease`)}
+                                ${renderDomainKpi('cutting', 'Cutting Bit', 'fa-screwdriver-wrench', summary ? summary.statuses.cutting : 'muted', profile && profile.cutting && profile.cutting.applicable ? `${profile.cutting.installed} terpasang` : 'Tidak diaplikasikan')}
+                                ${renderDomainKpi('battery', 'Aki', 'fa-car-battery', summary ? summary.statuses.battery : 'muted', profile && profile.battery ? `${fmt(profile.battery.voltage, 1)} V · ${fmt(profile.battery.cca, 0)}% CCA` : '-')}
+                            </section>
+                            <nav class="cm-tabs" aria-label="Jenis pemeriksaan">
+                                ${[
+                                    ['overview', 'fa-gauge-high', 'Ringkasan'],
+                                    ['tire', 'fa-circle-dot', 'Ban'],
+                                    ['grease', 'fa-oil-can', 'Grease'],
+                                    ['cutting', 'fa-screwdriver-wrench', 'Cutting Bit'],
+                                    ['battery', 'fa-car-battery', 'Aki'],
+                                    ['history', 'fa-clock-rotate-left', 'Riwayat']
+                                ].map(([key, icon, label]) => `<button type="button" class="${state.activeTab === key ? 'active' : ''}" onclick="ConditionMonitoring.switchTab('${key}')"><i class="fa-solid ${icon}"></i>${label}</button>`).join('')}
+                            </nav>
+                            <section class="cm-workspace">${renderTab(asset, profile, summary)}</section>
                         </div>
-                        <div class="cm-detail-header-actions">
-                            <button type="button" onclick="ConditionMonitoring.openAsset()" title="Buka Asset 360°"><i class="fa-solid fa-truck"></i><span>Aset 360°</span></button>
-                            <button type="button" onclick="ConditionMonitoring.openP2H()" title="Buka P2H unit"><i class="fa-solid fa-clipboard-check"></i><span>P2H</span></button>
-                            <button type="button" class="${activeWo ? 'danger' : ''}" onclick="ConditionMonitoring.openOrCreateWO()" title="Buka atau buat Work Order"><i class="fa-solid fa-wrench"></i><span>${activeWo ? esc(activeWo.woId) : 'Buat WO'}</span></button>
-                            <button class="cm-detail-close" type="button" onclick="ConditionMonitoring.closeDetail()" aria-label="Tutup detail">&times;</button>
-                        </div>
-                    </header>
-                    <div class="cm-detail-scroll">
-                        ${state.notice ? `<div class="cm-notice ${esc(state.notice.type)}"><i class="fa-solid ${state.notice.type === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i><span>${esc(state.notice.text)}</span><button type="button" onclick="ConditionMonitoring.dismissNotice()" aria-label="Tutup">&times;</button></div>` : ''}
-                        <section class="cm-detail-summary">
-                            <div><span>Status aset</span><strong class="cm-asset-status ${esc(String(asset.status || 'READY').toLowerCase())}">${esc(asset.status || 'READY')}</strong></div>
-                            <div><span>Health score</span><strong>${summary.score}<small>/100</small></strong></div>
-                            <div><span>Tindak lanjut</span><strong>${summary.critical} kritis · ${summary.warning} perhatian</strong></div>
-                            <div><span>WO aktif</span><strong>${activeWo ? esc(activeWo.woId) : 'Tidak ada'}</strong></div>
-                        </section>
-                        <section class="cm-domain-kpis">
-                            ${renderDomainKpi('tire', 'Ban / Undercarriage', 'fa-circle-dot', summary.statuses.tire, `${summary.tireDanger} kritis · ${summary.tireWarning} warning`)}
-                            ${renderDomainKpi('grease', 'Grease', 'fa-oil-can', summary.statuses.grease, `${Math.max(profile.grease.currentHm - profile.grease.lastHm, 0)} HM sejak grease`)}
-                            ${renderDomainKpi('cutting', 'Cutting Bit', 'fa-screwdriver-wrench', summary.statuses.cutting, profile.cutting.applicable ? `${profile.cutting.installed} terpasang` : 'Tidak diaplikasikan')}
-                            ${renderDomainKpi('battery', 'Aki', 'fa-car-battery', summary.statuses.battery, `${fmt(profile.battery.voltage, 1)} V · ${fmt(profile.battery.cca, 0)}% CCA`)}
-                        </section>
-                        <nav class="cm-tabs" aria-label="Jenis pemeriksaan">
-                            ${[
-                                ['overview', 'fa-gauge-high', 'Ringkasan'],
-                                ['tire', 'fa-circle-dot', 'Ban'],
-                                ['grease', 'fa-oil-can', 'Grease'],
-                                ['cutting', 'fa-screwdriver-wrench', 'Cutting Bit'],
-                                ['battery', 'fa-car-battery', 'Aki'],
-                                ['history', 'fa-clock-rotate-left', 'Riwayat']
-                            ].map(([key, icon, label]) => `<button type="button" class="${state.activeTab === key ? 'active' : ''}" onclick="ConditionMonitoring.switchTab('${key}')"><i class="fa-solid ${icon}"></i>${label}</button>`).join('')}
-                        </nav>
-                        <section class="cm-workspace">${renderTab(asset, profile, summary)}</section>
                     </div>
-                </div>
-            </div>`;
+                </div>`;
+        } catch (err) {
+            console.error('Error rendering Detail Modal:', err);
+            return `
+                <div class="cm-detail-overlay" role="dialog" onclick="ConditionMonitoring.handleOverlayClick(event)">
+                    <div class="cm-detail-dialog" style="padding:20px;">
+                        <header class="cm-detail-header">
+                            <div><h2>${esc(shortCode(asset.id))} - ${esc(asset.id)}</h2></div>
+                            <button class="cm-detail-close" type="button" onclick="ConditionMonitoring.closeDetail()">&times;</button>
+                        </header>
+                        <div style="padding:30px; text-align:center;">
+                            <i class="fa-solid fa-circle-check" style="font-size:2.5rem; color:var(--success); margin-bottom:10px;"></i>
+                            <h3>Detail Condition Monitoring Unit ${esc(asset.id)}</h3>
+                            <p style="margin-top:10px;">Lokasi: <strong>${esc(asset.location || 'Lokasi belum ditetapkan')}</strong> | Status: <strong>${esc(asset.status || 'READY')}</strong></p>
+                        </div>
+                    </div>
+                </div>`;
+        }
     }
 
     function render() {
+        let globalModalRoot = document.getElementById('globalCmModalContainer');
+        if (!globalModalRoot) {
+            globalModalRoot = document.createElement('div');
+            globalModalRoot.id = 'globalCmModalContainer';
+            document.body.appendChild(globalModalRoot);
+        } else if (globalModalRoot.parentElement !== document.body) {
+            document.body.appendChild(globalModalRoot);
+        }
+
         const root = document.getElementById('conditionMonitoringApp');
-        if (!root) return;
+
         if (!allAssets().length) {
-            root.innerHTML = '<div class="cm-empty"><i class="fa-solid fa-database"></i><strong>Data aset belum tersedia.</strong><span>Tunggu data.json selesai dimuat.</span></div>';
+            if (root) root.innerHTML = '<div class="cm-empty"><i class="fa-solid fa-database"></i><strong>Data aset belum tersedia.</strong><span>Tunggu data.json selesai dimuat.</span></div>';
             clearTimeout(renderTimer);
             renderTimer = setTimeout(render, 250);
             return;
@@ -4055,7 +4085,14 @@
         clearTimeout(renderTimer);
         const asset = selectedAsset();
         const profile = asset ? getProfile(asset) : null;
-        root.innerHTML = `${renderCatalog()}${detailOpen && asset && profile ? renderDetailModal(asset, profile, profileSummary(profile)) : ''}`;
+
+        const isCmViewActive = root && root.closest('.view-section')?.classList.contains('active');
+        if (isCmViewActive) {
+            root.innerHTML = renderCatalog();
+        }
+
+        const modalHtml = (detailOpen && asset && profile) ? renderDetailModal(asset, profile, profileSummary(profile)) : '';
+        globalModalRoot.innerHTML = modalHtml;
         document.body.classList.toggle('cm-modal-open', detailOpen);
     }
 
@@ -4436,24 +4473,34 @@
     const api = {
         refresh: render,
         openForAsset(assetId, tab = 'overview') {
-            if (!allAssets().some(asset => asset.id === assetId)) return;
-            state.selectedAssetId = assetId;
-            state.activeTab = tab;
-            const profile = getProfile(allAssets().find(asset => asset.id === assetId));
-            state.selectedTire = profile.tires[0].code;
-            detailOpen = true;
-            persist();
-            window.closeModal?.('assetModal');
-            window.showView?.('condition', '', 'menu-condition');
-            render();
-        },
-        openDetail(assetId, tab = 'overview') {
-            const asset = allAssets().find(item => item.id === assetId);
+            const asset = typeof window.resolveAsset === 'function' ? window.resolveAsset(assetId) : (allAssets().find(a => a.id === assetId) || allAssets()[0]);
             if (!asset) return;
+
             state.selectedAssetId = asset.id;
             state.activeTab = tab;
             const profile = getProfile(asset);
-            state.selectedTire = profile.tires[0].code;
+            if (profile && Array.isArray(profile.tires) && profile.tires.length > 0) {
+                state.selectedTire = profile.tires[0].code;
+            } else {
+                state.selectedTire = 'FL';
+            }
+            detailOpen = true;
+            persist();
+            window.closeModal?.('assetModal');
+            render();
+        },
+        openDetail(assetId, tab = 'overview') {
+            const asset = typeof window.resolveAsset === 'function' ? window.resolveAsset(assetId) : (allAssets().find(a => a.id === assetId) || allAssets()[0]);
+            if (!asset) return;
+
+            state.selectedAssetId = asset.id;
+            state.activeTab = tab;
+            const profile = getProfile(asset);
+            if (profile && Array.isArray(profile.tires) && profile.tires.length > 0) {
+                state.selectedTire = profile.tires[0].code;
+            } else {
+                state.selectedTire = 'FL';
+            }
             state.notice = null;
             detailOpen = true;
             persist();

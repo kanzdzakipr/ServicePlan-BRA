@@ -386,7 +386,7 @@
         }
 
         .kpi-card.standby {
-            border-color: var(--info);
+            border-color: var(--warning);
         }
 
         .kpi-card.breakdown {
@@ -4969,14 +4969,16 @@ body.cm-modal-open {
 
 .cm-detail-overlay {
     align-items: center;
-    background: rgba(15, 23, 42, .72);
-    backdrop-filter: blur(3px);
-    display: flex;
+    background: rgba(15, 23, 42, .8) !important;
+    backdrop-filter: blur(4px);
+    display: flex !important;
     inset: 0;
     justify-content: center;
     padding: 22px;
-    position: fixed;
-    z-index: 2400;
+    position: fixed !important;
+    z-index: 2147483647 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .cm-detail-dialog {
@@ -10214,8 +10216,17 @@ body.wo-confirm-modal-open {
     border: 1px solid var(--border);
     border-radius: 5px;
     cursor: pointer;
-    height: 30px;
-    width: 30px;
+    width: auto !important;
+    height: auto !important;
+    min-width: unset !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 5px 10px !important;
+    font-size: 0.76rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
 }
 
 .asset-row-actions button:hover {
