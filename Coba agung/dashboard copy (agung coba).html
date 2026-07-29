@@ -16,7 +16,220 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="../scripts/dashboard.css?v=20260729-MAINTAINX-V3">
     <link rel="stylesheet" href="fleet-integration.css?v=20260729-MAINTAINX-V3">
-    
+    <!-- Dedicated MaintainX Style Override -->
+    <link rel="stylesheet" href="maintainx-style.css?v=20260729-2">
+
+    <!-- Guaranteed Inline MaintainX Theme Overrides -->
+    <style id="maintainx-theme-override">
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #1686fb !important;
+            --primary-hover: #0875e7 !important;
+            --primary-soft: #eaf4ff !important;
+            --dark: #071e3d !important;
+            --bg-body: #f5f8fb !important;
+            --text-main: #111827 !important;
+            --text-muted: #667085 !important;
+            --border: #e3e8ef !important;
+            --success: #17b26a !important;
+            --warning: #f79009 !important;
+            --danger: #f04438 !important;
+            --info: #0284c7 !important;
+        }
+
+        html, body, *, button, input, select, textarea {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        }
+
+        body {
+            background-color: #f5f8fb !important;
+            color: #111827 !important;
+        }
+
+        /* Sidebar Styling - MaintainX Deep Navy */
+        aside.sidebar {
+            background-color: #071e3d !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .sidebar-header {
+            background-color: #0b2545 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
+        }
+
+        .sidebar-header i {
+            color: #1686fb !important;
+        }
+
+        .brand-label {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+        }
+
+        .sidebar-menu li a {
+            color: #94a3b8 !important;
+            border-radius: 6px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: rgba(255, 255, 255, 0.06) !important;
+            color: #f8fafc !important;
+        }
+
+        .sidebar-menu li a.active {
+            background-color: rgba(22, 134, 251, 0.15) !important;
+            color: #ffffff !important;
+            border-left: 4px solid #1686fb !important;
+            font-weight: 600 !important;
+        }
+
+        .sidebar-menu li a.active i {
+            color: #1686fb !important;
+        }
+
+        /* Top Header */
+        header.top-header {
+            background-color: #ffffff !important;
+            height: 64px !important;
+            border-bottom: 1px solid #e3e8ef !important;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03) !important;
+        }
+
+        .search-bar input {
+            border-radius: 9999px !important;
+            background: #f5f8fb !important;
+            border: 1px solid #e3e8ef !important;
+            padding: 9px 16px !important;
+        }
+
+        .search-bar input:focus {
+            background: #ffffff !important;
+            border-color: #1686fb !important;
+            box-shadow: 0 0 0 3px rgba(22, 134, 251, 0.15) !important;
+        }
+
+        .dropdown select {
+            border-radius: 10px !important;
+            border: 1px solid #e3e8ef !important;
+            font-weight: 600 !important;
+            color: #111827 !important;
+        }
+
+        .profile img {
+            border: 2px solid #eaf4ff !important;
+        }
+
+        /* Panels & Cards */
+        .panel {
+            background: #ffffff !important;
+            border: 1px solid #e3e8ef !important;
+            border-radius: 14px !important;
+            box-shadow: 0 2px 6px rgba(16, 24, 40, 0.04), 0 8px 16px rgba(16, 24, 40, 0.04) !important;
+        }
+
+        .panel-header {
+            border-bottom: 1px solid #e3e8ef !important;
+            color: #111827 !important;
+            font-weight: 600 !important;
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: #ffffff !important;
+            border: 1px solid #e3e8ef !important;
+            border-radius: 14px !important;
+            box-shadow: 0 2px 6px rgba(16, 24, 40, 0.04), 0 8px 16px rgba(16, 24, 40, 0.04) !important;
+            border-left-width: 4px !important;
+            border-left-style: solid !important;
+        }
+
+        .kpi-card.total { border-left-color: #071e3d !important; }
+        .kpi-card.operating { border-left-color: #17b26a !important; }
+        .kpi-card.standby { border-left-color: #0284c7 !important; }
+        .kpi-card.breakdown { border-left-color: #f04438 !important; }
+        .kpi-card.pm { border-left-color: #f79009 !important; }
+
+        .kpi-info h3 {
+            color: #667085 !important;
+            font-size: 0.78rem !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.04em !important;
+        }
+
+        .kpi-info .value {
+            color: #111827 !important;
+            font-size: 1.85rem !important;
+            font-weight: 700 !important;
+        }
+
+        .kpi-action-btn {
+            background: #eaf4ff !important;
+            color: #1686fb !important;
+            border-radius: 9999px !important;
+            font-weight: 600 !important;
+        }
+
+        .kpi-action-btn:hover {
+            background: #1686fb !important;
+            color: #ffffff !important;
+        }
+
+        /* Tables & Badges */
+        table th {
+            background: #f8fafc !important;
+            color: #667085 !important;
+            font-size: 0.78rem !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.04em !important;
+            border-bottom: 1px solid #e3e8ef !important;
+        }
+
+        table tr:hover {
+            background: #f6faff !important;
+        }
+
+        .badge {
+            border-radius: 9999px !important;
+            font-weight: 600 !important;
+            font-size: 0.78rem !important;
+            padding: 4px 12px !important;
+        }
+
+        .bg-operating { background-color: #ecfdf3 !important; color: #027a48 !important; }
+        .bg-breakdown { background-color: #fef3f2 !important; color: #b42318 !important; }
+        .bg-standby { background-color: #f0f9ff !important; color: #026aa2 !important; }
+        .bg-inspeksi { background-color: #fffaeb !important; color: #b54708 !important; }
+        .bg-draft { background-color: #f2f4f7 !important; color: #344054 !important; }
+        .bg-progress { background-color: #eff8ff !important; color: #175cd3 !important; }
+
+        /* Buttons & Forms */
+        .btn-primary {
+            background-color: #1686fb !important;
+            color: #ffffff !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 6px rgba(22, 134, 251, 0.25) !important;
+        }
+
+        .btn-primary:hover {
+            background-color: #0875e7 !important;
+        }
+
+        .form-control {
+            border-radius: 10px !important;
+            border: 1px solid #d0d5dd !important;
+        }
+
+        .form-control:focus {
+            border-color: #1686fb !important;
+            box-shadow: 0 0 0 3px rgba(22, 134, 251, 0.15) !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -104,7 +317,16 @@
 
             <!-- VIEW: DASHBOARD (MVP 1) -->
             <div id="view-dashboard" class="view-section active">
-                <h1 class="page-title">Executive Dashboard</h1>
+                <div class="mx-dashboard-header">
+                    <div>
+                        <div class="mx-eyebrow"><i class="fa-solid fa-chart-pie"></i> ASSET & FLEET OPERATIONS</div>
+                        <h1 class="page-title">Executive Dashboard</h1>
+                        <p class="mx-header-desc">Pemantauan real-time kondisi unit, status work order, lokasi GPS, dan kesehatan armada.</p>
+                    </div>
+                    <div class="mx-header-actions">
+                        <button type="button" class="btn btn-primary" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Work Order Baru</button>
+                    </div>
+                </div>
 
                 <!-- Ringkasan status unit -->
                 <div class="kpi-grid">
