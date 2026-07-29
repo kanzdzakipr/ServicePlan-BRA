@@ -41,4 +41,4 @@ scratch/
 
 # Eksklusi Mutlak Pemindaian AI Antigravity
 scripts/vendor/
-tests/fixtures/ # (Jika folder testing memiliki sampel payload dokumen berukuran besar)
+# tests/fixtures/ # (Jika folder testing memiliki sampel payload dokumen berukuran besar)
