@@ -2033,7 +2033,7 @@
             return `
                 <article class="print-documentation-sheet">
                     <header class="documentation-header">
-                        <div class="print-logo-mark company-logo"><span>BRA</span></div>
+                        <img src="assets/logo-pt-bina-rekayasa-anugrah.png" alt="Logo PT Bina Rekayasa Anugrah" class="print-logo-img company-logo-img">
                         <div>
                             <span>LAMPIRAN DOKUMENTASI</span>
                             <h2>${escapeHtml(schema.title)}</h2>
@@ -2131,8 +2131,8 @@
                 <section class="print-identification-section">
                 <header class="print-brand">
                     <div class="print-logo-block">
-                        <div class="print-logo-mark company-logo"><span>BRA</span></div>
-                        <div><h2>PT BINA REKAYASA ANUGERAH</h2><small>Departemen Equipment</small></div>
+                        <img src="assets/logo-pt-bina-rekayasa-anugrah.png" alt="Logo PT Bina Rekayasa Anugrah" class="print-logo-img company-logo-img">
+                        <div><h2>PT BINA REKAYASA ANUGERAH</h2><small>Departemen Equipment & Maintenance</small></div>
                     </div>
                     <div class="print-logo-block partner">
                         <div><strong>${escapeHtml(projectName)}</strong><small>Project / Mitra</small></div>
