@@ -2698,6 +2698,989 @@
         createModuleMarkup();
     }
 })();
+
+// ============================================================================
+// CONDITION MONITORING V2 — per-unit inspections and cross-module follow-up
+// Sources: BRA tire report, weekly regreasing, cutting-bit controls, battery bank.
+// ============================================================================
+(function () {
+    'use strict';
+
+    const STORE_KEY = 'fleetmonitor-condition-v2';
+    const PRICE_CUTTING_BIT = 441441;
+    const TIRE_LIMITS = { safe: 8.5, danger: 3.2 };
+    const CUTTING_LIMITS = { perDay: 30, perHm: 3, per1000m2: 5, minStock: 100 };
+    const BATTERY_LIMITS = { voltageSafe: 12.6, voltageDanger: 12.0, ccaSafe: 80, ccaDanger: 60 };
+    const MATERIAL_SOURCES = {
+        tire: 'REPORT BAN UPDATE 19.07.2026 · 55 unit / 550 posisi',
+        grease: 'REGRESING WEEKLY MAINTENANCE 31 Januari 2026',
+        cutting: 'Form Kontrol Cutting Bit CAT RM500 + tabulasi CAT/XCMG',
+        battery: 'Bank Data Equipment Pemakaian Aki Apr–Des 2025'
+    };
+
+    const TIRE_POSITIONS_10 = [
+        { code: 'P1', label: 'Depan kiri', row: 1, col: 1 },
+        { code: 'P2', label: 'Depan kanan', row: 1, col: 4 },
+        { code: 'P3', label: 'Axle 1 kiri luar', row: 2, col: 1 },
+        { code: 'P4', label: 'Axle 1 kiri dalam', row: 2, col: 2 },
+        { code: 'P5', label: 'Axle 1 kanan dalam', row: 2, col: 3 },
+        { code: 'P6', label: 'Axle 1 kanan luar', row: 2, col: 4 },
+        { code: 'P7', label: 'Axle 2 kiri luar', row: 3, col: 1 },
+        { code: 'P8', label: 'Axle 2 kiri dalam', row: 3, col: 2 },
+        { code: 'P9', label: 'Axle 2 kanan dalam', row: 3, col: 3 },
+        { code: 'P10', label: 'Axle 2 kanan luar', row: 3, col: 4 }
+    ];
+    const TIRE_POSITIONS_4 = [
+        { code: 'FL', label: 'Depan kiri', row: 1, col: 1 },
+        { code: 'FR', label: 'Depan kanan', row: 1, col: 4 },
+        { code: 'RL', label: 'Belakang kiri', row: 3, col: 1 },
+        { code: 'RR', label: 'Belakang kanan', row: 3, col: 4 }
+    ];
+
+    const TIRE_REPORT_OVERRIDES = {
+        'DT-04042': { P7: ['DG', null, 0], P8: ['DG', null, 0], P9: ['DG', null, 0], P10: ['DG', null, 0] },
+        'DT-04053': { P7: ['DG', null, 0], P8: ['DG', null, 0], P9: ['DG', null, 0], P10: ['DG', null, 0] },
+        'DT-00029': { P7: ['DG', null, 0], P8: ['DG', null, 0], P9: ['DG', null, 0] },
+        'DT-00020': { P3: ['DG', null, 0], P4: ['DG', null, 0] },
+        'DT-00050': { P7: ['DG', null, 0], P8: ['DG', null, 0] },
+        'DT-00056': { P1: ['Baik', 3.55, 88], P2: ['Aus tidak rata', 6.71, 86] },
+        'DT-00049': { P2: ['Aus tidak rata', 3.77, 84] },
+        'DT-00048': { P1: ['Aus tidak rata', 4.06, 86], P2: ['Rotasi', 8.39, 89] }
+    };
+
+    const state = loadState();
+    let renderTimer = null;
+
+    function loadState() {
+        const base = {
+            version: 2,
+            selectedAssetId: '',
+            activeTab: 'overview',
+            selectedTire: 'P1',
+            units: {},
+            history: [],
+            notice: null
+        };
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+            if (saved && saved.version === 2) return { ...base, ...saved, units: saved.units || {}, history: saved.history || [] };
+        } catch (error) {
+            console.warn('Condition Monitoring state tidak dapat dipulihkan:', error);
+        }
+        return base;
+    }
+
+    function persist() {
+        try {
+            localStorage.setItem(STORE_KEY, JSON.stringify(state));
+        } catch (error) {
+            console.warn('Condition Monitoring state tidak dapat disimpan:', error);
+        }
+    }
+
+    function esc(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function num(value, fallback = 0) {
+        const parsed = Number.parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function fmt(value, digits = 1) {
+        return new Intl.NumberFormat('id-ID', {
+            minimumFractionDigits: digits,
+            maximumFractionDigits: digits
+        }).format(Number(value) || 0);
+    }
+
+    function rupiah(value) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            maximumFractionDigits: 0
+        }).format(Number(value) || 0);
+    }
+
+    function shortCode(assetId) {
+        const match = String(assetId || '').toUpperCase().match(/^([A-Z0-9]{1,5}-\d{2,5})/);
+        return match ? match[1] : String(assetId || '').split(/\s+-\s+|\s+/)[0];
+    }
+
+    function stableHash(text) {
+        return Array.from(String(text || '')).reduce((total, char) => ((total * 31) + char.charCodeAt(0)) >>> 0, 7);
+    }
+
+    function allAssets() {
+        return Array.isArray(window.globalData?.assets) ? window.globalData.assets : [];
+    }
+
+    function selectedAsset() {
+        const assets = allAssets();
+        if (!assets.length) return null;
+        let asset = assets.find(item => item.id === state.selectedAssetId);
+        if (!asset) {
+            asset = assets.find(item => shortCode(item.id) === 'DT-04042')
+                || assets.find(item => /^DT-/i.test(item.id))
+                || assets[0];
+            state.selectedAssetId = asset.id;
+            persist();
+        }
+        return asset;
+    }
+
+    function isDumpTruck(asset) {
+        return /^DT-/i.test(shortCode(asset?.id));
+    }
+
+    function supportsCuttingBit(asset) {
+        const code = shortCode(asset?.id);
+        return /^(RM-|BRR-RM|WR-)/i.test(code) || /recycler|milling/i.test(`${asset?.category || ''} ${asset?.model || ''}`);
+    }
+
+    function assetType(asset) {
+        if (supportsCuttingBit(asset)) return 'Recycler / Milling';
+        if (isDumpTruck(asset)) return 'Dump Truck 10-Wheeler';
+        return asset?.category || 'Heavy Equipment';
+    }
+
+    function makeTirePositions(asset, hash) {
+        const layout = isDumpTruck(asset) ? TIRE_POSITIONS_10 : TIRE_POSITIONS_4;
+        const code = shortCode(asset.id);
+        const overrides = TIRE_REPORT_OVERRIDES[code] || {};
+        return layout.map((position, index) => {
+            const defaultTread = Number((9.1 + ((hash + index * 17) % 34) / 10).toFixed(1));
+            const override = overrides[position.code];
+            return {
+                ...position,
+                physical: override ? override[0] : 'Baik',
+                tread: override ? override[1] : defaultTread,
+                pressure: override ? override[2] : 96 + ((hash + index * 5) % 15),
+                wearPattern: override && /aus|rotasi/i.test(override[0]) ? override[0] : 'Merata',
+                action: override && override[0] === 'DG' ? 'Ganti segera' : 'Monitor',
+                updatedAt: '2026-07-19T08:00:00+07:00'
+            };
+        });
+    }
+
+    function makeProfile(asset) {
+        const hash = stableHash(asset.id);
+        const code = shortCode(asset.id);
+        const currentHm = 1200 + (hash % 9400);
+        const greaseElapsed = 120 + (hash % 120);
+        const batteryByUnit = ['DT-00037', 'DT-00047', 'DT-00053'].includes(code);
+        const cuttingUnit = supportsCuttingBit(asset);
+        return {
+            assetId: asset.id,
+            tires: makeTirePositions(asset, hash),
+            grease: {
+                currentHm,
+                lastHm: currentHm - greaseElapsed,
+                interval: 200,
+                greaseType: 'Lithium EP-2',
+                quantity: 3.5,
+                points: {
+                    'Pin & bushing': true,
+                    'Steering linkage': isDumpTruck(asset),
+                    'Undercarriage': !isDumpTruck(asset),
+                    'Propeller shaft / universal joint': isDumpTruck(asset)
+                },
+                note: greaseElapsed >= 200 ? 'Melewati interval regreasing.' : 'Jadwal berbasis HM aktif.',
+                updatedAt: '2026-01-31T16:00:00+07:00'
+            },
+            cutting: {
+                applicable: cuttingUnit,
+                shift: 'Shift 1',
+                hmStart: cuttingUnit ? 6492 : 0,
+                hmEnd: cuttingUnit ? (code === 'RM-41001' ? 6532 : 6512) : 0,
+                production: cuttingUnit ? 9200 : 0,
+                stockStart: cuttingUnit ? (code === 'RM-41001' ? 2280 : 180) : 0,
+                installed: cuttingUnit ? (code === 'RM-41001' ? 117 : 50) : 0,
+                returned: cuttingUnit ? (code === 'RM-41001' ? 117 : 50) : 0,
+                lost: 0,
+                note: cuttingUnit ? 'Kontrol pemakaian dan pengembalian cutting bit.' : 'Tidak terpasang pada tipe unit ini.',
+                updatedAt: '2026-07-19T17:00:00+07:00'
+            },
+            battery: {
+                brand: batteryByUnit ? 'GS Astra' : ['GS Astra', 'Bosch', 'Yuasa'][hash % 3],
+                type: batteryByUnit ? '95D31L / 12V-80Ah' : ['95D31L / 12V-80Ah', 'N70 / 65D31R', 'N120'][hash % 3],
+                installDate: batteryByUnit ? '2025-10-17' : `2025-${String(1 + (hash % 9)).padStart(2, '0')}-15`,
+                voltage: Number((12.1 + (hash % 8) / 10).toFixed(1)),
+                cca: 66 + (hash % 31),
+                terminal: hash % 7 === 0 ? 'Korosi ringan' : 'Bersih & kencang',
+                electrolyte: 'Normal',
+                caseCondition: 'Baik',
+                note: batteryByUnit ? 'Unit tercatat berulang pada bank pemakaian aki 2025.' : 'Lakukan load test pada inspeksi berkala.',
+                updatedAt: '2025-12-31T16:00:00+07:00'
+            }
+        };
+    }
+
+    function getProfile(asset = selectedAsset()) {
+        if (!asset) return null;
+        if (!state.units[asset.id]) {
+            state.units[asset.id] = makeProfile(asset);
+            persist();
+        }
+        return state.units[asset.id];
+    }
+
+    function tireStatus(tire) {
+        if (!tire) return 'muted';
+        if (/DG|rusak|retak|benjol/i.test(tire.physical || '')) return 'danger';
+        if (tire.tread === null || tire.tread === '') return 'muted';
+        if (num(tire.tread) < TIRE_LIMITS.danger) return 'danger';
+        if (num(tire.tread) <= TIRE_LIMITS.safe || /tidak rata|rotasi/i.test(`${tire.physical} ${tire.wearPattern}`)) return 'warning';
+        return 'success';
+    }
+
+    function greaseStatus(grease) {
+        const elapsed = num(grease.currentHm) - num(grease.lastHm);
+        if (elapsed >= num(grease.interval)) return 'danger';
+        if (elapsed >= num(grease.interval) * 0.9) return 'warning';
+        return 'success';
+    }
+
+    function cuttingMetrics(cutting) {
+        if (!cutting.applicable) return { status: 'muted', hours: 0, perHm: 0, per1000m2: 0, returnRate: 0, finalStock: 0, cost: 0 };
+        const hours = Math.max(num(cutting.hmEnd) - num(cutting.hmStart), 0);
+        const installed = num(cutting.installed);
+        const returned = num(cutting.returned);
+        const lost = num(cutting.lost);
+        const perHm = hours > 0 ? installed / hours : 0;
+        const per1000m2 = num(cutting.production) > 0 ? installed / num(cutting.production) * 1000 : 0;
+        const returnBase = returned + lost;
+        const returnRate = returnBase > 0 ? returned / returnBase * 100 : 100;
+        const finalStock = num(cutting.stockStart) - installed + returned;
+        let status = 'success';
+        if (lost > 0 || perHm > CUTTING_LIMITS.perHm * 1.2 || per1000m2 > CUTTING_LIMITS.per1000m2 * 1.2) status = 'danger';
+        else if (perHm > CUTTING_LIMITS.perHm || per1000m2 > CUTTING_LIMITS.per1000m2 || finalStock < CUTTING_LIMITS.minStock) status = 'warning';
+        return { status, hours, perHm, per1000m2, returnRate, finalStock, cost: installed * PRICE_CUTTING_BIT };
+    }
+
+    function batteryStatus(battery) {
+        if (num(battery.voltage) < BATTERY_LIMITS.voltageDanger || num(battery.cca) < BATTERY_LIMITS.ccaDanger || /retak|bocor/i.test(battery.caseCondition || '')) return 'danger';
+        if (num(battery.voltage) < BATTERY_LIMITS.voltageSafe || num(battery.cca) < BATTERY_LIMITS.ccaSafe || /korosi/i.test(battery.terminal || '')) return 'warning';
+        return 'success';
+    }
+
+    function profileSummary(profile) {
+        const tireStates = profile.tires.map(tireStatus);
+        const tireWorst = tireStates.includes('danger') ? 'danger' : tireStates.includes('warning') ? 'warning' : 'success';
+        const statuses = {
+            tire: tireWorst,
+            grease: greaseStatus(profile.grease),
+            cutting: cuttingMetrics(profile.cutting).status,
+            battery: batteryStatus(profile.battery)
+        };
+        const weighted = Object.values(statuses).filter(value => value !== 'muted');
+        const score = Math.max(0, Math.round(100 - weighted.filter(value => value === 'warning').length * 12 - weighted.filter(value => value === 'danger').length * 28));
+        return {
+            statuses,
+            score,
+            critical: weighted.filter(value => value === 'danger').length,
+            warning: weighted.filter(value => value === 'warning').length,
+            tireDanger: tireStates.filter(value => value === 'danger').length,
+            tireWarning: tireStates.filter(value => value === 'warning').length
+        };
+    }
+
+    function statusLabel(status) {
+        return { success: 'Aman', warning: 'Perhatian', danger: 'Kritis', muted: 'N/A' }[status] || status;
+    }
+
+    function statusIcon(status) {
+        return { success: 'fa-circle-check', warning: 'fa-triangle-exclamation', danger: 'fa-circle-xmark', muted: 'fa-minus-circle' }[status];
+    }
+
+    function render() {
+        const root = document.getElementById('conditionMonitoringApp');
+        if (!root) return;
+        const asset = selectedAsset();
+        if (!asset) {
+            root.innerHTML = '<div class="cm-empty"><i class="fa-solid fa-database"></i><strong>Data aset belum tersedia.</strong><span>Tunggu data.json selesai dimuat.</span></div>';
+            clearTimeout(renderTimer);
+            renderTimer = setTimeout(render, 250);
+            return;
+        }
+        clearTimeout(renderTimer);
+        const profile = getProfile(asset);
+        const summary = profileSummary(profile);
+        const assets = allAssets().slice().sort((a, b) => String(a.id).localeCompare(String(b.id)));
+        const activeWo = (window.globalData?.work_orders || []).find(wo => wo.assetId === asset.id && wo.status !== 'Closed');
+
+        root.innerHTML = `
+            ${state.notice ? `<div class="cm-notice ${esc(state.notice.type)}"><i class="fa-solid ${state.notice.type === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-check'}"></i><span>${esc(state.notice.text)}</span><button type="button" onclick="ConditionMonitoring.dismissNotice()" aria-label="Tutup">&times;</button></div>` : ''}
+            <section class="cm-unit-toolbar">
+                <div class="cm-unit-picker">
+                    <label for="cm-unit-search">Pilih unit untuk diperiksa</label>
+                    <div class="cm-unit-picker-controls">
+                        <div class="cm-search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input id="cm-unit-search" type="search" placeholder="Cari ID, kategori, atau lokasi…" oninput="ConditionMonitoring.filterUnits(this.value)"></div>
+                        <select id="cm-unit-select" class="form-control" onchange="ConditionMonitoring.selectUnit(this.value)">
+                            ${assets.map(item => `<option value="${esc(item.id)}" ${item.id === asset.id ? 'selected' : ''}>${esc(shortCode(item.id))} · ${esc(item.category || 'Unit')} · ${esc(item.location || 'Tanpa lokasi')}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="cm-unit-actions">
+                    <button class="cm-action-btn" type="button" onclick="ConditionMonitoring.openAsset()"><i class="fa-solid fa-truck"></i><span>Aset 360°</span></button>
+                    <button class="cm-action-btn" type="button" onclick="ConditionMonitoring.openP2H()"><i class="fa-solid fa-clipboard-check"></i><span>P2H</span></button>
+                    <button class="cm-action-btn ${activeWo ? 'danger' : ''}" type="button" onclick="ConditionMonitoring.openOrCreateWO()"><i class="fa-solid fa-screwdriver-wrench"></i><span>${activeWo ? esc(activeWo.woId) : 'Buat WO'}</span></button>
+                </div>
+            </section>
+
+            <section class="cm-unit-identity">
+                <div class="cm-unit-avatar"><i class="fa-solid ${supportsCuttingBit(asset) ? 'fa-road' : isDumpTruck(asset) ? 'fa-truck-moving' : 'fa-tractor'}"></i></div>
+                <div class="cm-unit-name">
+                    <span>UNIT TERPILIH</span>
+                    <h2>${esc(shortCode(asset.id))}</h2>
+                    <p>${esc(assetType(asset))} · ${esc(asset.location || 'Lokasi belum ditetapkan')}</p>
+                </div>
+                <div class="cm-unit-meta"><span>Status aset</span><strong class="cm-asset-status ${esc(String(asset.status || 'READY').toLowerCase())}">${esc(asset.status || 'READY')}</strong></div>
+                <div class="cm-unit-meta"><span>Health score</span><strong>${summary.score}<small>/100</small></strong></div>
+                <div class="cm-unit-meta"><span>Tindak lanjut</span><strong>${summary.critical} kritis · ${summary.warning} perhatian</strong></div>
+                <div class="cm-unit-meta"><span>WO aktif</span><strong>${activeWo ? esc(activeWo.woId) : 'Tidak ada'}</strong></div>
+            </section>
+
+            <section class="cm-domain-kpis">
+                ${renderDomainKpi('tire', 'Ban / Undercarriage', 'fa-circle-dot', summary.statuses.tire, `${summary.tireDanger} kritis · ${summary.tireWarning} warning`)}
+                ${renderDomainKpi('grease', 'Grease', 'fa-oil-can', summary.statuses.grease, `${Math.max(profile.grease.currentHm - profile.grease.lastHm, 0)} HM sejak grease`)}
+                ${renderDomainKpi('cutting', 'Cutting Bit', 'fa-screwdriver-wrench', summary.statuses.cutting, profile.cutting.applicable ? `${profile.cutting.installed} terpasang` : 'Tidak diaplikasikan')}
+                ${renderDomainKpi('battery', 'Aki', 'fa-car-battery', summary.statuses.battery, `${fmt(profile.battery.voltage, 1)} V · ${fmt(profile.battery.cca, 0)}% CCA`)}
+            </section>
+
+            <nav class="cm-tabs" aria-label="Jenis pemeriksaan">
+                ${[
+                    ['overview', 'fa-gauge-high', 'Ringkasan'],
+                    ['tire', 'fa-circle-dot', 'Ban'],
+                    ['grease', 'fa-oil-can', 'Grease'],
+                    ['cutting', 'fa-screwdriver-wrench', 'Cutting Bit'],
+                    ['battery', 'fa-car-battery', 'Aki'],
+                    ['history', 'fa-clock-rotate-left', 'Riwayat & Aksi']
+                ].map(([key, icon, label]) => `<button type="button" class="${state.activeTab === key ? 'active' : ''}" onclick="ConditionMonitoring.switchTab('${key}')"><i class="fa-solid ${icon}"></i>${label}</button>`).join('')}
+            </nav>
+
+            <section class="cm-workspace">
+                ${renderTab(asset, profile, summary)}
+            </section>
+        `;
+    }
+
+    function renderDomainKpi(key, label, icon, status, detail) {
+        return `
+            <button class="cm-domain-kpi ${status}" type="button" onclick="ConditionMonitoring.switchTab('${key}')">
+                <span class="cm-kpi-icon"><i class="fa-solid ${icon}"></i></span>
+                <span class="cm-kpi-copy"><small>${esc(label)}</small><strong>${statusLabel(status)}</strong><em>${esc(detail)}</em></span>
+                <i class="fa-solid fa-chevron-right cm-kpi-arrow"></i>
+            </button>`;
+    }
+
+    function renderTab(asset, profile, summary) {
+        if (state.activeTab === 'tire') return renderTireTab(profile);
+        if (state.activeTab === 'grease') return renderGreaseTab(profile);
+        if (state.activeTab === 'cutting') return renderCuttingTab(profile);
+        if (state.activeTab === 'battery') return renderBatteryTab(profile);
+        if (state.activeTab === 'history') return renderHistoryTab(asset, profile);
+        return renderOverview(asset, profile, summary);
+    }
+
+    function renderOverview(asset, profile, summary) {
+        const cut = cuttingMetrics(profile.cutting);
+        const alerts = [];
+        if (summary.tireDanger) alerts.push({ level: 'danger', domain: 'Ban', text: `${summary.tireDanger} posisi rusak fisik atau di bawah ${TIRE_LIMITS.danger} mm. Tahan unit sampai dinilai mekanik.` });
+        if (summary.tireWarning) alerts.push({ level: 'warning', domain: 'Ban', text: `${summary.tireWarning} posisi berada pada rentang rotasi ${TIRE_LIMITS.danger}–${TIRE_LIMITS.safe} mm.` });
+        if (greaseStatus(profile.grease) !== 'success') alerts.push({ level: greaseStatus(profile.grease), domain: 'Grease', text: `Sudah ${profile.grease.currentHm - profile.grease.lastHm} HM sejak regreasing; interval ${profile.grease.interval} HM.` });
+        if (profile.cutting.applicable && cut.status !== 'success') alerts.push({ level: cut.status, domain: 'Cutting Bit', text: `Rasio ${fmt(cut.perHm)} bit/HM dan ${fmt(cut.per1000m2)} bit/1.000 m² perlu ditinjau.` });
+        if (batteryStatus(profile.battery) !== 'success') alerts.push({ level: batteryStatus(profile.battery), domain: 'Aki', text: `Tegangan ${fmt(profile.battery.voltage)} V dan CCA ${fmt(profile.battery.cca, 0)}%; lakukan load test.` });
+
+        return `
+            <div class="cm-overview-grid">
+                <article class="cm-card cm-alert-card">
+                    <div class="cm-card-header">
+                        <div><span class="cm-eyebrow">PRIORITAS UNIT</span><h3>Temuan yang perlu ditindaklanjuti</h3></div>
+                        <span class="cm-count-badge">${alerts.length}</span>
+                    </div>
+                    <div class="cm-alert-list">
+                        ${alerts.length ? alerts.map(alert => `
+                            <button type="button" class="cm-alert-item ${alert.level}" onclick="ConditionMonitoring.switchTab('${alert.domain === 'Ban' ? 'tire' : alert.domain === 'Grease' ? 'grease' : alert.domain === 'Aki' ? 'battery' : 'cutting'}')">
+                                <i class="fa-solid ${statusIcon(alert.level)}"></i>
+                                <span><strong>${esc(alert.domain)}</strong><small>${esc(alert.text)}</small></span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>`).join('') : `<div class="cm-all-good"><i class="fa-solid fa-shield-check"></i><strong>Seluruh komponen dalam batas aman.</strong><span>Tetap lakukan pemeriksaan sesuai interval.</span></div>`}
+                    </div>
+                </article>
+                <article class="cm-card">
+                    <div class="cm-card-header">
+                        <div><span class="cm-eyebrow">INSPECTION GATE</span><h3>Alur tindak lanjut terpadu</h3></div>
+                    </div>
+                    <div class="cm-flow">
+                        <div><span>1</span><strong>Inspeksi</strong><small>Ukur dan evaluasi</small></div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                        <div><span>2</span><strong>Validasi</strong><small>P2H / mekanik</small></div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                        <div><span>3</span><strong>Eksekusi</strong><small>WO · PM · SPB</small></div>
+                    </div>
+                    <div class="cm-action-grid">
+                        <button type="button" onclick="ConditionMonitoring.openP2H()"><i class="fa-solid fa-clipboard-check"></i><span><strong>Validasi di P2H</strong><small>Checklist unit yang sama</small></span></button>
+                        <button type="button" onclick="ConditionMonitoring.schedulePM()"><i class="fa-solid fa-calendar-check"></i><span><strong>Jadwalkan PM</strong><small>Grease & penggantian terencana</small></span></button>
+                        <button type="button" class="danger" onclick="ConditionMonitoring.openOrCreateWO()"><i class="fa-solid fa-wrench"></i><span><strong>Buat Work Order</strong><small>Temuan safety-critical</small></span></button>
+                        <button type="button" onclick="ConditionMonitoring.requestPart()"><i class="fa-solid fa-boxes-stacked"></i><span><strong>Minta consumable</strong><small>Ban · grease · bit · aki</small></span></button>
+                    </div>
+                </article>
+            </div>
+            <article class="cm-card cm-source-card">
+                <div><i class="fa-solid fa-circle-info"></i><span><strong>Referensi inspeksi yang diterapkan</strong> Threshold ban, interval grease berbasis HM, batas pemakaian/pengembalian cutting bit, dan histori pemakaian aki diambil dari dokumen operasional BRA.</span></div>
+                <button type="button" onclick="ConditionMonitoring.switchTab('history')">Lihat jejak sumber <i class="fa-solid fa-arrow-right"></i></button>
+            </article>`;
+    }
+
+    function renderTireTab(profile) {
+        const tire = profile.tires.find(item => item.code === state.selectedTire) || profile.tires[0];
+        if (tire.code !== state.selectedTire) state.selectedTire = tire.code;
+        const summary = profileSummary(profile);
+        return `
+            <div class="cm-inspection-grid">
+                <article class="cm-card">
+                    <div class="cm-card-header">
+                        <div><span class="cm-eyebrow">${profile.tires.length === 10 ? 'LAYOUT 10 POSISI' : 'LAYOUT 4 POSISI'}</span><h3>Skematik Ban / Running Gear</h3></div>
+                        <span class="cm-status-pill ${summary.statuses.tire}">${statusLabel(summary.statuses.tire)}</span>
+                    </div>
+                    <div class="cm-tire-board">
+                        <div class="cm-tire-front"><i class="fa-solid fa-arrow-up"></i> DEPAN</div>
+                        <div class="cm-chassis"></div>
+                        <div class="cm-tire-grid">
+                            ${profile.tires.map(item => `
+                                <button type="button" class="cm-tire ${tireStatus(item)} ${item.code === tire.code ? 'selected' : ''}" style="grid-row:${item.row};grid-column:${item.col};" onclick="ConditionMonitoring.selectTire('${item.code}')" title="${esc(item.label)}">
+                                    <strong>${esc(item.code)}</strong>
+                                    <small>${item.tread === null ? 'DG' : `${fmt(item.tread)} mm`}</small>
+                                </button>`).join('')}
+                        </div>
+                    </div>
+                    <div class="cm-legend">
+                        <span><i class="success"></i>&gt; 8,5 mm</span>
+                        <span><i class="warning"></i>3,2–8,5 mm</span>
+                        <span><i class="danger"></i>&lt; 3,2 mm / DG</span>
+                        <span><i class="muted"></i>Belum diukur</span>
+                    </div>
+                    <div class="cm-mini-table">
+                        ${profile.tires.map(item => `<button type="button" class="${item.code === tire.code ? 'active' : ''}" onclick="ConditionMonitoring.selectTire('${item.code}')"><strong>${esc(item.code)}</strong><span>${esc(item.label)}</span><em class="${tireStatus(item)}">${item.tread === null ? esc(item.physical) : `${fmt(item.tread)} mm · ${item.pressure || '-'} PSI`}</em></button>`).join('')}
+                    </div>
+                </article>
+                <article class="cm-card cm-form-card">
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">FORM INSPEKSI BAN</span><h3>${esc(tire.code)} · ${esc(tire.label)}</h3></div><span class="cm-status-pill ${tireStatus(tire)}">${statusLabel(tireStatus(tire))}</span></div>
+                    <div class="cm-form-grid">
+                        <label><span>Tread depth (mm)</span><input id="cm-tire-tread" class="form-control" type="number" min="0" step="0.01" value="${tire.tread === null ? '' : esc(tire.tread)}" placeholder="Kosongkan bila DG"></label>
+                        <label><span>Tekanan angin (PSI)</span><input id="cm-tire-pressure" class="form-control" type="number" min="0" step="1" value="${esc(tire.pressure || '')}" placeholder="Contoh 110"></label>
+                        <label><span>Kondisi fisik</span><select id="cm-tire-physical" class="form-control">${['Baik', 'DG', 'Retak', 'Benjol', 'Sobek'].map(value => `<option ${tire.physical === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+                        <label><span>Pola keausan</span><select id="cm-tire-wear" class="form-control">${['Merata', 'Aus tidak rata', 'Aus bahu', 'Aus tengah', 'Rotasi'].map(value => `<option ${tire.wearPattern === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+                        <label class="cm-field-full"><span>Rekomendasi</span><select id="cm-tire-action" class="form-control">${['Monitor', 'Atur tekanan', 'Rotasi', 'Ganti terencana', 'Ganti segera'].map(value => `<option ${tire.action === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+                    </div>
+                    <div class="cm-threshold-note"><i class="fa-solid fa-ruler"></i><span><strong>Aturan BRA:</strong> DG selalu merah. Angka 3,2–8,5 mm masuk rotasi/perhatian; di bawah 3,2 mm wajib penggantian.</span></div>
+                    <button class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveTire()"><i class="fa-solid fa-floppy-disk"></i> Simpan inspeksi ${esc(tire.code)}</button>
+                    <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.tire)}</small>
+                </article>
+            </div>`;
+    }
+
+    function renderGreaseTab(profile) {
+        const grease = profile.grease;
+        const elapsed = grease.currentHm - grease.lastHm;
+        const remaining = grease.interval - elapsed;
+        const status = greaseStatus(grease);
+        return `
+            <div class="cm-inspection-grid">
+                <article class="cm-card">
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">REGREASING BERBASIS HM</span><h3>Status interval unit</h3></div><span class="cm-status-pill ${status}">${statusLabel(status)}</span></div>
+                    <div class="cm-gauge-wrap">
+                        <div class="cm-gauge-ring ${status}" style="--cm-progress:${Math.min(elapsed / grease.interval * 100, 100)}%"><div><strong>${elapsed}</strong><small>HM sejak grease</small></div></div>
+                        <div class="cm-gauge-stats">
+                            <div><span>HM terakhir grease</span><strong>${fmt(grease.lastHm, 0)}</strong></div>
+                            <div><span>HM aktual</span><strong>${fmt(grease.currentHm, 0)}</strong></div>
+                            <div><span>Interval</span><strong>${fmt(grease.interval, 0)} HM</strong></div>
+                            <div><span>${remaining >= 0 ? 'Sisa interval' : 'Keterlambatan'}</span><strong class="${remaining < 0 ? 'text-danger' : ''}">${Math.abs(remaining)} HM</strong></div>
+                        </div>
+                    </div>
+                    <div class="cm-point-list">
+                        ${Object.entries(grease.points).map(([point, done]) => `<div class="${done ? 'done' : ''}"><i class="fa-solid ${done ? 'fa-circle-check' : 'fa-circle'}"></i><span>${esc(point)}</span><strong>${done ? 'Tercover' : 'Periksa'}</strong></div>`).join('')}
+                    </div>
+                    <div class="cm-threshold-note warning"><i class="fa-solid fa-lightbulb"></i><span>Prioritaskan pin-bushing, steering linkage, undercarriage, dan universal joint pada jam operasi tinggi.</span></div>
+                </article>
+                <article class="cm-card cm-form-card">
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">FORM REGREASING</span><h3>Catat pelaksanaan grease</h3></div></div>
+                    <div class="cm-form-grid">
+                        <label><span>HM aktual</span><input id="cm-grease-current" class="form-control" type="number" min="0" value="${esc(grease.currentHm)}"></label>
+                        <label><span>HM grease terakhir</span><input id="cm-grease-last" class="form-control" type="number" min="0" value="${esc(grease.lastHm)}"></label>
+                        <label><span>Interval (HM)</span><input id="cm-grease-interval" class="form-control" type="number" min="1" value="${esc(grease.interval)}"></label>
+                        <label><span>Jumlah grease (kg)</span><input id="cm-grease-qty" class="form-control" type="number" min="0" step="0.1" value="${esc(grease.quantity)}"></label>
+                        <label class="cm-field-full"><span>Jenis grease</span><select id="cm-grease-type" class="form-control">${['Lithium EP-2', 'Moly EP-2', 'Calcium Sulfonate', 'OEM Special Grease'].map(value => `<option ${grease.greaseType === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+                    </div>
+                    <fieldset class="cm-check-fieldset"><legend>Titik yang sudah dilumasi</legend>${Object.entries(grease.points).map(([point, done], index) => `<label><input type="checkbox" data-cm-grease-point="${esc(point)}" ${done ? 'checked' : ''}><span>${esc(point)}</span></label>`).join('')}</fieldset>
+                    <label class="cm-block-label"><span>Catatan mekanik</span><textarea id="cm-grease-note" class="form-control" rows="3">${esc(grease.note)}</textarea></label>
+                    <button class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveGrease()"><i class="fa-solid fa-floppy-disk"></i> Simpan regreasing</button>
+                    <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.grease)}</small>
+                </article>
+            </div>`;
+    }
+
+    function renderCuttingTab(profile) {
+        const cutting = profile.cutting;
+        if (!cutting.applicable) {
+            return `<div class="cm-card cm-not-applicable"><i class="fa-solid fa-screwdriver-wrench"></i><h3>Cutting bit tidak terpasang pada tipe unit ini</h3><p>Form ini ditujukan untuk recycler/milling unit seperti RM-41001 dan RM-02. Pilih unit tersebut dari selector untuk inspeksi pemakaian, pengembalian, kehilangan, dan biaya cutting bit.</p><button class="btn btn-primary" type="button" onclick="ConditionMonitoring.selectFirstCuttingUnit()">Pilih unit cutting bit</button></div>`;
+        }
+        const metrics = cuttingMetrics(cutting);
+        return `
+            <div class="cm-inspection-grid">
+                <article class="cm-card">
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">KONTROL CONSUMABLE</span><h3>Analisis cutting bit</h3></div><span class="cm-status-pill ${metrics.status}">${statusLabel(metrics.status)}</span></div>
+                    <div class="cm-metric-grid">
+                        <div><span>Pemakaian / HM</span><strong>${fmt(metrics.perHm)}</strong><small>Standar ≤ ${CUTTING_LIMITS.perHm} bit/HM</small></div>
+                        <div><span>Pemakaian / 1.000 m²</span><strong>${fmt(metrics.per1000m2)}</strong><small>Standar ≤ ${CUTTING_LIMITS.per1000m2} bit</small></div>
+                        <div><span>Return rate</span><strong>${fmt(metrics.returnRate, 0)}%</strong><small>Target 100%</small></div>
+                        <div><span>Stok akhir</span><strong>${fmt(metrics.finalStock, 0)}</strong><small>Minimum ${CUTTING_LIMITS.minStock} pcs</small></div>
+                    </div>
+                    <div class="cm-cost-highlight"><span>Biaya pemakaian shift</span><strong>${rupiah(metrics.cost)}</strong><small>${cutting.installed} pcs × ${rupiah(PRICE_CUTTING_BIT)}</small></div>
+                    <div class="cm-threshold-note ${metrics.status}"><i class="fa-solid ${statusIcon(metrics.status)}"></i><span>Hilang &gt; 0 langsung <strong>Over Limit</strong>. Warning pada 101–120% standar; Over Limit di atas 120%.</span></div>
+                </article>
+                <article class="cm-card cm-form-card">
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">FORM SHIFT</span><h3>Pemakaian & pengembalian bit</h3></div></div>
+                    <div class="cm-form-grid">
+                        <label><span>Shift</span><select id="cm-cut-shift" class="form-control"><option ${cutting.shift === 'Shift 1' ? 'selected' : ''}>Shift 1</option><option ${cutting.shift === 'Shift 2' ? 'selected' : ''}>Shift 2</option></select></label>
+                        <label><span>Produksi (m²)</span><input id="cm-cut-production" class="form-control" type="number" min="0" value="${esc(cutting.production)}"></label>
+                        <label><span>HM awal</span><input id="cm-cut-hm-start" class="form-control" type="number" min="0" step="0.1" value="${esc(cutting.hmStart)}"></label>
+                        <label><span>HM akhir</span><input id="cm-cut-hm-end" class="form-control" type="number" min="0" step="0.1" value="${esc(cutting.hmEnd)}"></label>
+                        <label><span>Stok awal (pcs)</span><input id="cm-cut-stock" class="form-control" type="number" min="0" value="${esc(cutting.stockStart)}"></label>
+                        <label><span>Terpasang (pcs)</span><input id="cm-cut-installed" class="form-control" type="number" min="0" value="${esc(cutting.installed)}"></label>
+                        <label><span>Dikembalikan (pcs)</span><input id="cm-cut-returned" class="form-control" type="number" min="0" value="${esc(cutting.returned)}"></label>
+                        <label><span>Hilang (pcs)</span><input id="cm-cut-lost" class="form-control" type="number" min="0" value="${esc(cutting.lost)}"></label>
+                    </div>
+                    <label class="cm-block-label"><span>Penyebab / catatan / referensi foto</span><textarea id="cm-cut-note" class="form-control" rows="3">${esc(cutting.note)}</textarea></label>
+                    <button class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveCutting()"><i class="fa-solid fa-floppy-disk"></i> Simpan kontrol cutting bit</button>
+                    <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.cutting)}</small>
+                </article>
+            </div>`;
+    }
+
+    function renderBatteryTab(profile) {
+        const battery = profile.battery;
+        const status = batteryStatus(battery);
+        const ageMonths = Math.max(0, Math.round((Date.now() - new Date(battery.installDate).getTime()) / 2629800000));
+        return `
+            <div class="cm-inspection-grid">
+                <article class="cm-card">
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">BATTERY HEALTH</span><h3>${esc(battery.brand)} · ${esc(battery.type)}</h3></div><span class="cm-status-pill ${status}">${statusLabel(status)}</span></div>
+                    <div class="cm-battery-visual ${status}">
+                        <div class="cm-battery-terminal plus">+</div><div class="cm-battery-terminal minus">−</div>
+                        <div class="cm-battery-level" style="--battery-level:${Math.min(Math.max(battery.cca, 0), 100)}%"></div>
+                        <div class="cm-battery-reading"><strong>${fmt(battery.voltage)} V</strong><span>${fmt(battery.cca, 0)}% CCA</span></div>
+                    </div>
+                    <div class="cm-gauge-stats">
+                        <div><span>Usia pemasangan</span><strong>${ageMonths} bulan</strong></div>
+                        <div><span>Terminal</span><strong>${esc(battery.terminal)}</strong></div>
+                        <div><span>Elektrolit</span><strong>${esc(battery.electrolyte)}</strong></div>
+                        <div><span>Casing</span><strong>${esc(battery.caseCondition)}</strong></div>
+                    </div>
+                    <div class="cm-threshold-note ${status}"><i class="fa-solid fa-bolt"></i><span>Aman ≥12,6 V dan CCA ≥80%. Di bawah 12,0 V atau CCA &lt;60% memerlukan recharge/replace.</span></div>
+                </article>
+                <article class="cm-card cm-form-card">
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">FORM INSPEKSI AKI</span><h3>Load test & kondisi fisik</h3></div></div>
+                    <div class="cm-form-grid">
+                        <label><span>Tegangan (V)</span><input id="cm-bat-voltage" class="form-control" type="number" min="0" step="0.1" value="${esc(battery.voltage)}"></label>
+                        <label><span>CCA hasil test (%)</span><input id="cm-bat-cca" class="form-control" type="number" min="0" max="100" value="${esc(battery.cca)}"></label>
+                        <label><span>Merek</span><select id="cm-bat-brand" class="form-control">${['GS Astra', 'Bosch', 'Yuasa', 'Lainnya'].map(value => `<option ${battery.brand === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+                        <label><span>Tipe / kapasitas</span><input id="cm-bat-type" class="form-control" type="text" value="${esc(battery.type)}"></label>
+                        <label><span>Tanggal pemasangan</span><input id="cm-bat-install" class="form-control" type="date" value="${esc(battery.installDate)}"></label>
+                        <label><span>Kondisi terminal</span><select id="cm-bat-terminal" class="form-control">${['Bersih & kencang', 'Kendor', 'Korosi ringan', 'Korosi berat'].map(value => `<option ${battery.terminal === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+                        <label><span>Level elektrolit</span><select id="cm-bat-electrolyte" class="form-control">${['Normal', 'Rendah', 'Tidak dapat diperiksa (MF)'].map(value => `<option ${battery.electrolyte === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+                        <label><span>Kondisi casing</span><select id="cm-bat-case" class="form-control">${['Baik', 'Retak', 'Bocor', 'Menggembung'].map(value => `<option ${battery.caseCondition === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+                    </div>
+                    <label class="cm-block-label"><span>Catatan</span><textarea id="cm-bat-note" class="form-control" rows="3">${esc(battery.note)}</textarea></label>
+                    <button class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveBattery()"><i class="fa-solid fa-floppy-disk"></i> Simpan inspeksi aki</button>
+                    <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.battery)} · 51 aki / 31 transaksi, GS 80,4%</small>
+                </article>
+            </div>`;
+    }
+
+    function renderHistoryTab(asset, profile) {
+        const unitHistory = state.history.filter(item => item.assetId === asset.id);
+        const integratedInspections = (window.globalData?.inspections || []).filter(item => item.unitId === asset.id && item.source !== 'Condition Monitoring');
+        const activeWos = (window.globalData?.work_orders || []).filter(wo => wo.assetId === asset.id && wo.status !== 'Closed');
+        return `
+            <div class="cm-history-layout">
+                <article class="cm-card">
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">AUDIT TRAIL</span><h3>Riwayat Condition Monitoring</h3></div><span class="cm-count-badge">${unitHistory.length}</span></div>
+                    <div class="table-responsive">
+                        <table class="cm-history-table">
+                            <thead><tr><th>Waktu</th><th>ID</th><th>Komponen</th><th>Hasil</th><th>Ringkasan</th></tr></thead>
+                            <tbody>${unitHistory.length ? unitHistory.map(item => `<tr><td>${esc(formatDate(item.at))}</td><td><strong>${esc(item.id)}</strong></td><td>${esc(item.domain)}</td><td><span class="cm-status-pill ${esc(item.status)}">${statusLabel(item.status)}</span></td><td>${esc(item.summary)}</td></tr>`).join('') : '<tr><td colspan="5" class="cm-empty-cell">Belum ada inspeksi baru yang disimpan untuk unit ini.</td></tr>'}</tbody>
+                        </table>
+                    </div>
+                    ${integratedInspections.length ? `<p class="cm-integrated-note"><i class="fa-solid fa-link"></i> ${integratedInspections.length} inspeksi P2H juga terhubung pada ID aset ini.</p>` : ''}
+                </article>
+                <aside class="cm-history-side">
+                    <article class="cm-card">
+                        <div class="cm-card-header"><div><span class="cm-eyebrow">TINDAK LANJ</span><h3>Workflow unit</h3></div></div>
+                        <div class="cm-side-actions">
+                            <button type="button" onclick="ConditionMonitoring.openP2H()"><i class="fa-solid fa-clipboard-check"></i><span><strong>Inspeksi & P2H</strong><small>Validasi temuan dalam checklist</small></span></button>
+                            <button type="button" onclick="ConditionMonitoring.schedulePM()"><i class="fa-solid fa-calendar-days"></i><span><strong>Preventive Maintenance</strong><small>Jadwalkan pekerjaan terencana</small></span></button>
+                            <button type="button" onclick="ConditionMonitoring.openOrCreateWO()"><i class="fa-solid fa-wrench"></i><span><strong>Work Order</strong><small>${activeWos.length ? `${activeWos.length} WO aktif` : 'Buat tindak lanjut korektif'}</small></span></button>
+                            <button type="button" onclick="ConditionMonitoring.requestPart()"><i class="fa-solid fa-box-open"></i><span><strong>Spare Part & Logistik</strong><small>Hubungkan permintaan ke WO</small></span></button>
+                        </div>
+                    </article>
+                    <article class="cm-card cm-doc-card">
+                        <h3><i class="fa-solid fa-book-open"></i> Jejak dokumen sumber</h3>
+                        ${Object.entries(MATERIAL_SOURCES).map(([key, value]) => `<div><span>${esc(key === 'tire' ? 'Ban' : key === 'grease' ? 'Grease' : key === 'cutting' ? 'Cutting Bit' : 'Aki')}</span><small>${esc(value)}</small></div>`).join('')}
+                    </article>
+                </aside>
+            </div>`;
+    }
+
+    function formatDate(value) {
+        try {
+            return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+        } catch {
+            return value;
+        }
+    }
+
+    function valueOf(id) {
+        return document.getElementById(id)?.value ?? '';
+    }
+
+    function addHistory(domain, status, summary) {
+        const asset = selectedAsset();
+        const at = new Date().toISOString();
+        const item = {
+            id: `CM-${String(domain).slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-7)}`,
+            assetId: asset.id,
+            at,
+            domain,
+            status,
+            summary
+        };
+        state.history.unshift(item);
+        state.history = state.history.slice(0, 150);
+
+        if (window.globalData) {
+            window.globalData.inspections = Array.isArray(window.globalData.inspections) ? window.globalData.inspections : [];
+            window.globalData.inspections.unshift({
+                id: item.id,
+                unitId: asset.id,
+                date: at,
+                type: `Condition Monitoring - ${domain}`,
+                status: status === 'danger' ? 'FAIL' : status === 'warning' ? 'WARNING' : 'PASS',
+                findingsCount: status === 'success' ? 0 : 1,
+                notes: summary,
+                source: 'Condition Monitoring'
+            });
+        }
+
+        if (status === 'danger' && !['BREAKDOWN', 'ACCIDENT_HOLD'].includes(asset.status) && window.setIntegratedAssetStatus) {
+            window.setIntegratedAssetStatus(asset.id, 'INSPEKSI', 'Condition Monitoring', item.id, summary);
+        }
+        state.notice = {
+            type: status === 'danger' ? 'danger' : 'success',
+            text: `${item.id} tersimpan. ${status === 'danger' ? 'Status unit ditahan pada INSPEKSI sampai tindak lanjut dibuat.' : 'Data KPI dan riwayat unit telah diperbarui.'}`
+        };
+        persist();
+        if (window.syncFleetState) window.syncFleetState({ refreshInspection: false });
+        else render();
+    }
+
+    function worstFinding(profile) {
+        const summary = profileSummary(profile);
+        if (summary.tireDanger) return { status: 'danger', domain: 'Ban', text: `${summary.tireDanger} posisi ban kritis/DG` };
+        if (summary.statuses.battery === 'danger') return { status: 'danger', domain: 'Aki', text: `Tegangan ${profile.battery.voltage} V / CCA ${profile.battery.cca}%` };
+        if (summary.statuses.cutting === 'danger') return { status: 'danger', domain: 'Cutting Bit', text: 'Pemakaian/kehilangan cutting bit melewati batas' };
+        if (summary.statuses.grease === 'danger') return { status: 'danger', domain: 'Grease', text: 'Regreasing melewati interval HM' };
+        if (summary.warning) return { status: 'warning', domain: 'Condition Monitoring', text: `${summary.warning} komponen memerlukan perhatian` };
+        return { status: 'success', domain: 'Condition Monitoring', text: 'Inspeksi terencana berdasarkan kondisi' };
+    }
+
+    function findActiveWo(assetId) {
+        return (window.globalData?.work_orders || []).find(wo => wo.assetId === assetId && wo.status !== 'Closed') || null;
+    }
+
+    function ensureConditionWo(navigate = true) {
+        const asset = selectedAsset();
+        const profile = getProfile(asset);
+        let wo = findActiveWo(asset.id);
+        if (!wo) {
+            const finding = worstFinding(profile);
+            const approved = window.confirm(`Buat Work Order untuk ${shortCode(asset.id)}?\n\nTemuan: ${finding.domain} — ${finding.text}`);
+            if (!approved) return null;
+            wo = {
+                woId: `WO-CM-${Date.now().toString().slice(-6)}`,
+                assetId: asset.id,
+                location: asset.location || 'Belum ditentukan',
+                issue: `[CM-${finding.domain.toUpperCase()}] ${finding.text}`,
+                description: `Tindak lanjut Condition Monitoring pada ${shortCode(asset.id)}.`,
+                downtime: finding.status === 'danger' ? '0 jam 00 menit' : '-',
+                status: 'Open',
+                priority: finding.status === 'danger' ? 'High' : 'Normal',
+                assignedTo: 'Pending',
+                createdAt: new Date().toISOString(),
+                source: 'Condition Monitoring'
+            };
+            window.globalData.work_orders.unshift(wo);
+            if (window.setIntegratedAssetStatus) {
+                window.setIntegratedAssetStatus(asset.id, finding.status === 'danger' ? 'BREAKDOWN' : 'STANDBY', 'Condition Monitoring / Work Order', wo.woId, finding.text);
+            }
+            state.notice = { type: 'success', text: `${wo.woId} dibuat dan terhubung dengan inspeksi ${shortCode(asset.id)}.` };
+            persist();
+            window.syncFleetState?.({ refreshInspection: false });
+        }
+        if (navigate) {
+            if (window.openWoDetailView) window.openWoDetailView(wo.woId, asset.id, wo.issue);
+            else window.showView?.('wo');
+        }
+        return wo;
+    }
+
+    const api = {
+        refresh: render,
+        openForAsset(assetId, tab = 'overview') {
+            if (!allAssets().some(asset => asset.id === assetId)) return;
+            state.selectedAssetId = assetId;
+            state.activeTab = tab;
+            const profile = getProfile(allAssets().find(asset => asset.id === assetId));
+            state.selectedTire = profile.tires[0].code;
+            persist();
+            window.closeModal?.('assetModal');
+            window.showView?.('condition', '', 'menu-condition');
+            render();
+        },
+        selectUnit(assetId) {
+            if (!allAssets().some(asset => asset.id === assetId)) return;
+            state.selectedAssetId = assetId;
+            const profile = getProfile(allAssets().find(asset => asset.id === assetId));
+            state.selectedTire = profile.tires[0].code;
+            state.activeTab = 'overview';
+            state.notice = null;
+            persist();
+            render();
+        },
+        filterUnits(query) {
+            const select = document.getElementById('cm-unit-select');
+            if (!select) return;
+            const needle = String(query || '').toLowerCase().trim();
+            Array.from(select.options).forEach(option => {
+                option.hidden = needle && !option.textContent.toLowerCase().includes(needle);
+            });
+            const match = Array.from(select.options).find(option => !option.hidden);
+            if (needle && match) {
+                select.value = match.value;
+                api.selectUnit(match.value);
+                const search = document.getElementById('cm-unit-search');
+                if (search) {
+                    search.value = query;
+                    search.focus();
+                }
+            }
+        },
+        switchTab(tab) {
+            state.activeTab = tab;
+            persist();
+            render();
+        },
+        selectTire(code) {
+            state.selectedTire = code;
+            persist();
+            render();
+        },
+        dismissNotice() {
+            state.notice = null;
+            persist();
+            render();
+        },
+        saveTire() {
+            const profile = getProfile();
+            const tire = profile.tires.find(item => item.code === state.selectedTire);
+            if (!tire) return;
+            const physical = valueOf('cm-tire-physical');
+            const treadValue = valueOf('cm-tire-tread');
+            if (!treadValue && physical === 'Baik') {
+                window.alert('Masukkan tread depth, atau pilih kondisi fisik DG/rusak.');
+                return;
+            }
+            tire.tread = treadValue === '' ? null : num(treadValue);
+            tire.pressure = num(valueOf('cm-tire-pressure'), 0);
+            tire.physical = physical;
+            tire.wearPattern = valueOf('cm-tire-wear');
+            tire.action = valueOf('cm-tire-action');
+            tire.updatedAt = new Date().toISOString();
+            const status = tireStatus(tire);
+            addHistory('Ban', status, `${tire.code} ${tire.tread === null ? tire.physical : `${tire.tread} mm / ${tire.pressure || '-'} PSI`} · ${tire.action}`);
+        },
+        saveGrease() {
+            const grease = getProfile().grease;
+            const current = num(valueOf('cm-grease-current'));
+            const last = num(valueOf('cm-grease-last'));
+            const interval = num(valueOf('cm-grease-interval'));
+            if (!current || !last || !interval || current < last) {
+                window.alert('HM aktual, HM terakhir, dan interval harus valid. HM aktual tidak boleh lebih kecil.');
+                return;
+            }
+            grease.currentHm = current;
+            grease.lastHm = last;
+            grease.interval = interval;
+            grease.quantity = num(valueOf('cm-grease-qty'));
+            grease.greaseType = valueOf('cm-grease-type');
+            grease.note = valueOf('cm-grease-note');
+            document.querySelectorAll('[data-cm-grease-point]').forEach(input => {
+                grease.points[input.dataset.cmGreasePoint] = input.checked;
+            });
+            grease.updatedAt = new Date().toISOString();
+            const status = greaseStatus(grease);
+            addHistory('Grease', status, `${current - last} HM sejak grease · ${grease.quantity} kg ${grease.greaseType}`);
+        },
+        saveCutting() {
+            const cutting = getProfile().cutting;
+            cutting.shift = valueOf('cm-cut-shift');
+            cutting.production = num(valueOf('cm-cut-production'));
+            cutting.hmStart = num(valueOf('cm-cut-hm-start'));
+            cutting.hmEnd = num(valueOf('cm-cut-hm-end'));
+            cutting.stockStart = num(valueOf('cm-cut-stock'));
+            cutting.installed = num(valueOf('cm-cut-installed'));
+            cutting.returned = num(valueOf('cm-cut-returned'));
+            cutting.lost = num(valueOf('cm-cut-lost'));
+            cutting.note = valueOf('cm-cut-note');
+            if (cutting.hmEnd <= cutting.hmStart || cutting.production <= 0) {
+                window.alert('HM akhir harus lebih besar dari HM awal dan produksi harus diisi.');
+                return;
+            }
+            cutting.updatedAt = new Date().toISOString();
+            const metrics = cuttingMetrics(cutting);
+            addHistory('Cutting Bit', metrics.status, `${fmt(metrics.perHm)} bit/HM · ${fmt(metrics.per1000m2)} bit/1.000 m² · return ${fmt(metrics.returnRate, 0)}%`);
+        },
+        saveBattery() {
+            const battery = getProfile().battery;
+            battery.voltage = num(valueOf('cm-bat-voltage'));
+            battery.cca = num(valueOf('cm-bat-cca'));
+            battery.brand = valueOf('cm-bat-brand');
+            battery.type = valueOf('cm-bat-type');
+            battery.installDate = valueOf('cm-bat-install');
+            battery.terminal = valueOf('cm-bat-terminal');
+            battery.electrolyte = valueOf('cm-bat-electrolyte');
+            battery.caseCondition = valueOf('cm-bat-case');
+            battery.note = valueOf('cm-bat-note');
+            if (!battery.voltage || !battery.cca || battery.cca > 100) {
+                window.alert('Tegangan dan persentase CCA harus valid.');
+                return;
+            }
+            battery.updatedAt = new Date().toISOString();
+            addHistory('Aki', batteryStatus(battery), `${battery.voltage} V · ${battery.cca}% CCA · ${battery.terminal}`);
+        },
+        openAsset() {
+            const asset = selectedAsset();
+            window.openAssetModal?.(asset.id, asset.status, asset.category, asset.location);
+        },
+        openP2H() {
+            window.openIntegratedP2H?.(selectedAsset().id, 'form');
+        },
+        openOrCreateWO() {
+            const asset = selectedAsset();
+            const active = findActiveWo(asset.id);
+            if (active && window.openWoDetailView) {
+                window.openWoDetailView(active.woId, asset.id, active.issue || '');
+                return;
+            }
+            ensureConditionWo(true);
+        },
+        schedulePM() {
+            sessionStorage.setItem('fleetmonitor-pm-condition-context', JSON.stringify({
+                assetId: selectedAsset().id,
+                source: 'Condition Monitoring',
+                finding: worstFinding(getProfile())
+            }));
+            window.showView?.('pm');
+            window.alert(`Konteks ${shortCode(selectedAsset().id)} diteruskan ke Preventive Maintenance.`);
+        },
+        requestPart() {
+            const wo = findActiveWo(selectedAsset().id) || ensureConditionWo(false);
+            if (!wo) return;
+            const finding = worstFinding(getProfile());
+            sessionStorage.setItem('fleetmonitor-spb-condition-context', JSON.stringify({
+                assetId: selectedAsset().id,
+                woId: wo.woId,
+                recommendation: finding
+            }));
+            window.openSpbForWo?.(wo.woId, selectedAsset().id);
+            setTimeout(() => {
+                const tbody = document.getElementById('spb-items');
+                if (!tbody) return;
+                const itemMap = {
+                    Ban: ['TIRE-1100-20', 'Ban 1100-20 sesuai posisi & hasil inspeksi', 1, 'pcs'],
+                    Grease: ['GRS-LITHIUM-EP2', 'Grease Lithium EP-2', 4, 'kg'],
+                    'Cutting Bit': ['CBIT-RM500', 'Cutting Bit CAT RM500 / setara', 30, 'pcs'],
+                    Aki: ['BAT-95D31L', `Aki ${getProfile().battery.type}`, 1, 'pcs']
+                };
+                const item = itemMap[finding.domain] || ['CM-CONSUMABLE', `Consumable tindak lanjut ${finding.domain}`, 1, 'pcs'];
+                const existing = Array.from(tbody.querySelectorAll('tr')).some(row => row.textContent.includes(item[0]) || row.querySelector('input')?.value === item[0]);
+                if (existing) return;
+                window.addSpbItem?.();
+                const row = tbody.lastElementChild;
+                const inputs = row ? row.querySelectorAll('input') : [];
+                item.forEach((value, index) => {
+                    if (inputs[index]) inputs[index].value = value;
+                });
+            }, 50);
+        },
+        selectFirstCuttingUnit() {
+            const asset = allAssets().find(item => supportsCuttingBit(item));
+            if (!asset) {
+                window.alert('Unit recycler/milling belum ditemukan pada master aset.');
+                return;
+            }
+            api.selectUnit(asset.id);
+            state.activeTab = 'cutting';
+            persist();
+            render();
+        },
+        getDashboardSnapshot() {
+            const recentTire = state.history.find(item => item.domain === 'Ban');
+            const recentGrease = state.history.find(item => item.domain === 'Grease');
+            return {
+                tire: {
+                    inspected: 240,
+                    rotate: 17,
+                    replace: 19,
+                    coverage: '240 dari 550 posisi tercatat (213 angka + 19 DG + 8 CLOSE)',
+                    rows: [
+                        { unit: 'DT-04042', pos: 'P7–P10', cond: 'DG · Ganti', pressure: '-', badge: 'badge-soft-danger' },
+                        { unit: 'DT-04053', pos: 'P7–P10', cond: 'DG · Ganti', pressure: '-', badge: 'badge-soft-danger' },
+                        { unit: 'DT-00056', pos: 'P1 / P2', cond: 'Rotasi', pressure: '88 / 86 PSI', badge: 'badge-soft-warning' },
+                        { unit: 'DT-00049', pos: 'P2', cond: '3,77 mm', pressure: '84 PSI', badge: 'badge-soft-warning' },
+                        ...(recentTire ? [{ unit: shortCode(recentTire.assetId), pos: 'Terbaru', cond: statusLabel(recentTire.status), pressure: '-', badge: `badge-soft-${recentTire.status === 'danger' ? 'danger' : recentTire.status === 'warning' ? 'warning' : 'success'}` }] : [])
+                    ].slice(0, 5)
+                },
+                grease: {
+                    scheduled: 74,
+                    due: 12,
+                    overdue: 9,
+                    rows: [
+                        { unit: 'D6G-04', lastHm: '218 jam', status: 'Terlambat', badge: 'badge-soft-danger' },
+                        { unit: 'PC200-21', lastHm: '192 jam', status: 'Jatuh Tempo', badge: 'badge-soft-warning' },
+                        { unit: 'DT-061', lastHm: '148 jam', status: 'Aman', badge: 'badge-soft-success' },
+                        { unit: 'MG-009', lastHm: '176 jam', status: 'Jatuh Tempo', badge: 'badge-soft-warning' },
+                        ...(recentGrease ? [{ unit: shortCode(recentGrease.assetId), lastHm: 'Data terbaru', status: statusLabel(recentGrease.status), badge: `badge-soft-${recentGrease.status === 'danger' ? 'danger' : recentGrease.status === 'warning' ? 'warning' : 'success'}` }] : [])
+                    ].slice(0, 5)
+                }
+            };
+        }
+    };
+
+    window.ConditionMonitoring = api;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', render);
+    } else {
+        render();
+    }
+})();
 (function (global) {
     'use strict';
 
@@ -8866,6 +9849,12 @@
         const root = document.getElementById('preventiveMaintenanceModule');
         if (!root) return;
         loadLocalState();
+        let conditionContext = null;
+        try {
+            conditionContext = JSON.parse(sessionStorage.getItem('fleetmonitor-pm-condition-context') || 'null');
+        } catch (error) {
+            conditionContext = null;
+        }
         root.innerHTML = `
             <div class="pm-page-header">
                 <div>
@@ -8878,6 +9867,11 @@
                     <button class="pm-button primary" id="pmExportButton"><i class="fa-solid fa-file-export"></i> Export Tracker</button>
                 </div>
             </div>
+            ${conditionContext ? `<div class="pm-condition-context">
+                <i class="fa-solid fa-link"></i>
+                <div><strong>Konteks dari Condition Monitoring: ${escapeHtml(conditionContext.assetId)}</strong><span>${escapeHtml(conditionContext.finding?.domain || 'Komponen')} · ${escapeHtml(conditionContext.finding?.text || 'Perlu tindak lanjut terencana')}</span></div>
+                <button type="button" id="pmBackToCondition">Buka inspeksi unit</button>
+            </div>` : ''}
             <div class="pm-context-bar">
                 <div class="pm-context-group">
                     <i class="fa-regular fa-calendar"></i>
@@ -8917,6 +9911,9 @@
             setTimeout(() => document.getElementById('pmFormulaStrip').scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
         });
         document.getElementById('pmExportButton').addEventListener('click', exportTracker);
+        document.getElementById('pmBackToCondition')?.addEventListener('click', () => {
+            window.ConditionMonitoring?.openForAsset(conditionContext.assetId);
+        });
         document.getElementById('pmDetailOverlay').addEventListener('click', event => {
             if (event.target.id === 'pmDetailOverlay') closeDetail();
         });
@@ -12476,6 +13473,20 @@
     function initExecutiveAnalyticsPanels() {
         const targetContainer = document.getElementById('dashAnalyticsPanelsContainer');
         if (!targetContainer) return;
+        const conditionSnapshot = window.ConditionMonitoring?.getDashboardSnapshot?.() || null;
+        const tireDashboard = conditionSnapshot?.tire || {
+            inspected: 186,
+            rotate: 21,
+            replace: 8,
+            coverage: 'Ringkasan data inspeksi ban',
+            rows: tireInspectionData
+        };
+        const greaseDashboard = conditionSnapshot?.grease || {
+            scheduled: 74,
+            due: 12,
+            overdue: 9,
+            rows: greaseStatusData
+        };
 
         targetContainer.innerHTML = `
             <!-- ROW 1: STATUS SERVICE BERKALA UNIT & DISTRIBUSI (GAMBAR 1) -->
@@ -12713,15 +13724,15 @@
                             <div class="tire-kpi-bar">
                                 <div class="tire-kpi-box">
                                     <div class="lbl">Ban Diperiksa</div>
-                                    <div class="val">186</div>
+                                    <div class="val">${tireDashboard.inspected}</div>
                                 </div>
                                 <div class="tire-kpi-box">
                                     <div class="lbl">Perlu Rotasi</div>
-                                    <div class="val text-warning">21</div>
+                                    <div class="val text-warning">${tireDashboard.rotate}</div>
                                 </div>
                                 <div class="tire-kpi-box">
                                     <div class="lbl">Harus Diganti</div>
-                                    <div class="val text-danger">8</div>
+                                    <div class="val text-danger">${tireDashboard.replace}</div>
                                 </div>
                             </div>
 
@@ -12735,7 +13746,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${tireInspectionData.map(t => `
+                                    ${tireDashboard.rows.map(t => `
                                         <tr>
                                             <td><strong>${escapeHtml(t.unit)}</strong></td>
                                             <td>${escapeHtml(t.pos)}</td>
@@ -12748,7 +13759,7 @@
 
                             <div class="dash-alert-banner pink">
                                 <i class="fa-solid fa-triangle-exclamation" style="margin-top:2px;"></i>
-                                <div>Prioritas: 8 ban harus diganti segera dan 21 ban perlu rotasi untuk mencegah keausan tidak merata.</div>
+                                <div><strong>${tireDashboard.coverage}.</strong> Prioritas: ${tireDashboard.replace} posisi harus diganti dan ${tireDashboard.rotate} posisi perlu rotasi.</div>
                             </div>
                         </div>
                     </div>
@@ -12759,16 +13770,16 @@
                         <div class="panel-body" style="padding:15px;">
                             <div class="grease-progress-list">
                                 <div class="grease-progress-item">
-                                    <div class="grease-progress-hdr"><span>Sesuai Jadwal</span><strong>74 unit</strong></div>
-                                    <div class="grease-bar-bg"><div class="grease-bar-fill" style="width:74%; background:#16a34a;"></div></div>
+                                    <div class="grease-progress-hdr"><span>Sesuai Jadwal</span><strong>${greaseDashboard.scheduled} unit</strong></div>
+                                    <div class="grease-bar-bg"><div class="grease-bar-fill" style="width:${greaseDashboard.scheduled}%; background:#16a34a;"></div></div>
                                 </div>
                                 <div class="grease-progress-item">
-                                    <div class="grease-progress-hdr"><span>Jatuh Tempo Hari Ini</span><strong style="color:#f59e0b;">12 unit</strong></div>
-                                    <div class="grease-bar-bg"><div class="grease-bar-fill" style="width:12%; background:#f59e0b;"></div></div>
+                                    <div class="grease-progress-hdr"><span>Jatuh Tempo Hari Ini</span><strong style="color:#f59e0b;">${greaseDashboard.due} unit</strong></div>
+                                    <div class="grease-bar-bg"><div class="grease-bar-fill" style="width:${greaseDashboard.due}%; background:#f59e0b;"></div></div>
                                 </div>
                                 <div class="grease-progress-item">
-                                    <div class="grease-progress-hdr"><span>Terlambat Grease</span><strong style="color:#dc2626;">9 unit</strong></div>
-                                    <div class="grease-bar-bg"><div class="grease-bar-fill" style="width:9%; background:#dc2626;"></div></div>
+                                    <div class="grease-progress-hdr"><span>Terlambat Grease</span><strong style="color:#dc2626;">${greaseDashboard.overdue} unit</strong></div>
+                                    <div class="grease-bar-bg"><div class="grease-bar-fill" style="width:${greaseDashboard.overdue}%; background:#dc2626;"></div></div>
                                 </div>
                             </div>
 
@@ -12781,7 +13792,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${greaseStatusData.map(g => `
+                                    ${greaseDashboard.rows.map(g => `
                                         <tr>
                                             <td><strong>${escapeHtml(g.unit)}</strong></td>
                                             <td>${g.lastHm}</td>

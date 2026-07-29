@@ -142,7 +142,7 @@ Tabel berikut merinci seluruh kelas PDO Model yang akan dibuat beserta fungsiona
 | `InspectionModel.php` | `inspections.php` | `submitP2H()`, `getInspectionHistory()`, `flagCriticalFindings()` | `#view-uc` (Inspeksi & P2H) |
 | `MaintenanceModel.php` | `pm.php` | `getPMForecast()`, `schedulePM()`, `completePM()`, `checkOverdue()` | `#view-uc` (Preventive Maintenance) |
 | `InventoryModel.php` | `spareparts.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()`, `getLeadTimeSLA()` | `#view-uc` (Spare Part & Logistik) |
-| `ComponentModel.php` | `condition.php` | `getTireLayout()`, `updateTireMeasurement()`, `getComponentHealth()`, `logGreasing()` | `#view-uc` (Condition Monitoring) |
+| `ComponentModel.php` | `condition.php` | `getUnitCondition()`, `saveTireInspection()`, `saveGreaseInspection()`, `saveCuttingBitControl()`, `saveBatteryInspection()`, `evaluateThresholds()`, `createFollowUp()` | `#view-condition`, Executive KPI, Asset 360°, P2H, WO, PM, SPB |
 | `FuelModel.php` | `fuel.php` | `logRefuel()`, `getLPHReport()`, `detectFuelAnomaly()` | `#view-uc` (Fuel Management) |
 | `CostModel.php` | `costs.php` | `getBudgetVsActual()`, `getUnitValuations()`, `logTransaction()` | `#view-biaya` |
 | `KPIModel.php` | `kpi.php` | `getMechanicLeaderboard()`, `calculateMTTR_MTBF()`, `getOvertimeSPL()` | `#view-uc` (People & KPI, Produktivitas) |
@@ -323,16 +323,88 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
     FOREIGN KEY (requested_by) REFERENCES users(user_id)
 ) ENGINE=InnoDB;
 
--- 10. CONDITION MONITORING (TIRES & COMPONENTS)
-CREATE TABLE IF NOT EXISTS tire_inspections (
-    tire_inspection_id INT AUTO_INCREMENT PRIMARY KEY,
+-- 10. CONDITION MONITORING (PARENT INSPECTION + DOMAIN DETAIL)
+CREATE TABLE IF NOT EXISTS condition_inspections (
+    condition_inspection_id VARCHAR(50) PRIMARY KEY,
     asset_id VARCHAR(100) NOT NULL,
-    tire_position VARCHAR(20) NOT NULL, -- e.g., 'FL', 'FR', 'R1L', 'R1R'
-    tread_depth_mm DECIMAL(4,2) NOT NULL,
-    air_pressure_psi INT NOT NULL,
-    condition_color ENUM('GREEN', 'YELLOW', 'RED') NOT NULL,
+    domain ENUM('TIRE', 'GREASE', 'CUTTING_BIT', 'BATTERY') NOT NULL,
+    result_status ENUM('PASS', 'WARNING', 'FAIL', 'NOT_APPLICABLE') NOT NULL,
+    measured_hm_km DECIMAL(12,2) NULL,
+    notes TEXT NULL,
+    source_document VARCHAR(255) NULL,
+    inspected_by INT NULL,
     inspected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (asset_id) REFERENCES assets(asset_id) ON DELETE CASCADE
+    FOREIGN KEY (asset_id) REFERENCES assets(asset_id) ON DELETE CASCADE,
+    FOREIGN KEY (inspected_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_condition_asset_time (asset_id, inspected_at),
+    INDEX idx_condition_domain_status (domain, result_status)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS tire_inspection_items (
+    tire_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    condition_inspection_id VARCHAR(50) NOT NULL,
+    tire_position VARCHAR(20) NOT NULL, -- P1..P10 atau FL/FR/RL/RR
+    tread_depth_mm DECIMAL(5,2) NULL, -- NULL sah untuk DG/belum diukur
+    air_pressure_psi DECIMAL(6,2) NULL,
+    physical_condition ENUM('GOOD', 'DG', 'CRACK', 'BULGE', 'TEAR', 'NOT_MEASURED') DEFAULT 'GOOD',
+    wear_pattern VARCHAR(50) NULL,
+    recommendation VARCHAR(100) NULL,
+    result_status ENUM('PASS', 'WARNING', 'FAIL', 'NOT_MEASURED') NOT NULL,
+    FOREIGN KEY (condition_inspection_id) REFERENCES condition_inspections(condition_inspection_id) ON DELETE CASCADE,
+    UNIQUE KEY uq_tire_position_per_inspection (condition_inspection_id, tire_position)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS grease_inspection_details (
+    condition_inspection_id VARCHAR(50) PRIMARY KEY,
+    current_hm DECIMAL(12,2) NOT NULL,
+    last_grease_hm DECIMAL(12,2) NOT NULL,
+    interval_hm DECIMAL(10,2) NOT NULL,
+    grease_type VARCHAR(100) NOT NULL,
+    quantity_kg DECIMAL(8,2) NULL,
+    lubrication_points JSON NOT NULL,
+    FOREIGN KEY (condition_inspection_id) REFERENCES condition_inspections(condition_inspection_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS cutting_bit_inspection_details (
+    condition_inspection_id VARCHAR(50) PRIMARY KEY,
+    work_shift VARCHAR(30) NULL,
+    hm_start DECIMAL(12,2) NOT NULL,
+    hm_end DECIMAL(12,2) NOT NULL,
+    production_m2 DECIMAL(14,2) NOT NULL,
+    stock_start INT NOT NULL,
+    installed_qty INT NOT NULL,
+    returned_qty INT NOT NULL,
+    lost_qty INT NOT NULL DEFAULT 0,
+    usage_per_hm DECIMAL(10,3) NOT NULL,
+    usage_per_1000m2 DECIMAL(10,3) NOT NULL,
+    return_rate_pct DECIMAL(6,2) NOT NULL,
+    final_stock INT NOT NULL,
+    usage_cost DECIMAL(15,2) NOT NULL,
+    FOREIGN KEY (condition_inspection_id) REFERENCES condition_inspections(condition_inspection_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS battery_inspection_details (
+    condition_inspection_id VARCHAR(50) PRIMARY KEY,
+    brand VARCHAR(80) NOT NULL,
+    battery_type VARCHAR(100) NOT NULL,
+    installed_at DATE NULL,
+    voltage DECIMAL(5,2) NOT NULL,
+    cca_pct DECIMAL(6,2) NOT NULL,
+    terminal_condition VARCHAR(50) NULL,
+    electrolyte_condition VARCHAR(50) NULL,
+    case_condition VARCHAR(50) NULL,
+    FOREIGN KEY (condition_inspection_id) REFERENCES condition_inspections(condition_inspection_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS condition_follow_ups (
+    follow_up_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    condition_inspection_id VARCHAR(50) NOT NULL,
+    action_type ENUM('P2H', 'PM', 'WORK_ORDER', 'SPB') NOT NULL,
+    reference_id VARCHAR(50) NULL,
+    action_status ENUM('OPEN', 'IN_PROGRESS', 'DONE', 'CANCELLED') DEFAULT 'OPEN',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (condition_inspection_id) REFERENCES condition_inspections(condition_inspection_id) ON DELETE CASCADE,
+    INDEX idx_condition_follow_up_reference (action_type, reference_id)
 ) ENGINE=InnoDB;
 
 -- 11. FUEL LOGS
@@ -648,7 +720,10 @@ Berikut adalah *prompt* siap pakai untuk menghasilkan kode backend PHP PDO, berk
 > "Buatkan struktur class PHP PDO Model `AssetModel.php` dan API Controller `assets.php` berbasis PHP 8 native. `AssetModel.php` harus menggunakan Singleton Database connection dari `core/Database.php` dan memiliki method: `getAll(array $filters)`, `getById(string $id)`, `get360Details(string $id)`, dan `updateStatus(string $id, string $status)`. Controller `assets.php` harus menangani request HTTP GET/POST, mengembalikan JSON standard `{success: true, data: [...]}` dan menggunakan prepared statements strict."
 
 ### Prompt 2: Generasi Complete DDL Migration SQL Script
-> "Tuliskan file `schema.sql` MySQL 8.0 lengkap yang membuat database `serviceplan_bra` beserta seluruh tabel relasionalnya: `locations`, `users`, `roles`, `assets`, `asset_movements`, `work_orders`, `wo_time_logs`, `inspections`, `pm_plans`, `parts`, `purchase_requests`, `tire_inspections`, `fuel_logs`, `cost_financial_monthly`, `unit_valuations`, `accidents`, dan `approvals`. Sertakan Primary Key, Foreign Key Constraints (CASCADE/SET NULL), Indexing pada kolom pencarian status/kategori, dan charset utf8mb4."
+> "Tuliskan file `schema.sql` MySQL 8.0 lengkap yang membuat database `serviceplan_bra` beserta seluruh tabel relasionalnya: `locations`, `users`, `roles`, `assets`, `asset_movements`, `work_orders`, `wo_time_logs`, `inspections`, `pm_plans`, `parts`, `purchase_requests`, `condition_inspections`, `tire_inspection_items`, `grease_inspection_details`, `cutting_bit_inspection_details`, `battery_inspection_details`, `condition_follow_ups`, `fuel_logs`, `cost_financial_monthly`, `unit_valuations`, `accidents`, dan `approvals`. Sertakan Primary Key, Foreign Key Constraints (CASCADE/SET NULL), indexing pada `asset_id/domain/result_status/inspected_at`, dan charset utf8mb4."
 
 ### Prompt 3: Generasi Script Migration ETL Data JSON (`SeederDataJson.php`)
 > "Buatkan script CLI PHP `scripts/SeederDataJson.php` untuk membaca file `data.json` dan menyuntikkan datanya ke database MySQL `serviceplan_bra`. Script harus menggunakan PDO Transaction (`beginTransaction`, `commit`, `rollBack`), menyertakan logika Regex cleaning untuk ekstrak `asset_id`, `serial_number`, dan `license_plate` dari field `id` legacy, membersihkan tag `<br>` pada lokasi, mengonversi string downtime menjadi total menit integer, dan mengonversi format Rupiah pada `unit_valuations` menjadi nilai float/decimal SQL."
+
+### Prompt 4: Generasi API Condition Monitoring Terintegrasi
+> "Buat `ComponentModel.php` dan controller REST `condition.php` untuk empat domain: tire, grease, cutting_bit, battery. Semua POST wajib memakai transaction: simpan parent `condition_inspections`, detail domain, jalankan threshold evaluator, lalu bila FAIL buat `condition_follow_ups` dan kembalikan rekomendasi P2H/PM/WORK_ORDER/SPB. Endpoint GET `/condition.php?asset_id=...` mengembalikan profil unit, latest measurement, health score, history, dan active follow-up. Endpoint GET `/condition.php?scope=dashboard` mengembalikan KPI agregat ban dan grease dari sumber yang sama. Gunakan `asset_id` canonical, prepared statements, idempotency key, audit user, dan response JSON konsisten."

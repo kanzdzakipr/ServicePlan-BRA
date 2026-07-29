@@ -330,34 +330,54 @@ CREATE TABLE purchase_requests (
 
 ---
 
-### 3.8 Condition Monitoring (`view-uc` -> Condition Monitoring)
+### 3.8 Condition Monitoring (`#view-condition`)
 
 #### A. Analisis & Scope HTML (`dashboard.html`)
-Ditempatkan pada seksi `#view-uc` dengan judul "Condition Monitoring".
+Condition Monitoring merupakan halaman kerja per-unit, bukan lagi sketsa ban yang berdiri sendiri. Selector menggunakan `asset.id` asli sebagai foreign key lintas modul, sedangkan prefix lambung (`DT-*`, `RM-*`, dan lain-lain) hanya dipakai untuk memilih layout/form yang relevan. Halaman terdiri dari identitas unit, health score, status empat domain, tab inspeksi, audit trail, serta tombol tindak lanjut.
 
 #### B. Pemahaman Alur Bisnis & Aturan Sistem
-Berdasarkan `REPORT_BAN_UPDATE_19.07.2026.md`, `REGRESING_WEEKLY_MAINTENANCE...`, `Form_Kontrol_Cutting_Bit...`, dan `PEMAKAIAN_AKI`.
-Modul ini mengawasi komponen kritikal dengan metode pengukuran aus berulang:
-* **Ban**: Ambang Merah (<3.2 mm), Kuning (3.2–8.5 mm), Hijau (>8.5 mm).
-* **Cutting Bit / Undercarriage**: Pengukuran persentase keausan terhadap jam kerja.
+Acuan data berasal dari `material/BAN-GREASE-CUTTING_BIT-AKI/` dan dokumen mentah di `raw-material/BAN, GREASE, CUTTING BIT, AKI/`.
+
+* **Ban:** laporan 19 Juli 2026 memuat 55 dump truck × 10 posisi (550 potensi posisi), dengan 213 pengukuran numerik, 19 posisi `DG`, 8 posisi `CLOSE`, dan 310 posisi kosong. Hasil harus membedakan “belum diukur” dari “baik”.
+* **Grease:** regreasing dikendalikan oleh selisih HM aktual terhadap HM terakhir dan interval unit. Titik fokus: pin-bushing, steering linkage, undercarriage, dan propeller shaft/universal joint.
+* **Cutting bit:** harga referensi Rp441.441/pcs; batas pemakaian 30 bit/hari, 3 bit/HM, dan 5 bit/1.000 m²; return rate target 100%; minimum stok 100 pcs. Kehilangan lebih dari nol otomatis `OVER LIMIT`.
+* **Aki:** bank data mencatat 31 transaksi/51 aki pada April–Desember 2025; merek GS 41 unit (80,4%), Bosch 5, dan Yuasa 5. Inspeksi tetap berbasis tegangan, CCA, terminal, elektrolit, casing, tipe, serta usia pemasangan.
+* Komponen yang tidak sesuai tipe unit tampil sebagai `N/A`, bukan dipaksakan sebagai data kosong. Contoh: cutting bit hanya aktif untuk recycler/milling (`RM-*`).
 
 #### C. Spesifikasi Teknis Frontend
-* Skematik Visual 2D Sasis Unit (Dump Truck 10 Roda) dengan elemen lingkaran terinteraksi di setiap posisi roda.
-* Form Input Pengukuran Tread Depth (mm) & Tekanan Angin (PSI).
 
-#### D. Spesifikasi Backend & Threshold Evaluator
-* **Evaluation Engine**: Mengubah kondisi komponen secara otomatis berdasarkan input inspeksi fisik terbaru.
+* Selector unit dilengkapi pencarian ID/kategori/lokasi dan menyimpan unit terpilih.
+* Ringkasan empat domain: Ban/Undercarriage, Grease, Cutting Bit, dan Aki; setiap kartu membuka form terkait.
+* Skematik ban adaptif: 10 posisi untuk dump truck dan 4 posisi untuk unit roda lain. Z-level ditetapkan: chassis `z-index:1`, ban `z-index:3`, ban terpilih `z-index:20`.
+* Form ban mencatat tread, PSI, kerusakan fisik, pola aus, dan rekomendasi.
+* Form grease mencatat HM, interval, jenis/jumlah grease, titik pelumasan, dan catatan mekanik.
+* Form cutting bit menghitung bit/HM, bit/1.000 m², return rate, stok akhir, dan biaya shift otomatis.
+* Form aki mencatat voltase, CCA, merek/tipe, tanggal pasang, terminal, elektrolit, casing, dan catatan load test.
+* Riwayat menyimpan audit trail ID inspeksi, waktu, domain, status, dan ringkasan.
+
+#### D. Integrasi Lintas Menu & Threshold Evaluator
+
+1. Penyimpanan inspeksi membuat record pada koleksi inspeksi unit sehingga muncul bersama riwayat P2H.
+2. Temuan kritis mengubah status unit menjadi `INSPEKSI`; unit baru menjadi `BREAKDOWN` setelah pengguna mengonfirmasi pembuatan WO korektif.
+3. Aksi **Buat WO** menghasilkan WO dengan `assetId` yang sama, sumber `Condition Monitoring`, prioritas sesuai severity, dan membuka detail WO.
+4. Aksi **Jadwalkan PM** meneruskan konteks unit/temuan ke Preventive Maintenance.
+5. Aksi **Minta consumable** mewajibkan WO aktif, lalu membuka SPB dan mengisi rekomendasi ban, grease, cutting bit, atau aki.
+6. Asset 360° menyediakan tombol masuk ke Condition Monitoring unit yang sama.
+7. Executive Dashboard membaca snapshot KPI ban/grease dari mesin Condition Monitoring, bukan tabel KPI terpisah.
 
 #### E. Tabulasi Ambang Batas Condition Monitoring
-| Komponen | Parameter Ukur | Ambang Hijau (Good) | Ambang Kuning (Warning) | Ambang Merah (Critical/Replace) |
+
+| Komponen | Parameter Ukur | Hijau / Normal | Kuning / Warning | Merah / Critical |
 |:---|:---|:---|:---|:---|
-| Ban Dump Truck | Tread Depth (mm) | > 8.5 mm | 3.2 mm – 8.5 mm | < 3.2 mm / Rusak Fisik |
-| Cutting Bit CAT RM500| Panjang Tip (cm) | > 10 cm | 5 cm – 10 cm | < 5 cm / Patah |
-| Battery / Aki | Voltage (V) & CCA | > 12.6V / CCA > 80%| 12.0V – 12.5V | < 12.0V (Perlu Re-charge/Replace) |
-| Undercarriage Exca | Pitch Bushing / Rollers| Wear < 50% | Wear 50% – 85% | Wear > 85% / Overhoist |
+| Ban dump truck | Tread dan kondisi fisik | > 8,5 mm | 3,2–8,5 mm / aus tidak rata | < 3,2 mm atau `DG`/retak/benjol/sobek |
+| Grease | HM sejak grease | < 90% interval | 90–99% interval | ≥ interval |
+| Cutting bit | Bit/HM | ≤ 3 | >3 sampai 3,6 | >3,6 |
+| Cutting bit | Bit/1.000 m² | ≤ 5 | >5 sampai 6 | >6 |
+| Cutting bit | Return/lost/stock | 100%, lost 0, stok ≥100 | stok <100 | lost >0 |
+| Aki | Voltage dan CCA | ≥12,6 V dan CCA ≥80% | 12,0–12,5 V atau CCA 60–79% | <12,0 V atau CCA <60% / casing bocor-retak |
 
 #### F. Supporting AI Prompt (Production Ready)
-> "Rancang komponen visual HTML/CSS/JS untuk 'Visual Tire Pressure & Tread Depth Monitor'. Tampilkan diagram posisi ban 10-wheeler (Posisi FL, FR, R1L, R1R, dst.). Setiap posisi ban dapat diklik untuk memasukkan data Tread Depth (mm). Warnai indikator ban sesuai ambang batas: Merah (<3.2mm), Kuning (3.2-8.5mm), Hijau (>8.5mm)."
+> "Bangun modul Condition Monitoring per-unit yang mengikat setiap inspeksi ke `asset_id`; sediakan layout ban adaptif, form HM grease, kalkulasi cutting-bit, load test aki, audit trail, dan evaluator threshold. Hubungkan temuan ke P2H, PM, Work Order, SPB, Asset 360°, serta KPI Executive Dashboard tanpa menduplikasi sumber data."
 
 ---
 

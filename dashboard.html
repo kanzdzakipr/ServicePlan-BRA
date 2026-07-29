@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logo-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-7">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-8">
     
 </head>
 
@@ -416,70 +416,15 @@
 
             <!-- VIEW: CONDITION MONITORING -->
             <div id="view-condition" class="view-section">
-                <h1 class="page-title">Condition Monitoring</h1>
-                <div class="dashboard-layout">
-                    <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-truck"></i> Skematik Ban 10-Wheeler</span>
-                        </div>
-                        <div class="panel-body"
-                            style="display: flex; justify-content: center; align-items: center; padding: 40px; position: relative;">
-                            <div
-                                style="width: 150px; height: 350px; border: 2px solid #ccc; border-radius: 10px; position: relative; background: #f8f9fa;">
-                                <div
-                                    style="position: absolute; top: -25px; width: 100%; text-align: center; font-weight: bold;">
-                                    Depan</div>
-                                <div class="tire-indicator" id="tire-fl" onclick="inspectTire('FL')"
-                                    style="top: 20px; left: -30px;">FL</div>
-                                <div class="tire-indicator" id="tire-fr" onclick="inspectTire('FR')"
-                                    style="top: 20px; right: -30px;">FR</div>
-                                <div class="tire-indicator" id="tire-r1l" onclick="inspectTire('R1L')"
-                                    style="top: 150px; left: -30px;">R1L</div>
-                                <div class="tire-indicator" id="tire-r1li" onclick="inspectTire('R1LI')"
-                                    style="top: 150px; left: -5px; z-index: 1;">R1LI</div>
-                                <div class="tire-indicator" id="tire-r1r" onclick="inspectTire('R1R')"
-                                    style="top: 150px; right: -30px;">R1R</div>
-                                <div class="tire-indicator" id="tire-r1ri" onclick="inspectTire('R1RI')"
-                                    style="top: 150px; right: -5px; z-index: 1;">R1RI</div>
-                                <div class="tire-indicator" id="tire-r2l" onclick="inspectTire('R2L')"
-                                    style="bottom: 20px; left: -30px;">R2L</div>
-                                <div class="tire-indicator" id="tire-r2li" onclick="inspectTire('R2LI')"
-                                    style="bottom: 20px; left: -5px; z-index: 1;">R2LI</div>
-                                <div class="tire-indicator" id="tire-r2r" onclick="inspectTire('R2R')"
-                                    style="bottom: 20px; right: -30px;">R2R</div>
-                                <div class="tire-indicator" id="tire-r2ri" onclick="inspectTire('R2RI')"
-                                    style="bottom: 20px; right: -5px; z-index: 1;">R2RI</div>
-                            </div>
-                        </div>
+                <div class="cm-page-heading">
+                    <div>
+                        <h1 class="page-title"><i class="fa-solid fa-stethoscope"></i> Condition Monitoring</h1>
+                        <p>Inspeksi komponen kritis per-unit dan tindak lanjut terintegrasi.</p>
                     </div>
-                    <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-pen"></i> Form Inspeksi Ban (<span
-                                    id="selected-tire-label">FL</span>)</span></div>
-                        <div class="panel-body form-group">
-                            <input type="hidden" id="selected-tire" value="FL">
-                            <label>Tread Depth (mm)</label>
-                            <input type="number" id="tire-tread" class="form-control" placeholder="Misal: 9.5"
-                                step="0.1">
-                            <label>Tekanan Angin (PSI)</label>
-                            <input type="number" id="tire-pressure" class="form-control" placeholder="Misal: 110">
-                            <button class="btn btn-primary" onclick="saveTireInspection()" style="width: 100%;">Simpan
-                                Inspeksi</button>
-
-                            <div style="margin-top: 20px;">
-                                <p style="font-weight: bold;">Legenda Ambang Batas:</p>
-                                <div style="display: flex; gap: 10px; margin-top: 10px; font-size: 0.85rem;">
-                                    <div><span
-                                            style="display:inline-block; width:15px; height:15px; background:var(--success); margin-right:5px; border-radius:3px; vertical-align:middle;"></span>
-                                        &gt; 8.5 mm (Aman)</div>
-                                    <div><span
-                                            style="display:inline-block; width:15px; height:15px; background:var(--warning); margin-right:5px; border-radius:3px; vertical-align:middle;"></span>
-                                        3.2 - 8.5 mm (Warning)</div>
-                                    <div><span
-                                            style="display:inline-block; width:15px; height:15px; background:var(--danger); margin-right:5px; border-radius:3px; vertical-align:middle;"></span>
-                                        &lt; 3.2 mm (Bahaya)</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <span class="cm-source-chip"><i class="fa-solid fa-database"></i> Sumber BRA tervalidasi</span>
+                </div>
+                <div id="conditionMonitoringApp" class="cm-app" aria-live="polite">
+                    <div class="cm-loading"><i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan data inspeksi unit…</div>
                 </div>
             </div>
 
@@ -1139,8 +1084,9 @@
                             </div>
                              <button class="btn btn-primary" style="width:100%; margin-bottom:10px;"
                                  onclick="triggerUpdateStatus()">Update Status</button>
-                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
                                  <button class="btn" style="background:#f59e0b; color:#fff;" onclick="openIntegratedP2H(document.getElementById('modalAssetId').textContent, 'history')"><i class="fa-solid fa-clipboard-check"></i> P2H</button>
+                                 <button class="btn" style="background:#0284c7; color:#fff;" onclick="ConditionMonitoring.openForAsset(document.getElementById('modalAssetId').textContent)"><i class="fa-solid fa-stethoscope"></i> Kondisi</button>
                                  <button class="btn" style="background:#dc3545; color:#fff;" onclick="openIntegratedWO(document.getElementById('modalAssetId').textContent)"><i class="fa-solid fa-wrench"></i> Work Order</button>
                              </div>
                         </div>
@@ -2370,7 +2316,13 @@
                 const queryView = new URLSearchParams(window.location.search).get('view') || '';
                 const hashView = window.location.hash.replace(/^#/, '');
                 const requestedView = hashView || queryView;
-                if (/^reports(?:\/|$)/i.test(requestedView)) {
+                if (/^condition(?:\/|$)/i.test(requestedView)) {
+                    showView('condition', '', 'menu-condition');
+                    const conditionPanel = requestedView.split('/')[1];
+                    if (['overview', 'tire', 'grease', 'cutting', 'battery', 'history'].includes(conditionPanel)) {
+                        window.ConditionMonitoring?.switchTab(conditionPanel);
+                    }
+                } else if (/^reports(?:\/|$)/i.test(requestedView)) {
                     showView('reports');
                     const reportPanel = requestedView.split('/')[1];
                     if (reportPanel === 'import' || reportPanel === 'history') {
@@ -3042,6 +2994,9 @@
             if (viewName === 'dashboard' && !mapInitialized && globalData) {
                 initMap(globalData.assets);
                 mapInitialized = true;
+            }
+            if (viewName === 'condition' && window.ConditionMonitoring) {
+                window.ConditionMonitoring.refresh();
             }
             if (viewName === 'reports') {
                 if (!/^#reports(?:\/|$)/i.test(window.location.hash)) {
@@ -4288,8 +4243,11 @@
         }
 
         function initNewViews() {
-            // Initialize default tire selection (FL)
-            window.inspectTire('FL');
+            if (window.ConditionMonitoring) {
+                window.ConditionMonitoring.refresh();
+            } else if (window.inspectTire) {
+                window.inspectTire('FL');
+            }
 
             if (globalData) {
                 const woSelect = document.getElementById('spb-wo-id');
@@ -4358,7 +4316,7 @@
     <script src="scripts/vendor/jszip-3.10.1.min.js"></script>
     <script src="scripts/vendor/pdf-3.11.174.min.js"></script>
     <script src="scripts/vendor/tesseract-5.1.1.min.js"></script>
-    <script src="scripts/dashboard.js?v=20260729-2"></script>
+    <script src="scripts/dashboard.js?v=20260729-3"></script>
 </body>
 
 </html>
