@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logo-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-5">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-7">
     
 </head>
 
@@ -1693,6 +1693,12 @@
         window.openModal = function(id) {
             const el = document.getElementById(id);
             if (el) {
+                if (id === 'modalWoStatusConfirm') {
+                    document.body.classList.add('wo-confirm-modal-open');
+                    // Pastikan overlay menjadi anak body paling akhir sehingga
+                    // tidak terjebak stacking context komponen lain.
+                    document.body.appendChild(el);
+                }
                 el.classList.add('active');
                 el.style.display = 'flex';
             }
@@ -1703,6 +1709,9 @@
             if (el) {
                 el.classList.remove('active');
                 el.style.display = 'none';
+                if (id === 'modalWoStatusConfirm') {
+                    document.body.classList.remove('wo-confirm-modal-open');
+                }
             }
         };
 
@@ -1955,6 +1964,22 @@
             queueWoStatusConfirmation(woId, targetStatus);
         };
 
+        function showWoStatusToast(message) {
+            const previousToast = document.getElementById('woStatusToast');
+            if (previousToast) previousToast.remove();
+
+            const toast = document.createElement('div');
+            toast.id = 'woStatusToast';
+            toast.className = 'wo-status-toast';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>${escapeHtml(message)}</span>`;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('active'));
+            setTimeout(() => {
+                toast.classList.remove('active');
+                setTimeout(() => toast.remove(), 250);
+            }, 3500);
+        }
+
         function bindWorkOrderDropZones(kanbanBoard) {
             if (!kanbanBoard || kanbanBoard.dataset.dropZonesBound === 'true') return;
             kanbanBoard.dataset.dropZonesBound = 'true';
@@ -2160,7 +2185,219 @@
             }, true);
         }
 
+        /*
+         * Work Order Drag & Drop Engine v2
+         * Satu-satunya engine yang diaktifkan oleh initWorkOrderView.
+         * Menggunakan Pointer Events + pointer capture sehingga tidak bergantung
+         * pada perilaku native HTML5 drop di dalam container overflow.
+         */
+        const WorkOrderDragDrop = (() => {
+            const VALID_STATUSES = new Set(['Open', 'In Progress', 'Closed']);
+            let dragState = null;
+            let suppressCardClickUntil = 0;
+
+            function getColumnFromElement(element, board) {
+                if (!element || typeof element.closest !== 'function') return null;
+                const column = element.closest('.kanban-column[data-status]');
+                return column && board.contains(column) ? column : null;
+            }
+
+            function getColumnAtPoint(clientX, clientY, board) {
+                if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
+                const elements = typeof document.elementsFromPoint === 'function'
+                    ? document.elementsFromPoint(clientX, clientY)
+                    : [document.elementFromPoint(clientX, clientY)];
+                for (const element of elements) {
+                    const column = getColumnFromElement(element, board);
+                    if (column) return column;
+                }
+                return null;
+            }
+
+            function setActiveColumn(board, activeColumn) {
+                board.querySelectorAll('.kanban-column').forEach(column => {
+                    column.classList.toggle('wo-drop-target-active', column === activeColumn);
+                });
+            }
+
+            function createDragGhost(card) {
+                const rect = card.getBoundingClientRect();
+                const ghost = card.cloneNode(true);
+                ghost.removeAttribute('id');
+                ghost.removeAttribute('onclick');
+                ghost.removeAttribute('draggable');
+                ghost.setAttribute('aria-hidden', 'true');
+                ghost.className = 'kanban-card wo-dnd-ghost';
+                ghost.style.width = `${rect.width}px`;
+                ghost.style.height = `${rect.height}px`;
+                document.body.appendChild(ghost);
+                return ghost;
+            }
+
+            function moveGhost(ghost, clientX, clientY) {
+                if (!ghost) return;
+                ghost.style.left = `${clientX + 16}px`;
+                ghost.style.top = `${clientY + 16}px`;
+            }
+
+            function cleanupDrag() {
+                if (!dragState) return;
+                const { board, card, ghost, pointerId } = dragState;
+                try {
+                    if (card.hasPointerCapture(pointerId)) card.releasePointerCapture(pointerId);
+                } catch (error) {}
+                card.classList.remove('wo-dnd-source');
+                card.setAttribute('aria-grabbed', 'false');
+                if (ghost && ghost.parentNode) ghost.remove();
+                board.classList.remove('wo-dnd-active');
+                board.querySelectorAll('.kanban-column').forEach(column => {
+                    column.classList.remove('wo-drop-zone-ready', 'wo-drop-target-active', 'wo-drop-source');
+                });
+                document.body.classList.remove('wo-dnd-body-active');
+            }
+
+            function startVisualDrag() {
+                if (!dragState || dragState.dragging) return;
+                dragState.dragging = true;
+                dragState.card.classList.add('wo-dnd-source');
+                dragState.card.setAttribute('aria-grabbed', 'true');
+                dragState.ghost = createDragGhost(dragState.card);
+                dragState.board.classList.add('wo-dnd-active');
+                dragState.board.querySelectorAll('.kanban-column').forEach(column => {
+                    column.classList.add('wo-drop-zone-ready');
+                    if (column.dataset.status === dragState.sourceStatus) {
+                        column.classList.add('wo-drop-source');
+                    }
+                });
+                document.body.classList.add('wo-dnd-body-active');
+            }
+
+            function openStatusConfirmation(payload, targetStatus) {
+                if (!payload || !VALID_STATUSES.has(targetStatus)) return;
+                const wo = getWoById(payload.woId);
+                if (!wo || wo.status === targetStatus) return;
+
+                // Tunggu sampai pointer capture dan ghost benar-benar dibersihkan.
+                requestAnimationFrame(() => {
+                    closeModal('modalWoDetail');
+                    window.openWoStatusConfirmModal(
+                        wo.woId,
+                        wo.status,
+                        targetStatus,
+                        wo.assetId || wo.unitId || payload.assetId || '',
+                        wo.issue || wo.description || payload.issue || ''
+                    );
+                });
+            }
+
+            function bind(board) {
+                if (!board || board.dataset.woDndEngine === 'v2') return;
+                board.dataset.woDndEngine = 'v2';
+
+                board.addEventListener('pointerdown', event => {
+                    if (event.button !== 0 || dragState) return;
+                    if (event.target.closest('button, a, input, select, textarea')) return;
+
+                    const card = event.target.closest('.kanban-card[data-wo-id]');
+                    if (!card || !board.contains(card)) return;
+                    const wo = getWoById(card.dataset.woId);
+                    if (!wo) return;
+
+                    dragState = {
+                        board,
+                        card,
+                        pointerId: event.pointerId,
+                        startX: event.clientX,
+                        startY: event.clientY,
+                        lastX: event.clientX,
+                        lastY: event.clientY,
+                        sourceStatus: wo.status,
+                        targetStatus: null,
+                        dragging: false,
+                        ghost: null,
+                        payload: {
+                            woId: wo.woId,
+                            assetId: wo.assetId || wo.unitId || '',
+                            issue: wo.issue || wo.description || ''
+                        }
+                    };
+
+                    try { card.setPointerCapture(event.pointerId); } catch (error) {}
+                }, true);
+
+                window.addEventListener('pointermove', event => {
+                    if (!dragState || event.pointerId !== dragState.pointerId) return;
+                    dragState.lastX = event.clientX;
+                    dragState.lastY = event.clientY;
+
+                    const movement = Math.hypot(
+                        event.clientX - dragState.startX,
+                        event.clientY - dragState.startY
+                    );
+                    if (!dragState.dragging && movement >= 5) startVisualDrag();
+                    if (!dragState.dragging) return;
+
+                    event.preventDefault();
+                    moveGhost(dragState.ghost, event.clientX, event.clientY);
+                    const targetColumn = getColumnAtPoint(event.clientX, event.clientY, dragState.board);
+                    dragState.targetStatus = targetColumn ? targetColumn.dataset.status : null;
+                    setActiveColumn(dragState.board, targetColumn);
+                }, { capture: true, passive: false });
+
+                window.addEventListener('pointerup', event => {
+                    if (!dragState || event.pointerId !== dragState.pointerId) return;
+                    const completedDrag = dragState;
+                    const wasDragging = completedDrag.dragging;
+                    const releaseColumn = getColumnAtPoint(
+                        event.clientX,
+                        event.clientY,
+                        completedDrag.board
+                    );
+                    const targetStatus = (releaseColumn && releaseColumn.dataset.status)
+                        || completedDrag.targetStatus;
+
+                    cleanupDrag();
+                    dragState = null;
+
+                    if (!wasDragging) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    suppressCardClickUntil = Date.now() + 350;
+                    openStatusConfirmation(completedDrag.payload, targetStatus);
+                }, true);
+
+                window.addEventListener('pointercancel', event => {
+                    if (!dragState || event.pointerId !== dragState.pointerId) return;
+                    cleanupDrag();
+                    dragState = null;
+                    suppressCardClickUntil = Date.now() + 200;
+                }, true);
+
+                board.addEventListener('click', event => {
+                    if (Date.now() >= suppressCardClickUntil) return;
+                    if (!event.target.closest('.kanban-card[data-wo-id]')) return;
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }, true);
+            }
+
+            return { bind };
+        })();
+
         window.openWoStatusConfirmModal = function(woId, fromStatus, toStatus, assetId, issue) {
+            const allowedStatuses = ['Open', 'In Progress', 'Closed'];
+            const wo = getWoById(woId);
+            if (!wo || !allowedStatuses.includes(toStatus) || wo.status === toStatus) return;
+
+            fromStatus = wo.status;
+            assetId = wo.assetId || wo.unitId || assetId || '';
+            issue = String(wo.issue || wo.description || issue || '');
+
+            // Tidak boleh ada modal detail lain yang menutupi konfirmasi status.
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                if (modal.id && modal.id !== 'modalWoStatusConfirm') closeModal(modal.id);
+            });
+
             document.getElementById('woConfirmId').value = woId;
             document.getElementById('woConfirmTargetStatus').value = toStatus;
             document.getElementById('woConfirmAssetId').value = assetId;
@@ -2172,10 +2409,6 @@
             const toBadge = document.getElementById('woConfirmToStatus');
             if (fromBadge) fromBadge.textContent = fromStatus;
             if (toBadge) toBadge.textContent = toStatus;
-
-            // Find WO data in globalData if available for autofill
-            const wo = globalData && globalData.work_orders ? globalData.work_orders.find(w => w.woId === woId) : null;
-            const asset = globalData && globalData.assets ? globalData.assets.find(a => a.id === assetId) : null;
 
             // Autofill Mechanic
             const mechanicSelect = document.getElementById('woConfirmMechanic');
@@ -2245,6 +2478,14 @@
             });
             if (actionLog) wo.issue = `${wo.issue || ''} | [Log ${mechanic}]: ${actionLog}`;
 
+            // Tempatkan WO terbaru di urutan pertama agar perpindahannya langsung
+            // terlihat, termasuk pada kolom Closed yang berisi ratusan card.
+            const updatedWoIndex = globalData.work_orders.findIndex(item => item.woId === woId);
+            if (updatedWoIndex > 0) {
+                globalData.work_orders.splice(updatedWoIndex, 1);
+                globalData.work_orders.unshift(wo);
+            }
+
             // Sync integrated status for Asset & Monitoring Unit
             if (assetId && globalData.assets) {
                 setIntegratedAssetStatus(assetId, unitStatus, 'Work Order', woId, actionLog);
@@ -2255,7 +2496,14 @@
             // Synchronize state and update all UI views instantly
             window.syncFleetState();
 
-            alert(`Status Work Order (${woId}) berhasil diperbarui:\n- Status WO: ${targetStatus}\n- Mekanik: ${mechanic}\n- Status Unit ${assetId}: ${unitStatus}`);
+            const movedCard = document.getElementById(`wo-card-${woId}`);
+            if (movedCard) {
+                movedCard.classList.add('status-change-success');
+                movedCard.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+                setTimeout(() => movedCard.classList.remove('status-change-success'), 3200);
+            }
+
+            showWoStatusToast(`${woId} berhasil dipindahkan ke ${targetStatus}`);
         };
 
         window.openWoDetailModal = function(woId, fallbackAssetId, fallbackIssue) {
@@ -2807,19 +3055,7 @@
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                         <span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(wo.priority)}</span>
-                        <div class="wo-card-status-actions">
-                            <select class="wo-card-status-select"
-                                    aria-label="Ubah status ${escapeHtml(wo.woId)}"
-                                    onclick="event.stopPropagation()"
-                                    onpointerdown="event.stopPropagation()"
-                                    onchange="handleWoStatusSelect(event, '${escapeHtml(wo.woId)}')">
-                                <option value="">Ubah status...</option>
-                                ${statusKey !== 'Open' ? '<option value="Open">Open</option>' : ''}
-                                ${statusKey !== 'In Progress' ? '<option value="In Progress">In Progress</option>' : ''}
-                                ${statusKey !== 'Closed' ? '<option value="Closed">Closed</option>' : ''}
-                            </select>
-                            <span class="wo-card-drag-label"><i class="fa-solid fa-grip-vertical"></i> Drag</span>
-                        </div>
+                        <span class="wo-card-drag-label"><i class="fa-solid fa-grip-vertical"></i> Drag untuk ubah status</span>
                     </div>
                 </div>
             `;
@@ -2828,7 +3064,7 @@
         function initWorkOrderView(wos) {
             const kanbanBoard = document.getElementById('woKanbanBoard');
             if (!kanbanBoard) return;
-            bindWorkOrderDropZones(kanbanBoard);
+            WorkOrderDragDrop.bind(kanbanBoard);
 
             const openWos = wos.filter(w => w.status === 'Open');
             const progressWos = wos.filter(w => w.status === 'In Progress');
