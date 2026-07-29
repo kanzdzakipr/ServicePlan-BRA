@@ -10,7 +10,7 @@
     <!-- Leaflet for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260728-6">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260728-15">
     
 </head>
 
@@ -1715,40 +1715,100 @@
         // Drag and Drop & Form Kelengkapan (FRM-WO-01) Engine
         let currentDraggedWo = null;
 
-        window.handleWoDragStart = function(e, woId, currentStatus, assetId, issue) {
-            currentDraggedWo = { woId, currentStatus, assetId, issue };
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', woId);
-            e.currentTarget.classList.add('dragging');
+        window.handleWoDragStart = function(e, woId) {
+            if (!woId) return;
+            const wo = (globalData && globalData.work_orders) ? globalData.work_orders.find(w => w.woId === woId) : null;
+            
+            currentDraggedWo = {
+                woId: woId,
+                currentStatus: wo ? wo.status : 'Open',
+                assetId: wo ? wo.assetId : '',
+                issue: wo ? (wo.issue || wo.description || '') : ''
+            };
+
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', woId); } catch (err) {}
+            }
+
+            const card = e.target ? e.target.closest('.kanban-card') : null;
+            if (card) {
+                setTimeout(() => card.classList.add('dragging'), 0);
+            }
         };
 
         window.handleWoDragEnd = function(e) {
-            e.currentTarget.classList.remove('dragging');
-            document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
+            document.querySelectorAll('.kanban-card.dragging').forEach(el => el.classList.remove('dragging'));
+            document.querySelectorAll('.kanban-column.drag-over').forEach(el => el.classList.remove('drag-over'));
         };
 
         window.handleWoDragOver = function(e) {
             e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            const col = e.target ? e.target.closest('.kanban-column') : null;
+            if (col && !col.classList.contains('drag-over')) {
+                document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
+                col.classList.add('drag-over');
+            }
         };
 
         window.handleWoDragEnter = function(e, statusKey) {
             e.preventDefault();
-            const col = e.currentTarget.closest('.kanban-column') || e.currentTarget;
-            col.classList.add('drag-over');
+            const col = e.target ? e.target.closest('.kanban-column') : null;
+            if (col) col.classList.add('drag-over');
         };
 
         window.handleWoDragLeave = function(e) {
-            const col = e.currentTarget.closest('.kanban-column') || e.currentTarget;
-            col.classList.remove('drag-over');
+            const col = e.target ? e.target.closest('.kanban-column') : null;
+            if (col && !col.contains(e.relatedTarget)) {
+                col.classList.remove('drag-over');
+            }
         };
 
-        window.handleWoDrop = function(e, targetStatus) {
+        window.handleWoDrop = function(e, fallbackStatus) {
             e.preventDefault();
+            e.stopPropagation();
             document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
 
+            let targetStatus = null;
+            const elementWithStatus = e.target ? e.target.closest('[data-status]') : null;
+            if (elementWithStatus) {
+                targetStatus = elementWithStatus.getAttribute('data-status');
+            }
+
+            if (!targetStatus) {
+                const col = e.target ? e.target.closest('.kanban-column') : null;
+                if (col) {
+                    targetStatus = col.getAttribute('data-status');
+                    if (!targetStatus) {
+                        const id = col.id || '';
+                        if (id.includes('Open')) targetStatus = 'Open';
+                        else if (id.includes('Progress')) targetStatus = 'In Progress';
+                        else if (id.includes('Closed')) targetStatus = 'Closed';
+                    }
+                }
+            }
+
+            if (!targetStatus) targetStatus = fallbackStatus;
+
+            if (!currentDraggedWo) {
+                let woId = null;
+                try { woId = e.dataTransfer ? e.dataTransfer.getData('text/plain') : null; } catch(err){}
+                if (woId && globalData && globalData.work_orders) {
+                    const wo = globalData.work_orders.find(w => w.woId === woId);
+                    if (wo) {
+                        currentDraggedWo = {
+                            woId: wo.woId,
+                            currentStatus: wo.status,
+                            assetId: wo.assetId,
+                            issue: wo.issue || wo.description || ''
+                        };
+                    }
+                }
+            }
+
             if (!currentDraggedWo) return;
-            if (currentDraggedWo.currentStatus === targetStatus) return; // Same status, ignore
+            if (!targetStatus || currentDraggedWo.currentStatus === targetStatus) return;
 
             openWoStatusConfirmModal(currentDraggedWo.woId, currentDraggedWo.currentStatus, targetStatus, currentDraggedWo.assetId, currentDraggedWo.issue);
         };
@@ -1766,14 +1826,42 @@
             if (fromBadge) fromBadge.textContent = fromStatus;
             if (toBadge) toBadge.textContent = toStatus;
 
-            const actionText = document.getElementById('woConfirmAction');
-            if (actionText) actionText.value = `[${toStatus.toUpperCase()}] Penanganan WO ${woId} pada unit ${assetId}.`;
+            // Find WO data in globalData if available for autofill
+            const wo = globalData && globalData.work_orders ? globalData.work_orders.find(w => w.woId === woId) : null;
+            const asset = globalData && globalData.assets ? globalData.assets.find(a => a.id === assetId) : null;
 
+            // Autofill Mechanic
+            const mechanicSelect = document.getElementById('woConfirmMechanic');
+            if (mechanicSelect && wo && wo.assignedTo && wo.assignedTo !== 'Pending') {
+                for (let option of mechanicSelect.options) {
+                    if (option.value.includes(wo.assignedTo)) {
+                        option.selected = true;
+                        break;
+                    }
+                }
+            }
+
+            // Autofill Unit Effective Status based on WO transition
             const unitStatusSelect = document.getElementById('woConfirmUnitStatus');
-            if (unitStatusSelect) {
-                if (toStatus === 'Closed') unitStatusSelect.value = 'READY';
-                else if (toStatus === 'In Progress') unitStatusSelect.value = 'STANDBY';
-                else unitStatusSelect.value = 'BREAKDOWN';
+            let suggestedUnitStatus = 'BREAKDOWN';
+            if (toStatus === 'Closed') suggestedUnitStatus = 'READY';
+            else if (toStatus === 'In Progress') suggestedUnitStatus = 'STANDBY';
+            else if (toStatus === 'Open') suggestedUnitStatus = 'BREAKDOWN';
+
+            if (unitStatusSelect) unitStatusSelect.value = suggestedUnitStatus;
+
+            // Autofill Action & Repair Log
+            const actionText = document.getElementById('woConfirmAction');
+            if (actionText) {
+                const currentMechanic = mechanicSelect ? mechanicSelect.value : 'Mekanik';
+                const issueBrief = issue ? ` (${issue.substring(0, 40)})` : '';
+                if (toStatus === 'Closed') {
+                    actionText.value = `[PERBAIKAN SELESAI] Penanganan WO ${woId} pada unit ${assetId}${issueBrief} oleh ${currentMechanic} telah selesai. Unit dinyatakan READY operasional.`;
+                } else if (toStatus === 'In Progress') {
+                    actionText.value = `[SEDANG DIPERBAIKI] Pengerjaan WO ${woId} pada unit ${assetId}${issueBrief} sedang ditangani oleh ${currentMechanic}.`;
+                } else {
+                    actionText.value = `[PENGAJUAN ULANG] WO ${woId} unit ${assetId} dikembalikan ke antrean Open.`;
+                }
             }
 
             openModal('modalWoStatusConfirm');
@@ -1794,19 +1882,20 @@
                 wo.status = targetStatus;
                 wo.lastUpdate = new Date().toISOString();
                 wo.assignedTo = mechanic;
-                if (actionLog) wo.issue = `${wo.issue} | [Log ${mechanic}]: ${actionLog}`;
+                if (actionLog) wo.issue = `${wo.issue || ''} | [Log ${mechanic}]: ${actionLog}`;
             }
 
-            // Update asset status if matched
+            // Sync integrated status for Asset & Monitoring Unit
             if (assetId && globalData.assets) {
                 setIntegratedAssetStatus(assetId, unitStatus, 'Work Order', woId, actionLog);
             }
 
             closeModal('modalWoStatusConfirm');
 
+            // Synchronize state and update all UI views instantly
             window.syncFleetState();
 
-            alert(`✅ Status Work Order (${woId}) Berhasil Diperbarui:\n- Status Baru: ${targetStatus}\n- Mekanik: ${mechanic}\n- Status Unit: ${unitStatus}`);
+            alert(`✅ Status Work Order (${woId}) Berhasil Diperbarui:\n- Status WO: ${targetStatus}\n- Mekanik: ${mechanic}\n- Status Unit ${assetId}: ${unitStatus}`);
         };
 
         window.openWoDetailModal = function(woId, fallbackAssetId, fallbackIssue) {
@@ -2017,6 +2106,16 @@
                 || null;
             return { asset, latestInspection, activeWo, unitWos };
         }
+
+        window.refreshAllViews = function() {
+            if (!globalData) return;
+            initDashboard(globalData);
+            if (window.initExecutiveAnalyticsPanels) window.initExecutiveAnalyticsPanels();
+            initMonitoringView(globalData.assets);
+            initAssetView(globalData.assets);
+            initWorkOrderView(globalData.work_orders);
+            if (globalData.costs) initBiayaView(globalData.costs);
+        };
 
         window.syncFleetState = function(options = {}) {
             if (!globalData) return;
@@ -2329,10 +2428,12 @@
             return `
                 <div class="kanban-card ${wo.priority}" 
                      id="wo-card-${escapeHtml(wo.woId)}" 
+                     data-status="${statusKey}"
+                     data-asset="${escapedAsset}"
                      draggable="true"
-                     ondragstart="handleWoDragStart(event, '${escapeHtml(wo.woId)}', '${statusKey}', '${escapedAsset}', '${escapedIssue}')"
+                     ondragstart="handleWoDragStart(event, '${escapeHtml(wo.woId)}')"
                      ondragend="handleWoDragEnd(event)"
-                     onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapedAsset}', '${escapedIssue}')" 
+                     onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapedAsset}')" 
                      style="cursor:grab;" 
                      title="Klik untuk Detail 360° | Drag ke kolom lain untuk ubah status">
                     <div class="kanban-card-title" style="display:flex; justify-content:space-between; align-items:center;">
@@ -2373,7 +2474,7 @@
 
                 if (count === 0) {
                     return `
-                        <div class="kanban-column" id="col-${statusKey}" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                        <div class="kanban-column" id="col-${statusKey}" data-status="${statusKey}" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
                             <h3><span>${titleText}</span> <span class="badge ${badgeClass}">0</span></h3>
                             <div class="card-container" style="padding:20px; color:var(--text-muted); text-align:center; font-size:0.85rem;">Tidak ada data WO.</div>
                         </div>
@@ -2386,7 +2487,7 @@
                 if (count <= chunkSize) {
                     const cardsHtml = woList.map(wo => renderKanbanCardHtml(wo, statusKey)).join('');
                     bodyHtml = `
-                        <div class="card-container" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                        <div class="card-container" data-status="${statusKey}">
                             ${cardsHtml}
                         </div>
                     `;
@@ -2397,20 +2498,20 @@
                         const cardsHtml = chunk.map(wo => renderKanbanCardHtml(wo, statusKey)).join('');
 
                         subListsHtml += `
-                            <div class="card-sublist" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                            <div class="card-sublist" data-status="${statusKey}">
                                 ${cardsHtml}
                             </div>
                         `;
                     }
                     bodyHtml = `
-                        <div class="card-container multi-column-track" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                        <div class="card-container multi-column-track" data-status="${statusKey}">
                             ${subListsHtml}
                         </div>
                     `;
                 }
 
                 return `
-                    <div class="kanban-column ${count > chunkSize ? 'expanded-column' : ''}" id="col-${statusKey}">
+                    <div class="kanban-column ${count > chunkSize ? 'expanded-column' : ''}" id="col-${statusKey}" data-status="${statusKey}" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
                         <h3><span>${titleText}</span> <span class="badge ${badgeClass}">${count}</span></h3>
                         ${bodyHtml}
                     </div>
