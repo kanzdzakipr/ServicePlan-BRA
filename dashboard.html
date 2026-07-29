@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logo-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-12">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-2">
     
 </head>
 
@@ -710,47 +710,47 @@
                     </div>
                 </div>
 
-                <!-- 6 Synchronized Executive KPI Cards -->
-                <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-                    <div class="kpi-card total">
+                <!-- 6 Synchronized Executive KPI Cards (Anti-Overflow Responsive Layout) -->
+                <div class="kpi-grid cost-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px;">
+                    <div class="kpi-card total" title="Total Budget Berjalan: Rp 2.960 Jt">
                         <div class="kpi-info">
                             <h3>Total Budget Berjalan</h3>
                             <div class="value" id="kpiCostBudget">Rp 2.960 Jt</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-wallet" style="color: var(--primary);"></i></div>
                     </div>
-                    <div class="kpi-card breakdown">
+                    <div class="kpi-card breakdown" title="Pengeluaran Aktual: Rp 12.144 Jt">
                         <div class="kpi-info">
                             <h3>Pengeluaran Aktual</h3>
                             <div class="value" id="kpiCostActual" style="color: var(--danger);">Rp 12.144 Jt</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-file-invoice-dollar" style="color: var(--danger);"></i></div>
                     </div>
-                    <div class="kpi-card pm">
+                    <div class="kpi-card pm" title="Deviasi Budget: +310.2% (Over)">
                         <div class="kpi-info">
                             <h3>Deviasi Budget</h3>
-                            <div class="value" id="kpiCostDev" style="color: #fd7e14; font-size:1.15rem;">+310.2% (Over)</div>
+                            <div class="value" id="kpiCostDev" style="color: #fd7e14;">+310.2% (Over)</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-chart-line" style="color: #fd7e14;"></i></div>
                     </div>
-                    <div class="kpi-card operating">
+                    <div class="kpi-card operating" title="Nilai Buku Aset (7 Unit): Rp 3.347 Jt">
                         <div class="kpi-info">
                             <h3>Nilai Buku Aset (7 Unit)</h3>
-                            <div class="value" id="kpiCostBookValue" style="color: var(--success); font-size:1.15rem;">Rp 3.347 Jt</div>
+                            <div class="value" id="kpiCostBookValue" style="color: var(--success);">Rp 3.347 Jt</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-book" style="color: var(--success);"></i></div>
                     </div>
-                    <div class="kpi-card standby">
+                    <div class="kpi-card standby" title="Harga Penawaran Buyer: Rp 4.070 Jt">
                         <div class="kpi-info">
                             <h3>Harga Penawaran Buyer</h3>
-                            <div class="value" id="kpiCostMarketValue" style="color: var(--info); font-size:1.15rem;">Rp 4.070 Jt</div>
+                            <div class="value" id="kpiCostMarketValue" style="color: var(--info);">Rp 4.070 Jt</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-tags" style="color: var(--info);"></i></div>
                     </div>
-                    <div class="kpi-card" style="border-left-color: #2b8a3e;">
+                    <div class="kpi-card" style="border-left-color: #2b8a3e;" title="Proyeksi Net Gain BRA: +Rp 610 Jt">
                         <div class="kpi-info">
                             <h3>Proyeksi Net Gain BRA</h3>
-                            <div class="value" id="kpiCostMargin" style="color: #2b8a3e; font-size:1.15rem;">+Rp 610 Jt</div>
+                            <div class="value" id="kpiCostMargin" style="color: #2b8a3e;">+Rp 610 Jt</div>
                         </div>
                         <div class="kpi-icon"><i class="fa-solid fa-hand-holding-dollar" style="color: #2b8a3e;"></i></div>
                     </div>
@@ -760,9 +760,19 @@
                 <div class="dashboard-layout" style="margin-top: 15px;">
                     <!-- Visual Chart Panel Budget vs Actual -->
                     <div class="panel" style="flex: 1.2;">
-                        <div class="panel-header"><span><i class="fa-solid fa-chart-column"></i> Budget vs Actual Cost (8 Bulan Terakhir)</span></div>
-                        <div class="panel-body" style="height: 260px; display: flex; align-items: flex-end; gap: 14px; border-bottom: 1px solid var(--border); padding-top: 40px; position: relative;" id="costChartContainer">
+                        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <span><i class="fa-solid fa-chart-column" style="color:var(--primary);"></i> Budget vs Actual Cost (8 Bulan Terakhir)</span>
+                            <div style="display:flex; gap:12px; font-size:0.75rem; flex-wrap:wrap;">
+                                <span><span style="display:inline-block; width:10px; height:10px; background:#2563eb; border-radius:2px; margin-right:4px;"></span> Budget Planning</span>
+                                <span><span style="display:inline-block; width:10px; height:10px; background:#dc2626; border-radius:2px; margin-right:4px;"></span> Actual (Over Budget)</span>
+                                <span><span style="display:inline-block; width:10px; height:10px; background:#16a34a; border-radius:2px; margin-right:4px;"></span> Actual (Under Budget / Hemat)</span>
+                            </div>
+                        </div>
+                        <div class="panel-body" style="height: 310px; position: relative; padding: 15px 15px 35px 15px; overflow: visible;" id="costChartContainer">
                             <!-- Rendered via JS -->
+                        </div>
+                        <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); font-weight:600; padding-bottom:8px;">
+                            <i class="fa-solid fa-calendar-days"></i> Bulan Operasional Armada (Mei - Desember 2026)
                         </div>
                     </div>
 
@@ -4068,25 +4078,86 @@
             ];
 
             const maxVal = 600;
+            const yTicks = [600, 450, 300, 150, 0];
 
-            container.innerHTML = recentMonths.map(m => {
+            let html = `
+                <!-- Y-Axis Ticks & Grid Lines -->
+                <div class="chart-y-axis" style="position:absolute; left:40px; top:20px; bottom:30px; width:calc(100% - 55px); pointer-events:none; z-index:1;">
+                    ${yTicks.map(t => {
+                        const pct = 100 - (t / maxVal) * 100;
+                        return `
+                            <div style="position:absolute; top:${pct}%; left:0; width:100%; border-top:1px dashed #e2e8f0; display:flex; justify-content:flex-start; align-items:center;">
+                                <span style="position:absolute; left:-40px; font-size:0.68rem; color:var(--text-muted); font-weight:600;">${t} Jt</span>
+                            </div>
+                        `;
+                    }).join('')}
+                    <div style="position:absolute; top:-16px; left:-40px; font-size:0.68rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">
+                        Biaya (Rp Jt)
+                    </div>
+                </div>
+
+                <!-- Bars Container -->
+                <div style="display:flex; height:100%; width:calc(100% - 40px); margin-left:40px; align-items:flex-end; gap:10px; position:relative; z-index:2; padding-top:20px; padding-bottom:25px;">
+            `;
+
+            html += recentMonths.map(m => {
+                const isOver = m.actual > m.budget;
+                const diff = (m.actual - m.budget).toFixed(1);
+                const diffPct = Math.abs((((m.actual - m.budget) / m.budget) * 100)).toFixed(1);
                 const pctB = Math.min(100, (m.budget / maxVal) * 100);
                 const pctA = Math.min(100, (m.actual / maxVal) * 100);
+                
+                const diffText = isOver 
+                    ? `<strong style="color:#dc2626;">+Rp ${diff} Jt (+${diffPct}% Over)</strong>` 
+                    : `<strong style="color:#16a34a;">-Rp ${Math.abs(diff).toFixed(1)} Jt (-${diffPct}% Hemat)</strong>`;
+                
+                const statusBadge = isOver 
+                    ? `<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.68rem;">OVER BUDGET</span>` 
+                    : `<span style="background:#dcfce7; color:#16a34a; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.68rem;">UNDER BUDGET (HEMAT)</span>`;
+
                 return `
-                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
-                        <div style="display:flex; gap:4px; align-items:flex-end; width:100%; height:80%; justify-content:center;">
-                            <div style="width:40%; background:var(--primary); height:${pctB}%; border-radius:3px 3px 0 0;" title="${m.month}: Budget Rp ${m.budget} Jt"></div>
-                            <div style="width:40%; background:${m.actual > m.budget ? 'var(--danger)' : 'var(--success)'}; height:${pctA}%; border-radius:3px 3px 0 0;" title="${m.month}: Realisasi Rp ${m.actual} Jt"></div>
+                    <div class="cost-chart-bar-group" style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; position:relative; cursor:pointer;">
+                        <!-- Rich Tooltip Card -->
+                        <div class="cost-chart-tooltip">
+                            <div style="font-weight:700; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:6px; font-size:0.8rem; color:#1e293b;">
+                                📅 Bulan ${m.month} 2026
+                            </div>
+                            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:3px;">
+                                <span><span style="color:#2563eb;">■</span> Budget Planning:</span>
+                                <strong>Rp ${m.budget} Jt</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px;">
+                                <span><span style="color:${isOver ? '#dc2626' : '#16a34a'};">■</span> Realisasi Actual:</span>
+                                <strong style="color:${isOver ? '#dc2626' : '#16a34a'};">Rp ${m.actual} Jt</strong>
+                            </div>
+                            <div style="border-top:1px dashed #cbd5e1; padding-top:4px; font-size:0.75rem; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                                <span>Variance (Selisih):</span>
+                                ${diffText}
+                            </div>
+                            <div style="margin-top:5px; text-align:right;">
+                                ${statusBadge}
+                            </div>
                         </div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px;">${m.month}</div>
+
+                        <!-- Bar Pair -->
+                        <div style="display:flex; gap:4px; align-items:flex-end; width:100%; height:100%; justify-content:center; position:relative;">
+                            <!-- Budget Bar -->
+                            <div class="cost-bar" style="width:42%; background:#2563eb; height:${pctB}%; border-radius:4px 4px 0 0; position:relative;" title="${m.month}: Budget Rp ${m.budget} Jt">
+                                <span class="bar-value-label">${m.budget}</span>
+                            </div>
+                            <!-- Actual Bar -->
+                            <div class="cost-bar" style="width:42%; background:${isOver ? '#dc2626' : '#16a34a'}; height:${pctA}%; border-radius:4px 4px 0 0; position:relative;" title="${m.month}: Actual Rp ${m.actual} Jt (${isOver ? 'Over' : 'Hemat'})">
+                                <span class="bar-value-label" style="color:${isOver ? '#b91c1c' : '#15803d'};">${m.actual}</span>
+                            </div>
+                        </div>
+
+                        <!-- Month Label -->
+                        <div style="font-size:0.78rem; font-weight:700; color:var(--text-dark); margin-top:8px;">${m.month}</div>
                     </div>
                 `;
-            }).join('') + `
-                <div style="position:absolute; top:10px; right:15px; display:flex; gap:15px; font-size:0.75rem;">
-                    <div><span style="display:inline-block; width:10px; height:10px; background:var(--primary); margin-right:4px;"></span> Budget Planning</div>
-                    <div><span style="display:inline-block; width:10px; height:10px; background:var(--danger); margin-right:4px;"></span> Realisasi Actual</div>
-                </div>
-            `;
+            }).join('') + `</div>`;
+
+            container.innerHTML = html;
         };
 
         window.renderCostValuationTable = function(items) {
