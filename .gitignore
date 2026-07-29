@@ -4,7 +4,7 @@
 # ============================================================================
 
 # 1. Confidential & Legacy Materials (Prevent Public Exposure)
-material/
+# material/
 raw-material/
 arsip/
 data.json
