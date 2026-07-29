@@ -45,12 +45,12 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     border-bottom: 1px solid var(--border);
-    background: #f8f9fa;
+    background: #f8fafc;
 }
 
 #fleetDecisionSupport .fleet-risk-metric {
     min-width: 0;
-    padding: 11px 14px;
+    padding: 12px 16px;
     border-right: 1px solid var(--border);
 }
 
@@ -63,6 +63,7 @@
     color: var(--text-main);
     font-size: 1.15rem;
     line-height: 1.1;
+    font-weight: 700;
 }
 
 #fleetDecisionSupport .fleet-risk-metric span {
@@ -70,7 +71,7 @@
     margin-top: 4px;
     overflow: hidden;
     color: var(--text-muted);
-    font-size: .7rem;
+    font-size: .75rem;
     line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -81,7 +82,7 @@
 }
 
 #fleetDecisionSupport .fleet-risk-metric.warning strong {
-    color: #c77700;
+    color: var(--warning);
 }
 
 #fleetDecisionSupport .fleet-risk-list {
@@ -95,11 +96,12 @@
     align-items: center;
     padding: 14px 16px;
     border-bottom: 1px solid var(--border);
-    background: #fff;
+    background: #ffffff;
+    transition: background 0.2s ease;
 }
 
 #fleetDecisionSupport .fleet-risk-item:hover {
-    background: #fbfcfd;
+    background: #f6faff;
 }
 
 #fleetDecisionSupport .fleet-risk-item:last-child {
@@ -112,9 +114,9 @@
     display: grid;
     place-items: center;
     border-radius: 50%;
-    background: #f1f3f5;
+    background: var(--bg-body);
     color: var(--text-muted);
-    font-size: .72rem;
+    font-size: .75rem;
     font-weight: 700;
 }
 
