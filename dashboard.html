@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logo-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-2">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-5">
     
 </head>
 
@@ -961,94 +961,349 @@
                 </div>
             </div>
 
-            <!-- VIEW: PENGATURAN -->
+            <!-- VIEW: PENGATURAN & KONFIGURASI SISTEM (DUAL PANE MENU DI DALAM MENU) -->
             <div id="view-settings" class="view-section">
-                <h1 class="page-title">System Settings</h1>
-                <div class="panel">
-                    <div class="panel-body">
-                        <div class="asset-tabs" style="margin-bottom: 20px;">
-                            <div class="asset-tab active" onclick="switchSettingsTab('rbac', this)">User & Role RBAC
-                            </div>
-                            <div class="asset-tab" onclick="switchSettingsTab('threshold', this)">Konfigurasi Threshold
-                                & SLA</div>
-                            <div class="asset-tab" onclick="switchSettingsTab('location', this)">Master Lokasi Project
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <h1 class="page-title" style="margin-bottom:4px;"><i class="fa-solid fa-gears" style="color:var(--primary);"></i> Pengaturan & Konfigurasi Sistem</h1>
+                        <p style="color:var(--text-muted); font-size:0.88rem; margin:0;">
+                            Manajemen Hak Akses (RBAC 10 Roles x 16 Modul), Threshold SLA, Master Site Project, Kategori Asset, & Security System
+                        </p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="saveAllSettings()"><i class="fa-solid fa-floppy-disk"></i> Simpan Seluruh Konfigurasi</button>
+                    </div>
+                </div>
+
+                <!-- Dual-Pane Settings Layout ("Menu di Dalam Menu") -->
+                <div class="settings-layout" style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+                    
+                    <!-- Left Sub-Menu Navigation Sidebar -->
+                    <div class="settings-sidebar-nav" style="flex:0 0 270px; min-width:240px; background:#fff; border-radius:10px; border:1px solid var(--border); padding:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                        <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); padding:6px 10px 10px 10px; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; margin-bottom:10px;">
+                            <i class="fa-solid fa-bars-staggered"></i> Menu Pengaturan
+                        </div>
+                        <div class="settings-nav-item active" onclick="switchSettingsTab('rbac', this)">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <div>
+                                <strong>Manajemen Hak Akses</strong>
+                                <small>Matrix 10 User Roles x 16 Modul</small>
                             </div>
                         </div>
+                        <div class="settings-nav-item" onclick="switchSettingsTab('threshold', this)">
+                            <i class="fa-solid fa-sliders"></i>
+                            <div>
+                                <strong>Threshold & SLA Parameter</strong>
+                                <small>WO SLA, Red Line, Fuel & Idling</small>
+                            </div>
+                        </div>
+                        <div class="settings-nav-item" onclick="switchSettingsTab('location', this)">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <div>
+                                <strong>Master Site & Yard Project</strong>
+                                <small>Lokasi Duri, Pit, Prabumulih</small>
+                            </div>
+                        </div>
+                        <div class="settings-nav-item" onclick="switchSettingsTab('category', this)">
+                            <i class="fa-solid fa-tags"></i>
+                            <div>
+                                <strong>Kategori & Job Standard Rates</strong>
+                                <small>Klasifikasi Part A/B/C & Outsource</small>
+                            </div>
+                        </div>
+                        <div class="settings-nav-item" onclick="switchSettingsTab('template', this)">
+                            <i class="fa-solid fa-file-signature"></i>
+                            <div>
+                                <strong>Template Dokumen & Kop Surat</strong>
+                                <small>Penomoran WO, PO, & Kop BRA</small>
+                            </div>
+                        </div>
+                        <div class="settings-nav-item" onclick="switchSettingsTab('security', this)">
+                            <i class="fa-solid fa-lock"></i>
+                            <div>
+                                <strong>Keamanan & Audit Trail Log</strong>
+                                <small>Session Timeout & Access Trail</small>
+                            </div>
+                        </div>
+                    </div>
 
-                        <div id="settings-rbac">
-                            <h3 style="margin-bottom: 15px;">Manajemen Hak Akses</h3>
-                            <div class="table-responsive">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Role</th>
-                                            <th>Read</th>
-                                            <th>Create</th>
-                                            <th>Edit</th>
-                                            <th>Approve</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Equipment Manager</td>
-                                            <td><input type="checkbox" checked></td>
-                                            <td><input type="checkbox" checked></td>
-                                            <td><input type="checkbox" checked></td>
-                                            <td><input type="checkbox" checked></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Maintenance Planner</td>
-                                            <td><input type="checkbox" checked></td>
-                                            <td><input type="checkbox" checked></td>
-                                            <td><input type="checkbox" checked></td>
-                                            <td><input type="checkbox"></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Mekanik</td>
-                                            <td><input type="checkbox" checked></td>
-                                            <td><input type="checkbox" checked></td>
-                                            <td><input type="checkbox"></td>
-                                            <td><input type="checkbox"></td>
-                                        </tr>
-                                    </tbody>
+                    <!-- Right Content Panels Area -->
+                    <div class="settings-content-area" style="flex:1; min-width:300px; background:#fff; border-radius:10px; border:1px solid var(--border); padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                        
+                        <!-- Panel 1: Hak Akses RBAC (10 Roles x 16 Modul Matrix) -->
+                        <div id="settings-rbac" class="settings-panel">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                                <div>
+                                    <h3 style="margin:0; font-size:1.1rem; color:var(--text-dark);"><i class="fa-solid fa-user-shield" style="color:var(--primary);"></i> Matriks Hak Akses Pengguna (RBAC 10 Roles)</h3>
+                                    <p style="font-size:0.82rem; color:var(--text-muted); margin:3px 0 0 0;">
+                                        Matriks Distribusi Hak Akses Terstandarisasi Sistem (10 User Roles x 16 Modul Operasional)
+                                    </p>
+                                </div>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                                    <button class="btn btn-secondary" style="padding:4px 12px; font-size:0.78rem;" onclick="resetRbacToDefault()"><i class="fa-solid fa-rotate-left"></i> Reset ke Standard Default</button>
+                                    <div style="display:flex; gap:5px; flex-wrap:wrap; font-size:0.72rem;">
+                                        <span style="background:#dbeafe; color:#1e40af; padding:3px 7px; border-radius:4px; font-weight:700;">R = Read</span>
+                                        <span style="background:#dcfce7; color:#15803d; padding:3px 7px; border-radius:4px; font-weight:700;">C = Create</span>
+                                        <span style="background:#fef3c7; color:#b45309; padding:3px 7px; border-radius:4px; font-weight:700;">U = Update</span>
+                                        <span style="background:#f3e8ff; color:#6b21a8; padding:3px 7px; border-radius:4px; font-weight:700;">A = Approve</span>
+                                        <span style="background:#ffe4e6; color:#be123c; padding:3px 7px; border-radius:4px; font-weight:700;">O = Owner</span>
+                                        <span style="background:#f1f5f9; color:#94a3b8; padding:3px 7px; border-radius:4px; font-weight:700;">- = Denied</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Role Filter Selector Buttons -->
+                            <div style="margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                                <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase;">
+                                    <i class="fa-solid fa-filter"></i> Highlight Default Selection User Role:
+                                </label>
+                                <div style="display:flex; gap:6px; flex-wrap:wrap;" id="rbacRoleFilterButtons">
+                                    <!-- Rendered via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Selected Role Summary Card -->
+                            <div id="rbacRoleSummaryBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid var(--primary); border-radius:8px; padding:12px 15px; margin-bottom:15px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                                <!-- Rendered via JS -->
+                            </div>
+
+                            <!-- Interactive RBAC Matrix Table -->
+                            <div class="table-responsive" style="max-height:520px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+                                <table class="table" style="font-size:0.78rem; white-space:nowrap; margin:0;" id="rbacMatrixTable">
+                                    <!-- Rendered via JS -->
                                 </table>
                             </div>
                         </div>
 
-                        <div id="settings-threshold" style="display: none;">
-                            <h3 style="margin-bottom: 15px;">Threshold & SLA Parameter</h3>
-                            <div class="form-group" style="max-width: 500px;">
-                                <label>SLA Pembuatan Tiket WO sejak Unit Down (Menit)</label>
-                                <input type="number" id="cfg-sla-wo" class="form-control" value="30">
-                                <label>Batas Merah Aus Ban (mm)</label>
-                                <input type="number" id="cfg-tire-red" class="form-control" value="3.2" step="0.1">
-                                <label>Batas HM Warning PM Due Soon</label>
-                                <input type="number" id="cfg-pm-warning" class="form-control" value="50">
-                                <label>Toleransi % Anomali BBM</label>
-                                <input type="number" id="cfg-fuel-anomali" class="form-control" value="15" step="0.1">
-                                <button class="btn btn-primary" onclick="saveSettings()">Simpan Konfigurasi</button>
+                        <!-- Panel 2: Threshold & SLA Parameter -->
+                        <div id="settings-threshold" class="settings-panel" style="display:none;">
+                            <h3 style="margin-bottom:15px; font-size:1.1rem; color:var(--text-dark);"><i class="fa-solid fa-sliders" style="color:var(--primary);"></i> Konfigurasi Threshold, SLA & Alarm Operasional</h3>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:15px;">
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">SLA Tiket WO dari Unit Down (Menit)</label>
+                                    <input type="number" id="cfg-sla-wo" class="form-control" value="30">
+                                    <small style="color:var(--text-muted);">Target respon maksimal mekanik setelah P2H merah</small>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Batas Merah Aus Ban / Tread Limit (mm)</label>
+                                    <input type="number" id="cfg-tire-red" class="form-control" value="3.2" step="0.1">
+                                    <small style="color:var(--text-muted);">Tread depth di bawah nilai ini dianggap kritis</small>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Batas HM Warning PM Due Soon (HM)</label>
+                                    <input type="number" id="cfg-pm-warning" class="form-control" value="50">
+                                    <small style="color:var(--text-muted);">Peringatan PM otomatis muncul H-50 HM</small>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Toleransi % Anomali Konsumsi BBM (%)</label>
+                                    <input type="number" id="cfg-fuel-anomali" class="form-control" value="15.0" step="0.1">
+                                    <small style="color:var(--text-muted);">LPH/KPL di luar toleransi memicu alarm sounding</small>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Telematika Komtrax Idling Alarm Limit (%)</label>
+                                    <input type="number" id="cfg-idling-limit" class="form-control" value="50.0" step="1.0">
+                                    <small style="color:var(--text-muted);">Persentase engine idling dianggap pemborosan solar</small>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Safety Stock Minimum Cutting Bit (Pieces)</label>
+                                    <input type="number" id="cfg-cuttingbit-safety" class="form-control" value="380">
+                                    <small style="color:var(--text-muted);">Persediaan 20% unit RM XCMG BRR-RM-4101</small>
+                                </div>
+                            </div>
+                            <div style="margin-top:15px;">
+                                <button class="btn btn-primary" onclick="saveSettings()"><i class="fa-solid fa-check"></i> Simpan Parameter Threshold</button>
                             </div>
                         </div>
 
-                        <div id="settings-location" style="display: none;">
-                            <h3 style="margin-bottom: 15px;">Master Site / Lokasi</h3>
-                            <ul class="attention-list">
-                                <li>
-                                    <div class="attention-details"><strong>Site Alpha (Yard Duri)</strong></div>
-                                </li>
-                                <li>
-                                    <div class="attention-details"><strong>Site Beta (Yard Prabumulih)</strong></div>
-                                </li>
-                                <li>
-                                    <div class="attention-details"><strong>Sunter Area Stadium</strong></div>
-                                </li>
-                            </ul>
+                        <!-- Panel 3: Master Site & Yard Project -->
+                        <div id="settings-location" class="settings-panel" style="display:none;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                <h3 style="margin:0; font-size:1.1rem; color:var(--text-dark);"><i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Master Site Project & Base Camp Armada</h3>
+                                <button class="btn btn-secondary" onclick="alert('Form Tambah Lokasi Baru dibuka.')"><i class="fa-solid fa-plus"></i> Tambah Lokasi</button>
+                            </div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px;">
+                                <div style="border:1px solid #e2e8f0; border-radius:8px; padding:12px 15px; background:#fafafa;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <strong style="font-size:0.92rem; color:var(--primary);">Yard KM 12 Duri</strong>
+                                        <span class="badge badge-success">Utama (Base Camp)</span>
+                                    </div>
+                                    <p style="font-size:0.8rem; color:var(--text-muted); margin:6px 0 8px 0;">Bengkel Utama Overhaul & Gudang Part Duri, Riau</p>
+                                    <div style="font-size:0.75rem; color:#475569;">
+                                        <div><i class="fa-solid fa-user"></i> <strong>Penanggung Jawab:</strong> Budi Santoso (Eq Manager)</div>
+                                        <div><i class="fa-solid fa-truck-monster"></i> <strong>Aset Aktif:</strong> 42 Unit</div>
+                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2584° N, 101.2145° E</div>
+                                    </div>
+                                </div>
+
+                                <div style="border:1px solid #e2e8f0; border-radius:8px; padding:12px 15px; background:#fafafa;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <strong style="font-size:0.92rem; color:var(--warning);">Harapan Baru Pit Field</strong>
+                                        <span class="badge badge-info">Site Tambang</span>
+                                    </div>
+                                    <p style="font-size:0.8rem; color:var(--text-muted); margin:6px 0 8px 0;">Lokasi Pengerjaan Pit Excavator & Heavy Dozer</p>
+                                    <div style="font-size:0.75rem; color:#475569;">
+                                        <div><i class="fa-solid fa-user"></i> <strong>Penanggung Jawab:</strong> Joko Widodo (Planner)</div>
+                                        <div><i class="fa-solid fa-truck-monster"></i> <strong>Aset Aktif:</strong> 18 Unit</div>
+                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2890° N, 101.2400° E</div>
+                                    </div>
+                                </div>
+
+                                <div style="border:1px solid #e2e8f0; border-radius:8px; padding:12px 15px; background:#fafafa;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <strong style="font-size:0.92rem; color:var(--success);">Yard Prabumulih</strong>
+                                        <span class="badge badge-secondary">Cabang Sumsel</span>
+                                    </div>
+                                    <p style="font-size:0.8rem; color:var(--text-muted); margin:6px 0 8px 0;">Depo Peralatan & Service Center Sumatra Selatan</p>
+                                    <div style="font-size:0.75rem; color:#475569;">
+                                        <div><i class="fa-solid fa-user"></i> <strong>Penanggung Jawab:</strong> Ahmad Dahlan (Logistics)</div>
+                                        <div><i class="fa-solid fa-truck-monster"></i> <strong>Aset Aktif:</strong> 14 Unit</div>
+                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 3.4312° S, 104.2341° E</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Panel 4: Kategori & Standard Rates -->
+                        <div id="settings-category" class="settings-panel" style="display:none;">
+                            <h3 style="margin-bottom:15px; font-size:1.1rem; color:var(--text-dark);"><i class="fa-solid fa-tags" style="color:var(--primary);"></i> Klasifikasi Sparepart & Standard Job Rates</h3>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:15px;">
+                                <div style="border:1px solid #e2e8f0; border-radius:8px; padding:15px; background:#fafafa;">
+                                    <h4 style="margin-top:0; font-size:0.9rem; color:var(--primary);">Klasifikasi ABC Spareparts</h4>
+                                    <ul style="padding-left:18px; font-size:0.82rem; color:var(--text-dark); margin:0;">
+                                        <li><strong>Kategori A (High Value & Fast Moving):</strong> Filter, Oli Engine, Cutting Bit, Track Shoe</li>
+                                        <li><strong>Kategori B (Medium Value):</strong> Hose Hydraulic, Seal Kit, Injector Nozzle</li>
+                                        <li><strong>Kategori C (Low Value / Consumables):</strong> Baut Track, Grease, Rag, O-Ring</li>
+                                    </ul>
+                                </div>
+                                <div style="border:1px solid #e2e8f0; border-radius:8px; padding:15px; background:#fafafa;">
+                                    <h4 style="margin-top:0; font-size:0.9rem; color:var(--success);">Standard Outsource Job Rates</h4>
+                                    <div style="font-size:0.82rem; color:var(--text-dark);">
+                                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                            <span>Jasa Welder Outsource:</span>
+                                            <strong>Rp 150.000 / Jam</strong>
+                                        </div>
+                                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                            <span>Overhaul Engine Subkontraktor:</span>
+                                            <strong>Rp 45.000.000 / Unit</strong>
+                                        </div>
+                                        <div style="display:flex; justify-content:space-between;">
+                                            <span>Kalibrasi Pump & Injector:</span>
+                                            <strong>Rp 8.500.000 / Set</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel 5: Template Dokumen & Kop Surat -->
+                        <div id="settings-template" class="settings-panel" style="display:none;">
+                            <h3 style="margin-bottom:15px; font-size:1.1rem; color:var(--text-dark);"><i class="fa-solid fa-file-signature" style="color:var(--primary);"></i> Template Penomoran & Kop Surat Laporan</h3>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:15px;">
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Prefix Penomoran Work Order (WO)</label>
+                                    <input type="text" class="form-control" value="WO-BRA-YYYYMM-XXXX">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Prefix Penomoran Purchase Order (PO)</label>
+                                    <input type="text" class="form-control" value="PO-BRA-YYYY-XXXX">
+                                </div>
+                                <div class="form-group" style="grid-column:1 / -1;">
+                                    <label style="font-weight:600; font-size:0.85rem;">Nama Perusahaan & Header Kop Surat</label>
+                                    <input type="text" class="form-control" value="PT BINA REKAYASA ANUGERAH - Departemen Equipment & Maintenance">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel 6: Keamanan & Audit Trail Log -->
+                        <div id="settings-security" class="settings-panel" style="display:none;">
+                            <h3 style="margin-bottom:15px; font-size:1.1rem; color:var(--text-dark);"><i class="fa-solid fa-lock" style="color:var(--primary);"></i> Parameter Keamanan System & Audit Trail</h3>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:15px;">
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Idle Session Timeout (Menit)</label>
+                                    <input type="number" class="form-control" value="30">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Frekuensi Automatic Backup Database</label>
+                                    <select class="form-control">
+                                        <option selected>Setiap Hari (00:00 WIB)</option>
+                                        <option>Setiap 12 Jam</option>
+                                        <option>Setiap Minggu</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="margin-top:15px; border-top:1px solid #e2e8f0; padding-top:12px;">
+                                <strong style="font-size:0.85rem; color:var(--text-dark);"><i class="fa-solid fa-history"></i> Ringkasan Integration Audit Log (5 Aktivitas Terakhir):</strong>
+                                <ul style="font-size:0.78rem; color:var(--text-muted); padding-left:18px; margin:8px 0 0 0;">
+                                    <li>[29/07 19:42] User <strong>briannugraha</strong> memperbarui status Work Order WO-202607-004 ke CLOSED / READY.</li>
+                                    <li>[29/07 18:30] System otomatis mendeteksi anomali sounding BBM unit Exca 16 (Site Duri).</li>
+                                    <li>[29/07 15:10] User <strong>seagrass489-cell</strong> menyetujui PO Spareparts PO_DFT_01508 Trakindo Utama.</li>
+                                </ul>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
 
         </main>
+    </div>
+
+    <!-- Modal Override Hak Akses (RBAC Customizer) -->
+    <div class="modal-overlay" id="modalEditRbacPermission" style="z-index:999999;">
+        <div class="modal-content" style="max-width: 480px; padding: 22px;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:10px; margin-bottom:15px;">
+                <h3 style="margin:0; font-size:1.1rem; color:var(--text-dark);"><i class="fa-solid fa-user-pen" style="color:var(--primary);"></i> Override Hak Akses Modul</h3>
+                <button onclick="closeModal('modalEditRbacPermission')" style="border:none; background:none; font-size:1.4rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editRbacRoleIndex">
+                <input type="hidden" id="editRbacModuleIndex">
+                
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:15px;">
+                    <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Target User Role & Modul</div>
+                    <div style="font-size:0.95rem; font-weight:700; color:var(--primary);" id="editRbacRoleName">—</div>
+                    <div style="font-size:0.85rem; font-weight:600; color:var(--text-dark);" id="editRbacModuleName">—</div>
+                </div>
+
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; font-size:0.82rem; font-weight:700; color:var(--text-dark); margin-bottom:8px;">
+                        Pilih Hak Akses yang Diberikan (RCUAO):
+                    </label>
+                    
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#eff6ff; padding:7px 10px; border-radius:6px; border:1px solid #dbeafe;">
+                            <input type="checkbox" id="chkRbacR" style="width:16px; height:16px;">
+                            <span style="font-weight:700; color:#1e40af;">R — Read / View</span>
+                            <small style="color:var(--text-muted);">(Melihat data modul)</small>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#f0fdf4; padding:7px 10px; border-radius:6px; border:1px solid #dcfce7;">
+                            <input type="checkbox" id="chkRbacC" style="width:16px; height:16px;">
+                            <span style="font-weight:700; color:#15803d;">C — Create / Add</span>
+                            <small style="color:var(--text-muted);">(Menambah data baru)</small>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#fffbeb; padding:7px 10px; border-radius:6px; border:1px solid #fef3c7;">
+                            <input type="checkbox" id="chkRbacU" style="width:16px; height:16px;">
+                            <span style="font-weight:700; color:#b45309;">U — Update / Edit</span>
+                            <small style="color:var(--text-muted);">(Mengubah data eksisting)</small>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#faf5ff; padding:7px 10px; border-radius:6px; border:1px solid #f3e8ff;">
+                            <input type="checkbox" id="chkRbacA" style="width:16px; height:16px;">
+                            <span style="font-weight:700; color:#6b21a8;">A — Approve / Sign</span>
+                            <small style="color:var(--text-muted);">(Menyetujui dokumen/WO/PO)</small>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#fff1f2; padding:7px 10px; border-radius:6px; border:1px solid #ffe4e6;">
+                            <input type="checkbox" id="chkRbacO" style="width:16px; height:16px;">
+                            <span style="font-weight:700; color:#be123c;">O — Owner / Override</span>
+                            <small style="color:var(--text-muted);">(Akses pengubah master sistem)</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e2e8f0; padding-top:12px;">
+                <button class="btn btn-secondary" onclick="closeModal('modalEditRbacPermission')">Batal</button>
+                <button class="btn btn-primary" onclick="saveRbacCellOverride()"><i class="fa-solid fa-floppy-disk"></i> Simpan Hak Akses</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal Detail 360 -->
@@ -4341,14 +4596,300 @@
             alert('Dokumen ditolak.');
         }
 
-        function switchSettingsTab(tabName, el) {
-            document.querySelectorAll('#view-settings .asset-tab').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('settings-rbac').style.display = 'none';
-            document.getElementById('settings-threshold').style.display = 'none';
-            document.getElementById('settings-location').style.display = 'none';
-            document.getElementById('settings-' + tabName).style.display = 'block';
-        }
+        // ============================================================================
+        // PENGATURAN SYSTEM & RBAC 10 ROLES OVERRIDE ENGINE
+        // ============================================================================
+        const rbacModulesList = [
+            '1. Exec. Dashboard', '2. Monitoring Unit', '3. Master Asset', '4. Inspeksi & P2H',
+            '5. Work Order', '6. Preventive Maint.', '7. Part & Logistik', '8. Condition Maint.',
+            '9. Fuel Management', '10. Produktivitas', '11. Biaya Armada', '12. People & KPI',
+            '13. HSE & Incident', '14. Laporan & Form', '15. Approval Inbox', '16. Pengaturan System'
+        ];
+
+        const defaultRbacRolesMaster = [
+            {
+                id: 'admin',
+                name: '1. Administrator',
+                badge: 'System Admin',
+                icon: 'fa-user-gear',
+                color: '#2563eb',
+                desc: 'Hak Akses Penuh Seluruh Modul & Konfigurasi Sistem Utama (Owner)',
+                permissions: ['R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R C U O', 'R A O', 'R C U O']
+            },
+            {
+                id: 'eqmgr',
+                name: '2. Equipment Manager',
+                badge: 'Head of Equipment',
+                icon: 'fa-user-tie',
+                color: '#0d9488',
+                desc: 'Persetujuan Akhir Work Order, Budget Biaya, & Operasional Armada',
+                permissions: ['R U A', 'R U A', 'R U A', 'R U A', 'R C U A', 'R C U A', 'R A', 'R U A', 'R U A', 'R U A', 'R U A', 'R C U A', 'R C U A', 'R C U', 'R A', '-']
+            },
+            {
+                id: 'planner',
+                name: '3. Maintenance Planner',
+                badge: 'Planner & Scheduler',
+                icon: 'fa-calendar-check',
+                color: '#d97706',
+                desc: 'Perencanaan Jadwal PM, Work Order, & Kebutuhan Spareparts Field',
+                permissions: ['R U', 'R U', 'R U', 'R U', 'R C U A', 'R C U A', 'R C U', 'R C U', 'R U', 'R U', '-', 'R U', 'R', 'R C U', 'R', '-']
+            },
+            {
+                id: 'mekaniks',
+                name: '4. Mekanik Senior',
+                badge: 'Lead Technician',
+                icon: 'fa-screwdriver-wrench',
+                color: '#4f46e5',
+                desc: 'Eksekusi Work Order, Update Status Efektif Unit, & Inspeksi P2H',
+                permissions: ['R', 'R', 'R', 'R C', 'R C U', 'R', 'R C', 'R', 'R', 'R', '-', 'R', 'R', 'R', '-', '-']
+            },
+            {
+                id: 'mekanikj',
+                name: '5. Mekanik Junior / Helper',
+                badge: 'Field Helper',
+                icon: 'fa-wrench',
+                color: '#64748b',
+                desc: 'Input Hasil P2H Harian & Progres Fisik Pengerjaan Work Order',
+                permissions: ['R', 'R', 'R', 'R C', 'R U', 'R', '-', '-', '-', 'R', '-', 'R', '-', 'R', '-', '-']
+            },
+            {
+                id: 'welder',
+                name: '6. Welder / Fabrikator',
+                badge: 'Welding Specialist',
+                icon: 'fa-fire-burner',
+                color: '#ea580c',
+                desc: 'Perbaikan Structure Body, Bucket Excavator, & Fabrikasi Frame',
+                permissions: ['R', 'R', 'R', 'R C', 'R U', '-', '-', '-', '-', 'R', '-', 'R', '-', 'R', '-', '-']
+            },
+            {
+                id: 'safety',
+                name: '7. Inspector K3L / Safety',
+                badge: 'Safety Officer',
+                icon: 'fa-shield-halved',
+                color: '#16a34a',
+                desc: 'Audit K3L, Temuan Incident, Inspeksi Alat, & Sounding Tangki',
+                permissions: ['R', 'R U', 'R', 'R C U A', 'R C', '-', '-', 'R C U', 'R C U', 'R', '-', '-', 'R C U A', 'R C U', '-', '-']
+            },
+            {
+                id: 'logistics',
+                name: '8. Logistic Head',
+                badge: 'Warehouse Head',
+                icon: 'fa-boxes-stacked',
+                color: '#9333ea',
+                desc: 'Manajemen Stok Sparepart, PO Trakindo/UT, & Sounding BBM',
+                permissions: ['R', 'R', 'R', '-', 'R', 'R', 'R C U A', 'R', 'R C U', 'R', '-', '-', '-', 'R C U', 'R A', '-']
+            },
+            {
+                id: 'hrd',
+                name: '9. HRD Manager',
+                badge: 'Human Resources',
+                icon: 'fa-users-gear',
+                color: '#db2777',
+                desc: 'Manajemen Manpower, Absensi Mekanik, & Assessment KPI Staff',
+                permissions: ['R', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', 'R C U A', '-', 'R C U', 'R A', '-']
+            },
+            {
+                id: 'asset',
+                name: '10. Asset Manager',
+                badge: 'Asset Controller',
+                icon: 'fa-cubes',
+                color: '#0891b2',
+                desc: 'Valuasi Nilai Buku & Pasaran Unit, Cost Control, & Margin Sales',
+                permissions: ['R', 'R U A', 'R C U A', '-', 'R', '-', '-', 'R U', 'R', 'R U A', 'R C U A', 'R', 'R A', 'R C U', 'R A', '-']
+            }
+        ];
+
+        // Active State Store (Support Override)
+        let activeRbacRolesData = JSON.parse(JSON.stringify(defaultRbacRolesMaster));
+        let currentActiveRoleIndex = 1; // Default: Equipment Manager
+
+        window.switchSettingsTab = function(tabName, el) {
+            document.querySelectorAll('#view-settings .settings-nav-item').forEach(t => t.classList.remove('active'));
+            if (el) {
+                el.classList.add('active');
+            } else {
+                const navEl = document.querySelector(`#view-settings .settings-nav-item[onclick*="${tabName}"]`);
+                if (navEl) navEl.classList.add('active');
+            }
+
+            document.querySelectorAll('#view-settings .settings-panel').forEach(p => p.style.display = 'none');
+            const target = document.getElementById('settings-' + tabName);
+            if (target) target.style.display = 'block';
+
+            if (tabName === 'rbac') {
+                window.renderRbacMatrix(currentActiveRoleIndex);
+            }
+        };
+
+        window.selectRbacRole = function(index) {
+            currentActiveRoleIndex = index;
+            window.renderRbacMatrix(index);
+        };
+
+        window.openRbacOverrideModal = function(roleIdx, modIdx) {
+            const role = activeRbacRolesData[roleIdx];
+            const moduleName = rbacModulesList[modIdx];
+            if (!role) return;
+
+            document.getElementById('editRbacRoleIndex').value = roleIdx;
+            document.getElementById('editRbacModuleIndex').value = modIdx;
+            document.getElementById('editRbacRoleName').innerText = role.name;
+            document.getElementById('editRbacModuleName').innerText = moduleName;
+
+            const currentPerm = role.permissions[modIdx] || '-';
+            document.getElementById('chkRbacR').checked = currentPerm.includes('R');
+            document.getElementById('chkRbacC').checked = currentPerm.includes('C');
+            document.getElementById('chkRbacU').checked = currentPerm.includes('U');
+            document.getElementById('chkRbacA').checked = currentPerm.includes('A');
+            document.getElementById('chkRbacO').checked = currentPerm.includes('O');
+
+            openModal('modalEditRbacPermission');
+        };
+
+        window.saveRbacCellOverride = function() {
+            const roleIdx = parseInt(document.getElementById('editRbacRoleIndex').value);
+            const modIdx = parseInt(document.getElementById('editRbacModuleIndex').value);
+            const role = activeRbacRolesData[roleIdx];
+            if (!role) return;
+
+            const parts = [];
+            if (document.getElementById('chkRbacR').checked) parts.push('R');
+            if (document.getElementById('chkRbacC').checked) parts.push('C');
+            if (document.getElementById('chkRbacU').checked) parts.push('U');
+            if (document.getElementById('chkRbacA').checked) parts.push('A');
+            if (document.getElementById('chkRbacO').checked) parts.push('O');
+
+            const newPerm = parts.length > 0 ? parts.join(' ') : '-';
+            role.permissions[modIdx] = newPerm;
+            role.isCustomized = true;
+
+            closeModal('modalEditRbacPermission');
+            window.renderRbacMatrix(roleIdx);
+            alert(`Hak akses [${role.name}] pada modul [${rbacModulesList[modIdx]}] berhasil di-override menjadi: ${newPerm}`);
+        };
+
+        window.resetRbacToDefault = function() {
+            if (confirm('Apakah Anda yakin ingin mengembalikan seluruh hak akses 10 Roles ke konfigurasi standar default master?')) {
+                activeRbacRolesData = JSON.parse(JSON.stringify(defaultRbacRolesMaster));
+                window.renderRbacMatrix(currentActiveRoleIndex);
+                alert('Seluruh matriks hak akses berhasil dikembalikan ke standar default master.');
+            }
+        };
+
+        window.renderRbacMatrix = function(highlightIndex = 1) {
+            const filterContainer = document.getElementById('rbacRoleFilterButtons');
+            const summaryBox = document.getElementById('rbacRoleSummaryBox');
+            const tableEl = document.getElementById('rbacMatrixTable');
+            if (!tableEl) return;
+
+            // 1. Render Filter Buttons
+            if (filterContainer) {
+                filterContainer.innerHTML = activeRbacRolesData.map((role, idx) => {
+                    const isActive = idx === highlightIndex;
+                    const hasCustom = role.isCustomized || JSON.stringify(role.permissions) !== JSON.stringify(defaultRbacRolesMaster[idx].permissions);
+                    return `
+                        <button type="button" class="btn btn-sm ${isActive ? 'btn-primary' : 'btn-secondary'}" 
+                            style="font-size:0.73rem; padding:4px 10px; border-radius:20px; transition:all 0.2s ease; position:relative;" 
+                            onclick="selectRbacRole(${idx})">
+                            <i class="fa-solid ${role.icon}"></i> ${role.name}
+                            ${hasCustom ? '<span style="display:inline-block; width:7px; height:7px; background:#f59e0b; border-radius:50%; margin-left:4px;" title="Customized Override"></span>' : ''}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            // 2. Render Selected Role Summary Card
+            const activeRole = activeRbacRolesData[highlightIndex] || activeRbacRolesData[0];
+            const defaultRole = defaultRbacRolesMaster[highlightIndex] || defaultRbacRolesMaster[0];
+            const isRoleCustomized = activeRole.isCustomized || JSON.stringify(activeRole.permissions) !== JSON.stringify(defaultRole.permissions);
+            const grantedCount = activeRole.permissions.filter(p => p !== '-').length;
+
+            if (summaryBox) {
+                summaryBox.style.borderLeftColor = activeRole.color;
+                summaryBox.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="width:42px; height:42px; border-radius:8px; background:${activeRole.color}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+                            <i class="fa-solid ${activeRole.icon}"></i>
+                        </div>
+                        <div>
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <strong style="font-size:1.05rem; color:var(--text-dark);">${activeRole.name}</strong>
+                                <span class="badge" style="background:${activeRole.color}; color:#fff; font-size:0.7rem;">${activeRole.badge}</span>
+                                ${isRoleCustomized ? '<span class="badge" style="background:#f59e0b; color:#fff; font-size:0.68rem;"><i class="fa-solid fa-pen-to-square"></i> Customized Override</span>' : ''}
+                            </div>
+                            <p style="margin:2px 0 0 0; font-size:0.82rem; color:var(--text-muted);">${activeRole.desc}</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="text-align:right;">
+                            <div style="font-size:0.75rem; color:var(--text-muted);">Akses Modul Aktif</div>
+                            <strong style="font-size:1.2rem; color:${activeRole.color};">${grantedCount} / 16 Modul</strong>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 3. Render Matrix Table Header
+            let tableHtml = `
+                <thead>
+                    <tr style="background:#f1f5f9; color:#334155;">
+                        <th style="position:sticky; left:0; background:#f1f5f9; z-index:5; width:220px; border-right:2px solid #cbd5e1; padding:10px 12px;">User Role (10 Roles)</th>
+                        ${rbacModulesList.map(m => `<th style="text-align:center; padding:10px 10px;">${m}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            // 4. Helper function to format permission badge pill
+            const formatPill = (permStr) => {
+                if (permStr === '-') {
+                    return `<span style="display:inline-block; padding:2px 6px; border-radius:4px; background:#f8fafc; color:#cbd5e1; font-weight:600; font-size:0.72rem;">-</span>`;
+                }
+                const parts = permStr.split(' ');
+                return parts.map(p => {
+                    let bg = '#e2e8f0', col = '#475569';
+                    if (p === 'R') { bg = '#dbeafe'; col = '#1e40af'; }
+                    else if (p === 'C') { bg = '#dcfce7'; col = '#15803d'; }
+                    else if (p === 'U') { bg = '#fef3c7'; col = '#b45309'; }
+                    else if (p === 'A') { bg = '#f3e8ff'; col = '#6b21a8'; }
+                    else if (p === 'O') { bg = '#ffe4e6'; col = '#be123c'; }
+                    return `<span style="display:inline-block; padding:2px 5px; border-radius:3px; background:${bg}; color:${col}; font-weight:800; font-size:0.68rem; margin:1px;">${p}</span>`;
+                }).join('');
+            };
+
+            // 5. Render Rows with Highlight for Selected Role
+            tableHtml += activeRbacRolesData.map((role, idx) => {
+                const isSelected = idx === highlightIndex;
+                const rowBg = isSelected ? '#eff6ff' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
+                const rowBorder = isSelected ? 'border-left: 4px solid var(--primary);' : '';
+                const stickyBg = isSelected ? '#dbeafe' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
+
+                return `
+                    <tr style="background:${rowBg}; ${rowBorder}">
+                        <td style="position:sticky; left:0; background:${stickyBg}; z-index:4; border-right:2px solid #cbd5e1; font-weight:${isSelected ? '700' : '600'}; color:${isSelected ? 'var(--primary)' : 'var(--text-dark)'}; padding:8px 12px; cursor:pointer;" onclick="selectRbacRole(${idx})">
+                            <i class="fa-solid ${role.icon}" style="margin-right:6px; color:${role.color};"></i> ${role.name}
+                        </td>
+                        ${role.permissions.map((p, modIdx) => {
+                            const isCellDiff = defaultRbacRolesMaster[idx] && p !== defaultRbacRolesMaster[idx].permissions[modIdx];
+                            return `
+                                <td style="text-align:center; padding:6px 8px; background:${isSelected ? (p !== '-' ? 'rgba(37,99,235,0.08)' : 'transparent') : (isCellDiff ? '#fef3c7' : 'transparent')}; cursor:pointer; position:relative;" 
+                                    onclick="openRbacOverrideModal(${idx}, ${modIdx})" 
+                                    title="Klik untuk override hak akses ${role.name} pada ${rbacModulesList[modIdx]} (Saat ini: ${p})">
+                                    ${formatPill(p)}
+                                    ${isCellDiff ? '<i class="fa-solid fa-pen-to-square" style="font-size:0.6rem; color:#d97706; position:absolute; top:2px; right:2px;" title="Override Custom"></i>' : ''}
+                                </td>
+                            `;
+                        }).join('')}
+                    </tr>
+                `;
+            }).join('') + `</tbody>`;
+
+            tableEl.innerHTML = tableHtml;
+        };
+
+        window.saveAllSettings = function() {
+            alert('Seluruh konfigurasi sistem (RBAC 10 Roles, Threshold SLA, Site Project & Security) berhasil disimpan!');
+        };
 
         // Condition Monitoring: Tire Inspection Data Store & Highlight Engine
         let tireInspectionStore = {

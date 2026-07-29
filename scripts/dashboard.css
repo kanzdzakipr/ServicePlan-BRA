@@ -11665,3 +11665,61 @@ body.sl-modal-open {
     white-space: nowrap;
 }
 
+/* ============================================================================
+   SYSTEM SETTINGS DUAL-PANE ("MENU DI DALAM MENU") SUB-NAVIGATION STYLING
+   ============================================================================ */
+.settings-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    user-select: none;
+}
+
+.settings-nav-item i {
+    font-size: 1.15rem;
+    color: #64748b;
+    width: 24px;
+    text-align: center;
+    transition: color 0.2s ease;
+}
+
+.settings-nav-item strong {
+    display: block;
+    font-size: 0.88rem;
+    color: var(--text-dark);
+    line-height: 1.2;
+}
+
+.settings-nav-item small {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.settings-nav-item:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.settings-nav-item.active {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.08);
+}
+
+.settings-nav-item.active i {
+    color: var(--primary);
+}
+
+.settings-nav-item.active strong {
+    color: var(--primary);
+}
+
+
