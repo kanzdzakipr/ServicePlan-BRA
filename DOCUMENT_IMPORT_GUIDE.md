@@ -1,12 +1,14 @@
-# Panduan Modul Impor Dokumen
+# Panduan Modul Impor Laporan
 
 ## Ringkasan
 
-Menu **Laporan & Form → Impor Dokumen** menerima:
+Menu **Laporan & Form → Impor Laporan** menerima:
 
 - Word: `.docx` dan `.doc`;
 - PDF: `.pdf`, termasuk OCR adaptif untuk halaman scan;
 - spreadsheet: `.xlsx`, `.xls`, `.xlsm`, `.csv`, dan `.tsv`;
+- laporan manual Markdown: `.md` dan `.markdown`, termasuk heading, tabel pipe,
+  list, blockquote, code block, serta provenance nomor baris;
 - gambar pendukung: `.jpg`, `.jpeg`, `.png`, dan `.webp`.
 
 Semua parser, worker, WebAssembly, serta model OCR Indonesia/Inggris berada di `scripts/vendor`. File sumber diproses di browser dan tidak dikirim ke layanan eksternal. Versi dipatok dan checksum SHA-256 dicatat di `scripts/vendor/README.md`; spreadsheet memakai distribusi resmi [SheetJS CE 0.20.3](https://docs.sheetjs.com/docs/getting-started/installation/standalone/).
@@ -19,7 +21,7 @@ Arsip `.rar`, `.zip`, atau `.7z` tidak dibuka. Arsip tetap masuk manifest dengan
 2. Magic signature dibandingkan dengan ekstensi file.
 3. Adapter mengekstrak struktur canonical.
 4. Semua fragmen diberi `sourceRef`.
-5. Classifier memberi kandidat tipe laporan dari 19 schema yang tersedia.
+5. Classifier memberi kandidat tipe laporan dari 20 schema yang tersedia.
 6. Mapper menormalisasi field dan baris beserta confidence/provenance.
 7. User meninjau warning, konflik, dan informasi yang belum terpetakan.
 8. Tombol **Buat Draft Laporan** mengisi form; modul tidak pernah memfinalkan laporan otomatis.
@@ -73,6 +75,40 @@ Manifest juga mencatat merge, hidden row/column, defined name, error cell, media
 CSV/TSV mendeteksi UTF-8, UTF-16LE/BE, atau Windows-1252. SheetJS menangani delimiter serta quoted multiline. Nilai tidak pernah dieksekusi sebagai formula oleh modul impor.
 
 Sebelum JSZip atau parser OOXML membaca `.docx`, `.xlsx`, dan `.xlsm`, modul melakukan preflight langsung terhadap byte ZIP mentah. Pemeriksaan ini memvalidasi EOCD, Central Directory dan local header, ukuran/CRC yang tersedia, metode kompresi, rentang data, serta kesesuaian nama dan jumlah entry setelah JSZip. ZIP64, multi-disk, entry terenkripsi, path absolut/traversal/ambigu, collision nama, rentang overlap, dan paket yang melewati batas ukuran ditolak sebelum isi dimaterialisasi.
+
+### Markdown dan laporan manual Cutting Bit
+
+Adapter Markdown membaca UTF-8 atau UTF-16 dengan BOM, menolak byte NUL dan
+kontrol biner, serta membatasi sumber hingga 32 MiB. Parser tidak merender raw
+HTML, tidak mengikuti link, tidak mengambil resource eksternal, dan tidak
+menjalankan fenced code. Setiap heading, sel tabel, paragraf, list, blockquote,
+dan code block mendapat `sourceRef` berbasis nomor baris; raw Markdown tetap
+berada pada metadata fragmen.
+
+Schema ke-20 adalah `cutting-bit-usage` (`CB-RM`). Dua fixture utamanya:
+
+- `material/BAN-GREASE-CUTTING_BIT-AKI/Perhitungan_Cutting_Bit_XCMG_BRR-RM-4101_Tabulasi.md`;
+- `material/BAN-GREASE-CUTTING_BIT-AKI/Perhitungan_Cutting_Bit_CAT_RM500_BRR-RM-4102_Tabulasi.md`.
+
+Mapper khusus hanya membentuk baris draft dari section **Tabulasi Harian
+{Bulan}** yang memiliki kolom Tanggal, Planning, dan Actual. Bulan berasal dari
+heading section; nilai tanggal/planning/actual tetap menunjuk sel sumber.
+Tabel rekap, rumus, material, status kebutuhan, dan catatan tidak dicampur
+menjadi transaksi harian, tetapi seluruhnya tetap tersimpan dalam extraction
+audit.
+
+Actual pada tanggal tanpa planning tidak dipindahkan. Sistem memberi warning
+`cutting_bit_actual_without_planning`. Karena sumber hanya menyebut hari dan
+bulan, sistem juga memberi `cutting_bit_year_missing` dan tidak menebak tahun.
+Validasi draft menolak tanggal di luar bulan, bulan/tanggal duplikat, jumlah
+pcs pecahan/negatif, safety stock di luar 0-100%, dan tahun non-empat-digit.
+
+Baseline regresi:
+
+| Dokumen | Heading / tabel | Baris harian | Planning | Actual | Sentinel |
+|---|---:|---:|---:|---:|---|
+| XCMG BRR-RM-4101 | 14 / 12 | 62 | 1.900 | 117 | 19 Juli: 0 / 20 |
+| CAT RM500 BRR-RM-4102 | 11 / 8 | 31 | 150 | 50 | 21 Juli: 0 / 50 |
 
 ## Model canonical
 
@@ -142,6 +178,7 @@ Extraction di IndexedDB mengandung informasi sumber dan **tidak dienkripsi oleh 
 ### Batas ekstraksi keras
 
 - maksimal 100 MiB per file;
+- Markdown maksimal 32 MiB per file;
 - maksimal 500 file dan 500 MiB per batch;
 - paket OOXML maksimal 10.000 entry, 64 MiB total uncompressed, dan 32 MiB per entry;
 - workbook OOXML maksimal 1.100.000 node sel sebelum materialisasi, lalu maksimal 600.000 sel bernilai/formula/comment/hyperlink yang perlu dipertahankan;

@@ -1822,6 +1822,12 @@
     color: #536681;
 }
 
+.guide-legend .optional,
+.guide-reference-row .optional {
+    background: #edf7f2;
+    color: #287054;
+}
+
 .guide-reference-table {
     border: 1px solid #d9e0ea;
     border-radius: 7px;

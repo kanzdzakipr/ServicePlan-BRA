@@ -5,8 +5,10 @@
 Modul frontend berada pada:
 
 - `dashboard.html` sebagai shell aplikasi;
-- `scripts/report-forms.js` untuk schema, state, validasi, riwayat, duplikasi, dan preview;
-- `scripts/report-forms.css` untuk form, riwayat, upload gambar, dan layout cetak.
+- `scripts/dashboard.js` untuk 20 schema, state, validasi, importer, riwayat,
+  duplikasi, dan preview;
+- `scripts/dashboard.css` untuk form, importer, riwayat, upload gambar, dan
+  layout cetak.
 
 Penyimpanan browser dipisahkan menjadi:
 
@@ -18,7 +20,8 @@ Penyimpanan browser dipisahkan menjadi:
 Alur finalisasi:
 
 1. User mengisi field dan baris tabel.
-   Seluruh field identitas dan seluruh kolom tabel yang dapat diedit wajib diisi; kolom hasil perhitungan tetap otomatis.
+   Field/kolom bertanda wajib harus diisi; field opsional tetap dapat kosong
+   dan kolom hasil perhitungan tetap otomatis.
 2. Perubahan disimpan otomatis sebagai draft.
 3. Tombol **Preview** hanya memvalidasi dan menampilkan layout cetak.
 4. Tombol **Simpan Laporan** memvalidasi field, item, dan gambar wajib.
@@ -55,6 +58,27 @@ seedFields: {
     kop_surat: 'Dengan hormat,\nSehubungan dengan kebutuhan operasional ...'
 }
 ```
+
+### 2.1 Laporan Pemakaian Cutting Bit
+
+Schema `cutting-bit-usage` (`CB-RM`) menampung identitas recycling machine,
+material, lokasi, periode, target, hari kerja, safety stock, serta planning dan
+actual harian. Draft dapat diisi manual atau dibuat dari tab **Impor Laporan**.
+
+Profil mapping Markdown hanya menerima tabel **Tabulasi Harian {Bulan}**.
+Selisih dan realisasi dihitung ulang:
+
+```text
+selisih_pcs = actual - planning
+realisasi_persen = planning > 0 ? actual / planning x 100% : kosong
+```
+
+Tahun tidak disimpulkan dari waktu impor. Warning
+`cutting_bit_year_missing` meminta review bila tanggal penuh dibutuhkan,
+sementara `cutting_bit_actual_without_planning` mempertahankan anomali sumber
+tanpa menggeser tanggal. Validasi draft memastikan tanggal sesuai bulan,
+kombinasi bulan/tanggal unik, planning/actual berupa integer nonnegatif,
+safety stock 0-100%, dan tahun opsional berupa empat digit.
 
 ## 3. Upload bukti per item
 

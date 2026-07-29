@@ -4,8 +4,8 @@
     const field = (key, label, type = 'text', required = false, options = [], full = false, placeholder = '') => ({
         key, label, type, required, options, full, placeholder
     });
-    const column = (key, label, type = 'text', readonly = false, options = []) => ({
-        key, label, type, readonly, options
+    const column = (key, label, type = 'text', readonly = false, options = [], allowNegative = false) => ({
+        key, label, type, readonly, options, allowNegative
     });
 
     const formSchemas = [
@@ -514,6 +514,76 @@
             ]
         },
         {
+            id: 'cutting-bit-usage', code: 'CB-RM', category: 'Maintenance',
+            title: 'Laporan Pemakaian Cutting Bit Recycling Machine',
+            description: 'Planning, pemakaian aktual, safety stock, dan selisih harian cutting bit untuk unit recycling machine.',
+            source: 'Perhitungan_Cutting_Bit_Tabulasi.md',
+            sourcePath: 'material/BAN-GREASE-CUTTING_BIT-AKI/Perhitungan_Cutting_Bit_*_Tabulasi.md',
+            mappingProfile: 'cuttingBitDaily',
+            requiredContentHints: [
+                'perhitungan pemakaian cutting bit',
+                'identitas perhitungan',
+                'tabulasi harian'
+            ],
+            minimumRequiredContentHints: 2,
+            optionalFields: [
+                'tahun',
+                'target_total_m',
+                'kebutuhan_dasar',
+                'safety_stock_minimum',
+                'total_kebutuhan',
+                'sumber_dokumen'
+            ],
+            fields: [
+                field('mesin_unit', 'Mesin/unit', 'text', true),
+                field('kode_unit', 'Kode unit', 'text', true),
+                field('material', 'Material', 'select', true, [
+                    'Clay/Pasir',
+                    'Laterit/Tanah Padat',
+                    'Jalan berbatu/Kerikil',
+                    'Aspal tipis (5-10 cm)',
+                    'Aspal sedang (10-20 cm)',
+                    'Aspal tebal (>20 cm)'
+                ]),
+                field('lokasi', 'Lokasi', 'text', true),
+                field('periode_pencatatan', 'Periode pencatatan', 'text', true),
+                field('tahun', 'Tahun laporan', 'number'),
+                field('kebutuhan_harian', 'Kebutuhan cutting bit per hari', 'number', true),
+                field('target_harian_m', 'Target pekerjaan per hari (meter)', 'number', true),
+                field('hari_kerja', 'Hari kerja', 'number', true),
+                field('target_total_m', 'Target total (meter)', 'number', true),
+                field('kebutuhan_dasar', 'Kebutuhan cutting bit dasar (pcs)', 'number', true),
+                field('safety_stock_persen', 'Safety stock minimum (%)', 'number', true),
+                field('safety_stock_minimum', 'Safety stock minimum (pcs)', 'number', true),
+                field('total_kebutuhan', 'Total kebutuhan termasuk safety stock (pcs)', 'number', true),
+                field('sumber_dokumen', 'Dokumen sumber', 'text', true)
+            ],
+            tableTitle: 'Tabulasi planning dan pemakaian harian',
+            calculation: 'cuttingBitUsage',
+            calculationNote: 'Selisih dan realisasi dihitung ulang dari Actual - Planning. Nilai planning nol dengan actual terisi tetap dipertahankan sebagai anomali untuk review.',
+            optionalColumns: ['penanda_kalender', 'catatan'],
+            columns: [
+                column('bulan', 'Bulan', 'select', false, [
+                    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ]),
+                column('tanggal', 'Tanggal', 'number'),
+                column('planning', 'Planning (pcs)', 'number'),
+                column('actual', 'Actual (pcs)', 'number'),
+                column('selisih_pcs', 'Selisih Actual - Planning', 'number', true, [], true),
+                column('realisasi_persen', 'Realisasi (%)', 'number', true),
+                column('penanda_kalender', 'Penanda kalender', 'select', false, [
+                    'Merah (arti tidak dijelaskan sumber)'
+                ]),
+                column('catatan', 'Catatan')
+            ],
+            approvals: [
+                { label: 'Dibuat oleh / Mekanik' },
+                { label: 'Diperiksa Supervisor' },
+                { label: 'Mengetahui Head Equipment' }
+            ]
+        },
+        {
             id: 'parts-weekly', code: 'RPW', category: 'Logistik & Warehouse',
             title: 'Report Parts Weekly',
             description: 'Rekap mingguan parts masuk, keluar, saldo kuantitas, dan nilai persediaan.',
@@ -547,10 +617,10 @@
 
     formSchemas.forEach(schema => {
         schema.fields.forEach(item => {
-            item.required = true;
+            item.required = !schema.optionalFields?.includes(item.key);
         });
         schema.columns.forEach(item => {
-            item.required = !item.readonly;
+            item.required = !item.readonly && !schema.optionalColumns?.includes(item.key);
         });
     });
 
@@ -561,7 +631,7 @@
     const storagePrefix = 'fleetmonitor-report-draft-';
     const historyStorageKey = 'fleetmonitor-report-history-v1';
     const evidenceRequiredFormIds = new Set(['ppb', 'spb', 'sppu', 'sppu-006-pf04-cs10']);
-    const calculatedRowKeys = new Set(['saldo_sekarang', 'sisa', 'jam_kerja', 'hm_operasi', 'total', 'durasi', 'in_total', 'out_total', 'saldo', 'nilai_saldo']);
+    const calculatedRowKeys = new Set(['saldo_sekarang', 'sisa', 'jam_kerja', 'hm_operasi', 'total', 'durasi', 'in_total', 'out_total', 'saldo', 'nilai_saldo', 'selisih_pcs', 'realisasi_persen']);
     const importRowMetadataKeys = new Set(['_import']);
     const maxSourceImageBytes = 8 * 1024 * 1024;
     const minImageLongSide = 1280;
@@ -810,7 +880,7 @@
                     <i class="fa-regular fa-file-lines"></i> Template Form
                 </button>
                 <button class="report-view-tab" type="button" role="tab" aria-selected="false" data-report-panel="import">
-                    <i class="fa-solid fa-file-import"></i> Impor Dokumen
+                    <i class="fa-solid fa-file-import"></i> Impor Laporan
                     <span id="reportImportCount">0</span>
                 </button>
                 <button class="report-view-tab" type="button" role="tab" aria-selected="false" data-report-panel="history">
@@ -1289,6 +1359,12 @@
         if (item.type === 'time') return `Isi waktu ${label} menggunakan format 24 jam.`;
         if (item.type === 'select') return `Pilih satu opsi ${label} yang paling sesuai dari daftar yang tersedia.`;
         if (item.type === 'number') {
+            if (
+                activeSchema?.id === 'cutting-bit-usage'
+                && ['target_harian_m', 'target_total_m'].includes(item.key)
+            ) {
+                return `Isi ${label} sebagai target panjang pekerjaan dalam meter, bukan pembacaan hour meter unit.`;
+            }
             if (/harga|biaya|estimasi|nilai/.test(key)) return `Isi ${label} dalam Rupiah berupa angka tanpa simbol mata uang atau pemisah ribuan.`;
             if (/hm|hour|meter/.test(key + label)) return `Isi pembacaan ${label} sesuai panel/unit; desimal diperbolehkan.`;
             return `Isi ${label} berupa angka nol atau lebih; gunakan desimal hanya bila diperlukan.`;
@@ -1334,10 +1410,28 @@
         return `Isi ${item.label}`;
     }
 
+    function numberControlConstraints(item, isTableColumn = false) {
+        if (item.type !== 'number') return '';
+        if (activeSchema?.id !== 'cutting-bit-usage') {
+            return item.readonly ? '' : 'min="0" step="any"';
+        }
+        if (isTableColumn) {
+            if (item.key === 'tanggal') return 'min="1" max="31" step="1"';
+            if (['planning', 'actual'].includes(item.key)) return 'min="0" step="1"';
+            return item.readonly ? '' : 'min="0" step="any"';
+        }
+        if (item.key === 'tahun') return 'min="1900" max="2100" step="1"';
+        if (['kebutuhan_harian', 'hari_kerja', 'kebutuhan_dasar', 'safety_stock_minimum', 'total_kebutuhan'].includes(item.key)) {
+            return 'min="0" step="1"';
+        }
+        if (item.key === 'safety_stock_persen') return 'min="0" max="100" step="any"';
+        return 'min="0" step="any"';
+    }
+
     function formControl(item, value) {
         const required = item.required ? 'required' : '';
         const placeholder = `placeholder="${escapeHtml(fieldPlaceholder(item))}"`;
-        const nonNegative = item.type === 'number' ? 'min="0" step="any"' : '';
+        const numberConstraints = numberControlConstraints(item);
         const instruction = `title="${escapeHtml(fieldInstruction(item))}" aria-label="${escapeHtml(`${item.label}. ${fieldInstruction(item)}`)}"`;
         const numberTemplate = getNumberTemplate(activeSchema, item);
         if (numberTemplate) return templateNumberControl(item, value, numberTemplate);
@@ -1350,7 +1444,7 @@
                 ${item.options.map(option => `<option value="${escapeHtml(option)}" ${value === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}
             </select>`;
         }
-        return `<input class="builder-input" data-field="${escapeHtml(item.key)}" type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" ${required} ${placeholder} ${nonNegative} ${instruction}>`;
+        return `<input class="builder-input" data-field="${escapeHtml(item.key)}" type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" ${required} ${placeholder} ${numberConstraints} ${instruction}>`;
     }
 
     function tableControl(item, value, rowIndex) {
@@ -1362,8 +1456,8 @@
                 ${item.options.map(option => `<option value="${escapeHtml(option)}" ${value === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}
             </select>`;
         }
-        const nonNegative = item.type === 'number' && !item.readonly ? 'min="0" step="any"' : '';
-        return `<input ${common} type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(columnPlaceholder(item))}" ${required} ${nonNegative} ${item.readonly ? 'readonly tabindex="-1"' : ''}>`;
+        const numberConstraints = numberControlConstraints(item, true);
+        return `<input ${common} type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(columnPlaceholder(item))}" ${required} ${numberConstraints} ${item.readonly ? 'readonly tabindex="-1"' : ''}>`;
     }
 
     function evidenceControl(row, rowIndex) {
@@ -1463,7 +1557,7 @@
         return activeSchema.fields.map(item => `
             <div class="builder-field ${item.full ? 'full' : ''}">
                 <label>
-                    ${escapeHtml(item.label)}<span class="required-mark">*</span>
+                    ${escapeHtml(item.label)}${item.required ? '<span class="required-mark">*</span>' : ''}
                 </label>
                 ${formControl(item, activeDraft.fields[item.key] || '')}
             </div>
@@ -1473,7 +1567,11 @@
     function tableHeaderMarkup(item) {
         return `
             <div class="table-header-content">
-                <span>${escapeHtml(item.label)}${item.readonly ? '<em>Otomatis</em>' : '<b class="required-mark">*</b>'}</span>
+                <span>${escapeHtml(item.label)}${item.readonly
+                    ? '<em>Otomatis</em>'
+                    : item.required
+                        ? '<b class="required-mark">*</b>'
+                        : '<em>Opsional</em>'}</span>
             </div>
         `;
     }
@@ -1504,14 +1602,14 @@
                         <section class="guide-reference">
                             <div class="guide-reference-heading">
                                 <div><h3>Identitas & informasi dokumen</h3><p>Penjelasan mengenai data pada bagian atas form.</p></div>
-                                <div class="guide-legend"><span class="required">Semua wajib diisi</span></div>
+                                <div class="guide-legend"><span class="required">Wajib</span>${activeSchema.fields.some(item => !item.required) ? '<span class="optional">Opsional</span>' : ''}</div>
                             </div>
                             <div class="guide-reference-table">
                                 <div class="guide-reference-row head"><span>Field</span><span>Status</span><span>Cara mengisi</span></div>
                                 ${activeSchema.fields.map(item => `
                                     <div class="guide-reference-row">
                                         <strong>${escapeHtml(item.label)}</strong>
-                                        <span><em class="required">Wajib</em></span>
+                                        <span><em class="${item.required ? 'required' : 'optional'}">${item.required ? 'Wajib' : 'Opsional'}</em></span>
                                         <p>${escapeHtml(fieldInstruction(item))}</p>
                                     </div>
                                 `).join('')}
@@ -1527,7 +1625,7 @@
                                 ${activeSchema.columns.map(item => `
                                     <div class="guide-reference-row">
                                         <strong>${escapeHtml(item.label)}</strong>
-                                        <span><em class="${item.readonly ? 'automatic' : 'required'}">${item.readonly ? 'Otomatis' : 'Wajib'}</em></span>
+                                        <span><em class="${item.readonly ? 'automatic' : item.required ? 'required' : 'optional'}">${item.readonly ? 'Otomatis' : item.required ? 'Wajib' : 'Opsional'}</em></span>
                                         <p>${escapeHtml(columnInstruction(item))}</p>
                                     </div>
                                 `).join('')}
@@ -1641,6 +1739,15 @@
                 row.saldo = row.in_total - row.out_total;
                 row.nilai_saldo = row.saldo * numberValue(row.harga);
                 break;
+            case 'cuttingBitUsage': {
+                const planning = numberValue(row.planning);
+                const actual = numberValue(row.actual);
+                row.selisih_pcs = Math.round((actual - planning) * 100) / 100;
+                row.realisasi_persen = planning > 0
+                    ? Math.round((actual / planning * 100) * 100) / 100
+                    : '';
+                break;
+            }
         }
     }
 
@@ -1675,6 +1782,61 @@
                 <div class="summary-line"><span>Total jam kerja</span><strong>${hours.toLocaleString('id-ID')} jam</strong></div>
                 <div class="summary-line"><span>Total HM operasi</span><strong>${hm.toLocaleString('id-ID')} HM</strong></div>
                 <div class="summary-line total"><span>Total BBM</span><strong>${fuel.toLocaleString('id-ID')} liter</strong></div>
+            `;
+        }
+        if (schema.calculation === 'cuttingBitUsage') {
+            const totalPlanning = draft.rows.reduce(
+                (sum, row) => sum + numberValue(row.planning),
+                0
+            );
+            const totalActual = draft.rows.reduce(
+                (sum, row) => sum + numberValue(row.actual),
+                0
+            );
+            const difference = totalActual - totalPlanning;
+            const realization = totalPlanning > 0
+                ? Math.round((totalActual / totalPlanning * 100) * 100) / 100
+                : 0;
+            const targetTotal = numberValue(draft.fields.target_harian_m)
+                * numberValue(draft.fields.hari_kerja);
+            const baseRequirement = numberValue(draft.fields.kebutuhan_harian)
+                * numberValue(draft.fields.hari_kerja);
+            const safetyStock = baseRequirement
+                * numberValue(draft.fields.safety_stock_persen) / 100;
+            const totalRequirement = baseRequirement + safetyStock;
+            const remainingRequirement = totalRequirement - totalActual;
+            const plannedDays = draft.rows.filter(row => numberValue(row.planning) > 0).length;
+            const actualDays = draft.rows.filter(row => numberValue(row.actual) > 0).length;
+            const anomalousDays = draft.rows.filter(row => (
+                numberValue(row.actual) > 0 && numberValue(row.planning) === 0
+            )).length;
+            const sourceComparisons = [
+                ['target total', draft.fields.target_total_m, targetTotal],
+                ['kebutuhan dasar', draft.fields.kebutuhan_dasar, baseRequirement],
+                ['safety stock', draft.fields.safety_stock_minimum, safetyStock],
+                ['total + safety stock', draft.fields.total_kebutuhan, totalRequirement]
+            ];
+            const sourceMismatches = sourceComparisons
+                .filter(([, sourceValue, calculatedValue]) => (
+                    String(sourceValue ?? '').trim()
+                    && Math.abs(numberValue(sourceValue) - calculatedValue) > 0.01
+                ))
+                .map(([label]) => label);
+            return `
+                <div class="summary-line"><span>Target pekerjaan hasil hitung</span><strong>${targetTotal.toLocaleString('id-ID')} meter</strong></div>
+                <div class="summary-line"><span>Kebutuhan dasar hasil hitung</span><strong>${baseRequirement.toLocaleString('id-ID')} pcs</strong></div>
+                <div class="summary-line"><span>Safety stock hasil hitung</span><strong>${safetyStock.toLocaleString('id-ID')} pcs</strong></div>
+                <div class="summary-line"><span>Total kebutuhan + safety stock</span><strong>${totalRequirement.toLocaleString('id-ID')} pcs</strong></div>
+                <div class="summary-line"><span>Total planning</span><strong>${totalPlanning.toLocaleString('id-ID')} pcs</strong></div>
+                <div class="summary-line"><span>Total actual</span><strong>${totalActual.toLocaleString('id-ID')} pcs</strong></div>
+                <div class="summary-line"><span>Selisih actual - planning</span><strong>${difference.toLocaleString('id-ID')} pcs</strong></div>
+                <div class="summary-line"><span>Realisasi</span><strong>${realization.toLocaleString('id-ID')}%</strong></div>
+                <div class="summary-line"><span>Hari planning / actual</span><strong>${plannedDays.toLocaleString('id-ID')} / ${actualDays.toLocaleString('id-ID')} hari</strong></div>
+                <div class="summary-line"><span>Actual tanpa planning</span><strong>${anomalousDays.toLocaleString('id-ID')} hari</strong></div>
+                ${sourceMismatches.length
+                    ? `<div class="summary-line"><span>Review nilai sumber</span><strong>${escapeHtml(sourceMismatches.join(', '))}</strong></div>`
+                    : ''}
+                <div class="summary-line total"><span>Sisa terhadap kebutuhan + safety stock</span><strong>${remainingRequirement.toLocaleString('id-ID')} pcs</strong></div>
             `;
         }
         if (schema.calculation === 'weeklyParts') {
@@ -1736,7 +1898,7 @@
                         <div class="form-title-icon"><i class="fa-regular fa-file-lines"></i></div>
                         <div>
                             <h2>${escapeHtml(activeSchema.title)}</h2>
-                            <p>${escapeHtml(activeSchema.description)}<br>Acuan field: material/SOP/Form/${escapeHtml(activeSchema.source)}</p>
+                            <p>${escapeHtml(activeSchema.description)}<br>Acuan field: ${escapeHtml(activeSchema.sourcePath || `material/SOP/Form/${activeSchema.source}`)}</p>
                         </div>
                     </div>
                     <div class="autosave-badge" id="autosaveBadge"><i class="fa-solid fa-cloud"></i> Auto-save aktif</div>
@@ -1880,6 +2042,111 @@
         showToast('Form dan draft berhasil direset.');
     }
 
+    function cuttingBitDraftSemanticIssue() {
+        if (activeSchema?.id !== 'cutting-bit-usage') return null;
+        const fields = activeDraft.fields || {};
+        const issue = (message, selector) => ({ message, selector });
+        const numericField = key => Number(fields[key]);
+        const hasField = key => String(fields[key] ?? '').trim() !== '';
+
+        if (
+            hasField('tahun')
+            && (
+                !Number.isInteger(numericField('tahun'))
+                || numericField('tahun') < 1900
+                || numericField('tahun') > 2100
+            )
+        ) {
+            return issue(
+                'Tahun laporan harus berupa empat digit antara 1900 dan 2100.',
+                '[data-field="tahun"]'
+            );
+        }
+        for (const key of ['kebutuhan_harian', 'hari_kerja']) {
+            if (!Number.isInteger(numericField(key)) || numericField(key) <= 0) {
+                const definition = activeSchema.fields.find(item => item.key === key);
+                return issue(
+                    `${definition?.label || key} harus berupa bilangan bulat lebih dari nol.`,
+                    `[data-field="${key}"]`
+                );
+            }
+        }
+        if (!Number.isFinite(numericField('target_harian_m')) || numericField('target_harian_m') <= 0) {
+            return issue(
+                'Target pekerjaan per hari harus lebih dari nol meter.',
+                '[data-field="target_harian_m"]'
+            );
+        }
+        const safetyPercent = numericField('safety_stock_persen');
+        if (!Number.isFinite(safetyPercent) || safetyPercent < 0 || safetyPercent > 100) {
+            return issue(
+                'Safety stock minimum harus berada pada rentang 0-100%.',
+                '[data-field="safety_stock_persen"]'
+            );
+        }
+        for (const key of ['kebutuhan_dasar', 'safety_stock_minimum', 'total_kebutuhan']) {
+            if (
+                hasField(key)
+                && (!Number.isInteger(numericField(key)) || numericField(key) < 0)
+            ) {
+                const definition = activeSchema.fields.find(item => item.key === key);
+                return issue(
+                    `${definition?.label || key} harus berupa bilangan bulat nol atau lebih.`,
+                    `[data-field="${key}"]`
+                );
+            }
+        }
+
+        const maximumDays = {
+            Januari: 31,
+            Februari: hasField('tahun') && (
+                numericField('tahun') % 400 === 0
+                || (numericField('tahun') % 4 === 0 && numericField('tahun') % 100 !== 0)
+            ) ? 29 : hasField('tahun') ? 28 : 29,
+            Maret: 31,
+            April: 30,
+            Mei: 31,
+            Juni: 30,
+            Juli: 31,
+            Agustus: 31,
+            September: 30,
+            Oktober: 31,
+            November: 30,
+            Desember: 31
+        };
+        const seenDates = new Set();
+        for (let rowIndex = 0; rowIndex < activeDraft.rows.length; rowIndex += 1) {
+            const row = activeDraft.rows[rowIndex];
+            if (!isRowPopulated(row)) continue;
+            const day = Number(row.tanggal);
+            const maximum = maximumDays[row.bulan];
+            if (!maximum || !Number.isInteger(day) || day < 1 || day > maximum) {
+                return issue(
+                    `Tanggal pada baris ${rowIndex + 1} tidak valid untuk bulan ${row.bulan || 'yang dipilih'}.`,
+                    `[data-row="${rowIndex}"][data-key="tanggal"]`
+                );
+            }
+            for (const key of ['planning', 'actual']) {
+                const value = Number(row[key]);
+                if (!Number.isInteger(value) || value < 0) {
+                    return issue(
+                        `${key === 'planning' ? 'Planning' : 'Actual'} pada baris ${rowIndex + 1} harus berupa bilangan bulat nol atau lebih.`,
+                        `[data-row="${rowIndex}"][data-key="${key}"]`
+                    );
+                }
+            }
+            const dateKey = `${row.bulan}:${day}`;
+            if (seenDates.has(dateKey)) {
+                return issue(
+                    `${day} ${row.bulan} tercatat lebih dari sekali. Gabungkan atau koreksi baris duplikat sebelum finalisasi.`,
+                    `[data-row="${rowIndex}"][data-key="tanggal"]`
+                );
+            }
+            seenDates.add(dateKey);
+        }
+        return null;
+    }
+
     function validateDraft() {
         const form = document.getElementById('dynamicReportForm');
         const missingNumberPart = form?.querySelector('.template-number-part:invalid')
@@ -1954,6 +2221,14 @@
                 );
                 return null;
             }
+        }
+        const semanticIssue = cuttingBitDraftSemanticIssue();
+        if (semanticIssue) {
+            const input = document.querySelector(semanticIssue.selector);
+            input?.focus();
+            input?.reportValidity?.();
+            showToast(semanticIssue.message, true);
+            return null;
         }
         const invalidControl = form?.querySelector(':invalid');
         if (invalidControl) {
@@ -2401,7 +2676,7 @@
     }
 
     window.FleetReportForms = Object.freeze({
-        version: '1.1.0',
+        version: '1.2.0',
         getSchemas: () => cloneData(formSchemas),
         getDraftState(schemaId) {
             const schema = formSchemas.find(item => item.id === schemaId);
@@ -2771,7 +3046,7 @@
 (function (global) {
     'use strict';
 
-    const ENGINE_VERSION = '1.1.1';
+    const ENGINE_VERSION = '1.2.0';
     const ENVELOPE_VERSION = '1.0.0';
     const SUPPORTED_EXTENSIONS = new Set([
         '.doc',
@@ -2782,6 +3057,8 @@
         '.xlsm',
         '.csv',
         '.tsv',
+        '.md',
+        '.markdown',
         '.jpg',
         '.jpeg',
         '.png',
@@ -2789,8 +3066,10 @@
     ]);
     const AUDITED_UNSUPPORTED_EXTENSIONS = new Set(['.rar', '.zip', '.7z']);
     const SPREADSHEET_EXTENSIONS = new Set(['.xls', '.xlsx', '.xlsm', '.csv', '.tsv']);
+    const MARKDOWN_EXTENSIONS = new Set(['.md', '.markdown']);
     const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
     const MAX_SOURCE_BYTES = 100 * 1024 * 1024;
+    const MAX_MARKDOWN_BYTES = 32 * 1024 * 1024;
     const MAX_ZIP_ENTRIES = 10000;
     const MAX_ZIP_UNCOMPRESSED_BYTES = 64 * 1024 * 1024;
     const MAX_ZIP_ENTRY_BYTES = 32 * 1024 * 1024;
@@ -2831,6 +3110,15 @@
         sppu: ['form sppu', 'surat permintaan parts urgent', 'sppu yard'],
         'sppu-006-pf04-cs10': ['sppu 006', 'pf 04', 'cs 10'],
         'maintenance-board': ['maintenance board a2b', 'maintenace board'],
+        'cutting-bit-usage': [
+            'perhitungan pemakaian cutting bit',
+            'perhitungan cutting bit',
+            'cutting bit recycling machine',
+            'tabulasi harian',
+            'minimum safety stock',
+            'brr rm 4101',
+            'brr rm 4102'
+        ],
         'parts-weekly': ['report parts weekly', 'laporan parts mingguan', 'parts weekly']
     };
 
@@ -2849,9 +3137,27 @@
         tanggal_faktur: ['tanggal faktur', 'tgl faktur'],
         periode: ['periode', 'bulan tahun', 'period'],
         bulan: ['bulan', 'month'],
+        tahun: ['tahun', 'year'],
         project: ['project', 'proyek', 'job site', 'site'],
         job_site: ['job site', 'site', 'lokasi kerja'],
         lokasi: ['lokasi', 'location', 'site'],
+        mesin_unit: ['mesin unit', 'mesin/unit', 'unit', 'recycling machine'],
+        kode_unit: ['kode unit', 'unit code', 'kode alat'],
+        material: ['material', 'jenis material'],
+        periode_pencatatan: ['periode pencatatan', 'bulan pencatatan', 'periode'],
+        kebutuhan_harian: ['kebutuhan cutting bit per hari', 'kebutuhan per hari', 'planning harian'],
+        target_harian_m: ['target pekerjaan per hari', 'target harian meter'],
+        hari_kerja: ['hari kerja', 'jumlah hari kerja'],
+        target_total_m: ['target total', 'target pekerjaan total'],
+        kebutuhan_dasar: ['kebutuhan cutting bit', 'kebutuhan dasar'],
+        safety_stock_persen: ['minimum safety stock persen', 'safety stock persen'],
+        safety_stock_minimum: ['minimum safety stock', 'safety stock minimum'],
+        total_kebutuhan: ['total kebutuhan termasuk safety stock', 'kebutuhan termasuk safety stock'],
+        sumber_dokumen: ['sumber', 'dokumen sumber', 'source'],
+        planning: ['planning', 'rencana', 'plan'],
+        actual: ['actual', 'aktual', 'pemakaian'],
+        selisih_pcs: ['selisih actual planning', 'selisih', 'variance'],
+        realisasi_persen: ['realisasi', 'persentase realisasi'],
         kode_alat: ['kode alat', 'nomor kode alat', 'unit code', 'kode unit'],
         id_alat: ['id alat', 'unit id', 'kode unit'],
         code_number: ['code number', 'kode unit', 'unit code'],
@@ -3393,6 +3699,12 @@
             );
         }
         const extension = extensionOf(file.name);
+        if (MARKDOWN_EXTENSIONS.has(extension) && Number(file.size || 0) > MAX_MARKDOWN_BYTES) {
+            throw new Error(
+                `Ukuran Markdown ${Math.ceil(file.size / 1024 / 1024)} MB melewati batas aman `
+                + `${MAX_MARKDOWN_BYTES / 1024 / 1024} MB.`
+            );
+        }
         const buffer = await file.arrayBuffer();
         const bytes = new Uint8Array(buffer);
         const signature = detectSignature(bytes);
@@ -3469,6 +3781,8 @@
             if (extractionOptions.ocrMode === 'all' && ['.xlsx', '.xlsm'].includes(extension)) {
                 await appendSpreadsheetMediaOcr(buffer, extraction, extractionOptions, onProgress);
             }
+        } else if (MARKDOWN_EXTENSIONS.has(extension)) {
+            extraction = extractMarkdown(buffer, source, onProgress);
         } else if (IMAGE_EXTENSIONS.has(extension)) {
             extraction = await extractImage(file, source, extractionOptions, onProgress, bytes);
         } else {
@@ -3509,6 +3823,524 @@
             sourceRef: source.relativePath || source.fileName
         });
         extraction.stats.supported = false;
+        return extraction;
+    }
+
+    function decodeMarkdownBytes(bytes, fileName) {
+        let encoding = 'utf-8';
+        let text;
+        try {
+            if (
+                bytes.length >= 3
+                && bytes[0] === 0xef
+                && bytes[1] === 0xbb
+                && bytes[2] === 0xbf
+            ) {
+                encoding = 'utf-8-bom';
+                text = new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(3));
+            } else if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) {
+                encoding = 'utf-16le-bom';
+                text = new TextDecoder('utf-16le', { fatal: true }).decode(bytes.subarray(2));
+            } else if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) {
+                encoding = 'utf-16be-bom';
+                const source = bytes.subarray(2);
+                const swapped = new Uint8Array(source.length);
+                for (let index = 0; index + 1 < source.length; index += 2) {
+                    swapped[index] = source[index + 1];
+                    swapped[index + 1] = source[index];
+                }
+                text = new TextDecoder('utf-16le', { fatal: true }).decode(swapped);
+            } else {
+                text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            }
+        } catch (error) {
+            throw new Error(
+                `${fileName} bukan Markdown UTF-8/UTF-16 BOM yang valid: ${error.message}`
+            );
+        }
+        if (text.includes('\u0000')) {
+            throw new Error(`${fileName} mengandung byte NUL dan ditolak sebagai Markdown biner.`);
+        }
+        const controlCharacters = [...text].filter(character => {
+            const code = character.charCodeAt(0);
+            return code < 0x20 && !['\n', '\r', '\t'].includes(character);
+        }).length;
+        if (controlCharacters > Math.max(4, Math.floor(text.length * 0.002))) {
+            throw new Error(
+                `${fileName} mengandung terlalu banyak karakter kontrol dan kemungkinan bukan dokumen teks.`
+            );
+        }
+        return {
+            text: text.replace(/\r\n?/g, '\n'),
+            encoding
+        };
+    }
+
+    function cleanMarkdownInline(value) {
+        const codeSpans = [];
+        const protectedValue = String(value == null ? '' : value)
+            .replace(/(`+)([^\n]*?)\1/g, (match, delimiter, content) => {
+                const index = codeSpans.push(content) - 1;
+                return `\uE000${index}\uE001`;
+            });
+        const cleaned = normalizeSpace(
+            protectedValue
+                .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, 'Gambar: $1 ($2)')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')
+                .replace(/<br\s*\/?>/gi, ' ')
+                .replace(/<\/?[^>]+>/g, '')
+                .replace(/\\([\\`*_[\]{}()#+\-.!|>])/g, '$1')
+                .replace(/\*\*([^*\n]+)\*\*/g, '$1')
+                .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s).,;:])/g, '$1$2')
+        );
+        return cleaned.replace(/\uE000(\d+)\uE001/g, (match, index) => (
+            codeSpans[Number(index)] ?? ''
+        ));
+    }
+
+    function markdownPipeCells(line) {
+        let text = String(line || '').trim();
+        if (text.startsWith('|')) text = text.slice(1);
+        if (text.endsWith('|') && !/\\\|$/.test(text)) text = text.slice(0, -1);
+        const cells = [];
+        let cell = '';
+        let escaped = false;
+        let codeDelimiter = 0;
+        for (let index = 0; index < text.length; index += 1) {
+            const character = text[index];
+            if (escaped) {
+                cell += character;
+                escaped = false;
+                continue;
+            }
+            if (character === '\\') {
+                cell += character;
+                escaped = true;
+                continue;
+            }
+            if (character === '`') {
+                let count = 1;
+                while (text[index + count] === '`') count += 1;
+                cell += '`'.repeat(count);
+                if (!codeDelimiter) codeDelimiter = count;
+                else if (codeDelimiter === count) codeDelimiter = 0;
+                index += count - 1;
+                continue;
+            }
+            if (character === '|' && !codeDelimiter) {
+                cells.push(cell.trim());
+                cell = '';
+            } else {
+                cell += character;
+            }
+        }
+        cells.push(cell.trim());
+        return cells;
+    }
+
+    function isMarkdownTableSeparator(line) {
+        const cells = markdownPipeCells(line);
+        return cells.length > 0 && cells.every(cell => (
+            /^:?-{3,}:?$/.test(cell.replace(/\s/g, ''))
+        ));
+    }
+
+    function markdownAlignment(cell) {
+        const value = String(cell || '').replace(/\s/g, '');
+        if (value.startsWith(':') && value.endsWith(':')) return 'center';
+        if (value.endsWith(':')) return 'right';
+        if (value.startsWith(':')) return 'left';
+        return 'default';
+    }
+
+    function extractMarkdown(buffer, source, onProgress) {
+        if (buffer.byteLength > MAX_MARKDOWN_BYTES) {
+            throw new Error(
+                `${source.fileName} berukuran ${(buffer.byteLength / 1024 / 1024).toFixed(1)} MiB; `
+                + `batas Markdown ${MAX_MARKDOWN_BYTES / 1024 / 1024} MiB.`
+            );
+        }
+        const decoded = decodeMarkdownBytes(new Uint8Array(buffer), source.fileName);
+        const lines = decoded.text.split('\n');
+        const extraction = createExtraction(
+            'markdown',
+            'Fleet Markdown structural adapter'
+        );
+        const representedLines = new Set();
+        let currentSection = null;
+        let sectionSequence = 0;
+        let tableSequence = 0;
+        let headingCount = 0;
+        let tableRowCount = 0;
+        let listItemCount = 0;
+        let blockquoteCount = 0;
+        let codeBlockCount = 0;
+        let fence = null;
+
+        const ensureSection = lineNumber => {
+            if (currentSection) return currentSection;
+            sectionSequence += 1;
+            currentSection = {
+                id: `MD-SECTION-${sectionSequence}`,
+                title: 'Pembuka dokumen',
+                kind: 'markdown-section',
+                sourceRef: `md:s${sectionSequence}:L${lineNumber}`,
+                fragmentRefs: [],
+                meta: { level: 0, headingFragmentId: null }
+            };
+            extraction.sections.push(currentSection);
+            return currentSection;
+        };
+
+        const addSectionFragment = (
+            kind,
+            value,
+            startLine,
+            endLine = startLine,
+            meta = {}
+        ) => {
+            const section = ensureSection(startLine);
+            const sourceRef = endLine === startLine
+                ? `md:s${sectionSequence}:L${startLine}`
+                : `md:s${sectionSequence}:L${startLine}-L${endLine}`;
+            const fragmentId = addFragment(
+                extraction,
+                kind,
+                value,
+                sourceRef,
+                meta
+            );
+            if (fragmentId) section.fragmentRefs.push(fragmentId);
+            for (let line = startLine; line <= endLine; line += 1) {
+                representedLines.add(line);
+            }
+            return fragmentId;
+        };
+
+        onProgress?.({
+            stage: 'markdown',
+            current: 0,
+            total: lines.length,
+            message: `Membaca struktur Markdown ${source.fileName}`
+        });
+
+        for (let index = 0; index < lines.length; index += 1) {
+            const rawLine = lines[index];
+            const lineNumber = index + 1;
+            const trimmed = rawLine.trim();
+
+            if (fence) {
+                representedLines.add(lineNumber);
+                if (new RegExp(`^\\s*${fence.marker}{${fence.length},}\\s*$`).test(rawLine)) {
+                    addSectionFragment(
+                        'code-block',
+                        fence.lines.join('\n'),
+                        fence.startLine,
+                        lineNumber,
+                        {
+                            language: fence.language,
+                            rawMarkdown: lines.slice(fence.startLine - 1, lineNumber).join('\n')
+                        }
+                    );
+                    codeBlockCount += 1;
+                    fence = null;
+                } else {
+                    fence.lines.push(rawLine);
+                }
+                continue;
+            }
+
+            const fenceMatch = rawLine.match(/^\s*(`{3,}|~{3,})\s*([^\s`]*)?.*$/);
+            if (fenceMatch) {
+                fence = {
+                    marker: fenceMatch[1][0],
+                    length: fenceMatch[1].length,
+                    language: fenceMatch[2] || '',
+                    startLine: lineNumber,
+                    lines: []
+                };
+                representedLines.add(lineNumber);
+                continue;
+            }
+            if (!trimmed) continue;
+
+            const headingMatch = rawLine.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
+            if (headingMatch) {
+                sectionSequence += 1;
+                const title = cleanMarkdownInline(headingMatch[2]);
+                currentSection = {
+                    id: `MD-SECTION-${sectionSequence}`,
+                    title: title || `Bagian ${sectionSequence}`,
+                    kind: 'markdown-section',
+                    sourceRef: `md:s${sectionSequence}:L${lineNumber}`,
+                    fragmentRefs: [],
+                    meta: {
+                        level: headingMatch[1].length,
+                        headingFragmentId: null
+                    }
+                };
+                extraction.sections.push(currentSection);
+                const fragmentId = addSectionFragment(
+                    'heading',
+                    title,
+                    lineNumber,
+                    lineNumber,
+                    {
+                        level: headingMatch[1].length,
+                        rawMarkdown: rawLine
+                    }
+                );
+                currentSection.meta.headingFragmentId = fragmentId;
+                headingCount += 1;
+                continue;
+            }
+
+            if (
+                rawLine.includes('|')
+                && index + 1 < lines.length
+                && isMarkdownTableSeparator(lines[index + 1])
+            ) {
+                const headerRaw = markdownPipeCells(rawLine);
+                const separatorRaw = markdownPipeCells(lines[index + 1]);
+                const sourceRows = [];
+                let cursor = index + 2;
+                while (
+                    cursor < lines.length
+                    && lines[cursor].trim()
+                    && lines[cursor].includes('|')
+                    && !/^\s{0,3}#{1,6}\s+/.test(lines[cursor])
+                ) {
+                    sourceRows.push({
+                        rawLine: lines[cursor],
+                        lineNumber: cursor + 1,
+                        rawCells: markdownPipeCells(lines[cursor])
+                    });
+                    cursor += 1;
+                }
+                const maximumColumns = Math.max(
+                    headerRaw.length,
+                    ...sourceRows.map(row => row.rawCells.length)
+                );
+                const headers = Array.from({ length: maximumColumns }, (_, columnIndex) => (
+                    cleanMarkdownInline(headerRaw[columnIndex] || '')
+                    || `Kolom ${columnIndex + 1} (tanpa header)`
+                ));
+                const section = ensureSection(lineNumber);
+                const headerFragmentRefs = headers.map((header, columnIndex) => (
+                    addSectionFragment(
+                        'cell',
+                        header,
+                        lineNumber,
+                        lineNumber,
+                        {
+                            table: tableSequence + 1,
+                            row: 'header',
+                            column: columnIndex + 1,
+                            rawMarkdown: headerRaw[columnIndex] || '',
+                            isHeader: true
+                        }
+                    )
+                ));
+                representedLines.add(index + 2);
+                const rows = sourceRows.map((sourceRow, rowIndex) => {
+                    const values = Array.from({ length: maximumColumns }, (_, columnIndex) => (
+                        cleanMarkdownInline(sourceRow.rawCells[columnIndex] || '')
+                    ));
+                    const fragmentRefs = values.map((value, columnIndex) => (
+                        addSectionFragment(
+                            'cell',
+                            value,
+                            sourceRow.lineNumber,
+                            sourceRow.lineNumber,
+                            {
+                                table: tableSequence + 1,
+                                row: rowIndex + 1,
+                                column: columnIndex + 1,
+                                rawMarkdown: sourceRow.rawCells[columnIndex] || ''
+                            }
+                        )
+                    ));
+                    if (sourceRow.rawCells.length !== headerRaw.length) {
+                        addWarning(
+                            extraction,
+                            'markdown_table_width_mismatch',
+                            `Baris ${sourceRow.lineNumber} memiliki ${sourceRow.rawCells.length} kolom; header memiliki ${headerRaw.length}. Sel tetap dipertahankan.`,
+                            'warning',
+                            `md:s${sectionSequence}:L${sourceRow.lineNumber}`
+                        );
+                    }
+                    return {
+                        rowNumber: sourceRow.lineNumber,
+                        values,
+                        fragmentRefs
+                    };
+                });
+                tableSequence += 1;
+                tableRowCount += rows.length;
+                const endLine = sourceRows.at(-1)?.lineNumber || index + 2;
+                extraction.tables.push({
+                    id: `MD-TABLE-${tableSequence}`,
+                    title: section.title,
+                    kind: 'markdown-table',
+                    sourceRef: `md:s${sectionSequence}:L${lineNumber}-L${endLine}`,
+                    headers,
+                    headerFragmentRefs,
+                    headerRowNumber: lineNumber,
+                    preamble: [],
+                    rows,
+                    meta: {
+                        sectionId: section.id,
+                        sectionTitle: section.title,
+                        sectionSourceRef: section.sourceRef,
+                        sectionFragmentId: section.meta.headingFragmentId,
+                        alignment: Array.from({ length: maximumColumns }, (_, columnIndex) => (
+                            markdownAlignment(separatorRaw[columnIndex] || '')
+                        )),
+                        rawHeader: rawLine,
+                        rawSeparator: lines[index + 1]
+                    }
+                });
+                for (let line = lineNumber; line <= endLine; line += 1) {
+                    representedLines.add(line);
+                }
+                index = cursor - 1;
+                continue;
+            }
+
+            if (/^\s{0,3}(?:[-*_])(?:\s*[-*_]){2,}\s*$/.test(rawLine)) {
+                representedLines.add(lineNumber);
+                continue;
+            }
+            const listMatch = rawLine.match(/^\s*(?:[-+*]|\d+[.)])\s+(.+)$/);
+            if (listMatch) {
+                addSectionFragment(
+                    'list-item',
+                    cleanMarkdownInline(listMatch[1]),
+                    lineNumber,
+                    lineNumber,
+                    { rawMarkdown: rawLine }
+                );
+                listItemCount += 1;
+                continue;
+            }
+            const blockquoteMatch = rawLine.match(/^\s*>\s?(.*)$/);
+            if (blockquoteMatch) {
+                addSectionFragment(
+                    'blockquote',
+                    cleanMarkdownInline(blockquoteMatch[1]),
+                    lineNumber,
+                    lineNumber,
+                    { rawMarkdown: rawLine }
+                );
+                blockquoteCount += 1;
+                continue;
+            }
+
+            const paragraphLines = [rawLine];
+            let paragraphEnd = index;
+            while (paragraphEnd + 1 < lines.length) {
+                const nextLine = lines[paragraphEnd + 1];
+                if (
+                    !nextLine.trim()
+                    || /^\s{0,3}#{1,6}\s+/.test(nextLine)
+                    || /^\s*(`{3,}|~{3,})/.test(nextLine)
+                    || /^\s*(?:[-+*]|\d+[.)])\s+/.test(nextLine)
+                    || /^\s*>/.test(nextLine)
+                    || /^\s{0,3}(?:[-*_])(?:\s*[-*_]){2,}\s*$/.test(nextLine)
+                    || (
+                        nextLine.includes('|')
+                        && paragraphEnd + 2 < lines.length
+                        && isMarkdownTableSeparator(lines[paragraphEnd + 2])
+                    )
+                ) break;
+                paragraphEnd += 1;
+                paragraphLines.push(nextLine);
+            }
+            addSectionFragment(
+                'paragraph',
+                cleanMarkdownInline(paragraphLines.join('\n')),
+                lineNumber,
+                paragraphEnd + 1,
+                { rawMarkdown: paragraphLines.join('\n') }
+            );
+            index = paragraphEnd;
+        }
+
+        if (fence) {
+            addSectionFragment(
+                'code-block',
+                fence.lines.join('\n'),
+                fence.startLine,
+                lines.length,
+                {
+                    language: fence.language,
+                    rawMarkdown: lines.slice(fence.startLine - 1).join('\n')
+                }
+            );
+            codeBlockCount += 1;
+            addWarning(
+                extraction,
+                'markdown_unclosed_code_fence',
+                `Code fence mulai baris ${fence.startLine} tidak memiliki penutup; isinya tetap dipertahankan.`,
+                'warning',
+                `md:L${fence.startLine}`
+            );
+        }
+
+        const nonEmptyLineNumbers = lines
+            .map((line, index) => ({ line, number: index + 1 }))
+            .filter(item => item.line.trim())
+            .map(item => item.number);
+        const uncoveredLines = nonEmptyLineNumbers.filter(line => !representedLines.has(line));
+        uncoveredLines.forEach(lineNumber => {
+            addSectionFragment(
+                'raw-line',
+                cleanMarkdownInline(lines[lineNumber - 1]) || lines[lineNumber - 1],
+                lineNumber,
+                lineNumber,
+                { rawMarkdown: lines[lineNumber - 1], coverageFallback: true }
+            );
+        });
+        if (uncoveredLines.length) {
+            addWarning(
+                extraction,
+                'markdown_coverage_fallback',
+                `${uncoveredLines.length} baris memakai fallback raw-line agar tidak terlewat.`,
+                'warning',
+                'md'
+            );
+        }
+
+        extraction.artifacts.push({
+            kind: 'source-markdown',
+            name: source.fileName,
+            size: source.size,
+            sourceRef: source.relativePath || source.fileName,
+            meta: { encoding: decoded.encoding }
+        });
+        extraction.properties.markdown = {
+            encoding: decoded.encoding,
+            totalLines: lines.length,
+            nonEmptyLines: nonEmptyLineNumbers.length,
+            representedNonEmptyLines: nonEmptyLineNumbers.length,
+            coverage: 1,
+            externalResourcesFetched: false
+        };
+        extraction.stats.lines = lines.length;
+        extraction.stats.nonEmptyLines = nonEmptyLineNumbers.length;
+        extraction.stats.representedNonEmptyLines = nonEmptyLineNumbers.length;
+        extraction.stats.headings = headingCount;
+        extraction.stats.markdownTables = tableSequence;
+        extraction.stats.markdownTableRows = tableRowCount;
+        extraction.stats.listItems = listItemCount;
+        extraction.stats.blockquotes = blockquoteCount;
+        extraction.stats.codeBlocks = codeBlockCount;
+        onProgress?.({
+            stage: 'markdown',
+            current: lines.length,
+            total: lines.length,
+            message: `${headingCount} heading dan ${tableSequence} tabel Markdown terbaca`
+        });
         return extraction;
     }
 
@@ -5102,6 +5934,10 @@
         const sampledFragments = Array.from({ length: sampleSize }, (_, index) => (
             extraction.fragments[Math.floor(index * extraction.fragments.length / Math.max(sampleSize, 1))]?.value || ''
         ));
+        const sampledContentText = normalizeKey([
+            tableHeaderText,
+            ...sampledFragments
+        ].join(' ').slice(0, 1800000));
         const sampledText = normalizeKey([
             source.fileName,
             tableHeaderText,
@@ -5119,6 +5955,22 @@
             const exactFileHints = hints.filter(hint => normalizedFileName.includes(hint));
             const bodyHints = hints.filter(hint => sampledText.includes(hint));
             const labelMatches = labels.filter(label => sampledText.includes(label));
+            const requiredContentHints = unique(schema.requiredContentHints || [])
+                .map(normalizeKey)
+                .filter(Boolean);
+            const requiredContentMatches = requiredContentHints.filter(hint => (
+                sampledContentText.includes(hint)
+            ));
+            const minimumRequiredContentHints = Math.min(
+                requiredContentHints.length,
+                Math.max(0, Number(
+                    schema.minimumRequiredContentHints || requiredContentHints.length
+                ))
+            );
+            const contentGatePassed = (
+                !requiredContentHints.length
+                || requiredContentMatches.length >= minimumRequiredContentHints
+            );
             const fileTitleSimilarity = textSimilarity(normalizedFileName, schema.title);
             const sourceSimilarity = textSimilarity(
                 normalizedFileName,
@@ -5135,6 +5987,7 @@
             score += fileTitleSimilarity * 0.2;
             score += sourceSimilarity * 0.24;
             score += Math.min(0.32, labelCoverage * 0.9);
+            if (!contentGatePassed) score = Math.min(score, 0.18);
             return {
                 schemaId: schema.id,
                 title: schema.title,
@@ -5143,6 +5996,9 @@
                 evidence: {
                     filenameHints: exactFileHints.slice(0, 8),
                     contentHints: bodyHints.slice(0, 8),
+                    requiredContentHints,
+                    requiredContentMatches,
+                    contentGatePassed,
                     labelMatches: unique(labelMatches).slice(0, 20),
                     labelCoverage
                 }
@@ -5174,7 +6030,16 @@
         const best = results[0];
         const second = results[1];
         const margin = best ? best.score - (second?.score || 0) : 0;
-        const accepted = Boolean(best && best.score >= 0.32 && (margin >= 0.035 || best.score >= 0.72));
+        const accepted = extraction.format === 'markdown'
+            ? Boolean(best && (
+                best.score >= 0.72
+                || (best.score >= 0.52 && margin >= 0.055)
+            ))
+            : Boolean(
+                best
+                && best.score >= 0.32
+                && (margin >= 0.035 || best.score >= 0.72)
+            );
         const confidence = !accepted
             ? 'none'
             : best.score >= 0.74 && margin >= 0.1
@@ -5281,6 +6146,7 @@
             || value.match(/^docx:[^#]+/i)?.[0]
             || value.match(/^doc:(?:table-\d+|paragraph-\d+)/i)?.[0]
             || value.match(/^image:[^:]+/i)?.[0]
+            || value.match(/^md:s\d+/i)?.[0]
             || value.split('#')[0]
             || value;
     }
@@ -5367,6 +6233,144 @@
         const parsed = Date.parse(rawValue);
         if (Number.isFinite(parsed)) return new Date(parsed).toISOString().slice(0, 10);
         return '';
+    }
+
+    function firstLocalizedNumber(rawValue) {
+        const match = String(rawValue == null ? '' : rawValue).match(/[-+]?\d[\d.,]*/);
+        if (!match) return '';
+        let token = match[0];
+        const negative = token.startsWith('-');
+        token = token.replace(/^[+-]/, '');
+        const lastComma = token.lastIndexOf(',');
+        const lastDot = token.lastIndexOf('.');
+        let decimalSeparator = '';
+        if (lastComma >= 0 && lastDot >= 0) {
+            decimalSeparator = lastComma > lastDot ? ',' : '.';
+        } else {
+            const separatorIndex = Math.max(lastComma, lastDot);
+            if (separatorIndex >= 0) {
+                const decimals = token.length - separatorIndex - 1;
+                if (decimals > 0 && decimals <= 2) {
+                    decimalSeparator = token[separatorIndex];
+                }
+            }
+        }
+        if (decimalSeparator) {
+            const separatorIndex = token.lastIndexOf(decimalSeparator);
+            token = `${token.slice(0, separatorIndex).replace(/[.,]/g, '')}.`
+                + token.slice(separatorIndex + 1).replace(/[.,]/g, '');
+        } else {
+            token = token.replace(/[.,]/g, '');
+        }
+        const number = Number(token);
+        if (!Number.isFinite(number)) return '';
+        return String(negative ? -number : number);
+    }
+
+    function cuttingBitIdentityCandidates(extraction) {
+        const output = new Map();
+        extraction.tables
+            .filter(table => normalizeKey(table.title).includes('identitas perhitungan'))
+            .forEach(table => {
+                table.rows.forEach(row => {
+                    const label = normalizeKey(row.values?.[0]);
+                    if (!label || row.values?.[1] == null || output.has(label)) return;
+                    output.set(label, {
+                        label: row.values[0],
+                        value: row.values[1],
+                        fragmentIds: unique([
+                            row.fragmentRefs?.[0],
+                            row.fragmentRefs?.[1]
+                        ]),
+                        sourceRef: row.fragmentRefs?.[1]
+                            ? extraction.fragments.find(
+                                fragment => fragment.id === row.fragmentRefs[1]
+                            )?.sourceRef
+                            : `${table.sourceRef}:r${row.rowNumber}`,
+                        method: 'markdown-identity-table'
+                    });
+                });
+            });
+        const sourceFragment = extraction.fragments.find(fragment => (
+            ['paragraph', 'list-item'].includes(fragment.kind)
+            && /\bsumber\s*:/i.test(fragment.value)
+        ));
+        if (sourceFragment) {
+            const sourceValueMatch = String(sourceFragment.value).match(
+                /\bsumber\s*:\s*(.+?)(?=\s+halaman\s*:|$)/i
+            );
+            output.set('sumber', {
+                label: 'Sumber',
+                value: sourceValueMatch?.[1]?.trim() || '',
+                fragmentIds: [sourceFragment.id],
+                sourceRef: sourceFragment.sourceRef,
+                method: 'markdown-footer'
+            });
+        }
+        return output;
+    }
+
+    function mapCuttingBitFields(extraction, schema, usedFragmentIds) {
+        const candidates = cuttingBitIdentityCandidates(extraction);
+        const labelKeys = {
+            mesin_unit: ['mesin unit'],
+            kode_unit: ['kode unit'],
+            material: ['material'],
+            lokasi: ['lokasi'],
+            periode_pencatatan: ['periode pencatatan', 'bulan pencatatan'],
+            kebutuhan_harian: ['kebutuhan cutting bit per hari'],
+            target_harian_m: ['target pekerjaan per hari'],
+            hari_kerja: ['hari kerja'],
+            target_total_m: ['target total'],
+            kebutuhan_dasar: ['kebutuhan cutting bit'],
+            safety_stock_minimum: ['minimum safety stock'],
+            total_kebutuhan: ['total kebutuhan termasuk safety stock'],
+            sumber_dokumen: ['sumber']
+        };
+        const fields = {};
+        const provenance = {};
+        const definitions = new Map((schema.fields || []).map(item => [item.key, item]));
+
+        Object.entries(labelKeys).forEach(([fieldKey, aliases]) => {
+            const candidate = aliases
+                .map(alias => candidates.get(normalizeKey(alias)))
+                .find(Boolean);
+            if (!candidate) return;
+            const definition = definitions.get(fieldKey);
+            const normalized = definition?.type === 'number'
+                ? firstLocalizedNumber(candidate.value)
+                : normalizeMappedValue(candidate.value, definition || { type: 'text' });
+            if (normalized === '') return;
+            fields[fieldKey] = normalized;
+            provenance[fieldKey] = {
+                rawValue: candidate.value,
+                normalizedValue: normalized,
+                confidence: 0.99,
+                sourceRef: candidate.sourceRef,
+                fragmentIds: candidate.fragmentIds,
+                method: candidate.method
+            };
+            candidate.fragmentIds.forEach(fragmentId => usedFragmentIds.add(fragmentId));
+        });
+
+        const safetyCandidate = candidates.get('minimum safety stock');
+        const percentMatch = String(safetyCandidate?.value || '').match(
+            /([-+]?\d+(?:[.,]\d+)?)\s*%/
+        );
+        if (safetyCandidate && percentMatch) {
+            const normalized = firstLocalizedNumber(percentMatch[1]);
+            fields.safety_stock_persen = normalized;
+            provenance.safety_stock_persen = {
+                rawValue: safetyCandidate.value,
+                normalizedValue: normalized,
+                confidence: 0.99,
+                sourceRef: safetyCandidate.sourceRef,
+                fragmentIds: safetyCandidate.fragmentIds,
+                method: 'markdown-parenthetical-percent'
+            };
+            safetyCandidate.fragmentIds.forEach(fragmentId => usedFragmentIds.add(fragmentId));
+        }
+        return { fields, provenance };
     }
 
     function mapFields(extraction, schema, usedFragmentIds, conflicts) {
@@ -5485,7 +6489,277 @@
             .sort((left, right) => right.mapping.score - left.mapping.score)[0];
     }
 
+    const CUTTING_BIT_MONTHS = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+
+    function cuttingBitMonth(value) {
+        const normalized = normalizeKey(value);
+        return CUTTING_BIT_MONTHS.find(month => (
+            normalized.split(' ').includes(normalizeKey(month))
+        )) || '';
+    }
+
+    function cuttingBitCalendarMarkers(extraction) {
+        const markers = new Map();
+        extraction.tables
+            .filter(table => normalizeKey(table.title).includes('penanda kalender'))
+            .forEach(table => {
+                const monthIndex = table.headers.findIndex(header => (
+                    normalizeKey(header) === 'bulan'
+                ));
+                const datesIndex = table.headers.findIndex(header => (
+                    normalizeKey(header).includes('tanggal')
+                ));
+                if (monthIndex < 0 || datesIndex < 0) return;
+                table.rows.forEach(row => {
+                    const month = cuttingBitMonth(row.values?.[monthIndex]);
+                    if (!month) return;
+                    const days = String(row.values?.[datesIndex] || '')
+                        .match(/\d{1,2}/g)
+                        ?.map(Number)
+                        .filter(day => day >= 1 && day <= 31) || [];
+                    days.forEach(day => {
+                        markers.set(`${month}:${day}`, {
+                            fragmentId: row.fragmentRefs?.[datesIndex] || null,
+                            sourceRef: row.fragmentRefs?.[datesIndex]
+                                ? extraction.fragments.find(
+                                    fragment => fragment.id === row.fragmentRefs[datesIndex]
+                                )?.sourceRef
+                                : table.sourceRef
+                        });
+                    });
+                });
+            });
+        return markers;
+    }
+
+    function cuttingBitSourceNotes(extraction) {
+        const notes = new Map();
+        extraction.tables
+            .filter(table => normalizeKey(table.title).includes('perbedaan planning dan actual'))
+            .forEach(table => {
+                const dateIndex = table.headers.findIndex(header => (
+                    normalizeKey(header).includes('tanggal')
+                ));
+                const noteIndex = table.headers.findIndex(header => (
+                    /catatan|keterangan/.test(normalizeKey(header))
+                ));
+                if (dateIndex < 0 || noteIndex < 0) return;
+                table.rows.forEach(row => {
+                    const dateText = String(row.values?.[dateIndex] || '');
+                    const dayMatch = dateText.match(/\d{1,2}/);
+                    const month = cuttingBitMonth(dateText);
+                    if (!dayMatch || !month) return;
+                    const note = normalizeSpace(row.values?.[noteIndex]);
+                    if (!note) return;
+                    notes.set(`${month}:${Number(dayMatch[0])}`, {
+                        value: note,
+                        fragmentId: row.fragmentRefs?.[noteIndex] || null,
+                        sourceRef: row.fragmentRefs?.[noteIndex]
+                            ? extraction.fragments.find(
+                                fragment => fragment.id === row.fragmentRefs[noteIndex]
+                            )?.sourceRef
+                            : table.sourceRef
+                    });
+                });
+            });
+        return notes;
+    }
+
+    function mapCuttingBitRows(extraction, schema, usedFragmentIds) {
+        const rows = [];
+        const provenance = [];
+        const issues = [];
+        const seenDates = new Set();
+        let truncated = false;
+        const markers = cuttingBitCalendarMarkers(extraction);
+        const sourceNotes = cuttingBitSourceNotes(extraction);
+        const fragmentSourceRefs = new Map(
+            extraction.fragments.map(fragment => [fragment.id, fragment.sourceRef])
+        );
+        const maximumDays = {
+            Januari: 31, Februari: 29, Maret: 31, April: 30,
+            Mei: 31, Juni: 30, Juli: 31, Agustus: 31,
+            September: 30, Oktober: 31, November: 30, Desember: 31
+        };
+
+        extraction.tables
+            .filter(table => (
+                normalizeKey(table.title).includes('tabulasi harian')
+                && cuttingBitMonth(table.title)
+            ))
+            .forEach(table => {
+                const month = cuttingBitMonth(table.title);
+                const normalizedHeaders = table.headers.map(normalizeKey);
+                const dateIndex = normalizedHeaders.findIndex(header => header === 'tanggal');
+                const planningIndex = normalizedHeaders.findIndex(header => header.startsWith('planning'));
+                const actualIndex = normalizedHeaders.findIndex(header => header.startsWith('actual'));
+                if (dateIndex < 0 || planningIndex < 0 || actualIndex < 0) {
+                    issues.push({
+                        code: 'cutting_bit_daily_headers_missing',
+                        message: `Tabel ${table.title} tidak memiliki header Tanggal, Planning, dan Actual yang lengkap.`,
+                        severity: 'warning',
+                        sourceRef: table.sourceRef
+                    });
+                    return;
+                }
+
+                table.rows.forEach(sourceRow => {
+                    if (rows.length >= MAX_MAPPED_ROWS) {
+                        truncated = true;
+                        return;
+                    }
+                    const dayValue = firstLocalizedNumber(sourceRow.values?.[dateIndex]);
+                    const planningValue = firstLocalizedNumber(sourceRow.values?.[planningIndex]);
+                    const actualValue = firstLocalizedNumber(sourceRow.values?.[actualIndex]);
+                    const day = Number(dayValue);
+                    const planning = Number(planningValue);
+                    const actual = Number(actualValue);
+                    if (
+                        !Number.isInteger(day)
+                        || day < 1
+                        || day > maximumDays[month]
+                        || planningValue === ''
+                        || actualValue === ''
+                        || !Number.isInteger(planning)
+                        || !Number.isInteger(actual)
+                        || planning < 0
+                        || actual < 0
+                    ) {
+                        issues.push({
+                            code: 'cutting_bit_daily_row_invalid',
+                            message: `Baris ${sourceRow.rowNumber} pada ${table.title} tidak dapat dijadikan data harian tanpa mengarang nilai.`,
+                            severity: 'warning',
+                            sourceRef: `${table.sourceRef}:r${sourceRow.rowNumber}`
+                        });
+                        return;
+                    }
+                    const dateKey = `${month}:${day}`;
+                    if (seenDates.has(dateKey)) {
+                        issues.push({
+                            code: 'cutting_bit_duplicate_day',
+                            message: `${day} ${month} muncul lebih dari sekali pada tabulasi harian.`,
+                            severity: 'warning',
+                            sourceRef: `${table.sourceRef}:r${sourceRow.rowNumber}`
+                        });
+                        return;
+                    }
+                    seenDates.add(dateKey);
+
+                    const rowId = global.crypto?.randomUUID?.()
+                        || `CB-ROW-${Date.now()}-${rows.length + 1}`;
+                    const monthFragmentId = table.meta?.sectionFragmentId || null;
+                    const dateFragmentId = sourceRow.fragmentRefs?.[dateIndex] || null;
+                    const planningFragmentId = sourceRow.fragmentRefs?.[planningIndex] || null;
+                    const actualFragmentId = sourceRow.fragmentRefs?.[actualIndex] || null;
+                    const marker = markers.get(dateKey);
+                    const sourceNote = sourceNotes.get(dateKey);
+                    const generatedNote = actual > 0 && planning === 0
+                        ? 'Actual tercatat pada tanggal tanpa planning; pertahankan tanggal sumber dan review.'
+                        : '';
+                    const noteValue = sourceNote?.value || generatedNote;
+                    const mappedRow = {
+                        bulan: month,
+                        tanggal: String(day),
+                        planning: planningValue,
+                        actual: actualValue
+                    };
+                    if (marker) {
+                        mappedRow.penanda_kalender = 'Merah (arti tidak dijelaskan sumber)';
+                    }
+                    if (noteValue) mappedRow.catatan = noteValue;
+                    mappedRow._import = {
+                        rowId,
+                        sourceRef: table.sourceRef,
+                        confidence: 0.99
+                    };
+                    const rowSources = {
+                        bulan: {
+                            rawValue: table.title,
+                            normalizedValue: month,
+                            confidence: 0.99,
+                            sourceRef: table.meta?.sectionSourceRef || table.sourceRef,
+                            fragmentId: monthFragmentId,
+                            sourceHeader: 'section heading',
+                            method: 'section-context'
+                        },
+                        tanggal: {
+                            rawValue: sourceRow.values?.[dateIndex],
+                            normalizedValue: String(day),
+                            confidence: 1,
+                            sourceRef: fragmentSourceRefs.get(dateFragmentId)
+                                || `${table.sourceRef}:r${sourceRow.rowNumber}`,
+                            fragmentId: dateFragmentId,
+                            sourceHeader: table.headers[dateIndex]
+                        },
+                        planning: {
+                            rawValue: sourceRow.values?.[planningIndex],
+                            normalizedValue: planningValue,
+                            confidence: 1,
+                            sourceRef: fragmentSourceRefs.get(planningFragmentId)
+                                || `${table.sourceRef}:r${sourceRow.rowNumber}`,
+                            fragmentId: planningFragmentId,
+                            sourceHeader: table.headers[planningIndex]
+                        },
+                        actual: {
+                            rawValue: sourceRow.values?.[actualIndex],
+                            normalizedValue: actualValue,
+                            confidence: 1,
+                            sourceRef: fragmentSourceRefs.get(actualFragmentId)
+                                || `${table.sourceRef}:r${sourceRow.rowNumber}`,
+                            fragmentId: actualFragmentId,
+                            sourceHeader: table.headers[actualIndex]
+                        }
+                    };
+                    if (marker) {
+                        rowSources.penanda_kalender = {
+                            rawValue: 'Warna merah',
+                            normalizedValue: mappedRow.penanda_kalender,
+                            confidence: 0.96,
+                            sourceRef: marker.sourceRef || table.sourceRef,
+                            fragmentId: marker.fragmentId,
+                            sourceHeader: 'Tanggal yang Diberi Warna Merah'
+                        };
+                    }
+                    if (noteValue) {
+                        rowSources.catatan = {
+                            rawValue: sourceNote?.value || generatedNote,
+                            normalizedValue: noteValue,
+                            confidence: sourceNote ? 1 : 0.82,
+                            sourceRef: sourceNote?.sourceRef
+                                || fragmentSourceRefs.get(actualFragmentId)
+                                || table.sourceRef,
+                            fragmentId: sourceNote?.fragmentId || actualFragmentId,
+                            sourceHeader: sourceNote ? 'Catatan' : 'anomali planning/actual',
+                            method: sourceNote ? 'source-note' : 'derived-review-note'
+                        };
+                    }
+                    Object.values(rowSources).forEach(source => {
+                        if (source.fragmentId) usedFragmentIds.add(source.fragmentId);
+                    });
+                    rows.push(mappedRow);
+                    provenance.push({
+                        rowId,
+                        tableId: table.id,
+                        sourceRef: table.sourceRef,
+                        confidence: 0.99,
+                        fields: rowSources
+                    });
+                });
+            });
+
+        return { rows, provenance, truncated, issues };
+    }
+
     function mapRows(extraction, schema, usedFragmentIds) {
+        if (
+            schema.mappingProfile === 'cuttingBitDaily'
+            && extraction.format === 'markdown'
+        ) {
+            return mapCuttingBitRows(extraction, schema, usedFragmentIds);
+        }
         const rows = [];
         const provenance = [];
         const fragmentSourceRefs = new Map(
@@ -5569,6 +6843,96 @@
         )) ? 0.75 : 1;
     }
 
+    function cuttingBitMappingWarnings(mapping, sourceName) {
+        const warnings = [];
+        const fields = mapping.fields || {};
+        const rows = mapping.rows || [];
+        const asNumber = key => {
+            const value = Number(fields[key]);
+            return Number.isFinite(value) ? value : null;
+        };
+        const nearlyEqual = (left, right) => (
+            Math.abs(Number(left) - Number(right)) <= 0.01
+        );
+        const addMismatch = (label, sourceValue, calculatedValue) => {
+            if (
+                sourceValue == null
+                || calculatedValue == null
+                || nearlyEqual(sourceValue, calculatedValue)
+            ) return;
+            warnings.push({
+                code: 'cutting_bit_aggregate_mismatch',
+                message: `${label} pada sumber (${sourceValue}) berbeda dari hasil hitung (${calculatedValue}). Nilai sumber dipertahankan untuk review.`,
+                severity: 'warning',
+                sourceRef: sourceName
+            });
+        };
+
+        if (!String(fields.tahun ?? '').trim()) {
+            warnings.push({
+                code: 'cutting_bit_year_missing',
+                message: 'Sumber hanya menyebut nama bulan tanpa tahun. Tahun dibiarkan kosong agar sistem tidak mengarang tanggal.',
+                severity: 'warning',
+                sourceRef: sourceName
+            });
+        }
+        if (!rows.length) {
+            warnings.push({
+                code: 'cutting_bit_daily_rows_missing',
+                message: 'Tidak ada baris dari bagian "Tabulasi Harian <bulan>" yang dapat dipetakan.',
+                severity: 'warning',
+                sourceRef: sourceName
+            });
+            return warnings;
+        }
+
+        const actualWithoutPlanning = rows.filter(row => (
+            Number(row.actual) > 0 && Number(row.planning) === 0
+        ));
+        if (actualWithoutPlanning.length) {
+            warnings.push({
+                code: 'cutting_bit_actual_without_planning',
+                message: `${actualWithoutPlanning.length} actual tercatat pada tanggal tanpa planning (${actualWithoutPlanning.slice(0, 8).map(row => `${row.tanggal} ${row.bulan}`).join(', ')}${actualWithoutPlanning.length > 8 ? ', ...' : ''}). Tanggal sumber dipertahankan dan perlu review.`,
+                severity: 'warning',
+                sourceRef: sourceName
+            });
+        }
+
+        const kebutuhanHarian = asNumber('kebutuhan_harian');
+        const targetHarian = asNumber('target_harian_m');
+        const hariKerja = asNumber('hari_kerja');
+        const safetyPercent = asNumber('safety_stock_persen');
+        const targetCalculated = targetHarian != null && hariKerja != null
+            ? targetHarian * hariKerja
+            : null;
+        const kebutuhanCalculated = kebutuhanHarian != null && hariKerja != null
+            ? kebutuhanHarian * hariKerja
+            : null;
+        const safetyCalculated = kebutuhanCalculated != null && safetyPercent != null
+            ? kebutuhanCalculated * safetyPercent / 100
+            : null;
+        const totalCalculated = kebutuhanCalculated != null && safetyCalculated != null
+            ? kebutuhanCalculated + safetyCalculated
+            : null;
+        const planningTotal = rows.reduce((sum, row) => sum + Number(row.planning || 0), 0);
+
+        addMismatch('Target total meter', asNumber('target_total_m'), targetCalculated);
+        addMismatch('Kebutuhan cutting bit dasar', asNumber('kebutuhan_dasar'), kebutuhanCalculated);
+        addMismatch('Safety stock minimum', asNumber('safety_stock_minimum'), safetyCalculated);
+        addMismatch('Total kebutuhan termasuk safety stock', asNumber('total_kebutuhan'), totalCalculated);
+        addMismatch('Total planning pada tabulasi harian', asNumber('kebutuhan_dasar'), planningTotal);
+
+        if (safetyPercent != null && (safetyPercent < 0 || safetyPercent > 100)) {
+            warnings.push({
+                code: 'cutting_bit_safety_percent_invalid',
+                message: `Safety stock ${safetyPercent}% berada di luar rentang 0-100% dan perlu review.`,
+                severity: 'warning',
+                sourceRef: sourceName
+            });
+        }
+        return warnings;
+    }
+
     function analyzeImport(extracted, schemas, options = {}) {
         if (!extracted?.source || !extracted?.extraction) {
             throw new TypeError('Hasil ekstraksi tidak valid.');
@@ -5585,6 +6949,7 @@
         ) || null;
         const usedFragmentIds = new Set();
         const conflicts = [];
+        let mappingProfileIssues = [];
         let mapping = {
             fields: {},
             fieldProvenance: {},
@@ -5597,17 +6962,31 @@
         };
 
         if (selectedSchema) {
-            const fieldResult = mapFields(
-                extracted.extraction,
-                selectedSchema,
-                usedFragmentIds,
-                conflicts
+            const usesCuttingBitMarkdownProfile = (
+                selectedSchema.mappingProfile === 'cuttingBitDaily'
+                && extracted.extraction.format === 'markdown'
             );
+            const fieldResult = usesCuttingBitMarkdownProfile
+                ? {
+                    ...mapCuttingBitFields(
+                        extracted.extraction,
+                        selectedSchema,
+                        usedFragmentIds
+                    ),
+                    candidatesTruncated: false
+                }
+                : mapFields(
+                    extracted.extraction,
+                    selectedSchema,
+                    usedFragmentIds,
+                    conflicts
+                );
             const rowResult = mapRows(
                 extracted.extraction,
                 selectedSchema,
                 usedFragmentIds
             );
+            mappingProfileIssues = rowResult.issues || [];
             mapping = {
                 fields: fieldResult.fields,
                 fieldProvenance: fieldResult.provenance,
@@ -5637,14 +7016,8 @@
         const requiredCoverage = requiredFields.length
             ? filledRequiredFields.length / requiredFields.length
             : selectedSchema ? 1 : 0;
-        const errorCount = extracted.extraction.warnings.filter(
-            warning => warning.severity === 'error'
-        ).length;
-        const warningCount = extracted.extraction.warnings.filter(
-            warning => warning.severity === 'warning'
-        ).length;
-
         const qualityWarnings = [...extracted.extraction.warnings];
+        qualityWarnings.push(...mappingProfileIssues);
         if (!selectedSchema) {
             qualityWarnings.push({
                 code: 'report_template_not_detected',
@@ -5669,6 +7042,12 @@
                     severity: 'warning',
                     sourceRef: selectedSchema.id
                 });
+            }
+            if (selectedSchema.mappingProfile === 'cuttingBitDaily') {
+                qualityWarnings.push(...cuttingBitMappingWarnings(
+                    mapping,
+                    extracted.source.fileName
+                ));
             }
         }
         if (mapping.unmappedCount) {
@@ -5704,6 +7083,9 @@
             });
         }
 
+        const qualityErrorCount = qualityWarnings.filter(
+            warning => warning.severity === 'error'
+        ).length;
         const createdAt = new Date().toISOString();
         const importId = global.crypto?.randomUUID?.()
             || `IMP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -5733,19 +7115,19 @@
                 unmappedFragments: mapping.unmappedCount,
                 requiredFields: requiredFields.length,
                 filledRequiredFields: filledRequiredFields.length,
-                errors: errorCount,
-                warningCount,
+                errors: qualityErrorCount,
+                warningCount: qualityWarnings.filter(warning => warning.severity === 'warning').length,
                 conflicts: conflicts.length,
                 reviewRequired: true,
                 canCreateDraft: Boolean(
                     selectedSchema
                     && extracted.extraction.stats.supported !== false
-                    && errorCount === 0
+                    && qualityErrorCount === 0
                 ),
                 requiresIncompleteOverride: Boolean(
                     selectedSchema
                     && extracted.extraction.stats.supported !== false
-                    && errorCount > 0
+                    && qualityErrorCount > 0
                 ),
                 canFinalizeAutomatically: false,
                 warnings: qualityWarnings
@@ -6218,8 +7600,8 @@
             <div class="import-heading">
                 <div>
                     <div class="report-eyebrow">Ingest dokumen & staging data</div>
-                    <h1>Ubah Dokumen Menjadi Draft Laporan</h1>
-                    <p>Impor Word, PDF, Excel, atau CSV. Seluruh pemrosesan berjalan di perangkat ini; hasil ekstraksi, sumber nilai, konflik, dan informasi yang belum terpetakan tetap diaudit.</p>
+                    <h1>Ubah Laporan Manual Menjadi Draft Siap Pakai</h1>
+                    <p>Impor Markdown, Word, PDF, Excel, atau CSV. Seluruh pemrosesan berjalan di perangkat ini; hasil ekstraksi, sumber nilai, konflik, dan informasi yang belum terpetakan tetap diaudit.</p>
                 </div>
                 <div class="import-local-badge">
                     <i class="fa-solid fa-shield-halved"></i>
@@ -6230,7 +7612,7 @@
                 <div class="import-drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                 <div>
                     <h2>Jatuhkan file atau folder di sini</h2>
-                    <p>DOCX/DOC, PDF, XLSX/XLS, CSV/TSV, serta gambar JPG/PNG untuk OCR. File RAR akan dicatat sebagai arsip yang perlu diekstrak.</p>
+                    <p>MD/Markdown, DOCX/DOC, PDF, XLSX/XLS, CSV/TSV, serta gambar JPG/PNG untuk OCR. File RAR akan dicatat sebagai arsip yang perlu diekstrak.</p>
                     <div class="import-drop-actions">
                         <button type="button" class="import-primary-button" id="chooseImportFiles">
                             <i class="fa-solid fa-file-circle-plus"></i> Pilih File
@@ -6241,7 +7623,7 @@
                     </div>
                 </div>
                 <input id="documentFileInput" type="file" multiple hidden
-                    accept=".doc,.docx,.pdf,.xls,.xlsx,.xlsm,.csv,.tsv,.jpg,.jpeg,.png,.webp,.rar">
+                    accept=".md,.markdown,.doc,.docx,.pdf,.xls,.xlsx,.xlsm,.csv,.tsv,.jpg,.jpeg,.png,.webp,.rar">
                 <input id="documentFolderInput" type="file" multiple webkitdirectory directory hidden>
             </section>
             <div class="import-options-bar">
