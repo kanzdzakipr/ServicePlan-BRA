@@ -2700,6 +2700,870 @@
 })();
 
 // ============================================================================
+// SPARE PART & LOGISTICS — per-unit catalog, SPB workflow, and module linkage
+// Sources: Form P-1 SPB, Report Parts Weekly, and Procurement Progress Tracker.
+// ============================================================================
+(function () {
+    'use strict';
+
+    const STORAGE_KEY = 'fleetmonitor-spare-logistics-v2';
+    const PAGE_SIZE = 8;
+    const PROCUREMENT_STATUSES = [
+        'Menunggu Approval',
+        'Disetujui',
+        'Dipesan',
+        'Dalam Pengiriman',
+        'Tiba',
+        'Diserahkan',
+        'Tertunda'
+    ];
+    const READY_STATUSES = new Set(['Tiba', 'Diserahkan']);
+    const PART_RULES = [
+        { pattern: /aki|accu|baterai/i, partNumber: 'BAT-95D31L', description: 'Aki heavy duty 12 V / battery set', qty: 1, uom: 'pcs' },
+        { pattern: /radiator|coolant|over heat/i, partNumber: 'RAD-COOLING-KIT', description: 'Radiator / cooling system repair kit', qty: 1, uom: 'set' },
+        { pattern: /ban|tire|roda/i, partNumber: 'TIRE-1100R20', description: 'Ban heavy duty 11.00 R20 dan kelengkapan roda', qty: 1, uom: 'pcs' },
+        { pattern: /seal|rembes|bocor|packing|paking/i, partNumber: 'SEAL-KIT-HYD', description: 'Seal dan packing kit sesuai komponen', qty: 1, uom: 'set' },
+        { pattern: /injector|injektor|nozel|nozzle/i, partNumber: 'INJ-DIESEL-HD', description: 'Injector / nozzle diesel heavy duty', qty: 1, uom: 'pcs' },
+        { pattern: /solenoid/i, partNumber: 'SOL-24V-HD', description: 'Solenoid heavy duty 24 V', qty: 1, uom: 'pcs' },
+        { pattern: /filter|service berkala/i, partNumber: 'FILTER-SERVICE-KIT', description: 'Filter kit service berkala', qty: 1, uom: 'set' },
+        { pattern: /alarm|lampu|electrical|elektrik/i, partNumber: 'ELEC-SAFETY-KIT', description: 'Electrical dan safety indicator kit', qty: 1, uom: 'set' },
+        { pattern: /baut|bolt|clamp/i, partNumber: 'FASTENER-HD-KIT', description: 'Fastener, bolt, dan clamp heavy duty', qty: 1, uom: 'set' },
+        { pattern: /welding|las|chasis|retak|fabrikasi/i, partNumber: 'WELD-MRO-KIT', description: 'Material welding dan consumable MRO', qty: 1, uom: 'set' }
+    ];
+    const DOMAIN_PARTS = {
+        Ban: { partNumber: 'TIRE-1100R20', description: 'Ban sesuai posisi dan hasil inspeksi', qty: 1, uom: 'pcs' },
+        Grease: { partNumber: 'GRS-LITHIUM-EP2', description: 'Grease Lithium EP-2', qty: 4, uom: 'kg' },
+        'Cutting Bit': { partNumber: 'CBIT-RM500', description: 'Cutting Bit CAT RM500 / setara', qty: 30, uom: 'pcs' },
+        Aki: { partNumber: 'BAT-95D31L', description: 'Aki heavy duty sesuai spesifikasi unit', qty: 1, uom: 'pcs' }
+    };
+
+    const state = {
+        query: '',
+        category: 'ALL',
+        assetStatus: 'ALL',
+        withPage: 1,
+        withoutPage: 1,
+        modal: null
+    };
+    let records = [];
+    let initialized = false;
+    let root = null;
+    let searchTimer = null;
+    let toastTimer = null;
+
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function allAssets() {
+        return Array.isArray(window.globalData?.assets) ? window.globalData.assets : [];
+    }
+
+    function allWorkOrders() {
+        return Array.isArray(window.globalData?.work_orders) ? window.globalData.work_orders : [];
+    }
+
+    function uniqueAssets() {
+        const registry = new Map();
+        allAssets().forEach(asset => {
+            if (asset?.id && !registry.has(asset.id)) registry.set(asset.id, asset);
+        });
+        return Array.from(registry.values());
+    }
+
+    function assetById(assetId) {
+        return allAssets().find(asset => asset.id === assetId) || null;
+    }
+
+    function activeWorkOrders(assetId) {
+        return allWorkOrders().filter(wo => wo.assetId === assetId && String(wo.status).toLowerCase() !== 'closed');
+    }
+
+    function workOrderById(woId) {
+        return allWorkOrders().find(wo => wo.woId === woId) || null;
+    }
+
+    function shortCode(assetId) {
+        const value = String(assetId || '');
+        const beforePlate = value.split(/\s+-\s+/)[0];
+        const match = beforePlate.match(/^([A-Z]{1,6}-?\d{2,})/i);
+        return match ? match[1] : beforePlate || value;
+    }
+
+    function stableNumber(value) {
+        return Array.from(String(value || '')).reduce((hash, char) => ((hash * 31) + char.charCodeAt(0)) >>> 0, 17);
+    }
+
+    function statusClass(status) {
+        if (status === 'Tertunda') return 'danger';
+        if (READY_STATUSES.has(status)) return 'success';
+        if (status === 'Dalam Pengiriman' || status === 'Dipesan') return 'info';
+        return 'warning';
+    }
+
+    function quantityAvailable(status, requested) {
+        if (READY_STATUSES.has(status)) return requested;
+        if (status === 'Dalam Pengiriman') return Math.max(0, Math.floor(requested / 2));
+        return 0;
+    }
+
+    function inferredParts(issue) {
+        const matched = PART_RULES
+            .filter(rule => rule.pattern.test(String(issue || '')))
+            .map(rule => ({ ...rule }));
+        if (!matched.length) {
+            matched.push({
+                partNumber: 'MRO-GENERAL-KIT',
+                description: 'Material dan consumable sesuai diagnosis Work Order',
+                qty: 1,
+                uom: 'set'
+            });
+        }
+        return matched
+            .filter((item, index, list) => list.findIndex(candidate => candidate.partNumber === item.partNumber) === index)
+            .slice(0, 3);
+    }
+
+    function makeEta(seed) {
+        const date = new Date(2026, 6, 30 + (seed % 13));
+        return date.toISOString().slice(0, 10);
+    }
+
+    function seedWorkOrderRecords() {
+        let changed = false;
+        allWorkOrders()
+            .filter(wo => String(wo.status).toLowerCase() !== 'closed' && assetById(wo.assetId))
+            .forEach(wo => {
+                const parts = inferredParts(wo.issue || wo.description);
+                parts.forEach((part, lineIndex) => {
+                    const exists = records.some(record =>
+                        record.woId === wo.woId && record.partNumber === part.partNumber
+                    );
+                    if (exists) return;
+                    const seed = stableNumber(`${wo.woId}-${part.partNumber}`);
+                    const seededStatuses = ['Menunggu Approval', 'Dipesan', 'Dalam Pengiriman', 'Tiba', 'Tertunda'];
+                    const status = seededStatuses[seed % seededStatuses.length];
+                    const requested = Math.max(1, Number(part.qty) || 1);
+                    records.push({
+                        id: `SL-${wo.woId}-${lineIndex + 1}`,
+                        spbId: `SPB-${String(wo.woId).replace(/^WO-/, '')}`,
+                        assetId: wo.assetId,
+                        woId: wo.woId,
+                        partNumber: part.partNumber,
+                        description: part.description,
+                        qtyRequested: requested,
+                        qtyAvailable: quantityAvailable(status, requested),
+                        uom: part.uom,
+                        status,
+                        eta: READY_STATUSES.has(status) ? '2026-07-28' : makeEta(seed),
+                        priority: wo.priority === 'High' ? 'Critical' : 'Normal',
+                        rtwImpact: wo.priority === 'High' || assetById(wo.assetId)?.status === 'BREAKDOWN',
+                        source: 'Work Order',
+                        updatedAt: `2026-07-${String(20 + (seed % 10)).padStart(2, '0')}T08:00:00`
+                    });
+                    changed = true;
+                });
+            });
+        if (changed) persist();
+    }
+
+    function loadState() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+            records = Array.isArray(saved?.records) ? saved.records : [];
+        } catch (error) {
+            records = [];
+        }
+        seedWorkOrderRecords();
+    }
+
+    function persist() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, records }));
+        } catch (error) {
+            // The module remains usable in-memory when local storage is unavailable.
+        }
+    }
+
+    function ensureInitialized() {
+        if (initialized || !allAssets().length) return initialized;
+        loadState();
+        initialized = true;
+        return true;
+    }
+
+    function recordsForAsset(assetId) {
+        return records.filter(record => record.assetId === assetId);
+    }
+
+    function summaryForAsset(assetId) {
+        const items = recordsForAsset(assetId);
+        const requested = items.reduce((total, item) => total + (Number(item.qtyRequested) || 0), 0);
+        const available = items.reduce((total, item) => total + Math.min(Number(item.qtyAvailable) || 0, Number(item.qtyRequested) || 0), 0);
+        const delayed = items.filter(item => item.status === 'Tertunda').length;
+        const ready = items.filter(item => READY_STATUSES.has(item.status)).length;
+        const progress = items.filter(item => ['Dipesan', 'Dalam Pengiriman'].includes(item.status)).length;
+        const latest = items
+            .map(item => item.updatedAt)
+            .filter(Boolean)
+            .sort()
+            .at(-1) || '';
+        return {
+            items,
+            itemCount: items.length,
+            requested,
+            available,
+            delayed,
+            ready,
+            progress,
+            latest,
+            rtwImpact: items.some(item => item.rtwImpact),
+            overall: delayed ? 'danger' : items.length && ready === items.length ? 'success' : progress ? 'info' : 'warning'
+        };
+    }
+
+    function filteredAssets(hasParts) {
+        const query = state.query.trim().toLowerCase();
+        return uniqueAssets()
+            .filter(asset => (recordsForAsset(asset.id).length > 0) === hasParts)
+            .filter(asset => {
+                const haystack = `${asset.id} ${shortCode(asset.id)} ${asset.category || ''} ${asset.location || ''}`.toLowerCase();
+                return (!query || haystack.includes(query))
+                    && (state.category === 'ALL' || asset.category === state.category)
+                    && (state.assetStatus === 'ALL' || asset.status === state.assetStatus);
+            })
+            .sort((a, b) => {
+                if (hasParts) {
+                    const rank = { danger: 0, warning: 1, info: 2, success: 3 };
+                    const delta = rank[summaryForAsset(a.id).overall] - rank[summaryForAsset(b.id).overall];
+                    if (delta) return delta;
+                }
+                return shortCode(a.id).localeCompare(shortCode(b.id), 'id', { numeric: true });
+            });
+    }
+
+    function formatDate(value) {
+        if (!value) return 'Belum diperbarui';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return new Intl.DateTimeFormat('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        }).format(date);
+    }
+
+    function assetIcon(asset) {
+        return String(asset.category || '').toLowerCase().includes('dump')
+            ? 'fa-truck-moving'
+            : String(asset.category || '').toLowerCase().includes('excavator')
+                ? 'fa-person-digging'
+                : 'fa-tractor';
+    }
+
+    function workflowCell(asset) {
+        const woCount = activeWorkOrders(asset.id).length;
+        const p2hCount = (window.globalData?.inspections || []).filter(item => item.unitId === asset.id).length;
+        return `
+            <div class="sl-linkage-cell">
+                <span title="Work Order aktif"><i class="fa-solid fa-wrench"></i>${woCount} WO</span>
+                <span title="Riwayat inspeksi"><i class="fa-solid fa-clipboard-check"></i>${p2hCount} P2H</span>
+            </div>`;
+    }
+
+    function renderAssetRow(asset, hasParts) {
+        const summary = summaryForAsset(asset.id);
+        const workOrders = activeWorkOrders(asset.id);
+        const primaryWo = workOrders[0];
+        const fulfilment = summary.requested ? Math.round((summary.available / summary.requested) * 100) : 0;
+        return `
+            <tr>
+                <td>
+                    <div class="sl-unit-cell">
+                        <span class="sl-unit-icon ${hasParts ? summary.overall : 'muted'}"><i class="fa-solid ${assetIcon(asset)}"></i></span>
+                        <div><strong>${escapeHtml(shortCode(asset.id))}</strong><small title="${escapeHtml(asset.id)}">${escapeHtml(asset.category || 'Alat Berat')}</small></div>
+                    </div>
+                </td>
+                <td>
+                    <div class="sl-location-cell">
+                        <span title="${escapeHtml(asset.location || '')}">${escapeHtml(asset.location || 'Lokasi belum ditetapkan')}</span>
+                        <small class="sl-asset-status ${escapeHtml(String(asset.status || 'READY').toLowerCase())}">${escapeHtml(asset.status || 'READY')}</small>
+                    </div>
+                </td>
+                <td>${primaryWo
+                    ? `<strong class="sl-wo-code">${escapeHtml(primaryWo.woId)}</strong><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(primaryWo.priority || 'Normal')}</small>`
+                    : '<span class="sl-empty-value">Tidak ada WO aktif</span>'}</td>
+                <td>
+                    <div class="sl-item-counter ${hasParts ? summary.overall : 'muted'}">
+                        <strong>${summary.itemCount}</strong>
+                        <span>item<small>${summary.requested} total qty</small></span>
+                    </div>
+                </td>
+                <td>${hasParts ? `
+                    <div class="sl-fulfilment">
+                        <div><strong>${summary.available}/${summary.requested}</strong><span>${fulfilment}% tersedia</span></div>
+                        <span class="sl-progress"><i style="width:${Math.min(fulfilment, 100)}%"></i></span>
+                    </div>` : '<span class="sl-empty-value">Belum ada kebutuhan</span>'}</td>
+                <td>${hasParts
+                    ? `<span class="sl-procurement-badge ${summary.overall}">${summary.delayed ? `${summary.delayed} tertunda` : summary.ready === summary.itemCount ? 'Siap / diserahkan' : summary.progress ? 'Dalam pengadaan' : 'Menunggu proses'}</span><small>${formatDate(summary.latest)}</small>`
+                    : '<span class="sl-procurement-badge muted">Belum ditabulasi</span>'}</td>
+                <td>${workflowCell(asset)}</td>
+                <td><button class="sl-access-button" type="button" data-sl-action="open" data-asset-id="${escapeHtml(asset.id)}"><i class="fa-solid fa-arrow-up-right-from-square"></i>Akses</button></td>
+            </tr>`;
+    }
+
+    function renderPager(kind, page, totalPages, filteredCount, start, pageRows) {
+        return `
+            <div class="sl-table-footer">
+                <span>Menampilkan ${pageRows.length ? start + 1 : 0}–${Math.min(start + PAGE_SIZE, filteredCount)} dari ${filteredCount} unit</span>
+                <div>
+                    <button type="button" data-sl-action="page" data-kind="${kind}" data-delta="-1" ${page <= 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>
+                    <strong>Halaman ${page} / ${totalPages}</strong>
+                    <button type="button" data-sl-action="page" data-kind="${kind}" data-delta="1" ${page >= totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>`;
+    }
+
+    function renderAssetSection(hasParts) {
+        const kind = hasParts ? 'with' : 'without';
+        const filtered = filteredAssets(hasParts);
+        const pageKey = hasParts ? 'withPage' : 'withoutPage';
+        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+        state[pageKey] = Math.min(Math.max(1, state[pageKey]), totalPages);
+        const page = state[pageKey];
+        const start = (page - 1) * PAGE_SIZE;
+        const pageRows = filtered.slice(start, start + PAGE_SIZE);
+        return `
+            <section class="sl-table-panel ${hasParts ? 'has-parts' : 'no-parts'}">
+                <header class="sl-table-heading">
+                    <div>
+                        <span class="sl-eyebrow">${hasParts ? 'PRIORITAS PENGADAAN & KITTING' : 'REGISTRY BELUM BERTAUT PART'}</span>
+                        <h2>${hasParts ? 'Unit yang Sudah Memiliki Spare Part' : 'Unit yang Belum Memiliki Spare Part'}</h2>
+                        <p>${hasParts
+                            ? 'Counter menunjukkan baris item dan total kuantitas aktif per unit.'
+                            : 'Akses unit untuk menambahkan kebutuhan baru atau menautkannya ke Work Order.'}</p>
+                    </div>
+                    <span class="sl-section-count ${hasParts ? 'primary' : 'neutral'}"><strong>${filtered.length}</strong> unit</span>
+                </header>
+                <div class="table-responsive sl-table-wrap">
+                    <table class="sl-unit-table">
+                        <thead><tr><th>Unit / Tipe</th><th>Lokasi & Status</th><th>Referensi WO</th><th>Counter Part</th><th>Pemenuhan</th><th>Status Pengadaan</th><th>Linkage</th><th>Akses</th></tr></thead>
+                        <tbody>${pageRows.length
+                            ? pageRows.map(asset => renderAssetRow(asset, hasParts)).join('')
+                            : `<tr><td colspan="8" class="sl-empty-row">Tidak ada unit yang sesuai dengan filter saat ini.</td></tr>`}</tbody>
+                    </table>
+                </div>
+                ${renderPager(kind, page, totalPages, filtered.length, start, pageRows)}
+            </section>`;
+    }
+
+    function renderKpis() {
+        const assets = uniqueAssets();
+        const withParts = assets.filter(asset => recordsForAsset(asset.id).length).length;
+        const readyLines = records.filter(record => READY_STATUSES.has(record.status)).length;
+        const delayedLines = records.filter(record => record.status === 'Tertunda').length;
+        const rtwUnits = new Set(records.filter(record => record.rtwImpact && !READY_STATUSES.has(record.status)).map(record => record.assetId)).size;
+        return `
+            <section class="sl-kpi-grid">
+                <article class="sl-kpi-card primary"><div><span>Unit Dengan Part</span><strong>${withParts}</strong><small>dari ${assets.length} unit tertabulasi</small></div><i class="fa-solid fa-boxes-stacked"></i></article>
+                <article class="sl-kpi-card info"><div><span>Total Item Terpantau</span><strong>${records.length}</strong><small>baris kebutuhan / pengadaan</small></div><i class="fa-solid fa-list-ol"></i></article>
+                <article class="sl-kpi-card success"><div><span>Part Siap</span><strong>${readyLines}</strong><small>tiba atau telah diserahkan</small></div><i class="fa-solid fa-circle-check"></i></article>
+                <article class="sl-kpi-card danger"><div><span>RTW Terdampak</span><strong>${rtwUnits}</strong><small>${delayedLines} item berstatus tertunda</small></div><i class="fa-solid fa-triangle-exclamation"></i></article>
+            </section>`;
+    }
+
+    function renderToolbar() {
+        const categories = [...new Set(uniqueAssets().map(asset => asset.category).filter(Boolean))].sort();
+        return `
+            <section class="sl-catalog-panel">
+                <div class="sl-catalog-heading">
+                    <div>
+                        <span class="sl-eyebrow">KATALOG UNIT & KEBUTUHAN PART</span>
+                        <h2>Akses Spare Part per Alat Berat</h2>
+                        <p>Pencarian berlaku pada kedua tabulasi. Klik Akses untuk melihat daftar item dan membuat SPB.</p>
+                    </div>
+                    <div class="sl-source-note"><i class="fa-solid fa-file-shield"></i><span><strong>Acuan BRA</strong>Form P-1 · Parts Weekly · Monitoring Pengadaan</span></div>
+                </div>
+                <div class="sl-toolbar">
+                    <label class="sl-search"><i class="fa-solid fa-magnifying-glass"></i><input id="slUnitSearch" type="search" value="${escapeHtml(state.query)}" placeholder="Cari kode lambung, kategori, atau lokasi…" data-sl-filter="query"></label>
+                    <select class="form-control" data-sl-filter="category" aria-label="Filter kategori unit">
+                        <option value="ALL">Semua kategori</option>
+                        ${categories.map(category => `<option value="${escapeHtml(category)}" ${state.category === category ? 'selected' : ''}>${escapeHtml(category)}</option>`).join('')}
+                    </select>
+                    <select class="form-control" data-sl-filter="assetStatus" aria-label="Filter status aset">
+                        ${['ALL', 'READY', 'STANDBY', 'INSPEKSI', 'BREAKDOWN', 'ACCIDENT_HOLD'].map(status => `<option value="${status}" ${state.assetStatus === status ? 'selected' : ''}>${status === 'ALL' ? 'Semua status aset' : status}</option>`).join('')}
+                    </select>
+                    <button type="button" class="sl-reset-button" data-sl-action="reset"><i class="fa-solid fa-rotate-left"></i>Reset</button>
+                </div>
+            </section>`;
+    }
+
+    function renderExistingItems(assetId) {
+        const items = recordsForAsset(assetId);
+        if (!items.length) {
+            return `<div class="sl-modal-empty"><i class="fa-solid fa-box-open"></i><strong>Belum ada item spare part</strong><span>Tambahkan baris pada Draft SPB di bawah untuk mulai menautkan kebutuhan unit ini.</span></div>`;
+        }
+        return `
+            <div class="table-responsive sl-parts-table-wrap">
+                <table class="sl-parts-table">
+                    <thead><tr><th>Part / Deskripsi</th><th>SPB / WO</th><th>Kebutuhan</th><th>Tersedia</th><th>Status & ETA</th><th>Dampak</th></tr></thead>
+                    <tbody>${items.map(item => `
+                        <tr>
+                            <td><strong>${escapeHtml(item.partNumber)}</strong><small>${escapeHtml(item.description)}</small></td>
+                            <td><strong>${escapeHtml(item.spbId || 'Draft')}</strong>${item.woId ? `<button type="button" class="sl-inline-link" data-sl-action="record-wo" data-wo-id="${escapeHtml(item.woId)}">${escapeHtml(item.woId)}</button>` : '<small>Belum terkait WO</small>'}</td>
+                            <td><strong>${Number(item.qtyRequested) || 0}</strong> ${escapeHtml(item.uom || 'pcs')}</td>
+                            <td><strong>${Number(item.qtyAvailable) || 0}</strong> ${escapeHtml(item.uom || 'pcs')}</td>
+                            <td>
+                                <select class="sl-status-select ${statusClass(item.status)}" data-sl-record-status="${escapeHtml(item.id)}">
+                                    ${PROCUREMENT_STATUSES.map(status => `<option ${item.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+                                </select>
+                                <small>ETA ${escapeHtml(formatDate(item.eta))}</small>
+                            </td>
+                            <td><span class="sl-rtw-chip ${item.rtwImpact ? 'danger' : 'neutral'}">${item.rtwImpact ? 'RTW terdampak' : 'Tidak berdampak'}</span><small>${escapeHtml(item.source || 'SPB')}</small></td>
+                        </tr>`).join('')}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function renderDraftRows() {
+        if (!state.modal?.draft.length) {
+            return `<tr><td colspan="5" class="sl-draft-empty">Belum ada draft item. Gunakan tombol Tambah Item.</td></tr>`;
+        }
+        return state.modal.draft.map((item, index) => `
+            <tr data-sl-draft-row="${index}">
+                <td><input type="text" value="${escapeHtml(item.partNumber || '')}" placeholder="Part number" data-sl-draft-field="partNumber" data-index="${index}"></td>
+                <td><input type="text" value="${escapeHtml(item.description || '')}" placeholder="Nama / spesifikasi part" data-sl-draft-field="description" data-index="${index}"></td>
+                <td><input type="number" min="1" value="${Number(item.qty) || 1}" data-sl-draft-field="qty" data-index="${index}"></td>
+                <td><input type="text" value="${escapeHtml(item.uom || 'pcs')}" placeholder="pcs" data-sl-draft-field="uom" data-index="${index}"></td>
+                <td><button type="button" class="sl-remove-draft" data-sl-action="remove-draft" data-index="${index}" title="Hapus draft item"><i class="fa-solid fa-trash"></i></button></td>
+            </tr>`).join('');
+    }
+
+    function renderModal() {
+        if (!state.modal) return '';
+        const asset = assetById(state.modal.assetId);
+        if (!asset) return '';
+        const summary = summaryForAsset(asset.id);
+        const workOrders = activeWorkOrders(asset.id);
+        const selectedWo = state.modal.woId || workOrders[0]?.woId || '';
+        state.modal.woId = selectedWo;
+        const availablePct = summary.requested ? Math.round(summary.available / summary.requested * 100) : 0;
+        return `
+            <div class="sl-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="slModalTitle" data-sl-action="overlay">
+                <div class="sl-modal-dialog">
+                    <header class="sl-modal-header">
+                        <div class="sl-modal-title">
+                            <span class="sl-modal-avatar"><i class="fa-solid ${assetIcon(asset)}"></i></span>
+                            <div><small>DETAIL SPARE PART & LOGISTIK</small><h2 id="slModalTitle">${escapeHtml(shortCode(asset.id))}</h2><p>${escapeHtml(asset.category || 'Alat Berat')} · ${escapeHtml(asset.location || 'Lokasi belum ditetapkan')}</p></div>
+                        </div>
+                        <div class="sl-modal-actions">
+                            <button type="button" data-sl-action="asset" title="Buka Asset 360°"><i class="fa-solid fa-truck"></i><span>Aset 360°</span></button>
+                            <button type="button" data-sl-action="p2h" title="Buka Inspeksi & P2H"><i class="fa-solid fa-clipboard-check"></i><span>P2H</span></button>
+                            <button type="button" data-sl-action="wo" title="Buka atau buat Work Order"><i class="fa-solid fa-wrench"></i><span>${workOrders[0] ? escapeHtml(workOrders[0].woId) : 'Buat WO'}</span></button>
+                            <button type="button" data-sl-action="condition" title="Buka Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span>Kondisi</span></button>
+                            <button type="button" data-sl-action="pm" title="Buka kitting Preventive Maintenance"><i class="fa-solid fa-calendar-check"></i><span>PM</span></button>
+                            <button type="button" class="sl-modal-close" data-sl-action="close" aria-label="Tutup detail">&times;</button>
+                        </div>
+                    </header>
+                    <div class="sl-modal-scroll">
+                        <section class="sl-modal-summary">
+                            <div><span>Status aset</span><strong class="sl-asset-status ${escapeHtml(String(asset.status || 'READY').toLowerCase())}">${escapeHtml(asset.status || 'READY')}</strong></div>
+                            <div><span>Item tercatat</span><strong>${summary.itemCount}<small> baris</small></strong></div>
+                            <div><span>Ketersediaan</span><strong>${summary.available}/${summary.requested}<small> qty · ${availablePct}%</small></strong></div>
+                            <div><span>Referensi aktif</span><strong>${workOrders.length}<small> WO</small></strong></div>
+                        </section>
+
+                        <section class="sl-modal-section">
+                            <div class="sl-modal-section-heading">
+                                <div><span class="sl-eyebrow">INVENTORY, RESERVASI & PENGADAAN</span><h3>Daftar Item Spare Part</h3><p>Status dapat diperbarui langsung dan counter unit akan dihitung ulang.</p></div>
+                                <span class="sl-section-count primary"><strong>${summary.itemCount}</strong> item</span>
+                            </div>
+                            ${renderExistingItems(asset.id)}
+                        </section>
+
+                        <section class="sl-modal-section sl-spb-builder">
+                            <div class="sl-modal-section-heading">
+                                <div><span class="sl-eyebrow">FORM P-1 · SURAT PERMINTAAN BARANG</span><h3>Draft SPB Unit</h3><p>Setiap item baru akan masuk ke Approval dan tetap tertaut ke unit serta Work Order.</p></div>
+                                <span class="sl-form-code"><i class="fa-solid fa-file-invoice"></i> P-1</span>
+                            </div>
+                            <div class="sl-spb-context">
+                                <label><span>Work Order / JO aktif</span><select id="spb-wo-id" class="form-control" data-sl-modal-field="woId"><option value="">Belum ditautkan ke WO</option>${workOrders.map(wo => `<option value="${escapeHtml(wo.woId)}" ${selectedWo === wo.woId ? 'selected' : ''}>${escapeHtml(wo.woId)} · ${escapeHtml(wo.priority || 'Normal')}</option>`).join('')}</select></label>
+                                <label><span>Prioritas</span><select id="spb-priority" class="form-control" data-sl-modal-field="priority">${['Normal', 'Urgent', 'Critical'].map(value => `<option ${state.modal.priority === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+                                <label><span>Dampak terhadap RTW</span><select id="spb-rtw-impact" class="form-control" data-sl-modal-field="rtwImpact"><option value="false" ${!state.modal.rtwImpact ? 'selected' : ''}>Tidak</option><option value="true" ${state.modal.rtwImpact ? 'selected' : ''}>Ya</option></select></label>
+                            </div>
+                            <div class="table-responsive sl-draft-table-wrap">
+                                <table id="spb-item-table" class="sl-draft-table">
+                                    <thead><tr><th>Part Number</th><th>Deskripsi / Spesifikasi</th><th>Qty</th><th>Satuan</th><th>Aksi</th></tr></thead>
+                                    <tbody id="spb-items">${renderDraftRows()}</tbody>
+                                </table>
+                            </div>
+                            <div class="sl-draft-actions">
+                                <button type="button" class="sl-add-item-button" data-sl-action="add-draft"><i class="fa-solid fa-plus"></i>Tambah Item</button>
+                                <label><span>Catatan permintaan</span><input id="spb-notes" type="text" value="${escapeHtml(state.modal.notes || '')}" placeholder="Keterangan, spesifikasi alternatif, atau kendala…" data-sl-modal-field="notes"></label>
+                                <button type="button" class="sl-submit-button" data-sl-action="submit"><i class="fa-solid fa-paper-plane"></i>Ajukan SPB</button>
+                            </div>
+                            <div class="sl-governance-note"><i class="fa-solid fa-link"></i><span><strong>Linkage aktif:</strong> Master Asset → P2H / Condition Monitoring → Work Order → SPB → Approval → pengadaan → kesiapan RTW.</span></div>
+                        </section>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    function render() {
+        root = document.getElementById('spareLogisticsApp');
+        if (!root) return;
+        if (!ensureInitialized()) {
+            root.innerHTML = `<div class="sl-loading"><i class="fa-solid fa-database"></i><strong>Menyiapkan registry aset dan Work Order…</strong><span>Menunggu data.json selesai dimuat.</span></div>`;
+            return;
+        }
+        root.innerHTML = `
+            <div class="sl-shell">
+                <header class="sl-page-header">
+                    <div><span class="sl-eyebrow">WAREHOUSE · PROCUREMENT · MAINTENANCE</span><h1>Spare Part & Logistik</h1><p>Tabulasi kebutuhan per unit, ketersediaan, SPB, pengadaan, dan dampaknya terhadap kesiapan alat.</p></div>
+                    <div class="sl-header-flow"><span><b>1</b>Temuan</span><i class="fa-solid fa-chevron-right"></i><span><b>2</b>WO / SPB</span><i class="fa-solid fa-chevron-right"></i><span><b>3</b>Approval</span><i class="fa-solid fa-chevron-right"></i><span><b>4</b>Part siap</span></div>
+                </header>
+                ${renderKpis()}
+                ${renderToolbar()}
+                ${renderAssetSection(true)}
+                ${renderAssetSection(false)}
+                ${renderModal()}
+                <div class="sl-toast" id="slToast" role="status"><i class="fa-solid fa-circle-check"></i><span></span></div>
+            </div>`;
+        document.body.classList.toggle('sl-modal-open', Boolean(state.modal));
+    }
+
+    function notify(message, error = false) {
+        const toast = document.getElementById('slToast');
+        if (!toast) return;
+        toast.classList.toggle('error', error);
+        toast.querySelector('i').className = error ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check';
+        toast.querySelector('span').textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
+    function draftFromDomain(domain) {
+        return { ...(DOMAIN_PARTS[domain] || {
+            partNumber: 'MRO-CONSUMABLE',
+            description: `Consumable tindak lanjut ${domain || 'maintenance'}`,
+            qty: 1,
+            uom: 'pcs'
+        }) };
+    }
+
+    function addDraftItem(prefill = {}) {
+        if (!state.modal) return null;
+        const normalized = {
+            partNumber: prefill.partNumber || prefill[0] || '',
+            description: prefill.description || prefill[1] || '',
+            qty: Number(prefill.qty || prefill[2]) || 1,
+            uom: prefill.uom || prefill[3] || 'pcs'
+        };
+        const exists = normalized.partNumber && state.modal.draft.some(item => item.partNumber === normalized.partNumber);
+        if (!exists) state.modal.draft.push(normalized);
+        render();
+        return document.querySelector('#spb-items tr:last-child');
+    }
+
+    function openForAsset(assetId, woId = '', recommendedItem = null) {
+        const asset = assetById(assetId);
+        if (!asset) return;
+        const selectedWo = workOrderById(woId)?.assetId === assetId ? woId : activeWorkOrders(assetId)[0]?.woId || '';
+        state.modal = {
+            assetId,
+            woId: selectedWo,
+            priority: workOrderById(selectedWo)?.priority === 'High' ? 'Critical' : 'Normal',
+            rtwImpact: asset.status === 'BREAKDOWN',
+            notes: '',
+            draft: recommendedItem ? [{ ...recommendedItem }] : []
+        };
+        render();
+    }
+
+    function openForWorkOrder(woId, assetId) {
+        const wo = workOrderById(woId);
+        const resolvedAssetId = assetId || wo?.assetId;
+        if (!resolvedAssetId) return;
+        let recommended = null;
+        try {
+            const context = JSON.parse(sessionStorage.getItem('fleetmonitor-spb-condition-context') || 'null');
+            if (context?.assetId === resolvedAssetId && (!context.woId || context.woId === woId)) {
+                recommended = draftFromDomain(context.recommendation?.domain);
+                sessionStorage.removeItem('fleetmonitor-spb-condition-context');
+            }
+        } catch (error) {
+            recommended = null;
+        }
+        openForAsset(resolvedAssetId, woId, recommended);
+    }
+
+    function closeDetail() {
+        state.modal = null;
+        document.body.classList.remove('sl-modal-open');
+        render();
+    }
+
+    function syncDraftFromDom() {
+        const rows = Array.from(document.querySelectorAll('#spb-items tr[data-sl-draft-row]'));
+        state.modal.draft = rows.map(row => {
+            const inputs = row.querySelectorAll('input');
+            return {
+                partNumber: inputs[0]?.value.trim() || '',
+                description: inputs[1]?.value.trim() || '',
+                qty: Math.max(1, Number(inputs[2]?.value) || 1),
+                uom: inputs[3]?.value.trim() || 'pcs'
+            };
+        });
+    }
+
+    function addApprovalRow(request) {
+        const tbody = document.getElementById('approval-list');
+        if (!tbody || tbody.querySelector(`[data-sl-approval="${request.spbId}"]`)) return;
+        const row = document.createElement('tr');
+        row.dataset.slApproval = request.spbId;
+        row.innerHTML = `
+            <td>${escapeHtml(request.spbId)}</td>
+            <td>SPB Spare Part · ${escapeHtml(shortCode(request.assetId))}</td>
+            <td>Maintenance / Logistik</td>
+            <td>${request.lines.length} item · ${escapeHtml(request.woId || 'Belum terkait WO')}</td>
+            <td>
+                <button class="btn btn-success" style="padding:5px 10px;" onclick="approveDoc(this)"><i class="fa-solid fa-check"></i></button>
+                <button class="btn btn-danger" style="padding:5px 10px;" onclick="rejectDoc(this, '${escapeHtml(request.spbId)}')"><i class="fa-solid fa-xmark"></i></button>
+            </td>`;
+        tbody.prepend(row);
+    }
+
+    function submitDraft() {
+        if (!state.modal) return;
+        syncDraftFromDom();
+        const validLines = state.modal.draft.filter(item => item.partNumber && item.description && Number(item.qty) > 0);
+        if (!validLines.length) {
+            notify('Minimal satu item dengan part number, deskripsi, dan qty wajib diisi.', true);
+            return;
+        }
+        const now = new Date();
+        const dateCode = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const serial = String(new Set(records.map(item => item.spbId).filter(Boolean)).size + 101).padStart(3, '0');
+        const spbId = `SPB-${dateCode}-${serial}`;
+        const woId = state.modal.woId || '';
+        validLines.forEach((item, index) => {
+            records.push({
+                id: `SL-${dateCode}-${Date.now()}-${index}`,
+                spbId,
+                assetId: state.modal.assetId,
+                woId,
+                partNumber: item.partNumber,
+                description: item.description,
+                qtyRequested: Number(item.qty),
+                qtyAvailable: 0,
+                uom: item.uom,
+                status: 'Menunggu Approval',
+                eta: '',
+                priority: state.modal.priority,
+                rtwImpact: Boolean(state.modal.rtwImpact),
+                source: 'SPB Manual',
+                notes: state.modal.notes,
+                updatedAt: now.toISOString()
+            });
+        });
+        const request = {
+            spbId,
+            assetId: state.modal.assetId,
+            woId,
+            priority: state.modal.priority,
+            rtwImpact: Boolean(state.modal.rtwImpact),
+            notes: state.modal.notes,
+            createdAt: now.toISOString(),
+            status: 'Menunggu Approval',
+            lines: validLines
+        };
+        if (window.globalData) {
+            window.globalData.spare_part_requests = Array.isArray(window.globalData.spare_part_requests)
+                ? window.globalData.spare_part_requests
+                : [];
+            window.globalData.spare_part_requests.unshift(request);
+        }
+        persist();
+        state.modal.draft = [];
+        render();
+        addApprovalRow(request);
+        notify(`${spbId} dibuat, counter unit diperbarui, dan dokumen masuk ke Approval.`);
+    }
+
+    function updateRecordStatus(recordId, status) {
+        const record = records.find(item => item.id === recordId);
+        if (!record || !PROCUREMENT_STATUSES.includes(status)) return;
+        record.status = status;
+        record.qtyAvailable = quantityAvailable(status, Number(record.qtyRequested) || 0);
+        record.updatedAt = new Date().toISOString();
+        persist();
+        render();
+        notify(`${record.partNumber} diperbarui menjadi ${status}.`);
+    }
+
+    function openRecordWorkOrder(woId) {
+        const wo = workOrderById(woId);
+        if (!wo) {
+            notify('Work Order terkait tidak ditemukan.', true);
+            return;
+        }
+        closeDetail();
+        window.openWoDetailView?.(wo.woId, wo.assetId, wo.issue || wo.description || '');
+    }
+
+    function navigate(action) {
+        const asset = state.modal ? assetById(state.modal.assetId) : null;
+        if (!asset) return;
+        const assetId = asset.id;
+        closeDetail();
+        if (action === 'asset') {
+            window.openAssetModal?.(asset.id, asset.status, asset.category, asset.location);
+        } else if (action === 'p2h') {
+            window.openIntegratedP2H?.(assetId, 'history');
+        } else if (action === 'wo') {
+            window.openIntegratedWO?.(assetId);
+        } else if (action === 'condition') {
+            window.ConditionMonitoring?.openForAsset(assetId);
+        } else if (action === 'pm') {
+            try {
+                sessionStorage.setItem('fleetmonitor-pm-condition-context', JSON.stringify({
+                    assetId,
+                    source: 'Spare Part & Logistik',
+                    finding: { domain: 'Kitting Spare Part', text: `Validasi kesiapan part untuk ${shortCode(assetId)}` }
+                }));
+            } catch (error) {
+                // Navigation still works without session storage.
+            }
+            window.showView?.('pm', '', 'menu-pm');
+            setTimeout(() => document.querySelector('[data-pm-tab="kitting"]')?.click(), 80);
+        }
+    }
+
+    function handleClick(event) {
+        const control = event.target.closest('[data-sl-action]');
+        if (!control) return;
+        const action = control.dataset.slAction;
+        if (action === 'overlay' && event.target !== control) return;
+        if (action === 'open') {
+            openForAsset(control.dataset.assetId);
+        } else if (action === 'close' || action === 'overlay') {
+            closeDetail();
+        } else if (action === 'reset') {
+            state.query = '';
+            state.category = 'ALL';
+            state.assetStatus = 'ALL';
+            state.withPage = 1;
+            state.withoutPage = 1;
+            render();
+        } else if (action === 'page') {
+            const key = control.dataset.kind === 'with' ? 'withPage' : 'withoutPage';
+            state[key] += Number(control.dataset.delta) || 0;
+            render();
+        } else if (action === 'add-draft') {
+            addDraftItem();
+        } else if (action === 'remove-draft') {
+            syncDraftFromDom();
+            state.modal.draft.splice(Number(control.dataset.index), 1);
+            render();
+        } else if (action === 'submit') {
+            submitDraft();
+        } else if (action === 'record-wo') {
+            openRecordWorkOrder(control.dataset.woId);
+        } else if (['asset', 'p2h', 'wo', 'condition', 'pm'].includes(action)) {
+            navigate(action);
+        }
+    }
+
+    function handleInput(event) {
+        const filter = event.target.dataset.slFilter;
+        if (filter === 'query') {
+            state.query = event.target.value;
+            state.withPage = 1;
+            state.withoutPage = 1;
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                render();
+                const search = document.getElementById('slUnitSearch');
+                if (search) {
+                    search.focus();
+                    search.setSelectionRange(search.value.length, search.value.length);
+                }
+            }, 140);
+            return;
+        }
+        const draftField = event.target.dataset.slDraftField;
+        if (draftField && state.modal) {
+            const item = state.modal.draft[Number(event.target.dataset.index)];
+            if (item) item[draftField] = draftField === 'qty' ? Number(event.target.value) : event.target.value;
+            return;
+        }
+        const modalField = event.target.dataset.slModalField;
+        if (modalField && state.modal) {
+            state.modal[modalField] = modalField === 'rtwImpact' ? event.target.value === 'true' : event.target.value;
+        }
+    }
+
+    function handleChange(event) {
+        const filter = event.target.dataset.slFilter;
+        if (filter && filter !== 'query') {
+            state[filter] = event.target.value;
+            state.withPage = 1;
+            state.withoutPage = 1;
+            render();
+            return;
+        }
+        const recordId = event.target.dataset.slRecordStatus;
+        if (recordId) {
+            updateRecordStatus(recordId, event.target.value);
+            return;
+        }
+        handleInput(event);
+    }
+
+    function createModule() {
+        root = document.getElementById('spareLogisticsApp');
+        if (!root) return;
+        root.addEventListener('click', handleClick);
+        root.addEventListener('input', handleInput);
+        root.addEventListener('change', handleChange);
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && state.modal) closeDetail();
+        });
+        render();
+    }
+
+    const api = {
+        refresh: render,
+        openForAsset,
+        openForWorkOrder,
+        addDraftItem,
+        addRecommendedItem(domain) {
+            return addDraftItem(draftFromDomain(domain));
+        },
+        submitDraft,
+        close: closeDetail,
+        getUnitCounter(assetId) {
+            const summary = summaryForAsset(assetId);
+            return { items: summary.itemCount, quantity: summary.requested, available: summary.available };
+        }
+    };
+
+    window.SpareLogistics = api;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', createModule);
+    } else {
+        createModule();
+    }
+})();
+
+// ============================================================================
 // CONDITION MONITORING V2 — per-unit inspections and cross-module follow-up
 // Sources: BRA tire report, weekly regreasing, cutting-bit controls, battery bank.
 // ============================================================================
@@ -10043,8 +10907,8 @@
             </div>
             ${conditionContext ? `<div class="pm-condition-context">
                 <i class="fa-solid fa-link"></i>
-                <div><strong>Konteks dari Condition Monitoring: ${escapeHtml(conditionContext.assetId)}</strong><span>${escapeHtml(conditionContext.finding?.domain || 'Komponen')} · ${escapeHtml(conditionContext.finding?.text || 'Perlu tindak lanjut terencana')}</span></div>
-                <button type="button" id="pmBackToCondition">Buka inspeksi unit</button>
+                <div><strong>Konteks dari ${escapeHtml(conditionContext.source || 'Condition Monitoring')}: ${escapeHtml(conditionContext.assetId)}</strong><span>${escapeHtml(conditionContext.finding?.domain || 'Komponen')} · ${escapeHtml(conditionContext.finding?.text || 'Perlu tindak lanjut terencana')}</span></div>
+                <button type="button" id="pmBackToCondition">${conditionContext.source === 'Spare Part & Logistik' ? 'Kembali ke logistik' : 'Buka inspeksi unit'}</button>
             </div>` : ''}
             <div class="pm-context-bar">
                 <div class="pm-context-group">
@@ -10086,6 +10950,11 @@
         });
         document.getElementById('pmExportButton').addEventListener('click', exportTracker);
         document.getElementById('pmBackToCondition')?.addEventListener('click', () => {
+            if (conditionContext.source === 'Spare Part & Logistik') {
+                window.showView?.('logistics', '', 'menu-logistics');
+                setTimeout(() => window.SpareLogistics?.openForAsset(conditionContext.assetId), 60);
+                return;
+            }
             window.ConditionMonitoring?.openForAsset(conditionContext.assetId);
         });
         document.getElementById('pmDetailOverlay').addEventListener('click', event => {

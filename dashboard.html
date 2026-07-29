@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logo-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-11">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-12">
     
 </head>
 
@@ -404,35 +404,7 @@
 
             <!-- VIEW: LOGISTICS -->
             <div id="view-logistics" class="view-section">
-                <h1 class="page-title">Spare Part & Logistik</h1>
-                <div class="panel">
-                    <div class="panel-header"><span><i class="fa-solid fa-file-invoice"></i> Form Pembuatan Surat
-                            Permintaan Barang (SPB)</span></div>
-                    <div class="panel-body form-group">
-                        <label>Pilih Work Order (WO) Aktif</label>
-                        <select id="spb-wo-id" class="form-control"></select>
-                        <div style="margin-bottom: 15px;">
-                            <label>Daftar Item Spare Part</label>
-                            <table style="width: 100%; border: 1px solid var(--border); margin-bottom: 10px;"
-                                id="spb-item-table">
-                                <thead style="background: #f8f9fa;">
-                                    <tr>
-                                        <th>Part Number</th>
-                                        <th>Deskripsi</th>
-                                        <th>Qty</th>
-                                        <th>Satuan</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="spb-items"></tbody>
-                            </table>
-                            <button class="btn btn-primary" onclick="addSpbItem()"><i class="fa-solid fa-plus"></i>
-                                Tambah Item</button>
-                        </div>
-                        <button class="btn btn-success" onclick="submitSpb()" style="width: 100%;"><i
-                                class="fa-solid fa-paper-plane"></i> Submit SPB</button>
-                    </div>
-                </div>
+                <div id="spareLogisticsApp"></div>
             </div>
 
             <!-- VIEW: CONDITION MONITORING -->
@@ -1683,11 +1655,15 @@
         };
 
         window.openSpbForWo = function(woId, assetId) {
-            showView('logistics');
-            const woSelect = document.getElementById('spb-wo-id');
-            if (woSelect && woId) {
-                woSelect.value = woId;
-            }
+            showView('logistics', '', 'menu-logistics');
+            setTimeout(() => {
+                if (window.SpareLogistics) {
+                    window.SpareLogistics.openForWorkOrder(woId, assetId);
+                    return;
+                }
+                const woSelect = document.getElementById('spb-wo-id');
+                if (woSelect && woId) woSelect.value = woId;
+            }, 50);
         };
 
         // Shared helpers for Work Order status workflow.
@@ -3124,6 +3100,9 @@
             if (viewName === 'condition' && window.ConditionMonitoring) {
                 window.ConditionMonitoring.refresh();
             }
+            if (viewName === 'logistics' && window.SpareLogistics) {
+                window.SpareLogistics.refresh();
+            }
             if (viewName === 'reports') {
                 if (!reportsMenuMedia.matches) setReportsMenuExpanded(true, { persist: false });
                 if (!/^#reports(?:\/|$)/i.test(window.location.hash)) {
@@ -3338,27 +3317,12 @@
             `).join('');
         }
 
-        function addSpbItem() {
-            const tbody = document.getElementById('spb-items');
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><input type="text" class="form-control" placeholder="Part No" style="margin-bottom:0;"></td>
-                <td><input type="text" class="form-control" placeholder="Deskripsi" style="margin-bottom:0;"></td>
-                <td><input type="number" class="form-control" placeholder="Qty" style="margin-bottom:0; width:70px;"></td>
-                <td><input type="text" class="form-control" placeholder="Satuan" style="margin-bottom:0; width:70px;"></td>
-                <td><button class="btn btn-danger" onclick="this.parentElement.parentElement.remove()" style="padding: 8px;"><i class="fa-solid fa-trash"></i></button></td>
-            `;
-            tbody.appendChild(tr);
+        function addSpbItem(prefill = {}) {
+            return window.SpareLogistics?.addDraftItem(prefill);
         }
 
         function submitSpb() {
-            const items = document.getElementById('spb-items').children.length;
-            if (items === 0) {
-                alert('Minimal 1 item spare part harus diinput.');
-                return;
-            }
-            alert('SPB berhasil di-submit dan masuk ke Approval Inbox.');
-            document.getElementById('spb-items').innerHTML = '';
+            return window.SpareLogistics?.submitDraft();
         }
 
         function inspectTire(pos) {
@@ -4403,13 +4367,7 @@
             }
 
             if (globalData) {
-                const woSelect = document.getElementById('spb-wo-id');
-                if (woSelect) {
-                    woSelect.innerHTML = globalData.work_orders
-                        .filter(wo => wo.status !== 'Closed')
-                        .map(wo => `<option value="${escapeHtml(wo.woId)}">${escapeHtml(wo.woId)} - ${escapeHtml(wo.assetId)}</option>`)
-                        .join('');
-                }
+                window.SpareLogistics?.refresh();
 
                 const fuelSelect = document.getElementById('frmFuelUnitId') || document.getElementById('fuel-asset-id');
                 if (fuelSelect && globalData.assets) {
@@ -4469,7 +4427,7 @@
     <script src="scripts/vendor/jszip-3.10.1.min.js"></script>
     <script src="scripts/vendor/pdf-3.11.174.min.js"></script>
     <script src="scripts/vendor/tesseract-5.1.1.min.js"></script>
-    <script src="scripts/dashboard.js?v=20260729-4"></script>
+    <script src="scripts/dashboard.js?v=20260729-6"></script>
 </body>
 
 </html>
