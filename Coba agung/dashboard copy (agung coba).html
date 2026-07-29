@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../scripts/dashboard.css?v=20260729-MAINTAINX-V3">
     <link rel="stylesheet" href="fleet-integration.css?v=20260729-MAINTAINX-V3">
     <!-- Dedicated MaintainX Style Override -->
-    <link rel="stylesheet" href="maintainx-style.css?v=20260729-1">
+    <link rel="stylesheet" href="maintainx-style.css?v=20260729-2">
     
 </head>
 
@@ -106,7 +106,16 @@
 
             <!-- VIEW: DASHBOARD (MVP 1) -->
             <div id="view-dashboard" class="view-section active">
-                <h1 class="page-title">Executive Dashboard</h1>
+                <div class="mx-dashboard-header">
+                    <div>
+                        <div class="mx-eyebrow"><i class="fa-solid fa-chart-pie"></i> ASSET & FLEET OPERATIONS</div>
+                        <h1 class="page-title">Executive Dashboard</h1>
+                        <p class="mx-header-desc">Pemantauan real-time kondisi unit, status work order, lokasi GPS, dan kesehatan armada.</p>
+                    </div>
+                    <div class="mx-header-actions">
+                        <button type="button" class="btn btn-primary" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Work Order Baru</button>
+                    </div>
+                </div>
 
                 <!-- Ringkasan status unit -->
                 <div class="kpi-grid">
