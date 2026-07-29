@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logo-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-1">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260729-5">
     
 </head>
 
@@ -1716,52 +1716,121 @@
 
         // Drag and Drop & Form Kelengkapan (FRM-WO-01) Engine
         let currentDraggedWo = null;
+        let suppressWoCardClick = false;
+        let lastWoDropTargetStatus = null;
+        let woNativeDropHandled = false;
+
+        function getWoById(woId) {
+            if (!woId || typeof globalData === 'undefined' || !globalData || !Array.isArray(globalData.work_orders)) {
+                return null;
+            }
+            return globalData.work_orders.find(wo => wo.woId === woId) || null;
+        }
 
         window.handleWoDragStart = function(e, woId) {
             if (!woId) return;
-            const wo = (globalData && globalData.work_orders) ? globalData.work_orders.find(w => w.woId === woId) : null;
+            const wo = getWoById(woId);
+            const card = e.currentTarget || (e.target ? e.target.closest('.kanban-card') : null);
             
             currentDraggedWo = {
                 woId: woId,
-                currentStatus: wo ? wo.status : 'Open',
-                assetId: wo ? wo.assetId : '',
+                currentStatus: wo ? wo.status : (card ? card.dataset.status : ''),
+                assetId: wo ? (wo.assetId || wo.unitId || '') : (card ? card.dataset.asset : ''),
                 issue: wo ? (wo.issue || wo.description || '') : ''
             };
+            suppressWoCardClick = true;
+            lastWoDropTargetStatus = null;
+            woNativeDropHandled = false;
 
             if (e.dataTransfer) {
                 e.dataTransfer.effectAllowed = 'move';
                 try { e.dataTransfer.setData('text/plain', woId); } catch (err) {}
+                try { e.dataTransfer.setData('application/x-work-order', JSON.stringify(currentDraggedWo)); } catch (err) {}
             }
 
-            const card = e.target ? e.target.closest('.kanban-card') : null;
             if (card) {
+                card.setAttribute('aria-grabbed', 'true');
+                // Tunda perubahan visual sampai browser selesai membuat drag image.
+                // Mengubah hit-testing sumber secara sinkron dapat membatalkan native drag.
                 setTimeout(() => card.classList.add('dragging'), 0);
             }
         };
 
         window.handleWoDragEnd = function(e) {
-            document.querySelectorAll('.kanban-card.dragging').forEach(el => el.classList.remove('dragging'));
+            const dragPayload = currentDraggedWo;
+            let releaseColumn = null;
+            if (Number.isFinite(e.clientX) && Number.isFinite(e.clientY)) {
+                const releaseElement = document.elementFromPoint(e.clientX, e.clientY);
+                releaseColumn = releaseElement && typeof releaseElement.closest === 'function'
+                    ? releaseElement.closest('.kanban-column[data-status]')
+                    : null;
+            }
+            const releaseStatus = (releaseColumn && releaseColumn.dataset.status) || lastWoDropTargetStatus;
+
+            document.querySelectorAll('.kanban-card.dragging').forEach(el => {
+                el.classList.remove('dragging');
+                el.setAttribute('aria-grabbed', 'false');
+            });
             document.querySelectorAll('.kanban-column.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+            // Beberapa browser tidak mengirim event `drop` pada container yang
+            // memiliki overflow/scroll. Gunakan kolom terakhir di bawah pointer
+            // sebagai fallback agar form konfirmasi tetap dibuka.
+            if (
+                !woNativeDropHandled &&
+                dragPayload &&
+                releaseStatus &&
+                dragPayload.currentStatus !== releaseStatus
+            ) {
+                currentDraggedWo = null;
+                requestAnimationFrame(() => {
+                    const wo = getWoById(dragPayload.woId);
+                    if (!wo || wo.status === releaseStatus) return;
+                    window.openWoStatusConfirmModal(
+                        wo.woId,
+                        wo.status,
+                        releaseStatus,
+                        wo.assetId || wo.unitId || dragPayload.assetId || '',
+                        wo.issue || wo.description || dragPayload.issue || ''
+                    );
+                });
+            }
+
+            // Menahan click yang kadang dikirim browser tepat setelah drag selesai.
+            setTimeout(() => {
+                suppressWoCardClick = false;
+                currentDraggedWo = null;
+                lastWoDropTargetStatus = null;
+                woNativeDropHandled = false;
+            }, 0);
         };
 
         window.handleWoDragOver = function(e) {
             e.preventDefault();
             if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-            const col = e.target ? e.target.closest('.kanban-column') : null;
+            const col = e.currentTarget && e.currentTarget.classList.contains('kanban-column')
+                ? e.currentTarget
+                : (e.target ? e.target.closest('.kanban-column') : null);
             if (col && !col.classList.contains('drag-over')) {
                 document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
                 col.classList.add('drag-over');
             }
+            if (col && col.dataset.status) lastWoDropTargetStatus = col.dataset.status;
         };
 
         window.handleWoDragEnter = function(e, statusKey) {
             e.preventDefault();
-            const col = e.target ? e.target.closest('.kanban-column') : null;
+            const col = e.currentTarget && e.currentTarget.classList.contains('kanban-column')
+                ? e.currentTarget
+                : (e.target ? e.target.closest('.kanban-column') : null);
             if (col) col.classList.add('drag-over');
+            if (col && col.dataset.status) lastWoDropTargetStatus = col.dataset.status;
         };
 
         window.handleWoDragLeave = function(e) {
-            const col = e.target ? e.target.closest('.kanban-column') : null;
+            const col = e.currentTarget && e.currentTarget.classList.contains('kanban-column')
+                ? e.currentTarget
+                : (e.target ? e.target.closest('.kanban-column') : null);
             if (col && !col.contains(e.relatedTarget)) {
                 col.classList.remove('drag-over');
             }
@@ -1772,48 +1841,324 @@
             e.stopPropagation();
             document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
 
-            let targetStatus = null;
-            const elementWithStatus = e.target ? e.target.closest('[data-status]') : null;
-            if (elementWithStatus) {
-                targetStatus = elementWithStatus.getAttribute('data-status');
-            }
+            const dropColumn = e.currentTarget && e.currentTarget.classList.contains('kanban-column')
+                ? e.currentTarget
+                : (e.target ? e.target.closest('.kanban-column') : null);
+            // Status dari handler kolom adalah sumber utama. Dengan begitu kartu
+            // di bawah pointer tidak keliru dibaca sebagai kolom tujuan.
+            const targetStatus = fallbackStatus || (dropColumn ? dropColumn.dataset.status : '');
+            const allowedStatuses = ['Open', 'In Progress', 'Closed'];
+            if (!allowedStatuses.includes(targetStatus)) return;
+            woNativeDropHandled = true;
 
-            if (!targetStatus) {
-                const col = e.target ? e.target.closest('.kanban-column') : null;
-                if (col) {
-                    targetStatus = col.getAttribute('data-status');
-                    if (!targetStatus) {
-                        const id = col.id || '';
-                        if (id.includes('Open')) targetStatus = 'Open';
-                        else if (id.includes('Progress')) targetStatus = 'In Progress';
-                        else if (id.includes('Closed')) targetStatus = 'Closed';
-                    }
+            let dragPayload = currentDraggedWo;
+            if (!dragPayload && e.dataTransfer) {
+                try {
+                    const serialized = e.dataTransfer.getData('application/x-work-order');
+                    if (serialized) dragPayload = JSON.parse(serialized);
+                } catch (err) {}
+
+                if (!dragPayload) {
+                    try {
+                        const woId = e.dataTransfer.getData('text/plain');
+                        if (woId) dragPayload = { woId };
+                    } catch (err) {}
                 }
             }
 
-            if (!targetStatus) targetStatus = fallbackStatus;
+            if (!dragPayload || !dragPayload.woId) return;
 
-            if (!currentDraggedWo) {
-                let woId = null;
-                try { woId = e.dataTransfer ? e.dataTransfer.getData('text/plain') : null; } catch(err){}
-                if (woId && globalData && globalData.work_orders) {
-                    const wo = globalData.work_orders.find(w => w.woId === woId);
-                    if (wo) {
-                        currentDraggedWo = {
-                            woId: wo.woId,
-                            currentStatus: wo.status,
-                            assetId: wo.assetId,
-                            issue: wo.issue || wo.description || ''
-                        };
-                    }
-                }
+            // Ambil data terbaru agar status sumber tidak bergantung pada DOM atau
+            // payload drag yang mungkin sudah tertinggal.
+            const wo = getWoById(dragPayload.woId);
+            if (!wo) return;
+
+            const fromStatus = wo.status;
+            if (fromStatus === targetStatus) {
+                currentDraggedWo = null;
+                return;
             }
 
-            if (!currentDraggedWo) return;
-            if (!targetStatus || currentDraggedWo.currentStatus === targetStatus) return;
+            const modalPayload = {
+                woId: wo.woId,
+                currentStatus: fromStatus,
+                assetId: wo.assetId || wo.unitId || dragPayload.assetId || '',
+                issue: wo.issue || wo.description || dragPayload.issue || ''
+            };
+            currentDraggedWo = null;
 
-            openWoStatusConfirmModal(currentDraggedWo.woId, currentDraggedWo.currentStatus, targetStatus, currentDraggedWo.assetId, currentDraggedWo.issue);
+            window.openWoStatusConfirmModal(
+                modalPayload.woId,
+                modalPayload.currentStatus,
+                targetStatus,
+                modalPayload.assetId,
+                modalPayload.issue
+            );
         };
+
+        window.handleWoCardClick = function(e, woId, assetId) {
+            if (suppressWoCardClick) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+            window.openWoDetailModal(woId, assetId);
+        };
+
+        let pendingWoStatusConfirmation = 0;
+
+        function queueWoStatusConfirmation(woId, targetStatus, fallbackPayload = {}) {
+            const allowedStatuses = ['Open', 'In Progress', 'Closed'];
+            if (!woId || !allowedStatuses.includes(targetStatus)) return;
+
+            const confirmationId = ++pendingWoStatusConfirmation;
+            suppressWoCardClick = true;
+
+            // Jalankan setelah pointerup/mouseup/click selesai agar modal tidak
+            // tertimpa oleh click detail yang dikirim browser sesudah drag.
+            setTimeout(() => {
+                if (confirmationId !== pendingWoStatusConfirmation) return;
+                const wo = getWoById(woId);
+                if (!wo || wo.status === targetStatus) {
+                    suppressWoCardClick = false;
+                    return;
+                }
+
+                const showConfirmation = () => {
+                    window.openWoStatusConfirmModal(
+                        wo.woId,
+                        wo.status,
+                        targetStatus,
+                        wo.assetId || wo.unitId || fallbackPayload.assetId || '',
+                        wo.issue || wo.description || fallbackPayload.issue || ''
+                    );
+                };
+
+                showConfirmation();
+
+                // Pemeriksaan kedua memastikan overlay tetap aktif apabila ada
+                // handler click browser yang berjalan terlambat.
+                setTimeout(() => {
+                    const modal = document.getElementById('modalWoStatusConfirm');
+                    if (modal && !modal.classList.contains('active')) showConfirmation();
+                    suppressWoCardClick = false;
+                }, 80);
+            }, 0);
+        }
+
+        window.handleWoStatusSelect = function(e, woId) {
+            e.preventDefault();
+            e.stopPropagation();
+            const select = e.currentTarget;
+            const targetStatus = select.value;
+            select.value = '';
+            queueWoStatusConfirmation(woId, targetStatus);
+        };
+
+        function bindWorkOrderDropZones(kanbanBoard) {
+            if (!kanbanBoard || kanbanBoard.dataset.dropZonesBound === 'true') return;
+            kanbanBoard.dataset.dropZonesBound = 'true';
+            let pointerDrag = null;
+
+            const findDropColumn = eventTarget => {
+                if (!eventTarget || typeof eventTarget.closest !== 'function') return null;
+                return eventTarget.closest('.kanban-column[data-status]');
+            };
+
+            const findDropColumnAtPoint = (clientX, clientY) => {
+                if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return null;
+                const target = document.elementFromPoint(clientX, clientY);
+                return findDropColumn(target);
+            };
+
+            const highlightDropColumn = column => {
+                document.querySelectorAll('.kanban-column.drag-over').forEach(item => {
+                    if (item !== column) item.classList.remove('drag-over');
+                });
+                if (column) column.classList.add('drag-over');
+            };
+
+            const cleanupPointerDrag = () => {
+                if (!pointerDrag) return;
+                if (pointerDrag.card) {
+                    pointerDrag.card.classList.remove('dragging', 'pointer-drag-source');
+                    pointerDrag.card.setAttribute('aria-grabbed', 'false');
+                }
+                if (pointerDrag.ghost && pointerDrag.ghost.parentNode) {
+                    pointerDrag.ghost.parentNode.removeChild(pointerDrag.ghost);
+                }
+                document.body.classList.remove('wo-pointer-drag-active');
+                document.querySelectorAll('.kanban-column.drag-over').forEach(item => item.classList.remove('drag-over'));
+            };
+
+            // Jalur utama drag menggunakan Pointer Events. Ini tidak bergantung
+            // pada event HTML5 `drop`, sehingga konsisten pada container scroll.
+            kanbanBoard.addEventListener('pointerdown', e => {
+                if (e.button !== 0) return;
+                if (e.target.closest('button, a, input, select, textarea')) return;
+
+                const card = e.target.closest('.kanban-card[data-wo-id]');
+                if (!card || !kanbanBoard.contains(card)) return;
+
+                const wo = getWoById(card.dataset.woId);
+                if (!wo) return;
+
+                pointerDrag = {
+                    pointerId: e.pointerId,
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    lastX: e.clientX,
+                    lastY: e.clientY,
+                    dragging: false,
+                    card,
+                    ghost: null,
+                    targetStatus: null,
+                    payload: {
+                        woId: wo.woId,
+                        currentStatus: wo.status,
+                        assetId: wo.assetId || wo.unitId || '',
+                        issue: wo.issue || wo.description || ''
+                    }
+                };
+            }, true);
+
+            document.addEventListener('pointermove', e => {
+                if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return;
+
+                pointerDrag.lastX = e.clientX;
+                pointerDrag.lastY = e.clientY;
+                const distance = Math.hypot(
+                    e.clientX - pointerDrag.startX,
+                    e.clientY - pointerDrag.startY
+                );
+
+                if (!pointerDrag.dragging && distance >= 6) {
+                    pointerDrag.dragging = true;
+                    suppressWoCardClick = true;
+                    pointerDrag.card.classList.add('dragging', 'pointer-drag-source');
+                    pointerDrag.card.setAttribute('aria-grabbed', 'true');
+                    document.body.classList.add('wo-pointer-drag-active');
+
+                    const rect = pointerDrag.card.getBoundingClientRect();
+                    const ghost = pointerDrag.card.cloneNode(true);
+                    ghost.removeAttribute('id');
+                    ghost.removeAttribute('onclick');
+                    ghost.classList.remove('dragging', 'pointer-drag-source');
+                    ghost.classList.add('wo-pointer-drag-ghost');
+                    ghost.style.width = `${rect.width}px`;
+                    pointerDrag.ghost = ghost;
+                    document.body.appendChild(ghost);
+                }
+
+                if (!pointerDrag.dragging) return;
+                e.preventDefault();
+
+                if (pointerDrag.ghost) {
+                    pointerDrag.ghost.style.left = `${e.clientX + 14}px`;
+                    pointerDrag.ghost.style.top = `${e.clientY + 14}px`;
+                }
+
+                const column = findDropColumnAtPoint(e.clientX, e.clientY);
+                pointerDrag.targetStatus = column ? column.dataset.status : null;
+                highlightDropColumn(column);
+            }, { capture: true, passive: false });
+
+            const finishPointerDrag = (e, requireMatchingPointerId) => {
+                if (!pointerDrag) return false;
+                if (requireMatchingPointerId && e.pointerId !== pointerDrag.pointerId) return false;
+
+                const completedDrag = pointerDrag;
+                const releaseX = Number.isFinite(e.clientX) ? e.clientX : completedDrag.lastX;
+                const releaseY = Number.isFinite(e.clientY) ? e.clientY : completedDrag.lastY;
+                const releaseColumn = findDropColumn(e.target) || findDropColumnAtPoint(releaseX, releaseY);
+                const targetStatus = (releaseColumn && releaseColumn.dataset.status)
+                    || completedDrag.targetStatus
+                    || lastWoDropTargetStatus;
+                const wasDragging = completedDrag.dragging;
+                cleanupPointerDrag();
+                pointerDrag = null;
+
+                if (!wasDragging) return false;
+                if (typeof e.preventDefault === 'function') e.preventDefault();
+                if (typeof e.stopPropagation === 'function') e.stopPropagation();
+
+                const wo = getWoById(completedDrag.payload.woId);
+                if (wo && targetStatus && wo.status !== targetStatus) {
+                    queueWoStatusConfirmation(wo.woId, targetStatus, completedDrag.payload);
+                }
+
+                setTimeout(() => {
+                    if (!targetStatus) suppressWoCardClick = false;
+                }, 100);
+                return true;
+            };
+
+            document.addEventListener('pointerup', e => {
+                finishPointerDrag(e, true);
+            }, true);
+
+            // Fallback khusus mouse: pada sebagian kombinasi browser/overflow,
+            // pointerup dapat hilang tetapi mouseup tetap dikirim.
+            document.addEventListener('mouseup', e => {
+                if (!pointerDrag || !pointerDrag.dragging || e.button !== 0) return;
+                finishPointerDrag(e, false);
+            }, true);
+
+            document.addEventListener('pointercancel', e => {
+                if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return;
+                if (pointerDrag.dragging && (pointerDrag.targetStatus || lastWoDropTargetStatus)) {
+                    finishPointerDrag(e, true);
+                    return;
+                }
+                const wasDragging = pointerDrag.dragging;
+                cleanupPointerDrag();
+                pointerDrag = null;
+                if (wasDragging) {
+                    setTimeout(() => {
+                        suppressWoCardClick = false;
+                    }, 0);
+                }
+            }, true);
+
+            // Capture digunakan agar area card-container, card-sublist, dan card
+            // tetap diterjemahkan sebagai satu drop zone milik kolom induknya.
+            kanbanBoard.addEventListener('dragover', e => {
+                const column = findDropColumn(e.target);
+                if (!column) return;
+
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                document.querySelectorAll('.kanban-column.drag-over').forEach(item => {
+                    if (item !== column) item.classList.remove('drag-over');
+                });
+                column.classList.add('drag-over');
+                lastWoDropTargetStatus = column.dataset.status || null;
+            }, true);
+
+            kanbanBoard.addEventListener('dragenter', e => {
+                const column = findDropColumn(e.target);
+                if (!column) return;
+                e.preventDefault();
+                column.classList.add('drag-over');
+                lastWoDropTargetStatus = column.dataset.status || null;
+            }, true);
+
+            kanbanBoard.addEventListener('dragleave', e => {
+                const column = findDropColumn(e.target);
+                if (!column) return;
+                const nextColumn = findDropColumn(e.relatedTarget);
+                if (nextColumn !== column) column.classList.remove('drag-over');
+                if (!nextColumn && e.relatedTarget && !kanbanBoard.contains(e.relatedTarget)) {
+                    lastWoDropTargetStatus = null;
+                }
+            }, true);
+
+            kanbanBoard.addEventListener('drop', e => {
+                const column = findDropColumn(e.target);
+                if (!column) return;
+                window.handleWoDrop(e, column.dataset.status);
+            }, true);
+        }
 
         window.openWoStatusConfirmModal = function(woId, fromStatus, toStatus, assetId, issue) {
             document.getElementById('woConfirmId').value = woId;
@@ -1834,6 +2179,7 @@
 
             // Autofill Mechanic
             const mechanicSelect = document.getElementById('woConfirmMechanic');
+            if (mechanicSelect) mechanicSelect.selectedIndex = 0;
             if (mechanicSelect && wo && wo.assignedTo && wo.assignedTo !== 'Pending') {
                 for (let option of mechanicSelect.options) {
                     if (option.value.includes(wo.assignedTo)) {
@@ -1877,15 +2223,27 @@
             const actionLog = document.getElementById('woConfirmAction').value;
             const unitStatus = document.getElementById('woConfirmUnitStatus').value;
 
-            if (!globalData || !globalData.work_orders) return;
+            if (!globalData || !Array.isArray(globalData.work_orders)) return;
 
-            const wo = globalData.work_orders.find(w => w.woId === woId);
-            if (wo) {
-                wo.status = targetStatus;
-                wo.lastUpdate = new Date().toISOString();
-                wo.assignedTo = mechanic;
-                if (actionLog) wo.issue = `${wo.issue || ''} | [Log ${mechanic}]: ${actionLog}`;
+            const wo = getWoById(woId);
+            if (!wo) {
+                alert(`Work Order ${woId} tidak ditemukan. Muat ulang data lalu coba kembali.`);
+                return;
             }
+
+            const previousStatus = wo.status;
+            wo.status = targetStatus;
+            wo.lastUpdate = new Date().toISOString();
+            wo.assignedTo = mechanic;
+            wo.statusHistory = Array.isArray(wo.statusHistory) ? wo.statusHistory : [];
+            wo.statusHistory.unshift({
+                fromStatus: previousStatus,
+                toStatus: targetStatus,
+                mechanic,
+                action: actionLog,
+                updatedAt: wo.lastUpdate
+            });
+            if (actionLog) wo.issue = `${wo.issue || ''} | [Log ${mechanic}]: ${actionLog}`;
 
             // Sync integrated status for Asset & Monitoring Unit
             if (assetId && globalData.assets) {
@@ -1897,7 +2255,7 @@
             // Synchronize state and update all UI views instantly
             window.syncFleetState();
 
-            alert(`✅ Status Work Order (${woId}) Berhasil Diperbarui:\n- Status WO: ${targetStatus}\n- Mekanik: ${mechanic}\n- Status Unit ${assetId}: ${unitStatus}`);
+            alert(`Status Work Order (${woId}) berhasil diperbarui:\n- Status WO: ${targetStatus}\n- Mekanik: ${mechanic}\n- Status Unit ${assetId}: ${unitStatus}`);
         };
 
         window.openWoDetailModal = function(woId, fallbackAssetId, fallbackIssue) {
@@ -2430,12 +2788,12 @@
             return `
                 <div class="kanban-card ${wo.priority}" 
                      id="wo-card-${escapeHtml(wo.woId)}" 
+                     data-wo-id="${escapeHtml(wo.woId)}"
                      data-status="${statusKey}"
                      data-asset="${escapedAsset}"
-                     draggable="true"
-                     ondragstart="handleWoDragStart(event, '${escapeHtml(wo.woId)}')"
-                     ondragend="handleWoDragEnd(event)"
-                     onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapedAsset}')" 
+                     draggable="false"
+                     aria-grabbed="false"
+                     onclick="handleWoCardClick(event, '${escapeHtml(wo.woId)}', '${escapedAsset}')"
                      style="cursor:grab;" 
                      title="Klik untuk Detail 360° | Drag ke kolom lain untuk ubah status">
                     <div class="kanban-card-title" style="display:flex; justify-content:space-between; align-items:center;">
@@ -2449,7 +2807,19 @@
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                         <span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(wo.priority)}</span>
-                        <span style="font-size:0.72rem; color:var(--primary); font-weight:600;"><i class="fa-solid fa-grip-vertical"></i> Drag / Detail <i class="fa-solid fa-chevron-right"></i></span>
+                        <div class="wo-card-status-actions">
+                            <select class="wo-card-status-select"
+                                    aria-label="Ubah status ${escapeHtml(wo.woId)}"
+                                    onclick="event.stopPropagation()"
+                                    onpointerdown="event.stopPropagation()"
+                                    onchange="handleWoStatusSelect(event, '${escapeHtml(wo.woId)}')">
+                                <option value="">Ubah status...</option>
+                                ${statusKey !== 'Open' ? '<option value="Open">Open</option>' : ''}
+                                ${statusKey !== 'In Progress' ? '<option value="In Progress">In Progress</option>' : ''}
+                                ${statusKey !== 'Closed' ? '<option value="Closed">Closed</option>' : ''}
+                            </select>
+                            <span class="wo-card-drag-label"><i class="fa-solid fa-grip-vertical"></i> Drag</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -2458,6 +2828,7 @@
         function initWorkOrderView(wos) {
             const kanbanBoard = document.getElementById('woKanbanBoard');
             if (!kanbanBoard) return;
+            bindWorkOrderDropZones(kanbanBoard);
 
             const openWos = wos.filter(w => w.status === 'Open');
             const progressWos = wos.filter(w => w.status === 'In Progress');
@@ -2476,9 +2847,9 @@
 
                 if (count === 0) {
                     return `
-                        <div class="kanban-column" id="col-${statusKey}" data-status="${statusKey}" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                        <div class="kanban-column" id="col-${statusKey}" data-status="${statusKey}">
                             <h3><span>${titleText}</span> <span class="badge ${badgeClass}">0</span></h3>
-                            <div class="card-container" style="padding:20px; color:var(--text-muted); text-align:center; font-size:0.85rem;">Tidak ada data WO.</div>
+                            <div class="card-container" data-status="${statusKey}" style="padding:20px; color:var(--text-muted); text-align:center; font-size:0.85rem;">Tidak ada data WO.</div>
                         </div>
                     `;
                 }
@@ -2513,7 +2884,7 @@
                 }
 
                 return `
-                    <div class="kanban-column ${count > chunkSize ? 'expanded-column' : ''}" id="col-${statusKey}" data-status="${statusKey}" ondragover="handleWoDragOver(event)" ondragenter="handleWoDragEnter(event, '${statusKey}')" ondragleave="handleWoDragLeave(event)" ondrop="handleWoDrop(event, '${statusKey}')">
+                    <div class="kanban-column ${count > chunkSize ? 'expanded-column' : ''}" id="col-${statusKey}" data-status="${statusKey}">
                         <h3><span>${titleText}</span> <span class="badge ${badgeClass}">${count}</span></h3>
                         ${bodyHtml}
                     </div>
@@ -4179,6 +4550,7 @@
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
+
     </script>
     <script src="scripts/vendor/jszip-3.10.1.min.js"></script>
     <script src="scripts/vendor/pdf-3.11.174.min.js"></script>
