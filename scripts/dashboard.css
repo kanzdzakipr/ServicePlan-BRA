@@ -3169,7 +3169,7 @@
 
     .print-layout-landscape .print-documentation-sheet {
         margin: 0 auto;
-        width: 150mm;
+        width: 100%;
     }
 }
 #documentImportModule {

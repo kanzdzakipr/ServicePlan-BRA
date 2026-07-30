@@ -1645,6 +1645,79 @@
         `;
     }
 
+    function updateAdditionalAttachmentsGrid() {
+        const grid = document.getElementById('attachmentsGrid');
+        if (!grid) return;
+        const attachments = activeDraft.attachments || [];
+        grid.innerHTML = attachments.map((att, idx) => `
+            <div class="attachment-thumb" style="position:relative; width:120px; height:120px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+                <img src="${escapeHtml(att.dataUrl)}" style="width:100%; height:100%; object-fit:cover;" alt="Attachment ${idx+1}">
+                <button type="button" data-remove-attachment="${idx}" style="position:absolute; top:4px; right:4px; background:rgba(220,38,38,0.9); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer;" title="Hapus foto"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        `).join('') + `
+            <label class="attachment-upload-btn" style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:120px; height:120px; border:2px dashed #cbd5e1; border-radius:8px; cursor:pointer; background:#f8fafc; color:#64748b; font-size:0.85rem; transition:0.2s;">
+                <i class="fa-solid fa-camera" style="font-size:1.5rem; margin-bottom:5px;"></i>
+                <span style="text-align:center;">Tambah Foto</span>
+                <input type="file" id="additionalAttachmentsUpload" multiple accept="image/jpeg,image/png,image/webp" style="display:none;" capture="environment">
+            </label>
+        `;
+        bindAdditionalAttachmentsListeners();
+    }
+
+    function bindAdditionalAttachmentsListeners() {
+        const attachmentsUpload = document.getElementById('additionalAttachmentsUpload');
+        if (attachmentsUpload) {
+            attachmentsUpload.addEventListener('change', async (e) => {
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+                
+                if (!activeDraft.attachments) activeDraft.attachments = [];
+                
+                for (let i = 0; i < files.length; i++) {
+                    try {
+                        const imageResult = await readImage(files[i]);
+                        activeDraft.attachments.push({
+                            dataUrl: imageResult.dataUrl,
+                            name: files[i].name
+                        });
+                    } catch (err) {
+                        console.error('Error uploading image', err);
+                        showToast('Gagal memproses gambar ' + files[i].name, true);
+                    }
+                }
+                saveDraft();
+                updateAdditionalAttachmentsGrid();
+            });
+        }
+        
+        document.querySelectorAll('[data-remove-attachment]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = Number(btn.dataset.removeAttachment);
+                if (activeDraft.attachments) {
+                    activeDraft.attachments.splice(idx, 1);
+                    saveDraft();
+                    updateAdditionalAttachmentsGrid();
+                }
+            });
+        });
+    }
+
+    function renderAdditionalAttachmentsBox() {
+        if (activeSchema?.id !== 'cutting-bit-usage') return '';
+        
+        return `
+            <section class="additional-attachments-box" style="margin-top: 20px;">
+                <h3 style="margin-top:20px; font-size:1.1rem; border-bottom:1px solid #e2e8f0; padding-bottom:8px; color:var(--text-dark);">
+                    <i class="fa-solid fa-images" style="color:var(--primary);"></i> Lampiran Foto Dokumentasi (Kondisi Lapangan / Cutting Bit)
+                </h3>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">Anda dapat mengunggah beberapa foto sekaligus dari kamera atau galeri untuk dilampirkan pada laporan cetak.</p>
+                <div class="attachments-grid" id="attachmentsGrid" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                    <!-- Diisi oleh updateAdditionalAttachmentsGrid -->
+                </div>
+            </section>
+        `;
+    }
+
     function renderFormGuidance() {
         return `
             <aside class="form-guidance">
@@ -1931,6 +2004,7 @@
                             <div class="calculation-summary" id="calculationSummary"></div>
                         </section>
                         ${renderFormGuidance()}
+                        ${renderAdditionalAttachmentsBox()}
                     </div>
                     <div class="form-builder-footer">
                         <div class="form-footer-note"><i class="fa-solid fa-shield-halved"></i> Data prototipe tersimpan lokal di browser, belum dikirim ke server.</div>
@@ -1971,6 +2045,8 @@
             event.preventDefault();
             validateAndPreview();
         });
+        
+        updateAdditionalAttachmentsGrid();
         renderRows();
         document.getElementById('reportModule').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -2315,6 +2391,35 @@
         };
     }
 
+    function renderExtraAttachmentsPrint(schema, attachments, reportNumber) {
+        if (!attachments || attachments.length === 0) return '';
+        
+        return attachments.map((att, index) => `
+            <article class="print-documentation-sheet" style="display:block; min-height:auto; page-break-before:always; break-before:page;">
+                <header class="documentation-header">
+                    <img src="assets/logo-pt-bina-rekayasa-anugrah.png" alt="Logo PT Bina Rekayasa Anugrah" class="print-logo-img company-logo-img">
+                    <div>
+                        <span>LAMPIRAN TAMBAHAN</span>
+                        <h2>${escapeHtml(schema.title)}</h2>
+                        <small>Nomor: ${escapeHtml(reportNumber)}</small>
+                    </div>
+                    <strong>HALAMAN ${index + 1}</strong>
+                </header>
+                <div class="documentation-title" style="margin-bottom: 20px;">
+                    <span>Lampiran Dokumentasi Tambahan</span>
+                    <h3>Kondisi Fisik / Lapangan</h3>
+                </div>
+                <figure class="documentation-figure" style="display:block; text-align:center; margin:0 auto; box-sizing: border-box; background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:8px; max-width:90%;">
+                    <img src="${escapeHtml(att.dataUrl)}" alt="Lampiran Foto ${index + 1}" style="max-width:100%; max-height:65vh; object-fit:contain; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.1); display:block; margin:0 auto;">
+                    <figcaption style="margin-top:15px; color:#475569; font-size:14px; line-height:1.5;">
+                        <strong style="display:block; color:#1e293b; margin-bottom:4px;">Lampiran Foto ${index + 1}</strong>
+                        <span>File: ${escapeHtml(att.name || '—')}</span>
+                    </figcaption>
+                </figure>
+            </article>
+        `).join('');
+    }
+
     function renderDocumentationPages(schema, rows, reportNumber, createdAt) {
         if (!requiresEvidence(schema)) return '';
         return rows.filter(row => row._evidence?.dataUrl).map((row, index) => {
@@ -2493,6 +2598,7 @@
                 </section>
             </article>
             ${renderDocumentationPages(schema, rows, reportNumber, createdAt)}
+            ${renderExtraAttachmentsPrint(schema, draft.attachments, reportNumber)}
         `;
         preview.classList.add('active');
         preview.querySelector('[data-close-preview]').addEventListener('click', () => preview.classList.remove('active'));
