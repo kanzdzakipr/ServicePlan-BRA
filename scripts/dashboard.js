@@ -515,8 +515,8 @@
         },
         {
             id: 'cutting-bit-usage', code: 'CB-RM', category: 'Maintenance',
-            title: 'Laporan Pemakaian Cutting Bit Recycling Machine',
-            description: 'Planning, pemakaian aktual, safety stock, dan selisih harian cutting bit untuk unit recycling machine.',
+            title: 'Laporan Cutting Bit',
+            description: 'Laporan planning, pemakaian aktual, dan safety stock cutting bit.',
             source: 'Perhitungan_Cutting_Bit_Tabulasi.md',
             sourcePath: 'material/BAN-GREASE-CUTTING_BIT-AKI/Perhitungan_Cutting_Bit_*_Tabulasi.md',
             mappingProfile: 'cuttingBitDaily',
@@ -891,9 +891,8 @@
             <section class="catalog-workspace" id="reportCatalog">
                 <div class="report-heading">
                     <div>
-                        <div class="report-eyebrow">Pusat dokumen operasional</div>
-                        <h1>Laporan & Form Terstandarisasi</h1>
-                        <p>Pilih jenis dokumen, lengkapi data, lalu siapkan keluaran laporan yang konsisten dengan form Departemen Equipment.</p>
+                        <h1>Laporan & Form</h1>
+                        <p>Pilih form, lengkapi data, lalu simpan atau cetak laporan.</p>
                     </div>
                     <div class="report-counter">
                         <i class="fa-solid fa-layer-group"></i>
@@ -935,11 +934,9 @@
             <section class="report-history-workspace hidden" id="reportHistory">
                 <div class="report-heading report-history-heading">
                     <div>
-                        <div class="report-eyebrow">Database laporan lokal</div>
-                        <h1>Riwayat Laporan Final</h1>
-                        <p>Laporan yang sudah disimpan dapat dilihat, dicetak, atau digunakan ulang sebagai dasar laporan baru.</p>
+                        <h1>Riwayat Laporan</h1>
+                        <p>Lihat, cetak, atau gunakan kembali laporan yang tersimpan.</p>
                     </div>
-                    <div class="history-storage-note"><i class="fa-solid fa-database"></i> Prototipe: tersimpan di browser ini</div>
                 </div>
                 <div class="history-toolbar">
                     <div class="report-control-wrap">
@@ -1649,31 +1646,16 @@
     }
 
     function renderFormGuidance() {
-        const requiredLabels = activeSchema.fields.filter(item => item.required).map(item => item.label);
-        const hasTemplateNumber = activeSchema.fields.some(item => getNumberTemplate(activeSchema, item));
-        const steps = [
-            `Lengkapi identitas wajib: ${requiredLabels.slice(0, 6).join(', ')}${requiredLabels.length > 6 ? ', dan field wajib lainnya' : ''}.`,
-            `Isi tabel “${activeSchema.tableTitle}” per item/baris. Pastikan identitas, jumlah, kondisi, atau hasil pemeriksaan saling konsisten.`
-        ];
-        if (hasTemplateNumber) {
-            steps.unshift('Pada nomor dokumen, bagian teks baku sudah dikunci. Isi hanya kotak nomor urut, kode/periode, bulan, atau tahun yang tersedia.');
-        }
-        if (requiresEvidence()) {
-            steps.push('Setiap baris item yang terisi wajib memiliki gambar bukti minimal HD 1280×720px dan keterangan foto. Gunakan foto fokus, cukup cahaya, dan menampilkan objek terkait.');
-        }
-        if (activeSchema.calculationNote) {
-            steps.push(activeSchema.calculationNote);
-        }
-        steps.push('Gunakan Simpan Draft untuk pekerjaan sementara, Preview untuk pengecekan, lalu Simpan Laporan setelah seluruh data benar. Form akan kembali kosong setelah finalisasi berhasil.');
-
         return `
             <aside class="form-guidance">
                 <div class="form-guidance-heading">
                     <i class="fa-solid fa-circle-info"></i>
-                    <div><strong>Panduan pengisian ${escapeHtml(activeSchema.code)}</strong><span>Baca sebelum menyimpan laporan final.</span></div>
-                    <button type="button" id="openDetailedGuide"><i class="fa-solid fa-book-open"></i> Baca panduan lengkap</button>
+                    <div>
+                        <strong>Periksa field wajib dan tabel sebelum menyimpan.</strong>
+                        <span>Gunakan Preview untuk meninjau format laporan.</span>
+                    </div>
+                    <button type="button" id="openDetailedGuide"><i class="fa-solid fa-book-open"></i> Panduan field</button>
                 </div>
-                <ol>${steps.map(step => `<li>${escapeHtml(step)}</li>`).join('')}</ol>
             </aside>
         `;
     }
@@ -2295,6 +2277,44 @@
         return value === 0 || value === '0' ? '0' : value || '—';
     }
 
+    function resolveReportPrintLayout(schema, rows = []) {
+        const columns = Array.isArray(schema?.columns) ? schema.columns : [];
+        const sampleRows = (Array.isArray(rows) ? rows : []).slice(0, 25);
+        const headerCharacters = columns.reduce(
+            (total, columnItem) => total + String(columnItem.label || '').trim().length,
+            0
+        );
+        const sampledValues = sampleRows.flatMap(row => (
+            columns.map(columnItem => String(row?.[columnItem.key] ?? '').trim())
+        )).filter(Boolean);
+        const averageValueLength = sampledValues.length
+            ? sampledValues.reduce((total, value) => total + value.length, 0) / sampledValues.length
+            : 0;
+        const longestValue = sampledValues.reduce(
+            (longest, value) => Math.max(longest, value.length),
+            0
+        );
+        const forcedOrientation = String(schema?.printOrientation || '').toLowerCase();
+        const landscape = forcedOrientation === 'landscape' || (
+            forcedOrientation !== 'portrait'
+            && (
+                columns.length >= 7
+                || (columns.length >= 6 && headerCharacters >= 78)
+                || (columns.length >= 5 && (averageValueLength >= 24 || longestValue >= 80))
+            )
+        );
+        const compact = landscape && (
+            columns.length >= 10
+            || headerCharacters >= 145
+            || averageValueLength >= 38
+        );
+        return {
+            orientation: landscape ? 'landscape' : 'portrait',
+            compact,
+            columnCount: columns.length + 1
+        };
+    }
+
     function renderDocumentationPages(schema, rows, reportNumber, createdAt) {
         if (!requiresEvidence(schema)) return '';
         return rows.filter(row => row._evidence?.dataUrl).map((row, index) => {
@@ -2394,15 +2414,23 @@
         const reportNumber = getReportNumber(schema, draft.fields);
         const projectName = draft.fields.project || draft.fields.lokasi || 'PROJECT / MITRA';
         const summary = summaryMarkup(schema, draft);
+        const printLayout = resolveReportPrintLayout(schema, rows);
+        preview.classList.toggle('print-layout-landscape', printLayout.orientation === 'landscape');
+        preview.classList.toggle('print-layout-portrait', printLayout.orientation === 'portrait');
         preview.innerHTML = `
             <div class="preview-toolbar">
-                <strong><i class="fa-regular fa-file-pdf"></i> ${options.finalized ? 'Laporan final' : 'Preview dokumen terstandarisasi'}</strong>
+                <strong>
+                    <i class="fa-regular fa-file-pdf"></i>
+                    ${options.finalized ? 'Laporan final' : 'Preview dokumen terstandarisasi'}
+                    <span class="preview-layout-badge">A4 ${printLayout.orientation === 'landscape' ? 'Landscape' : 'Portrait'}</span>
+                </strong>
                 <div>
                     <button type="button" data-close-preview><i class="fa-solid fa-xmark"></i> Tutup</button>
                     <button type="button" data-print-report><i class="fa-solid fa-print"></i> Cetak / Simpan PDF</button>
                 </div>
             </div>
-            <article class="print-sheet">
+            <article class="print-sheet report-${printLayout.orientation}${printLayout.compact ? ' report-compact' : ''}"
+                data-print-orientation="${printLayout.orientation}" data-print-columns="${printLayout.columnCount}">
                 <section class="print-identification-section">
                 <header class="print-brand">
                     <div class="print-logo-block">
@@ -2688,6 +2716,10 @@
         importDraft,
         isImportReferenced,
         openForm,
+        getPrintLayout(schemaId, rows = []) {
+            const schema = formSchemas.find(item => item.id === schemaId);
+            return schema ? cloneData(resolveReportPrintLayout(schema, rows)) : null;
+        },
         selectPanel: switchReportPanel,
         notify: showToast
     });
@@ -9667,26 +9699,25 @@
         module.innerHTML = `
             <div class="import-heading">
                 <div>
-                    <div class="report-eyebrow">Ingest dokumen & staging data</div>
-                    <h1>Ubah Laporan Manual Menjadi Draft Siap Pakai</h1>
-                    <p>Impor Markdown, Word, PDF, Excel, atau CSV. Seluruh pemrosesan berjalan di perangkat ini; hasil ekstraksi, sumber nilai, konflik, dan informasi yang belum terpetakan tetap diaudit.</p>
+                    <h1>Impor Laporan</h1>
+                    <p>Masukkan dokumen untuk dijadikan draft laporan yang siap diperiksa.</p>
                 </div>
                 <div class="import-local-badge">
                     <i class="fa-solid fa-shield-halved"></i>
-                    <div><strong>LOCAL PROCESSING</strong><span>Tidak mengunggah file ke layanan luar</span></div>
+                    <div><strong>PROSES LOKAL</strong><span>File tidak dikirim keluar</span></div>
                 </div>
             </div>
             <section class="import-dropzone" id="documentDropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen">
                 <div class="import-drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                 <div>
-                    <h2>Jatuhkan file atau folder di sini</h2>
-                    <p>MD/Markdown, DOCX/DOC, PDF, XLSX/XLS, CSV/TSV, serta gambar JPG/PNG untuk OCR. File RAR akan dicatat sebagai arsip yang perlu diekstrak.</p>
+                    <h2>Jatuhkan file di sini</h2>
+                    <p>Mendukung Markdown Laporan Cutting Bit, Word, PDF, Excel, CSV, dan gambar.</p>
                     <div class="import-drop-actions">
                         <button type="button" class="import-primary-button" id="chooseImportFiles">
                             <i class="fa-solid fa-file-circle-plus"></i> Pilih File
                         </button>
                         <button type="button" class="import-secondary-button" id="chooseImportFolder">
-                            <i class="fa-solid fa-folder-tree"></i> Audit Satu Folder
+                            <i class="fa-solid fa-folder-tree"></i> Pilih Folder
                         </button>
                     </div>
                 </div>
@@ -9696,23 +9727,17 @@
             </section>
             <div class="import-options-bar">
                 <div>
-                    <label for="documentOcrMode">Mode pembacaan gambar / scan</label>
+                    <label for="documentOcrMode">Pembacaan dokumen scan</label>
                     <select id="documentOcrMode" class="report-select">
-                        <option value="auto">OCR otomatis pada halaman tanpa teks</option>
-                        <option value="all">OCR maksimal, termasuk semua gambar tertanam</option>
-                        <option value="off">Tanpa OCR (audit akan menandai halaman scan)</option>
+                        <option value="auto">Otomatis</option>
+                        <option value="all">Baca semua gambar</option>
+                        <option value="off">Tanpa OCR</option>
                     </select>
-                </div>
-                <div class="import-pipeline">
-                    <span><b>1</b> Hash</span><i class="fa-solid fa-chevron-right"></i>
-                    <span><b>2</b> Ekstrak</span><i class="fa-solid fa-chevron-right"></i>
-                    <span><b>3</b> Cocokkan</span><i class="fa-solid fa-chevron-right"></i>
-                    <span><b>4</b> Review</span>
                 </div>
             </div>
             <div class="import-privacy-note">
                 <i class="fa-solid fa-lock"></i>
-                <span>Hasil ekstraksi dapat memuat data pribadi dan disimpan di IndexedDB browser ini tanpa enkripsi aplikasi. Hapus arsip ketika review selesai, terutama pada perangkat bersama.</span>
+                <span>Arsip tersimpan di browser ini. Hapus setelah selesai jika perangkat dipakai bersama.</span>
                 <button type="button" class="import-secondary-button" id="clearAllImports">
                     <i class="fa-regular fa-trash-can"></i> Hapus Semua Arsip
                 </button>

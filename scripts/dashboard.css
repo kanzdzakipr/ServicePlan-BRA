@@ -123,73 +123,6 @@
             outline: none;
         }
 
-        .sidebar-menu-group {
-            margin-bottom: 2px;
-        }
-
-        .sidebar-menu .reports-parent-link {
-            padding-right: 12px;
-        }
-
-        .sidebar-menu .reports-menu-toggle {
-            flex: 0 0 auto;
-            font-size: .68rem;
-            margin: 0 0 0 auto;
-            transform: rotate(0deg);
-            transition: transform .22s ease;
-            width: auto;
-        }
-
-        .sidebar-menu-group.is-open .reports-menu-toggle {
-            transform: rotate(180deg);
-        }
-
-        .sidebar-submenu {
-            list-style: none;
-            margin: 0;
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            padding: 0;
-            transform: translateY(-5px);
-            transition: max-height .24s ease, opacity .18s ease, padding .24s ease, transform .24s ease, visibility .24s;
-            visibility: hidden;
-        }
-
-        .sidebar-menu-group.is-open .sidebar-submenu {
-            max-height: 118px;
-            opacity: 1;
-            padding: 2px 0 6px;
-            transform: translateY(0);
-            visibility: visible;
-        }
-
-        .sidebar-menu .sidebar-submenu li a {
-            border-left-width: 3px;
-            font-size: .78rem;
-            height: 34px;
-            min-height: 34px;
-            padding: 0 14px 0 30px;
-        }
-
-        .sidebar-menu .sidebar-submenu li a i {
-            flex-basis: 22px;
-            font-size: .78rem;
-            margin-right: 7px;
-            width: 22px;
-        }
-
-        .sidebar-menu .sidebar-submenu li a.active {
-            background: rgba(36, 87, 197, .24);
-            border-left-color: #7da4ff;
-            color: #fff;
-        }
-
-        .sidebar-menu-group.is-open > .reports-parent-link {
-            background-color: rgba(255, 255, 255, .08);
-            color: #fff;
-        }
-
         /* Main Content Styles */
         .main-wrapper {
             flex-grow: 1;
@@ -716,74 +649,6 @@
             .sidebar-menu li a i {
                 font-size: 1rem;
                 margin: 0;
-            }
-
-            .reports-menu-toggle {
-                display: none;
-            }
-
-            .sidebar-menu-group .sidebar-submenu {
-                background: #2b3137;
-                border: 1px solid #4b5563;
-                border-radius: 0 8px 8px 0;
-                box-shadow: 10px 12px 28px rgba(0, 0, 0, .28);
-                display: block;
-                left: var(--sidebar-collapsed-width);
-                margin: 0;
-                max-height: none;
-                min-width: 205px;
-                opacity: 0;
-                overflow: hidden;
-                padding: 0;
-                pointer-events: none;
-                position: fixed;
-                top: var(--reports-flyout-top, 70px);
-                transform: translateX(-8px);
-                transition: opacity .18s ease, transform .18s ease, visibility .18s;
-                visibility: hidden;
-                width: 220px;
-                z-index: 2200;
-            }
-
-            .sidebar-menu-group.is-open .sidebar-submenu {
-                max-height: calc(100vh - 16px);
-                opacity: 1;
-                overflow-y: auto;
-                padding: 7px 0;
-                pointer-events: auto;
-                transform: translateX(0);
-                visibility: visible;
-            }
-
-            .sidebar-menu-group.is-open .sidebar-submenu::before {
-                color: #fff;
-                content: "Laporan & Form";
-                display: block;
-                font-size: .71rem;
-                font-weight: 700;
-                letter-spacing: .04em;
-                padding: 5px 14px 8px;
-                text-transform: uppercase;
-            }
-
-            .sidebar-menu .sidebar-menu-group.is-open .sidebar-submenu li a {
-                border-left-width: 3px;
-                font-size: .78rem;
-                height: 36px;
-                justify-content: flex-start;
-                min-height: 36px;
-                padding: 0 13px;
-            }
-
-            .sidebar-menu .sidebar-menu-group.is-open .sidebar-submenu li a i {
-                flex: 0 0 22px;
-                font-size: .78rem;
-                margin-right: 7px;
-                width: 22px;
-            }
-
-            .sidebar-menu-group.is-open .sidebar-submenu .nav-label {
-                display: block;
             }
 
             .content {
@@ -1722,7 +1587,7 @@
     align-items: center;
     display: flex;
     gap: 11px;
-    margin-bottom: 11px;
+    margin-bottom: 0;
 }
 
 .form-guidance-heading > i {
@@ -1758,17 +1623,6 @@
     gap: 7px;
     margin-left: auto;
     padding: 8px 10px;
-}
-
-.form-guidance ol {
-    font-size: .73rem;
-    line-height: 1.55;
-    margin: 0;
-    padding-left: 20px;
-}
-
-.form-guidance li + li {
-    margin-top: 5px;
 }
 
 .guide-modal-open {
@@ -2128,6 +1982,23 @@
     padding: 12px 16px;
 }
 
+.preview-toolbar > strong {
+    align-items: center;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.preview-layout-badge {
+    background: rgba(255, 255, 255, .14);
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 999px;
+    font-size: .62rem;
+    letter-spacing: .04em;
+    padding: 3px 8px;
+    text-transform: uppercase;
+}
+
 .preview-toolbar button {
     background: rgba(255,255,255,.12);
     border: 1px solid rgba(255,255,255,.28);
@@ -2148,6 +2019,24 @@
     max-width: 920px;
     min-height: 600px;
     padding: 28px 38px;
+}
+
+.print-sheet.report-landscape {
+    max-width: 1180px;
+    padding: 24px 30px;
+}
+
+.print-sheet.report-landscape .print-table {
+    font-size: .62rem;
+}
+
+.print-sheet.report-landscape .print-table th,
+.print-sheet.report-landscape .print-table td {
+    padding: 5px;
+}
+
+.print-sheet.report-landscape.report-compact .print-table {
+    font-size: .56rem;
 }
 
 .print-brand {
@@ -2679,6 +2568,21 @@
         size: A4 portrait;
     }
 
+    @page report-portrait {
+        margin: 30mm;
+        size: A4 portrait;
+    }
+
+    @page report-landscape {
+        margin: 12mm 14mm;
+        size: A4 landscape;
+    }
+
+    @page report-documentation {
+        margin: 30mm;
+        size: A4 portrait;
+    }
+
     html,
     body {
         background: #fff !important;
@@ -2733,6 +2637,14 @@
         width: 150mm !important;
     }
 
+    #reportPrintArea.print-layout-landscape,
+    #historyPrintArea.print-layout-landscape {
+        font-size: 9pt;
+        line-height: 1.3;
+        max-width: 269mm !important;
+        width: 269mm !important;
+    }
+
     #reportPrintArea:not(.active),
     #historyPrintArea:not(.active) {
         display: none !important;
@@ -2754,6 +2666,16 @@
         overflow: visible;
         padding: 0;
         width: 100%;
+    }
+
+    .print-sheet.report-portrait {
+        page: report-portrait;
+    }
+
+    .print-sheet.report-landscape {
+        font-size: 9pt;
+        line-height: 1.28;
+        page: report-landscape;
     }
 
     .print-identification-section,
@@ -3036,6 +2958,7 @@
         max-width: none;
         min-height: 237mm;
         overflow: visible;
+        page: report-documentation;
         padding: 10mm 0 0;
         page-break-before: always;
         page-break-after: always;
@@ -3142,6 +3065,111 @@
 
     .print-documentation-sheet .print-footer {
         margin-top: auto;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-identification-section {
+        padding-top: 4mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-brand {
+        gap: 4mm;
+        margin-bottom: 3mm;
+        padding-bottom: 2mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-logo-mark {
+        flex-basis: 13mm;
+        height: 11mm;
+        width: 13mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-brand h2,
+    .print-layout-landscape .print-sheet.report-landscape .print-brand strong,
+    .print-layout-landscape .print-sheet.report-landscape .print-brand small,
+    .print-layout-landscape .print-sheet.report-landscape .print-title > span,
+    .print-layout-landscape .print-sheet.report-landscape .print-document-number,
+    .print-layout-landscape .print-sheet.report-landscape .print-section-header small,
+    .print-layout-landscape .print-sheet.report-landscape .print-section-identity {
+        font-size: 9pt;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-title {
+        margin: 3mm 0 4mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-title h1,
+    .print-layout-landscape .print-sheet.report-landscape .print-section-header h2 {
+        font-size: 12pt;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-meta {
+        font-size: 9pt;
+        gap: 1.5mm 8mm;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-meta div {
+        gap: 2mm;
+        grid-template-columns: 34mm minmax(0, 1fr);
+        padding-bottom: 1mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-section-header {
+        margin-bottom: 2mm;
+        padding-bottom: 1.5mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-table,
+    .print-layout-landscape .print-sheet.report-landscape .print-table th,
+    .print-layout-landscape .print-sheet.report-landscape .print-table td {
+        font-size: 8.5pt !important;
+        line-height: 1.18;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-table th,
+    .print-layout-landscape .print-sheet.report-landscape .print-table td {
+        padding: 1mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape.report-compact .print-table,
+    .print-layout-landscape .print-sheet.report-landscape.report-compact .print-table th,
+    .print-layout-landscape .print-sheet.report-landscape.report-compact .print-table td {
+        font-size: 7.5pt !important;
+        line-height: 1.12;
+        padding: .8mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .calculation-summary,
+    .print-layout-landscape .print-sheet.report-landscape .summary-line,
+    .print-layout-landscape .print-sheet.report-landscape .summary-line.total,
+    .print-layout-landscape .print-sheet.report-landscape .print-approvals,
+    .print-layout-landscape .print-sheet.report-landscape .print-approvals strong,
+    .print-layout-landscape .print-sheet.report-landscape .print-approvals small,
+    .print-layout-landscape .print-sheet.report-landscape .print-approvals > div > span,
+    .print-layout-landscape .print-sheet.report-landscape .print-footer {
+        font-size: 9pt;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .summary-card {
+        width: 105mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-closing-section {
+        margin-top: 4mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-approvals {
+        margin-top: 7mm;
+        min-height: 26mm;
+    }
+
+    .print-layout-landscape .print-sheet.report-landscape .print-approvals .signature-space {
+        height: 12mm;
+    }
+
+    .print-layout-landscape .print-documentation-sheet {
+        margin: 0 auto;
+        width: 150mm;
     }
 }
 #documentImportModule {
