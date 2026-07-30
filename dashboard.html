@@ -950,7 +950,10 @@
 
                         <!-- TAB 4: RENCANA VS REALISASI PM -->
                         <div id="costTabSecPmComp" style="display:none;">
-                            <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-list-check"></i> Perbandingan Rencana vs Realisasi PM Jan-Feb 2026</h3>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                                <h3 style="margin:0; font-size:1.05rem;"><i class="fa-solid fa-list-check"></i> Perbandingan Rencana vs Realisasi PM Jan-Feb 2026</h3>
+                                <button class="btn btn-primary" onclick="openNewPMModal()"><i class="fa-solid fa-plus"></i> Rencana Service Berkala (PM)</button>
+                            </div>
                             <div class="table-responsive">
                                 <table style="margin: 0; font-size: 0.88rem;">
                                     <thead>
@@ -1342,6 +1345,38 @@
             <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e2e8f0; padding-top:12px;">
                 <button class="btn btn-secondary" onclick="closeModal('modalEditRbacPermission')">Batal</button>
                 <button class="btn btn-primary" onclick="saveRbacCellOverride()"><i class="fa-solid fa-floppy-disk"></i> Simpan Hak Akses</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Service Berkala PM -->
+    <div class="modal-overlay" id="modalNewPM">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Rencana Service Berkala (PM) Baru</h2>
+                <button onclick="closeModal('modalNewPM')"
+                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body form-group">
+                <label>Pilih Unit Alat Berat</label>
+                <select id="npm-id" class="form-control" onchange="autoFillPmParts()">
+                    <!-- Populated via JS -->
+                </select>
+                <label>Jadwal Service PM</label>
+                <input type="text" id="npm-schedule" class="form-control" placeholder="Contoh: PM 250 Hours, PM 500 Hours">
+                
+                <label>Rekomendasi Parts & Consumable (Auto-fill by Unit Type)</label>
+                <textarea id="npm-parts" rows="2" class="form-control" readonly style="background:#f1f5f9; cursor:not-allowed;" title="Sesuai master data spreadsheet Service Berkala"></textarea>
+                
+                <label>Estimasi Budget Rencana (Rp)</label>
+                <input type="number" id="npm-cost" class="form-control" readonly style="background:#f1f5f9; cursor:not-allowed;" title="Sesuai master data spreadsheet Service Berkala">
+                
+                <label>Lokasi Pelaksanaan (Site)</label>
+                <input type="text" id="npm-loc" class="form-control" placeholder="Contoh: Pit, Workshop Duri">
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px;">
+                <button class="btn btn-secondary" onclick="closeModal('modalNewPM')">Batal</button>
+                <button class="btn btn-primary" onclick="submitNewPM()">Simpan Rencana PM</button>
             </div>
         </div>
     </div>
@@ -4540,6 +4575,78 @@
                     </td>
                 </tr>
             `).join('');
+        };
+
+        const pmPartsDictionary = {
+            "SD 01": { estCost: 2000000, parts: "Track Roller 203-30-00140" },
+            "SD 02": { estCost: 2000000, parts: "Track Link Assy 203-32-00201" },
+            "SD 03": { estCost: 2000000, parts: "Element Air Cleaner InYN11P01013P1" },
+            "SD 05": { estCost: 2000000, parts: "Element Air Cleaner OutYN11P00001S002" },
+            "SD 06": { estCost: 2000000, parts: "Element2446U287S4" },
+            "PF 01": { estCost: 2000000, parts: "Accu / Batery N - 120 (24 Volt)" }
+        };
+
+        const getPmDataForUnit = (unitCode) => {
+            if (pmPartsDictionary[unitCode]) return pmPartsDictionary[unitCode];
+            // Fallbacks for other units based on prefixes from spreadsheet
+            if (unitCode.startsWith('SD') || unitCode.startsWith('PF')) return { estCost: 2000000, parts: "Filter Set & Oli 15w40 (Standard PM)" };
+            if (unitCode.startsWith('GR') || unitCode.startsWith('Dozer')) return { estCost: 5000000, parts: "Filter Set & Oli Transmisi (Standard PM)" };
+            if (unitCode.startsWith('Exca')) return { estCost: 3000000, parts: "Filter Set, Oli Hidrolik & Oli Mesin (Standard PM)" };
+            if (unitCode.startsWith('DT')) return { estCost: 4000000, parts: "Oli Mesin, Filter Oli, Filter Solar (Standard PM)" };
+            return { estCost: 2000000, parts: "General Parts Consumable (Oli 15w40, dsb)" };
+        };
+
+        window.openNewPMModal = function() {
+            const select = document.getElementById('npm-id');
+            // Populasikan daftar aset aktif
+            select.innerHTML = '<option value="" disabled selected>-- Pilih Unit --</option>' + 
+                globalData.assets.map(a => `<option value="${a.id}">${a.id} (${a.category}) - ${a.name}</option>`).join('');
+            
+            document.getElementById('npm-schedule').value = '';
+            document.getElementById('npm-parts').value = '';
+            document.getElementById('npm-cost').value = '';
+            document.getElementById('npm-loc').value = '';
+            
+            openModal('modalNewPM');
+        };
+
+        window.autoFillPmParts = function() {
+            const unitId = document.getElementById('npm-id').value;
+            const pmData = getPmDataForUnit(unitId);
+            document.getElementById('npm-cost').value = pmData.estCost;
+            document.getElementById('npm-parts').value = pmData.parts;
+        };
+
+        window.submitNewPM = function() {
+            const unitId = document.getElementById('npm-id').value;
+            const schedule = document.getElementById('npm-schedule').value;
+            const parts = document.getElementById('npm-parts').value;
+            const cost = parseInt(document.getElementById('npm-cost').value) || 0;
+            const loc = document.getElementById('npm-loc').value;
+
+            if (!unitId || !schedule) {
+                alert('Unit dan Jadwal Service harus diisi!');
+                return;
+            }
+
+            const asset = globalData.assets.find(a => a.id === unitId);
+            const modelName = asset ? asset.name : 'Unknown Model';
+
+            // Masukkan ke globalPmComparisons
+            globalPmComparisons.unshift({
+                unitId: unitId,
+                model: modelName,
+                schedule: schedule,
+                location: loc || 'Workshop',
+                planCost: cost,
+                actCost: 0, // Belum direalisasi
+                diff: cost,
+                notes: `Draft PM: Butuh parts (${parts})`
+            });
+
+            renderCostPmCompTable(globalPmComparisons);
+            closeModal('modalNewPM');
+            alert('Rencana Service PM Berhasil Ditambahkan dengan estimasi biaya dari spreadsheet!');
         };
 
         window.renderCostPmCompTable = function(pmList) {
