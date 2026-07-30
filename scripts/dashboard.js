@@ -15196,3 +15196,152 @@
         initExecutiveAnalyticsPanels();
     }
 })();
+
+// ==========================================
+// LOGISTICS & SPARE PARTS TRACKING
+// ==========================================
+
+const URL_LOGISTICS_DATA = "logistics_data.json";
+
+let dataPartsMasuk = [];
+let dataPartsKeluar = [];
+
+window.switchLogisticsTab = function(tabName) {
+    document.querySelectorAll('.logistics-tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tabs-container .tab-link').forEach(el => el.classList.remove('active'));
+    
+    document.getElementById(`logistics-tab-${tabName}`).style.display = 'block';
+    document.querySelector(`.tabs-container .tab-link[onclick="switchLogisticsTab('${tabName}')"]`).classList.add('active');
+    
+    // Auto load data if empty
+    if (tabName === 'masuk' && dataPartsMasuk.length === 0) loadLogisticsData('masuk');
+    if (tabName === 'keluar' && dataPartsKeluar.length === 0) loadLogisticsData('keluar');
+};
+
+window.loadLogisticsData = async function(specificTab = null) {
+    const loadMasuk = specificTab === null || specificTab === 'masuk';
+    const loadKeluar = specificTab === null || specificTab === 'keluar';
+    
+    if (loadMasuk) {
+        document.getElementById('table-logistics-masuk').style.display = 'none';
+        document.getElementById('logistics-masuk-loader').style.display = 'block';
+    }
+    if (loadKeluar) {
+        document.getElementById('table-logistics-keluar').style.display = 'none';
+        document.getElementById('logistics-keluar-loader').style.display = 'block';
+    }
+    
+    try {
+        if (!window.logisticsData) throw new Error("Data logistik lokal tidak ditemukan (pastikan logistics_data.js ter-load).");
+        const data = window.logisticsData;
+        
+        if (loadMasuk) {
+            dataPartsMasuk = data.masuk || [];
+            renderTableMasuk();
+            document.getElementById('logistics-masuk-loader').style.display = 'none';
+            document.getElementById('table-logistics-masuk').style.display = 'table';
+        }
+        
+        if (loadKeluar) {
+            dataPartsKeluar = data.keluar || [];
+            renderTableKeluar();
+            document.getElementById('logistics-keluar-loader').style.display = 'none';
+            document.getElementById('table-logistics-keluar').style.display = 'table';
+        }
+    } catch (e) {
+        console.error("Gagal menarik data logistik: ", e);
+        if (loadMasuk) document.getElementById('logistics-masuk-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data. Periksa file logistics_data.js.</p>`;
+        if (loadKeluar) document.getElementById('logistics-keluar-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data. Periksa file logistics_data.js.</p>`;
+    }
+};
+
+function renderTableMasuk(filterText = '') {
+    const tbody = document.querySelector('#table-logistics-masuk tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    const q = filterText.toLowerCase();
+    
+    const filtered = dataPartsMasuk.filter(item => {
+        return !q || 
+            (item.namaParts || '').toLowerCase().includes(q) || 
+            (item.noSpb || '').toLowerCase().includes(q) || 
+            (item.merk || '').toLowerCase().includes(q);
+    });
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
+        return;
+    }
+    
+    const limited = filtered.slice(0, 100);
+    const rowsHtml = limited.map(item => `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 12px 15px;">${escapeHtml(item.tanggal) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.noBukti) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.terimaDari) || '-'}</td>
+            <td style="padding: 12px 15px;"><strong>${escapeHtml(item.namaParts) || '-'}</strong></td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.partNumber) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.merk) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.satuan) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.jml) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.unit) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
+        </tr>
+    `).join('');
+    
+    tbody.innerHTML = rowsHtml;
+}
+
+function renderTableKeluar(filterText = '') {
+    const tbody = document.querySelector('#table-logistics-keluar tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    const q = filterText.toLowerCase();
+    
+    const filtered = dataPartsKeluar.filter(item => {
+        return !q || 
+            (item.namaSparepart || '').toLowerCase().includes(q) || 
+            (item.idUnit || '').toLowerCase().includes(q) || 
+            (item.noSpb || '').toLowerCase().includes(q);
+    });
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
+        return;
+    }
+    
+    const limited = filtered.slice(0, 100);
+    const rowsHtml = limited.map(item => `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 12px 15px;">${escapeHtml(item.no) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.tglSpb) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.noJo) || '-'}</td>
+            <td style="padding: 12px 15px;"><span class="badge" style="background:var(--primary); color:white; padding:4px 8px; border-radius:4px;">${escapeHtml(item.idUnit) || '-'}</span></td>
+            <td style="padding: 12px 15px;"><strong>${escapeHtml(item.namaSparepart) || '-'}</strong></td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.spesifikasi) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.qty) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.satuan) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.status) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(item.kesimpulan) || '-'}</td>
+        </tr>
+    `).join('');
+    
+    tbody.innerHTML = rowsHtml;
+}
+
+// Bind search listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const sMasuk = document.getElementById('search-logistics-masuk');
+    const sKeluar = document.getElementById('search-logistics-keluar');
+    if(sMasuk) sMasuk.addEventListener('input', (e) => renderTableMasuk(e.target.value));
+    if(sKeluar) sKeluar.addEventListener('input', (e) => renderTableKeluar(e.target.value));
+    
+    // Auto load data on initialization
+    if (window.loadLogisticsData) {
+        window.loadLogisticsData();
+    }
+});
+
