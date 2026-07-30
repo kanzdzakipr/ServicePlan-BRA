@@ -1,0 +1,4959 @@
+[
+  {
+    "modelName": "BUDGETING 2026",
+    "totalItems": 34,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "JANUARI",
+        "partNo": "ITEM DESKRIPSI",
+        "qty": "FEBRUARI"
+      },
+      {
+        "description": "Rp0",
+        "partNo": null,
+        "qty": "Rp0"
+      },
+      {
+        "description": "HM Service",
+        "partNo": "Nama Asset",
+        "qty": "biaya service"
+      },
+      {
+        "description": "3.497",
+        "partNo": "Bomag Smooth Drum Compactor BW211D-40 SL",
+        "qty": "1"
+      },
+      {
+        "description": "3.987",
+        "partNo": "Bomag Smooth Drum Compactor BW211D-40",
+        "qty": "1"
+      },
+      {
+        "description": "2.303",
+        "partNo": "Bomag Smooth Drum Compactor BW211D-40SL",
+        "qty": "1"
+      },
+      {
+        "description": "1.316",
+        "partNo": "Bomag Smooth Drum BW211D-40",
+        "qty": "1"
+      },
+      {
+        "description": "1.847",
+        "partNo": "Bomag Smooth Drum BW211D-40",
+        "qty": "1"
+      },
+      {
+        "description": "01-03-4650",
+        "partNo": "Bomag Pad Foot Compactor BW211D-40",
+        "qty": "1"
+      },
+      {
+        "description": "01-01-2448",
+        "partNo": "Bomag Pad Foot Compactor BW211D-40",
+        "qty": "1"
+      },
+      {
+        "description": "1.810",
+        "partNo": "Bomag Pad Foot Compactor BW211D-40SL",
+        "qty": "1"
+      },
+      {
+        "description": "1626.2",
+        "partNo": "CAT Pad Foot CS10GC",
+        "qty": "1"
+      },
+      {
+        "description": "hm mati",
+        "partNo": "Bulldozer Caterpillar D6G",
+        "qty": "1"
+      },
+      {
+        "description": "14.242",
+        "partNo": "Bulldozer Caterpillar D6G 2XL",
+        "qty": "1"
+      },
+      {
+        "description": "336",
+        "partNo": "Bulldozer D7G2",
+        "qty": "1"
+      },
+      {
+        "description": "by ut",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "1"
+      },
+      {
+        "description": "stnby",
+        "partNo": "Excavator Caterpillar 320D S/N",
+        "qty": "1"
+      },
+      {
+        "description": "4.000",
+        "partNo": "Excavator CAT 320 GX new",
+        "qty": "1"
+      },
+      {
+        "description": "4.500",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "1"
+      },
+      {
+        "description": "3.000",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1"
+      },
+      {
+        "description": "3.500",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1"
+      },
+      {
+        "description": "2.500",
+        "partNo": "Excavator Caterpillar 305",
+        "qty": "1"
+      },
+      {
+        "description": "2.000",
+        "partNo": "Excavator Caterpillar 305",
+        "qty": "1"
+      },
+      {
+        "description": "by hino",
+        "partNo": "Dump Truck HINO",
+        "qty": "1"
+      },
+      {
+        "description": "indotek",
+        "partNo": "Dump Truck HINO",
+        "qty": "1"
+      },
+      {
+        "description": "BY ISUZU",
+        "partNo": "Dumptruck Isuzu",
+        "qty": "1"
+      },
+      {
+        "description": "Rp6.426.123",
+        "partNo": "oli 15 w 40",
+        "qty": "1"
+      },
+      {
+        "description": "Rp5.985.342",
+        "partNo": "oli 30",
+        "qty": "1"
+      },
+      {
+        "description": "Rp5.590.959",
+        "partNo": "oli 10",
+        "qty": "1"
+      },
+      {
+        "description": "Rp14.818.411",
+        "partNo": "HYDO ADV 30-208 L",
+        "qty": "1"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      },
+      {
+        "description": "MEKANIK",
+        "partNo": null,
+        "qty": "SPARE PART"
+      }
+    ]
+  },
+  {
+    "modelName": "Sheet34",
+    "totalItems": 75,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "Kode Unit",
+        "partNo": "Nama Asset",
+        "qty": "Lokasi"
+      },
+      {
+        "description": "SD 01",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40 SL",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "SD 02",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40",
+        "qty": "DURI"
+      },
+      {
+        "description": "SD 03",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40SL",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "SD 05",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40",
+        "qty": "DURI"
+      },
+      {
+        "description": "SD 06",
+        "partNo": "Bomag Smooth Drum BW211D-40",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "PF 01",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "PF 02",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40",
+        "qty": "DURI"
+      },
+      {
+        "description": "PF 03",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40SL",
+        "qty": "DURI"
+      },
+      {
+        "description": "PF 04",
+        "partNo": "CAT Pad Foot CS10GC",
+        "qty": "DURI"
+      },
+      {
+        "description": "SD 07",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40SL",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "SD 08",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40SL",
+        "qty": "DURI"
+      },
+      {
+        "description": "SD 09",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40SL",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "PF 05",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40SL (WITH SOIL)",
+        "qty": "DURI"
+      },
+      {
+        "description": "PF 06",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40SL (WITH SOIL)",
+        "qty": "DURI"
+      },
+      {
+        "description": "SD 10",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40 SL",
+        "qty": "DURI"
+      },
+      {
+        "description": "SD 11",
+        "partNo": "CAT Pad Foot CS10GC",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "SD 12",
+        "partNo": "CAT Pad Foot CS10GC",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "PF07",
+        "partNo": "SAKAI Sheep Foot Compactor SV700TF",
+        "qty": "DURI"
+      },
+      {
+        "description": "PF08",
+        "partNo": "Sheep Foot XCMG  XS250PD",
+        "qty": "1"
+      },
+      {
+        "description": "GR 1",
+        "partNo": "MOTOR GRADER CAT 120 K",
+        "qty": "DURI"
+      },
+      {
+        "description": "GR 2",
+        "partNo": "MOTOR GRADER KOMATSU GD535-5",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "GR3",
+        "partNo": "MOTOR GRADER KOMATSU GD535-5",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "GR4",
+        "partNo": "MOTOR GRADER KOMATSU GD535-5",
+        "qty": "DURI"
+      },
+      {
+        "description": "GR5",
+        "partNo": "MOTOR GRADER XCMG GR135 MAX",
+        "qty": "DURI"
+      },
+      {
+        "description": "Dozer 01",
+        "partNo": "Bulldozer Caterpillar D6G",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Dozer 03",
+        "partNo": "Bulldozer Caterpillar D6G  2XL",
+        "qty": "DURI"
+      },
+      {
+        "description": "Dozer 04",
+        "partNo": "Bulldozer Komatsu D85ESS-2",
+        "qty": "DURI"
+      },
+      {
+        "description": "Dozer 06",
+        "partNo": "Bulldozer Caterpillar D6R",
+        "qty": "DURI"
+      },
+      {
+        "description": "Dozer 05",
+        "partNo": "Bulldozer Caterpillar D6G 2XL",
+        "qty": "DURI"
+      },
+      {
+        "description": "Dozer 07",
+        "partNo": "Bulldozer Caterpillar D7G2",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Dozer 08",
+        "partNo": "Bulldozer Komatsu D85ESS-2",
+        "qty": "DURI"
+      },
+      {
+        "description": "Dozer 09",
+        "partNo": "Bulldozer Komatsu D85ESS-2",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Dozer 10",
+        "partNo": "Bulldozer Zoomlion ZD170G",
+        "qty": "DURI"
+      },
+      {
+        "description": "Dozer 11",
+        "partNo": "Bulldozer Shantui SD16E",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 01",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 02",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 04",
+        "partNo": "Excavator Caterpillar 320D S/N",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Exca 06",
+        "partNo": "Excavator CAT 320 GX new",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 07",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 10",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Exca 11",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Exca 12",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Exca 13",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 14",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Exca 15",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Exca 16",
+        "partNo": "Excavator Caterpillar 305.5E2",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 17",
+        "partNo": "Excavator Caterpillar 305.5E2",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 18",
+        "partNo": "Excavator Caterpillar 305.5E2",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 19",
+        "partNo": "Excavator Caterpillar 305.5E2",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 20",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 21",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 22",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 23",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 24",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 25",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "DURI"
+      },
+      {
+        "description": "Exca 26",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Exca 27",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Exca 28",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "Exca 29",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "DURI"
+      },
+      {
+        "description": "BL 01",
+        "partNo": "Backhoe Loader JCB 3CX",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "WL 01",
+        "partNo": "Wheel Loader Caterpillar 950 GC",
+        "qty": "PRABUMULIH"
+      },
+      {
+        "description": "WL 02",
+        "partNo": "Wheel Loader SEM 655D (Pallet Fork)",
+        "qty": "DURI"
+      },
+      {
+        "description": "CC-01",
+        "partNo": "Crawler Crane Zoomlion ZCC600V",
+        "qty": "DURI"
+      },
+      {
+        "description": "CC-02",
+        "partNo": "Crawler Crane XCMG XGC35HD",
+        "qty": "DURI"
+      },
+      {
+        "description": "RM-01",
+        "partNo": "Road Cold Recycler XCMG XLZ2303K",
+        "qty": "DURI"
+      },
+      {
+        "description": "RM-02",
+        "partNo": "Road Reclaimers Caterpillar RM500B",
+        "qty": "DURI"
+      },
+      {
+        "description": "CS-01",
+        "partNo": "Powder Binder Spreader XCMG XKC185",
+        "qty": "DURI"
+      },
+      {
+        "description": "CS-02",
+        "partNo": "Powder Binder Spreader XCMG XKC183",
+        "qty": "DURI"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      },
+      {
+        "description": "Bulan 6",
+        "partNo": "Bulan 4",
+        "qty": "Bulan 7"
+      },
+      {
+        "description": "X",
+        "partNo": "V",
+        "qty": "1"
+      },
+      {
+        "description": "order part",
+        "partNo": "Biaya Corrective",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "BIAYA PER BULAN",
+    "totalItems": 32,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "HM Service",
+        "partNo": "Nama Asset",
+        "qty": "biaya service"
+      },
+      {
+        "description": "3.497",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40 SL",
+        "qty": "Rp5.322.500"
+      },
+      {
+        "description": "3.987",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40",
+        "qty": "Rp5.322.500"
+      },
+      {
+        "description": "2.303",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40SL",
+        "qty": "Rp1.793.140"
+      },
+      {
+        "description": "1.316",
+        "partNo": "Bomag Smooth Drum BW211D-40",
+        "qty": "Rp1.662.110"
+      },
+      {
+        "description": "1.847",
+        "partNo": "Bomag Smooth Drum BW211D-40",
+        "qty": "Rp1.793.140"
+      },
+      {
+        "description": "01-03-4650",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40",
+        "qty": "Rp1.662.110"
+      },
+      {
+        "description": "01-01-2448",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40 <br><br>",
+        "qty": "Rp1.662.110"
+      },
+      {
+        "description": "1.810",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40SL",
+        "qty": "Rp1.662.110"
+      },
+      {
+        "description": "1626.2",
+        "partNo": "CAT Pad Foot CS10GC",
+        "qty": "Rp2.830.986"
+      },
+      {
+        "description": "hm mati",
+        "partNo": "Bulldozer Caterpillar D6G",
+        "qty": "Rp0"
+      },
+      {
+        "description": "14.242",
+        "partNo": "Bulldozer Caterpillar D6G 2XL",
+        "qty": "Rp575.000"
+      },
+      {
+        "description": "336",
+        "partNo": "Bulldozer D7G2",
+        "qty": "Rp0"
+      },
+      {
+        "description": "by ut",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "Rp0"
+      },
+      {
+        "description": "stnby",
+        "partNo": "Excavator Caterpillar 320D S/N",
+        "qty": "Rp0"
+      },
+      {
+        "description": "4.000",
+        "partNo": "Excavator CAT 320 GX new",
+        "qty": "Rp0"
+      },
+      {
+        "description": "4.500",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "Rp0"
+      },
+      {
+        "description": "3.000",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "Rp7.517.250"
+      },
+      {
+        "description": "3.500",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "Rp1.860.355"
+      },
+      {
+        "description": "2.500",
+        "partNo": "Excavator Caterpillar 305",
+        "qty": "Rp2.033.421"
+      },
+      {
+        "description": "2.000",
+        "partNo": "Excavator Caterpillar 305",
+        "qty": "Rp0"
+      },
+      {
+        "description": "by hino",
+        "partNo": "Dump Truck HINO",
+        "qty": "Rp0"
+      },
+      {
+        "description": "indotek",
+        "partNo": "Dump Truck HINO",
+        "qty": "Rp0"
+      },
+      {
+        "description": "Rp6.426.123",
+        "partNo": "oli 15 w 40",
+        "qty": "Rp19.278.369"
+      },
+      {
+        "description": "Rp5.985.342",
+        "partNo": "oli 30",
+        "qty": "Rp11.970.684"
+      },
+      {
+        "description": "Rp5.590.959",
+        "partNo": "oli 10",
+        "qty": "Rp11.181.918"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      },
+      {
+        "description": "Rp2.000.000",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40 SL",
+        "qty": "1"
+      },
+      {
+        "description": "0",
+        "partNo": "MOTOR GRADER KOMATSU GD535-5",
+        "qty": "alat waranty"
+      },
+      {
+        "description": "Rp146.000.000",
+        "partNo": "TOTAL",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "EXCA CAT 320D",
+    "totalItems": 3,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OEM",
+        "partNo": "GENUINE",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "catatan hm 2024",
+    "totalItems": 68,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "hm 10  januari",
+        "partNo": "ALAT",
+        "qty": "hm 14 maret"
+      },
+      {
+        "description": "standby di bkp",
+        "partNo": "Bomag Single Drum Compactor BW211D-40",
+        "qty": "1"
+      },
+      {
+        "description": "?",
+        "partNo": "Bomag Single Drum Compactor BW211D-40SL",
+        "qty": "1"
+      },
+      {
+        "description": "dijual",
+        "partNo": "COMPACTOR DRUM CAT CS533E",
+        "qty": "1"
+      },
+      {
+        "description": "1.063",
+        "partNo": "Bomag Single Drum BW211D-40",
+        "qty": "1"
+      },
+      {
+        "description": "18.033",
+        "partNo": "Bomag Single Drum BW211D-40",
+        "qty": "1"
+      },
+      {
+        "description": "01-03-4650",
+        "partNo": "Bomag Single Foot Compactor BW211D-40S6",
+        "qty": "1"
+      },
+      {
+        "description": "2.160",
+        "partNo": "Bomag Single Foot Compactor BW211D-40",
+        "qty": "1"
+      },
+      {
+        "description": "1.551",
+        "partNo": "Bomag Single Foot Compactor BW211D-40S6",
+        "qty": "1"
+      },
+      {
+        "description": "1.549,8",
+        "partNo": "compactor Single Foot Cat CS10GC",
+        "qty": "1"
+      },
+      {
+        "description": "14.874",
+        "partNo": "Bulldozer Caterpillar D6G",
+        "qty": "1"
+      },
+      {
+        "description": "standby",
+        "partNo": "Bulldozer Komatsu D70LE-8",
+        "qty": "1"
+      },
+      {
+        "description": "7.997,5",
+        "partNo": "Excavator PC 210-10M0/P1 S/N C01530",
+        "qty": "1"
+      },
+      {
+        "description": "4.116,7",
+        "partNo": "Excavator CAT 320 GX new S/N",
+        "qty": "1"
+      },
+      {
+        "description": "2.607,5",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1"
+      },
+      {
+        "description": "3.249",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1"
+      },
+      {
+        "description": "2.987",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "1"
+      },
+      {
+        "description": "2.908,8",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "1"
+      },
+      {
+        "description": "2.849,1",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1"
+      },
+      {
+        "description": "2.618,4",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1"
+      },
+      {
+        "description": "2.098,2",
+        "partNo": "Excavator GC 305",
+        "qty": "1"
+      },
+      {
+        "description": "1.975,5",
+        "partNo": "Excavator GC 305",
+        "qty": "1"
+      },
+      {
+        "description": "2.277,3",
+        "partNo": "Excavator GC 305",
+        "qty": "1"
+      },
+      {
+        "description": "1.499,2",
+        "partNo": "Excavator GC 305",
+        "qty": "1"
+      },
+      {
+        "description": "2.963,1",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "1"
+      },
+      {
+        "description": "2.502",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "1"
+      },
+      {
+        "description": "203.491",
+        "partNo": "Dump Truck HINO FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      },
+      {
+        "description": "minggu 2",
+        "partNo": "minggu 4",
+        "qty": "minggu 3"
+      },
+      {
+        "description": "2.835",
+        "partNo": "2.779",
+        "qty": "2.891"
+      },
+      {
+        "description": "3.117",
+        "partNo": "3.019",
+        "qty": "3.166"
+      },
+      {
+        "description": "1.843",
+        "partNo": "1.745",
+        "qty": "1.892"
+      },
+      {
+        "description": "1.056",
+        "partNo": "1.000",
+        "qty": "1.112"
+      },
+      {
+        "description": "1.042",
+        "partNo": "986",
+        "qty": "1.098"
+      },
+      {
+        "description": "1.037",
+        "partNo": null,
+        "qty": "1.086"
+      },
+      {
+        "description": "4.410",
+        "partNo": "4.354",
+        "qty": "4.466"
+      },
+      {
+        "description": "1.770",
+        "partNo": "1.672",
+        "qty": "1.819"
+      },
+      {
+        "description": "1.083",
+        "partNo": "985",
+        "qty": "1.132"
+      },
+      {
+        "description": "15.891",
+        "partNo": "15.842",
+        "qty": "15.940"
+      },
+      {
+        "description": "1.258",
+        "partNo": "1.160",
+        "qty": "1.307"
+      },
+      {
+        "description": "771",
+        "partNo": "673",
+        "qty": "820"
+      },
+      {
+        "description": "13.707",
+        "partNo": "13.609",
+        "qty": "13.756"
+      },
+      {
+        "description": "20.147",
+        "partNo": "20.049",
+        "qty": "20.196"
+      },
+      {
+        "description": "474",
+        "partNo": "362",
+        "qty": "530"
+      },
+      {
+        "description": "7.072",
+        "partNo": "6.974",
+        "qty": "7.121"
+      },
+      {
+        "description": "2.092",
+        "partNo": "2.036",
+        "qty": "2.148"
+      },
+      {
+        "description": "13.692",
+        "partNo": "13.636",
+        "qty": "13.748"
+      },
+      {
+        "description": "7.619",
+        "partNo": "7.563",
+        "qty": "7.675"
+      },
+      {
+        "description": "2.741",
+        "partNo": "2.629",
+        "qty": "2.797"
+      },
+      {
+        "description": "1.907",
+        "partNo": "1.795",
+        "qty": "1.963"
+      },
+      {
+        "description": "1.903",
+        "partNo": "1.791",
+        "qty": "1.959"
+      },
+      {
+        "description": "2.274",
+        "partNo": "2.162",
+        "qty": "2.330"
+      },
+      {
+        "description": "2.256",
+        "partNo": "2.144",
+        "qty": "2.312"
+      },
+      {
+        "description": "1.563",
+        "partNo": "1.507",
+        "qty": "1.619"
+      },
+      {
+        "description": "1.609",
+        "partNo": "1.553",
+        "qty": "1.665"
+      },
+      {
+        "description": "976",
+        "partNo": "864",
+        "qty": "1.032"
+      },
+      {
+        "description": "791",
+        "partNo": "679",
+        "qty": "847"
+      },
+      {
+        "description": "867",
+        "partNo": "#REF!",
+        "qty": "923"
+      },
+      {
+        "description": "940",
+        "partNo": "#REF!",
+        "qty": "996"
+      },
+      {
+        "description": "1.755",
+        "partNo": null,
+        "qty": "1.811"
+      },
+      {
+        "description": "1.851",
+        "partNo": null,
+        "qty": "1.907"
+      },
+      {
+        "description": "X",
+        "partNo": "V",
+        "qty": "Y"
+      },
+      {
+        "description": "minggu 3",
+        "partNo": "minggu 1",
+        "qty": "minggu 4"
+      },
+      {
+        "description": "AH",
+        "partNo": "AF",
+        "qty": "AI"
+      },
+      {
+        "description": "servis hm mei (hm )",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "minggu 1",
+        "partNo": "minggu 3",
+        "qty": "minggu 2"
+      }
+    ]
+  },
+  {
+    "modelName": "hm 2023",
+    "totalItems": 135,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "3.592",
+        "partNo": "Bomag Single Drum Compactor BW211D-40",
+        "qty": "2.921"
+      },
+      {
+        "description": "1.993",
+        "partNo": "Bomag Single Drum Compactor BW211D-40SL",
+        "qty": "1.647"
+      },
+      {
+        "description": "rusak",
+        "partNo": "COMPACTOR DRUM CAT CS533E",
+        "qty": "1.000"
+      },
+      {
+        "description": "1.020",
+        "partNo": "Bomag Single Drum BW211D-40",
+        "qty": "873"
+      },
+      {
+        "description": "1.288",
+        "partNo": "Bomag Single Drum BW211D-40",
+        "qty": "988"
+      },
+      {
+        "description": "4.416",
+        "partNo": "Bomag Single Foot Compactor BW211D-40S6",
+        "qty": "4.294"
+      },
+      {
+        "description": "1.883",
+        "partNo": "Bomag Single Foot Compactor BW211D-40",
+        "qty": "1.574"
+      },
+      {
+        "description": "1.518",
+        "partNo": "Bomag Single Foot Compactor BW211D-40S6",
+        "qty": "1.420"
+      },
+      {
+        "description": "1.299",
+        "partNo": "compactor Single Foot Cat CS10GC",
+        "qty": "936"
+      },
+      {
+        "description": "9.628",
+        "partNo": "GREDER",
+        "qty": "1"
+      },
+      {
+        "description": "15.833",
+        "partNo": "Bulldozer Caterpillar D6G",
+        "qty": "15.502"
+      },
+      {
+        "description": "1.431",
+        "partNo": "Bulldozer Komatsu D70LE-8",
+        "qty": "1.062"
+      },
+      {
+        "description": "575",
+        "partNo": "Bulldozer D85E SS",
+        "qty": "575"
+      },
+      {
+        "description": "13.805",
+        "partNo": "Bulldozer CAT D6g XL",
+        "qty": "13.511"
+      },
+      {
+        "description": "rusak hm?",
+        "partNo": "Bulldozer D7G2",
+        "qty": "0"
+      },
+      {
+        "description": "6.224",
+        "partNo": "Excavator PC 210-10M0/P1 S/N C01530",
+        "qty": "alat rusak"
+      },
+      {
+        "description": "7.343",
+        "partNo": "Excavator PC 210-10M0/P1 S/N C01531",
+        "qty": "6.925"
+      },
+      {
+        "description": "2.427",
+        "partNo": "Excavator Caterpillar 320D S/N BZP03563",
+        "qty": "1.934"
+      },
+      {
+        "description": "13.757",
+        "partNo": "Excavator Komatsu PC 200-8 M0/U S/N C17877",
+        "qty": "13.580"
+      },
+      {
+        "description": "7.825",
+        "partNo": "Excavator Komatsu PC 200-8 S/N C19371",
+        "qty": "7.507"
+      },
+      {
+        "description": "3.203",
+        "partNo": "Excavator CAT 320 GX new S/N",
+        "qty": "2.517"
+      },
+      {
+        "description": "2.811",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "2.397"
+      },
+      {
+        "description": "2.293",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1.739"
+      },
+      {
+        "description": "2.956",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1.735"
+      },
+      {
+        "description": "2.430",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "2.050"
+      },
+      {
+        "description": "2.547",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "2.032"
+      },
+      {
+        "description": "1.922",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1.451"
+      },
+      {
+        "description": "1.895",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "1.497"
+      },
+      {
+        "description": "1.534",
+        "partNo": "Excavator GC 305",
+        "qty": "808"
+      },
+      {
+        "description": "1521.8",
+        "partNo": "Excavator GC 305",
+        "qty": "755"
+      },
+      {
+        "description": "22.155",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "1.674"
+      },
+      {
+        "description": "2.059",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "1.792"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      },
+      {
+        "description": "minggu 3",
+        "partNo": "minggu 1",
+        "qty": "minggu 4"
+      },
+      {
+        "description": "2.891",
+        "partNo": "2.779",
+        "qty": "2.947"
+      },
+      {
+        "description": "3.166",
+        "partNo": "3.068",
+        "qty": "3.215"
+      },
+      {
+        "description": "1.892",
+        "partNo": "1.794",
+        "qty": "1.941"
+      },
+      {
+        "description": "1.112",
+        "partNo": "1.000",
+        "qty": "1.168"
+      },
+      {
+        "description": "1.098",
+        "partNo": "986",
+        "qty": "1.154"
+      },
+      {
+        "description": "1.086",
+        "partNo": "1.037",
+        "qty": "1.135"
+      },
+      {
+        "description": "4.466",
+        "partNo": "4.354",
+        "qty": "4.522"
+      },
+      {
+        "description": "1.819",
+        "partNo": "1.721",
+        "qty": "1.868"
+      },
+      {
+        "description": "1.132",
+        "partNo": "1.034",
+        "qty": "1.181"
+      },
+      {
+        "description": "15.940",
+        "partNo": "15.842",
+        "qty": "15.989"
+      },
+      {
+        "description": "1.307",
+        "partNo": "1.209",
+        "qty": "1.356"
+      },
+      {
+        "description": "820",
+        "partNo": "722",
+        "qty": "869"
+      },
+      {
+        "description": "13.756",
+        "partNo": "13.658",
+        "qty": "13.805"
+      },
+      {
+        "description": "20.196",
+        "partNo": "20.098",
+        "qty": "20.245"
+      },
+      {
+        "description": "530",
+        "partNo": "418",
+        "qty": "586"
+      },
+      {
+        "description": "7.121",
+        "partNo": "7.023",
+        "qty": "7.170"
+      },
+      {
+        "description": "2.148",
+        "partNo": "2.036",
+        "qty": "2.204"
+      },
+      {
+        "description": "13.748",
+        "partNo": "13.636",
+        "qty": "13.804"
+      },
+      {
+        "description": "7.675",
+        "partNo": "7.563",
+        "qty": "7.731"
+      },
+      {
+        "description": "2.797",
+        "partNo": "2.685",
+        "qty": "2.853"
+      },
+      {
+        "description": "1.963",
+        "partNo": "1.851",
+        "qty": "2.019"
+      },
+      {
+        "description": "1.959",
+        "partNo": "1.847",
+        "qty": "2.015"
+      },
+      {
+        "description": "2.330",
+        "partNo": "2.218",
+        "qty": "2.386"
+      },
+      {
+        "description": "2.312",
+        "partNo": "2.200",
+        "qty": "2.368"
+      },
+      {
+        "description": "1.619",
+        "partNo": "1.507",
+        "qty": "1.675"
+      },
+      {
+        "description": "1.665",
+        "partNo": "1.553",
+        "qty": "1.721"
+      },
+      {
+        "description": "1.032",
+        "partNo": "920",
+        "qty": "1.088"
+      },
+      {
+        "description": "847",
+        "partNo": "735",
+        "qty": "903"
+      },
+      {
+        "description": "923",
+        "partNo": "811",
+        "qty": "979"
+      },
+      {
+        "description": "996",
+        "partNo": "884",
+        "qty": "1.052"
+      },
+      {
+        "description": "1.811",
+        "partNo": "1.755",
+        "qty": "1.867"
+      },
+      {
+        "description": "1.907",
+        "partNo": "1.851",
+        "qty": "1.963"
+      },
+      {
+        "description": "X",
+        "partNo": "V",
+        "qty": "Y"
+      },
+      {
+        "description": "servis september (hm )",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "minggu 1",
+        "partNo": "minggu 3",
+        "qty": "minggu 2"
+      },
+      {
+        "description": "3.451",
+        "partNo": "3.339",
+        "qty": "3.507"
+      },
+      {
+        "description": "3.656",
+        "partNo": "3.558",
+        "qty": "3.705"
+      },
+      {
+        "description": "2.382",
+        "partNo": "2.284",
+        "qty": "2.431"
+      },
+      {
+        "description": "1.672",
+        "partNo": "1.560",
+        "qty": "1.728"
+      },
+      {
+        "description": "1.658",
+        "partNo": "1.546",
+        "qty": "1.714"
+      },
+      {
+        "description": "1.576",
+        "partNo": "1.478",
+        "qty": "1.625"
+      },
+      {
+        "description": "5.026",
+        "partNo": "4.914",
+        "qty": "5.082"
+      },
+      {
+        "description": "2.309",
+        "partNo": "2.211",
+        "qty": "2.358"
+      },
+      {
+        "description": "1.622",
+        "partNo": "1.524",
+        "qty": "1.671"
+      },
+      {
+        "description": "16.430",
+        "partNo": "16.332",
+        "qty": "16.479"
+      },
+      {
+        "description": "1.797",
+        "partNo": "1.699",
+        "qty": "1.846"
+      },
+      {
+        "description": "1.310",
+        "partNo": "1.212",
+        "qty": "1.359"
+      },
+      {
+        "description": "14.246",
+        "partNo": "14.148",
+        "qty": "14.295"
+      },
+      {
+        "description": "20.686",
+        "partNo": "20.588",
+        "qty": "20.735"
+      },
+      {
+        "description": "1.090",
+        "partNo": "978",
+        "qty": "1.146"
+      },
+      {
+        "description": "7.611",
+        "partNo": "7.513",
+        "qty": "7.660"
+      },
+      {
+        "description": "2.708",
+        "partNo": "2.596",
+        "qty": "2.764"
+      },
+      {
+        "description": "14.308",
+        "partNo": "14.196",
+        "qty": "14.364"
+      },
+      {
+        "description": "8.235",
+        "partNo": "8.123",
+        "qty": "8.291"
+      },
+      {
+        "description": "3.357",
+        "partNo": "3.245",
+        "qty": "3.413"
+      },
+      {
+        "description": "2.523",
+        "partNo": "2.411",
+        "qty": "2.579"
+      },
+      {
+        "description": "2.519",
+        "partNo": "2.407",
+        "qty": "2.575"
+      },
+      {
+        "description": "2.890",
+        "partNo": "2.778",
+        "qty": "2.946"
+      },
+      {
+        "description": "2.872",
+        "partNo": "2.760",
+        "qty": "2.928"
+      },
+      {
+        "description": "2.179",
+        "partNo": "2.067",
+        "qty": "2.235"
+      },
+      {
+        "description": "2.225",
+        "partNo": "2.113",
+        "qty": "2.281"
+      },
+      {
+        "description": "1.592",
+        "partNo": "1.480",
+        "qty": "1.648"
+      },
+      {
+        "description": "1.407",
+        "partNo": "1.295",
+        "qty": "1.463"
+      },
+      {
+        "description": "1.483",
+        "partNo": "1.371",
+        "qty": "1.539"
+      },
+      {
+        "description": "1.556",
+        "partNo": "1.444",
+        "qty": "1.612"
+      },
+      {
+        "description": "2.371",
+        "partNo": "2.259",
+        "qty": "2.427"
+      },
+      {
+        "description": "2.467",
+        "partNo": "2.355",
+        "qty": "2.523"
+      },
+      {
+        "description": "AH",
+        "partNo": "AF",
+        "qty": "AI"
+      },
+      {
+        "description": "4.011",
+        "partNo": "3.899",
+        "qty": "4.067"
+      },
+      {
+        "description": "4.146",
+        "partNo": "4.048",
+        "qty": "4.195"
+      },
+      {
+        "description": "2.232",
+        "partNo": "2.120",
+        "qty": "2.288"
+      },
+      {
+        "description": "2.218",
+        "partNo": "2.106",
+        "qty": "2.274"
+      },
+      {
+        "description": "2.066",
+        "partNo": "1.968",
+        "qty": "2.115"
+      },
+      {
+        "description": "5.586",
+        "partNo": "5.474",
+        "qty": "5.642"
+      },
+      {
+        "description": "2.799",
+        "partNo": "2.701",
+        "qty": "2.848"
+      },
+      {
+        "description": "2.112",
+        "partNo": "2.014",
+        "qty": "2.161"
+      },
+      {
+        "description": "16.920",
+        "partNo": "16.822",
+        "qty": "16.969"
+      },
+      {
+        "description": "2.287",
+        "partNo": "2.189",
+        "qty": "2.336"
+      },
+      {
+        "description": "1.800",
+        "partNo": "1.702",
+        "qty": "1.849"
+      },
+      {
+        "description": "14.736",
+        "partNo": "14.638",
+        "qty": "14.785"
+      },
+      {
+        "description": "21.176",
+        "partNo": "21.078",
+        "qty": "21.225"
+      },
+      {
+        "description": "1.650",
+        "partNo": "1.538",
+        "qty": "1.706"
+      },
+      {
+        "description": "8.101",
+        "partNo": "8.003",
+        "qty": "8.150"
+      },
+      {
+        "description": "3.268",
+        "partNo": "3.156",
+        "qty": "3.324"
+      },
+      {
+        "description": "14.868",
+        "partNo": "14.756",
+        "qty": "14.924"
+      },
+      {
+        "description": "8.795",
+        "partNo": "8.683",
+        "qty": "8.851"
+      },
+      {
+        "description": "3.917",
+        "partNo": "3.805",
+        "qty": "3.973"
+      },
+      {
+        "description": "3.083",
+        "partNo": "2.971",
+        "qty": "3.139"
+      },
+      {
+        "description": "3.079",
+        "partNo": "2.967",
+        "qty": "3.135"
+      },
+      {
+        "description": "3.450",
+        "partNo": "3.338",
+        "qty": "3.506"
+      },
+      {
+        "description": "3.432",
+        "partNo": "3.320",
+        "qty": "3.488"
+      },
+      {
+        "description": "2.739",
+        "partNo": "2.627",
+        "qty": "2.795"
+      },
+      {
+        "description": "2.785",
+        "partNo": "2.673",
+        "qty": "2.841"
+      },
+      {
+        "description": "2.152",
+        "partNo": "2.040",
+        "qty": "2.208"
+      },
+      {
+        "description": "1.967",
+        "partNo": "1.855",
+        "qty": "2.023"
+      },
+      {
+        "description": "2.043",
+        "partNo": "1.931",
+        "qty": "2.099"
+      },
+      {
+        "description": "2.116",
+        "partNo": "2.004",
+        "qty": "2.172"
+      },
+      {
+        "description": "2.931",
+        "partNo": "2.819",
+        "qty": "2.987"
+      },
+      {
+        "description": "3.027",
+        "partNo": "2.915",
+        "qty": "3.083"
+      }
+    ]
+  },
+  {
+    "modelName": "EXCA 01 DAN 02",
+    "totalItems": 8,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OTHER",
+        "partNo": "KOMATSU",
+        "qty": "QUANTITY"
+      },
+      {
+        "description": "FS1242",
+        "partNo": "600-319-3620",
+        "qty": "1 PCS"
+      },
+      {
+        "description": "SHELL",
+        "partNo": "KOMATSU",
+        "qty": "QUANTITY"
+      },
+      {
+        "description": "SHELL RIMULA D 30",
+        "partNo": "EOS 30",
+        "qty": "23,1 LITER"
+      },
+      {
+        "description": "FF5488",
+        "partNo": "600-319-3750",
+        "qty": "1 PCS"
+      },
+      {
+        "description": "Shell Spirax S4 CX 30",
+        "partNo": "TO 30",
+        "qty": "5,3 LITER"
+      }
+    ]
+  },
+  {
+    "modelName": "BULLDOZER D6R",
+    "totalItems": 74,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "PART NUMBER",
+        "partNo": "NO",
+        "qty": "1"
+      },
+      {
+        "description": "GENUINE",
+        "partNo": null,
+        "qty": "OEM"
+      },
+      {
+        "description": "214-7568",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "6V-8397",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "6V-4589",
+        "partNo": "3",
+        "qty": "1"
+      },
+      {
+        "description": "1R-0777",
+        "partNo": "4",
+        "qty": "1"
+      },
+      {
+        "description": "6V-9633",
+        "partNo": "5",
+        "qty": "1"
+      },
+      {
+        "description": "8F-9206",
+        "partNo": "6",
+        "qty": "1"
+      },
+      {
+        "description": "5F-1678",
+        "partNo": "7",
+        "qty": "1"
+      },
+      {
+        "description": "3J-1907",
+        "partNo": "8",
+        "qty": "1"
+      },
+      {
+        "description": "130-0229",
+        "partNo": "9",
+        "qty": "1"
+      },
+      {
+        "description": "3D-2824",
+        "partNo": "10",
+        "qty": "1"
+      },
+      {
+        "description": "2M-9780",
+        "partNo": "11",
+        "qty": "1"
+      },
+      {
+        "description": "220-8678",
+        "partNo": "12",
+        "qty": "1"
+      },
+      {
+        "description": "209-7290",
+        "partNo": "13",
+        "qty": "1"
+      },
+      {
+        "description": "326-1644",
+        "partNo": "14",
+        "qty": "1"
+      },
+      {
+        "description": "160-0526",
+        "partNo": "15",
+        "qty": "1"
+      },
+      {
+        "description": "9X-2205",
+        "partNo": "16",
+        "qty": "1"
+      },
+      {
+        "description": "1R-1808",
+        "partNo": "17",
+        "qty": "1"
+      },
+      {
+        "description": "9X-8600",
+        "partNo": "18",
+        "qty": "1"
+      },
+      {
+        "description": "1R-0762",
+        "partNo": "19",
+        "qty": "1"
+      },
+      {
+        "description": "341-0979",
+        "partNo": "20",
+        "qty": "1"
+      },
+      {
+        "description": "9F-4446",
+        "partNo": "21",
+        "qty": "1"
+      },
+      {
+        "description": "8M-5661",
+        "partNo": "22",
+        "qty": "1"
+      },
+      {
+        "description": "9G-5127",
+        "partNo": "23",
+        "qty": "1"
+      },
+      {
+        "description": "6V-5188",
+        "partNo": "24",
+        "qty": "1"
+      },
+      {
+        "description": "1R-1809",
+        "partNo": "25",
+        "qty": "1"
+      },
+      {
+        "description": "6L-1649",
+        "partNo": "26",
+        "qty": "1"
+      },
+      {
+        "description": "6L-5359",
+        "partNo": "27",
+        "qty": "1"
+      },
+      {
+        "description": "5P-4057",
+        "partNo": "28",
+        "qty": "1"
+      },
+      {
+        "description": "3J-7354",
+        "partNo": "29",
+        "qty": "1"
+      },
+      {
+        "description": "3S-7781",
+        "partNo": "30",
+        "qty": "1"
+      },
+      {
+        "description": "5M-2057",
+        "partNo": "31",
+        "qty": "1"
+      },
+      {
+        "description": "2S-4078",
+        "partNo": "32",
+        "qty": "1"
+      },
+      {
+        "description": "8T-3298",
+        "partNo": "33",
+        "qty": "1"
+      },
+      {
+        "description": "3K-0360",
+        "partNo": "34",
+        "qty": "1"
+      },
+      {
+        "description": "9H-6454",
+        "partNo": "35",
+        "qty": "1"
+      },
+      {
+        "description": "177-9343",
+        "partNo": "36",
+        "qty": "1"
+      },
+      {
+        "description": "HP427",
+        "partNo": "37",
+        "qty": "1"
+      },
+      {
+        "description": "HP426",
+        "partNo": "38",
+        "qty": "1"
+      },
+      {
+        "description": "HP428",
+        "partNo": "39",
+        "qty": "1"
+      },
+      {
+        "description": "TU-H004C",
+        "partNo": "40",
+        "qty": "1"
+      },
+      {
+        "description": "3E9848",
+        "partNo": "41",
+        "qty": "1"
+      },
+      {
+        "description": "3E9901",
+        "partNo": "42",
+        "qty": "1"
+      },
+      {
+        "description": "7X7858",
+        "partNo": "43",
+        "qty": "1"
+      },
+      {
+        "description": "7X7855",
+        "partNo": "44",
+        "qty": "1"
+      },
+      {
+        "description": "3.195.921",
+        "partNo": "45",
+        "qty": "1"
+      },
+      {
+        "description": "FILTER ELEMENT AS-PRIMARY",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "FILTER ELEMENT AS-SEC AIR",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "BELT",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "FILTER AS",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "FILTER-AIR",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "V-BELT",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL-VALVE COVER",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "REGULATOR-WATER TEMPERATU",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "GASKET-REGULATOR",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL-LIP TYPE",
+        "partNo": "3",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL-O-RING",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL-O RING",
+        "partNo": "9",
+        "qty": "1"
+      },
+      {
+        "description": "V-BELT SET",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "1"
+      },
+      {
+        "description": "HARGA OEM",
+        "partNo": "HARGA GENUNINE",
+        "qty": "1"
+      },
+      {
+        "description": "Rp215.000",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "Rp250.000",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "Rp285.000",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "Rp50.000",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "Rp185.000",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "Rp192.972",
+        "partNo": "4",
+        "qty": "1"
+      },
+      {
+        "description": "Rp137.000",
+        "partNo": "3",
+        "qty": "1"
+      },
+      {
+        "description": "Rp612.440,19",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "Rp700.000",
+        "partNo": "3",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "filter stok",
+    "totalItems": 3,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "tanggal masuk",
+        "partNo": "nama filter",
+        "qty": "tanggal pakai"
+      }
+    ]
+  },
+  {
+    "modelName": "BULLDOZER D7G",
+    "totalItems": 36,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OEM",
+        "partNo": "GENUINE",
+        "qty": "250"
+      },
+      {
+        "description": "FILTER ELEMENT AS-AIR",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "V-BELT SET",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "FILTER ELEMENT AS-CAB AIR",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "FILTER-AIR",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "GASKET",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL-VALVE COVER",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "REGULATOR",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL-O-RING",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "SPACER",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "SHIM",
+        "partNo": "4",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL-O RING",
+        "partNo": "5",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL",
+        "partNo": "6",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL (large)",
+        "partNo": "9",
+        "qty": "1"
+      },
+      {
+        "description": "WASHER SEALING",
+        "partNo": "10",
+        "qty": "1"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "1"
+      },
+      {
+        "description": "HARGA OEM",
+        "partNo": "HARGA GENUNINE",
+        "qty": "1"
+      },
+      {
+        "description": "Rp235.000",
+        "partNo": "Rp333.270",
+        "qty": "1"
+      },
+      {
+        "description": "Rp12.000",
+        "partNo": "Rp12.000",
+        "qty": "1"
+      },
+      {
+        "description": "Rp175.000",
+        "partNo": "Rp390.600",
+        "qty": "1"
+      },
+      {
+        "description": "Rp78.000",
+        "partNo": "Rp927.110",
+        "qty": "1"
+      },
+      {
+        "description": "Rp30.000",
+        "partNo": "Rp30.000",
+        "qty": "1"
+      },
+      {
+        "description": "Rp300.000",
+        "partNo": "Rp358.726",
+        "qty": "1"
+      },
+      {
+        "description": "Rp285.000",
+        "partNo": "Rp285.000",
+        "qty": "1"
+      },
+      {
+        "description": "Rp100.000",
+        "partNo": "Rp100.000",
+        "qty": "1"
+      },
+      {
+        "description": "Rp150.000",
+        "partNo": "Rp150.000",
+        "qty": "1"
+      },
+      {
+        "description": "Rp15.000",
+        "partNo": "Rp15.000",
+        "qty": "1"
+      },
+      {
+        "description": "Rp32.500",
+        "partNo": "Rp32.500",
+        "qty": "1"
+      },
+      {
+        "description": "Rp192.972",
+        "partNo": "Rp192.972",
+        "qty": "1"
+      },
+      {
+        "description": "Rp286.884",
+        "partNo": "Rp286.884",
+        "qty": "1"
+      },
+      {
+        "description": "Rp68.172",
+        "partNo": "Rp68.172",
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.351.116",
+        "partNo": "Rp1.351.116",
+        "qty": "1"
+      },
+      {
+        "description": "Rp364.572",
+        "partNo": "Rp364.572",
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.392.941",
+        "partNo": "Rp1.392.941",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "EXCA 07, EXCA 12, EXCA 13",
+    "totalItems": 10,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OTHER",
+        "partNo": "KOMATSU",
+        "qty": "QUANTITY"
+      },
+      {
+        "description": "LF16006",
+        "partNo": "6736-51-5142",
+        "qty": "1 PCS"
+      },
+      {
+        "description": "FS1242",
+        "partNo": "600-319-3610",
+        "qty": "1 PCS"
+      },
+      {
+        "description": "2341-LBH30 ( HOP )",
+        "partNo": "20Y-04-J1130",
+        "qty": "1PCS"
+      },
+      {
+        "description": "SHELL",
+        "partNo": "KOMATSU",
+        "qty": "QUANTITY"
+      },
+      {
+        "description": "SHELL RIMULA D 30",
+        "partNo": "EOS 30",
+        "qty": "18 LITER"
+      },
+      {
+        "description": "FF5488",
+        "partNo": "600-319-3750",
+        "qty": "1 PCS"
+      },
+      {
+        "description": "Shell Spirax S4 CX 30",
+        "partNo": "TO 30",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "07. EXCA CAT GX",
+    "totalItems": 4,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "250",
+        "partNo": "GENUINE",
+        "qty": "500"
+      },
+      {
+        "description": "1",
+        "partNo": "HP427:LS",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "EXCA GC",
+    "totalItems": 29,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OEM",
+        "partNo": "GENUINE",
+        "qty": "250"
+      },
+      {
+        "description": "ELEMENT",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "FILTER AS",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "FILTER AS-AIR",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "SEAL",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "BELT-SERPENTINE",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "GASKET-WATER REGULATOR",
+        "partNo": "1",
+        "qty": "1"
+      },
+      {
+        "description": "CONNECTION AS",
+        "partNo": "2",
+        "qty": "1"
+      },
+      {
+        "description": "CAP AS-COOLANT TANK",
+        "partNo": "3",
+        "qty": "1"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      },
+      {
+        "description": "Rp210.000",
+        "partNo": "Rp986.965",
+        "qty": "1"
+      },
+      {
+        "description": "Rp165.000",
+        "partNo": "Rp749.963",
+        "qty": "1"
+      },
+      {
+        "description": "Rp15.000",
+        "partNo": "Rp34.650",
+        "qty": "Rp69.300"
+      },
+      {
+        "description": "Rp175.000",
+        "partNo": "Rp436.514",
+        "qty": "1"
+      },
+      {
+        "description": "Rp100.000",
+        "partNo": "Rp261.199",
+        "qty": "1"
+      },
+      {
+        "description": "Rp200.000",
+        "partNo": "Rp352.050",
+        "qty": "1"
+      },
+      {
+        "description": "Rp25.000",
+        "partNo": "Rp60.750",
+        "qty": "1"
+      },
+      {
+        "description": "Rp315.000",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp75.000",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp133.000",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.350.000",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp150.000",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp450.000",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp895.000",
+        "partNo": "Rp1.384.399",
+        "qty": "1"
+      },
+      {
+        "description": "Rp500.000",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp610.000",
+        "partNo": "Rp2.846.266",
+        "qty": "1"
+      },
+      {
+        "description": "Rp700.000",
+        "partNo": null,
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "EXCA KOMATSU",
+    "totalItems": 35,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "1000HM",
+        "partNo": "500HM",
+        "qty": "2000HM"
+      },
+      {
+        "description": "KGO 15W40 PAIL ENGINE OIL",
+        "partNo": "EXCAVATOR PC210-10M0/P1 S/N C01530",
+        "qty": "KGO 15W40 PAIL ENGINE OIL"
+      },
+      {
+        "description": "KGO 15W40 BOTTLE ENGINE OIL",
+        "partNo": "EXCAVATOR PC210-10M0/P1 S/N C01531",
+        "qty": "KGO 15W40 BOTTLE ENGINE OIL"
+      },
+      {
+        "description": "CARTRIDGE",
+        "partNo": "CARTRIDGE",
+        "qty": "KGO TO30 PAIL TRANSMISSION OIL"
+      },
+      {
+        "description": "OIL FILTER",
+        "partNo": "OIL FILTER",
+        "qty": "CARTRIDGE"
+      },
+      {
+        "description": "CARTRIDGE PC195LC-8/PC210-10M0",
+        "partNo": "CARTRIDGE PC195LC-8/PC210-10M0",
+        "qty": "OIL FILTER"
+      },
+      {
+        "description": "ELEMENT",
+        "partNo": "ELEMENT",
+        "qty": "CARTRIDGE PC195LC-8/PC210-10M0"
+      },
+      {
+        "description": "AIR CLEANER ASSY",
+        "partNo": null,
+        "qty": "CARTRIDGE"
+      },
+      {
+        "description": "ELEMENT FILTER",
+        "partNo": null,
+        "qty": "AIR CLEANER ASSY"
+      },
+      {
+        "description": "KGO TO30 PAIL TRANSMISSION OIL",
+        "partNo": null,
+        "qty": "ELEMENT FILTER"
+      },
+      {
+        "description": "LI*FILTER",
+        "partNo": "EXCAVATOR KOMATSU PC 200-8 M0/U SN C17877",
+        "qty": "LI*FILTER"
+      },
+      {
+        "description": "CARTRIDGE-600-319-5612",
+        "partNo": "EXCAVATOR KOMATSU PC 200-8 M0/U SN C19371",
+        "qty": "CARTRIDGE"
+      },
+      {
+        "description": "CARTRIDGE-600-319-3750",
+        "partNo": "KGO 15W40 BOTTLE ENGINE OIL",
+        "qty": "CARTRIDGE"
+      },
+      {
+        "description": "AIR CLEANER ASSY (Tambahan Sticker)",
+        "partNo": "OIL FILTER-6376-5-5142",
+        "qty": "AIR CLEANER ASSY (Tambahan Sticker)"
+      },
+      {
+        "description": "OIL FILTER-6376-5-5142",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "ENGINE OIL FILTER  600-211-5241",
+        "partNo": "ENGINE OIL FILTER  600-211-5241",
+        "qty": "ENGINE OIL FILTER  600-211-5241"
+      },
+      {
+        "description": "FUEL FILTER  600-311-6220",
+        "partNo": "FUEL FILTER  600-311-6220",
+        "qty": "FUEL FILTER  600-311-6220"
+      },
+      {
+        "description": "HYDROLIK FILTER   07063-01054",
+        "partNo": "HYDROLIK FILTER   07063-01054",
+        "qty": "HYDROLIK FILTER   07063-01054"
+      },
+      {
+        "description": "OLI  MESIN SAE 15W-40   8 LITER",
+        "partNo": "OLI  MESIN SAE 15W-40   8 LITER",
+        "qty": "AIR FILTER   600-181-6340"
+      },
+      {
+        "description": "OLI SWING SAE 30   1,6 LITER",
+        "partNo": null,
+        "qty": "OLI  MESIN SAE 15W-40   8 LITER"
+      },
+      {
+        "description": "OLI FINAL DRIVE  SAE 30   1,6X 2 LITER",
+        "partNo": null,
+        "qty": "OLI SWING SAE 30   1,6 LITER"
+      },
+      {
+        "description": "OLI PTO SAE 30   1 LITER",
+        "partNo": null,
+        "qty": "OLI FINAL DRIVE  SAE 30   1,6X 2 LITER"
+      },
+      {
+        "description": "OLI HYDROLIK  SAE 10   60 LITER",
+        "partNo": null,
+        "qty": "OLI PTO SAE 30   1 LITER"
+      },
+      {
+        "description": "Engine oil (EO15W40-DH)",
+        "partNo": "EXCAVATOR KOMATSU PC200-10M0 MOCE S/N DBCH0302",
+        "qty": "Engine oil (EO15W40-DH)"
+      },
+      {
+        "description": "Engine oil filter",
+        "partNo": "EXCAVATOR KOMATSU PC200-10M0 MOCE S/N DBCH0380",
+        "qty": "Engine oil filter"
+      },
+      {
+        "description": "Fuel pre-filter",
+        "partNo": "EXCAVATOR KOMATSU PC200-10M0 MOCE S/N DBCH0366",
+        "qty": "Fuel pre-filter"
+      },
+      {
+        "description": "Fuel additional pre-filter",
+        "partNo": "Fuel additional pre-filter",
+        "qty": "Fuel additional pre-filter"
+      },
+      {
+        "description": "Fuel tank breather",
+        "partNo": "Fuel tank breather",
+        "qty": "Fuel tank breather"
+      },
+      {
+        "description": "Fuel main filter",
+        "partNo": null,
+        "qty": "Fuel main filter"
+      },
+      {
+        "description": "ELEMENT ASS'Y, AIR",
+        "partNo": null,
+        "qty": "ELEMENT ASS'Y, AIR"
+      },
+      {
+        "description": "Hydraulic tank breather",
+        "partNo": null,
+        "qty": "Hydraulic tank breather"
+      },
+      {
+        "description": "Swing machinery oil (TO30)",
+        "partNo": null,
+        "qty": "Swing machinery oil (TO30)"
+      },
+      {
+        "description": "Swing pinion grease (G2-Li)",
+        "partNo": null,
+        "qty": "Swing pinion grease (G2-Li)"
+      }
+    ]
+  },
+  {
+    "modelName": "EXCA 08 dan 03",
+    "totalItems": 11,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OTHER",
+        "partNo": "KOMATSU",
+        "qty": "QUANTITY"
+      },
+      {
+        "description": "LF16006",
+        "partNo": "6736-51-5142",
+        "qty": "1 PCS"
+      },
+      {
+        "description": "FS1242",
+        "partNo": "600-319-3620",
+        "qty": "1 PCS"
+      },
+      {
+        "description": "SHELL",
+        "partNo": "KOMATSU",
+        "qty": "20"
+      },
+      {
+        "description": "SHELL RIMULA D 30",
+        "partNo": "EOS 30",
+        "qty": "23,1 LITER"
+      },
+      {
+        "description": "FF5488",
+        "partNo": "600-319-3750",
+        "qty": "1 PCS"
+      },
+      {
+        "description": "p181046/ p 119373",
+        "partNo": "600-185-4100",
+        "qty": "1 PCS"
+      },
+      {
+        "description": "Shell Spirax S4 CX 30",
+        "partNo": "TO 30",
+        "qty": "6,5 LITER"
+      },
+      {
+        "description": "2341-LBH30 ( HOP )",
+        "partNo": "20Y-04-J1130",
+        "qty": "1PCS"
+      }
+    ]
+  },
+  {
+    "modelName": "BULLDOZER D6G&D6G 2XL",
+    "totalItems": 14,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OEM",
+        "partNo": "GENUINE",
+        "qty": "250"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "1"
+      },
+      {
+        "description": "GENUINE (2026)",
+        "partNo": "GENUINE",
+        "qty": "1"
+      },
+      {
+        "description": "Rp400.226",
+        "partNo": "Rp333.270",
+        "qty": "1"
+      },
+      {
+        "description": "Rp414.336",
+        "partNo": "Rp390.600",
+        "qty": "1"
+      },
+      {
+        "description": "Rp927.110",
+        "partNo": "Rp994.613",
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.784.002",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.198.354",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.259.442",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp622.009,57",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.472.105",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.794.749",
+        "partNo": null,
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "Sheet33",
+    "totalItems": 243,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "SN/ Plat Kendaraan",
+        "partNo": "Nama Asset",
+        "qty": "Status Warranty"
+      },
+      {
+        "description": "961.582.391.008",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40 SL",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.582.391.036",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.582.391.145",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40SL",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.884.301.945",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.884.302.060",
+        "partNo": "Bomag Smooth Drum BW211D-40",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.884.301.016",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.884.301.614",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40 <br><br>",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.582.391.152",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40SL",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "T8F00361",
+        "partNo": "CAT Pad Foot CS10GC",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.582.391.103",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40SL",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.582.391.660",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40SL",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.582.391.661",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40SL",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.582.391.717",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40SL (WITH SOIL)",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.582.391.718",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40SL (WITH SOIL)",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "961.582.391.716",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40 SL",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "T8F03605",
+        "partNo": "CAT Pad Foot CS10GC",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "T8F03606",
+        "partNo": "CAT Pad Foot CS10GC",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "VSV19T-10259",
+        "partNo": "SAKAI Sheep Foot Compactor SV700TF",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "SZN01229",
+        "partNo": "MOTOR GRADER CAT 120 K",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "2.066",
+        "partNo": "MOTOR GRADER KOMATSU GD535-5",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "1.372",
+        "partNo": "MOTOR GRADER KOMATSU GD535-5",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "2.259",
+        "partNo": "MOTOR GRADER KOMATSU GD535-5",
+        "qty": "1"
+      },
+      {
+        "description": "PRDB00108",
+        "partNo": "MOTOR GRADER XCMG GR135 MAX",
+        "qty": "1"
+      },
+      {
+        "description": "P6G00163",
+        "partNo": "Bulldozer Caterpillar D6G",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "P6G01656",
+        "partNo": "Bulldozer Caterpillar D6G  2XL",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "J16298",
+        "partNo": "Bulldozer Komatsu D85ESS-2",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "S6X00348",
+        "partNo": "Bulldozer Caterpillar D6R",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "P6G01529",
+        "partNo": "Bulldozer Caterpillar D6G 2XL",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "7MB05410",
+        "partNo": "Bulldozer Caterpillar D7G2",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "J21020",
+        "partNo": "Bulldozer Komatsu D85ESS-2",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "J18025",
+        "partNo": "Bulldozer Komatsu D85ESS-2",
+        "qty": "1"
+      },
+      {
+        "description": "ZLHD116HR1B05388",
+        "partNo": "Bulldozer Zoomlion ZD170G",
+        "qty": "1"
+      },
+      {
+        "description": "CHSD16AEKR1054524",
+        "partNo": "Bulldozer Shantui SD16E",
+        "qty": "1"
+      },
+      {
+        "description": "C01531",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "C01530",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "BZP03563",
+        "partNo": "Excavator Caterpillar 320D S/N",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "SYW01364",
+        "partNo": "Excavator CAT 320 GX new",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DBCHO302",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DKJ40199",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DKJ40200",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DBCHO380",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DBCH0366",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DKJ40263",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DKJ40294",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "WE217079",
+        "partNo": "Excavator Caterpillar 305.5E2",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "WE217080",
+        "partNo": "Excavator Caterpillar 305.5E2",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "WE217081",
+        "partNo": "Excavator Caterpillar 305.5E2",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "WE217082",
+        "partNo": "Excavator Caterpillar 305.5E2",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "C51502",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "C51503",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DBCH1801",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DBCH1784",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DBCH2244",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DBCH2245",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "waranty ut"
+      },
+      {
+        "description": "C00637",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "waranty ut"
+      },
+      {
+        "description": "C07004",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "waranty ut"
+      },
+      {
+        "description": "C07076",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "waranty ut"
+      },
+      {
+        "description": "DBCH2941",
+        "partNo": "Excavator PC 200-10 MO",
+        "qty": "1"
+      },
+      {
+        "description": "HAR3CXPMTR3463439",
+        "partNo": "Backhoe Loader JCB 3CX",
+        "qty": "1"
+      },
+      {
+        "description": "M5K08000",
+        "partNo": "Wheel Loader Caterpillar 950 GC",
+        "qty": "1"
+      },
+      {
+        "description": "S5512759",
+        "partNo": "Wheel Loader SEM 655D (Pallet Fork)",
+        "qty": "1"
+      },
+      {
+        "description": "ZCC60-0199",
+        "partNo": "Crawler Crane Zoomlion ZCC600V",
+        "qty": "waranty"
+      },
+      {
+        "description": "XUG035HDAKFC00524",
+        "partNo": "Crawler Crane XCMG XGC35HD",
+        "qty": "waranty"
+      },
+      {
+        "description": "XUG2303KJRDQ00021",
+        "partNo": "Road Cold Recycler XCMG XLZ2303K",
+        "qty": "1"
+      },
+      {
+        "description": "RMZ00126",
+        "partNo": "Road Reclaimers Caterpillar RM500B",
+        "qty": "1"
+      },
+      {
+        "description": "XUG0183KKSMQ0021",
+        "partNo": "Powder Binder Spreader XCMG XKC185",
+        "qty": "1"
+      },
+      {
+        "description": "SAGAE320",
+        "partNo": "Stone Breaker SAGA288 (2020)",
+        "qty": "1"
+      },
+      {
+        "description": "BM7680TU",
+        "partNo": "MEDIUM BUS 13-24 SEATS",
+        "qty": "1"
+      },
+      {
+        "description": "SN/ Pelat Kendaraan",
+        "partNo": "Nama Asset",
+        "qty": "1"
+      },
+      {
+        "description": "DT 9884 JE / DT8126JE",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "tidak waranty"
+      },
+      {
+        "description": "DT 9883 JE / DT8973IE",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9115 PYX / B9103 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9116 PYX /B9102ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9121 PYX/B9104ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9122 PYX / B9105ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9701 PYW",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9892 PYW",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9642 KYW",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9644 KYW",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9683 KYW",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B9613TYT",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG 8367 IJ",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9973 BIS / B 9136 PYX",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG 8163 NK",
+        "partNo": "Dump Truck FUSO FN62F HD",
+        "qty": "1"
+      },
+      {
+        "description": "Z 9109 AB",
+        "partNo": "Dump Truck QUESTER",
+        "qty": "1"
+      },
+      {
+        "description": "B 9078 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "B 9079 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "B 9080 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "B 9081 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "B 9082 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "B 9089 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "B 9091 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "B 9092 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "B 9093 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "B 9094 ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer"
+      },
+      {
+        "description": "DT 9782 LE/ DT 8669 KE",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG 8230 MX",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9914 JYT",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9097 ZYT",
+        "partNo": "Dumptruck Isuzu NMR 81",
+        "qty": "1"
+      },
+      {
+        "description": "B 9098 ZYT",
+        "partNo": "Dumptruck Isuzu NMR 81",
+        "qty": "1"
+      },
+      {
+        "description": "BK8115EO",
+        "partNo": "Dumptruck FUSO FM 517 HS",
+        "qty": "1"
+      },
+      {
+        "description": "BK8119EO",
+        "partNo": "Dumptruck FUSO FM 517 HS",
+        "qty": "1"
+      },
+      {
+        "description": "BK8117EO",
+        "partNo": "Dumptruck FUSO FM 517 HS",
+        "qty": "1"
+      },
+      {
+        "description": "BG 8639 NI / XENNA 33",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG 8640 NI / XENNA 31",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG 8641 NI / XENNA 30",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG8638 NI / XENNA 32",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG8976IX",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG 8535 OW",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B9107ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9110ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9109ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9112ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9113ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9118ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9114ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9115ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9116ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9117ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9120ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9121ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9122ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9123ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9124ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9125ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9126ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9127ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9128ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9129ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9130ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9131ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9132ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9133ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9134ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9135ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9136ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9137ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9138ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "B9139ZYT",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "waranty hino di dealer service"
+      },
+      {
+        "description": "BG 8747 PS",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG 8738 PS",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM 9237 JU",
+        "partNo": "TRADO HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BG 8752 PS",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9944JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9666JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9819QO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9296JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9510QO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9509QO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9824QO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9289JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9244NU",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9682JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9174NU",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9291JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9287JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9949JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9503QO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9285JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9398JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9678JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9956JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "BM9951JO",
+        "partNo": "Dump Truck HINO RANGER-FM 280 JD",
+        "qty": "1"
+      },
+      {
+        "description": "B 9096 ZYT",
+        "partNo": "Dumptruck Isuzu NMR 81",
+        "qty": "1"
+      },
+      {
+        "description": "BK 8143 XE",
+        "partNo": "TRADO MITSUBISHI FV 419 P",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8643 ZD",
+        "partNo": "TRADO FUSO FN 527 ML",
+        "qty": "1"
+      },
+      {
+        "description": "DD 8319 SU",
+        "partNo": "TRADO HINO RANGER-FM 260 JD",
+        "qty": "1"
+      },
+      {
+        "description": "KT 9287 KU",
+        "partNo": "PRIMOVER MERCEDES-BENZ AXOR 4928 T",
+        "qty": "1"
+      },
+      {
+        "description": "MDN51552A",
+        "partNo": "LOWBOY DIAMOND",
+        "qty": "1"
+      },
+      {
+        "description": "B 9012 ZEH",
+        "partNo": "PRIMOVER UD TRUCKS GWE 350",
+        "qty": "1"
+      },
+      {
+        "description": "AC74G18040636",
+        "partNo": "LOWBOY DIAMOND",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8371 CU",
+        "partNo": "PRIMOVER HINO FM 350 T/H",
+        "qty": "1"
+      },
+      {
+        "description": "PKU2103133FBS3",
+        "partNo": "LOWBOY HINO",
+        "qty": "1"
+      },
+      {
+        "description": "B 9018 KFA",
+        "partNo": "WATER TANK 5000L HINO 130 HD",
+        "qty": "1"
+      },
+      {
+        "description": "BK 9217 CA / BK 8580 AC",
+        "partNo": "EX WATER TANK",
+        "qty": "1"
+      },
+      {
+        "description": "BK8121EO",
+        "partNo": "Dumptruck FUSO FM 517 HS",
+        "qty": "1"
+      },
+      {
+        "description": "BA 9016 QU",
+        "partNo": "FUEL TANK 8000L MISTSUBISHI CANTER FE 75 SHDN",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8450 NU",
+        "partNo": "FLATBED FUSO FN62FL",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8451 NU",
+        "partNo": "FLATBED FUSO FN62FL",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8534 NU",
+        "partNo": "FLATBED FUSO FN62FL",
+        "qty": "1"
+      },
+      {
+        "description": "B 9008 ZIN / KZ1223",
+        "partNo": "TMC HINO FM 280 JW / TADANO TM-ZT1005H",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8449 NU / KZ1263",
+        "partNo": "TMC FUSO FN62FL / TADANO TM-ZT1005H",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8452 NU / KZ1255",
+        "partNo": "TMC FUSO FN62FL / TADANO TM-ZT1005H",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8533 NU / TBA",
+        "partNo": "TMC FUSO FN62FL / TADANO TM-ZT1005H",
+        "qty": "1"
+      },
+      {
+        "description": "BM 1707 DN / BM 1098 LLT",
+        "partNo": "NISSAN X-TRAIL",
+        "qty": "1"
+      },
+      {
+        "description": "B 1167 ZKS",
+        "partNo": "INOVA",
+        "qty": "1"
+      },
+      {
+        "description": "B 1869 ZKV",
+        "partNo": "INOVA",
+        "qty": "1"
+      },
+      {
+        "description": "B 1693 ZKW",
+        "partNo": "AVANZA",
+        "qty": "1"
+      },
+      {
+        "description": "B 1695 ZKW",
+        "partNo": "AVANZA",
+        "qty": "1"
+      },
+      {
+        "description": "B 1691 ZKW",
+        "partNo": "AVANZA",
+        "qty": "1"
+      },
+      {
+        "description": "B 1689 ZKW",
+        "partNo": "AVANZA",
+        "qty": "1"
+      },
+      {
+        "description": "BM 9834 DK",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BM 9833 DK",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BP 8521 DJ",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "B9133ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "BM8777QJ",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BM8776QJ",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BM8925QJ",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BM8926QJ",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BM8774QJ",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BM8775QJ",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BG8782PS",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "BG8779PS",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "BG8776PS",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8468 QN",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BM 8469 QN",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BK 8722 FE",
+        "partNo": "SUZUKI /NEW CARRY PU FD AC PS",
+        "qty": "1"
+      },
+      {
+        "description": "B 9790 JY",
+        "partNo": "PICK UP KIJANG",
+        "qty": "1"
+      },
+      {
+        "description": "BK 8333 BF",
+        "partNo": "ISUZU PANTHER PICKUP",
+        "qty": "1"
+      },
+      {
+        "description": "B 9305 ZAE",
+        "partNo": "PICK UP SUZUKI CARRY",
+        "qty": "1"
+      },
+      {
+        "description": "BM8430QK",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "BM8429QK",
+        "partNo": "MITSUBISHI TRITON",
+        "qty": "1"
+      },
+      {
+        "description": "B9186ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "B9188ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "B 1082 ZNP",
+        "partNo": "BYD",
+        "qty": "1"
+      },
+      {
+        "description": "BG 1392 PD",
+        "partNo": "PAJERO",
+        "qty": "1"
+      },
+      {
+        "description": "B 1866 ZOF",
+        "partNo": "INNOVA ZENIX",
+        "qty": "1"
+      },
+      {
+        "description": "B 1864 ZOF",
+        "partNo": "INNOVA ZENIX",
+        "qty": "1"
+      },
+      {
+        "description": "B9147ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "B9146ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "B9144ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "B9142ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "B9115ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "B 9225 ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "B 9227 ZBA",
+        "partNo": "TOYOTA HILUX",
+        "qty": "1"
+      },
+      {
+        "description": "BM 2843 BA",
+        "partNo": "MOTOR VEGA R",
+        "qty": "1"
+      },
+      {
+        "description": "BM 6446 ABZ",
+        "partNo": "CRF150L",
+        "qty": "1"
+      },
+      {
+        "description": "BM 6447 ABZ",
+        "partNo": "CRF150L",
+        "qty": "1"
+      },
+      {
+        "description": "BM 6448 ABZ",
+        "partNo": "CRF150L",
+        "qty": "1"
+      },
+      {
+        "description": "BM 6449 ABZ",
+        "partNo": "CRF150L",
+        "qty": "1"
+      },
+      {
+        "description": "BM 6450 ABZ",
+        "partNo": "CRF150L",
+        "qty": "1"
+      },
+      {
+        "description": "BM 6452 ABZ",
+        "partNo": "CRF150L",
+        "qty": "1"
+      },
+      {
+        "description": "BM 6453 ABZ",
+        "partNo": "CRF150L",
+        "qty": "1"
+      },
+      {
+        "description": "D471290",
+        "partNo": "TOTAL STATION NIKON K2 (2 LAYAR)",
+        "qty": "1"
+      },
+      {
+        "description": "D501365",
+        "partNo": "TOTAL STATION NIKON K2 (2 LAYAR)",
+        "qty": "1"
+      },
+      {
+        "description": "A15982",
+        "partNo": "TOTAL STATION NIKON K2 (2 LAYAR)",
+        "qty": "1"
+      },
+      {
+        "description": "138.324.352.137",
+        "partNo": "AUTOMATIC LEVEL LEICA N324",
+        "qty": "1"
+      },
+      {
+        "description": "138.324.352.169",
+        "partNo": "AUTOMATIC LEVEL LEICA N324",
+        "qty": "1"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      },
+      {
+        "description": "7",
+        "partNo": "5",
+        "qty": "8"
+      }
+    ]
+  },
+  {
+    "modelName": "CS10GC-T8F",
+    "totalItems": 34,
+    "parts": [
+      {
+        "description": "Filter AS-Water Sep & Fuel",
+        "partNo": "4600310:AA",
+        "qty": "1"
+      },
+      {
+        "description": "Filter AS-Engine Oil",
+        "partNo": "7W2326:AA",
+        "qty": "1"
+      },
+      {
+        "description": "Filter Element-Wtr Sep & Fuel",
+        "partNo": "1R1804:AA",
+        "qty": "1"
+      },
+      {
+        "description": "Filter-Oil(Advanced Efficiency)",
+        "partNo": "1G8878:AA",
+        "qty": "1"
+      },
+      {
+        "description": "OIL SAMPLE-WE & LP",
+        "partNo": "HP426:LS",
+        "qty": "1"
+      },
+      {
+        "description": "OIL SAMPLE BOTTLE-IR",
+        "partNo": "HP427:LS",
+        "qty": "1"
+      },
+      {
+        "description": "COOLANT ANALYSIS",
+        "partNo": "HP428:LS",
+        "qty": "1"
+      },
+      {
+        "description": "GREASE CARTRIDGE",
+        "partNo": "TU-H004C:NM",
+        "qty": "1"
+      },
+      {
+        "description": "DEO15W40-5 LIT",
+        "partNo": "3E9901:EM",
+        "qty": "1"
+      },
+      {
+        "description": "CAT TDTO 50",
+        "partNo": "7X7858:EM",
+        "qty": "1"
+      },
+      {
+        "description": "ELC COOLANT EXTENDER",
+        "partNo": "1195152:AA",
+        "qty": "1"
+      },
+      {
+        "description": "CAT HYDO ADVANCE 30",
+        "partNo": "3195921:EM",
+        "qty": "1"
+      },
+      {
+        "description": "Filter Element AS-Air",
+        "partNo": "2229020:AA",
+        "qty": "1"
+      },
+      {
+        "description": "Gasket(Valve Cover)",
+        "partNo": "2256451:AA",
+        "qty": "1"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "1"
+      },
+      {
+        "description": "PM 1000",
+        "partNo": "PM 250",
+        "qty": "1"
+      },
+      {
+        "description": "649.349",
+        "partNo": "Filter AS-Water Sep & Fuel",
+        "qty": "1"
+      },
+      {
+        "description": "255.248",
+        "partNo": "Filter AS-Engine Oil",
+        "qty": "1"
+      },
+      {
+        "description": "390.914",
+        "partNo": "Filter Element-Wtr Sep & Fuel",
+        "qty": "1"
+      },
+      {
+        "description": "1.365.317",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "747.090",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "182.753",
+        "partNo": "182.753",
+        "qty": "1"
+      },
+      {
+        "description": "271.400",
+        "partNo": "COOLANT ANALYSIS",
+        "qty": "1"
+      },
+      {
+        "description": "125.618",
+        "partNo": "125.618",
+        "qty": "1"
+      },
+      {
+        "description": "656.868",
+        "partNo": "DEO15W40-5 LIT",
+        "qty": "1"
+      },
+      {
+        "description": "1.392.941",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "916.888",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "6.954.386",
+        "partNo": "308.371",
+        "qty": "1"
+      },
+      {
+        "description": "1.500.000",
+        "partNo": "300.000",
+        "qty": "1"
+      },
+      {
+        "description": "100.000",
+        "partNo": "50.000",
+        "qty": "1"
+      },
+      {
+        "description": "400.000",
+        "partNo": "200.000",
+        "qty": "1"
+      },
+      {
+        "description": "975.000",
+        "partNo": "975.000",
+        "qty": "1"
+      },
+      {
+        "description": "1.475.000",
+        "partNo": "1.225.000",
+        "qty": "1"
+      },
+      {
+        "description": "9.929.386",
+        "partNo": "1.833.371",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "VIBRO C533E",
+    "totalItems": 7,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OEM",
+        "partNo": "GENUINE",
+        "qty": "500"
+      },
+      {
+        "description": "PM Event",
+        "partNo": "Part Number",
+        "qty": "1"
+      },
+      {
+        "description": "250",
+        "partNo": null,
+        "qty": "500"
+      },
+      {
+        "description": "Jumlah",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "1",
+        "partNo": "HP427",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "BULLDOZER D85SS",
+    "totalItems": 9,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OEM (DONALSON)",
+        "partNo": "GENUINE",
+        "qty": "500"
+      },
+      {
+        "description": "J 86-10230",
+        "partNo": "LUBE FILTER",
+        "qty": "1"
+      },
+      {
+        "description": "J 86-20291/ P557440DON",
+        "partNo": "FUEL FILTER",
+        "qty": "1"
+      },
+      {
+        "description": "P181046",
+        "partNo": "SARINGAN HAWA",
+        "qty": "1"
+      },
+      {
+        "description": "P119373/ 600-311-8291/P551670",
+        "partNo": "OIL FILTER",
+        "qty": "1"
+      },
+      {
+        "description": "326-1643",
+        "partNo": "FILTER SEPARATOR",
+        "qty": "1"
+      },
+      {
+        "description": "P557380",
+        "partNo": "HYDRAULIC FILTER, CARTRIDGE",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "BULLDOZER D70LE",
+    "totalItems": 8,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "250",
+        "partNo": "GENUINE",
+        "qty": "500"
+      },
+      {
+        "description": "26Ltr",
+        "partNo": "ENGINE OIL",
+        "qty": "26Ltr"
+      },
+      {
+        "description": "1",
+        "partNo": "Engine oil filter (6136-51-5120)",
+        "qty": "1"
+      },
+      {
+        "description": "x",
+        "partNo": "Air Cleaner Assy (6115-81-7602)",
+        "qty": "x"
+      },
+      {
+        "description": "Rp235.000",
+        "partNo": "total",
+        "qty": "Rp235.000"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      }
+    ]
+  },
+  {
+    "modelName": "BOMAG KOMATSU deutz",
+    "totalItems": 15,
+    "parts": [
+      {
+        "description": "Engine Oil filter",
+        "partNo": "05710640",
+        "qty": "1"
+      },
+      {
+        "description": "Pre-fuel filter/Separator",
+        "partNo": "05825010/15",
+        "qty": "1"
+      },
+      {
+        "description": "Engine Oil",
+        "partNo": "15W40-DH1/P20",
+        "qty": "10 liter"
+      },
+      {
+        "description": "filter fuel",
+        "partNo": "05716779",
+        "qty": "1"
+      },
+      {
+        "description": "Pre-fuel filter/separator",
+        "partNo": "05825009",
+        "qty": "1"
+      },
+      {
+        "description": "oli 40",
+        "partNo": "oli 40",
+        "qty": "10,5 liter"
+      },
+      {
+        "description": "Engine Oil Filter",
+        "partNo": "5.710.640",
+        "qty": "1"
+      },
+      {
+        "description": "Element Hydraulic",
+        "partNo": "07993014",
+        "qty": "1"
+      },
+      {
+        "description": "Air Cleaner Outer",
+        "partNo": "05821147",
+        "qty": "1"
+      },
+      {
+        "description": "Air Cleaner inner",
+        "partNo": "05821148",
+        "qty": "1"
+      },
+      {
+        "description": "Oil Axel",
+        "partNo": "GO-80W90/P20",
+        "qty": "1"
+      },
+      {
+        "description": "lub oil filter",
+        "partNo": "05710640",
+        "qty": "1"
+      },
+      {
+        "description": "final drive",
+        "partNo": "G0-80W90/P20",
+        "qty": "4 liter"
+      },
+      {
+        "description": "hydraulic oil",
+        "partNo": "HO-46-HM/P20",
+        "qty": "60 liter"
+      },
+      {
+        "description": "Pre-fuel filter",
+        "partNo": "05825010/15",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "BOMAG BW211D-40SL cummin",
+    "totalItems": 11,
+    "parts": [
+      {
+        "description": "Engine Oil filter",
+        "partNo": "31.780.204",
+        "qty": "1"
+      },
+      {
+        "description": "fuel pre filter",
+        "partNo": "31.780.219",
+        "qty": "1"
+      },
+      {
+        "description": "fuel main filter",
+        "partNo": "31.781.260",
+        "qty": "1"
+      },
+      {
+        "description": "fuel water separtaor",
+        "partNo": "31.701.062",
+        "qty": "1"
+      },
+      {
+        "description": "oli 40",
+        "partNo": "oli 40",
+        "qty": "10,5 liter"
+      },
+      {
+        "description": "Element Hydraulic",
+        "partNo": "07993110",
+        "qty": "1"
+      },
+      {
+        "description": "Air Cleaner Outer",
+        "partNo": "05821147",
+        "qty": "1"
+      },
+      {
+        "description": "Air Cleaner inner",
+        "partNo": "05821148",
+        "qty": "1"
+      },
+      {
+        "description": "Engine Oil",
+        "partNo": "15W40-DH1/P20",
+        "qty": "1"
+      },
+      {
+        "description": "Oil Axel/oli gardan",
+        "partNo": "GO-80W90/P20",
+        "qty": "10 liter"
+      },
+      {
+        "description": "oli final drive/ wheel hub",
+        "partNo": null,
+        "qty": "5 liter"
+      }
+    ]
+  },
+  {
+    "modelName": "GRADER 120K",
+    "totalItems": 17,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "OEM",
+        "partNo": "GENUINE",
+        "qty": "1"
+      },
+      {
+        "description": "P606087",
+        "partNo": "FILTER AS-WATER SEP & FUEL",
+        "qty": "1"
+      },
+      {
+        "description": "1R0762",
+        "partNo": "FILTER-FUEL",
+        "qty": "2"
+      },
+      {
+        "description": "1R1807",
+        "partNo": "FILTER AS-ENGINE OIL",
+        "qty": "1"
+      },
+      {
+        "description": "P550575",
+        "partNo": "FILTER ELEMENT AS-OIL (HYDRAULIC FILTER)",
+        "qty": "1"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      },
+      {
+        "description": "Rp375.000",
+        "partNo": "Rp362.080",
+        "qty": "Rp762.604"
+      },
+      {
+        "description": "Rp1.233.116",
+        "partNo": "Rp1.233.116",
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.588.772",
+        "partNo": "Rp1.588.772",
+        "qty": "1"
+      },
+      {
+        "description": "Rp250.000",
+        "partNo": "Rp308.936",
+        "qty": "Rp654.040"
+      },
+      {
+        "description": "Rp32.000",
+        "partNo": "Rp700.000",
+        "qty": "1"
+      },
+      {
+        "description": "Rp165.000",
+        "partNo": "Rp1.503.362",
+        "qty": "1"
+      },
+      {
+        "description": "Rp350.000",
+        "partNo": "Rp742.366",
+        "qty": "Rp878.306"
+      },
+      {
+        "description": "Rp650.000",
+        "partNo": "Rp650.000",
+        "qty": "1"
+      },
+      {
+        "description": "Rp1.500.000",
+        "partNo": "Rp1.500.000",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "DUMPTRUCK",
+    "totalItems": 14,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "2.016",
+        "partNo": "Dump Truck HINO RANGER-FM 260 JD DT 9884 JE",
+        "qty": "DT 01"
+      },
+      {
+        "description": "2.010",
+        "partNo": "Dump Truck HINO FM 260 JD BM 9237 JU",
+        "qty": "DT 03"
+      },
+      {
+        "description": "2.011",
+        "partNo": "Dump Truck MITSUBISHI",
+        "qty": "DT 07"
+      },
+      {
+        "description": "2.018",
+        "partNo": "Dump Truck HINO LOHAN  500 FM 260 JD B 9115 PYX",
+        "qty": "DT 09"
+      },
+      {
+        "description": "2.012",
+        "partNo": "Dump Truck Hino BM 9420 DU (2012)",
+        "qty": "DT 19"
+      },
+      {
+        "description": "2.013",
+        "partNo": "Dump Truck HINO",
+        "qty": "DT 21"
+      },
+      {
+        "description": "2.006",
+        "partNo": "TRADO",
+        "qty": "TR 01"
+      },
+      {
+        "description": "N",
+        "partNo": "L",
+        "qty": "O"
+      },
+      {
+        "description": "FILTER SOLAR BAWAH 23401-1440L",
+        "partNo": "FILTER SOLAR ATAS FC-100",
+        "qty": "TOTAL BIAYA"
+      },
+      {
+        "description": "1",
+        "partNo": "1",
+        "qty": "Rp300.000"
+      },
+      {
+        "description": "17",
+        "partNo": "17",
+        "qty": "1"
+      },
+      {
+        "description": "Rp135.000",
+        "partNo": "Rp125.000",
+        "qty": "1"
+      }
+    ]
+  },
+  {
+    "modelName": "service maret",
+    "totalItems": 17,
+    "parts": [
+      {
+        "description": "D",
+        "partNo": "B",
+        "qty": "E"
+      },
+      {
+        "description": "---",
+        "partNo": "---",
+        "qty": "---"
+      },
+      {
+        "description": "HM Service",
+        "partNo": "Nama Asset",
+        "qty": "Biaya"
+      },
+      {
+        "description": "stanby",
+        "partNo": "Bomag Smooth Drum Compactor  BW211D-40 SL",
+        "qty": "Rp0"
+      },
+      {
+        "description": "1.500",
+        "partNo": "Bomag Smooth Drum BW211D-40",
+        "qty": "Rp435.000"
+      },
+      {
+        "description": "20.000",
+        "partNo": "Bomag Smooth Drum BW211D-40",
+        "qty": "Rp5.322.500"
+      },
+      {
+        "description": "5.000",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40",
+        "qty": "Rp4.570.680"
+      },
+      {
+        "description": "2.500",
+        "partNo": "Bomag Pad Foot Compactor  BW211D-40 <br><br>",
+        "qty": "Rp4.570.680"
+      },
+      {
+        "description": "by ut",
+        "partNo": "Excavator PC 210-10M0/P1",
+        "qty": "Rp0"
+      },
+      {
+        "description": "stnby",
+        "partNo": "Excavator Komatsu PC 200-8 M0/U",
+        "qty": "1"
+      },
+      {
+        "description": "4.000",
+        "partNo": "Excavator CAT 320 GX new",
+        "qty": "Rp1.994.117"
+      },
+      {
+        "description": "4.500",
+        "partNo": "Excavator Komatsu PC 200-10 MOCE",
+        "qty": "Rp3.548.073,11"
+      },
+      {
+        "description": "3.000",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "Rp7.517.250"
+      },
+      {
+        "description": "3.500",
+        "partNo": "Excavator Caterpillar 320 GC",
+        "qty": "Rp1.860.355"
+      },
+      {
+        "description": "2.000",
+        "partNo": "Excavator Caterpillar 305",
+        "qty": "Rp2.033.421"
+      },
+      {
+        "description": "by hino",
+        "partNo": "Dump Truck HINO",
+        "qty": "Rp0"
+      },
+      {
+        "description": "indotek",
+        "partNo": "Dump Truck HINO",
+        "qty": "Rp0"
+      }
+    ]
+  },
+  {
+    "modelName": "exca cat mini",
+    "totalItems": 13,
+    "parts": [
+      {
+        "description": "FILTER ASENGINE OIL",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "FILTER ASWATER SEP & FUE",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "FILTER ELEMENTOIL",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "OIL SAMPLEWE & LP",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "OIL SAMPLE BOTTLEIR",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "COOLANT ANALYSIS",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "CAP & PROBE GP",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "GREASE CARTIDGE",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "DEO15W405 LIT",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "TDTO 5020 LIT",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "HYDO ADV 3020L",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "ELC COOLANT EXTENDER",
+        "partNo": null,
+        "qty": "1"
+      },
+      {
+        "description": "FILTER ELEMENT ASAIR",
+        "partNo": null,
+        "qty": "1"
+      }
+    ]
+  }
+]
