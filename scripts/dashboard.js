@@ -2705,134 +2705,30 @@
         showToast(options.finalized ? 'Laporan final siap dicetak.' : 'Validasi selesai. Preview laporan siap ditinjau.');
     }
 
-    function xmlEscape(value) {
-        return String(value == null ? '' : value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
-    }
-
-    function officialTemplateFileName(schema) {
-        return `Template_Resmi_${schema.code}_${schema.title}`
-            .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
-            .replace(/\s+/g, '_')
-            .slice(0, 120);
-    }
-
-    function wordParagraph(text, options = {}) {
-        const style = options.style ? `<w:pStyle w:val="${xmlEscape(options.style)}"/>` : '';
-        const bold = options.bold ? '<w:b/>' : '';
-        const size = options.size ? `<w:sz w:val="${Number(options.size)}"/>` : '';
-        const color = options.color ? `<w:color w:val="${xmlEscape(options.color)}"/>` : '';
-        return `<w:p><w:pPr>${style}</w:pPr><w:r><w:rPr>${bold}${size}${color}</w:rPr><w:t xml:space="preserve">${xmlEscape(text)}</w:t></w:r></w:p>`;
-    }
-
-    function wordTableCell(text, options = {}) {
-        const shade = options.shade ? `<w:shd w:fill="${xmlEscape(options.shade)}"/>` : '';
-        const width = options.width ? `<w:tcW w:w="${Number(options.width)}" w:type="dxa"/>` : '';
-        return `<w:tc><w:tcPr>${width}${shade}<w:tcMar><w:top w:w="90" w:type="dxa"/><w:left w:w="110" w:type="dxa"/><w:bottom w:w="90" w:type="dxa"/><w:right w:w="110" w:type="dxa"/></w:tcMar></w:tcPr>${wordParagraph(text, { bold: options.bold, size: options.size || 19, color: options.color })}</w:tc>`;
-    }
-
-    function wordTable(rows, widths = []) {
-        return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="6" w:color="B8C2D1"/><w:left w:val="single" w:sz="6" w:color="B8C2D1"/><w:bottom w:val="single" w:sz="6" w:color="B8C2D1"/><w:right w:val="single" w:sz="6" w:color="B8C2D1"/><w:insideH w:val="single" w:sz="4" w:color="D9E0E9"/><w:insideV w:val="single" w:sz="4" w:color="D9E0E9"/></w:tblBorders></w:tblPr>${rows.map(row => `<w:tr>${row.map((cell, index) => wordTableCell(cell.text, { ...cell, width: widths[index] }))}</w:tr>`).join('')}</w:tbl>`;
-    }
-
-    function officialTemplateDocumentXml(schema) {
-        const fieldRows = [
-            [
-                { text: 'Field / pertanyaan', bold: true, shade: 'DCE8FA', color: '173F99' },
-                { text: 'Isian pengguna', bold: true, shade: 'DCE8FA', color: '173F99' }
-            ],
-            ...schema.fields.map(item => {
-                const optionHint = item.type === 'select' && item.options?.length
-                    ? `Pilih: ${item.options.join(' / ')}`
-                    : item.type === 'date'
-                        ? 'YYYY-MM-DD'
-                        : item.type === 'month'
-                            ? 'YYYY-MM'
-                            : item.type === 'number'
-                                ? 'Masukkan angka'
-                                : '';
-                return [
-                    { text: `${item.label}${item.required ? ' *' : ''}${optionHint ? `\n${optionHint}` : ''}\n[FIELD:${item.key}]`, bold: true },
-                    { text: '' }
-                ];
-            })
-        ];
-        const tableRows = [
-            schema.columns.map(item => ({
-                text: `${item.label}\n[COLUMN:${item.key}]`,
-                bold: true,
-                shade: 'DCE8FA',
-                color: '173F99'
-            })),
-            ...Array.from({ length: 6 }, () => schema.columns.map(() => ({ text: ' ' })))
-        ];
-        return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-  <w:body>
-    ${wordParagraph('PT BINA REKAYASA ANUGRAH', { bold: true, size: 22, color: '2457C5' })}
-    ${wordParagraph(schema.title, { bold: true, size: 32 })}
-    ${wordParagraph(`${schema.code} · ${schema.category}`, { bold: true, size: 20, color: '657083' })}
-    ${wordParagraph('TEMPLATE DOKUMEN RESMI SISTEM', { bold: true, size: 19, color: '16855B' })}
-    ${wordParagraph('Petunjuk: isi kolom yang tersedia tanpa mengubah label [FIELD:] dan [COLUMN:]. Penanda tersebut membantu sistem memetakan data secara akurat saat dokumen diunggah kembali. Tanda * berarti wajib.', { size: 19 })}
-    ${wordParagraph('A. Identitas & informasi dokumen', { bold: true, size: 24, color: '173F99' })}
-    ${wordTable(fieldRows, [3900, 5900])}
-    ${wordParagraph('B. Data laporan', { bold: true, size: 24, color: '173F99' })}
-    ${wordParagraph(schema.tableTitle, { size: 19 })}
-    ${wordTable(tableRows)}
-    ${wordParagraph('Catatan tambahan', { bold: true, size: 21 })}
-    ${wordParagraph('Ketik catatan pendukung di sini. Jangan menghapus label field dan header tabel.', { size: 19 })}
-    <w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="850" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>
-  </w:body>
-</w:document>`;
+    function officialTemplateFileName() {
+        return 'Template_Laporan_Monitoring_TPL-LM-001_v1.0.xlsx';
     }
 
     async function downloadOfficialTemplate(schemaId) {
         const schema = formSchemas.find(item => item.id === schemaId);
         if (!schema) throw new Error('Template laporan tidak ditemukan.');
-        if (!window.JSZip) throw new Error('Pustaka DOCX belum siap. Muat ulang halaman lalu coba kembali.');
-        const zip = new window.JSZip();
-        zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
-  <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-</Types>`);
-        zip.folder('_rels').file('.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
-  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
-</Relationships>`);
-        zip.folder('word').file('document.xml', officialTemplateDocumentXml(schema));
-        zip.folder('docProps').file('core.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <dc:title>${xmlEscape(`Template Resmi ${schema.code} - ${schema.title}`)}</dc:title>
-  <dc:creator>FleetMonitor · PT Bina Rekayasa Anugrah</dc:creator>
-  <cp:keywords>${xmlEscape(`FleetMonitor,${schema.id},report-template-v2`)}</cp:keywords>
-  <dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created>
-</cp:coreProperties>`);
-        zip.folder('docProps').file('app.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>FleetMonitor</Application></Properties>`);
-        const blob = await zip.generateAsync({
-            type: 'blob',
-            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            compression: 'DEFLATE'
+        if (!window.FleetXlsxTemplateBuilder) {
+            throw new Error('Pembentuk template XLSX belum siap. Muat ulang halaman lalu coba kembali.');
+        }
+        const blob = await window.FleetXlsxTemplateBuilder.build({
+            schemaId: schema.id,
+            schemaCode: schema.code,
+            schemaTitle: schema.title
         });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${officialTemplateFileName(schema)}.docx`;
+        link.download = officialTemplateFileName();
         document.body.appendChild(link);
         link.click();
         link.remove();
         window.setTimeout(() => URL.revokeObjectURL(url), 1500);
-        showToast(`Template resmi ${schema.code} berhasil diunduh.`);
+        showToast('Template XLSX resmi berhasil diunduh.');
         return blob;
     }
 
@@ -10161,7 +10057,7 @@
         ));
         grid.innerHTML = filtered.length ? filtered.map(schema => `
             <article class="official-template-card">
-                <div class="official-template-file"><i class="fa-regular fa-file-word"></i><span>DOCX</span></div>
+                <div class="official-template-file"><i class="fa-regular fa-file-excel"></i><span>XLSX</span></div>
                 <div>
                     <small>${escapeHtml(schema.category)}</small>
                     <strong>${escapeHtml(schema.code)} · ${escapeHtml(schema.title)}</strong>
