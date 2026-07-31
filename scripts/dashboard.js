@@ -617,10 +617,14 @@
 
     formSchemas.forEach(schema => {
         schema.fields.forEach(item => {
-            item.required = !schema.optionalFields?.includes(item.key);
+            if (schema.optionalFields?.includes(item.key)) item.required = false;
+            else item.required = Boolean(item.required);
         });
         schema.columns.forEach(item => {
-            item.required = !item.readonly && !schema.optionalColumns?.includes(item.key);
+            const generallyOptional = /^(keterangan|catatan|tindakan|tambahan|penanda_kalender)$/i.test(item.key);
+            item.required = !item.readonly
+                && !generallyOptional
+                && !schema.optionalColumns?.includes(item.key);
         });
     });
 
@@ -1409,6 +1413,12 @@
 
     function numberControlConstraints(item, isTableColumn = false) {
         if (item.type !== 'number') return '';
+        const key = String(item.key || '').toLowerCase();
+        if (/^(tahun|tahun_pembuatan)$/.test(key)) return 'min="1900" max="2100" step="1"';
+        if (/^(pekan|minggu)$/.test(key)) return 'min="1" max="53" step="1"';
+        if (isTableColumn && /^(tanggal|hari)$/.test(key)) return 'min="1" max="31" step="1"';
+        if (/persen|persentase|percentage/.test(key)) return 'min="0" max="100" step="any"';
+        if (/^(jumlah|qty|kuantitas|hari_kerja)$/.test(key)) return 'min="0" step="1"';
         if (activeSchema?.id !== 'cutting-bit-usage') {
             return item.readonly ? '' : 'min="0" step="any"';
         }
@@ -1425,36 +1435,64 @@
         return 'min="0" step="any"';
     }
 
+    function validationAttributes(item, isTableColumn = false) {
+        const key = `${item.key || ''} ${item.label || ''}`.toLowerCase();
+        if (item.type === 'number') return numberControlConstraints(item, isTableColumn);
+        if (item.type === 'email') return 'autocomplete="email" maxlength="254"';
+        if (item.type === 'tel') {
+            return 'inputmode="tel" autocomplete="tel" minlength="8" maxlength="18" pattern="\\+?[0-9][0-9 ()-]{7,17}"';
+        }
+        if (item.type === 'file') {
+            return `accept="${escapeHtml(item.accept || '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png')}"`;
+        }
+        if (item.type === 'textarea') {
+            return `${item.required ? 'minlength="10"' : ''} maxlength="${Number(item.maxLength || 2000)}"`;
+        }
+        if (item.type === 'text') {
+            const maxLength = Number(item.maxLength || (
+                /alamat|uraian|analisa|temuan|riwayat|catatan|keterangan/.test(key) ? 500 : 160
+            ));
+            return `${item.required ? 'minlength="2"' : ''} maxlength="${maxLength}"`;
+        }
+        return '';
+    }
+
     function formControl(item, value) {
         const required = item.required ? 'required' : '';
         const placeholder = `placeholder="${escapeHtml(fieldPlaceholder(item))}"`;
-        const numberConstraints = numberControlConstraints(item);
+        const constraints = validationAttributes(item);
         const instruction = `title="${escapeHtml(fieldInstruction(item))}" aria-label="${escapeHtml(`${item.label}. ${fieldInstruction(item)}`)}"`;
         const numberTemplate = getNumberTemplate(activeSchema, item);
         if (numberTemplate) return templateNumberControl(item, value, numberTemplate);
         if (item.type === 'textarea') {
-            return `<textarea class="builder-input" data-field="${escapeHtml(item.key)}" ${required} ${placeholder} ${instruction}>${escapeHtml(value)}</textarea>`;
+            return `<textarea id="report-field-${escapeHtml(item.key)}" class="builder-input" data-field="${escapeHtml(item.key)}" ${required} ${placeholder} ${constraints} ${instruction} aria-describedby="report-field-${escapeHtml(item.key)}-error">${escapeHtml(value)}</textarea>`;
         }
         if (item.type === 'select') {
-            return `<select class="builder-input" data-field="${escapeHtml(item.key)}" ${required} ${instruction}>
+            return `<select id="report-field-${escapeHtml(item.key)}" class="builder-input" data-field="${escapeHtml(item.key)}" ${required} ${instruction} aria-describedby="report-field-${escapeHtml(item.key)}-error">
                 <option value="">Pilih ${escapeHtml(item.label.toLowerCase())}...</option>
                 ${item.options.map(option => `<option value="${escapeHtml(option)}" ${value === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}
             </select>`;
         }
-        return `<input class="builder-input" data-field="${escapeHtml(item.key)}" type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" ${required} ${placeholder} ${numberConstraints} ${instruction}>`;
+        if (item.type === 'boolean') {
+            return `<div class="builder-radio-group" role="radiogroup" aria-describedby="report-field-${escapeHtml(item.key)}-error">
+                ${['Ya', 'Tidak'].map(option => `<label><input type="radio" name="report-field-${escapeHtml(item.key)}" data-field="${escapeHtml(item.key)}" value="${option}" ${value === option ? 'checked' : ''} ${required}> ${option}</label>`).join('')}
+            </div>`;
+        }
+        return `<input id="report-field-${escapeHtml(item.key)}" class="builder-input" data-field="${escapeHtml(item.key)}" type="${escapeHtml(item.type)}" value="${item.type === 'file' ? '' : escapeHtml(value)}" ${required} ${placeholder} ${constraints} ${instruction} aria-describedby="report-field-${escapeHtml(item.key)}-error">`;
     }
 
     function tableControl(item, value, rowIndex) {
-        const common = `class="table-cell-input" data-row="${rowIndex}" data-key="${escapeHtml(item.key)}" title="${escapeHtml(columnInstruction(item))}" aria-label="${escapeHtml(`${item.label} baris ${rowIndex + 1}. ${columnInstruction(item)}`)}"`;
+        const errorId = `report-row-${rowIndex}-${escapeHtml(item.key)}-error`;
+        const common = `class="table-cell-input" data-row="${rowIndex}" data-key="${escapeHtml(item.key)}" title="${escapeHtml(columnInstruction(item))}" aria-label="${escapeHtml(`${item.label} baris ${rowIndex + 1}. ${columnInstruction(item)}`)}" aria-describedby="${errorId}"`;
         const required = item.required ? 'required' : '';
         if (item.type === 'select') {
             return `<select ${common} ${required}>
                 <option value="">Pilih ${escapeHtml(item.label.toLowerCase())}...</option>
                 ${item.options.map(option => `<option value="${escapeHtml(option)}" ${value === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}
-            </select>`;
+            </select><small class="table-validation-message" id="${errorId}" aria-live="polite"></small>`;
         }
-        const numberConstraints = numberControlConstraints(item, true);
-        return `<input ${common} type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(columnPlaceholder(item))}" ${required} ${numberConstraints} ${item.readonly ? 'readonly tabindex="-1"' : ''}>`;
+        const constraints = validationAttributes(item, true);
+        return `<input ${common} type="${escapeHtml(item.type)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(columnPlaceholder(item))}" ${required} ${constraints} ${item.readonly ? 'readonly tabindex="-1"' : ''}><small class="table-validation-message" id="${errorId}" aria-live="polite"></small>`;
     }
 
     function evidenceControl(row, rowIndex) {
@@ -1553,10 +1591,11 @@
     function renderFields() {
         return activeSchema.fields.map(item => `
             <div class="builder-field ${item.full ? 'full' : ''}">
-                <label>
+                <label for="report-field-${escapeHtml(item.key)}">
                     ${escapeHtml(item.label)}${item.required ? '<span class="required-mark">*</span>' : ''}
                 </label>
                 ${formControl(item, activeDraft.fields[item.key] || '')}
+                <small class="field-validation-message" id="report-field-${escapeHtml(item.key)}-error" aria-live="polite"></small>
             </div>
         `).join('');
     }
@@ -2076,7 +2115,56 @@
             });
             renderSummary();
         }
+        updateControlValidation(target, true);
         saveDraft();
+    }
+
+    function validationMessageFor(control) {
+        const validity = control.validity;
+        if (!validity || validity.valid) return '';
+        const label = control.dataset.field
+            ? activeSchema?.fields.find(item => item.key === control.dataset.field)?.label
+            : activeSchema?.columns.find(item => item.key === control.dataset.key)?.label;
+        const fieldLabel = label || 'Field ini';
+        if (validity.valueMissing) return `${fieldLabel} wajib diisi.`;
+        if (validity.typeMismatch) {
+            return control.type === 'email'
+                ? 'Gunakan format email yang valid, misalnya nama@perusahaan.co.id.'
+                : `${fieldLabel} menggunakan format yang tidak valid.`;
+        }
+        if (validity.patternMismatch) {
+            return control.type === 'tel'
+                ? 'Gunakan nomor telepon 8–18 digit; tanda +, spasi, kurung, dan tanda hubung diperbolehkan.'
+                : `${fieldLabel} belum mengikuti format yang diminta.`;
+        }
+        if (validity.rangeUnderflow) return `${fieldLabel} minimal ${control.min}.`;
+        if (validity.rangeOverflow) return `${fieldLabel} maksimal ${control.max}.`;
+        if (validity.stepMismatch) return `${fieldLabel} harus menggunakan kelipatan ${control.step}.`;
+        if (validity.tooShort) return `${fieldLabel} minimal ${control.minLength} karakter.`;
+        if (validity.tooLong) return `${fieldLabel} maksimal ${control.maxLength} karakter.`;
+        if (validity.badInput) return `${fieldLabel} hanya menerima angka yang valid.`;
+        return `${fieldLabel} belum valid. Periksa kembali isian ini.`;
+    }
+
+    function updateControlValidation(control, markTouched = false) {
+        if (!control?.matches?.('input, select, textarea') || control.readOnly) return;
+        if (markTouched) control.dataset.validationTouched = 'true';
+        const errorId = control.getAttribute('aria-describedby');
+        const message = control.dataset.validationTouched === 'true'
+            ? validationMessageFor(control)
+            : '';
+        control.classList.toggle('is-invalid', Boolean(message));
+        control.setAttribute('aria-invalid', String(Boolean(message)));
+        if (errorId) {
+            const errorElement = document.getElementById(errorId);
+            if (errorElement) errorElement.textContent = message;
+        }
+    }
+
+    function revealFormValidationErrors(form) {
+        form?.querySelectorAll('input, select, textarea').forEach(control => {
+            updateControlValidation(control, !control.validity.valid);
+        });
     }
 
     function closeForm() {
@@ -2207,6 +2295,7 @@
 
     function validateDraft() {
         const form = document.getElementById('dynamicReportForm');
+        revealFormValidationErrors(form);
         const missingNumberPart = form?.querySelector('.template-number-part:invalid')
             || [...(form?.querySelectorAll('.template-number-part') || [])].find(input => !input.value.trim());
         if (missingNumberPart) {
@@ -2327,12 +2416,20 @@
         const createdAt = new Date().toISOString();
         const record = {
             id: `RPT-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
+            schemaVersion: 'report-template-v2',
+            sourceMethod: activeDraft.importSource ? 'import' : 'form',
             schemaId: activeSchema.id,
             code: activeSchema.code,
             title: activeSchema.title,
             reportNumber: getReportNumber(activeSchema, activeDraft.fields),
             createdAt,
-            draft: cloneData({ ...activeDraft, finalizedAt: createdAt })
+            draft: cloneData({ ...activeDraft, finalizedAt: createdAt }),
+            standardizedPayload: cloneData({
+                schemaId: activeSchema.id,
+                schemaVersion: 'report-template-v2',
+                fields: activeDraft.fields,
+                rows: populatedRows
+            })
         };
         try {
             const records = readHistory();
@@ -2608,6 +2705,137 @@
         showToast(options.finalized ? 'Laporan final siap dicetak.' : 'Validasi selesai. Preview laporan siap ditinjau.');
     }
 
+    function xmlEscape(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+    }
+
+    function officialTemplateFileName(schema) {
+        return `Template_Resmi_${schema.code}_${schema.title}`
+            .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
+            .replace(/\s+/g, '_')
+            .slice(0, 120);
+    }
+
+    function wordParagraph(text, options = {}) {
+        const style = options.style ? `<w:pStyle w:val="${xmlEscape(options.style)}"/>` : '';
+        const bold = options.bold ? '<w:b/>' : '';
+        const size = options.size ? `<w:sz w:val="${Number(options.size)}"/>` : '';
+        const color = options.color ? `<w:color w:val="${xmlEscape(options.color)}"/>` : '';
+        return `<w:p><w:pPr>${style}</w:pPr><w:r><w:rPr>${bold}${size}${color}</w:rPr><w:t xml:space="preserve">${xmlEscape(text)}</w:t></w:r></w:p>`;
+    }
+
+    function wordTableCell(text, options = {}) {
+        const shade = options.shade ? `<w:shd w:fill="${xmlEscape(options.shade)}"/>` : '';
+        const width = options.width ? `<w:tcW w:w="${Number(options.width)}" w:type="dxa"/>` : '';
+        return `<w:tc><w:tcPr>${width}${shade}<w:tcMar><w:top w:w="90" w:type="dxa"/><w:left w:w="110" w:type="dxa"/><w:bottom w:w="90" w:type="dxa"/><w:right w:w="110" w:type="dxa"/></w:tcMar></w:tcPr>${wordParagraph(text, { bold: options.bold, size: options.size || 19, color: options.color })}</w:tc>`;
+    }
+
+    function wordTable(rows, widths = []) {
+        return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="6" w:color="B8C2D1"/><w:left w:val="single" w:sz="6" w:color="B8C2D1"/><w:bottom w:val="single" w:sz="6" w:color="B8C2D1"/><w:right w:val="single" w:sz="6" w:color="B8C2D1"/><w:insideH w:val="single" w:sz="4" w:color="D9E0E9"/><w:insideV w:val="single" w:sz="4" w:color="D9E0E9"/></w:tblBorders></w:tblPr>${rows.map(row => `<w:tr>${row.map((cell, index) => wordTableCell(cell.text, { ...cell, width: widths[index] }))}</w:tr>`).join('')}</w:tbl>`;
+    }
+
+    function officialTemplateDocumentXml(schema) {
+        const fieldRows = [
+            [
+                { text: 'Field / pertanyaan', bold: true, shade: 'DCE8FA', color: '173F99' },
+                { text: 'Isian pengguna', bold: true, shade: 'DCE8FA', color: '173F99' }
+            ],
+            ...schema.fields.map(item => {
+                const optionHint = item.type === 'select' && item.options?.length
+                    ? `Pilih: ${item.options.join(' / ')}`
+                    : item.type === 'date'
+                        ? 'YYYY-MM-DD'
+                        : item.type === 'month'
+                            ? 'YYYY-MM'
+                            : item.type === 'number'
+                                ? 'Masukkan angka'
+                                : '';
+                return [
+                    { text: `${item.label}${item.required ? ' *' : ''}${optionHint ? `\n${optionHint}` : ''}\n[FIELD:${item.key}]`, bold: true },
+                    { text: '' }
+                ];
+            })
+        ];
+        const tableRows = [
+            schema.columns.map(item => ({
+                text: `${item.label}\n[COLUMN:${item.key}]`,
+                bold: true,
+                shade: 'DCE8FA',
+                color: '173F99'
+            })),
+            ...Array.from({ length: 6 }, () => schema.columns.map(() => ({ text: ' ' })))
+        ];
+        return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    ${wordParagraph('PT BINA REKAYASA ANUGRAH', { bold: true, size: 22, color: '2457C5' })}
+    ${wordParagraph(schema.title, { bold: true, size: 32 })}
+    ${wordParagraph(`${schema.code} · ${schema.category}`, { bold: true, size: 20, color: '657083' })}
+    ${wordParagraph('TEMPLATE DOKUMEN RESMI SISTEM', { bold: true, size: 19, color: '16855B' })}
+    ${wordParagraph('Petunjuk: isi kolom yang tersedia tanpa mengubah label [FIELD:] dan [COLUMN:]. Penanda tersebut membantu sistem memetakan data secara akurat saat dokumen diunggah kembali. Tanda * berarti wajib.', { size: 19 })}
+    ${wordParagraph('A. Identitas & informasi dokumen', { bold: true, size: 24, color: '173F99' })}
+    ${wordTable(fieldRows, [3900, 5900])}
+    ${wordParagraph('B. Data laporan', { bold: true, size: 24, color: '173F99' })}
+    ${wordParagraph(schema.tableTitle, { size: 19 })}
+    ${wordTable(tableRows)}
+    ${wordParagraph('Catatan tambahan', { bold: true, size: 21 })}
+    ${wordParagraph('Ketik catatan pendukung di sini. Jangan menghapus label field dan header tabel.', { size: 19 })}
+    <w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="850" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>
+  </w:body>
+</w:document>`;
+    }
+
+    async function downloadOfficialTemplate(schemaId) {
+        const schema = formSchemas.find(item => item.id === schemaId);
+        if (!schema) throw new Error('Template laporan tidak ditemukan.');
+        if (!window.JSZip) throw new Error('Pustaka DOCX belum siap. Muat ulang halaman lalu coba kembali.');
+        const zip = new window.JSZip();
+        zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+  <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>`);
+        zip.folder('_rels').file('.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`);
+        zip.folder('word').file('document.xml', officialTemplateDocumentXml(schema));
+        zip.folder('docProps').file('core.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <dc:title>${xmlEscape(`Template Resmi ${schema.code} - ${schema.title}`)}</dc:title>
+  <dc:creator>FleetMonitor · PT Bina Rekayasa Anugrah</dc:creator>
+  <cp:keywords>${xmlEscape(`FleetMonitor,${schema.id},report-template-v2`)}</cp:keywords>
+  <dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString()}</dcterms:created>
+</cp:coreProperties>`);
+        zip.folder('docProps').file('app.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>FleetMonitor</Application></Properties>`);
+        const blob = await zip.generateAsync({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            compression: 'DEFLATE'
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${officialTemplateFileName(schema)}.docx`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+        showToast(`Template resmi ${schema.code} berhasil diunduh.`);
+        return blob;
+    }
+
     function showToast(message, isError = false) {
         const toast = document.getElementById('reportToast');
         if (!toast) return;
@@ -2810,7 +3038,7 @@
     }
 
     window.FleetReportForms = Object.freeze({
-        version: '1.2.0',
+        version: '1.3.0',
         getSchemas: () => cloneData(formSchemas),
         getDraftState(schemaId) {
             const schema = formSchemas.find(item => item.id === schemaId);
@@ -2826,6 +3054,7 @@
             const schema = formSchemas.find(item => item.id === schemaId);
             return schema ? cloneData(resolveReportPrintLayout(schema, rows)) : null;
         },
+        downloadOfficialTemplate,
         selectPanel: switchReportPanel,
         notify: showToast
     });
@@ -5252,7 +5481,7 @@
 (function (global) {
     'use strict';
 
-    const ENGINE_VERSION = '1.2.0';
+    const ENGINE_VERSION = '1.3.0';
     const ENVELOPE_VERSION = '1.0.0';
     const SUPPORTED_EXTENSIONS = new Set([
         '.doc',
@@ -8589,11 +8818,15 @@
             let selected = null;
             let alternative = null;
             candidates.forEach(candidate => {
-                const labelScore = bestAliasScore(candidate.label, aliases);
+                const explicitKey = candidate.label.match(/\[\s*FIELD\s*:\s*([a-z0-9_-]+)\s*\]/i)?.[1];
+                const isExplicitMatch = explicitKey?.toLocaleLowerCase('id') === item.key.toLocaleLowerCase('id');
+                const labelScore = isExplicitMatch
+                    ? 1
+                    : bestAliasScore(candidate.label, aliases);
                 if (labelScore < 0.58) return;
                 const normalized = normalizeMappedValue(candidate.value, item);
                 if (normalized === '') return;
-                const score = labelScore * candidate.baseConfidence;
+                const score = isExplicitMatch ? 0.995 : labelScore * candidate.baseConfidence;
                 const result = { candidate, labelScore, normalized, score };
                 if (!selected || result.score > selected.score) {
                     alternative = selected;
@@ -8610,7 +8843,9 @@
                 confidence: clamp(selected.score),
                 sourceRef: selected.candidate.sourceRef,
                 fragmentIds: selected.candidate.sourceRefs,
-                method: selected.candidate.origin
+                method: /\[\s*FIELD\s*:/i.test(selected.candidate.label)
+                    ? 'official-template-marker'
+                    : selected.candidate.origin
             };
             selected.candidate.sourceRefs.forEach(id => usedFragmentIds.add(id));
             if (
@@ -8639,11 +8874,14 @@
         const assignments = [];
         const usedColumnKeys = new Set();
         headers.forEach((header, sourceIndex) => {
+            const explicitKey = String(header || '').match(/\[\s*COLUMN\s*:\s*([a-z0-9_-]+)\s*\]/i)?.[1];
             const ranked = columns
                 .filter(column => !column.readonly && !usedColumnKeys.has(column.key))
                 .map(column => ({
                     column,
-                    score: bestAliasScore(header, fieldAliases(column))
+                    score: explicitKey?.toLocaleLowerCase('id') === column.key.toLocaleLowerCase('id')
+                        ? 1
+                        : bestAliasScore(header, fieldAliases(column))
                 }))
                 .sort((left, right) => right.score - left.score);
             if (ranked[0]?.score >= 0.5) {
@@ -9222,6 +9460,9 @@
         const requiredCoverage = requiredFields.length
             ? filledRequiredFields.length / requiredFields.length
             : selectedSchema ? 1 : 0;
+        const completeness = selectedSchema
+            ? clamp((extractionCoverage * 0.35) + (requiredCoverage * 0.65))
+            : extractionCoverage * 0.35;
         const qualityWarnings = [...extracted.extraction.warnings];
         qualityWarnings.push(...mappingProfileIssues);
         if (!selectedSchema) {
@@ -9313,6 +9554,7 @@
                 : null,
             mapping,
             quality: {
+                completeness,
                 extractionCoverage,
                 mappingCoverage,
                 requiredCoverage,
@@ -9329,11 +9571,12 @@
                     selectedSchema
                     && extracted.extraction.stats.supported !== false
                     && qualityErrorCount === 0
+                    && requiredCoverage === 1
                 ),
                 requiresIncompleteOverride: Boolean(
                     selectedSchema
                     && extracted.extraction.stats.supported !== false
-                    && qualityErrorCount > 0
+                    && (qualityErrorCount > 0 || requiredCoverage < 1)
                 ),
                 canFinalizeAutomatically: false,
                 warnings: qualityWarnings
@@ -9514,7 +9757,10 @@
         const unsupported = record.extraction?.stats?.supported === false;
         let status = unsupported
             ? 'unsupported'
-            : record.quality?.errors
+            : record.quality?.errors || (
+                record.target
+                && Number(record.quality?.requiredCoverage ?? 0) < 1
+            )
                 ? 'review'
                 : record.target
                     ? 'ready'
@@ -9533,6 +9779,7 @@
             target: record.target,
             classification: record.classification,
             quality: {
+                completeness: record.quality?.completeness || 0,
                 extractionCoverage: record.quality?.extractionCoverage || 0,
                 mappingCoverage: record.quality?.mappingCoverage || 0,
                 requiredCoverage: record.quality?.requiredCoverage || 0,
@@ -9813,6 +10060,31 @@
                     <div><strong>PROSES LOKAL</strong><span>File tidak dikirim keluar</span></div>
                 </div>
             </div>
+            <section class="official-template-library" aria-labelledby="officialTemplateTitle">
+                <div class="official-template-heading">
+                    <div class="official-template-icon"><i class="fa-solid fa-folder-open"></i></div>
+                    <div>
+                        <span>TEMPLATE DOKUMEN</span>
+                        <h2 id="officialTemplateTitle">Mulai dari format resmi sistem</h2>
+                        <p>Unduh, isi tanpa mengubah label, lalu unggah kembali agar ekstraksi dan pemetaan lebih konsisten.</p>
+                    </div>
+                    <button type="button" class="import-secondary-button" id="toggleOfficialTemplates" aria-expanded="true" aria-controls="officialTemplateBody">
+                        <i class="fa-solid fa-chevron-up"></i> Sembunyikan
+                    </button>
+                </div>
+                <div id="officialTemplateBody">
+                    <div class="official-template-toolbar">
+                        <div class="report-control-wrap">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="search" class="report-input" id="officialTemplateSearch" placeholder="Cari kode atau nama template…">
+                        </div>
+                        <select class="report-select" id="officialTemplateCategory" aria-label="Filter kategori template">
+                            <option value="">Semua kategori</option>
+                        </select>
+                    </div>
+                    <div class="official-template-grid" id="officialTemplateGrid"></div>
+                </div>
+            </section>
             <section class="import-dropzone" id="documentDropzone" tabindex="0" role="button" aria-label="Pilih atau jatuhkan dokumen">
                 <div class="import-drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                 <div>
@@ -9861,13 +10133,80 @@
                 <section class="import-detail-panel" id="documentImportDetail"></section>
             </div>
         `;
+        renderOfficialTemplateLibrary();
         bindBaseEvents();
+    }
+
+    function renderOfficialTemplateLibrary() {
+        const grid = document.getElementById('officialTemplateGrid');
+        const categorySelect = document.getElementById('officialTemplateCategory');
+        if (!grid || !categorySelect) return;
+        const schemas = reports()?.getSchemas?.() || [];
+        if (!categorySelect.dataset.ready) {
+            [...new Set(schemas.map(schema => schema.category))].sort().forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            });
+            categorySelect.dataset.ready = 'true';
+        }
+        const query = (document.getElementById('officialTemplateSearch')?.value || '')
+            .trim()
+            .toLocaleLowerCase('id');
+        const category = categorySelect.value;
+        const filtered = schemas.filter(schema => (
+            (!category || schema.category === category)
+            && (!query || `${schema.code} ${schema.title} ${schema.description}`.toLocaleLowerCase('id').includes(query))
+        ));
+        grid.innerHTML = filtered.length ? filtered.map(schema => `
+            <article class="official-template-card">
+                <div class="official-template-file"><i class="fa-regular fa-file-word"></i><span>DOCX</span></div>
+                <div>
+                    <small>${escapeHtml(schema.category)}</small>
+                    <strong>${escapeHtml(schema.code)} · ${escapeHtml(schema.title)}</strong>
+                    <span>${schema.fields.length} field · ${schema.columns.length} kolom standar</span>
+                </div>
+                <button type="button" class="import-secondary-button" data-download-official-template="${escapeHtml(schema.id)}">
+                    <i class="fa-solid fa-download"></i> Unduh
+                </button>
+            </article>
+        `).join('') : `
+            <div class="official-template-empty"><i class="fa-regular fa-folder-open"></i> Template tidak ditemukan.</div>
+        `;
+        grid.querySelectorAll('[data-download-official-template]').forEach(button => {
+            button.addEventListener('click', async () => {
+                const original = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan…';
+                try {
+                    await reports().downloadOfficialTemplate(button.dataset.downloadOfficialTemplate);
+                } catch (error) {
+                    reports()?.notify(`Template gagal dibuat: ${error.message}`, true);
+                } finally {
+                    button.disabled = false;
+                    button.innerHTML = original;
+                }
+            });
+        });
     }
 
     function bindBaseEvents() {
         const dropzone = document.getElementById('documentDropzone');
         const fileInput = document.getElementById('documentFileInput');
         const folderInput = document.getElementById('documentFolderInput');
+        document.getElementById('officialTemplateSearch')?.addEventListener('input', renderOfficialTemplateLibrary);
+        document.getElementById('officialTemplateCategory')?.addEventListener('change', renderOfficialTemplateLibrary);
+        document.getElementById('toggleOfficialTemplates')?.addEventListener('click', event => {
+            const button = event.currentTarget;
+            const body = document.getElementById('officialTemplateBody');
+            const expanded = button.getAttribute('aria-expanded') === 'true';
+            button.setAttribute('aria-expanded', String(!expanded));
+            body.hidden = expanded;
+            button.innerHTML = expanded
+                ? '<i class="fa-solid fa-chevron-down"></i> Tampilkan'
+                : '<i class="fa-solid fa-chevron-up"></i> Sembunyikan';
+        });
         document.getElementById('chooseImportFiles').addEventListener('click', event => {
             event.stopPropagation();
             if (state.hydrating) return;
@@ -10386,6 +10725,7 @@
                 </div>
             </div>
             <div class="import-quality-grid">
+                ${qualityGauge('Kelengkapan laporan', record.quality.completeness ?? ((record.quality.extractionCoverage * 0.35) + (record.quality.requiredCoverage * 0.65)), 'Gabungan keterbacaan dokumen dan field wajib')}
                 ${qualityGauge('Cakupan ekstraksi', record.quality.extractionCoverage, 'Semua halaman/sheet/bagian yang berhasil dibaca')}
                 ${qualityGauge('Field wajib terisi', record.quality.requiredCoverage, `${record.quality.filledRequiredFields}/${record.quality.requiredFields} field`)}
                 ${qualityGauge('Masuk ke schema', record.quality.mappingCoverage, `${record.quality.mappedFragments}/${record.quality.sourceFragments} fragmen`)}
@@ -10460,6 +10800,31 @@
         return mappingDetail(record, schemas);
     }
 
+    function manualMappingControl(field, value = '') {
+        const common = `class="report-input" data-manual-map-field="${escapeHtml(field.key)}"`;
+        if (field.type === 'select') {
+            return `<select ${common}>
+                <option value="">Pilih ${escapeHtml(field.label.toLowerCase())}…</option>
+                ${(field.options || []).map(option => `<option value="${escapeHtml(option)}" ${value === option ? 'selected' : ''}>${escapeHtml(option)}</option>`).join('')}
+            </select>`;
+        }
+        if (field.type === 'textarea') {
+            return `<textarea ${common} maxlength="2000" placeholder="Lengkapi ${escapeHtml(field.label.toLowerCase())}">${escapeHtml(value)}</textarea>`;
+        }
+        const type = ['date', 'month', 'time', 'number', 'email', 'tel'].includes(field.type)
+            ? field.type
+            : 'text';
+        const numberAttributes = type === 'number' ? 'min="0" step="any"' : '';
+        const typeAttributes = type === 'email'
+            ? 'maxlength="254"'
+            : type === 'tel'
+                ? 'inputmode="tel" minlength="8" maxlength="18" pattern="\\+?[0-9][0-9 ()-]{7,17}"'
+                : type === 'text'
+                    ? 'maxlength="500"'
+                    : '';
+        return `<input type="${type}" ${common} ${numberAttributes} ${typeAttributes} value="${escapeHtml(value)}" placeholder="Lengkapi ${escapeHtml(field.label.toLowerCase())}">`;
+    }
+
     function mappingDetail(record, schemas) {
         if (!record.target) {
             return `
@@ -10480,6 +10845,9 @@
             field.required
             && (record.mapping.fields[field.key] === undefined || record.mapping.fields[field.key] === '')
         ));
+        const unmappedFields = fields.filter(field => (
+            record.mapping.fields[field.key] === undefined || record.mapping.fields[field.key] === ''
+        ));
         return `
             <div class="import-mapping-summary">
                 <div>
@@ -10499,6 +10867,35 @@
                     <span>fragmen tetap di arsip</span>
                 </div>
             </div>
+            ${unmappedFields.length ? `
+                <section class="import-manual-mapping">
+                    <div class="import-section-title">
+                        <div>
+                            <h3><i class="fa-solid fa-pen-to-square"></i> Field belum terpetakan (${unmappedFields.length})</h3>
+                            <span>Lengkapi langsung di sini; nilai manual akan diberi provenance dan ikut masuk ke draft standar.</span>
+                        </div>
+                    </div>
+                    <form id="manualMappingForm">
+                        <div class="import-manual-field-grid">
+                            ${unmappedFields.map(field => `
+                                <label>
+                                    <span>${escapeHtml(field.label)} ${field.required ? '<b>WAJIB</b>' : '<em>Opsional</em>'}</span>
+                                    ${manualMappingControl(field)}
+                                </label>
+                            `).join('')}
+                        </div>
+                        <div class="import-manual-actions">
+                            <span><i class="fa-solid fa-circle-info"></i> Isi field yang diketahui; field wajib harus lengkap sebelum laporan difinalkan.</span>
+                            <button type="submit" class="import-primary-button"><i class="fa-solid fa-floppy-disk"></i> Simpan Koreksi</button>
+                        </div>
+                    </form>
+                </section>
+            ` : `
+                <div class="import-inline-alert success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Seluruh field template sudah terpetakan. Tetap periksa nilainya sebelum menyimpan laporan final.</span>
+                </div>
+            `}
             <section class="import-detail-section">
                 <div class="import-section-title"><h3>Pemetaan field identitas</h3><span>Nilai normalized + sumber asli</span></div>
                 <div class="import-mapping-table-wrap">
@@ -10670,6 +11067,74 @@
         `;
     }
 
+    async function saveManualMapping(record, form, button) {
+        const schemas = reports()?.getSchemas?.() || [];
+        const schema = schemas.find(item => item.id === record.target?.schemaId);
+        if (!schema) throw new Error('Template tujuan tidak ditemukan.');
+        const definitions = new Map(schema.fields.map(field => [field.key, field]));
+        let changed = 0;
+        form.querySelectorAll('[data-manual-map-field]').forEach(control => {
+            const key = control.dataset.manualMapField;
+            const definition = definitions.get(key);
+            if (!definition) return;
+            const value = control.value.trim();
+            if (!value) return;
+            record.mapping.fields[key] = value;
+            record.mapping.fieldProvenance[key] = {
+                confidence: 1,
+                sourceRef: `manual-review:${record.source.fileName}`,
+                sourceFragmentId: null,
+                label: definition.label,
+                mappingMethod: 'manual'
+            };
+            changed += 1;
+        });
+        if (!changed) {
+            reports()?.notify('Belum ada koreksi yang diisi.', true);
+            return;
+        }
+        const requiredFields = schema.fields.filter(field => field.required);
+        const missing = requiredFields.filter(field => !String(record.mapping.fields[field.key] ?? '').trim());
+        const requiredCoverage = requiredFields.length
+            ? (requiredFields.length - missing.length) / requiredFields.length
+            : 1;
+        record.quality.requiredCoverage = requiredCoverage;
+        record.quality.requiredFields = requiredFields.length;
+        record.quality.filledRequiredFields = requiredFields.length - missing.length;
+        record.quality.completeness = Math.min(
+            1,
+            (Number(record.quality.extractionCoverage || 0) * 0.35) + (requiredCoverage * 0.65)
+        );
+        record.quality.canCreateDraft = Boolean(
+            record.extraction.stats.supported !== false
+            && Number(record.quality.errors || 0) === 0
+            && requiredCoverage === 1
+        );
+        record.quality.requiresIncompleteOverride = Boolean(
+            record.extraction.stats.supported !== false
+            && (Number(record.quality.errors || 0) > 0 || requiredCoverage < 1)
+        );
+        record.quality.warnings = record.quality.warnings.filter(
+            warning => warning.code !== 'required_fields_missing'
+        );
+        if (missing.length) {
+            record.quality.warnings.push({
+                code: 'required_fields_missing',
+                message: `${missing.length} field wajib masih perlu dilengkapi: ${missing.slice(0, 8).map(field => field.label).join(', ')}${missing.length > 8 ? ', …' : ''}.`,
+                severity: 'warning',
+                sourceRef: schema.id
+            });
+        }
+        record.quality.warningCount = record.quality.warnings.filter(
+            warning => warning.severity === 'warning'
+        ).length;
+        record.updatedAt = new Date().toISOString();
+        button.disabled = true;
+        await saveRecord(record);
+        reports()?.notify(`${changed} koreksi manual tersimpan. Kelengkapan sekarang ${Math.round(record.quality.completeness * 100)}%.`);
+        render();
+    }
+
     function bindDetailEvents(container, record, schemas) {
         container.querySelectorAll('[data-import-detail-tab]').forEach(button => {
             button.addEventListener('click', () => {
@@ -10719,6 +11184,17 @@
                 const latestRecord = state.records.get(record.importId) || record;
                 applyToDraft(latestRecord, button);
             });
+        });
+        const manualMappingForm = container.querySelector('#manualMappingForm');
+        manualMappingForm?.addEventListener('submit', async event => {
+            event.preventDefault();
+            const button = manualMappingForm.querySelector('button[type="submit"]');
+            try {
+                await saveManualMapping(record, manualMappingForm, button);
+            } catch (error) {
+                button.disabled = false;
+                reports()?.notify(`Koreksi gagal disimpan: ${error.message}`, true);
+            }
         });
         bindDeleteButtons(container);
         container.querySelectorAll('[data-export-import]').forEach(button => {

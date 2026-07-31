@@ -11761,4 +11761,319 @@ body.sl-modal-open {
     color: var(--primary);
 }
 
+/* Laporan & Form — standardized templates, live validation, manual mapping */
+#reportModule .builder-input.is-invalid,
+#reportModule .table-cell-input.is-invalid {
+    background: #fff8f8;
+    border-color: #c93f4f;
+    box-shadow: 0 0 0 3px rgba(201, 63, 79, .1);
+}
+
+#reportModule .field-validation-message,
+#reportModule .table-validation-message {
+    color: #a92f3d;
+    display: block;
+    font-size: .66rem;
+    line-height: 1.35;
+    min-height: 0;
+}
+
+#reportModule .field-validation-message:not(:empty) {
+    margin-top: 5px;
+}
+
+#reportModule .table-validation-message:not(:empty) {
+    margin-top: 4px;
+    min-width: 120px;
+}
+
+#reportModule .builder-radio-group {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #cfd6e1;
+    border-radius: 7px;
+    display: flex;
+    gap: 18px;
+    min-height: 42px;
+    padding: 8px 12px;
+}
+
+#reportModule .builder-radio-group label {
+    align-items: center;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 6px;
+    margin: 0;
+}
+
+.official-template-library {
+    background: linear-gradient(135deg, #f7faff 0%, #eef4ff 100%);
+    border: 1px solid #c9d8f4;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.official-template-heading {
+    align-items: center;
+    display: flex;
+    gap: 14px;
+    padding: 17px 18px;
+}
+
+.official-template-heading > div:nth-child(2) {
+    flex: 1;
+}
+
+.official-template-icon {
+    align-items: center;
+    background: #2457c5;
+    border-radius: 11px;
+    color: #fff;
+    display: flex;
+    flex: 0 0 auto;
+    font-size: 1.25rem;
+    height: 48px;
+    justify-content: center;
+    width: 48px;
+}
+
+.official-template-heading span {
+    color: #2457c5;
+    display: block;
+    font-size: .62rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+}
+
+.official-template-heading h2 {
+    font-size: 1rem;
+    margin: 2px 0 3px;
+}
+
+.official-template-heading p {
+    color: #657083;
+    font-size: .73rem;
+    line-height: 1.45;
+    margin: 0;
+}
+
+#officialTemplateBody {
+    border-top: 1px solid #d6e1f5;
+    padding: 14px 18px 18px;
+}
+
+.official-template-toolbar {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(240px, 1fr) minmax(190px, 280px);
+    margin-bottom: 11px;
+}
+
+.official-template-grid {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 330px;
+    overflow: auto;
+    padding-right: 3px;
+}
+
+.official-template-card {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #dce4f1;
+    border-radius: 9px;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    padding: 10px;
+}
+
+.official-template-file {
+    align-items: center;
+    background: #eaf0ff;
+    border-radius: 8px;
+    color: #2457c5;
+    display: flex;
+    flex-direction: column;
+    font-size: 1.05rem;
+    height: 44px;
+    justify-content: center;
+}
+
+.official-template-file span {
+    font-size: .46rem;
+    letter-spacing: .05em;
+    margin-top: 2px;
+}
+
+.official-template-card small,
+.official-template-card strong,
+.official-template-card > div:nth-child(2) > span {
+    display: block;
+}
+
+.official-template-card small {
+    color: #6f7b8f;
+    font-size: .56rem;
+}
+
+.official-template-card strong {
+    color: #253149;
+    font-size: .72rem;
+    line-height: 1.35;
+    margin: 2px 0;
+}
+
+.official-template-card > div:nth-child(2) > span {
+    color: #7b8798;
+    font-size: .58rem;
+}
+
+.official-template-card .import-secondary-button {
+    min-height: 34px;
+    padding: 6px 10px;
+}
+
+.official-template-empty {
+    color: #778398;
+    font-size: .75rem;
+    grid-column: 1 / -1;
+    padding: 24px;
+    text-align: center;
+}
+
+.import-quality-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.import-manual-mapping {
+    background: #fffaf0;
+    border: 1px solid #ead5a8;
+    border-radius: 9px;
+    margin-bottom: 18px;
+    padding: 13px;
+}
+
+.import-manual-mapping .import-section-title {
+    align-items: flex-start;
+}
+
+.import-manual-mapping .import-section-title h3 {
+    color: #775516;
+    font-size: .82rem;
+}
+
+.import-manual-mapping .import-section-title h3 i {
+    margin-right: 5px;
+}
+
+.import-manual-mapping .import-section-title span {
+    color: #806e4e;
+    display: block;
+    font-size: .63rem;
+    margin-top: 3px;
+}
+
+.import-manual-field-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.import-manual-field-grid label > span {
+    color: #4f596a;
+    display: block;
+    font-size: .64rem;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.import-manual-field-grid label b,
+.import-manual-field-grid label em {
+    border-radius: 999px;
+    font-size: .47rem;
+    font-style: normal;
+    margin-left: 4px;
+    padding: 2px 5px;
+}
+
+.import-manual-field-grid label b {
+    background: #fde7e9;
+    color: #a92f3d;
+}
+
+.import-manual-field-grid label em {
+    background: #eef1f5;
+    color: #667286;
+}
+
+.import-manual-field-grid textarea.report-input {
+    min-height: 82px;
+    resize: vertical;
+}
+
+.import-manual-actions {
+    align-items: center;
+    border-top: 1px solid #eadfca;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+}
+
+.import-manual-actions > span {
+    color: #776b56;
+    font-size: .62rem;
+    line-height: 1.45;
+}
+
+.import-inline-alert.success {
+    background: #effaf5;
+    border-color: #b9e4d0;
+    color: #126a4c;
+}
+
+@media (max-width: 1100px) {
+    .import-quality-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .official-template-heading {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .official-template-heading .import-secondary-button {
+        margin-left: 62px;
+    }
+
+    .official-template-toolbar,
+    .official-template-grid,
+    .import-manual-field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .official-template-card {
+        grid-template-columns: 40px minmax(0, 1fr);
+    }
+
+    .official-template-card .import-secondary-button {
+        grid-column: 1 / -1;
+    }
+
+    .import-quality-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .import-manual-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
 
