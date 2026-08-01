@@ -68,8 +68,17 @@
         return { unitId, snPlat };
     };
 
+    window.formatUnitId = function(unit) {
+        if (!unit) return unit;
+        return unit.replace(/DT[\s-]+(\d+)/gi, (match, numStr) => {
+            const num = parseInt(numStr, 10);
+            return `DT-${num.toString().padStart(5, '0')}`;
+        });
+    };
+
     window.getSnPlatFromUnit = function(unitCode) {
         if (!unitCode) return '-';
+        unitCode = window.formatUnitId(unitCode);
         const cleanUnit = unitCode.trim().toUpperCase();
         
         if (window.assetDbMapping && window.assetDbMapping[cleanUnit]) {
@@ -5106,7 +5115,10 @@
             api.openForAsset(unitId, 'overview');
         },
         openForAsset(assetId, tab = 'overview') {
-            let asset = typeof window.resolveAsset === 'function' ? window.resolveAsset(assetId) : (allAssets().find(a => a.id.toLowerCase() === assetId.toLowerCase()));
+            let asset = typeof window.resolveAsset === 'function' ? window.resolveAsset(assetId) : (allAssets().find(a => {
+                const parsed = window.parseAssetId ? window.parseAssetId(a.id).unitId.toLowerCase() : a.id.toLowerCase();
+                return a.id.toLowerCase() === assetId.toLowerCase() || parsed === assetId.toLowerCase() || a.id.toLowerCase().includes(assetId.toLowerCase());
+            }));
             
             // Auto generate dummy dumptruck asset if not found
             if (!asset) {
@@ -16179,7 +16191,7 @@ function renderTableMasuk(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.merk) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.satuan) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.jml) || '-'}</td>
-            <td style="padding: 12px 15px;">${escapeHtml(item.unit) || '-'}</td>
+            <td style="padding: 12px 15px;">${escapeHtml(window.formatUnitId(item.unit)) || '-'}</td>
             <td style="padding: 12px 15px;"><strong style="color:var(--text-muted);">${escapeHtml(window.getSnPlatFromUnit(item.unit))}</strong></td>
             <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
         </tr>
@@ -16218,12 +16230,8 @@ function renderTableKeluar(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.tglSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.noJo) || '-'}</td>
-<<<<<<< HEAD
-            <td style="padding: 12px 15px;"><button type="button" onclick="openLogisticsAsset('${escapeHtml(item.idUnit)}')" class="badge" style="border:0; cursor:pointer; background:var(--primary); color:white; padding:4px 8px; border-radius:4px;" title="Buka pada katalog Master Asset">${escapeHtml(item.idUnit) || '-'}</button></td>
-=======
-            <td style="padding: 12px 15px;"><span class="badge" style="background:var(--primary); color:white; padding:4px 8px; border-radius:4px;">${escapeHtml(item.idUnit) || '-'}</span></td>
+            <td style="padding: 12px 15px;"><button type="button" onclick="openLogisticsAsset('${escapeHtml(window.formatUnitId(item.idUnit))}')" class="badge" style="border:0; cursor:pointer; background:var(--primary); color:white; padding:4px 8px; border-radius:4px;" title="Buka pada katalog Master Asset">${escapeHtml(window.formatUnitId(item.idUnit)) || '-'}</button></td>
             <td style="padding: 12px 15px;"><strong style="color:var(--text-muted);">${escapeHtml(window.getSnPlatFromUnit(item.idUnit))}</strong></td>
->>>>>>> 90da9cd63e443ccd4419ffca6fcc524eebee2609
             <td style="padding: 12px 15px;"><strong>${escapeHtml(item.namaSparepart) || '-'}</strong></td>
             <td style="padding: 12px 15px;">${escapeHtml(item.spesifikasi) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.qty) || '-'}</td>
