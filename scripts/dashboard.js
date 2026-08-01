@@ -4823,8 +4823,30 @@
 
     const api = {
         refresh: render,
+        openDirectUnit() {
+            const input = document.getElementById('cm-direct-input');
+            if (!input) return;
+            const unitId = input.value.trim();
+            if (!unitId) return;
+            api.openForAsset(unitId, 'overview');
+        },
         openForAsset(assetId, tab = 'overview') {
-            const asset = typeof window.resolveAsset === 'function' ? window.resolveAsset(assetId) : (allAssets().find(a => a.id === assetId) || allAssets()[0]);
+            let asset = typeof window.resolveAsset === 'function' ? window.resolveAsset(assetId) : (allAssets().find(a => a.id.toLowerCase() === assetId.toLowerCase()));
+            
+            // Auto generate dummy dumptruck asset if not found
+            if (!asset) {
+                asset = {
+                    id: assetId.toUpperCase(),
+                    category: 'DUMP TRUCK',
+                    location: 'DURI',
+                    status: 'READY'
+                };
+                // Push to global assets if available
+                if (window.globalData && window.globalData.assets) {
+                    window.globalData.assets.push(asset);
+                }
+            }
+
             if (!asset) return;
 
             state.selectedAssetId = asset.id;
