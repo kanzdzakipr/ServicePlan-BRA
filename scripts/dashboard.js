@@ -584,6 +584,64 @@
             ]
         },
         {
+            id: 'procurement-monitoring', code: 'MON-PROC', category: 'Logistik & Warehouse',
+            title: 'Monitoring Progres Pengadaan Spare Part',
+            description: 'Monitoring SPB dan JO hingga barang tiba, kendala, tindakan, status pengadaan, serta dampaknya terhadap RTW.',
+            source: 'Template_Monitoring_Progres_Pengadaan_Sparepart.md',
+            sourcePath: 'material/LOGISTIK/Template_Monitoring_Progres_Pengadaan_Sparepart.md',
+            mappingProfile: 'procurementProgress',
+            requiredContentHints: ['no spb', 'tanggal spb', 'nama spare part', 'tgl barang tiba', 'pengaruh ke rtw'],
+            minimumRequiredContentHints: 4,
+            seedFields: {
+                site: 'EQUIPMENT PHR DURI',
+                periode: '2026-01',
+                pic_logistik: 'Tim Procurement / Logistik',
+                sumber_dokumen: 'Template Monitoring Progres Pengadaan Spare Part'
+            },
+            fields: [
+                field('site', 'Site / lokasi'),
+                field('periode', 'Periode monitoring', 'month'),
+                field('pic_logistik', 'PIC procurement / logistik'),
+                field('sumber_dokumen', 'Sumber dokumen')
+            ],
+            tableTitle: 'Monitoring progres pengadaan spare part',
+            calculation: 'procurementProgress',
+            calculationNote: 'Total waktu aktual dihitung otomatis dari tanggal persetujuan + jam proses sampai tanggal + jam barang tiba.',
+            optionalColumns: [
+                'tanggal_disetujui', 'jam_proses', 'tanggal_tiba', 'jam_tiba',
+                'uraian_kendala', 'aksi_perbaikan', 'kesimpulan_akhir'
+            ],
+            columns: [
+                column('nomor', 'No', 'number', true),
+                column('nomor_spb', 'No SPB'),
+                column('tanggal_spb', 'Tanggal SPB', 'date'),
+                column('nomor_jo', 'No JO mekanik'),
+                column('id_unit', 'ID unit'),
+                column('nama_spare_part', 'Nama Spare Part'),
+                column('part_number', 'Spesifikasi / Part No'),
+                column('qty', 'Qty', 'number'),
+                column('satuan', 'Satuan'),
+                column('tanggal_disetujui', 'Tgl / SPB Disetujui', 'date'),
+                column('jam_proses', 'Jam proses ke toko', 'time'),
+                column('tanggal_tiba', 'Tgl Barang Tiba', 'date'),
+                column('jam_tiba', 'Jam Barang Tiba', 'time'),
+                column('total_waktu_aktual', 'Total Waktu Aktual (jam)', 'number', true),
+                column('uraian_kendala', 'Uraian Kendala', 'textarea'),
+                column('aksi_perbaikan', 'Aksi Perbaikan', 'textarea'),
+                column('status_pengadaan', 'Status', 'select', false, [
+                    'Menunggu Approval', 'Disetujui', 'Dipesan', 'Dalam Pengiriman',
+                    'Tiba', 'Diserahkan', 'Tertunda', 'Dibatalkan'
+                ]),
+                column('rtw_terdampak', 'Unit terdampak Pengaruh ke RTW (ya / tidak)', 'select', false, ['Ya', 'Tidak']),
+                column('kesimpulan_akhir', 'Kesimpulan Akhir', 'textarea')
+            ],
+            approvals: [
+                { label: 'Dibuat oleh / Admin Equipment' },
+                { label: 'Diperiksa Logistik' },
+                { label: 'Mengetahui Head of Equipment' }
+            ]
+        },
+        {
             id: 'parts-weekly', code: 'RPW', category: 'Logistik & Warehouse',
             title: 'Report Parts Weekly',
             description: 'Rekap mingguan parts masuk, keluar, saldo kuantitas, dan nilai persediaan.',
@@ -635,7 +693,7 @@
     const storagePrefix = 'fleetmonitor-report-draft-';
     const historyStorageKey = 'fleetmonitor-report-history-v1';
     const evidenceRequiredFormIds = new Set(['ppb', 'spb', 'sppu', 'sppu-006-pf04-cs10']);
-    const calculatedRowKeys = new Set(['saldo_sekarang', 'sisa', 'jam_kerja', 'hm_operasi', 'total', 'durasi', 'in_total', 'out_total', 'saldo', 'nilai_saldo', 'selisih_pcs', 'realisasi_persen']);
+    const calculatedRowKeys = new Set(['saldo_sekarang', 'sisa', 'jam_kerja', 'hm_operasi', 'total', 'durasi', 'in_total', 'out_total', 'saldo', 'nilai_saldo', 'selisih_pcs', 'realisasi_persen', 'total_waktu_aktual', 'nomor']);
     const importRowMetadataKeys = new Set(['_import']);
     const maxSourceImageBytes = 8 * 1024 * 1024;
     const minImageLongSide = 1280;
@@ -1842,6 +1900,19 @@
                     : '';
                 break;
             }
+            case 'procurementProgress': {
+                const rowIndex = activeDraft?.rows?.indexOf(row) ?? -1;
+                row.nomor = rowIndex >= 0 ? rowIndex + 1 : row.nomor;
+                if (row.tanggal_disetujui && row.jam_proses && row.tanggal_tiba && row.jam_tiba) {
+                    const startedAt = new Date(`${row.tanggal_disetujui}T${row.jam_proses}:00`);
+                    const arrivedAt = new Date(`${row.tanggal_tiba}T${row.jam_tiba}:00`);
+                    const elapsed = (arrivedAt.getTime() - startedAt.getTime()) / 3600000;
+                    row.total_waktu_aktual = Number.isFinite(elapsed) && elapsed >= 0
+                        ? Math.round(elapsed * 100) / 100
+                        : '';
+                }
+                break;
+            }
         }
     }
 
@@ -2114,6 +2185,21 @@
                 if (output) output.value = activeDraft.rows[rowIndex][item.key] == null ? '' : activeDraft.rows[rowIndex][item.key];
             });
             renderSummary();
+        }
+        if (schema.calculation === 'procurementProgress') {
+            const populated = draft.rows.filter(row => row.nomor_spb || row.id_unit || row.nama_spare_part);
+            const arrived = populated.filter(row => ['Tiba', 'Diserahkan'].includes(row.status_pengadaan)).length;
+            const delayed = populated.filter(row => row.status_pengadaan === 'Tertunda').length;
+            const rtwImpacted = populated.filter(row => row.rtw_terdampak === 'Ya').length;
+            const measured = populated.filter(row => Number(row.total_waktu_aktual) >= 0 && String(row.total_waktu_aktual ?? '') !== '');
+            const averageHours = measured.length
+                ? measured.reduce((sum, row) => sum + numberValue(row.total_waktu_aktual), 0) / measured.length
+                : 0;
+            return `
+                <div class="summary-line"><span>Total item dimonitor</span><strong>${populated.length.toLocaleString('id-ID')} item</strong></div>
+                <div class="summary-line"><span>Barang tiba / diserahkan</span><strong>${arrived.toLocaleString('id-ID')} item</strong></div>
+                <div class="summary-line"><span>Tertunda / dampak RTW</span><strong>${delayed.toLocaleString('id-ID')} / ${rtwImpacted.toLocaleString('id-ID')} item</strong></div>
+                <div class="summary-line total"><span>Rata-rata waktu aktual</span><strong>${averageHours.toLocaleString('id-ID', { maximumFractionDigits: 2 })} jam</strong></div>`;
         }
         updateControlValidation(target, true);
         saveDraft();
@@ -2705,13 +2791,29 @@
         showToast(options.finalized ? 'Laporan final siap dicetak.' : 'Validasi selesai. Preview laporan siap ditinjau.');
     }
 
-    function officialTemplateFileName() {
+    function officialTemplateFileName(schemaId = '') {
+        if (schemaId === 'procurement-monitoring') {
+            return 'Template_Monitoring_Progres_Pengadaan_Sparepart.xlsx';
+        }
         return 'Template_Laporan_Monitoring_TPL-LM-001_v1.0.xlsx';
     }
 
     async function downloadOfficialTemplate(schemaId) {
         const schema = formSchemas.find(item => item.id === schemaId);
         if (!schema) throw new Error('Template laporan tidak ditemukan.');
+        if (schema.id === 'procurement-monitoring') {
+            const link = document.createElement('a');
+            link.href = new URL(
+                'raw-material/logistik/Template_Monitoring_Progres_Pengadaan_Sparepart.xlsx',
+                document.baseURI
+            ).href;
+            link.download = officialTemplateFileName(schema.id);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast('Template monitoring pengadaan asli berhasil diunduh. Isi lalu impor kembali untuk membuat draft laporan.');
+            return null;
+        }
         if (!window.FleetXlsxTemplateBuilder) {
             throw new Error('Pembentuk template XLSX belum siap. Muat ulang halaman lalu coba kembali.');
         }
@@ -2723,7 +2825,7 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = officialTemplateFileName();
+        link.download = officialTemplateFileName(schema.id);
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -3043,6 +3145,16 @@
         return allAssets().find(asset => asset.id === assetId) || null;
     }
 
+    function assetFromSourceReference(reference) {
+        const normalized = String(reference || '').trim().toUpperCase();
+        if (!normalized) return null;
+        const code = normalized.match(/\b[A-Z]{2,6}-\d{3,5}\b/)?.[0] || normalized;
+        return allAssets().find(asset => (
+            String(asset.id || '').toUpperCase() === code
+            || String(asset.rawId || '').toUpperCase() === normalized
+        )) || null;
+    }
+
     function activeWorkOrders(assetId) {
         return allWorkOrders().filter(wo => wo.assetId === assetId && String(wo.status).toLowerCase() !== 'closed');
     }
@@ -3135,6 +3247,43 @@
         if (changed) persist();
     }
 
+    function seedFilterUsageRecords() {
+        const usage = Array.isArray(window.logisticsData?.filterUsage)
+            ? window.logisticsData.filterUsage
+            : [];
+        let changed = false;
+        usage.forEach((item, index) => {
+            const asset = assetFromSourceReference(item.idUnit);
+            if (!asset) return;
+            const recordId = `SL-FILTER-202601-${String(index + 1).padStart(3, '0')}`;
+            if (records.some(record => record.id === recordId)) return;
+            const requested = Math.max(1, Number(item.qty) || 1);
+            records.push({
+                id: recordId,
+                spbId: item.noBukti || `FILTER-JAN-2026-${index + 1}`,
+                assetId: asset.id,
+                woId: '',
+                partNumber: item.partNumber || 'FILTER-TANPA-KODE',
+                description: item.namaParts || 'Filter / spare part',
+                qtyRequested: requested,
+                qtyAvailable: requested,
+                uom: item.satuan || 'Pcs',
+                status: 'Diserahkan',
+                eta: item.tanggal || '2026-01-25',
+                requestDate: item.tanggal || '',
+                priority: 'Normal',
+                rtwImpact: false,
+                source: 'Pemakaian Filter DT Januari 2026',
+                notes: item.statusBarangBekas
+                    ? `Status barang bekas: ${item.statusBarangBekas}`
+                    : 'Status barang bekas tidak dicatat pada sumber.',
+                updatedAt: `${item.tanggal || '2026-01-25'}T08:00:00`
+            });
+            changed = true;
+        });
+        if (changed) persist();
+    }
+
     function loadState() {
         try {
             const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
@@ -3142,6 +3291,7 @@
         } catch (error) {
             records = [];
         }
+        seedFilterUsageRecords();
         seedWorkOrderRecords();
     }
 
@@ -3162,6 +3312,18 @@
 
     function recordsForAsset(assetId) {
         return records.filter(record => record.assetId === assetId);
+    }
+
+    function warehouseUsageForAsset(assetId) {
+        const usage = Array.isArray(window.logisticsData?.keluar)
+            ? window.logisticsData.keluar
+            : [];
+        const normalizedAssetId = String(assetId || '').toUpperCase();
+        return usage.filter(item => {
+            const sourceUnit = String(item.idUnit || '').toUpperCase();
+            const strictCode = sourceUnit.match(/\b[A-Z]{2,6}-\d{3,5}\b/)?.[0] || '';
+            return strictCode === normalizedAssetId;
+        }).sort((left, right) => String(right.tglSpb || '').localeCompare(String(left.tglSpb || '')));
     }
 
     function summaryForAsset(assetId) {
@@ -3393,6 +3555,29 @@
             </div>`;
     }
 
+    function renderWarehouseUsage(assetId) {
+        const usage = warehouseUsageForAsset(assetId);
+        if (!usage.length) {
+            return `<div class="sl-modal-empty"><i class="fa-solid fa-book"></i><strong>Belum ada riwayat pemakaian dengan ID unit baku</strong><span>Transaksi lama yang hanya memakai kode informal tetap tersedia pada tab Buku Harian Warehouse dan tidak dipaksakan ke Master Asset.</span></div>`;
+        }
+        const visible = usage.slice(0, 25);
+        return `
+            <div class="table-responsive sl-parts-table-wrap">
+                <table class="sl-parts-table">
+                    <thead><tr><th>Tanggal / bukti</th><th>Part / kode</th><th>Qty</th><th>Status bekas</th><th>Sumber</th></tr></thead>
+                    <tbody>${visible.map(item => `
+                        <tr>
+                            <td><strong>${escapeHtml(item.tglSpb || '-')}</strong><small>${escapeHtml(item.noBukti || item.noSpb || '-')}</small></td>
+                            <td><strong>${escapeHtml(item.namaSparepart || '-')}</strong><small>${escapeHtml(item.spesifikasi || 'Part number tidak tercatat')}</small></td>
+                            <td><strong>${escapeHtml(item.qty || '0')}</strong> ${escapeHtml(item.satuan || '')}</td>
+                            <td>${escapeHtml(item.kesimpulan || 'Tidak dicatat')}</td>
+                            <td><small>${escapeHtml(item.source || 'Bank Data Equipment')}</small></td>
+                        </tr>`).join('')}</tbody>
+                </table>
+                ${usage.length > visible.length ? `<div class="sl-table-footer"><span>Menampilkan 25 transaksi terbaru dari ${usage.length.toLocaleString('id-ID')} riwayat unit.</span></div>` : ''}
+            </div>`;
+    }
+
     function renderDraftRows() {
         if (!state.modal?.draft.length) {
             return `<tr><td colspan="5" class="sl-draft-empty">Belum ada draft item. Gunakan tombol Tambah Item.</td></tr>`;
@@ -3416,6 +3601,7 @@
         const selectedWo = state.modal.woId || workOrders[0]?.woId || '';
         state.modal.woId = selectedWo;
         const availablePct = summary.requested ? Math.round(summary.available / summary.requested * 100) : 0;
+        const warehouseUsageCount = warehouseUsageForAsset(asset.id).length;
         return `
             <div class="sl-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="slModalTitle" data-sl-action="overlay">
                 <div class="sl-modal-dialog">
@@ -3430,6 +3616,7 @@
                             <button type="button" data-sl-action="wo" title="Buka atau buat Work Order"><i class="fa-solid fa-wrench"></i><span>${workOrders[0] ? escapeHtml(workOrders[0].woId) : 'Buat WO'}</span></button>
                             <button type="button" data-sl-action="condition" title="Buka Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span>Kondisi</span></button>
                             <button type="button" data-sl-action="pm" title="Buka kitting Preventive Maintenance"><i class="fa-solid fa-calendar-check"></i><span>PM</span></button>
+                            <button type="button" data-sl-action="report" title="Buat draft Monitoring Pengadaan"><i class="fa-solid fa-file-lines"></i><span>Laporan</span></button>
                             <button type="button" class="sl-modal-close" data-sl-action="close" aria-label="Tutup detail">&times;</button>
                         </div>
                     </header>
@@ -3439,6 +3626,7 @@
                             <div><span>Item tercatat</span><strong>${summary.itemCount}<small> baris</small></strong></div>
                             <div><span>Ketersediaan</span><strong>${summary.available}/${summary.requested}<small> qty · ${availablePct}%</small></strong></div>
                             <div><span>Referensi aktif</span><strong>${workOrders.length}<small> WO</small></strong></div>
+                            <div><span>Riwayat warehouse</span><strong>${warehouseUsageCount}<small> transaksi</small></strong></div>
                         </section>
 
                         <section class="sl-modal-section">
@@ -3447,6 +3635,14 @@
                                 <span class="sl-section-count primary"><strong>${summary.itemCount}</strong> item</span>
                             </div>
                             ${renderExistingItems(asset.id)}
+                        </section>
+
+                        <section class="sl-modal-section">
+                            <div class="sl-modal-section-heading">
+                                <div><span class="sl-eyebrow">BANK DATA EQUIPMENT · PEMAKAIAN FILTER</span><h3>Riwayat Pemakaian Warehouse</h3><p>Riwayat menggunakan ID unit baku yang sama dengan Master Asset; data informal tidak dipetakan secara spekulatif.</p></div>
+                                <span class="sl-section-count primary"><strong>${warehouseUsageCount}</strong> transaksi</span>
+                            </div>
+                            ${renderWarehouseUsage(asset.id)}
                         </section>
 
                         <section class="sl-modal-section sl-spb-builder">
@@ -3680,6 +3876,70 @@
         window.openWoDetailView?.(wo.woId, wo.assetId, wo.issue || wo.description || '');
     }
 
+    function createProcurementReport() {
+        if (!state.modal) return;
+        const asset = assetById(state.modal.assetId);
+        const items = recordsForAsset(state.modal.assetId);
+        if (!asset || !items.length) {
+            notify('Belum ada item yang dapat dimasukkan ke laporan pengadaan.', true);
+            return;
+        }
+        const dates = items
+            .map(item => item.requestDate || String(item.updatedAt || '').slice(0, 10))
+            .filter(Boolean)
+            .sort();
+        const period = (dates[0] || new Date().toISOString().slice(0, 10)).slice(0, 7);
+        const rows = items.map(item => {
+            const requestDate = item.requestDate || String(item.updatedAt || '').slice(0, 10);
+            const processTime = String(item.updatedAt || '').match(/T(\d{2}:\d{2})/)?.[1] || '';
+            const hasApproval = item.status !== 'Menunggu Approval';
+            const hasArrived = READY_STATUSES.has(item.status);
+            return {
+                nomor_spb: item.spbId || 'Tidak tercatat pada sumber',
+                tanggal_spb: requestDate,
+                nomor_jo: item.woId || 'Tidak tercatat pada sumber',
+                id_unit: asset.id,
+                nama_spare_part: item.description || 'Tidak tercatat pada sumber',
+                part_number: item.partNumber || 'Tidak tercatat pada sumber',
+                qty: Number(item.qtyRequested) || 0,
+                satuan: item.uom || 'pcs',
+                tanggal_disetujui: hasApproval ? requestDate : '',
+                jam_proses: hasApproval ? processTime : '',
+                tanggal_tiba: hasArrived ? (item.eta || requestDate) : '',
+                jam_tiba: hasArrived ? processTime : '',
+                uraian_kendala: item.status === 'Tertunda' ? (item.notes || 'Kendala belum dirinci') : '',
+                aksi_perbaikan: '',
+                status_pengadaan: item.status,
+                rtw_terdampak: item.rtwImpact ? 'Ya' : 'Tidak',
+                kesimpulan_akhir: `${item.status} · ${item.source || 'Spare Part & Logistik'}`
+            };
+        });
+        closeDetail();
+        window.showView?.('reports', '', 'menu-reports');
+        try {
+            window.FleetReportForms?.importDraft({
+                schemaId: 'procurement-monitoring',
+                fields: {
+                    site: asset.location || 'EQUIPMENT PHR DURI',
+                    periode: period,
+                    pic_logistik: 'Tim Procurement / Logistik',
+                    sumber_dokumen: 'Spare Part & Logistik · Master Asset · Bank Data Equipment'
+                },
+                rows,
+                importSource: {
+                    importId: `SL-REPORT-${asset.id}-${Date.now()}`,
+                    fileName: `Sinkronisasi Spare Part ${asset.id}`,
+                    mappingCoverage: 1,
+                    unmappedFragments: 0,
+                    appliedRows: rows.length,
+                    totalMappedRows: rows.length
+                }
+            });
+        } catch (error) {
+            window.FleetReportForms?.notify?.(`Draft laporan gagal dibuat: ${error.message}`, true);
+        }
+    }
+
     function navigate(action) {
         const asset = state.modal ? assetById(state.modal.assetId) : null;
         if (!asset) return;
@@ -3738,6 +3998,8 @@
             submitDraft();
         } else if (action === 'record-wo') {
             openRecordWorkOrder(control.dataset.woId);
+        } else if (action === 'report') {
+            createProcurementReport();
         } else if (['asset', 'p2h', 'wo', 'condition', 'pm'].includes(action)) {
             navigate(action);
         }
@@ -3810,6 +4072,7 @@
             return addDraftItem(draftFromDomain(domain));
         },
         submitDraft,
+        createProcurementReport,
         close: closeDetail,
         getUnitCounter(assetId) {
             const summary = summaryForAsset(assetId);
@@ -5450,7 +5713,14 @@
             'brr rm 4101',
             'brr rm 4102'
         ],
-        'parts-weekly': ['report parts weekly', 'laporan parts mingguan', 'parts weekly']
+        'parts-weekly': ['report parts weekly', 'laporan parts mingguan', 'parts weekly'],
+        'procurement-monitoring': [
+            'template monitoring progres pengadaan spare part',
+            'monitoring progres pengadaan',
+            'a identitas spb',
+            'jam poses le toko',
+            'unit terdampak pengaruh ke rtw'
+        ]
     };
 
     const FIELD_ALIASES = {
@@ -5460,6 +5730,20 @@
         nomor_bukti: ['no bukti', 'nomor bukti'],
         nomor_po: ['no po', 'nomor po', 'purchase order'],
         nomor_spb: ['no spb', 'nomor spb'],
+        tanggal_spb: ['tanggal spb', 'tgl spb'],
+        nomor_jo: ['no jo mekanik', 'no jo mekanik/', 'nomor jo', 'job order', 'jo mekanik'],
+        id_unit: ['id unit', 'unit id', 'kode unit', 'id alat'],
+        nama_spare_part: ['nama spare part', 'nama sparepart', 'nama parts', 'part name'],
+        tanggal_disetujui: ['tgl spb disetujui', 'tgl / spb disetujui', 'tanggal spb disetujui', 'approved date'],
+        jam_proses: ['jam poses le toko', 'jam proses ke toko', 'jam proses', 'procurement start'],
+        tanggal_tiba: ['tgl barang tiba', 'tanggal barang tiba', 'actual arrival date'],
+        jam_tiba: ['jam barang tiba', 'actual arrival time'],
+        total_waktu_aktual: ['total waktu aktual jam', 'total waktu aktual', 'actual lead time'],
+        uraian_kendala: ['uraian kendala', 'kendala', 'issue description'],
+        aksi_perbaikan: ['aksi perbaikan', 'tindakan perbaikan', 'corrective action'],
+        status_pengadaan: ['status pengadaan', 'procurement status', 'status'],
+        rtw_terdampak: ['unit terdampak pengaruh ke rtw ya tidak', 'pengaruh ke rtw', 'rtw terdampak'],
+        kesimpulan_akhir: ['kesimpulan akhir', 'conclusion'],
         nomor_ppb: ['no ppb', 'nomor ppb'],
         nomor_polisi: ['no polisi', 'nomor polisi', 'nopol', 'plat nomor'],
         nomor_faktur: ['no faktur', 'nomor faktur', 'invoice'],
@@ -8535,14 +8819,15 @@
     }
 
     function normalizeDate(rawValue) {
-        const raw = normalizeKey(rawValue);
-        const iso = raw.match(/\b(20\d{2})[-/.](0?[1-9]|1[0-2])[-/.]([0-2]?\d|3[01])\b/);
+        const source = String(rawValue == null ? '' : rawValue).trim();
+        const iso = source.match(/\b(20\d{2})[-/.](0?[1-9]|1[0-2])[-/.]([0-2]?\d|3[01])\b/);
         if (iso) return `${iso[1]}-${String(iso[2]).padStart(2, '0')}-${String(iso[3]).padStart(2, '0')}`;
-        const dmy = raw.match(/\b([0-2]?\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.](\d{2,4})\b/);
+        const dmy = source.match(/\b([0-2]?\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.](\d{2,4})\b/);
         if (dmy) {
             const year = dmy[3].length === 2 ? `20${dmy[3]}` : dmy[3];
             return `${year}-${String(dmy[2]).padStart(2, '0')}-${String(dmy[1]).padStart(2, '0')}`;
         }
+        const raw = normalizeKey(source);
         const monthNames = {
             januari: 1, january: 1, jan: 1,
             februari: 2, february: 2, feb: 2,
@@ -8770,6 +9055,11 @@
         const assignments = [];
         const usedColumnKeys = new Set();
         headers.forEach((header, sourceIndex) => {
+            const normalizedHeader = normalizeKey(header);
+            const computedExactMatch = columns.some(column => (
+                column.readonly && fieldAliases(column).includes(normalizedHeader)
+            ));
+            if (computedExactMatch) return;
             const explicitKey = String(header || '').match(/\[\s*COLUMN\s*:\s*([a-z0-9_-]+)\s*\]/i)?.[1];
             const ranked = columns
                 .filter(column => !column.readonly && !usedColumnKeys.has(column.key))
@@ -9099,6 +9389,74 @@
             && extraction.format === 'markdown'
         ) {
             return mapCuttingBitRows(extraction, schema, usedFragmentIds);
+        }
+        if (schema.mappingProfile === 'procurementProgress') {
+            const rows = [];
+            const provenance = [];
+            const fragmentSourceRefs = new Map(
+                extraction.fragments.map(fragment => [fragment.id, fragment.sourceRef])
+            );
+            let truncated = false;
+            extraction.tables.forEach(table => {
+                if (rows.length >= MAX_MAPPED_ROWS) {
+                    truncated = true;
+                    return;
+                }
+                const variant = bestTableMapping(table, schema);
+                if (!variant?.mapping.assignments.length) return;
+                const mappedKeys = new Set(variant.mapping.assignments.map(item => item.targetKey));
+                const identityMatches = [
+                    'nomor_spb', 'tanggal_spb', 'nomor_jo', 'id_unit',
+                    'nama_spare_part', 'part_number', 'qty', 'tanggal_disetujui',
+                    'tanggal_tiba', 'status_pengadaan', 'rtw_terdampak'
+                ].filter(key => mappedKeys.has(key)).length;
+                if (identityMatches < 8 || variant.mapping.score < 0.58) return;
+
+                variant.dataRows.forEach((sourceRow, sourceRowIndex) => {
+                    if (rows.length >= MAX_MAPPED_ROWS) {
+                        truncated = true;
+                        return;
+                    }
+                    const mappedRow = {};
+                    const rowSources = {};
+                    variant.mapping.assignments.forEach(assignment => {
+                        const definition = schema.columns.find(item => item.key === assignment.targetKey);
+                        const rawValue = sourceRow.values?.[assignment.sourceIndex] ?? '';
+                        const normalized = normalizeMappedValue(rawValue, definition);
+                        if (normalized === '') return;
+                        mappedRow[assignment.targetKey] = normalized;
+                        const fragmentId = sourceRow.fragmentRefs?.[assignment.sourceIndex] || null;
+                        if (fragmentId) usedFragmentIds.add(fragmentId);
+                        rowSources[assignment.targetKey] = {
+                            rawValue,
+                            normalizedValue: normalized,
+                            confidence: assignment.score,
+                            sourceRef: fragmentId
+                                ? fragmentSourceRefs.get(fragmentId)
+                                : `${table.sourceRef}:r${sourceRow.rowNumber || sourceRowIndex + 1}`,
+                            fragmentId,
+                            sourceHeader: assignment.sourceHeader
+                        };
+                    });
+                    if (!mappedRow.nomor_spb && !mappedRow.id_unit && !mappedRow.nama_spare_part) return;
+                    const rowId = global.crypto?.randomUUID?.()
+                        || `ROW-${Date.now()}-${rows.length + 1}`;
+                    mappedRow._import = {
+                        rowId,
+                        sourceRef: table.sourceRef,
+                        confidence: variant.mapping.score
+                    };
+                    rows.push(mappedRow);
+                    provenance.push({
+                        rowId,
+                        tableId: table.id,
+                        sourceRef: table.sourceRef,
+                        confidence: variant.mapping.score,
+                        fields: rowSources
+                    });
+                });
+            });
+            return { rows, provenance, truncated };
         }
         const rows = [];
         const provenance = [];
@@ -15573,58 +15931,100 @@
 // LOGISTICS & SPARE PARTS TRACKING
 // ==========================================
 
-const URL_LOGISTICS_DATA = "logistics_data.json";
-
 let dataPartsMasuk = [];
 let dataPartsKeluar = [];
+let dataLogisticsStock = [];
 
 window.switchLogisticsTab = function(tabName) {
-    document.querySelectorAll('.logistics-tab-content').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.tabs-container .tab-link').forEach(el => el.classList.remove('active'));
-    
-    document.getElementById(`logistics-tab-${tabName}`).style.display = 'block';
-    document.querySelector(`.tabs-container .tab-link[onclick="switchLogisticsTab('${tabName}')"]`).classList.add('active');
-    
+    const view = document.getElementById('view-logistics');
+    if (!view) return;
+    view.querySelectorAll('.logistics-tab-content').forEach(el => el.style.display = 'none');
+    view.querySelectorAll('.tabs-container .tab-link').forEach(el => el.classList.remove('active'));
+    const panel = document.getElementById(`logistics-tab-${tabName}`);
+    const tab = view.querySelector(`.tabs-container .tab-link[onclick="switchLogisticsTab('${tabName}')"]`);
+    if (panel) panel.style.display = 'block';
+    if (tab) tab.classList.add('active');
+
     // Auto load data if empty
     if (tabName === 'masuk' && dataPartsMasuk.length === 0) loadLogisticsData('masuk');
     if (tabName === 'keluar' && dataPartsKeluar.length === 0) loadLogisticsData('keluar');
+    if (tabName === 'stock' && dataLogisticsStock.length === 0) loadLogisticsData('stock');
 };
 
 window.loadLogisticsData = async function(specificTab = null) {
     const loadMasuk = specificTab === null || specificTab === 'masuk';
     const loadKeluar = specificTab === null || specificTab === 'keluar';
-    
+    const loadStock = specificTab === null || specificTab === 'stock';
+
     if (loadMasuk) {
-        document.getElementById('table-logistics-masuk').style.display = 'none';
-        document.getElementById('logistics-masuk-loader').style.display = 'block';
+        document.getElementById('table-logistics-masuk')?.style.setProperty('display', 'none');
+        document.getElementById('logistics-masuk-loader')?.style.setProperty('display', 'block');
     }
     if (loadKeluar) {
-        document.getElementById('table-logistics-keluar').style.display = 'none';
-        document.getElementById('logistics-keluar-loader').style.display = 'block';
+        document.getElementById('table-logistics-keluar')?.style.setProperty('display', 'none');
+        document.getElementById('logistics-keluar-loader')?.style.setProperty('display', 'block');
     }
-    
+    if (loadStock) {
+        document.getElementById('table-logistics-stock')?.style.setProperty('display', 'none');
+        document.getElementById('logistics-stock-loader')?.style.setProperty('display', 'block');
+    }
+
     try {
         if (!window.logisticsData) throw new Error("Data logistik lokal tidak ditemukan (pastikan logistics_data.js ter-load).");
         const data = window.logisticsData;
-        
+
         if (loadMasuk) {
             dataPartsMasuk = data.masuk || [];
             renderTableMasuk();
-            document.getElementById('logistics-masuk-loader').style.display = 'none';
-            document.getElementById('table-logistics-masuk').style.display = 'table';
+            document.getElementById('logistics-masuk-loader')?.style.setProperty('display', 'none');
+            document.getElementById('table-logistics-masuk')?.style.setProperty('display', 'table');
         }
-        
+
         if (loadKeluar) {
             dataPartsKeluar = data.keluar || [];
             renderTableKeluar();
-            document.getElementById('logistics-keluar-loader').style.display = 'none';
-            document.getElementById('table-logistics-keluar').style.display = 'table';
+            document.getElementById('logistics-keluar-loader')?.style.setProperty('display', 'none');
+            document.getElementById('table-logistics-keluar')?.style.setProperty('display', 'table');
         }
+        if (loadStock) {
+            dataLogisticsStock = data.stock || [];
+            renderTableStock();
+            document.getElementById('logistics-stock-loader')?.style.setProperty('display', 'none');
+            document.getElementById('table-logistics-stock')?.style.setProperty('display', 'table');
+        }
+        renderLogisticsSyncSummary(data);
     } catch (e) {
         console.error("Gagal menarik data logistik: ", e);
-        if (loadMasuk) document.getElementById('logistics-masuk-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data. Periksa file logistics_data.js.</p>`;
-        if (loadKeluar) document.getElementById('logistics-keluar-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data. Periksa file logistics_data.js.</p>`;
+        if (loadMasuk && document.getElementById('logistics-masuk-loader')) document.getElementById('logistics-masuk-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data. Periksa file logistics_data.js.</p>`;
+        if (loadKeluar && document.getElementById('logistics-keluar-loader')) document.getElementById('logistics-keluar-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data. Periksa file logistics_data.js.</p>`;
+        if (loadStock && document.getElementById('logistics-stock-loader')) document.getElementById('logistics-stock-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data stok.</p>`;
     }
+};
+
+function renderLogisticsSyncSummary(data) {
+    const target = document.querySelector('#logisticsSyncSummary .panel-body');
+    if (!target) return;
+    const metadata = data.metadata || {};
+    target.innerHTML = `
+        <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:center;">
+            <span><i class="fa-solid fa-arrow-down"></i> <strong>${Number(data.masuk?.length || 0).toLocaleString('id-ID')}</strong> barang masuk</span>
+            <span><i class="fa-solid fa-arrow-up"></i> <strong>${Number(data.keluar?.length || 0).toLocaleString('id-ID')}</strong> pemakaian</span>
+            <span><i class="fa-solid fa-boxes-stacked"></i> <strong>${Number(data.stock?.length || 0).toLocaleString('id-ID')}</strong> baris stok</span>
+            <span><i class="fa-solid fa-filter-circle-check"></i> <strong>${Number(metadata.filterRows || 0).toLocaleString('id-ID')}</strong> pemakaian filter Januari 2026 tersinkron</span>
+            <span title="Baris filter yang ditemukan kembali pada Bank Data Equipment"><strong>${Number(metadata.filterMatchedToBank || 0).toLocaleString('id-ID')}</strong> cocok dengan bank data</span>
+        </div>`;
+}
+
+window.openLogisticsAsset = function(sourceAssetId) {
+    const normalized = String(sourceAssetId || '').trim().toUpperCase();
+    const strictCode = normalized.match(/\b[A-Z]{2,6}-\d{3,5}\b/)?.[0] || normalized;
+    const asset = (window.globalData?.assets || []).find(item => String(item.id || '').toUpperCase() === strictCode);
+    if (!asset) {
+        window.alert(`ID unit ${sourceAssetId || '-'} belum ditemukan pada Master Asset.`);
+        return;
+    }
+    window.SpareLogistics?.openForAsset(asset.id);
+    document.getElementById('spareLogisticsApp')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 function renderTableMasuk(filterText = '') {
@@ -15662,7 +16062,9 @@ function renderTableMasuk(filterText = '') {
         </tr>
     `).join('');
     
-    tbody.innerHTML = rowsHtml;
+    tbody.innerHTML = rowsHtml + (filtered.length > limited.length
+        ? `<tr><td colspan="10" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString('id-ID')}. Gunakan pencarian untuk mempersempit data.</td></tr>`
+        : '');
 }
 
 function renderTableKeluar(filterText = '') {
@@ -15676,11 +16078,13 @@ function renderTableKeluar(filterText = '') {
         return !q || 
             (item.namaSparepart || '').toLowerCase().includes(q) || 
             (item.idUnit || '').toLowerCase().includes(q) || 
-            (item.noSpb || '').toLowerCase().includes(q);
+            (item.noSpb || '').toLowerCase().includes(q) ||
+            (item.spesifikasi || '').toLowerCase().includes(q) ||
+            (item.source || '').toLowerCase().includes(q);
     });
     
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
         return;
     }
     
@@ -15691,25 +16095,55 @@ function renderTableKeluar(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.tglSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.noJo) || '-'}</td>
-            <td style="padding: 12px 15px;"><span class="badge" style="background:var(--primary); color:white; padding:4px 8px; border-radius:4px;">${escapeHtml(item.idUnit) || '-'}</span></td>
+            <td style="padding: 12px 15px;"><button type="button" onclick="openLogisticsAsset('${escapeHtml(item.idUnit)}')" class="badge" style="border:0; cursor:pointer; background:var(--primary); color:white; padding:4px 8px; border-radius:4px;" title="Buka pada katalog Master Asset">${escapeHtml(item.idUnit) || '-'}</button></td>
             <td style="padding: 12px 15px;"><strong>${escapeHtml(item.namaSparepart) || '-'}</strong></td>
             <td style="padding: 12px 15px;">${escapeHtml(item.spesifikasi) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.qty) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.satuan) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.status) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.kesimpulan) || '-'}</td>
+            <td style="padding: 12px 15px;"><small>${escapeHtml(item.source) || '-'}</small></td>
         </tr>
     `).join('');
-    
-    tbody.innerHTML = rowsHtml;
+
+    tbody.innerHTML = rowsHtml + (filtered.length > limited.length
+        ? `<tr><td colspan="12" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString('id-ID')}. Gunakan pencarian untuk mempersempit data.</td></tr>`
+        : '');
+}
+
+function renderTableStock(filterText = '') {
+    const tbody = document.querySelector('#table-logistics-stock tbody');
+    if (!tbody) return;
+    const query = filterText.trim().toLowerCase();
+    const filtered = dataLogisticsStock.filter(item => (
+        !query
+        || String(item.namaParts || '').toLowerCase().includes(query)
+        || String(item.partNumber || '').toLowerCase().includes(query)
+    ));
+    const limited = filtered.slice(0, 100);
+    tbody.innerHTML = limited.length ? limited.map(item => `
+        <tr>
+            <td><strong>${escapeHtml(item.namaParts) || '-'}</strong></td>
+            <td>${escapeHtml(item.partNumber) || '-'}</td>
+            <td>${escapeHtml(item.satuan) || '-'}</td>
+            <td>${escapeHtml(item.penerimaanTotal) || '0'}</td>
+            <td>${escapeHtml(item.pemakaianTotal) || '0'}</td>
+            <td><strong>${escapeHtml(item.saldo) || '0'}</strong></td>
+            <td><small>${escapeHtml(item.source) || '-'}</small></td>
+        </tr>`).join('') + (filtered.length > limited.length
+            ? `<tr><td colspan="7" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString('id-ID')}.</td></tr>`
+            : '')
+        : `<tr><td colspan="7" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
 }
 
 // Bind search listeners
 document.addEventListener('DOMContentLoaded', () => {
     const sMasuk = document.getElementById('search-logistics-masuk');
     const sKeluar = document.getElementById('search-logistics-keluar');
+    const sStock = document.getElementById('search-logistics-stock');
     if(sMasuk) sMasuk.addEventListener('input', (e) => renderTableMasuk(e.target.value));
     if(sKeluar) sKeluar.addEventListener('input', (e) => renderTableKeluar(e.target.value));
+    if(sStock) sStock.addEventListener('input', (e) => renderTableStock(e.target.value));
     
     // Auto load data on initialization
     if (window.loadLogisticsData) {

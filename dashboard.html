@@ -12,9 +12,9 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logo-pt-bina-rekayasa-anugrah.png">
     <link rel="stylesheet" href="scripts/dashboard.css?v=20260731-1">
-    <script src="scripts/logistics_data.js?v=20260730-1"></script>
+    <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
-    <script src="scripts/dashboard.js?v=20260731-2"></script>
+    <script src="scripts/dashboard.js?v=20260801-1"></script>
 
 </head>
 
@@ -475,13 +475,26 @@
 
             <!-- VIEW: LOGISTICS -->
             <div id="view-logistics" class="view-section">
+                <div id="spareLogisticsApp" aria-live="polite">
+                    <div style="text-align:center; padding:45px; color:var(--text-muted);">
+                        <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                        <p style="margin-top:10px;">Menyiapkan integrasi Master Asset dan kebutuhan spare part...</p>
+                    </div>
+                </div>
+
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
                     <div>
-                        <h1 class="page-title" style="margin-bottom:4px;"><i class="fa-solid fa-boxes-stacked"
-                                style="color:var(--primary);"></i> Spare Part & Logistik</h1>
+                        <h2 class="page-title" style="margin-bottom:4px; font-size:1.25rem;"><i class="fa-solid fa-book"
+                                style="color:var(--primary);"></i> Buku Harian Warehouse</h2>
                         <p style="color:var(--text-muted); font-size:0.88rem; margin:0;">
-                            Integrasi langsung pencatatan barang gudang dari Google Sheets
+                            Data lokal tersinkronisasi dari Bank Data Equipment dan Pemakaian Filter DT Januari 2026
                         </p>
+                    </div>
+                </div>
+
+                <div id="logisticsSyncSummary" class="panel" style="margin-bottom:12px;">
+                    <div class="panel-body" style="padding:12px 16px; color:var(--text-muted); font-size:0.84rem;">
+                        <i class="fa-solid fa-database"></i> Menyiapkan ringkasan sumber data logistik...
                     </div>
                 </div>
 
@@ -490,7 +503,8 @@
                         <div class="tabs-container">
                             <ul class="nav-tabs" style="margin-bottom: 20px;">
                                 <li class="tab-link active" onclick="switchLogisticsTab('masuk')">Barang Masuk (Parts In)</li>
-                                <li class="tab-link" onclick="switchLogisticsTab('keluar')">Barang Keluar (Parts Out)</li>
+                                <li class="tab-link" onclick="switchLogisticsTab('keluar')">Pemakaian / Barang Keluar</li>
+                                <li class="tab-link" onclick="switchLogisticsTab('stock')">Saldo Stok Equipment</li>
                             </ul>
                         </div>
 
@@ -515,7 +529,7 @@
                             <div id="logistics-masuk-loader"
                                 style="text-align: center; padding: 40px; color: var(--text-light);">
                                 <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
-                                <p style="margin-top: 10px;">Mengunduh data Barang Masuk...</p>
+                                <p style="margin-top: 10px;">Memuat Bank Data Equipment...</p>
                             </div>
 
                             <div class="table-responsive">
@@ -579,12 +593,49 @@
                                             <th>QTY</th>
                                             <th>SATUAN</th>
                                             <th>STATUS</th>
-                                            <th>KESIMPULAN AKHIR</th>
+                                            <th>STATUS BARANG BEKAS</th>
+                                            <th>SUMBER</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <!-- Data will be injected here -->
                                     </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB SALDO STOK -->
+                        <div id="logistics-tab-stock" class="logistics-tab-content" style="display: none;">
+                            <div class="table-toolbar"
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:12px;">
+                                <div class="search-box" style="flex:1; max-width:400px; position:relative;">
+                                    <i class="fa-solid fa-search"
+                                        style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:var(--text-light);"></i>
+                                    <input type="text" id="search-logistics-stock"
+                                        placeholder="Cari nama parts atau part number..."
+                                        style="width:100%; padding:10px 15px 10px 40px; border:1px solid var(--border-color); border-radius:8px; font-family:inherit;">
+                                </div>
+                                <span style="font-size:0.78rem; color:var(--text-muted);">Periode sumber: 26 April-25 Mei 2026</span>
+                            </div>
+                            <div id="logistics-stock-loader"
+                                style="text-align:center; padding:40px; color:var(--text-light);">
+                                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                                <p style="margin-top:10px;">Memuat saldo stok...</p>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table" id="table-logistics-stock" style="display:none;">
+                                    <thead>
+                                        <tr>
+                                            <th>NAMA PARTS</th>
+                                            <th>PART NUMBER</th>
+                                            <th>SATUAN</th>
+                                            <th>PENERIMAAN TOTAL</th>
+                                            <th>PEMAKAIAN TOTAL</th>
+                                            <th>SALDO</th>
+                                            <th>SUMBER</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
                                 </table>
                             </div>
                         </div>
