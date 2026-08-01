@@ -3226,10 +3226,12 @@
     }
 
     function allAssets() {
+        if (typeof window.getProjectScopedAssets === 'function') return window.getProjectScopedAssets();
         return Array.isArray(window.globalData?.assets) ? window.globalData.assets : [];
     }
 
     function allWorkOrders() {
+        if (typeof window.getProjectScopedWorkOrders === 'function') return window.getProjectScopedWorkOrders();
         return Array.isArray(window.globalData?.work_orders) ? window.globalData.work_orders : [];
     }
 
@@ -11849,6 +11851,18 @@
         };
     }
 
+    function linkedAssetForPlan(plan) {
+        const planId = String(plan?.id || '').trim().toUpperCase();
+        if (!planId || planId.includes('/') || planId === 'BELUM TERPETAKAN') return null;
+        const assets = Array.isArray(window.globalData?.assets) ? window.globalData.assets : [];
+        return assets.find(asset => String(asset.id || '').trim().toUpperCase() === planId) || null;
+    }
+
+    function assetLinkMetrics() {
+        const linked = pmPlans.filter(plan => linkedAssetForPlan(plan)).length;
+        return { linked, unlinked: pmPlans.length - linked, total: pmPlans.length };
+    }
+
     function varianceOf(plan) {
         if (plan.current == null || plan.target == null) return null;
         return Math.round((Number(plan.current) - Number(plan.target)) * 10) / 10;
@@ -11955,7 +11969,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="pm-source-note"><i class="fa-solid fa-database"></i> Acuan: Plan Service Juli 2026 + Kebutuhan Filter Januari 2026</div>
+                <div class="pm-source-note"><i class="fa-solid fa-database"></i><span>Acuan: Plan Service Juli 2026 + Kebutuhan Filter Januari 2026</span><span id="pmAssetLinkSummary" class="pm-asset-link-summary"></span></div>
             </div>
             <nav class="pm-tabs" aria-label="Submenu Preventive Maintenance">
                 <button class="pm-tab active" data-pm-tab="forecast"><i class="fa-solid fa-gauge-high"></i> Forecast & Due Tracker</button>
@@ -12022,10 +12036,17 @@
     }
 
     function renderAll() {
+        if (!document.getElementById('pmPanelForecast')) return;
         renderForecast();
         renderCalendar();
         renderKitting();
         switchTab(activeTab);
+        const linkSummary = document.getElementById('pmAssetLinkSummary');
+        if (linkSummary) {
+            const links = assetLinkMetrics();
+            linkSummary.innerHTML = `<i class="fa-solid fa-link"></i> ${links.linked}/${links.total} terhubung ke Master Asset`;
+            linkSummary.title = `${links.unlinked} rencana belum memiliki ID aset yang cocok persis`;
+        }
     }
 
     function renderForecast() {
@@ -12142,12 +12163,13 @@
         document.getElementById('pmTableCount').textContent = `${filtered.length} dari ${pmPlans.length} unit`;
         body.innerHTML = filtered.map(rawPlan => {
             const plan = mergedPlan(rawPlan);
+            const linkedAsset = linkedAssetForPlan(plan);
             const status = statusOf(plan);
             const variance = varianceOf(plan);
             const usage = intervalUsage(plan);
             const barClass = status === 'COMPLETED' ? 'complete' : status === 'OVERDUE' ? 'danger' : ['DUE', 'DUE SOON'].includes(status) ? 'warning' : '';
             return `<tr>
-                <td class="pm-unit-cell"><strong>${escapeHtml(plan.code || 'Kode belum ada')}</strong><span>${escapeHtml(plan.id)} · ${meterType(plan)}</span></td>
+                <td class="pm-unit-cell"><strong>${escapeHtml(plan.code || 'Kode belum ada')}</strong><span>${escapeHtml(plan.id)} · ${meterType(plan)}</span><span class="pm-link-state ${linkedAsset ? 'linked' : 'unlinked'}"><i class="fa-solid ${linkedAsset ? 'fa-link' : 'fa-link-slash'}"></i> ${linkedAsset ? 'Master Asset' : 'Belum terpetakan'}</span></td>
                 <td class="pm-asset-cell"><strong title="${escapeHtml(plan.asset)}">${escapeHtml(plan.asset)}</strong><span>${plan.year} · ${escapeHtml(plan.warranty)}</span></td>
                 <td><strong>${formatNumber(plan.current)} ${meterType(plan)}</strong><br><span class="pm-card-caption">${formatDate(plan.tracking)}</span></td>
                 <td><strong>${formatNumber(plan.last)}</strong><br><span class="pm-card-caption">${formatDate(plan.lastDate)}</span></td>
@@ -12411,6 +12433,8 @@
     } else {
         createModule();
     }
+    document.addEventListener('fleetdata:ready', renderAll);
+    document.addEventListener('fleetproject:change', renderAll);
 })();
 (function () {
     'use strict';
@@ -16056,27 +16080,39 @@
 let dataPartsMasuk = [];
 let dataPartsKeluar = [];
 let dataLogisticsStock = [];
+let dataLogisticsOil = [];
+let dataLogisticsUsed = [];
 
 window.switchLogisticsTab = function(tabName) {
     const view = document.getElementById('view-logistics');
     if (!view) return;
     view.querySelectorAll('.logistics-tab-content').forEach(el => el.style.display = 'none');
-    view.querySelectorAll('.tabs-container .tab-link').forEach(el => el.classList.remove('active'));
+    view.querySelectorAll('.tabs-container .tab-link').forEach(el => {
+        el.classList.remove('active');
+        el.setAttribute('aria-selected', 'false');
+    });
     const panel = document.getElementById(`logistics-tab-${tabName}`);
     const tab = view.querySelector(`.tabs-container .tab-link[onclick="switchLogisticsTab('${tabName}')"]`);
     if (panel) panel.style.display = 'block';
-    if (tab) tab.classList.add('active');
+    if (tab) {
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+    }
 
     // Auto load data if empty
     if (tabName === 'masuk' && dataPartsMasuk.length === 0) loadLogisticsData('masuk');
     if (tabName === 'keluar' && dataPartsKeluar.length === 0) loadLogisticsData('keluar');
     if (tabName === 'stock' && dataLogisticsStock.length === 0) loadLogisticsData('stock');
+    if (tabName === 'oil' && dataLogisticsOil.length === 0) loadLogisticsData('oil');
+    if (tabName === 'used' && dataLogisticsUsed.length === 0) loadLogisticsData('used');
 };
 
 window.loadLogisticsData = async function(specificTab = null) {
     const loadMasuk = specificTab === null || specificTab === 'masuk';
     const loadKeluar = specificTab === null || specificTab === 'keluar';
     const loadStock = specificTab === null || specificTab === 'stock';
+    const loadOil = specificTab === null || specificTab === 'oil';
+    const loadUsed = specificTab === null || specificTab === 'used';
 
     if (loadMasuk) {
         document.getElementById('table-logistics-masuk')?.style.setProperty('display', 'none');
@@ -16089,6 +16125,14 @@ window.loadLogisticsData = async function(specificTab = null) {
     if (loadStock) {
         document.getElementById('table-logistics-stock')?.style.setProperty('display', 'none');
         document.getElementById('logistics-stock-loader')?.style.setProperty('display', 'block');
+    }
+    if (loadOil) {
+        document.getElementById('table-logistics-oil')?.style.setProperty('display', 'none');
+        document.getElementById('logistics-oil-loader')?.style.setProperty('display', 'block');
+    }
+    if (loadUsed) {
+        document.getElementById('table-logistics-used')?.style.setProperty('display', 'none');
+        document.getElementById('logistics-used-loader')?.style.setProperty('display', 'block');
     }
 
     try {
@@ -16114,12 +16158,26 @@ window.loadLogisticsData = async function(specificTab = null) {
             document.getElementById('logistics-stock-loader')?.style.setProperty('display', 'none');
             document.getElementById('table-logistics-stock')?.style.setProperty('display', 'table');
         }
+        if (loadOil) {
+            dataLogisticsOil = data.oil || [];
+            renderTableOil();
+            document.getElementById('logistics-oil-loader')?.style.setProperty('display', 'none');
+            document.getElementById('table-logistics-oil')?.style.setProperty('display', 'table');
+        }
+        if (loadUsed) {
+            dataLogisticsUsed = data.usedGoods || [];
+            renderTableUsed();
+            document.getElementById('logistics-used-loader')?.style.setProperty('display', 'none');
+            document.getElementById('table-logistics-used')?.style.setProperty('display', 'table');
+        }
         renderLogisticsSyncSummary(data);
     } catch (e) {
         console.error("Gagal menarik data logistik: ", e);
         if (loadMasuk && document.getElementById('logistics-masuk-loader')) document.getElementById('logistics-masuk-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data. Periksa file logistics_data.js.</p>`;
         if (loadKeluar && document.getElementById('logistics-keluar-loader')) document.getElementById('logistics-keluar-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data. Periksa file logistics_data.js.</p>`;
         if (loadStock && document.getElementById('logistics-stock-loader')) document.getElementById('logistics-stock-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data stok.</p>`;
+        if (loadOil && document.getElementById('logistics-oil-loader')) document.getElementById('logistics-oil-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat ledger oli.</p>`;
+        if (loadUsed && document.getElementById('logistics-used-loader')) document.getElementById('logistics-used-loader').innerHTML = `<p style="color:var(--danger)">Gagal memuat data barang bekas.</p>`;
     }
 };
 
@@ -16127,14 +16185,21 @@ function renderLogisticsSyncSummary(data) {
     const target = document.querySelector('#logisticsSyncSummary .panel-body');
     if (!target) return;
     const metadata = data.metadata || {};
-    target.innerHTML = `
-        <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:center;">
-            <span><i class="fa-solid fa-arrow-down"></i> <strong>${Number(data.masuk?.length || 0).toLocaleString('id-ID')}</strong> barang masuk</span>
-            <span><i class="fa-solid fa-arrow-up"></i> <strong>${Number(data.keluar?.length || 0).toLocaleString('id-ID')}</strong> pemakaian</span>
-            <span><i class="fa-solid fa-boxes-stacked"></i> <strong>${Number(data.stock?.length || 0).toLocaleString('id-ID')}</strong> baris stok</span>
-            <span><i class="fa-solid fa-filter-circle-check"></i> <strong>${Number(metadata.filterRows || 0).toLocaleString('id-ID')}</strong> pemakaian filter Januari 2026 tersinkron</span>
-            <span title="Baris filter yang ditemukan kembali pada Bank Data Equipment"><strong>${Number(metadata.filterMatchedToBank || 0).toLocaleString('id-ID')}</strong> cocok dengan bank data</span>
-        </div>`;
+    const stats = [
+        ['fa-arrow-down', data.masuk?.length, 'Barang masuk'],
+        ['fa-arrow-up', data.keluar?.length, 'Barang keluar'],
+        ['fa-boxes-stacked', data.stock?.length, 'Baris stok'],
+        ['fa-oil-can', data.oil?.length, 'Oli & coolant'],
+        ['fa-recycle', data.usedGoods?.length, 'Status barang bekas'],
+        ['fa-filter-circle-check', metadata.filterMatchedToBank, 'Filter cocok bank data']
+    ];
+    target.innerHTML = `<div class="logistics-summary-grid">${stats.map(stat => `
+        <article class="logistics-summary-card"><i class="fa-solid ${stat[0]}"></i><span><strong>${Number(stat[1] || 0).toLocaleString('id-ID')}</strong><small>${stat[2]}</small></span></article>`).join('')}</div>`;
+    const counts = { masuk: data.masuk?.length, keluar: data.keluar?.length, stock: data.stock?.length, oil: data.oil?.length, usedGoods: data.usedGoods?.length };
+    Object.entries(counts).forEach(([key, value]) => {
+        const badge = document.querySelector(`[data-logistics-count="${key}"]`);
+        if (badge) badge.textContent = Number(value || 0).toLocaleString('id-ID');
+    });
 }
 
 window.openLogisticsAsset = function(sourceAssetId) {
@@ -16164,7 +16229,7 @@ function renderTableMasuk(filterText = '') {
     });
     
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
         return;
     }
     
@@ -16186,7 +16251,7 @@ function renderTableMasuk(filterText = '') {
     `).join('');
     
     tbody.innerHTML = rowsHtml + (filtered.length > limited.length
-        ? `<tr><td colspan="10" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString('id-ID')}. Gunakan pencarian untuk mempersempit data.</td></tr>`
+        ? `<tr><td colspan="11" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString('id-ID')}. Gunakan pencarian untuk mempersempit data.</td></tr>`
         : '');
 }
 
@@ -16207,7 +16272,7 @@ function renderTableKeluar(filterText = '') {
     });
     
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
         return;
     }
     
@@ -16218,12 +16283,8 @@ function renderTableKeluar(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.tglSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.noJo) || '-'}</td>
-<<<<<<< HEAD
             <td style="padding: 12px 15px;"><button type="button" onclick="openLogisticsAsset('${escapeHtml(item.idUnit)}')" class="badge" style="border:0; cursor:pointer; background:var(--primary); color:white; padding:4px 8px; border-radius:4px;" title="Buka pada katalog Master Asset">${escapeHtml(item.idUnit) || '-'}</button></td>
-=======
-            <td style="padding: 12px 15px;"><span class="badge" style="background:var(--primary); color:white; padding:4px 8px; border-radius:4px;">${escapeHtml(item.idUnit) || '-'}</span></td>
             <td style="padding: 12px 15px;"><strong style="color:var(--text-muted);">${escapeHtml(window.getSnPlatFromUnit(item.idUnit))}</strong></td>
->>>>>>> 90da9cd63e443ccd4419ffca6fcc524eebee2609
             <td style="padding: 12px 15px;"><strong>${escapeHtml(item.namaSparepart) || '-'}</strong></td>
             <td style="padding: 12px 15px;">${escapeHtml(item.spesifikasi) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.qty) || '-'}</td>
@@ -16235,7 +16296,7 @@ function renderTableKeluar(filterText = '') {
     `).join('');
 
     tbody.innerHTML = rowsHtml + (filtered.length > limited.length
-        ? `<tr><td colspan="12" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString('id-ID')}. Gunakan pencarian untuk mempersempit data.</td></tr>`
+        ? `<tr><td colspan="13" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString('id-ID')}. Gunakan pencarian untuk mempersempit data.</td></tr>`
         : '');
 }
 
@@ -16264,14 +16325,67 @@ function renderTableStock(filterText = '') {
         : `<tr><td colspan="7" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
 }
 
+function formatLogisticsCurrency(value) {
+    const number = Number(value);
+    return Number.isFinite(number) && number > 0 ? `Rp ${number.toLocaleString('id-ID')}` : '-';
+}
+
+function renderTableOil(filterText = '') {
+    const tbody = document.querySelector('#table-logistics-oil tbody');
+    if (!tbody) return;
+    const query = String(filterText || '').trim().toLowerCase();
+    const filtered = dataLogisticsOil.filter(item => !query || [item.tanggal, item.noBukti, item.namaProduk, item.kodeProduk, item.unit].some(value => String(value || '').toLowerCase().includes(query)));
+    const limited = filtered.slice(0, 150);
+    tbody.innerHTML = limited.length ? limited.map(item => `<tr>
+        <td>${escapeHtml(item.no) || '-'}</td><td>${escapeHtml(item.tanggal) || '-'}</td><td>${escapeHtml(item.noBukti) || '-'}</td>
+        <td><strong>${escapeHtml(item.namaProduk) || '-'}</strong></td><td>${escapeHtml(item.kodeProduk) || '-'}</td><td>${escapeHtml(item.satuan) || '-'}</td>
+        <td><strong>${escapeHtml(item.jumlah) || '0'}</strong></td><td>${escapeHtml(item.unit) || '-'}</td><td>${escapeHtml(window.getSnPlatFromUnit(item.unit))}</td>
+        <td>${formatLogisticsCurrency(item.nilai)}</td></tr>`).join('') + (filtered.length > limited.length ? `<tr><td colspan="10" class="logistics-limit-note">Menampilkan 150 dari ${filtered.length.toLocaleString('id-ID')} transaksi. Gunakan pencarian untuk mempersempit data.</td></tr>` : '')
+        : '<tr><td colspan="10" class="logistics-limit-note">Tidak ada transaksi oli yang cocok.</td></tr>';
+}
+
+function renderTableUsed(filterText = '', statusText = '') {
+    const tbody = document.querySelector('#table-logistics-used tbody');
+    if (!tbody) return;
+    const query = String(filterText || '').trim().toLowerCase();
+    const status = String(statusText || '').trim().toUpperCase();
+    const filtered = dataLogisticsUsed.filter(item => {
+        const itemStatus = String(item.kesimpulan || '').trim().toUpperCase();
+        const matchesStatus = !status || itemStatus === status;
+        const matchesQuery = !query || [item.tglSpb, item.noSpb, item.noJo, item.idUnit, item.namaSparepart, item.spesifikasi, item.kesimpulan].some(value => String(value || '').toLowerCase().includes(query));
+        return matchesStatus && matchesQuery;
+    });
+    const limited = filtered.slice(0, 150);
+    tbody.innerHTML = limited.length ? limited.map(item => `<tr>
+        <td>${escapeHtml(item.no) || '-'}</td><td>${escapeHtml(item.tglSpb) || '-'}</td><td>${escapeHtml(item.noSpb) || '-'}</td><td>${escapeHtml(item.noJo) || '-'}</td>
+        <td><button type="button" class="logistics-unit-link" onclick="openLogisticsAsset('${escapeHtml(item.idUnit)}')">${escapeHtml(item.idUnit) || '-'}</button></td>
+        <td>${escapeHtml(window.getSnPlatFromUnit(item.idUnit))}</td><td><strong>${escapeHtml(item.namaSparepart) || '-'}</strong></td><td>${escapeHtml(item.spesifikasi) || '-'}</td>
+        <td>${escapeHtml(item.qty) || '-'}</td><td><span class="logistics-used-status status-${itemStatusClass(item.kesimpulan)}">${escapeHtml(item.kesimpulan) || '-'}</span></td><td><small>${escapeHtml(item.source) || '-'}</small></td></tr>`).join('') + (filtered.length > limited.length ? `<tr><td colspan="11" class="logistics-limit-note">Menampilkan 150 dari ${filtered.length.toLocaleString('id-ID')} transaksi.</td></tr>` : '')
+        : '<tr><td colspan="11" class="logistics-limit-note">Tidak ada status barang bekas yang cocok.</td></tr>';
+}
+
+function itemStatusClass(value) {
+    const normalized = String(value || '').toUpperCase();
+    if (normalized === 'ADA') return 'available';
+    if (normalized.includes('TIDAK') || normalized.includes('BELUM')) return 'pending';
+    return 'neutral';
+}
+
 // Bind search listeners
 document.addEventListener('DOMContentLoaded', () => {
     const sMasuk = document.getElementById('search-logistics-masuk');
     const sKeluar = document.getElementById('search-logistics-keluar');
     const sStock = document.getElementById('search-logistics-stock');
+    const sOil = document.getElementById('search-logistics-oil');
+    const sUsed = document.getElementById('search-logistics-used');
+    const fUsed = document.getElementById('filter-logistics-used');
     if(sMasuk) sMasuk.addEventListener('input', (e) => renderTableMasuk(e.target.value));
     if(sKeluar) sKeluar.addEventListener('input', (e) => renderTableKeluar(e.target.value));
     if(sStock) sStock.addEventListener('input', (e) => renderTableStock(e.target.value));
+    if(sOil) sOil.addEventListener('input', (e) => renderTableOil(e.target.value));
+    const refreshUsed = () => renderTableUsed(sUsed?.value || '', fUsed?.value || '');
+    if(sUsed) sUsed.addEventListener('input', refreshUsed);
+    if(fUsed) fUsed.addEventListener('change', refreshUsed);
     
     // Auto load data on initialization
     if (window.loadLogisticsData) {

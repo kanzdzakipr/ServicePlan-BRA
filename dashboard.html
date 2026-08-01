@@ -81,10 +81,9 @@
         <header class="top-header">
             <div class="header-left">
                 <div class="dropdown">
-                    <select>
-                        <option>Project: Semua Project</option>
-                        <option>Project: Sunter Area Stadium</option>
-                        <option>Project: Site Alpha</option>
+                    <select id="globalProjectFilter" onchange="applyGlobalProjectFilter(this.value)"
+                        aria-label="Filter global berdasarkan project atau lokasi">
+                        <option value="">Project/Lokasi: Semua</option>
                     </select>
                 </div>
             </div>
@@ -406,25 +405,43 @@
 
             <!-- VIEW: WORK ORDER (MVP 2) -->
             <div id="view-wo" class="view-section">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h1 class="page-title">Manajemen Work Order</h1>
-                    <button class="btn btn-danger" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Buat
-                        Tiket WO</button>
+                <div class="wo-workspace-header">
+                    <div>
+                        <span class="wo-workspace-eyebrow">Corrective maintenance · data WO aktif</span>
+                        <h1 class="page-title">Manajemen Work Order</h1>
+                        <p>WO dipertahankan sebagai tiket kerusakan. Nomor JO lama tidak diubah menjadi SPK secara otomatis.</p>
+                    </div>
+                    <div class="wo-workspace-actions">
+                        <div class="wo-view-switch" role="group" aria-label="Mode tampilan Work Order">
+                            <button type="button" class="active" data-wo-mode="kanban" onclick="switchWorkOrderMode('kanban')"><i class="fa-solid fa-table-columns"></i> Kanban</button>
+                            <button type="button" data-wo-mode="table" onclick="switchWorkOrderMode('table')"><i class="fa-solid fa-table-list"></i> Tabel</button>
+                        </div>
+                        <button class="btn btn-danger" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Buat Tiket WO</button>
+                    </div>
                 </div>
-                <div class="kanban-board" id="woKanbanBoard">
-                    <!-- Populated via JS -->
-                    <div class="kanban-column" id="col-Open">
-                        <h3><span>Open / Submitted</span> <span class="badge bg-draft" id="count-Open">0</span></h3>
-                        <div class="card-container"></div>
+
+                <div class="wo-workspace-toolbar">
+                    <div class="wo-workspace-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="woWorkspaceSearch" oninput="filterWorkOrderWorkspace()" placeholder="Cari nomor WO, unit, mekanik, atau keluhan..."></div>
+                    <select id="woWorkspaceStatus" onchange="filterWorkOrderWorkspace()" aria-label="Filter status Work Order">
+                        <option value="">Semua status</option><option>Open</option><option>In Progress</option><option>Closed</option>
+                    </select>
+                    <select id="woWorkspacePriority" onchange="filterWorkOrderWorkspace()" aria-label="Filter prioritas Work Order">
+                        <option value="">Semua prioritas</option><option>High</option><option>Normal</option>
+                    </select>
+                    <span id="woWorkspaceCount" class="wo-workspace-count">0 WO</span>
+                </div>
+
+                <div id="woKanbanPanel">
+                    <div class="kanban-board" id="woKanbanBoard">
+                        <!-- Populated via JS -->
                     </div>
-                    <div class="kanban-column" id="col-In-Progress">
-                        <h3><span>In Progress (Mekanik)</span> <span class="badge bg-progress"
-                                id="count-InProgress">0</span></h3>
-                        <div class="card-container"></div>
-                    </div>
-                    <div class="kanban-column" id="col-Closed">
-                        <h3><span>Closed / Ready</span> <span class="badge bg-operating" id="count-Closed">0</span></h3>
-                        <div class="card-container"></div>
+                </div>
+                <div id="woTablePanel" class="wo-table-panel" style="display:none;">
+                    <div class="table-responsive">
+                        <table class="table wo-workspace-table">
+                            <thead><tr><th>WO</th><th>Unit</th><th>Project/Lokasi</th><th>Keluhan</th><th>Prioritas</th><th>Status</th><th>Mekanik</th><th>Downtime</th><th>Aksi</th></tr></thead>
+                            <tbody id="woWorkspaceTableBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -483,7 +500,7 @@
                     </div>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <div class="warehouse-ledger-heading">
                     <div>
                         <h2 class="page-title" style="margin-bottom:4px; font-size:1.25rem;"><i class="fa-solid fa-book"
                                 style="color:var(--primary);"></i> Buku Harian Warehouse</h2>
@@ -493,27 +510,27 @@
                     </div>
                 </div>
 
-                <div id="logisticsSyncSummary" class="panel" style="margin-bottom:12px;">
+                <div id="logisticsSyncSummary" class="panel warehouse-sync-summary" style="margin-bottom:12px;">
                     <div class="panel-body" style="padding:12px 16px; color:var(--text-muted); font-size:0.84rem;">
                         <i class="fa-solid fa-database"></i> Menyiapkan ringkasan sumber data logistik...
                     </div>
                 </div>
 
-                <div class="panel">
+                <div class="panel warehouse-ledger-panel">
                     <div class="panel-body">
-                        <div class="tabs-container">
-                            <ul class="nav-tabs" style="margin-bottom: 20px;">
-                                <li class="tab-link active" onclick="switchLogisticsTab('masuk')">Barang Masuk (Parts In)</li>
-                                <li class="tab-link" onclick="switchLogisticsTab('keluar')">Pemakaian / Barang Keluar</li>
-                                <li class="tab-link" onclick="switchLogisticsTab('stock')">Saldo Stok Equipment</li>
-                            </ul>
-                        </div>
+                        <nav class="tabs-container logistics-ledger-tabs" role="tablist" aria-label="Jenis data buku harian warehouse">
+                            <button type="button" class="tab-link active" role="tab" aria-selected="true" onclick="switchLogisticsTab('masuk')"><i class="fa-solid fa-arrow-down"></i><span>Barang Masuk</span><small class="logistics-tab-count" data-logistics-count="masuk">0</small></button>
+                            <button type="button" class="tab-link" role="tab" aria-selected="false" onclick="switchLogisticsTab('keluar')"><i class="fa-solid fa-arrow-up"></i><span>Barang Keluar</span><small class="logistics-tab-count" data-logistics-count="keluar">0</small></button>
+                            <button type="button" class="tab-link" role="tab" aria-selected="false" onclick="switchLogisticsTab('stock')"><i class="fa-solid fa-boxes-stacked"></i><span>Saldo Stok</span><small class="logistics-tab-count" data-logistics-count="stock">0</small></button>
+                            <button type="button" class="tab-link" role="tab" aria-selected="false" onclick="switchLogisticsTab('oil')"><i class="fa-solid fa-oil-can"></i><span>Oli & Lubricant</span><small class="logistics-tab-count" data-logistics-count="oil">0</small></button>
+                            <button type="button" class="tab-link" role="tab" aria-selected="false" onclick="switchLogisticsTab('used')"><i class="fa-solid fa-recycle"></i><span>Barang Bekas</span><small class="logistics-tab-count" data-logistics-count="usedGoods">0</small></button>
+                        </nav>
 
                         <!-- TAB BARANG MASUK -->
                         <div id="logistics-tab-masuk" class="logistics-tab-content active" style="display: block;">
-                            <div class="table-toolbar"
+                            <div class="table-toolbar logistics-data-toolbar"
                                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <div class="search-box" style="flex: 1; max-width: 400px; position: relative;">
+                                <div class="search-box logistics-search-box" style="flex: 1; max-width: 400px; position: relative;">
                                     <i class="fa-solid fa-search"
                                         style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light);"></i>
                                     <input type="text" id="search-logistics-masuk"
@@ -527,14 +544,14 @@
                                 </div>
                             </div>
 
-                            <div id="logistics-masuk-loader"
+                            <div id="logistics-masuk-loader" class="logistics-data-loader"
                                 style="text-align: center; padding: 40px; color: var(--text-light);">
                                 <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
                                 <p style="margin-top: 10px;">Memuat Bank Data Equipment...</p>
                             </div>
 
-                            <div class="table-responsive">
-                                <table class="table" id="table-logistics-masuk" style="display: none;">
+                            <div class="table-responsive logistics-data-table-wrap">
+                                <table class="table logistics-data-table" id="table-logistics-masuk" style="display: none;">
                                     <thead>
                                         <tr>
                                             <th>TANGGAL</th>
@@ -559,9 +576,9 @@
 
                         <!-- TAB BARANG KELUAR -->
                         <div id="logistics-tab-keluar" class="logistics-tab-content" style="display: none;">
-                            <div class="table-toolbar"
+                            <div class="table-toolbar logistics-data-toolbar"
                                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <div class="search-box" style="flex: 1; max-width: 400px; position: relative;">
+                                <div class="search-box logistics-search-box" style="flex: 1; max-width: 400px; position: relative;">
                                     <i class="fa-solid fa-search"
                                         style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light);"></i>
                                     <input type="text" id="search-logistics-keluar"
@@ -575,20 +592,20 @@
                                 </div>
                             </div>
 
-                            <div id="logistics-keluar-loader"
+                            <div id="logistics-keluar-loader" class="logistics-data-loader"
                                 style="text-align: center; padding: 40px; color: var(--text-light);">
                                 <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
                                 <p style="margin-top: 10px;">Mengunduh data Barang Keluar...</p>
                             </div>
 
-                            <div class="table-responsive">
-                                <table class="table" id="table-logistics-keluar" style="display: none;">
+                            <div class="table-responsive logistics-data-table-wrap">
+                                <table class="table logistics-data-table" id="table-logistics-keluar" style="display: none;">
                                     <thead>
                                         <tr>
                                             <th>NO</th>
                                             <th>NO SPB</th>
                                             <th>TGL SPB</th>
-                                            <th>NO JO / MEKANIK</th>
+                                            <th>NO. JO LEGACY / MEKANIK</th>
                                             <th>ID UNIT</th>
                                             <th>SN / PLAT KENDARAAN</th>
                                             <th>NAMA SPARE PART</th>
@@ -609,9 +626,9 @@
 
                         <!-- TAB SALDO STOK -->
                         <div id="logistics-tab-stock" class="logistics-tab-content" style="display: none;">
-                            <div class="table-toolbar"
+                            <div class="table-toolbar logistics-data-toolbar"
                                 style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:12px;">
-                                <div class="search-box" style="flex:1; max-width:400px; position:relative;">
+                                <div class="search-box logistics-search-box" style="flex:1; max-width:400px; position:relative;">
                                     <i class="fa-solid fa-search"
                                         style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:var(--text-light);"></i>
                                     <input type="text" id="search-logistics-stock"
@@ -620,13 +637,13 @@
                                 </div>
                                 <span style="font-size:0.78rem; color:var(--text-muted);">Periode sumber: 26 April-25 Mei 2026</span>
                             </div>
-                            <div id="logistics-stock-loader"
+                            <div id="logistics-stock-loader" class="logistics-data-loader"
                                 style="text-align:center; padding:40px; color:var(--text-light);">
                                 <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
                                 <p style="margin-top:10px;">Memuat saldo stok...</p>
                             </div>
-                            <div class="table-responsive">
-                                <table class="table" id="table-logistics-stock" style="display:none;">
+                            <div class="table-responsive logistics-data-table-wrap">
+                                <table class="table logistics-data-table" id="table-logistics-stock" style="display:none;">
                                     <thead>
                                         <tr>
                                             <th>NAMA PARTS</th>
@@ -638,6 +655,45 @@
                                             <th>SUMBER</th>
                                         </tr>
                                     </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB OLI & LUBRICANT -->
+                        <div id="logistics-tab-oil" class="logistics-tab-content" style="display:none;">
+                            <div class="table-toolbar logistics-data-toolbar">
+                                <div class="search-box logistics-search-box">
+                                    <i class="fa-solid fa-search"></i>
+                                    <input type="search" id="search-logistics-oil" placeholder="Cari produk oli, coolant, unit, atau tanggal...">
+                                </div>
+                                <span class="logistics-source-note"><i class="fa-solid fa-database"></i> Ledger aktual · Yard KM 12 Kulim</span>
+                            </div>
+                            <div id="logistics-oil-loader" class="logistics-data-loader"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p>Memuat pemakaian oli dan coolant...</p></div>
+                            <div class="table-responsive logistics-data-table-wrap">
+                                <table class="table logistics-data-table" id="table-logistics-oil" style="display:none;">
+                                    <thead><tr><th>NO</th><th>TANGGAL</th><th>NO. BUKTI / BON</th><th>NAMA PRODUK</th><th>KODE PRODUK</th><th>SATUAN</th><th>JUMLAH</th><th>UNIT / KETERANGAN</th><th>SN / PLAT</th><th>NILAI SUMBER</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB BARANG BEKAS -->
+                        <div id="logistics-tab-used" class="logistics-tab-content" style="display:none;">
+                            <div class="table-toolbar logistics-data-toolbar">
+                                <div class="search-box logistics-search-box">
+                                    <i class="fa-solid fa-search"></i>
+                                    <input type="search" id="search-logistics-used" placeholder="Cari unit, parts, nomor bukti, atau status...">
+                                </div>
+                                <select id="filter-logistics-used" class="logistics-status-filter" aria-label="Filter status barang bekas">
+                                    <option value="">Semua status</option><option value="ADA">Ada</option><option value="BELUM ADA">Belum ada</option><option value="TIDAK ADA">Tidak ada</option><option value="BELUM">Belum</option>
+                                </select>
+                            </div>
+                            <div class="logistics-data-notice"><i class="fa-solid fa-circle-info"></i><span>Tab ini merupakan turunan transaksi Barang Keluar yang memiliki isian status barang bekas; bukan transaksi stok barang bekas terpisah.</span></div>
+                            <div id="logistics-used-loader" class="logistics-data-loader"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p>Menyiapkan status barang bekas...</p></div>
+                            <div class="table-responsive logistics-data-table-wrap">
+                                <table class="table logistics-data-table" id="table-logistics-used" style="display:none;">
+                                    <thead><tr><th>NO</th><th>TANGGAL</th><th>NO. BUKTI</th><th>NO. JO LEGACY</th><th>ID UNIT</th><th>SN / PLAT</th><th>NAMA PARTS</th><th>PART NUMBER</th><th>QTY</th><th>STATUS BARANG BEKAS</th><th>SUMBER</th></tr></thead>
                                     <tbody></tbody>
                                 </table>
                             </div>
@@ -2983,6 +3039,117 @@
                 }));
             }
 
+            let activeProjectLocation = '';
+
+            function getAllAssets() {
+                return Array.isArray(globalData?.assets) ? globalData.assets : [];
+            }
+
+            function getAllWorkOrders() {
+                return Array.isArray(globalData?.work_orders) ? globalData.work_orders : [];
+            }
+
+            window.getProjectScopedAssets = function () {
+                const assets = getAllAssets();
+                return activeProjectLocation
+                    ? assets.filter(asset => String(asset.location || '').trim() === activeProjectLocation)
+                    : assets;
+            };
+
+            window.getProjectScopedWorkOrders = function (source = null) {
+                const workOrders = Array.isArray(source) ? source : getAllWorkOrders();
+                if (!activeProjectLocation) return workOrders;
+                const assetIds = new Set(window.getProjectScopedAssets().map(asset => asset.id));
+                return workOrders.filter(wo => assetIds.has(extractCleanAssetId(wo.assetId || wo.unitId || '')));
+            };
+
+            window.getActiveProjectLocation = function () {
+                return activeProjectLocation;
+            };
+
+            function buildProjectScopedData() {
+                const assets = window.getProjectScopedAssets();
+                const workOrders = window.getProjectScopedWorkOrders();
+                const statusCounts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, ACCIDENT_HOLD: 0 };
+                assets.forEach(asset => {
+                    const status = asset.status || 'READY';
+                    statusCounts[status] = (statusCounts[status] || 0) + 1;
+                });
+                return {
+                    ...globalData,
+                    assets,
+                    work_orders: workOrders,
+                    summary: {
+                        ...(globalData?.summary || {}),
+                        total_units: assets.length,
+                        status_counts: statusCounts
+                    }
+                };
+            }
+
+            function renderProjectMaster() {
+                const panel = document.getElementById('settings-location');
+                if (!panel || !globalData) return;
+                const locations = new Map();
+                getAllAssets().forEach(asset => {
+                    const location = String(asset.location || 'Belum ditentukan').trim() || 'Belum ditentukan';
+                    if (!locations.has(location)) locations.set(location, []);
+                    locations.get(location).push(asset);
+                });
+                const sortedLocations = Array.from(locations.entries()).sort((a, b) => b[1].length - a[1].length);
+                panel.innerHTML = `
+                    <div class="project-master-heading">
+                        <div>
+                            <span class="project-master-eyebrow">Master berbasis data aset</span>
+                            <h3><i class="fa-solid fa-location-dot"></i> Project / Lokasi Operasional</h3>
+                            <p>${sortedLocations.length} lokasi ditemukan dari ${getAllAssets().length} unit. Data ini dipakai sebagai filter lintas Dashboard, Master Asset, WO, dan katalog spare part.</p>
+                        </div>
+                        <span class="project-master-source"><i class="fa-solid fa-database"></i> Sumber: Master Asset</span>
+                    </div>
+                    <div class="project-master-notice"><i class="fa-solid fa-circle-info"></i><span>Nama lokasi masih mengikuti data sumber. Karena belum tersedia ID project, PIC, koordinat, dan periode kontrak yang tervalidasi, sistem tidak membuat data project fiktif.</span></div>
+                    <div class="project-master-grid">
+                        ${sortedLocations.map(([location, assets]) => {
+                            const active = assets.filter(asset => !['BREAKDOWN', 'ACCIDENT_HOLD'].includes(asset.status)).length;
+                            const breakdown = assets.filter(asset => asset.status === 'BREAKDOWN').length;
+                            const categories = new Set(assets.map(asset => asset.category).filter(Boolean)).size;
+                            return `<button type="button" class="project-master-card${activeProjectLocation === location ? ' active' : ''}" data-project-location="${escapeHtml(location)}" onclick="applyGlobalProjectFilter(this.dataset.projectLocation)">
+                                <span class="project-master-card-icon"><i class="fa-solid fa-map-location-dot"></i></span>
+                                <span class="project-master-card-body"><strong>${escapeHtml(location)}</strong><small>${assets.length} unit &middot; ${categories} kategori</small></span>
+                                <span class="project-master-card-metrics"><b>${active}</b><small>aktif</small><b class="danger">${breakdown}</b><small>breakdown</small></span>
+                            </button>`;
+                        }).join('')}
+                    </div>`;
+            }
+
+            function initializeProjectMaster() {
+                const select = document.getElementById('globalProjectFilter');
+                if (!select || !globalData) return;
+                const counts = new Map();
+                getAllAssets().forEach(asset => {
+                    const location = String(asset.location || 'Belum ditentukan').trim() || 'Belum ditentukan';
+                    counts.set(location, (counts.get(location) || 0) + 1);
+                });
+                const options = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+                select.innerHTML = `<option value="">Project/Lokasi: Semua (${getAllAssets().length})</option>`
+                    + options.map(([location, count]) => `<option value="${escapeHtml(location)}">${escapeHtml(location)} (${count})</option>`).join('');
+                select.value = activeProjectLocation;
+                renderProjectMaster();
+            }
+
+            window.applyGlobalProjectFilter = function (location) {
+                activeProjectLocation = String(location || '').trim();
+                const scopedData = buildProjectScopedData();
+                initDashboard(scopedData);
+                initMonitoringView(scopedData.assets);
+                initAssetView(scopedData.assets);
+                initWorkOrderView(scopedData.work_orders);
+                window.SpareLogistics?.refresh?.();
+                renderProjectMaster();
+                document.dispatchEvent(new CustomEvent('fleetproject:change', {
+                    detail: { location: activeProjectLocation, assets: scopedData.assets, workOrders: scopedData.work_orders }
+                }));
+            };
+
             window.resolveAsset = function (query) {
                 if (!globalData || !Array.isArray(globalData.assets)) return null;
                 if (!query) return globalData.assets[0] || null;
@@ -3126,11 +3293,12 @@
 
             window.refreshAllViews = function () {
                 if (!globalData) return;
-                initDashboard(globalData);
+                const scopedData = buildProjectScopedData();
+                initDashboard(scopedData);
                 if (window.initExecutiveAnalyticsPanels) window.initExecutiveAnalyticsPanels();
-                initMonitoringView(globalData.assets);
-                initAssetView(globalData.assets);
-                initWorkOrderView(globalData.work_orders);
+                initMonitoringView(scopedData.assets);
+                initAssetView(scopedData.assets);
+                initWorkOrderView(scopedData.work_orders);
                 if (globalData.costs) initBiayaView(globalData.costs);
             };
 
@@ -3203,17 +3371,20 @@
                     linkExistingWorkflowRecords();
                     rebuildFleetSummary();
                     window.globalData = globalData;
+                    initializeProjectMaster();
 
-                    initDashboard(globalData);
+                    const initialData = buildProjectScopedData();
+                    initDashboard(initialData);
                     if (window.initExecutiveAnalyticsPanels) window.initExecutiveAnalyticsPanels();
-                    initMonitoringView(globalData.assets);
-                    initAssetView(globalData.assets);
-                    initWorkOrderView(globalData.work_orders);
+                    initMonitoringView(initialData.assets);
+                    initAssetView(initialData.assets);
+                    initWorkOrderView(initialData.work_orders);
                     initBiayaView(globalData.costs);
                     initFuelEngine(globalData);
                     initNewViews();
                     window.FleetInspectionModule?.refresh();
-                    initMonitoringView(globalData.assets);
+                    initMonitoringView(initialData.assets);
+                    document.dispatchEvent(new CustomEvent('fleetdata:ready', { detail: initialData }));
 
                     const queryView = new URLSearchParams(window.location.search).get('view') || '';
                     const hashView = window.location.hash.replace(/^#/, '');
@@ -3344,20 +3515,21 @@
                 }
 
                 let titleText = "Tabulasi Semua Unit Alat";
-                let filtered = globalData.assets;
+                const scopedAssets = window.getProjectScopedAssets();
+                let filtered = scopedAssets;
 
                 if (statusKey === 'READY') {
                     titleText = "Tabulasi Unit Status: OPERATING / READY";
-                    filtered = globalData.assets.filter(a => a.status === 'READY');
+                    filtered = scopedAssets.filter(a => a.status === 'READY');
                 } else if (statusKey === 'STANDBY') {
                     titleText = "Tabulasi Unit Status: STANDBY";
-                    filtered = globalData.assets.filter(a => a.status === 'STANDBY');
+                    filtered = scopedAssets.filter(a => a.status === 'STANDBY');
                 } else if (statusKey === 'BREAKDOWN') {
                     titleText = "Tabulasi Unit Status: BREAKDOWN";
-                    filtered = globalData.assets.filter(a => a.status === 'BREAKDOWN');
+                    filtered = scopedAssets.filter(a => a.status === 'BREAKDOWN');
                 } else if (statusKey === 'INSPEKSI') {
                     titleText = "Tabulasi Unit Status: INSPEKSI / PM";
-                    filtered = globalData.assets.filter(a => a.status === 'INSPEKSI');
+                    filtered = scopedAssets.filter(a => a.status === 'INSPEKSI');
                 }
 
                 document.getElementById('statusDetailTitle').textContent = titleText + ` (${filtered.length} Unit)`;
@@ -3535,14 +3707,83 @@
             `;
             }
 
-            function initWorkOrderView(wos) {
+            let workOrderViewMode = 'kanban';
+            let workOrderSource = [];
+
+            window.switchWorkOrderMode = function (mode) {
+                workOrderViewMode = mode === 'table' ? 'table' : 'kanban';
+                const kanbanPanel = document.getElementById('woKanbanPanel');
+                const tablePanel = document.getElementById('woTablePanel');
+                if (kanbanPanel) kanbanPanel.style.display = workOrderViewMode === 'kanban' ? '' : 'none';
+                if (tablePanel) tablePanel.style.display = workOrderViewMode === 'table' ? '' : 'none';
+                document.querySelectorAll('[data-wo-mode]').forEach(button => {
+                    const active = button.dataset.woMode === workOrderViewMode;
+                    button.classList.toggle('active', active);
+                    button.setAttribute('aria-pressed', String(active));
+                });
+            };
+
+            function getFilteredWorkOrders() {
+                const query = String(document.getElementById('woWorkspaceSearch')?.value || '').trim().toLowerCase();
+                const status = document.getElementById('woWorkspaceStatus')?.value || '';
+                const priority = document.getElementById('woWorkspacePriority')?.value || '';
+                return workOrderSource.filter(wo => {
+                    if (status && wo.status !== status) return false;
+                    if (priority && wo.priority !== priority) return false;
+                    if (!query) return true;
+                    const asset = getAllAssets().find(item => item.id === extractCleanAssetId(wo.assetId || wo.unitId || ''));
+                    return [wo.woId, wo.assetId, wo.unitId, wo.issue, wo.description, wo.assignedTo, wo.mechanic, asset?.location]
+                        .some(value => String(value || '').toLowerCase().includes(query));
+                });
+            }
+
+            function renderWorkOrderTable(workOrders) {
+                const tbody = document.getElementById('woWorkspaceTableBody');
+                if (!tbody) return;
+                if (!workOrders.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="wo-table-empty"><i class="fa-solid fa-inbox"></i><span>Tidak ada Work Order yang sesuai filter.</span></td></tr>';
+                    return;
+                }
+                tbody.innerHTML = workOrders.map(wo => {
+                    const assetId = extractCleanAssetId(wo.assetId || wo.unitId || '');
+                    const asset = getAllAssets().find(item => item.id === assetId);
+                    const issue = wo.issue || wo.description || 'Belum ada uraian keluhan';
+                    const mechanic = wo.assignedTo || wo.mechanic || 'Belum ditugaskan';
+                    const statusClass = wo.status === 'Closed' ? 'closed' : wo.status === 'In Progress' ? 'progress' : 'open';
+                    const priorityClass = wo.priority === 'High' ? 'high' : 'normal';
+                    return `<tr>
+                        <td><button type="button" class="wo-id-link" onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapeHtml(assetId)}')">${escapeHtml(wo.woId)}</button></td>
+                        <td><strong>${escapeHtml(assetId || '-')}</strong></td>
+                        <td>${escapeHtml(asset?.location || 'Belum terpetakan')}</td>
+                        <td class="wo-issue-cell" title="${escapeHtml(issue)}">${escapeHtml(issue)}</td>
+                        <td><span class="wo-priority-pill ${priorityClass}">${escapeHtml(wo.priority || 'Normal')}</span></td>
+                        <td><span class="wo-status-pill ${statusClass}">${escapeHtml(wo.status || 'Open')}</span></td>
+                        <td>${escapeHtml(mechanic)}</td>
+                        <td>${escapeHtml(wo.downtime || '0 jam 00 menit')}</td>
+                        <td><button type="button" class="wo-row-action" onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapeHtml(assetId)}')" aria-label="Buka detail ${escapeHtml(wo.woId)}"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></td>
+                    </tr>`;
+                }).join('');
+            }
+
+            window.filterWorkOrderWorkspace = function () {
+                initWorkOrderView(workOrderSource, true);
+            };
+
+            function initWorkOrderView(wos, preserveSource = false) {
                 const kanbanBoard = document.getElementById('woKanbanBoard');
                 if (!kanbanBoard) return;
+                if (!preserveSource) {
+                    workOrderSource = Array.isArray(wos) ? [...wos] : [];
+                }
+                const visibleWos = getFilteredWorkOrders();
+                const count = document.getElementById('woWorkspaceCount');
+                if (count) count.textContent = `${visibleWos.length.toLocaleString('id-ID')} WO`;
+                renderWorkOrderTable(visibleWos);
                 WorkOrderDragDrop.bind(kanbanBoard);
 
-                const openWos = wos.filter(w => w.status === 'Open');
-                const progressWos = wos.filter(w => w.status === 'In Progress');
-                const closedWos = wos.filter(w => w.status === 'Closed');
+                const openWos = visibleWos.filter(w => w.status === 'Open');
+                const progressWos = visibleWos.filter(w => w.status === 'In Progress');
+                const closedWos = visibleWos.filter(w => w.status === 'Closed');
 
                 // Update global badge counters
                 const badgeO = document.getElementById('count-Open');
@@ -3606,6 +3847,7 @@
                 const closedCol = renderParentColumn('Closed', 'Closed / Ready', 'bg-operating', closedWos);
 
                 kanbanBoard.innerHTML = openCol + progressCol + closedCol;
+                window.switchWorkOrderMode(workOrderViewMode);
             }
 
             let previousModalId = null;

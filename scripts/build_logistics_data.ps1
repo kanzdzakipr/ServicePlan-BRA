@@ -87,6 +87,7 @@ $filterLines = @(Get-Content -LiteralPath $FilterPath -Encoding UTF8)
 $partInLines = Get-SectionLines $bankLines '^# 2\. Sheet `PART MASUK`' '^# 3\. Sheet `PEMAKAIAN`'
 $usageLines = Get-SectionLines $bankLines '^# 3\. Sheet `PEMAKAIAN`' '^# 4\. Sheet `STOCK`'
 $stockLines = Get-SectionLines $bankLines '^# 4\. Sheet `STOCK`' '^# 5\. Sheet `stok`'
+$oilLines = Get-SectionLines $bankLines '^# 18\. Sheet `PEMAKAIAN OLI DAN COOLANT`' '^# 19\.'
 
 $partsIn = [System.Collections.Generic.List[object]]::new()
 foreach ($line in $partInLines) {
@@ -153,6 +154,30 @@ foreach ($line in $stockLines) {
         pemakaianTotal = (Get-NumericCellValue $cells[24])
         saldo = (Get-NumericCellValue $cells[25])
         source = 'BANK DATA EQUIPMENT / STOCK 26 April-25 Mei 2026'
+    })
+}
+
+$oilUsage = [System.Collections.Generic.List[object]]::new()
+foreach ($line in $oilLines) {
+    if ($line -notmatch '^\|\s*\d+\s*\|') { continue }
+    $cells = Get-MarkdownCells $line
+    if ($cells.Count -lt 9) { continue }
+    $date = Convert-ToIsoDate $cells[1]
+    $productName = Get-PlainValue $cells[4]
+    if (-not $date -or -not $productName -or $date -notmatch '^\d{4}-\d{2}-\d{2}$') { continue }
+    $oilUsage.Add([ordered]@{
+        no = [string]($oilUsage.Count + 1)
+        tanggal = $date
+        noBukti = (Get-PlainValue $(if ($cells[2]) { $cells[2] } else { $cells[3] }))
+        namaProduk = $productName
+        kodeProduk = (Get-PlainValue $cells[5])
+        satuan = (Get-PlainValue $cells[6])
+        jumlah = (Get-NumericCellValue $cells[7])
+        unit = (Get-PlainValue $cells[8])
+        nilai = (Get-NumericCellValue $(if ($cells.Count -gt 9) { $cells[9] } else { '' }))
+        site = 'YARD KM 12 KULIM'
+        periode = '26 Mei 2025 - 25 Juni 2026'
+        source = 'BANK DATA EQUIPMENT / PEMAKAIAN OLI DAN COOLANT'
     })
 }
 
@@ -227,6 +252,8 @@ foreach ($filter in $filterUsage) {
     })
 }
 
+$usedGoods = @($partsOut | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.kesimpulan) })
+
 $payload = [ordered]@{
     metadata = [ordered]@{
         generatedAt = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssK')
@@ -235,10 +262,14 @@ $payload = [ordered]@{
         filterPeriod = '2025-12-26/2026-01-25'
         filterRows = $filterUsage.Count
         filterMatchedToBank = $filterMatched
+        oilRows = $oilUsage.Count
+        usedGoodsRows = $usedGoods.Count
     }
     masuk = $partsIn
     keluar = $partsOut
     stock = $stock
+    oil = $oilUsage
+    usedGoods = $usedGoods
     filterUsage = $filterUsage
 }
 
@@ -250,4 +281,6 @@ Write-Output "Generated $OutputPath"
 Write-Output "Parts masuk: $($partsIn.Count)"
 Write-Output "Pemakaian/keluar: $($partsOut.Count)"
 Write-Output "Stock: $($stock.Count)"
+Write-Output "Oil & coolant usage: $($oilUsage.Count)"
+Write-Output "Used-goods status rows: $($usedGoods.Count)"
 Write-Output "Filter Januari: $($filterUsage.Count) ($filterMatched matched to bank)"
