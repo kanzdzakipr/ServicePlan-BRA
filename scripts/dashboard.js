@@ -1,6 +1,38 @@
 (function () {
     'use strict';
 
+    window.parseAssetId = function(fullId) {
+        if (!fullId) return { unitId: '-', snPlat: '-' };
+        let unitId = fullId;
+        let snPlat = '-';
+        if (fullId.includes(' SN ')) {
+            const parts = fullId.split(' SN ');
+            unitId = parts[0].trim();
+            snPlat = 'SN ' + parts[1].trim();
+        } else if (fullId.includes('-')) {
+            const match = fullId.match(/^([A-Z0-9]+-\d+)(.*)$/i);
+            if (match) {
+                unitId = match[1].trim();
+                snPlat = match[2].replace(/^[\s-]+/, '').trim();
+                if (!snPlat) snPlat = '-';
+            }
+        }
+        return { unitId, snPlat };
+    };
+
+    window.getSnPlatFromUnit = function(unitCode) {
+        if (!unitCode || !window.globalData || !window.globalData.assets) return '-';
+        const cleanUnit = unitCode.trim().toLowerCase();
+        const asset = window.globalData.assets.find(a => {
+            const parsed = window.parseAssetId(a.id);
+            return parsed.unitId.toLowerCase() === cleanUnit || a.id.toLowerCase() === cleanUnit;
+        });
+        if (asset) {
+            return window.parseAssetId(asset.id).snPlat;
+        }
+        return '-';
+    };
+
     const field = (key, label, type = 'text', required = false, options = [], full = false, placeholder = '') => ({
         key, label, type, required, options, full, placeholder
     });
@@ -15658,6 +15690,7 @@ function renderTableMasuk(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.satuan) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.jml) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.unit) || '-'}</td>
+            <td style="padding: 12px 15px;"><strong style="color:var(--text-muted);">${escapeHtml(window.getSnPlatFromUnit(item.unit))}</strong></td>
             <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
         </tr>
     `).join('');
@@ -15692,6 +15725,7 @@ function renderTableKeluar(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.tglSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.noJo) || '-'}</td>
             <td style="padding: 12px 15px;"><span class="badge" style="background:var(--primary); color:white; padding:4px 8px; border-radius:4px;">${escapeHtml(item.idUnit) || '-'}</span></td>
+            <td style="padding: 12px 15px;"><strong style="color:var(--text-muted);">${escapeHtml(window.getSnPlatFromUnit(item.idUnit))}</strong></td>
             <td style="padding: 12px 15px;"><strong>${escapeHtml(item.namaSparepart) || '-'}</strong></td>
             <td style="padding: 12px 15px;">${escapeHtml(item.spesifikasi) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.qty) || '-'}</td>

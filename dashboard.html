@@ -386,6 +386,7 @@
                                 <thead>
                                     <tr>
                                         <th>Asset ID / Kode</th>
+                                        <th>SN / Plat Kendaraan</th>
                                         <th>Kategori</th>
                                         <th>Lokasi Aktif</th>
                                         <th>Update Terakhir</th>
@@ -531,6 +532,7 @@
                                             <th>SATUAN</th>
                                             <th>JUMLAH</th>
                                             <th>KETERANGAN (UNIT)</th>
+                                            <th>SN / PLAT KENDARAAN</th>
                                             <th>NO. SPB</th>
                                         </tr>
                                     </thead>
@@ -574,6 +576,7 @@
                                             <th>TGL SPB</th>
                                             <th>NO JO / MEKANIK</th>
                                             <th>ID UNIT</th>
+                                            <th>SN / PLAT KENDARAAN</th>
                                             <th>NAMA SPARE PART</th>
                                             <th>SPESIFIKASI / PART NO</th>
                                             <th>QTY</th>
@@ -2251,6 +2254,7 @@
                         <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 2;">
                             <tr>
                                 <th>Unit ID / Kode Lambung</th>
+                                <th>SN / Plat Kendaraan</th>
                                 <th>Kategori Alat</th>
                                 <th>Lokasi Aktif</th>
                                 <th>Last Update</th>
@@ -3312,6 +3316,7 @@
                 }
 
                 tbody.innerHTML = assets.map(asset => {
+                    const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
                     let badge = '';
                     if (asset.status === 'READY') badge = '<span class="badge bg-operating">READY</span>';
                     else if (asset.status === 'STANDBY') badge = '<span class="badge bg-standby">STANDBY</span>';
@@ -3320,7 +3325,8 @@
 
                     return `
                     <tr>
-                        <td><strong>${escapeHtml(asset.id)}</strong></td>
+                        <td><strong>${escapeHtml(parsed.unitId)}</strong></td>
+                        <td>${escapeHtml(parsed.snPlat)}</td>
                         <td>${escapeHtml(asset.category)}</td>
                         <td>${escapeHtml(asset.location)}</td>
                         <td>${escapeHtml(asset.lastUpdate || '2 jam lalu')}</td>
@@ -3376,6 +3382,7 @@
 
                 // 2. Render Asset Rows with Rich Linkage Actions
                 tbody.innerHTML = assets.slice(0, 100).map(asset => {
+                    const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
                     let badge = '';
                     if (asset.status === 'READY') badge = '<span class="badge bg-operating">READY</span>';
                     else if (asset.status === 'STANDBY') badge = '<span class="badge bg-standby">STANDBY</span>';
@@ -3385,8 +3392,10 @@
                     return `
                     <tr onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" style="cursor:pointer;" title="Klik untuk membuka Detail 360° Unit ${escapeHtml(asset.id)}">
                         <td>
-                            <strong style="color:var(--primary);">${escapeHtml(asset.id)}</strong>
-                            ${asset.serialNumber || asset.plateNumber ? `<br><small style="color:var(--text-muted); font-size:0.75rem; font-weight:600;">${escapeHtml(asset.serialNumber || asset.plateNumber)}</small>` : ''}
+                            <strong style="color:var(--primary);">${escapeHtml(parsed.unitId)}</strong>
+                        </td>
+                        <td>
+                            <strong style="color:var(--text-muted);">${escapeHtml(parsed.snPlat)}</strong>
                         </td>
                         <td>${escapeHtml(asset.category)}</td>
                         <td><i class="fa-solid fa-location-dot" style="color:var(--text-muted); margin-right:4px;"></i> ${escapeHtml(asset.location)}</td>
