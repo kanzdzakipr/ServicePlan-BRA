@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="id">
+<head><meta charset="utf-8"><title>Dashboard import smoke test</title></head>
+<body>
+    <pre id="result">RUNNING</pre>
+    <iframe id="dashboard" src="../dashboard.html" hidden></iframe>
+    <script>
+        const markdown = `# Template Monitoring Progres Pengadaan Spare Part
+
+| No | No SPB | Tanggal SPB | No JO mekanik/ | ID unit | Nama Spare Part | Spesifikasi / Part No | Qty | Satuan | Tgl / SPB Disetujui | jam poses le toko | Tgl Barang Tiba | Jam Barang Tiba | Total Waktu Aktual (jam) | Uraian Kendala | Aksi Perbaikan | Status | Unit terdampak Pengaruh ke RTW (ya / tidak) | Kesimpulan Akhir |
+|---:|---|---|---|---|---|---|---:|---|---|---|---|---|---:|---|---|---|---|---|
+| 1 | SPB-2026-001 | 01/01/2026 | WO-26-001 | DT-00046 | Element Set Fuel Fil | 23304-JAF40 | 1 | Pcs | 02/01/2026 | 08:00 | 03/01/2026 | 10:00 | 26 | Stok awal kosong | Eskalasi vendor | Diserahkan | Ya | Barang diterima dan siap dipasang |
+`;
+
+        async function run() {
+            const frame = document.getElementById('dashboard').contentWindow;
+            const output = document.getElementById('result');
+            try {
+                for (let attempt = 0; attempt < 50 && !frame.globalData?.assets?.length; attempt += 1) {
+                    await new Promise(resolve => window.setTimeout(resolve, 100));
+                }
+                const file = new File([markdown], 'Template_Monitoring_Progres_Pengadaan_Sparepart.md', {
+                    type: 'text/markdown'
+                });
+                const extracted = await frame.FleetDocumentImportEngine.extractFile(file);
+                const analyzed = frame.FleetDocumentImportEngine.analyzeImport(
+                    extracted,
+                    frame.FleetReportForms.getSchemas()
+                );
+                const row = analyzed.mapping.rows[0] || {};
+                frame.SpareLogistics.openForAsset('DT-00046');
+                frame.SpareLogistics.createProcurementReport();
+                const linkedDraft = frame.FleetReportForms.getDraftState('procurement-monitoring');
+                const linkedRows = linkedDraft?.draft?.rows || [];
+                const checks = {
+                    schema: analyzed.target.schemaId === 'procurement-monitoring',
+                    rows: analyzed.mapping.rows.length === 1,
+                    spb: row.nomor_spb === 'SPB-2026-001',
+                    dates: row.tanggal_spb === '2026-01-01' && row.tanggal_tiba === '2026-01-03',
+                    unit: row.id_unit === 'DT-00046',
+                    part: row.part_number === '23304-JAF40',
+                    status: row.status_pengadaan === 'Diserahkan',
+                    rtw: row.rtw_terdampak === 'Ya',
+                    draftReady: analyzed.quality.canCreateDraft === true,
+                    linkedAssetDraft: linkedDraft?.hasData === true,
+                    linkedFilterRows: linkedRows.filter(item => item.id_unit === 'DT-00046').length >= 4,
+                    linkedFields: Boolean(linkedDraft?.draft?.fields?.site && linkedDraft?.draft?.fields?.periode)
+                };
+                const passed = Object.values(checks).every(Boolean);
+                output.textContent = `${passed ? 'PASS' : 'FAIL'} ${JSON.stringify({ checks, target: analyzed.target, quality: analyzed.quality, row }, null, 2)}`;
+            } catch (error) {
+                output.textContent = `FAIL ${error.stack || error.message}`;
+            }
+        }
+
+        document.getElementById('dashboard').addEventListener('load', () => {
+            window.setTimeout(run, 300);
+        });
+    </script>
+</body>
+</html>
