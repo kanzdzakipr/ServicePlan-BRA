@@ -76,11 +76,23 @@
             return window.assetDbMapping[cleanUnit];
         }
         
+        // try partial / substring matching from mapping
+        if (window.assetDbMapping) {
+            const firstPart = cleanUnit.split(' ')[0];
+            if (window.assetDbMapping[firstPart]) return window.assetDbMapping[firstPart];
+            
+            for (const key in window.assetDbMapping) {
+                if (cleanUnit.includes(key) || key.includes(firstPart)) {
+                    return window.assetDbMapping[key];
+                }
+            }
+        }
+        
         // fallback
         if (window.globalData && window.globalData.assets) {
             const asset = window.globalData.assets.find(a => {
                 const parsed = window.parseAssetId(a.id);
-                return parsed.unitId.toUpperCase() === cleanUnit || a.id.toUpperCase() === cleanUnit;
+                return parsed.unitId.toUpperCase() === cleanUnit || a.id.toUpperCase() === cleanUnit || cleanUnit.includes(parsed.unitId.toUpperCase());
             });
             if (asset) {
                 return window.parseAssetId(asset.id).snPlat;

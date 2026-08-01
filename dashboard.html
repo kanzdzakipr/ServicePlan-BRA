@@ -3140,6 +3140,9 @@
                 try {
                     if (window.loadAssetMapping) {
                         await window.loadAssetMapping();
+                        // Re-render logistics to apply SN/Plat
+                        if (typeof renderTableMasuk === 'function') renderTableMasuk();
+                        if (typeof renderTableKeluar === 'function') renderTableKeluar();
                     }
                     const response = await fetch('data.json');
                     if (!response.ok) throw new Error('Data not found');
