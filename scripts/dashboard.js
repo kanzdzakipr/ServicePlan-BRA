@@ -1,6 +1,94 @@
 (function () {
     'use strict';
 
+    window.assetDbMapping = null;
+
+    window.loadAssetMapping = async function() {
+        try {
+            const url = "https://docs.google.com/spreadsheets/d/1lrElHvYPB4ezXR13kOxy6WdECbRN4C3-H2UOF8ZcXtE/gviz/tq?tqx=out:csv&sheet=List%20Data%20Aset%20BRA";
+            const response = await fetch(url);
+            const csvText = await response.text();
+            
+            const mapping = {};
+            const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+            const lines = csvText.split(/\r?\n/);
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const r = lines[i].split(regex).map(field => field.replace(/^"|"$/g, '').trim());
+                if (r.length < 10) continue;
+                
+                const sn = r[5] || '';
+                const kodeUnit = r[8] || '';
+                const lambung = r[9] || '';
+                
+                if (kodeUnit) mapping[kodeUnit.toUpperCase().trim()] = sn;
+                if (lambung) mapping[lambung.toUpperCase().trim()] = sn;
+            }
+            window.assetDbMapping = mapping;
+            console.log("Asset DB mapping loaded from Google Sheets.");
+        } catch(e) {
+            console.error("Error loading Asset DB mapping:", e);
+        }
+    };
+
+    window.parseAssetId = function(fullId) {
+        if (!fullId) return { unitId: '-', snPlat: '-' };
+        let unitId = fullId;
+        let snPlat = '-';
+        
+        // try string parsing first for unitId
+        if (fullId.includes(' SN ')) {
+            unitId = fullId.split(' SN ')[0].trim();
+        } else if (fullId.includes('-')) {
+            const match = fullId.match(/^([A-Z0-9]+-\d+)(.*)$/i);
+            if (match) {
+                unitId = match[1].trim();
+            }
+        }
+
+        // Try mapping first
+        if (window.assetDbMapping) {
+            const mappedSn = window.assetDbMapping[unitId.toUpperCase().trim()] || window.assetDbMapping[fullId.toUpperCase().trim()];
+            if (mappedSn) {
+                return { unitId, snPlat: mappedSn };
+            }
+        }
+
+        // fallback string parse for snPlat
+        if (fullId.includes(' SN ')) {
+            snPlat = 'SN ' + fullId.split(' SN ')[1].trim();
+        } else if (fullId.includes('-')) {
+            const match = fullId.match(/^([A-Z0-9]+-\d+)(.*)$/i);
+            if (match) {
+                snPlat = match[2].replace(/^[\s-]+/, '').trim();
+                if (!snPlat) snPlat = '-';
+            }
+        }
+        return { unitId, snPlat };
+    };
+
+    window.getSnPlatFromUnit = function(unitCode) {
+        if (!unitCode) return '-';
+        const cleanUnit = unitCode.trim().toUpperCase();
+        
+        if (window.assetDbMapping && window.assetDbMapping[cleanUnit]) {
+            return window.assetDbMapping[cleanUnit];
+        }
+        
+        // fallback
+        if (window.globalData && window.globalData.assets) {
+            const asset = window.globalData.assets.find(a => {
+                const parsed = window.parseAssetId(a.id);
+                return parsed.unitId.toUpperCase() === cleanUnit || a.id.toUpperCase() === cleanUnit;
+            });
+            if (asset) {
+                return window.parseAssetId(asset.id).snPlat;
+            }
+        }
+        return '-';
+    };
+
     const field = (key, label, type = 'text', required = false, options = [], full = false, placeholder = '') => ({
         key, label, type, required, options, full, placeholder
     });
@@ -4998,8 +5086,30 @@
 
     const api = {
         refresh: render,
+        openDirectUnit() {
+            const input = document.getElementById('cm-direct-input');
+            if (!input) return;
+            const unitId = input.value.trim();
+            if (!unitId) return;
+            api.openForAsset(unitId, 'overview');
+        },
         openForAsset(assetId, tab = 'overview') {
-            const asset = typeof window.resolveAsset === 'function' ? window.resolveAsset(assetId) : (allAssets().find(a => a.id === assetId) || allAssets()[0]);
+            let asset = typeof window.resolveAsset === 'function' ? window.resolveAsset(assetId) : (allAssets().find(a => a.id.toLowerCase() === assetId.toLowerCase()));
+            
+            // Auto generate dummy dumptruck asset if not found
+            if (!asset) {
+                asset = {
+                    id: assetId.toUpperCase(),
+                    category: 'DUMP TRUCK',
+                    location: 'DURI',
+                    status: 'READY'
+                };
+                // Push to global assets if available
+                if (window.globalData && window.globalData.assets) {
+                    window.globalData.assets.push(asset);
+                }
+            }
+
             if (!asset) return;
 
             state.selectedAssetId = asset.id;
@@ -16058,6 +16168,7 @@ function renderTableMasuk(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.satuan) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.jml) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.unit) || '-'}</td>
+            <td style="padding: 12px 15px;"><strong style="color:var(--text-muted);">${escapeHtml(window.getSnPlatFromUnit(item.unit))}</strong></td>
             <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
         </tr>
     `).join('');
@@ -16095,7 +16206,12 @@ function renderTableKeluar(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.tglSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.noJo) || '-'}</td>
+<<<<<<< HEAD
             <td style="padding: 12px 15px;"><button type="button" onclick="openLogisticsAsset('${escapeHtml(item.idUnit)}')" class="badge" style="border:0; cursor:pointer; background:var(--primary); color:white; padding:4px 8px; border-radius:4px;" title="Buka pada katalog Master Asset">${escapeHtml(item.idUnit) || '-'}</button></td>
+=======
+            <td style="padding: 12px 15px;"><span class="badge" style="background:var(--primary); color:white; padding:4px 8px; border-radius:4px;">${escapeHtml(item.idUnit) || '-'}</span></td>
+            <td style="padding: 12px 15px;"><strong style="color:var(--text-muted);">${escapeHtml(window.getSnPlatFromUnit(item.idUnit))}</strong></td>
+>>>>>>> 90da9cd63e443ccd4419ffca6fcc524eebee2609
             <td style="padding: 12px 15px;"><strong>${escapeHtml(item.namaSparepart) || '-'}</strong></td>
             <td style="padding: 12px 15px;">${escapeHtml(item.spesifikasi) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.qty) || '-'}</td>

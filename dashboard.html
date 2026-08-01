@@ -386,6 +386,7 @@
                                 <thead>
                                     <tr>
                                         <th>Asset ID / Kode</th>
+                                        <th>SN / Plat Kendaraan</th>
                                         <th>Kategori</th>
                                         <th>Lokasi Aktif</th>
                                         <th>Update Terakhir</th>
@@ -545,6 +546,7 @@
                                             <th>SATUAN</th>
                                             <th>JUMLAH</th>
                                             <th>KETERANGAN (UNIT)</th>
+                                            <th>SN / PLAT KENDARAAN</th>
                                             <th>NO. SPB</th>
                                         </tr>
                                     </thead>
@@ -588,6 +590,7 @@
                                             <th>TGL SPB</th>
                                             <th>NO JO / MEKANIK</th>
                                             <th>ID UNIT</th>
+                                            <th>SN / PLAT KENDARAAN</th>
                                             <th>NAMA SPARE PART</th>
                                             <th>SPESIFIKASI / PART NO</th>
                                             <th>QTY</th>
@@ -649,6 +652,11 @@
                     <div>
                         <h1 class="page-title"><i class="fa-solid fa-stethoscope"></i> Condition Monitoring</h1>
                         <p>Inspeksi komponen kritis per-unit dan tindak lanjut terintegrasi.</p>
+                        <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; width: fit-content;">
+                            <label for="cm-direct-input" style="font-weight: 600; color: #334155; margin: 0;">Cek Inspeksi Dumptruck:</label>
+                            <input type="text" id="cm-direct-input" class="form-control" placeholder="Input ID (misal: DT-00049)" style="width: 250px;">
+                            <button class="btn btn-primary" onclick="ConditionMonitoring.openDirectUnit()"><i class="fa-solid fa-search"></i> Lihat Hasil Inspeksi</button>
+                        </div>
                     </div>
                     <span class="cm-source-chip"><i class="fa-solid fa-database"></i> Sumber BRA tervalidasi</span>
                 </div>
@@ -2302,6 +2310,7 @@
                         <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 2;">
                             <tr>
                                 <th>Unit ID / Kode Lambung</th>
+                                <th>SN / Plat Kendaraan</th>
                                 <th>Kategori Alat</th>
                                 <th>Lokasi Aktif</th>
                                 <th>Last Update</th>
@@ -3180,6 +3189,9 @@
 
             document.addEventListener('DOMContentLoaded', async () => {
                 try {
+                    if (window.loadAssetMapping) {
+                        await window.loadAssetMapping();
+                    }
                     const response = await fetch('data.json');
                     if (!response.ok) throw new Error('Data not found');
                     globalData = await response.json();
@@ -3363,6 +3375,7 @@
                 }
 
                 tbody.innerHTML = assets.map(asset => {
+                    const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
                     let badge = '';
                     if (asset.status === 'READY') badge = '<span class="badge bg-operating">READY</span>';
                     else if (asset.status === 'STANDBY') badge = '<span class="badge bg-standby">STANDBY</span>';
@@ -3371,7 +3384,8 @@
 
                     return `
                     <tr>
-                        <td><strong>${escapeHtml(asset.id)}</strong></td>
+                        <td><strong>${escapeHtml(parsed.unitId)}</strong></td>
+                        <td>${escapeHtml(parsed.snPlat)}</td>
                         <td>${escapeHtml(asset.category)}</td>
                         <td>${escapeHtml(asset.location)}</td>
                         <td>${escapeHtml(asset.lastUpdate || '2 jam lalu')}</td>
@@ -3427,6 +3441,7 @@
 
                 // 2. Render Asset Rows with Rich Linkage Actions
                 tbody.innerHTML = assets.slice(0, 100).map(asset => {
+                    const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
                     let badge = '';
                     if (asset.status === 'READY') badge = '<span class="badge bg-operating">READY</span>';
                     else if (asset.status === 'STANDBY') badge = '<span class="badge bg-standby">STANDBY</span>';
@@ -3436,8 +3451,10 @@
                     return `
                     <tr onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" style="cursor:pointer;" title="Klik untuk membuka Detail 360° Unit ${escapeHtml(asset.id)}">
                         <td>
-                            <strong style="color:var(--primary);">${escapeHtml(asset.id)}</strong>
-                            ${asset.serialNumber || asset.plateNumber ? `<br><small style="color:var(--text-muted); font-size:0.75rem; font-weight:600;">${escapeHtml(asset.serialNumber || asset.plateNumber)}</small>` : ''}
+                            <strong style="color:var(--primary);">${escapeHtml(parsed.unitId)}</strong>
+                        </td>
+                        <td>
+                            <strong style="color:var(--text-muted);">${escapeHtml(parsed.snPlat)}</strong>
                         </td>
                         <td>${escapeHtml(asset.category)}</td>
                         <td><i class="fa-solid fa-location-dot" style="color:var(--text-muted); margin-right:4px;"></i> ${escapeHtml(asset.location)}</td>
