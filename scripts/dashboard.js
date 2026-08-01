@@ -1,18 +1,66 @@
 (function () {
     'use strict';
 
+    window.assetDbMapping = null;
+
+    window.loadAssetMapping = async function() {
+        try {
+            const url = "https://docs.google.com/spreadsheets/d/1lrElHvYPB4ezXR13kOxy6WdECbRN4C3-H2UOF8ZcXtE/gviz/tq?tqx=out:csv&sheet=List%20Data%20Aset%20BRA";
+            const response = await fetch(url);
+            const csvText = await response.text();
+            
+            const mapping = {};
+            const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+            const lines = csvText.split(/\r?\n/);
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const r = lines[i].split(regex).map(field => field.replace(/^"|"$/g, '').trim());
+                if (r.length < 10) continue;
+                
+                const sn = r[5] || '';
+                const kodeUnit = r[8] || '';
+                const lambung = r[9] || '';
+                
+                if (kodeUnit) mapping[kodeUnit.toUpperCase().trim()] = sn;
+                if (lambung) mapping[lambung.toUpperCase().trim()] = sn;
+            }
+            window.assetDbMapping = mapping;
+            console.log("Asset DB mapping loaded from Google Sheets.");
+        } catch(e) {
+            console.error("Error loading Asset DB mapping:", e);
+        }
+    };
+
     window.parseAssetId = function(fullId) {
         if (!fullId) return { unitId: '-', snPlat: '-' };
         let unitId = fullId;
         let snPlat = '-';
+        
+        // try string parsing first for unitId
         if (fullId.includes(' SN ')) {
-            const parts = fullId.split(' SN ');
-            unitId = parts[0].trim();
-            snPlat = 'SN ' + parts[1].trim();
+            unitId = fullId.split(' SN ')[0].trim();
         } else if (fullId.includes('-')) {
             const match = fullId.match(/^([A-Z0-9]+-\d+)(.*)$/i);
             if (match) {
                 unitId = match[1].trim();
+            }
+        }
+
+        // Try mapping first
+        if (window.assetDbMapping) {
+            const mappedSn = window.assetDbMapping[unitId.toUpperCase().trim()] || window.assetDbMapping[fullId.toUpperCase().trim()];
+            if (mappedSn) {
+                return { unitId, snPlat: mappedSn };
+            }
+        }
+
+        // fallback string parse for snPlat
+        if (fullId.includes(' SN ')) {
+            snPlat = 'SN ' + fullId.split(' SN ')[1].trim();
+        } else if (fullId.includes('-')) {
+            const match = fullId.match(/^([A-Z0-9]+-\d+)(.*)$/i);
+            if (match) {
                 snPlat = match[2].replace(/^[\s-]+/, '').trim();
                 if (!snPlat) snPlat = '-';
             }
@@ -21,14 +69,22 @@
     };
 
     window.getSnPlatFromUnit = function(unitCode) {
-        if (!unitCode || !window.globalData || !window.globalData.assets) return '-';
-        const cleanUnit = unitCode.trim().toLowerCase();
-        const asset = window.globalData.assets.find(a => {
-            const parsed = window.parseAssetId(a.id);
-            return parsed.unitId.toLowerCase() === cleanUnit || a.id.toLowerCase() === cleanUnit;
-        });
-        if (asset) {
-            return window.parseAssetId(asset.id).snPlat;
+        if (!unitCode) return '-';
+        const cleanUnit = unitCode.trim().toUpperCase();
+        
+        if (window.assetDbMapping && window.assetDbMapping[cleanUnit]) {
+            return window.assetDbMapping[cleanUnit];
+        }
+        
+        // fallback
+        if (window.globalData && window.globalData.assets) {
+            const asset = window.globalData.assets.find(a => {
+                const parsed = window.parseAssetId(a.id);
+                return parsed.unitId.toUpperCase() === cleanUnit || a.id.toUpperCase() === cleanUnit;
+            });
+            if (asset) {
+                return window.parseAssetId(asset.id).snPlat;
+            }
         }
         return '-';
     };

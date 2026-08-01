@@ -3133,6 +3133,9 @@
 
             document.addEventListener('DOMContentLoaded', async () => {
                 try {
+                    if (window.loadAssetMapping) {
+                        await window.loadAssetMapping();
+                    }
                     const response = await fetch('data.json');
                     if (!response.ok) throw new Error('Data not found');
                     globalData = await response.json();
