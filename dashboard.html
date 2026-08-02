@@ -500,6 +500,71 @@
                     </div>
                 </div>
 
+                <div class="panel" style="margin-bottom: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 12px; overflow: hidden;">
+                    <div class="panel-header" style="background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%); color: white; padding: 15px 20px;">
+                        <span style="font-size: 1.1rem; font-weight: 600;"><i class="fa-solid fa-file-pen" style="margin-right: 8px;"></i> Input Administrasi & Logistik</span>
+                    </div>
+                    <div class="panel-body" style="padding: 20px; background: #ffffff;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                            
+                            <!-- 1. SPB & No Polisi -->
+                            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; cursor: default;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #e0e7ff; color: var(--primary); display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-truck"></i></div>
+                                    Input SPB & Unit
+                                </h4>
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Kode Nomor SPB</label>
+                                    <input type="text" class="form-control" placeholder="Contoh: SPB-2026-001" style="border-radius: 6px; padding: 10px;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">No Polisi / Unit</label>
+                                    <input type="text" class="form-control" placeholder="Contoh: B 1234 XYZ / DT-001" style="border-radius: 6px; padding: 10px;">
+                                </div>
+                                <button class="btn btn-primary" style="margin-top: 15px; width: 100%; border-radius: 6px; padding: 10px; font-weight: 600; transition: background 0.2s;"><i class="fa-solid fa-save" style="margin-right: 5px;"></i> Simpan Data SPB</button>
+                            </div>
+
+                            <!-- 2. Sheet Oli -->
+                            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; cursor: default;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-oil-can"></i></div>
+                                    Sheet Oli (Pemakaian/Pemasukan)
+                                </h4>
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Jenis Transaksi</label>
+                                    <select class="form-control" style="border-radius: 6px; padding: 10px;">
+                                        <option>Pemakaian Oli</option>
+                                        <option>Pemasukan Oli</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Upload Sheet (Excel/CSV)</label>
+                                    <input type="file" class="form-control" accept=".xlsx,.xls,.csv" style="border-radius: 6px; padding: 7px 10px; background: white;">
+                                </div>
+                                <button class="btn btn-success" style="margin-top: 15px; width: 100%; border-radius: 6px; padding: 10px; font-weight: 600; background-color: #10b981; border-color: #10b981;"><i class="fa-solid fa-upload" style="margin-right: 5px;"></i> Upload Sheet Oli</button>
+                            </div>
+
+                            <!-- 3. Upload Foto & PDF -->
+                            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; cursor: default;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; color: #ef4444; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-file-pdf"></i></div>
+                                    Upload Administrasi Logistik
+                                </h4>
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Foto Barang Keluar & Masuk</label>
+                                    <input type="file" class="form-control" accept="image/*" multiple style="border-radius: 6px; padding: 7px 10px; background: white;" title="Pilih foto barang masuk/keluar">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Laporan PDF Administrasi</label>
+                                    <input type="file" class="form-control" accept=".pdf" style="border-radius: 6px; padding: 7px 10px; background: white;">
+                                </div>
+                                <button class="btn btn-primary" style="margin-top: 15px; width: 100%; border-radius: 6px; padding: 10px; font-weight: 600; background-color: #3b82f6; border-color: #3b82f6;"><i class="fa-solid fa-cloud-arrow-up" style="margin-right: 5px;"></i> Upload Berkas</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
                 <div class="warehouse-ledger-heading">
                     <div>
                         <h2 class="page-title" style="margin-bottom:4px; font-size:1.25rem;"><i class="fa-solid fa-book"
