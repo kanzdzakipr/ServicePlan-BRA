@@ -88,8 +88,11 @@
                 </div>
             </div>
             <div class="header-right">
-                <div class="search-bar">
-                    <input type="text" placeholder="Cari unit, WO, lambung...">
+                <div class="search-bar" style="position: relative;">
+                    <input type="text" id="globalSearchInput" onkeyup="handleGlobalSearch()" onfocus="if(this.value.length >= 2) document.getElementById('globalSearchResults').style.display='block';" placeholder="Cari unit, WO, lambung..." autocomplete="off">
+                    <div id="globalSearchResults" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 100%; min-width: 350px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); z-index: 1000; max-height: 400px; overflow-y: auto;">
+                        <!-- Results injected here -->
+                    </div>
                 </div>
                 <div class="profile">
                     <img src="https://ui-avatars.com/api/?name=Admin+Manager&background=007bff&color=fff" alt="User">
