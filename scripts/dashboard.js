@@ -16409,3 +16409,74 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+window.handleGlobalSearch = function() {
+    const input = document.getElementById('globalSearchInput');
+    const resultsContainer = document.getElementById('globalSearchResults');
+    if (!input || !resultsContainer) return;
+    
+    const query = input.value.toLowerCase().trim();
+    if (query.length < 2) {
+        resultsContainer.style.display = 'none';
+        return;
+    }
+    
+    resultsContainer.style.display = 'block';
+    let html = '';
+    let resultCount = 0;
+    
+    if (window.globalData && window.globalData.assets) {
+        const assets = window.globalData.assets.filter(a => 
+            (a.id && a.id.toLowerCase().includes(query)) || 
+            (a.category && a.category.toLowerCase().includes(query)) || 
+            (a.location && a.location.toLowerCase().includes(query)) || 
+            (a.status && a.status.toLowerCase().includes(query))
+        ).slice(0, 5);
+        
+        if (assets.length > 0) {
+            html += '<div style="padding: 8px 15px; background: #f8fafc; font-size: 0.8rem; font-weight: bold; color: #64748b; border-bottom: 1px solid #e2e8f0;"><i class="fa-solid fa-truck"></i> Asset Unit</div>';
+            assets.forEach(a => {
+                const parsedId = window.parseAssetId ? window.parseAssetId(a.id) : {snPlat: '-'};
+                const snPlat = parsedId.snPlat !== '-' ? ' (' + parsedId.snPlat + ')' : '';
+                html += `<div style="padding: 10px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'" onclick="showView('asset'); document.getElementById('globalSearchResults').style.display='none';">
+                    <div style="font-weight: 600; color: #0f172a;">${a.id}${snPlat}</div>
+                    <div style="font-size: 0.8rem; color: #64748b;">${a.category||'-'} &middot; ${a.location||'-'} &middot; <span style="color:var(--primary)">${a.status||'-'}</span></div>
+                </div>`;
+                resultCount++;
+            });
+        }
+    }
+    
+    if (window.globalData && window.globalData.workOrders) {
+        const wos = window.globalData.workOrders.filter(w => 
+            (w.woId && w.woId.toLowerCase().includes(query)) || 
+            (w.assetId && w.assetId.toLowerCase().includes(query)) || 
+            (w.complaint && w.complaint.toLowerCase().includes(query)) || 
+            (w.mechanic && w.mechanic.toLowerCase().includes(query))
+        ).slice(0, 5);
+        
+        if (wos.length > 0) {
+            html += '<div style="padding: 8px 15px; background: #f8fafc; font-size: 0.8rem; font-weight: bold; color: #64748b; border-bottom: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0;"><i class="fa-solid fa-screwdriver-wrench"></i> Work Order</div>';
+            wos.forEach(w => {
+                html += `<div style="padding: 10px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'" onclick="showView('wo'); document.getElementById('globalSearchResults').style.display='none';">
+                    <div style="font-weight: 600; color: #0f172a;">${w.woId} - ${w.assetId}</div>
+                    <div style="font-size: 0.8rem; color: #64748b;">${w.complaint||'-'} &middot; <span style="color:var(--danger)">${w.status||'-'}</span></div>
+                </div>`;
+                resultCount++;
+            });
+        }
+    }
+    
+    if (resultCount === 0) {
+        html = '<div style="padding: 15px; text-align: center; color: #94a3b8; font-size: 0.9rem;">Tidak ada hasil ditemukan.</div>';
+    }
+    
+    resultsContainer.innerHTML = html;
+};
+
+document.addEventListener('click', function(e) {
+    const searchBar = document.querySelector('.search-bar');
+    const resultsContainer = document.getElementById('globalSearchResults');
+    if (searchBar && !searchBar.contains(e.target) && resultsContainer) {
+        resultsContainer.style.display = 'none';
+    }
+});
