@@ -1,0 +1,106 @@
+<?php
+require_once 'db.php';
+
+$db = Database::getInstance();
+$method = $_SERVER['REQUEST_METHOD'];
+
+switch ($method) {
+    case 'GET':
+        if (isset($_GET['id'])) {
+            $stmt = $db->prepare("SELECT * FROM work_orders WHERE wo_id = :id");
+            $stmt->execute([':id' => $_GET['id']]);
+            $result = $stmt->fetch();
+        } else {
+            $stmt = $db->query("
+                SELECT w.*, a.asset_code, a.category as asset_category
+                FROM work_orders w
+                LEFT JOIN assets a ON w.asset_id = a.asset_id
+                ORDER BY w.reported_at DESC
+            ");
+            $result = $stmt->fetchAll();
+        }
+        echo json_encode(["status" => "success", "data" => $result]);
+        break;
+
+    case 'POST':
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (!$data || !isset($data['wo_id']) || !isset($data['asset_id'])) {
+            echo json_encode(["status" => "error", "message" => "Invalid data"]);
+            exit;
+        }
+
+        $stmt = $db->prepare("
+            INSERT INTO work_orders (wo_id, asset_id, issue_description, status, priority, assigned_mechanic)
+            VALUES (:wo_id, :asset_id, :issue, :status, :prio, :pic)
+        ");
+        
+        try {
+            $stmt->execute([
+                ':wo_id' => $data['wo_id'],
+                ':asset_id' => $data['asset_id'],
+                ':issue' => $data['issue_description'] ?? '',
+                ':status' => $data['status'] ?? 'Open',
+                ':prio' => $data['priority'] ?? 'Normal',
+                ':pic' => $data['assigned_mechanic'] ?? 'Belum ada PIC'
+            ]);
+            echo json_encode(["status" => "success", "message" => "Work Order created"]);
+        } catch (PDOException $e) {
+            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+        }
+        break;
+
+    case 'PUT':
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (!$data || (!isset($data['wo_id']) && !isset($_GET['id']))) {
+            echo json_encode(["status" => "error", "message" => "Invalid data or ID missing"]);
+            exit;
+        }
+
+        $id = $_GET['id'] ?? $data['wo_id'];
+        
+        $fields = [];
+        $params = [':id' => $id];
+        
+        foreach (['status', 'priority', 'assigned_mechanic', 'issue_description', 'downtime_minutes'] as $field) {
+            if (isset($data[$field])) {
+                $fields[] = "$field = :$field";
+                $params[":$field"] = $data[$field];
+            }
+        }
+        
+        if (empty($fields)) {
+            echo json_encode(["status" => "error", "message" => "No fields to update"]);
+            exit;
+        }
+
+        $query = "UPDATE work_orders SET " . implode(", ", $fields) . " WHERE wo_id = :id";
+        $stmt = $db->prepare($query);
+        
+        try {
+            $stmt->execute($params);
+            echo json_encode(["status" => "success", "message" => "Work Order updated"]);
+        } catch (PDOException $e) {
+            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+        }
+        break;
+
+    case 'DELETE':
+        if (!isset($_GET['id'])) {
+            echo json_encode(["status" => "error", "message" => "ID missing"]);
+            exit;
+        }
+        $stmt = $db->prepare("DELETE FROM work_orders WHERE wo_id = :id");
+        try {
+            $stmt->execute([':id' => $_GET['id']]);
+            echo json_encode(["status" => "success", "message" => "Work Order deleted"]);
+        } catch (PDOException $e) {
+            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+        }
+        break;
+
+    default:
+        http_response_code(405);
+        echo json_encode(["status" => "error", "message" => "Method not allowed"]);
+        break;
+}
+?>

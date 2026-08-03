@@ -3282,7 +3282,7 @@
             function persistFleetState() {
                 if (!globalData) return;
                 try {
-                    localStorage.setItem(FLEET_STATE_KEY, JSON.stringify({
+                    const stateToSave = {
                         version: 1,
                         assets: globalData.assets.map(asset => ({
                             id: asset.id,
@@ -3297,7 +3297,15 @@
                         })),
                         work_orders: globalData.work_orders || [],
                         inspections: globalData.inspections || []
-                    }));
+                    };
+                    localStorage.setItem(FLEET_STATE_KEY, JSON.stringify(stateToSave));
+                    
+                    // Sync to Backend
+                    fetch('api/sync.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(stateToSave)
+                    }).catch(e => console.warn('Sync API failed:', e));
                 } catch (error) {
                     console.warn('State integrasi tidak dapat disimpan:', error);
                 }
@@ -3431,7 +3439,7 @@
                         if (typeof renderTableMasuk === 'function') renderTableMasuk();
                         if (typeof renderTableKeluar === 'function') renderTableKeluar();
                     }
-                    const response = await fetch('data.json');
+                    const response = await fetch('api/init.php');
                     if (!response.ok) throw new Error('Data not found');
                     globalData = await response.json();
                     normalizeAssetRegistry(globalData);
