@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="scripts/dashboard.css?v=20260731-1">
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
-    <script src="scripts/dashboard.js?v=20260804-1"></script>
+    <script src="scripts/dashboard.js?v=20260804-2"></script>
 
 </head>
 
@@ -3439,7 +3439,7 @@
                         if (typeof renderTableMasuk === 'function') renderTableMasuk();
                         if (typeof renderTableKeluar === 'function') renderTableKeluar();
                     }
-                    const response = await fetch('api/init.php');
+                    const response = await fetch('api/init.php?t=' + Date.now());
                     if (!response.ok) throw new Error('Data not found');
                     globalData = await response.json();
                     normalizeAssetRegistry(globalData);

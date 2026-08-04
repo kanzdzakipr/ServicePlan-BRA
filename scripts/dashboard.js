@@ -14770,56 +14770,7 @@
     };
 
     // Default Seed Inspections History Data
-    let inspectionHistory = [
-        {
-            id: 'P2H-20260727-001',
-            date: '2026-07-27 06:45',
-            unitId: 'DT-00027 - B 9136 ZYT',
-            category: 'Excavator',
-            operator: 'Budi Santoso',
-            nrp: 'OP-BRA-089',
-            site: 'Yard Duri',
-            hmStart: 8450.0,
-            hmEnd: 8458.5,
-            status: 'LULUS DENGAN CATATAN',
-            criticalFails: 0,
-            warnings: 1,
-            notes: 'Semua item kritikal normal. Ditemukan baut cover pelindung agak kendur, sudah dikencangkan.',
-            details: {}
-        },
-        {
-            id: 'P2H-20260727-002',
-            date: '2026-07-27 07:10',
-            unitId: 'DT-00050 - B 9105 ZYT',
-            category: 'Excavator',
-            operator: 'Rudi Hermawan',
-            nrp: 'OP-BRA-112',
-            site: 'Borrow Pit',
-            hmStart: 12100.0,
-            hmEnd: 12100.0,
-            status: 'GAGAL (CRITICAL FAIL)',
-            criticalFails: 2,
-            warnings: 0,
-            notes: 'Terjadi kebocoran oli rem utama pada roda belakang kiri & baut roda kendur 2 pcs. Unit ditahan!',
-            details: {}
-        },
-        {
-            id: 'P2H-20260726-003',
-            date: '2026-07-26 16:30',
-            unitId: 'DT-04024 - BM 9285 JO',
-            category: 'Excavator',
-            operator: 'Ahmad Dahlan',
-            nrp: 'OP-BRA-045',
-            site: 'Site Alpha',
-            hmStart: 3420.0,
-            hmEnd: 3427.0,
-            status: 'LULUS (PASS)',
-            criticalFails: 0,
-            warnings: 0,
-            notes: 'P2H rutin selesai operasi. Alat siap beroperasi besok.',
-            details: {}
-        }
-    ];
+    let inspectionHistory = [];
 
     // Current Active Form State
     let currentFormData = {
