@@ -3,40 +3,40 @@
 
     window.assetDbMapping = null;
 
-    window.loadAssetMapping = async function() {
+    window.loadAssetMapping = async function () {
         try {
             const url = "https://docs.google.com/spreadsheets/d/1lrElHvYPB4ezXR13kOxy6WdECbRN4C3-H2UOF8ZcXtE/gviz/tq?tqx=out:csv&sheet=List%20Data%20Aset%20BRA";
             const response = await fetch(url);
             const csvText = await response.text();
-            
+
             const mapping = {};
             const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
             const lines = csvText.split(/\r?\n/);
-            
+
             for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
                 const r = lines[i].split(regex).map(field => field.replace(/^"|"$/g, '').trim());
                 if (r.length < 10) continue;
-                
+
                 const sn = r[5] || '';
                 const kodeUnit = r[8] || '';
                 const lambung = r[9] || '';
-                
+
                 if (kodeUnit) mapping[kodeUnit.toUpperCase().trim()] = sn;
                 if (lambung) mapping[lambung.toUpperCase().trim()] = sn;
             }
             window.assetDbMapping = mapping;
             console.log("Asset DB mapping loaded from Google Sheets.");
-        } catch(e) {
+        } catch (e) {
             console.error("Error loading Asset DB mapping:", e);
         }
     };
 
-    window.parseAssetId = function(fullId) {
+    window.parseAssetId = function (fullId) {
         if (!fullId) return { unitId: '-', snPlat: '-' };
         let unitId = fullId;
         let snPlat = '-';
-        
+
         // try string parsing first for unitId
         if (fullId.includes(' SN ')) {
             unitId = fullId.split(' SN ')[0].trim();
@@ -68,7 +68,7 @@
         return { unitId, snPlat };
     };
 
-    window.formatUnitId = function(unit) {
+    window.formatUnitId = function (unit) {
         if (!unit) return unit;
         return unit.replace(/DT[\s-]+(\d+)/gi, (match, numStr) => {
             const num = parseInt(numStr, 10);
@@ -76,27 +76,27 @@
         });
     };
 
-    window.getSnPlatFromUnit = function(unitCode) {
+    window.getSnPlatFromUnit = function (unitCode) {
         if (!unitCode) return '-';
         unitCode = window.formatUnitId(unitCode);
         const cleanUnit = unitCode.trim().toUpperCase();
-        
+
         if (window.assetDbMapping && window.assetDbMapping[cleanUnit]) {
             return window.assetDbMapping[cleanUnit];
         }
-        
+
         // try partial / substring matching from mapping
         if (window.assetDbMapping) {
             const firstPart = cleanUnit.split(' ')[0];
             if (window.assetDbMapping[firstPart]) return window.assetDbMapping[firstPart];
-            
+
             for (const key in window.assetDbMapping) {
                 if (cleanUnit.includes(key) || key.includes(firstPart)) {
                     return window.assetDbMapping[key];
                 }
             }
         }
-        
+
         // fallback
         if (window.globalData && window.globalData.assets) {
             const asset = window.globalData.assets.find(a => {
@@ -1482,10 +1482,10 @@
         return `
             <div class="template-number-control" data-template-number="${escapeHtml(item.key)}" data-template-pattern="${escapeHtml(template)}">
                 ${tokens.map(token => {
-                    if (!token.editable) return `<span class="template-number-fixed">${escapeHtml(token.value)}</span>`;
-                    const currentIndex = valueIndex++;
-                    const width = Math.max(3, Math.min(10, token.value.length + 1));
-                    return `<input
+            if (!token.editable) return `<span class="template-number-fixed">${escapeHtml(token.value)}</span>`;
+            const currentIndex = valueIndex++;
+            const width = Math.max(3, Math.min(10, token.value.length + 1));
+            return `<input
                         class="template-number-part"
                         type="text"
                         inputmode="text"
@@ -1499,7 +1499,7 @@
                         aria-label="${escapeHtml(`${item.label} bagian ${currentIndex + 1}`)}"
                         ${item.required ? 'required' : ''}
                     >`;
-                }).join('')}
+        }).join('')}
             </div>
             <small class="template-number-hint"><i class="fa-solid fa-lock"></i> Bagian format baku dikunci; isi hanya kotak yang tersedia.</small>
         `;
@@ -1771,10 +1771,10 @@
         return `
             <div class="table-header-content">
                 <span>${escapeHtml(item.label)}${item.readonly
-                    ? '<em>Otomatis</em>'
-                    : item.required
-                        ? '<b class="required-mark">*</b>'
-                        : '<em>Opsional</em>'}</span>
+                ? '<em>Otomatis</em>'
+                : item.required
+                    ? '<b class="required-mark">*</b>'
+                    : '<em>Opsional</em>'}</span>
             </div>
         `;
     }
@@ -1857,7 +1857,7 @@
         const attachments = activeDraft.attachments || [];
         grid.innerHTML = attachments.map((att, idx) => `
             <div class="attachment-thumb" style="position:relative; width:120px; height:120px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
-                <img src="${escapeHtml(att.dataUrl)}" style="width:100%; height:100%; object-fit:cover;" alt="Attachment ${idx+1}">
+                <img src="${escapeHtml(att.dataUrl)}" style="width:100%; height:100%; object-fit:cover;" alt="Attachment ${idx + 1}">
                 <button type="button" data-remove-attachment="${idx}" style="position:absolute; top:4px; right:4px; background:rgba(220,38,38,0.9); color:white; border:none; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; cursor:pointer;" title="Hapus foto"><i class="fa-solid fa-xmark"></i></button>
             </div>
         `).join('') + `
@@ -1876,9 +1876,9 @@
             attachmentsUpload.addEventListener('change', async (e) => {
                 const files = e.target.files;
                 if (!files || files.length === 0) return;
-                
+
                 if (!activeDraft.attachments) activeDraft.attachments = [];
-                
+
                 for (let i = 0; i < files.length; i++) {
                     try {
                         const imageResult = await readImage(files[i]);
@@ -1895,7 +1895,7 @@
                 updateAdditionalAttachmentsGrid();
             });
         }
-        
+
         document.querySelectorAll('[data-remove-attachment]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = Number(btn.dataset.removeAttachment);
@@ -1910,7 +1910,7 @@
 
     function renderAdditionalAttachmentsBox() {
         if (activeSchema?.id !== 'cutting-bit-usage') return '';
-        
+
         return `
             <section class="additional-attachments-box" style="margin-top: 20px;">
                 <h3 style="margin-top:20px; font-size:1.1rem; border-bottom:1px solid #e2e8f0; padding-bottom:8px; color:var(--text-dark);">
@@ -2186,11 +2186,11 @@
                             pemetaan ${Math.round(Number(activeDraft.importSource.mappingCoverage || 0) * 100)}% ·
                             ${Number(activeDraft.importSource.unmappedFragments || 0)} fragmen tetap tersimpan di arsip impor.
                             ${activeDraft.importSource.rowsLimited
-                                ? ` Draft memakai ${Number(activeDraft.importSource.appliedRows || 0).toLocaleString('id-ID')} dari ${Number(activeDraft.importSource.totalMappedRows || 0).toLocaleString('id-ID')} baris terpetakan.`
-                                : ''}
+                    ? ` Draft memakai ${Number(activeDraft.importSource.appliedRows || 0).toLocaleString('id-ID')} dari ${Number(activeDraft.importSource.totalMappedRows || 0).toLocaleString('id-ID')} baris terpetakan.`
+                    : ''}
                             ${Number(activeDraft.importSource.typeIssueCount || 0)
-                                ? ` ${Number(activeDraft.importSource.typeIssueCount).toLocaleString('id-ID')} nilai tidak diterapkan langsung karena tipe, opsi, atau kolomnya tidak cocok dengan schema dan perlu direview.`
-                                : ''}</span>
+                    ? ` ${Number(activeDraft.importSource.typeIssueCount).toLocaleString('id-ID')} nilai tidak diterapkan langsung karena tipe, opsi, atau kolomnya tidak cocok dengan schema dan perlu direview.`
+                    : ''}</span>
                         </div>
                     </div>
                 ` : ''}
@@ -2264,7 +2264,7 @@
             event.preventDefault();
             validateAndPreview();
         });
-        
+
         updateAdditionalAttachmentsGrid();
         renderRows();
         document.getElementById('reportModule').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2685,7 +2685,7 @@
 
     function renderExtraAttachmentsPrint(schema, attachments, reportNumber) {
         if (!attachments || attachments.length === 0) return '';
-        
+
         return attachments.map((att, index) => `
             <article class="print-documentation-sheet" style="display:block; min-height:auto; page-break-before:always; break-before:page;">
                 <header class="documentation-header">
@@ -2877,10 +2877,10 @@
                 ${summary ? `<div class="calculation-summary"><div class="summary-card">${summary}</div></div>` : ''}
                 <div class="print-approvals" style="grid-template-columns:repeat(${approvals.length},1fr)">
                     ${approvals.map(item => {
-                        const name = item.nameField ? draft.fields[item.nameField] : '';
-                        const role = item.roleField ? draft.fields[item.roleField] : '';
-                        return `<div><span>${escapeHtml(item.label)}</span><div class="signature-space"></div><strong>( ${escapeHtml(name || '__________________')} )</strong>${role ? `<small>${escapeHtml(role)}</small>` : ''}</div>`;
-                    }).join('')}
+            const name = item.nameField ? draft.fields[item.nameField] : '';
+            const role = item.roleField ? draft.fields[item.roleField] : '';
+            return `<div><span>${escapeHtml(item.label)}</span><div class="signature-space"></div><strong>( ${escapeHtml(name || '__________________')} )</strong>${role ? `<small>${escapeHtml(role)}</small>` : ''}</div>`;
+        }).join('')}
                 </div>
                 <footer class="print-footer">
                     <span>Dibuat otomatis oleh FleetMonitor</span>
@@ -3532,8 +3532,8 @@
                     </div>
                 </td>
                 <td>${primaryWo
-                    ? `<strong class="sl-wo-code">${escapeHtml(primaryWo.woId)}</strong><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(primaryWo.priority || 'Normal')}</small>`
-                    : '<span class="sl-empty-value">Tidak ada WO aktif</span>'}</td>
+                ? `<strong class="sl-wo-code">${escapeHtml(primaryWo.woId)}</strong><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(primaryWo.priority || 'Normal')}</small>`
+                : '<span class="sl-empty-value">Tidak ada WO aktif</span>'}</td>
                 <td>
                     <div class="sl-item-counter ${hasParts ? summary.overall : 'muted'}">
                         <strong>${summary.itemCount}</strong>
@@ -3546,8 +3546,8 @@
                         <span class="sl-progress"><i style="width:${Math.min(fulfilment, 100)}%"></i></span>
                     </div>` : '<span class="sl-empty-value">Belum ada kebutuhan</span>'}</td>
                 <td>${hasParts
-                    ? `<span class="sl-procurement-badge ${summary.overall}">${summary.delayed ? `${summary.delayed} tertunda` : summary.ready === summary.itemCount ? 'Siap / diserahkan' : summary.progress ? 'Dalam pengadaan' : 'Menunggu proses'}</span><small>${formatDate(summary.latest)}</small>`
-                    : '<span class="sl-procurement-badge muted">Belum ditabulasi</span>'}</td>
+                ? `<span class="sl-procurement-badge ${summary.overall}">${summary.delayed ? `${summary.delayed} tertunda` : summary.ready === summary.itemCount ? 'Siap / diserahkan' : summary.progress ? 'Dalam pengadaan' : 'Menunggu proses'}</span><small>${formatDate(summary.latest)}</small>`
+                : '<span class="sl-procurement-badge muted">Belum ditabulasi</span>'}</td>
                 <td>${workflowCell(asset)}</td>
                 <td><button class="sl-access-button" type="button" data-sl-action="open" data-asset-id="${escapeHtml(asset.id)}"><i class="fa-solid fa-arrow-up-right-from-square"></i>Akses</button></td>
             </tr>`;
@@ -3581,8 +3581,8 @@
                         <span class="sl-eyebrow">${hasParts ? 'PRIORITAS PENGADAAN & KITTING' : 'REGISTRY BELUM BERTAUT PART'}</span>
                         <h2>${hasParts ? 'Unit yang Sudah Memiliki Spare Part' : 'Unit yang Belum Memiliki Spare Part'}</h2>
                         <p>${hasParts
-                            ? 'Counter menunjukkan baris item dan total kuantitas aktif per unit.'
-                            : 'Akses unit untuk menambahkan kebutuhan baru atau menautkannya ke Work Order.'}</p>
+                ? 'Counter menunjukkan baris item dan total kuantitas aktif per unit.'
+                : 'Akses unit untuk menambahkan kebutuhan baru atau menautkannya ke Work Order.'}</p>
                     </div>
                     <span class="sl-section-count ${hasParts ? 'primary' : 'neutral'}"><strong>${filtered.length}</strong> unit</span>
                 </header>
@@ -3590,8 +3590,8 @@
                     <table class="sl-unit-table">
                         <thead><tr><th>Unit / Tipe</th><th>Lokasi & Status</th><th>Referensi WO</th><th>Counter Part</th><th>Pemenuhan</th><th>Status Pengadaan</th><th>Linkage</th><th>Akses</th></tr></thead>
                         <tbody>${pageRows.length
-                            ? pageRows.map(asset => renderAssetRow(asset, hasParts)).join('')
-                            : `<tr><td colspan="8" class="sl-empty-row">Tidak ada unit yang sesuai dengan filter saat ini.</td></tr>`}</tbody>
+                ? pageRows.map(asset => renderAssetRow(asset, hasParts)).join('')
+                : `<tr><td colspan="8" class="sl-empty-row">Tidak ada unit yang sesuai dengan filter saat ini.</td></tr>`}</tbody>
                     </table>
                 </div>
                 ${renderPager(kind, page, totalPages, filtered.length, start, pageRows)}
@@ -3819,12 +3819,14 @@
     }
 
     function draftFromDomain(domain) {
-        return { ...(DOMAIN_PARTS[domain] || {
-            partNumber: 'MRO-CONSUMABLE',
-            description: `Consumable tindak lanjut ${domain || 'maintenance'}`,
-            qty: 1,
-            uom: 'pcs'
-        }) };
+        return {
+            ...(DOMAIN_PARTS[domain] || {
+                partNumber: 'MRO-CONSUMABLE',
+                description: `Consumable tindak lanjut ${domain || 'maintenance'}`,
+                qty: 1,
+                uom: 'pcs'
+            })
+        };
     }
 
     function addDraftItem(prefill = {}) {
@@ -4611,10 +4613,10 @@
                         <thead><tr><th>Unit / Tipe</th><th>Lokasi & Status</th><th>Ban</th><th>Grease</th><th>Cutting Bit</th><th>Aki</th><th>Inspeksi Terakhir</th><th>Tindak Lanjut</th><th>Aksi</th></tr></thead>
                         <tbody>
                             ${pageRows.length ? pageRows.map(({ asset, profile, summary, overall }) => {
-                                const latest = latestConditionFor(asset.id);
-                                const activeWo = findActiveWo(asset.id);
-                                const greaseElapsed = Math.max(profile.grease.currentHm - profile.grease.lastHm, 0);
-                                return `<tr>
+            const latest = latestConditionFor(asset.id);
+            const activeWo = findActiveWo(asset.id);
+            const greaseElapsed = Math.max(profile.grease.currentHm - profile.grease.lastHm, 0);
+            return `<tr>
                                     <td><div class="cm-unit-table-cell"><span class="cm-unit-table-icon ${overall}"><i class="fa-solid ${supportsCuttingBit(asset) ? 'fa-road' : isDumpTruck(asset) ? 'fa-truck-moving' : 'fa-tractor'}"></i></span><div><strong>${esc(shortCode(asset.id))}</strong><small>${esc(assetType(asset))}</small></div></div></td>
                                     <td><div class="cm-location-cell"><span title="${esc(asset.location || '')}">${esc(asset.location || 'Lokasi belum ditetapkan')}</span><small class="cm-asset-status ${esc(String(asset.status || 'READY').toLowerCase())}">${esc(asset.status || 'READY')}</small></div></td>
                                     <td>${conditionCell(summary.statuses.tire, `${summary.tireDanger} kritis · ${summary.tireWarning} warning`)}</td>
@@ -4625,7 +4627,7 @@
                                     <td>${activeWo ? `<button class="cm-wo-link" type="button" onclick="ConditionMonitoring.openLinkedWO('${esc(asset.id)}')"><i class="fa-solid fa-wrench"></i>${esc(activeWo.woId)}</button>` : `<span class="cm-overall-chip ${overall}">${statusLabel(overall)}</span>`}</td>
                                     <td><button class="cm-detail-button" type="button" data-asset-id="${esc(asset.id)}" onclick="window.ConditionMonitoring && window.ConditionMonitoring.openDetail('${esc(asset.id)}'); event.stopPropagation();"><i class="fa-solid fa-eye"></i> Detail</button></td>
                                 </tr>`;
-                            }).join('') : '<tr><td colspan="9" class="cm-empty-cell">Tidak ada unit yang sesuai dengan pencarian dan filter.</td></tr>'}
+        }).join('') : '<tr><td colspan="9" class="cm-empty-cell">Tidak ada unit yang sesuai dengan pencarian dan filter.</td></tr>'}
                         </tbody>
                     </table>
                 </div>
@@ -4670,13 +4672,13 @@
                             </section>
                             <nav class="cm-tabs" aria-label="Jenis pemeriksaan">
                                 ${[
-                                    ['overview', 'fa-gauge-high', 'Ringkasan'],
-                                    ['tire', 'fa-circle-dot', 'Ban'],
-                                    ['grease', 'fa-oil-can', 'Grease'],
-                                    ['cutting', 'fa-screwdriver-wrench', 'Cutting Bit'],
-                                    ['battery', 'fa-car-battery', 'Aki'],
-                                    ['history', 'fa-clock-rotate-left', 'Riwayat']
-                                ].map(([key, icon, label]) => `<button type="button" class="${state.activeTab === key ? 'active' : ''}" onclick="ConditionMonitoring.switchTab('${key}')"><i class="fa-solid ${icon}"></i>${label}</button>`).join('')}
+                    ['overview', 'fa-gauge-high', 'Ringkasan'],
+                    ['tire', 'fa-circle-dot', 'Ban'],
+                    ['grease', 'fa-oil-can', 'Grease'],
+                    ['cutting', 'fa-screwdriver-wrench', 'Cutting Bit'],
+                    ['battery', 'fa-car-battery', 'Aki'],
+                    ['history', 'fa-clock-rotate-left', 'Riwayat']
+                ].map(([key, icon, label]) => `<button type="button" class="${state.activeTab === key ? 'active' : ''}" onclick="ConditionMonitoring.switchTab('${key}')"><i class="fa-solid ${icon}"></i>${label}</button>`).join('')}
                             </nav>
                             <section class="cm-workspace">${renderTab(asset, profile, summary)}</section>
                         </div>
@@ -5121,7 +5123,7 @@
                 const parsed = window.parseAssetId ? window.parseAssetId(a.id).unitId.toLowerCase() : a.id.toLowerCase();
                 return a.id.toLowerCase() === assetId.toLowerCase() || parsed === assetId.toLowerCase() || a.id.toLowerCase().includes(assetId.toLowerCase());
             }));
-            
+
             // Auto generate dummy dumptruck asset if not found
             if (!asset) {
                 asset = {
@@ -7230,7 +7232,7 @@
                         section.fragmentRefs.push(
                             ...table.headerFragmentRefs,
                             ...table.rows.flatMap(row => row.fragmentRefs)
-                        .filter(Boolean));
+                                .filter(Boolean));
                     }
                 }
             });
@@ -7303,7 +7305,7 @@
             ))
             .reduce(
                 (sum, fragment) => sum + String(fragment.value || '').length,
-            0
+                0
             );
         const shouldOcrMedia = options.ocrMode === 'all'
             || (options.ocrMode === 'auto' && visibleCharacterCount < 80);
@@ -7491,45 +7493,45 @@
             if (current.nodeType === 3) return;
             if (current.nodeType !== 1) return;
             switch (current.localName) {
-            case 't':
-                parts.push(current.textContent || '');
-                return;
-            case 'delText':
-                parts.push(` [TEKS DIHAPUS: ${current.textContent || ''}] `);
-                return;
-            case 'tab':
-                parts.push('\t');
-                return;
-            case 'br':
-            case 'cr':
-                parts.push('\n');
-                return;
-            case 'noBreakHyphen':
-                parts.push('‑');
-                return;
-            case 'softHyphen':
-                parts.push('\u00AD');
-                return;
-            case 'sym': {
-                const hexadecimal = attributeByLocalName(current, 'char');
-                const codePoint = Number.parseInt(hexadecimal, 16);
-                parts.push(
-                    Number.isFinite(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
-                        ? String.fromCodePoint(codePoint)
-                        : `[SYMBOL ${hexadecimal || '?'}]`
-                );
-                return;
-            }
-            case 'checkBox': {
-                const checked = elementsByLocalName(current, 'checked')[0];
-                const value = attributeByLocalName(checked, 'val').toLowerCase();
-                parts.push(checked && !['0', 'false', 'off'].includes(value) ? '☒' : '☐');
-                return;
-            }
-            case 'instrText':
-                return;
-            default:
-                [...current.childNodes].forEach(walk);
+                case 't':
+                    parts.push(current.textContent || '');
+                    return;
+                case 'delText':
+                    parts.push(` [TEKS DIHAPUS: ${current.textContent || ''}] `);
+                    return;
+                case 'tab':
+                    parts.push('\t');
+                    return;
+                case 'br':
+                case 'cr':
+                    parts.push('\n');
+                    return;
+                case 'noBreakHyphen':
+                    parts.push('‑');
+                    return;
+                case 'softHyphen':
+                    parts.push('\u00AD');
+                    return;
+                case 'sym': {
+                    const hexadecimal = attributeByLocalName(current, 'char');
+                    const codePoint = Number.parseInt(hexadecimal, 16);
+                    parts.push(
+                        Number.isFinite(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+                            ? String.fromCodePoint(codePoint)
+                            : `[SYMBOL ${hexadecimal || '?'}]`
+                    );
+                    return;
+                }
+                case 'checkBox': {
+                    const checked = elementsByLocalName(current, 'checked')[0];
+                    const value = attributeByLocalName(checked, 'val').toLowerCase();
+                    parts.push(checked && !['0', 'false', 'off'].includes(value) ? '☒' : '☐');
+                    return;
+                }
+                case 'instrText':
+                    return;
+                default:
+                    [...current.childNodes].forEach(walk);
             }
         }
         walk(node);
@@ -7780,13 +7782,13 @@
         const remaining = deadline - Date.now();
         if (remaining <= 0) {
             const error = pdfDeadlineError(label);
-            try { cancel?.(error); } catch (unused) {}
+            try { cancel?.(error); } catch (unused) { }
             return Promise.reject(error);
         }
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
                 const error = pdfDeadlineError(label);
-                try { cancel?.(error); } catch (unused) {}
+                try { cancel?.(error); } catch (unused) { }
                 reject(error);
             }, remaining);
             Promise.resolve(promise).then(
@@ -7820,7 +7822,7 @@
                     deadline,
                     `Text layer halaman ${pageNumber}`,
                     error => {
-                        void reader.cancel(error).catch(() => {});
+                        void reader.cancel(error).catch(() => { });
                         destroyDocument();
                     }
                 );
@@ -7843,7 +7845,7 @@
                         + `${MAX_PDF_TEXT_CHARACTERS_PER_PAGE / 1024 / 1024} MiB karakter.`
                     );
                     error.code = 'pdf_text_limit';
-                    await reader.cancel(error).catch(() => {});
+                    await reader.cancel(error).catch(() => { });
                     throw error;
                 }
                 items.push(...chunkItems);
@@ -7851,9 +7853,9 @@
             }
         } finally {
             if (!completed) {
-                await reader.cancel(new Error('Pembacaan text layer dihentikan.')).catch(() => {});
+                await reader.cancel(new Error('Pembacaan text layer dihentikan.')).catch(() => { });
             }
-            try { reader.releaseLock(); } catch (unused) {}
+            try { reader.releaseLock(); } catch (unused) { }
         }
         return items;
     }
@@ -7875,7 +7877,7 @@
         const destroyDocument = () => {
             if (documentDestroyed) return;
             documentDestroyed = true;
-            void loadingTask.destroy().catch(() => {});
+            void loadingTask.destroy().catch(() => { });
         };
         const pdf = await withPdfDeadline(
             loadingTask.promise,
@@ -7885,7 +7887,7 @@
         );
         const pageTotal = pdf.numPages;
         if (pageTotal > MAX_PDF_PAGES) {
-            await pdf.destroy().catch(() => {});
+            await pdf.destroy().catch(() => { });
             throw new Error(`PDF memiliki ${pageTotal} halaman; batas aman ${MAX_PDF_PAGES} halaman per file.`);
         }
         extraction.stats.pagesExpected = pageTotal;
@@ -8111,8 +8113,8 @@
             }
         } finally {
             await ocr.terminate();
-            await pdf.cleanup().catch(() => {});
-            await pdf.destroy().catch(() => {});
+            await pdf.cleanup().catch(() => { });
+            await pdf.destroy().catch(() => { });
         }
 
         extraction.stats.pagesProcessed = pageTotal - pageFailureCount;
@@ -11293,9 +11295,9 @@
                         <thead><tr><th>Field laporan</th><th>Nilai hasil</th><th>Confidence</th><th>Sumber</th></tr></thead>
                         <tbody>
                             ${fields.map(field => {
-                                const provenance = record.mapping.fieldProvenance[field.key];
-                                const value = record.mapping.fields[field.key];
-                                return `
+            const provenance = record.mapping.fieldProvenance[field.key];
+            const value = record.mapping.fields[field.key];
+            return `
                                     <tr class="${value === undefined || value === '' ? 'missing' : ''}">
                                         <td><strong>${escapeHtml(field.label)}</strong>${field.required ? '<small>WAJIB</small>' : ''}</td>
                                         <td>${value !== undefined && value !== '' ? escapeHtml(value) : '<em>Belum ditemukan</em>'}</td>
@@ -11303,7 +11305,7 @@
                                         <td><code>${escapeHtml(provenance?.sourceRef || '—')}</code></td>
                                     </tr>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -12100,7 +12102,7 @@
                 </div>
                 <div class="pm-filter-bar">
                     <div class="pm-field"><label>Pencarian unit</label><input id="pmSearch" class="pm-input" type="search" placeholder="Kode, lambung, atau nama asset..."></div>
-                    <div class="pm-field"><label>Status</label><select id="pmStatusFilter" class="pm-select"><option value="">Semua status</option>${['COMPLETED','OVERDUE','DUE SOON','DUE','NOT DUE','NO DATA'].map(status => `<option>${status}</option>`).join('')}</select></div>
+                    <div class="pm-field"><label>Status</label><select id="pmStatusFilter" class="pm-select"><option value="">Semua status</option>${['COMPLETED', 'OVERDUE', 'DUE SOON', 'DUE', 'NOT DUE', 'NO DATA'].map(status => `<option>${status}</option>`).join('')}</select></div>
                     <div class="pm-field"><label>Kategori</label><select id="pmCategoryFilter" class="pm-select"><option value="">Semua kategori</option>${[...new Set(pmPlans.map(categoryOf))].sort().map(category => `<option>${escapeHtml(category)}</option>`).join('')}</select></div>
                     <button class="pm-button secondary" id="pmResetFilter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
                 </div>
@@ -12219,7 +12221,7 @@
                 <section class="pm-card">
                     <div class="pm-card-header"><div><div class="pm-card-title"><i class="fa-regular fa-calendar-days"></i> Juli 2026</div><div class="pm-card-caption">Tanggal menampilkan realisasi yang tercatat, bukan estimasi due date</div></div><span class="pm-status completed">${Object.values(events).flat().length} TERCATAT</span></div>
                     <div class="pm-calendar">
-                        ${['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(day => `<div class="pm-calendar-head">${day}</div>`).join('')}
+                        ${['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map(day => `<div class="pm-calendar-head">${day}</div>`).join('')}
                         ${cells.join('')}
                     </div>
                 </section>
@@ -12227,10 +12229,10 @@
                     <div class="pm-card-header"><div><div class="pm-card-title"><i class="fa-solid fa-clipboard-list"></i> Perlu Dijadwalkan / Dilengkapi</div><div class="pm-card-caption">Tidak membuat tanggal estimasi tanpa data usage rate</div></div></div>
                     <ul class="pm-unscheduled-list">
                         ${attention.map(rawPlan => {
-                            const plan = mergedPlan(rawPlan);
-                            const status = statusOf(plan);
-                            return `<li><div><strong>${escapeHtml(plan.code || plan.id)}</strong><span>${status === 'COMPLETED' ? 'Detail realisasi belum lengkap' : `${status} · ${varianceOf(plan) > 0 ? '+' : ''}${formatNumber(varianceOf(plan))} ${meterType(plan)}`}</span></div><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}">Buka</button></li>`;
-                        }).join('')}
+            const plan = mergedPlan(rawPlan);
+            const status = statusOf(plan);
+            return `<li><div><strong>${escapeHtml(plan.code || plan.id)}</strong><span>${status === 'COMPLETED' ? 'Detail realisasi belum lengkap' : `${status} · ${varianceOf(plan) > 0 ? '+' : ''}${formatNumber(varianceOf(plan))} ${meterType(plan)}`}</span></div><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}">Buka</button></li>`;
+        }).join('')}
                     </ul>
                 </section>
             </div>
@@ -12264,9 +12266,9 @@
                         <thead><tr><th>Unit</th><th>Model</th><th>Total item</th><th>PN dapat digunakan</th><th>Perlu verifikasi</th><th>Kelengkapan PN</th><th>Status</th><th>Aksi</th></tr></thead>
                         <tbody>
                             ${kitReferences.map(kit => {
-                                const usableItems = kit.items - kit.issues;
-                                const readiness = Math.round(usableItems / kit.items * 100);
-                                return `<tr>
+            const usableItems = kit.items - kit.issues;
+            const readiness = Math.round(usableItems / kit.items * 100);
+            return `<tr>
                                     <td class="pm-unit-cell"><strong>${escapeHtml(kit.code)}</strong><span>${escapeHtml(kit.id)}</span></td>
                                     <td class="pm-asset-cell"><strong>${escapeHtml(kit.model)}</strong></td>
                                     <td>${kit.items}</td><td>${usableItems}</td><td>${kit.issues}</td>
@@ -12274,7 +12276,7 @@
                                     <td><span class="pm-status ${kit.issues ? 'due-soon' : 'completed'}">${kit.issues ? 'VERIFIKASI PN' : 'PN LENGKAP'}</span></td>
                                     <td><button class="pm-row-action" data-kit-detail="${kit.no}">Tinjau</button></td>
                                 </tr>`;
-                            }).join('')}
+        }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -12336,8 +12338,8 @@
                             <div class="pm-field"><label>HM/KM aktual</label><input class="pm-input" name="actual" type="number" step="0.1" value="${plan.actual == null ? '' : plan.actual}" required></div>
                             <div class="pm-field"><label>Nomor Work Order</label><input class="pm-input" name="wo" value="${escapeHtml(plan.wo || '')}" placeholder="WO-PM-..."></div>
                             <div class="pm-field"><label>PIC mekanik</label><input class="pm-input" name="mechanic" value="${escapeHtml(plan.mechanic || '')}" placeholder="Nama PIC"></div>
-                            <div class="pm-field"><label>Kesiapan filter</label><select class="pm-select" name="filterReady"><option value="">Belum dicek</option>${['Siap','Parsial','Belum siap'].map(option => `<option ${plan.filterReady === option ? 'selected' : ''}>${option}</option>`).join('')}</select></div>
-                            <div class="pm-field"><label>Kesiapan oli & grease</label><select class="pm-select" name="fluidReady"><option value="">Belum dicek</option>${['Siap','Parsial','Belum siap'].map(option => `<option ${plan.fluidReady === option ? 'selected' : ''}>${option}</option>`).join('')}</select></div>
+                            <div class="pm-field"><label>Kesiapan filter</label><select class="pm-select" name="filterReady"><option value="">Belum dicek</option>${['Siap', 'Parsial', 'Belum siap'].map(option => `<option ${plan.filterReady === option ? 'selected' : ''}>${option}</option>`).join('')}</select></div>
+                            <div class="pm-field"><label>Kesiapan oli & grease</label><select class="pm-select" name="fluidReady"><option value="">Belum dicek</option>${['Siap', 'Parsial', 'Belum siap'].map(option => `<option ${plan.fluidReady === option ? 'selected' : ''}>${option}</option>`).join('')}</select></div>
                             <div class="pm-field full"><label>Analisa / catatan planner</label><textarea class="pm-input" name="plannerNote" rows="3">${escapeHtml(plan.plannerNote || '')}</textarea></div>
                         </form>
                     </div>
@@ -12414,7 +12416,7 @@
     }
 
     function exportTracker() {
-        const headers = ['Kode Unit','No Lambung','Asset','Jenis Meter','Tracking','Service Terakhir','Interval','Target','Selisih','Status','Realisasi Meter','Tanggal Realisasi','Catatan'];
+        const headers = ['Kode Unit', 'No Lambung', 'Asset', 'Jenis Meter', 'Tracking', 'Service Terakhir', 'Interval', 'Target', 'Selisih', 'Status', 'Realisasi Meter', 'Tanggal Realisasi', 'Catatan'];
         const rows = pmPlans.map(rawPlan => {
             const plan = mergedPlan(rawPlan);
             return [plan.code, plan.id, plan.asset, meterType(plan), plan.current, plan.last, plan.interval, plan.target, varianceOf(plan), statusOf(plan), plan.actual || '', plan.actualDate || '', plan.plannerNote || plan.note || ''];
@@ -13027,7 +13029,7 @@
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetId = btn.getAttribute('data-pk-tab');
-                
+
                 tabBtns.forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.pk-tab-content').forEach(c => c.classList.remove('active'));
 
@@ -13123,7 +13125,7 @@
         }
     }
 
-    window.updateHeadKPIScore = function(index, newScoreVal) {
+    window.updateHeadKPIScore = function (index, newScoreVal) {
         let val = parseInt(newScoreVal, 10);
         if (isNaN(val) || val < 1) val = 1;
         if (val > 5) val = 5;
@@ -13222,7 +13224,7 @@
         }
     }
 
-    window.filterMechanicTable = function() {
+    window.filterMechanicTable = function () {
         const input = document.getElementById('searchMechanic');
         if (!input) return;
         const filter = input.value.toUpperCase();
@@ -13313,7 +13315,7 @@
     }
 
     // Global Export Function
-    window.exportKPIReport = function() {
+    window.exportKPIReport = function () {
         const headers = ['Aspek', 'Indikator', 'Target', 'Skor', 'Bobot (%)', 'Nilai Bobot', 'Catatan Audit'];
         const rows = currentHeadKPI.map(item => [
             item.aspect, item.indicator, item.target, item.score, item.weight, ((item.score * item.weight) / 5).toFixed(1), item.notes
@@ -13812,7 +13814,7 @@
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetId = btn.getAttribute('data-hse-tab');
-                
+
                 tabBtns.forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.hse-tab-content').forEach(c => c.classList.remove('active'));
 
@@ -13862,8 +13864,8 @@
             if (log.severity === 'Moderate') sevBadge = `<span class="hse-badge hse-badge-moderate">${log.severity}</span>`;
             else if (log.severity === 'Critical') sevBadge = `<span class="hse-badge hse-badge-critical">${log.severity}</span>`;
 
-            let lockBadge = log.isUnitLocked ? 
-                `<span class="hse-badge hse-badge-hold"><i class="fa-solid fa-lock"></i> ACCIDENT_HOLD</span>` : 
+            let lockBadge = log.isUnitLocked ?
+                `<span class="hse-badge hse-badge-hold"><i class="fa-solid fa-lock"></i> ACCIDENT_HOLD</span>` :
                 `<span class="hse-badge hse-badge-released"><i class="fa-solid fa-lock-open"></i> RELEASED</span>`;
 
             let capaBadge = `<span class="pk-badge pk-badge-warning">${log.status}</span>`;
@@ -13894,7 +13896,7 @@
         if (!tbody) return;
 
         tbody.innerHTML = initialAccidentLogs.map((log, idx) => {
-            let lockBtn = log.isUnitLocked ? 
+            let lockBtn = log.isUnitLocked ?
                 `<button class="btn btn-success" style="padding:4px 10px; font-size:0.78rem;" onclick="window.releaseUnitHold(${idx})"><i class="fa-solid fa-key"></i> Otorisasi Rilis Unit</button>` :
                 `<span class="pk-badge pk-badge-success"><i class="fa-solid fa-check"></i> Disetujui & Rilis</span>`;
 
@@ -13922,7 +13924,7 @@
     // 4. STEPPER & MODAL CONTROLLERS
     // =========================================================================
 
-    window.openNewIncidentModal = function() {
+    window.openNewIncidentModal = function () {
         currentStep = 1;
         updateStepVisibility();
         populateAssetSelect();
@@ -13930,12 +13932,12 @@
         if (overlay) overlay.classList.add('active');
     };
 
-    window.closeIncidentModal = function() {
+    window.closeIncidentModal = function () {
         const overlay = document.getElementById('modalIncidentReport');
         if (overlay) overlay.classList.remove('active');
     };
 
-    window.navigateStep = function(direction) {
+    window.navigateStep = function (direction) {
         if (direction === 1) {
             // Validation step 1
             if (currentStep === 1) {
@@ -13966,7 +13968,7 @@
         else if (currentStep === 2) document.getElementById('btnNextStep').innerText = 'Lanjut Step 3 (Penyebab & CAPA)';
     }
 
-    window.submitIncidentForm = function() {
+    window.submitIncidentForm = function () {
         const assetId = document.getElementById('incAssetId').value;
         const datetime = document.getElementById('incDatetime').value || '2026-07-25 09:00';
         const location = document.getElementById('incLocation').value || 'Site Project';
@@ -14038,7 +14040,7 @@
         renderHSEModuleContent();
     };
 
-    window.openAccidentDetail = function(idx) {
+    window.openAccidentDetail = function (idx) {
         const log = initialAccidentLogs[idx];
         if (!log) return;
 
@@ -14094,12 +14096,12 @@
         if (modal) modal.classList.add('active');
     };
 
-    window.closeAccidentDetailModal = function() {
+    window.closeAccidentDetailModal = function () {
         const modal = document.getElementById('modalAccidentDetail');
         if (modal) modal.classList.remove('active');
     };
 
-    window.releaseUnitHold = function(idx) {
+    window.releaseUnitHold = function (idx) {
         const log = initialAccidentLogs[idx];
         if (!log) return;
 
@@ -14120,7 +14122,7 @@
         }
     };
 
-    window.filterAccidentTable = function() {
+    window.filterAccidentTable = function () {
         const input = document.getElementById('searchAccident');
         if (!input) return;
         const filter = input.value.toUpperCase();
@@ -14140,7 +14142,7 @@
         }
     };
 
-    window.exportHSEReport = function() {
+    window.exportHSEReport = function () {
         const headers = ['No Dokumen', 'Tanggal', 'Kode Unit', 'Lokasi', 'Operator', 'Severitas', 'Estimasi Biaya', 'Status Lock', 'Status CAPA'];
         const rows = initialAccidentLogs.map(l => [
             l.docNo, l.incidentDate, l.unitCode, l.location, l.operatorName, l.severity, l.impact.totalFinancialImpact, l.isUnitLocked ? 'LOCKED' : 'RELEASED', l.status
@@ -14504,7 +14506,7 @@
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetId = btn.getAttribute('data-prod-tab');
-                
+
                 tabBtns.forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.prod-tab-content').forEach(c => c.classList.remove('active'));
 
@@ -14591,7 +14593,7 @@
         `).join('');
     }
 
-    window.filterKomtraxTable = function() {
+    window.filterKomtraxTable = function () {
         const input = document.getElementById('searchKomtrax');
         if (!input) return;
         const filter = input.value.toUpperCase();
@@ -14611,7 +14613,7 @@
         }
     };
 
-    window.exportProductivityReport = function() {
+    window.exportProductivityReport = function () {
         const headers = ['Model', 'Serial No', 'Branch', 'SMR (H)', 'Working Days', 'Working Hours', 'Actual Working Hours', 'Actual Ratio %', 'Idling Ratio %', 'Fuel (L/H)', 'Status'];
         const rows = komtraxFleetData.map(u => [
             u.model, u.sn, u.branch, u.smr, u.days, u.hours, u.actualHours, u.actualRatio, u.idlingRatio, u.fuelLPH, u.status
@@ -14770,7 +14772,56 @@
     };
 
     // Default Seed Inspections History Data
-    let inspectionHistory = [];
+    let inspectionHistory = [
+        {
+            id: 'P2H-20260727-001',
+            date: '2026-07-27 06:45',
+            unitId: 'DT-00027 - B 9136 ZYT',
+            category: 'Excavator',
+            operator: 'Budi Santoso',
+            nrp: 'OP-BRA-089',
+            site: 'Yard Duri',
+            hmStart: 8450.0,
+            hmEnd: 8458.5,
+            status: 'LULUS DENGAN CATATAN',
+            criticalFails: 0,
+            warnings: 1,
+            notes: 'Semua item kritikal normal. Ditemukan baut cover pelindung agak kendur, sudah dikencangkan.',
+            details: {}
+        },
+        {
+            id: 'P2H-20260727-002',
+            date: '2026-07-27 07:10',
+            unitId: 'DT-00050 - B 9105 ZYT',
+            category: 'Excavator',
+            operator: 'Rudi Hermawan',
+            nrp: 'OP-BRA-112',
+            site: 'Borrow Pit',
+            hmStart: 12100.0,
+            hmEnd: 12100.0,
+            status: 'GAGAL (CRITICAL FAIL)',
+            criticalFails: 2,
+            warnings: 0,
+            notes: 'Terjadi kebocoran oli rem utama pada roda belakang kiri & baut roda kendur 2 pcs. Unit ditahan!',
+            details: {}
+        },
+        {
+            id: 'P2H-20260726-003',
+            date: '2026-07-26 16:30',
+            unitId: 'DT-04024 - BM 9285 JO',
+            category: 'Excavator',
+            operator: 'Ahmad Dahlan',
+            nrp: 'OP-BRA-045',
+            site: 'Site Alpha',
+            hmStart: 3420.0,
+            hmEnd: 3427.0,
+            status: 'LULUS (PASS)',
+            criticalFails: 0,
+            warnings: 0,
+            notes: 'P2H rutin selesai operasi. Alat siap beroperasi besok.',
+            details: {}
+        }
+    ];
 
     // Current Active Form State
     let currentFormData = {
@@ -15146,7 +15197,7 @@
     // 4. SUBMIT FORM & AUTOMATIC WORK ORDER TRIGGER ENGINE
     // =========================================================================
 
-    window.submitP2HForm = async function () {
+    window.submitP2HForm = function () {
         const assetId = document.getElementById('p2hFormAssetSelect').value;
         const operator = document.getElementById('p2hFormOperator').value.trim();
         const nrp = document.getElementById('p2hFormNRP').value.trim();
@@ -15178,8 +15229,8 @@
         const statusLabel = isCriticalFail ? 'GAGAL (CRITICAL FAIL)' : (warningsCount > 0 ? 'LULUS DENGAN CATATAN' : 'LULUS (PASS)');
 
         const newP2H = {
-            id: 'P2H-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(100 + Math.random()*900),
-            date: new Date().toISOString().slice(0,16).replace('T',' '),
+            id: 'P2H-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(100 + Math.random() * 900),
+            date: new Date().toISOString().slice(0, 16).replace('T', ' '),
             unitId: assetId,
             category: currentFormData.category,
             operator: operator,
@@ -15194,23 +15245,6 @@
             answers: { ...currentFormData.answers },
             itemNotes: { ...currentFormData.notes }
         };
-
-        try {
-            const response = await fetch('api/p2h.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newP2H)
-            });
-            const result = await response.json();
-            if (result.status !== 'success') {
-                alert('Gagal menyimpan P2H ke database: ' + result.message);
-                return;
-            }
-        } catch (error) {
-            console.error('Error saving P2H:', error);
-            alert('Terjadi kesalahan jaringan atau server saat menyimpan P2H.');
-            return;
-        }
 
         // Add to History
         inspectionHistory.unshift(newP2H);
@@ -15293,36 +15327,6 @@
     // 5. HISTORY TABLE & FILTERING
     // =========================================================================
 
-    window.deleteP2H = async function(id) {
-        if (!confirm(`Apakah Anda yakin ingin menghapus tiket P2H ${id}?`)) return;
-        try {
-            const response = await fetch(`api/p2h.php?id=${encodeURIComponent(id)}`, {
-                method: 'DELETE'
-            });
-            const result = await response.json();
-            if (result.status === 'success') {
-                inspectionHistory = inspectionHistory.filter(x => x.id !== id);
-                if (window.globalData && window.globalData.inspections) {
-                    window.globalData.inspections = window.globalData.inspections.filter(x => x.id !== id);
-                }
-                alert('Tiket P2H berhasil dihapus.');
-                renderHistoryTable();
-                updateKpiSummary();
-                if (typeof window.renderModalUnitP2h === 'function') {
-                    const activeUnitIdEl = document.getElementById('modalAssetId');
-                    if (activeUnitIdEl && activeUnitIdEl.textContent) {
-                        window.renderModalUnitP2h(activeUnitIdEl.textContent);
-                    }
-                }
-            } else {
-                alert('Gagal menghapus P2H: ' + result.message);
-            }
-        } catch (error) {
-            console.error('Error deleting P2H:', error);
-            alert('Terjadi kesalahan jaringan atau server.');
-        }
-    };
-
     function renderHistoryTable() {
         const tbody = document.getElementById('tbP2HHistoryBody');
         if (!tbody) return;
@@ -15352,9 +15356,6 @@
                     <td>
                         <button type="button" class="btn" style="padding:3px 8px; font-size:0.78rem; background:var(--primary); color:#fff;" onclick="window.viewP2HDetail('${escapeHtml(p.id)}')">
                             <i class="fa-solid fa-eye"></i> Detail
-                        </button>
-                        <button type="button" class="btn" style="padding:3px 8px; font-size:0.78rem; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; margin-left:4px;" onclick="window.deleteP2H('${escapeHtml(p.id)}')">
-                            <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
                 </tr>
@@ -15461,7 +15462,7 @@
         const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `Laporan_P2H_PT_BRA_${new Date().toISOString().slice(0,10)}.csv`;
+        link.download = `Laporan_P2H_PT_BRA_${new Date().toISOString().slice(0, 10)}.csv`;
         link.click();
         alert('Laporan Rekapitulasi P2H berhasil di-export ke format CSV.');
     };
@@ -15672,12 +15673,12 @@
                         <div class="panel-body" style="padding:15px;">
                             <div class="donut-chart-wrapper">
                                 ${renderSvgDonut([
-                                    { pct: 15, color: '#dc2626' }, // Terlambat
-                                    { pct: 9, color: '#f59e0b' },  // Hari ini
-                                    { pct: 23, color: '#0284c7' }, // <=7 Hari
-                                    { pct: 47, color: '#16a34a' }, // Selesai
-                                    { pct: 6, color: '#64748b' }   // Belum Ada Data
-                                ])}
+            { pct: 15, color: '#dc2626' }, // Terlambat
+            { pct: 9, color: '#f59e0b' },  // Hari ini
+            { pct: 23, color: '#0284c7' }, // <=7 Hari
+            { pct: 47, color: '#16a34a' }, // Selesai
+            { pct: 6, color: '#64748b' }   // Belum Ada Data
+        ])}
 
                                 <div class="donut-legend">
                                     <div class="donut-legend-item">
@@ -15736,12 +15737,12 @@
                         <div class="panel-body" style="padding:15px;">
                             <div class="donut-chart-wrapper">
                                 ${renderSvgDonut([
-                                    { pct: 53.5, color: '#0284c7' },
-                                    { pct: 29.0, color: '#16a34a' },
-                                    { pct: 10.2, color: '#f59e0b' },
-                                    { pct: 5.3, color: '#ec4899' },
-                                    { pct: 2.0, color: '#64748b' }
-                                ])}
+            { pct: 53.5, color: '#0284c7' },
+            { pct: 29.0, color: '#16a34a' },
+            { pct: 10.2, color: '#f59e0b' },
+            { pct: 5.3, color: '#ec4899' },
+            { pct: 2.0, color: '#64748b' }
+        ])}
                                 <div class="donut-legend">
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#0284c7;"></span> Alat Berat</div>
@@ -15770,11 +15771,11 @@
                         <div class="panel-body" style="padding:15px;">
                             <div class="donut-chart-wrapper">
                                 ${renderSvgDonut([
-                                    { pct: 42.7, color: '#16a34a' }, // Selesai 38
-                                    { pct: 30.3, color: '#0284c7' }, // Dalam Perbaikan 27
-                                    { pct: 18.0, color: '#f59e0b' }, // Menunggu Spare Part 16
-                                    { pct: 9.0, color: '#dc2626' }   // Breakdown 8
-                                ])}
+            { pct: 42.7, color: '#16a34a' }, // Selesai 38
+            { pct: 30.3, color: '#0284c7' }, // Dalam Perbaikan 27
+            { pct: 18.0, color: '#f59e0b' }, // Menunggu Spare Part 16
+            { pct: 9.0, color: '#dc2626' }   // Breakdown 8
+        ])}
                                 <div class="donut-legend">
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#16a34a;"></span> Selesai</div>
@@ -15940,22 +15941,22 @@
                                     <!-- Bars Grid (Full 150px track height) -->
                                     <div style="display:flex; justify-content:space-around; align-items:flex-end; height:150px; width:100%; position:relative; z-index:5;">
                                         ${mechanicProductivityData.map(m => {
-                                            const barPx = Math.round((m.actual / 200) * 150);
-                                            const isExceed = m.actual >= m.target;
-                                            let barBg = '#0284c7';
-                                            if (!isExceed) {
-                                                if (m.pct >= 95) barBg = '#38bdf8';
-                                                else if (m.pct >= 88) barBg = '#f59e0b';
-                                                else barBg = '#ef4444';
-                                            }
-                                            return `
+            const barPx = Math.round((m.actual / 200) * 150);
+            const isExceed = m.actual >= m.target;
+            let barBg = '#0284c7';
+            if (!isExceed) {
+                if (m.pct >= 95) barBg = '#38bdf8';
+                else if (m.pct >= 88) barBg = '#f59e0b';
+                else barBg = '#ef4444';
+            }
+            return `
                                                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; width:18%;">
                                                     <div class="bar-actual" style="width:34px; height:${barPx}px; background-color:${barBg} !important; border-radius:4px 4px 0 0; box-shadow:0 3px 6px rgba(0,0,0,0.18); transition:all 0.3s ease; cursor:pointer; display:flex; justify-content:center; align-items:flex-start; padding-top:4px;" title="${escapeHtml(m.name)}: ${m.actual} Jam (${m.pct}% dari Target 176 Jam)">
                                                         <span style="font-size:0.7rem; font-weight:bold; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,0.6);">${m.actual}j</span>
                                                     </div>
                                                 </div>
                                             `;
-                                        }).join('')}
+        }).join('')}
                                     </div>
                                 </div>
 
@@ -16010,8 +16011,8 @@
                                 </div>
                                 ${monthlyCostTrendData.map(c => `
                                     <div class="cost-col">
-                                        <div class="cost-bar-fill" style="height:${(c.val/250)*100}%;" title="${c.month}: Rp ${c.val} Jt"></div>
-                                        <div class="cost-month-lbl">${c.month.slice(0,3)} ${c.month.slice(-2)}</div>
+                                        <div class="cost-bar-fill" style="height:${(c.val / 250) * 100}%;" title="${c.month}: Rp ${c.val} Jt"></div>
+                                        <div class="cost-month-lbl">${c.month.slice(0, 3)} ${c.month.slice(-2)}</div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -16096,7 +16097,7 @@ let dataLogisticsStock = [];
 let dataLogisticsOil = [];
 let dataLogisticsUsed = [];
 
-window.switchLogisticsTab = function(tabName) {
+window.switchLogisticsTab = function (tabName) {
     const view = document.getElementById('view-logistics');
     if (!view) return;
     view.querySelectorAll('.logistics-tab-content').forEach(el => el.style.display = 'none');
@@ -16120,7 +16121,7 @@ window.switchLogisticsTab = function(tabName) {
     if (tabName === 'used' && dataLogisticsUsed.length === 0) loadLogisticsData('used');
 };
 
-window.loadLogisticsData = async function(specificTab = null) {
+window.loadLogisticsData = async function (specificTab = null) {
     const loadMasuk = specificTab === null || specificTab === 'masuk';
     const loadKeluar = specificTab === null || specificTab === 'keluar';
     const loadStock = specificTab === null || specificTab === 'stock';
@@ -16215,7 +16216,7 @@ function renderLogisticsSyncSummary(data) {
     });
 }
 
-window.openLogisticsAsset = function(sourceAssetId) {
+window.openLogisticsAsset = function (sourceAssetId) {
     const normalized = String(sourceAssetId || '').trim().toUpperCase();
     const strictCode = normalized.match(/\b[A-Z]{2,6}-\d{3,5}\b/)?.[0] || normalized;
     const asset = (window.globalData?.assets || []).find(item => String(item.id || '').toUpperCase() === strictCode);
@@ -16230,22 +16231,22 @@ window.openLogisticsAsset = function(sourceAssetId) {
 function renderTableMasuk(filterText = '') {
     const tbody = document.querySelector('#table-logistics-masuk tbody');
     if (!tbody) return;
-    
+
     tbody.innerHTML = '';
     const q = filterText.toLowerCase();
-    
+
     const filtered = dataPartsMasuk.filter(item => {
-        return !q || 
-            (item.namaParts || '').toLowerCase().includes(q) || 
-            (item.noSpb || '').toLowerCase().includes(q) || 
+        return !q ||
+            (item.namaParts || '').toLowerCase().includes(q) ||
+            (item.noSpb || '').toLowerCase().includes(q) ||
             (item.merk || '').toLowerCase().includes(q);
     });
-    
+
     if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
         return;
     }
-    
+
     const limited = filtered.slice(0, 100);
     const rowsHtml = limited.map(item => `
         <tr style="border-bottom: 1px solid var(--border-color);">
@@ -16262,7 +16263,7 @@ function renderTableMasuk(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
         </tr>
     `).join('');
-    
+
     tbody.innerHTML = rowsHtml + (filtered.length > limited.length
         ? `<tr><td colspan="11" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString('id-ID')}. Gunakan pencarian untuk mempersempit data.</td></tr>`
         : '');
@@ -16271,24 +16272,24 @@ function renderTableMasuk(filterText = '') {
 function renderTableKeluar(filterText = '') {
     const tbody = document.querySelector('#table-logistics-keluar tbody');
     if (!tbody) return;
-    
+
     tbody.innerHTML = '';
     const q = filterText.toLowerCase();
-    
+
     const filtered = dataPartsKeluar.filter(item => {
-        return !q || 
-            (item.namaSparepart || '').toLowerCase().includes(q) || 
-            (item.idUnit || '').toLowerCase().includes(q) || 
+        return !q ||
+            (item.namaSparepart || '').toLowerCase().includes(q) ||
+            (item.idUnit || '').toLowerCase().includes(q) ||
             (item.noSpb || '').toLowerCase().includes(q) ||
             (item.spesifikasi || '').toLowerCase().includes(q) ||
             (item.source || '').toLowerCase().includes(q);
     });
-    
+
     if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
         return;
     }
-    
+
     const limited = filtered.slice(0, 100);
     const rowsHtml = limited.map(item => `
         <tr style="border-bottom: 1px solid var(--border-color);">
@@ -16396,85 +16397,85 @@ document.addEventListener('DOMContentLoaded', () => {
     const sOil = document.getElementById('search-logistics-oil');
     const sUsed = document.getElementById('search-logistics-used');
     const fUsed = document.getElementById('filter-logistics-used');
-    if(sMasuk) sMasuk.addEventListener('input', (e) => renderTableMasuk(e.target.value));
-    if(sKeluar) sKeluar.addEventListener('input', (e) => renderTableKeluar(e.target.value));
-    if(sStock) sStock.addEventListener('input', (e) => renderTableStock(e.target.value));
-    if(sOil) sOil.addEventListener('input', (e) => renderTableOil(e.target.value));
+    if (sMasuk) sMasuk.addEventListener('input', (e) => renderTableMasuk(e.target.value));
+    if (sKeluar) sKeluar.addEventListener('input', (e) => renderTableKeluar(e.target.value));
+    if (sStock) sStock.addEventListener('input', (e) => renderTableStock(e.target.value));
+    if (sOil) sOil.addEventListener('input', (e) => renderTableOil(e.target.value));
     const refreshUsed = () => renderTableUsed(sUsed?.value || '', fUsed?.value || '');
-    if(sUsed) sUsed.addEventListener('input', refreshUsed);
-    if(fUsed) fUsed.addEventListener('change', refreshUsed);
-    
+    if (sUsed) sUsed.addEventListener('input', refreshUsed);
+    if (fUsed) fUsed.addEventListener('change', refreshUsed);
+
     // Auto load data on initialization
     if (window.loadLogisticsData) {
         window.loadLogisticsData();
     }
 });
 
-window.handleGlobalSearch = function() {
+window.handleGlobalSearch = function () {
     const input = document.getElementById('globalSearchInput');
     const resultsContainer = document.getElementById('globalSearchResults');
     if (!input || !resultsContainer) return;
-    
+
     const query = input.value.toLowerCase().trim();
     if (query.length < 2) {
         resultsContainer.style.display = 'none';
         return;
     }
-    
+
     resultsContainer.style.display = 'block';
     let html = '';
     let resultCount = 0;
-    
+
     if (window.globalData && window.globalData.assets) {
-        const assets = window.globalData.assets.filter(a => 
-            (a.id && a.id.toLowerCase().includes(query)) || 
-            (a.category && a.category.toLowerCase().includes(query)) || 
-            (a.location && a.location.toLowerCase().includes(query)) || 
+        const assets = window.globalData.assets.filter(a =>
+            (a.id && a.id.toLowerCase().includes(query)) ||
+            (a.category && a.category.toLowerCase().includes(query)) ||
+            (a.location && a.location.toLowerCase().includes(query)) ||
             (a.status && a.status.toLowerCase().includes(query))
         ).slice(0, 5);
-        
+
         if (assets.length > 0) {
             html += '<div style="padding: 8px 15px; background: #f8fafc; font-size: 0.8rem; font-weight: bold; color: #64748b; border-bottom: 1px solid #e2e8f0;"><i class="fa-solid fa-truck"></i> Asset Unit</div>';
             assets.forEach(a => {
-                const parsedId = window.parseAssetId ? window.parseAssetId(a.id) : {snPlat: '-'};
+                const parsedId = window.parseAssetId ? window.parseAssetId(a.id) : { snPlat: '-' };
                 const snPlat = parsedId.snPlat !== '-' ? ' (' + parsedId.snPlat + ')' : '';
                 html += `<div style="padding: 10px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'" onclick="showView('asset'); document.getElementById('globalSearchResults').style.display='none';">
                     <div style="font-weight: 600; color: #0f172a;">${a.id}${snPlat}</div>
-                    <div style="font-size: 0.8rem; color: #64748b;">${a.category||'-'} &middot; ${a.location||'-'} &middot; <span style="color:var(--primary)">${a.status||'-'}</span></div>
+                    <div style="font-size: 0.8rem; color: #64748b;">${a.category || '-'} &middot; ${a.location || '-'} &middot; <span style="color:var(--primary)">${a.status || '-'}</span></div>
                 </div>`;
                 resultCount++;
             });
         }
     }
-    
+
     if (window.globalData && window.globalData.workOrders) {
-        const wos = window.globalData.workOrders.filter(w => 
-            (w.woId && w.woId.toLowerCase().includes(query)) || 
-            (w.assetId && w.assetId.toLowerCase().includes(query)) || 
-            (w.complaint && w.complaint.toLowerCase().includes(query)) || 
+        const wos = window.globalData.workOrders.filter(w =>
+            (w.woId && w.woId.toLowerCase().includes(query)) ||
+            (w.assetId && w.assetId.toLowerCase().includes(query)) ||
+            (w.complaint && w.complaint.toLowerCase().includes(query)) ||
             (w.mechanic && w.mechanic.toLowerCase().includes(query))
         ).slice(0, 5);
-        
+
         if (wos.length > 0) {
             html += '<div style="padding: 8px 15px; background: #f8fafc; font-size: 0.8rem; font-weight: bold; color: #64748b; border-bottom: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0;"><i class="fa-solid fa-screwdriver-wrench"></i> Work Order</div>';
             wos.forEach(w => {
                 html += `<div style="padding: 10px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'" onclick="showView('wo'); document.getElementById('globalSearchResults').style.display='none';">
                     <div style="font-weight: 600; color: #0f172a;">${w.woId} - ${w.assetId}</div>
-                    <div style="font-size: 0.8rem; color: #64748b;">${w.complaint||'-'} &middot; <span style="color:var(--danger)">${w.status||'-'}</span></div>
+                    <div style="font-size: 0.8rem; color: #64748b;">${w.complaint || '-'} &middot; <span style="color:var(--danger)">${w.status || '-'}</span></div>
                 </div>`;
                 resultCount++;
             });
         }
     }
-    
+
     if (resultCount === 0) {
         html = '<div style="padding: 15px; text-align: center; color: #94a3b8; font-size: 0.9rem;">Tidak ada hasil ditemukan.</div>';
     }
-    
+
     resultsContainer.innerHTML = html;
 };
 
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const searchBar = document.querySelector('.search-bar');
     const resultsContainer = document.getElementById('globalSearchResults');
     if (searchBar && !searchBar.contains(e.target) && resultsContainer) {

@@ -24,19 +24,7 @@ try {
         $globalData['work_orders'] = $dbWO;
     }
 
-    // Override Inspections (P2H) dari Database
-    try {
-        $globalData['inspections'] = []; // Inisialisasi awal untuk mencegah fallback dummy data
-        $stmtP2H = $db->query("SELECT raw_data FROM p2h_records ORDER BY date DESC");
-        $dbP2H = $stmtP2H->fetchAll(PDO::FETCH_ASSOC);
-        if (!empty($dbP2H)) {
-            $globalData['inspections'] = array_map(function($row) {
-                return json_decode($row['raw_data'], true);
-            }, $dbP2H);
-        }
-    } catch (Exception $e) {
-        // Abaikan jika tabel p2h_records belum ada
-    }
+    // Jika ingin override costs, dll bisa dilakukan di sini
 
     echo json_encode($globalData);
 } catch (Exception $e) {
