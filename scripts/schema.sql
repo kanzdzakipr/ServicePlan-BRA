@@ -5,11 +5,7 @@
 -- Extracted & Normalized from material/ and raw-material/ Markdown Repositories
 -- ============================================================================
 
-CREATE DATABASE IF NOT EXISTS `serviceplan_bra`
-DEFAULT CHARACTER SET utf8mb4 
-DEFAULT COLLATE utf8mb4_unicode_ci;
 
-USE `serviceplan_bra`;
 
 -- Disable foreign key checks for clean structure creation
 SET FOREIGN_KEY_CHECKS = 0;
