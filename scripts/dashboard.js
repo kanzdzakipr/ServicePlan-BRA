@@ -15357,6 +15357,12 @@
                 alert('Tiket P2H berhasil dihapus.');
                 renderHistoryTable();
                 updateKpiSummary();
+                if (typeof window.renderModalUnitP2h === 'function') {
+                    const activeUnitIdEl = document.getElementById('modalAssetId');
+                    if (activeUnitIdEl && activeUnitIdEl.textContent) {
+                        window.renderModalUnitP2h(activeUnitIdEl.textContent);
+                    }
+                }
             } else {
                 alert('Gagal menghapus P2H: ' + result.message);
             }
