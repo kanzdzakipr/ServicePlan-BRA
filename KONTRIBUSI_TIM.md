@@ -1,9 +1,9 @@
 # 📊 Laporan Bobot & Persentase Kontribusi Pengerjaan Tim ServicePlan-BRA
 
 > **Repositori**: `kanzdzakipr/ServicePlan-BRA`  
-> **Tanggal Audit**: 2 Agustus 2026  
+> **Tanggal Audit**: 4 Agustus 2026  
 > **Metode Evaluasi**: Analisis Komparatif Multi-Faktor (Jumlah Commit, Kebaruan Fitur, Arsitektur Sistem, Tabulasi Data, & Manajemen Dokumentasi)  
-> **Skema Periode**: **Term 1** (Periode Awal s/d 27 Juli 2026) & **Term 2** (Periode Lanjutan 28 Juli – 2 Agustus 2026 per hari ini)
+> **Skema Periode**: **Term 1** (Periode Awal s/d 27 Juli 2026) & **Term 2** (Periode Lanjutan 28 Juli – 4 Agustus 2026 per hari ini)
 
 ---
 
@@ -13,11 +13,11 @@
 
 | Rank | Kontributor / Contributor | Total Commit | Estimasi Lines Added/Modified | Bobot Kontribusi Fitur & Arsitektur Utama | **Persentase Kontribusi Akumulasi** |
 | :---: | :--- | :---: | :---: | :--- | :---: |
-| 🥇 | **briannugraha** | 68 (40,0%) | ~35.200+ | Blueprint Implementation Plan 1 & 2, Fuel Anomaly Engine, Cost Control & Valuasi, Leaflet & Google Maps Integration, Asset 360°, Productivity & KPI Modules, Refurbish Sparepart & Logistik, Reform Condition Monitoring (Dual-Layer Modal & Universal ID Resolver), Refurbish Master Asset & Pengaturan | **41.2%** |
-| 🥈 | **seagrass489-cell** | 56 (32,9%) | ~22.500+ | Parser Engine Data 9.400+ baris, Data Completeness Audit Checklist, Tabulasi Keuangan PO & SPB, Testing Master Asset, Inspeksi P2H, Integration Testing & Validasi Form Laporan | **34.8%** |
-| 🥉 | **kanzdzakipr** | 22 (12,9%) | ~5.500+ | Inisialisasi Repositori, HTML Scaffolding (`testkanz*.html`), Branch Governance, Merge Integrasi Utama, & Validasi Asset Linking | **12.5%** |
-| 4 | **bisamelihat** | 24 (14,1%) | ~12.200+ | Fondasi Struktur Proyek, Prisma ORM Architecture, Seeder Data Engine (`seeder.js`), PRD & Data Model Documentation, Early Dashboard Prototypes | **11.5%** |
-| **TOTAL** | **4 Kontributor** | **170 Commit** | **~75.400+ Lines** | **100% Modul Tercover & Tersertifikasi Real-Time** | **100.0%** |
+| 🥇 | **briannugraha** | 71 (39,2%) | ~36.800+ | Blueprint Implementation Plan 1 & 2, Fuel Anomaly Engine, Cost Control & Valuasi, Leaflet & Google Maps Integration, Asset 360°, Productivity & KPI Modules, Refurbish Sparepart & Logistik, Reform Condition Monitoring (Dual-Layer Modal & Universal ID Resolver), Refurbish Master Asset & Audit Data Completeness per 4 Agustus | **40.8%** |
+| 🥈 | **seagrass489-cell** | 56 (30,9%) | ~22.500+ | Parser Engine Data 9.400+ baris, Data Completeness Audit Checklist, Tabulasi Keuangan PO & SPB, Testing Master Asset, Inspeksi P2H, Integration Testing & Validasi Form Laporan | **33.5%** |
+| 🥉 | **kanzdzakipr** | 30 (16,6%) | ~7.200+ | Inisialisasi Repositori, Configuration Backend Hostinger (`api/db.php`), Penyesuaian Script `SeederDataJson.php` & `schema.sql`, HTML Scaffolding, Searchbar, & Branch Governance | **14.8%** |
+| 4 | **bisamelihat** | 24 (13,3%) | ~12.000+ | Fondasi Struktur Proyek, Prisma ORM Architecture, Seeder Data Engine (`seeder.js`), PRD & Data Model Documentation, Early Dashboard Prototypes | **10.9%** |
+| **TOTAL** | **4 Kontributor** | **181 Commit** | **~78.500+ Lines** | **100% Modul Tercover & Tersertifikasi Real-Time** | **100.0%** |
 
 ---
 
@@ -33,15 +33,15 @@
 
 ---
 
-### 📌 3. Evaluasi Term 2 (Periode Lanjutan: 28 Juli – 2 Agustus 2026 per Hari Ini)
+### 📌 3. Evaluasi Term 2 (Periode Lanjutan: 28 Juli – 4 Agustus 2026 per Hari Ini)
 
 | Rank | Kontributor / Contributor | Commit Term 2 | Estimasi Lines Term 2 | Bobot Kontribusi Fitur & Arsitektur Term 2 | **Persentase Term 2** |
 | :---: | :--- | :---: | :---: | :--- | :---: |
-| 🥇 | **seagrass489-cell** | 28 (43,8%) | ~8.000+ | Testing & Validasi Modul Monitoring Unit, Master Asset, Inspeksi P2H, Verifikasi Tabulasi Data Markdown, Merge Integration Tests, & Testing Form Laporan | **46.5%** |
-| 🥈 | **briannugraha** | 21 (32,8%) | ~15.700+ | Refurbish Master Asset, Refurbish Pengaturan & User Governance, Resizing Menu Biaya, Refurbish Sparepart & Logistik, Reform Condition Monitoring (Dual-Layer Modal & Universal ID Resolver), Overhaul Kanban Drag & Drop Engine | **39.5%** |
-| 🥉 | **kanzdzakipr** | 13 (20,3%) | ~2.400+ | Branch Governance, Merge Integration Main, Synchronization Asset Linking & Script Validation, Searchbar Functionality | **11.5%** |
-| 4 | **bisamelihat** | 2 (3,1%) | ~400+ | Minor Maintenance Data Seeder & Documentation Fixes | **2.5%** |
-| **SUBTOTAL** | **4 Kontributor** | **64 Commit** | **~26.500+ Lines** | **Fitur Kebaruan, Refurbish Modul Utama, Visual Brand, & Validasi Sistem** | **100.0%** |
+| 🥇 | **seagrass489-cell** | 28 (37,3%) | ~8.000+ | Testing & Validasi Modul Monitoring Unit, Master Asset, Inspeksi P2H, Verifikasi Tabulasi Data Markdown, Merge Integration Tests, & Testing Form Laporan | **42.5%** |
+| 🥈 | **briannugraha** | 24 (32,0%) | ~17.300+ | Refurbish Master Asset, Refurbish Pengaturan & User Governance, Resizing Menu Biaya, Refurbish Sparepart & Logistik, Reform Condition Monitoring (Dual-Layer Modal & Universal ID Resolver), Audit Data Completeness per 4 Agustus | **38.5%** |
+| 🥉 | **kanzdzakipr** | 21 (28,0%) | ~4.100+ | Penyesuaian Backend Hostinger (`api/db.php`), `SeederDataJson.php`, Update `schema.sql`, Searchbar Functionality, & Branch Governance | **16.8%** |
+| 4 | **bisamelihat** | 2 (2,7%) | ~200+ | Minor Maintenance Data Seeder & Documentation Fixes | **2.2%** |
+| **SUBTOTAL** | **4 Kontributor** | **75 Commit** | **~29.600+ Lines** | **Fitur Kebaruan, Refurbish Modul Utama, Visual Brand, Hostinger Config, & Validasi Sistem** | **100.0%** |
 
 ---
 
@@ -56,11 +56,11 @@ Total Skor Akumulasi = (Bobot Term 1 × 60%) + (Bobot Term 2 × 40%)
 ### Breakdown Distribusi Kontribusi:
 
 ```mermaid
-pie title Distribusi Persentase Kontribusi Akumulasi Total (All-Time)
-    "briannugraha (41.2%)" : 41.2
-    "seagrass489-cell (34.8%)" : 34.8
-    "kanzdzakipr (12.5%)" : 12.5
-    "bisamelihat (11.5%)" : 11.5
+pie title Distribusi Persentase Kontribusi Akumulasi Total (All-Time per 4 Agustus 2026)
+    "briannugraha (40.8%)" : 40.8
+    "seagrass489-cell (33.5%)" : 33.5
+    "kanzdzakipr (14.8%)" : 14.8
+    "bisamelihat (10.9%)" : 10.9
 ```
 
 #### Perbandingan Distribusi per Term:
@@ -74,20 +74,20 @@ pie title Distribusi Kontribusi Term 1 (s/d 27 Juli 2026)
 ```
 
 ```mermaid
-pie title Distribusi Kontribusi Term 2 (28 Juli - 2 Agustus 2026)
-    "seagrass489-cell (46.5%)" : 46.5
-    "briannugraha (39.5%)" : 39.5
-    "kanzdzakipr (11.5%)" : 11.5
-    "bisamelihat (2.5%)" : 2.5
+pie title Distribusi Kontribusi Term 2 (28 Juli - 4 Agustus 2026)
+    "seagrass489-cell (42.5%)" : 42.5
+    "briannugraha (38.5%)" : 38.5
+    "kanzdzakipr (16.8%)" : 16.8
+    "bisamelihat (2.2%)" : 2.2
 ```
 
 ---
 
 ## 🔍 Detail Rincian Kontribusi per Kontributor
 
-### 1. `briannugraha` — **41.2%** *(Lead Feature & Implementation Architect)*
-* **Total Commit**: 68 Commit (40,0% dari total 170 commit repositori).
-* **Breakdown Commit**: 47 Commit (Term 1) + 21 Commit (Term 2).
+### 1. `briannugraha` — **40.8%** *(Lead Feature & Implementation Architect)*
+* **Total Commit**: 71 Commit (39,2% dari total 181 commit repositori).
+* **Breakdown Commit**: 47 Commit (Term 1) + 24 Commit (Term 2).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Implementation Plan 1 & 2**: Merancang arsitektur menyeluruh sistem monitoring alat berat ServicePlan-BRA (`implementation-plan-1.md`, `implementation-plan-2.md`).
@@ -97,17 +97,17 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 2 Agustus 2026)
     - **Modul Produktivitas & KPI**: Integrasi telematika KOMTRAX 18 unit, penandaan idling anomaly (>50%), dan audit armada standby 48 unit.
     - **Konversi Materi**: Menyusun dan mengonversi berkas spek material 1 hingga 14 ke dalam format markdown terstruktur.
   * **Term 2**:
+    - **Audit Data Completeness per 4 Agustus**: Melakukan peninjauan menyeluruh kesiapan 16 menu navigasi, update status dataset aktif, serta merumuskan 5 mekanisme teknis adaptasi API Controller eksisting.
     - **Reform Condition Monitoring**: Implementasi Dual-Layer Modal Rendering (`#globalCmModalContainer` at `document.body` level) & Universal Asset ID Extractor Regex (`^([A-Z0-9]{1,6}-\d{2,5})`) untuk seluruh 400+ entri `data.json`.
     - **Refurbish Master Asset & In-Place Popup**: Integrasi modal popup Kondisi tanpa pemindahan view navigasi, sinkronisasi `window.resolveAsset`, dan pembersihan duplikasi skrip.
     - **Refurbish Sparepart & Logistik, Biaya, & Pengaturan**: Penyesuaian layout responsive, manajemen role pengeluaran barang, dan visual audit brand.
     - **Overhaul Kanban Drag & Drop Engine**: Memperbaiki logika target drop zone, pembatasan internal scroll horizontal 2,5 kartu untuk `Closed / Ready`, dan pencegahan flickering visual.
     - **Form FRM-WO-01 & Integrated Status Sync**: Mengembangkan modal konfirmasi perubahan status Work Order dengan fitur autofill otomatis (Unit ID, Status Efektif Unit `READY`/`STANDBY`/`BREAKDOWN`, Mekanik, & Log Laporan) yang tersinkron secara real-time di seluruh modul.
-    - **Inkorporasi Brand Logo PT Bina Rekayasa Anugrah**: Mengintegrasikan logo resmi `assets/logo-pt-bina-rekayasa-anugrah.png` pada Favicon Browser, Sidebar Header Utama, Templat Cetak Laporan Resmi, dan Lampiran Dokumentasi Foto.
 
 ---
 
-### 2. `seagrass489-cell` — **34.8%** *(Data Parser & Completeness Specialist)*
-* **Total Commit**: 56 Commit (32,9% dari total 170 commit repositori).
+### 2. `seagrass489-cell` — **33.5%** *(Data Parser & Completeness Specialist)*
+* **Total Commit**: 56 Commit (30,9% dari total 181 commit repositori).
 * **Breakdown Commit**: 28 Commit (Term 1) + 28 Commit (Term 2).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
@@ -123,22 +123,23 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 2 Agustus 2026)
 
 ---
 
-### 3. `kanzdzakipr` — **12.5%** *(Repository Owner & Scaffolding Integrator)*
-* **Total Commit**: 22 Commit (12,9% dari total 170 commit repositori).
-* **Breakdown Commit**: 9 Commit (Term 1) + 13 Commit (Term 2).
+### 3. `kanzdzakipr` — **14.8%** *(Repository Owner & Backend Integrator)*
+* **Total Commit**: 30 Commit (16,6% dari total 181 commit repositori).
+* **Breakdown Commit**: 9 Commit (Term 1) + 21 Commit (Term 2).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Inisialisasi Repositori**: Membuat repositori utama `kanzdzakipr/ServicePlan-BRA` dan struktur percabangan awal.
     - **Scaffolding HTML Awal**: Mengembangkan berkas prototipe awal (`test.html`, `testkanz.html`, `testkanz2.html`, `testkanz3.html`).
     - **Governance & Integration**: Menangani proses *merge branch main*, penyelarasan prompt, dan koordinasi sinkronisasi tim.
   * **Term 2**:
+    - **Konfigurasi Backend Hostinger & Database**: Penyesuaian koneksi `api/db.php` untuk database Hostinger (`u646470441_ServicePlanBRA`), update `schema.sql`, dan perbaikan script `SeederDataJson.php` (`b16f1e5`, `4cf69f0`, `7ad3786`).
     - **Searchbar & Workflow Integration**: Mengaktifkan pencarian searchbar utama, pengujian workflow integrasi, dan pembaruan format plat kendaraan logistik (`5b632f8`, `170f0e4`, `3402709`).
     - **Merge & Script Validation**: Eksekusi merge branch berkala dan sinkronisasi script dashboard.
 
 ---
 
-### 4. `bisamelihat` — **11.5%** *(Core Foundation & Database Seeder Architect)*
-* **Total Commit**: 24 Commit (14,1% dari total 170 commit repositori).
+### 4. `bisamelihat` — **10.9%** *(Core Foundation & Database Seeder Architect)*
+* **Total Commit**: 24 Commit (13,3% dari total 181 commit repositori).
 * **Breakdown Commit**: 22 Commit (Term 1) + 2 Commit (Term 2).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
@@ -153,9 +154,20 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 2 Agustus 2026)
 
 ## 📈 Log Riwayat Graph Commit Utama
 
-### 📌 Log Commit Term 2 (28 Juli – 2 Agustus 2026 per Hari Ini)
+### 📌 Log Commit Term 2 (28 Juli – 4 Agustus 2026 per Hari Ini)
 
 ```git
+* 9a31ab9 (kanzdzakipr) Merge branch 'main' of https://github.com/kanzdzakipr/ServicePlan-BRA
+* 9525c8f (briannugraha) auditing data completeness as of 4th august
+* d9cd912 (seagrass489-cell) inspek p2h
+* a52c1ed (kanzdzakipr) Update dashboard.html
+* d000ac5 (kanzdzakipr) Update dashboard.html
+* 7ad3786 (kanzdzakipr) Update SeederDataJson.php
+* 7507164 (kanzdzakipr) hilangin CLI seederdatajson
+* b16f1e5 (kanzdzakipr) sesuaiin db.php untuk hostinger
+* 4cf69f0 (kanzdzakipr) Update schema.sql
+* 0b49c00 (seagrass489-cell) penyesuaian backend + pinpoint upload hostinger
+* 6355400 (briannugraha) update kontribusi tim per 2 agustus
 * 509d335 (briannugraha) Update dashboard.js
 * 5b632f8 (kanzdzakipr) bikin searchbarnya kerja
 * 3466596 (seagrass489-cell) 1. Kode nomor SPB terinput No polisi untuk Unit 2. tambahkan sheet oli pemakaian atau pemasukan 3. tambahkan fitur upload foto Barang keluar, barang masuk, dan input Laporan PDF dari administrasi logistik
@@ -337,4 +349,4 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 2 Agustus 2026)
 
 ---
 
-*Laporan ini diperbarui secara otomatis berdasarkan audit komprehensif git log history & graph repositori ServicePlan-BRA per 2 Agustus 2026.*
+*Laporan ini diperbarui secara otomatis berdasarkan audit komprehensif git log history & graph repositori ServicePlan-BRA per 4 Agustus 2026.*
