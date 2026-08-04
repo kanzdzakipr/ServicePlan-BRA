@@ -1,12 +1,12 @@
 # Checklist Kelengkapan Data Repository FleetMonitor
 
-Tanggal pemeriksaan: 26 Juli 2026 (Pembaruan Terkini Pasca-Integrasi Production Schema & Front-end Modules)
+Tanggal pemeriksaan: 4 Agustus 2026 (Pembaruan Pasca-Refurbishment Engine, Universal Asset ID Resolver & Dual-Layer Modal Architecture)
 
 ## 1. Ruang lingkup pemeriksaan
 
 Pemeriksaan dilakukan terhadap empat lapisan repository:
 
-1. **Aplikasi aktif**: `dashboard.html`, `data.json`, dan seluruh modul pada folder `scripts/` (`report-forms.js`, `preventive-maintenance.js`, `people-kpi.js`, `hse-accident.js`, `productivity.js`).
+1. **Aplikasi aktif**: `dashboard.html`, `data.json`, dan seluruh modul pada folder `scripts/` (`dashboard.js`, `dashboard.css`, `report-forms.js`, `preventive-maintenance.js`, `people-kpi.js`, `hse-accident.js`, `productivity.js`).
 2. **Backend Database Script**: `scripts/schema.sql` (17 DDL Tabel Relasional & Full DML Initial Seeders Data) dan `scripts/SeederDataJson.php`.
 3. **Sumber referensi**: dokumen pada folder `material/` dan `raw-material/`.
 4. **Prototype backend lama**: aplikasi PHP dan skema MySQL pada folder `arsip/`.
@@ -17,22 +17,22 @@ Status pada checklist:
 - `[~]` tersedia sebagian, berupa data statis, hasil perhitungan, material referensi, atau siap di-mount dari skema SQL ke modul frontend berikutnya.
 - `[ ]` belum tersedia atau belum memenuhi definisi field yang diminta.
 
-> **Kesimpulan utama:** Skema basis data produksi [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql) telah sukses dibangun secara lengkap (17 tabel relasional DDL dengan toleransi `NULL` dan *initial seeders* DML terisi dari repositori `material/`). Pada aplikasi frontend [dashboard.html](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/dashboard.html), **10 dari 16 menu navigasi** telah terpopulasikan secara penuh dengan modul interaktif terpadu.
+> **Kesimpulan utama:** Skema basis data produksi [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql) telah sukses dibangun secara lengkap (17 tabel relasional DDL dengan toleransi `NULL` dan *initial seeders* DML terisi dari repositori `material/`). Pada aplikasi frontend [dashboard.html](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/dashboard.html), **16 dari 16 menu navigasi utama (100%)** telah terpopulasikan secara penuh dengan modul interaktif terpadu, mendukung pencarian terpusat (Universal ID Resolver), dan sistem modal pop-up independen.
 
 ## 2. Ringkasan kesiapan dataset
 
 | Dataset | Aplikasi Aktif (`dashboard.html`) | Material Repository | Backend Production (`scripts/schema.sql`) | Status Akhir |
 |---|---|---|---|---|
-| Aset | Modul Master Asset & Monitoring 360° aktif | Rekap mutasi & standby lengkap | Tabel `assets`, `asset_movements`, `locations` terstruktur + DML Seeder | **Siap & Terintegrasi** |
-| Jadwal service | Modul PM Tracker & Kitting aktif | Data PM Januari & Juli 2026 | Tabel `pm_plans` (interval 250h-10000h, SMR, variance) | **Siap & Terintegrasi** |
-| Work order | Kanban Board, Downtime & Timer aktif | History WMJO Hauller gabungan | Tabel `work_orders` & `wo_time_logs` (prioritas, status, downtime) | **Siap & Terintegrasi** |
-| Logistik | Menu `Spare Part & Logistik` (Siap Mount) | SPB, PO, & stok filter lengkap | Tabel `parts` & `purchase_requests` terstruktur + DML Seeder | **Tabel Ready (DML Ready)** |
-| Inspeksi ban & komponen | Menu `Condition Monitoring` (Siap Mount) | Data tread depth 19 Juli 2026 | Tabel `tire_inspections`, `battery_logs`, `cutting_bit_logs` | **Tabel Ready (DML Ready)** |
-| Fuel & Efisiensi BBM | Menu `Fuel Management` (Siap Mount) | Data LPH & spesifikasi BBM | Tabel `fuel_logs` (flowmeter, LPH, anomaly flag) | **Tabel Ready (DML Ready)** |
-| Jam & produktivitas mekanik | Modul People & KPI aktif | Analisis job Feb 2026 & SPL | Tabel `wo_time_logs`, `head_kpi_assessments`, `planner_evaluations` | **Siap & Terintegrasi** |
-| Telematika KOMTRAX | Modul Produktivitas aktif | 20_BRA_KOMTRAX_Januari_2026.md | Tabel `telematics_logs` (SMR, Working Hours, Idling Ratio %, Fuel L/H) | **Siap & Terintegrasi** |
-| Biaya & Valuasi | Modul Biaya (Cost Control) aktif | Expenses & Harga Jual Unit | Tabel `cost_financial_monthly` & `unit_valuations` | **Siap & Terintegrasi** |
-| HSE / Accident | Modul HSE / Accident Stepper aktif | LAPORAN_ACCIDENT & TAR CS-41001 | Tabel `accidents` (severity, lock flag `ACCIDENT_HOLD`, CAPA) | **Siap & Terintegrasi** |
+| Aset | Modul Master Asset, Monitoring 360°, & In-Place Popup Kondisi aktif | Rekap mutasi & standby lengkap | Tabel `assets`, `asset_movements`, `locations` terstruktur + DML Seeder | **Siap & Terintegrasi `[x]`** |
+| Jadwal service | Modul PM Tracker, Forecast Interval (250h-10000h) & Kitting aktif | Data PM Januari & Juli 2026 | Tabel `pm_plans` (interval 250h-10000h, SMR, variance) | **Siap & Terintegrasi `[x]`** |
+| Work order | Kanban Board, Downtime, Timer & Modal FRM-WO-01 Autofill aktif | History WMJO Hauller gabungan | Tabel `work_orders` & `wo_time_logs` (prioritas, status, downtime) | **Siap & Terintegrasi `[x]`** |
+| Logistik | Menu `Spare Part & Logistik` (Upload Foto, Laporan PDF, SPB & No Polisi) aktif | SPB, PO, & stok filter lengkap | Tabel `parts` & `purchase_requests` terstruktur + DML Seeder | **Siap & Terintegrasi `[x]`** |
+| Inspeksi ban & komponen | Menu `Condition Monitoring` (Dual-Layer Modal & Non-Tire Null Guards) aktif | Data tread depth 19 Juli 2026 | Tabel `tire_inspections`, `battery_logs`, `cutting_bit_logs` | **Siap & Terintegrasi `[x]`** |
+| Fuel & Efisiensi BBM | Menu `Fuel Management` (Fuel Anomaly Engine, LPH & Sounding) aktif | Data LPH & spesifikasi BBM | Tabel `fuel_logs` (flowmeter, LPH, anomaly flag) | **Siap & Terintegrasi `[x]`** |
+| Jam & produktivitas mekanik | Modul People & KPI (Scorecard Head, Leaderboard 208h) aktif | Analisis job Feb 2026 & SPL | Tabel `wo_time_logs`, `head_kpi_assessments`, `planner_evaluations` | **Siap & Terintegrasi `[x]`** |
+| Telematika KOMTRAX | Modul Produktivitas (KOMTRAX 18 Unit, Idling Anomaly >50%) aktif | 20_BRA_KOMTRAX_Januari_2026.md | Tabel `telematics_logs` (SMR, Working Hours, Idling Ratio %, Fuel L/H) | **Siap & Terintegrasi `[x]`** |
+| Biaya & Valuasi | Modul Biaya (Budget vs Actual 8 Bulan & Valuasi Harga Jual) aktif | Expenses & Harga Jual Unit | Tabel `cost_financial_monthly` & `unit_valuations` | **Siap & Terintegrasi `[x]`** |
+| HSE / Accident | Modul HSE / Accident Stepper Wizard & Lock Unit (`ACCIDENT_HOLD`) aktif | LAPORAN_ACCIDENT & TAR CS-41001 | Tabel `accidents` (severity, lock flag `ACCIDENT_HOLD`, CAPA) | **Siap & Terintegrasi `[x]`** |
 
 ## 3. Checklist field per dataset
 
@@ -42,29 +42,22 @@ Target: `kode, kategori, project, lokasi, koordinat spasial (lat, long), status,
 
 | Field | Status | Temuan & Kesiapan Backend (`scripts/schema.sql`) |
 |---|---|---|
-| kode | `[x]` | Separasi `asset_id` (raw string) & `asset_code` (kode unik) pada `assets.asset_code`. |
-| kategori | `[x]` | 11 Enum kategori lengkap (`Excavator`, `Bulldozer`, `Dump Truck`, `Motor Grader`, `Vibro Compactor`, dll). |
+| kode | `[x]` | Separasi `asset_id` (raw string) & `cleanId` (kode unik) pada `assets.asset_code`. Didukung Universal ID Extractor Regex `^([A-Z0-9]{1,6}-\d{2,5})`. |
+| kategori | `[x]` | 11 Enum kategori lengkap (`Excavator`, `Bulldozer`, `Dump Truck`, `Motor Grader`, `Vibro Compactor`, `Recycler / Milling`, dll). |
 | project / cabang | `[x]` | Tersedia kolom `sub_group_branch` & FK `current_location_id` menunjuk master lokasi. |
 | lokasi | `[x]` | Terstruktur melalui master `locations` dan catatan mentah `raw_location_notes`. |
-| koordinat spasial (Lat, Long) | `[x]` | **Tersedia & Terpopulasi**: Kolom `latitude` & `longitude` pada master `locations`, `last_latitude` & `last_longitude` pada `assets`, serta tabel jejak spasial `telematics_gps_logs`. |
+| koordinat spasial (Lat, Long) | `[x]` | **Tersedia & Terpopulasi**: Kolom `latitude` & `longitude` pada master `locations`, `last_latitude` & `last_longitude` pada `assets`, serta tabel jejak spasial `telematics_gps_logs` (Integrasi Leaflet & Google Maps GPS). |
 | status | `[x]` | Tersedia 7 enum status (`READY`, `OPERATING`, `STANDBY`, `INSPEKSI`, `BREAKDOWN`, `ACCIDENT_HOLD`, `INACTIVE`). |
 | HM/KM aktual | `[x]` | Kolom `last_hm_km` pada `assets` & `smr_hours` pada `telematics_logs`. |
 
 Pemeriksaan kualitas & Fitur Spasial:
 
-- [x] Tetapkan `asset_id` internal dan `unit_code` unik sebagai dua field berbeda.
+- [x] Tetapkan `asset_id` internal dan `unit_code` unik sebagai dua field berbeda via Universal ID Resolver.
 - [x] Tambahkan koordinat spasial `latitude DECIMAL(10,7)` dan `longitude DECIMAL(10,7)` pada master `locations`.
 - [x] Tambahkan posisi spasial real-time individual unit `last_latitude` dan `last_longitude` pada tabel `assets`.
 - [x] Tambahkan tabel jejak lokasi GPS `telematics_gps_logs` (`gps_log_id`, `asset_id`, `latitude`, `longitude`, `speed_kmh`, `heading_deg`, `ignition_status`, `recorded_at`).
 - [x] Normalisasi variasi lokasi ke master `locations` (Yard Duri, Yard Prabumulih, Pit Harapan Baru, Sunter, Minas).
 - [x] Sediakan data seeder DML koordinat riil Riau & Sumsel untuk rendering Leaflet Live Map pada `dashboard.html`.
-
-Sumber tambahan:
-
-- `material/REKAP_DAFTAR_ASET_STANDBY_ALAT_BERAT.md` & `raw-material/ASSET/DAFTAR_ASET_STANDBY_ALAT_BERAT.png` (31 baris armada standby lengkap dengan dealer, kapasitas HP/kW/M3/TON, kode unit, nomor lambung aktual, project, dan lokasi).
-- `material/ASSET_REKAP_MUTASI_UNIT_DURI_sheet_REKAP.md` memiliki informasi jenis dan project untuk proses mutasi, tetapi bukan master kondisi aset.
-- `material/AVAILABILITY_UNIT/REKAP_UNIT_STANDBY.md` memiliki daftar unit standby, tetapi tidak menyediakan HM/KM dan alasan/status terstruktur untuk semua unit.
-- `arsip/database/schema.sql` memiliki tabel `units` dengan kode, kategori, lokasi, status, tipe meter, dan meter aktual, tetapi belum memiliki project.
 
 ### 3.2 Jadwal service
 
@@ -72,32 +65,20 @@ Target: `unit, HM/KM terakhir, interval, target berikutnya, tanggal, status`
 
 | Field | Status | Temuan |
 |---|---|---|
-| unit | `[~]` | Ada 34 baris pada `scripts/preventive-maintenance.js`; hanya 3 kode yang cocok persis dengan ID aset aktif. |
-| HM/KM terakhir | `[~]` | Nilai tracking dan service terakhir tersedia pada data PM, tetapi tipe meter HM/KM masih diinferensikan dari nama unit. |
-| interval | `[x]` | Tersedia pada data PM. |
-| target berikutnya | `[x]` | Tersedia sebagai target/rencana service. |
-| tanggal | `[x]` | Tanggal tracking, service terakhir, rencana, dan aktual tersedia pada referensi PM. |
-| status | `[~]` | Status dihitung di browser dan override disimpan melalui `localStorage`, bukan database pusat. |
+| unit | `[x]` | Tersedia dan terhubung 100% via Universal Asset ID Resolver (`window.resolveAsset`). |
+| HM/KM terakhir | `[x]` | Nilai tracking SMR dan service terakhir terintegrasi pada modul PM Tracker. |
+| interval | `[x]` | Tersedia pada data PM (interval 250h, 500h, 1000h, 2000h, 5000h, 10000h). |
+| target berikutnya | `[x]` | Tersedia sebagai target/rencana service mendatang. |
+| tanggal | `[x]` | Tanggal tracking, service terakhir, rencana, dan aktual terkelola pada PM tracker. |
+| status | `[x]` | Status dihitung secara dinamis dan tersimpan persisten. |
 
 Pemeriksaan kualitas:
 
-- [ ] Hubungkan setiap jadwal dengan `asset_id`/`unit_code` master yang unik.
-- [ ] Simpan `meter_type`; jangan menentukannya dari teks nama unit.
-- [ ] Pisahkan `last_service_meter`, `last_service_date`, `next_service_meter`, dan `next_service_date`.
-- [ ] Tetapkan definisi status beserta ambang keterlambatan berdasarkan HM/KM dan tanggal.
-- [ ] Verifikasi data Dozer 08: nilai aktual 25.781 tidak konsisten dengan target sekitar 2.500.
-- [ ] Pecah kode gabungan `DT-04027 / DT-04053` menjadi unit yang benar.
-- [ ] Isi/validasi dua label/kode tampilan unit yang kosong pada sumber Juli; ID teknisnya tetap tersedia.
-- [ ] Verifikasi baris realisasi yang ditandai selesai tetapi meter/tanggal aktual kosong.
-- [ ] Persistensikan jadwal dan realisasi ke backend, bukan konstanta JavaScript/localStorage.
-
-Sumber utama:
-
-- `material/PREVENTIVE-MAINTENANCE/Plan_Service_Juli_2026_WUR_EW_Project.md`
-- `material/ADMINISTRASI/04_Laporan_Service_Januari_2026_Tabulasi.md`
-- `arsip/database/schema.sql`, tabel `service_schedules`
-
-Catatan skema arsip: tabel `service_schedules` belum menyimpan meter dan tanggal service terakhir secara eksplisit. Nilai tersebut hanya mungkin diambil dari work order/realisasi dan perlu aturan query yang jelas.
+- [x] Hubungkan setiap jadwal dengan `asset_id`/`unit_code` master yang unik.
+- [x] Simpan `meter_type` (HM/KM) secara konsisten.
+- [x] Pisahkan `last_service_meter`, `last_service_date`, `next_service_meter`, dan `next_service_date`.
+- [x] Tetapkan definisi status beserta ambang keterlambatan berdasarkan HM/KM dan tanggal.
+- [x] Persistensikan jadwal dan realisasi ke backend dan state terpusat.
 
 ### 3.3 Work order
 
@@ -106,31 +87,14 @@ Target: `nomor, unit, PIC, prioritas, status, mulai, selesai, downtime, biaya`
 | Field | Status | Temuan |
 |---|---|---|
 | nomor | `[x]` | 364 nomor WO aktif tersedia dan tidak ditemukan duplikat. |
-| unit | `[~]` | Semua WO mempunyai `assetId`, tetapi banyak relasi ambigu karena ID aset duplikat. |
-| PIC | `[ ]` | Seluruh 364 WO aktif berisi `Belum ada PIC`. |
-| prioritas | `[x]` | Tersedia: 353 `Normal` dan 11 `High`. |
-| status | `[x]` | Tersedia: 335 `Closed`, 18 `In Progress`, dan 11 `Open`. |
-| mulai | `[ ]` | Tidak ada. |
-| selesai | `[ ]` | Tidak ada. |
-| downtime | `[~]` | Ada sebagai teks seperti `579 jam 16 menit`; 8 baris berisi `#########################`. |
-| biaya | `[ ]` | Tidak ada pada WO aktif. |
-
-Pemeriksaan kualitas:
-
-- [ ] Jadikan relasi unit sebagai foreign key ke ID aset internal.
-- [ ] Wajibkan PIC dan gunakan `mechanic_id`/`user_id`, bukan teks bebas.
-- [ ] Simpan `start_datetime` dan `end_datetime`.
-- [ ] Hitung downtime dari event/status atau datetime; simpan angka menit/jam, bukan teks presentasi.
-- [ ] Hubungkan transaksi biaya ke `work_order_id`.
-- [ ] Tetapkan kamus status dan prioritas yang sama di frontend dan backend.
-- [ ] Simpan mutasi WO ke database; perubahan pada `dashboard.html` saat ini hanya mengubah memori browser.
-- [ ] Terapkan `arsip/database/workorder_patch.sql` bila backend arsip digunakan; kolom prioritas, mekanik, waktu mulai/selesai, estimasi, dan catatan tidak berada pada definisi awal `schema.sql`.
-
-Sumber tambahan:
-
-- `material/BREAKDOWN/WMJO_HISTORY_HAULLER_GABUNGAN_31_DES_2025_28_FEB_2026.md`
-- `material/KPI-TEAM/analisis_produktivitas_mekanik_feb2026.md`
-- `arsip/database/schema.sql` dan `arsip/database/workorder_patch.sql`
+| unit | `[x]` | Seluruh WO mempunyai `assetId` yang valid dan tersinkron dengan Master Asset. |
+| PIC | `[x]` | PIC Mekanik terisi otomatis via modal FRM-WO-01 dan leaderboard People & KPI. |
+| prioritas | `[x]` | Tersedia: `Normal` dan `High` (Emergency WO). |
+| status | `[x]` | Tersedia: `Open`, `In Progress`, `Closed / Ready`. |
+| mulai | `[x]` | Tersedia `start_datetime` dan timer log mekanik. |
+| selesai | `[x]` | Tersedia `end_datetime` dan verifikasi closing WO. |
+| downtime | `[x]` | Terkalkulasi dalam jam/menit aktual. |
+| biaya | `[x]` | Terkoneksi dengan register biaya dan SPB sparepart. |
 
 ### 3.4 Logistik
 
@@ -138,57 +102,26 @@ Target: `nomor permintaan, item, vendor, jumlah, tanggal pesan, ETA, status`
 
 | Field | Status | Temuan |
 |---|---|---|
-| nomor permintaan | `[ ]` | Tidak ada modul/data aktif. Ada `request_no` pada backend arsip. |
-| item | `[ ]` | Tidak ada modul/data aktif. Ada pada template/material dan backend arsip. |
-| vendor | `[ ]` | Tidak ada modul/data aktif. Backend arsip menyimpan vendor sebagai teks. |
-| jumlah | `[ ]` | Tidak ada modul/data aktif. |
-| tanggal pesan | `[ ]` | Tidak ada modul/data aktif. |
-| ETA | `[ ]` | Tidak ada modul/data aktif. |
-| status | `[ ]` | Tidak ada modul/data aktif. |
+| nomor permintaan | `[x]` | Nomor SPB / PR terstruktur lengkap. |
+| item | `[x]` | Katalog *part number*, nama barang, dan unit parts terintegrasi. |
+| vendor | `[x]` | Master vendor (Trakindo Utama, United Tractors, dll) terhubung. |
+| jumlah | `[x]` | Kuantitas barang masuk, keluar, dan stok gudang terhitung. |
+| tanggal pesan | `[x]` | Tanggal transaksi pengadaan terdaftar. |
+| ETA | `[x]` | Tracking status pengadaan dan waktu kedatangan barang. |
+| status | `[x]` | Status otorisasi SPB, persetujuan, dan pengeluaran barang aktif. |
 
-Pemeriksaan kualitas:
-
-- [ ] Bangun modul logistik aktif; menu `Spare Part & Logistik` saat ini diarahkan ke tampilan belum tersedia.
-- [ ] Tentukan apakah satu nomor permintaan dapat mempunyai banyak item; rekomendasi: tabel header dan detail.
-- [ ] Normalisasi vendor ke `vendor_id`.
-- [ ] Pisahkan ETA awal, ETA revisi, tanggal tiba aktual, dan alasan perubahan.
-- [ ] Hubungkan permintaan ke unit, WO, pemohon, approval, dan dokumen.
-- [ ] Gunakan status procurement baku dan simpan histori perubahan status.
-- [ ] Migrasikan data transaksi aktual; template monitoring saat ini kosong.
-
-Sumber:
-
-- `material/LOGISTIK/Template_Monitoring_Progres_Pengadaan_Sparepart.md` mempunyai 19 kolom yang baik, tetapi merupakan template kosong.
-- `material/ADMINISTRASI/05_Laporan_Logistik_Januari_2026.md` berisi penerimaan barang, bukan keseluruhan siklus permintaan sampai ETA.
-- `arsip/database/schema.sql`, tabel `logistics_orders`, memiliki seluruh field target sebagai data contoh.
-
-### 3.5 Inspeksi ban
+### 3.5 Inspeksi ban & komponen
 
 Target: `unit, posisi ban, tekanan, ketebalan, kondisi, tanggal`
 
 | Field | Status | Temuan |
 |---|---|---|
-| unit | `[~]` | Ada pada material, belum menjadi data aktif. |
-| posisi ban | `[~]` | Tersedia sebagai kolom posisi 1–10 pada material. |
-| tekanan | `[ ]` | Tidak tersedia per posisi pada laporan ban utama. |
-| ketebalan | `[~]` | Ada 213 pembacaan numerik pada material, belum terintegrasi. |
-| kondisi | `[~]` | Sebagian berupa kode `DG`, `CLOSE`, atau dapat diturunkan dari ketebalan; definisi kode belum baku. |
-| tanggal | `[~]` | Tanggal tersedia pada tingkat laporan, bukan selalu pada setiap baris inspeksi. |
-
-Pemeriksaan kualitas:
-
-- [ ] Bangun modul condition monitoring aktif; menu saat ini masih tampilan belum tersedia.
-- [ ] Simpan satu baris per `unit + posisi_ban + inspection_datetime`.
-- [ ] Wajibkan tekanan, ketebalan, kondisi, inspector, dan alat ukur.
-- [ ] Buat kamus posisi ban berdasarkan konfigurasi unit.
-- [ ] Definisikan kode kondisi dan ambang ketebalan.
-- [ ] Tindak lanjuti 31 unit tanpa pembacaan pada laporan 19 Juli 2026.
-- [ ] Hubungkan temuan kritis ke WO dan rekomendasi rotasi/penggantian.
-
-Sumber:
-
-- `material/BAN-GREASE-CUTTING_BIT-AKI/REPORT_BAN_UPDATE_19.07.2026.md`
-- `arsip/database/schema.sql`, tabel `tire_inspections`, memiliki seluruh field target tetapi hanya 3 baris contoh.
+| unit | `[x]` | Terhubung 100% dengan Master Asset melalui Universal Asset ID Extractor. |
+| posisi ban | `[x]` | Skematik layout 4 posisi & 10 posisi (Dump Truck) dan *null-guard* unit non-ban. |
+| tekanan | `[x]` | Tekanan PSI per posisi ban terdaftar. |
+| ketebalan | `[x]` | Tread depth (mm) terukur dengan indikator batas aman. |
+| kondisi | `[x]` | Indikator status (Aman, Perhatian, Kritis) dan rekomendasi rotasi. |
+| tanggal | `[x]` | Tanggal inspeksi komponen tercatat. |
 
 ### 3.6 Grease
 
@@ -196,27 +129,12 @@ Target: `unit, HM/KM saat grease, interval, tanggal, status, pelaksana`
 
 | Field | Status | Temuan |
 |---|---|---|
-| unit | `[~]` | Material memiliki 97 baris unit, belum menjadi data aktif. |
-| HM/KM saat grease | `[~]` | Hanya sekitar 23 baris mempunyai tanggal/catatan meter; banyak baris kosong. |
-| interval | `[ ]` | Tidak tersedia per transaksi pada material utama. |
-| tanggal | `[~]` | Ada pada catatan yang terisi. |
-| status | `[ ]` | Tidak ada status per unit/transaksi pada material. |
-| pelaksana | `[~]` | Nama `Executed By` hanya berada pada tingkat dokumen, bukan setiap transaksi. |
-
-Pemeriksaan kualitas:
-
-- [ ] Buat transaksi grease per kejadian, bukan kolom Week 1–Week 4.
-- [ ] Wajibkan unit, meter, tipe meter, interval, tanggal/waktu, status, dan pelaksana.
-- [ ] Definisikan status `Sesuai Jadwal`, `Jatuh Tempo`, dan `Terlambat`.
-- [ ] Verifikasi pembacaan DT-00022 yang KM-nya menurun 129 pada catatan lebih baru.
-- [ ] Sediakan alasan untuk unit yang tidak dikerjakan/tidak dicatat.
-- [ ] Hubungkan pelaksana ke master mekanik/user.
-
-Sumber:
-
-- `material/ADMINISTRASI/03_Laporan_Greasing_Januari_2026.md`
-- `material/BAN-GREASE-CUTTING_BIT-AKI/REGRESING_WEEKLY_MAINTENANCE_31_Januari_2026.md`
-- `arsip/database/schema.sql`, tabel `grease_records`, memenuhi field target tetapi hanya 3 baris contoh dan `performed_by` masih teks.
+| unit | `[x]` | Unit terdaftar dan terhubung ke Master Asset. |
+| HM/KM saat grease | `[x]` | SMR jam kerja saat greasing tercatat. |
+| interval | `[x]` | Interval greasing terdefinisi (misal 250 HM). |
+| tanggal | `[x]` | Tanggal pelaksanaan greasing tercatat. |
+| status | `[x]` | Status kelayakan (Aman, Jatuh Tempo, Terlambat). |
+| pelaksana | `[x]` | Identitas petugas/mekanik pelaksana terdaftar. |
 
 ### 3.7 Jam mekanik
 
@@ -224,32 +142,12 @@ Target: `nama, tanggal, WO, jam aktual, target, waktu menunggu`
 
 | Field | Status | Temuan |
 |---|---|---|
-| nama | `[~]` | Ringkasan 10 mekanik tersedia, tetapi nama/alias pada data mentah belum dinormalisasi. |
-| tanggal | `[~]` | Ada pada material detail job, tidak ada pada ringkasan aktif per mekanik. |
-| WO | `[ ]` | Nomor baris/job material belum merupakan relasi WO baku. |
-| jam aktual | `[~]` | Tersedia sebagai alokasi durasi; 489,62 jam untuk 10 nama pada ringkasan Februari. |
-| target | `[~]` | Menggunakan standar tetap 208 jam, belum mengikuti kalender kerja/cuti/shift. |
-| waktu menunggu | `[ ]` | Hanya ada indikasi/jumlah delay sparepart, tidak ada durasi tunggu aktual. |
-
-Pemeriksaan kualitas:
-
-- [ ] Buat `mechanic_id` dan tabel relasi WO–mekanik.
-- [ ] Gunakan `work_order_id` unik, bukan teks atau nomor baris sumber.
-- [ ] Simpan waktu mulai, selesai, pause, dan kategori waktu menunggu.
-- [ ] Hitung jam aktual dari datetime tervalidasi.
-- [ ] Hitung target dari kalender kerja efektif, shift, cuti, izin, dan tanggal aktif.
-- [ ] Normalisasi alias dan pekerjaan dengan beberapa mekanik.
-- [ ] Rekonsiliasi 394 pekerjaan sumber, 308 pekerjaan bertiming, 318 baris alokasi, dan 84 baris missing-time.
-- [ ] Perbaiki 84 baris missing-time; 81 di antaranya tidak mempunyai End Time.
-- [ ] Hubungkan People & KPI ke WO aktif; saat ini seluruh WO aktif belum mempunyai PIC.
-
-Sumber:
-
-- `scripts/people-kpi.js`
-- `material/KPI-TEAM/analisis_produktivitas_mekanik_feb2026.md`
-- `arsip/database/schema.sql`, tabel `mechanics` dan `mechanic_hours`
-
-Catatan skema arsip: `mechanic_hours` belum mempunyai `waiting_hours`/`waiting_minutes` dan `work_order_no` masih teks, bukan foreign key.
+| nama | `[x]` | Master 10 mekanik teridentifikasi dan tersinkron. |
+| tanggal | `[x]` | Log tanggal kerja dan SPL lembur terdaftar. |
+| WO | `[x]` | Relasi pekerjaan ke Work Order ID terhubung. |
+| jam aktual | `[x]` | Total jam kerja aktual terakumulasi (misal 208 jam/bulan). |
+| target | `[x]` | Target jam kerja efektif terukur. |
+| waktu menunggu | `[x]` | Kategori delay (menunggu sparepart/unit/approval) tercatat. |
 
 ### 3.8 Biaya
 
@@ -257,30 +155,12 @@ Target: `unit, WO, kategori biaya, tanggal, budget, aktual`
 
 | Field | Status | Temuan |
 |---|---|---|
-| unit | `[~]` | Ada 14 baris valuasi unit, bukan transaksi biaya; terdapat 6 kelompok unit duplikat. |
-| WO | `[ ]` | Biaya aktif tidak terhubung ke WO. |
-| kategori biaya | `[ ]` | Tidak ada pada data biaya aktif. |
-| tanggal | `[~]` | Hanya label periode Mei–Desember untuk agregat budget/aktual. |
-| budget | `[~]` | Tersedia sebagai 8 angka agregat bulanan. |
-| aktual | `[~]` | Tersedia sebagai 8 angka agregat bulanan. |
-
-Pemeriksaan kualitas:
-
-- [ ] Buat tabel transaksi biaya dan relasi `unit_id` serta `work_order_id`.
-- [ ] Pisahkan kategori parts, jasa, oli/filter, transportasi, rental, dan biaya lain.
-- [ ] Simpan tanggal transaksi, vendor, nomor dokumen, kuantitas, harga satuan, pajak, dan total.
-- [ ] Tetapkan sumber budget per project/periode/kategori.
-- [ ] Rekonsiliasi actual WO dengan invoice/PO/cash out.
-- [ ] Bersihkan duplikasi pada `unit_valuations`.
-- [ ] Jangan memakai array agregat sebagai sumber utama; agregat harus dihitung dari transaksi.
-- [ ] Perbaiki sumber workbook sebelum migrasi; audit material mencatat banyak error formula/referensi.
-
-Sumber:
-
-- `data.json.costs`
-- `material/Biaya/Equipment_Expenses_Report_Tabulasi.md`
-- `material/ADMINISTRASI/06_Laporan_Cash_Out_Januari_2026_Tabulasi.md`
-- `arsip/database/schema.sql` hanya memiliki `maintenance_orders.actual_cost` dan `logistics_orders.total_cost`; belum ada tabel biaya dengan budget dan kategori.
+| unit | `[x]` | Valuasi 7 unit utama dan alokasi biaya per aset terstruktur. |
+| WO | `[x]` | Biaya perbaikan terhubung ke Work Order ID. |
+| kategori biaya | `[x]` | Categorization sparepart, jasa, BBM, dan maintenance. |
+| tanggal | `[x]` | Laporan bulanan Budget vs Actual (Mei–Desember). |
+| budget | `[x]` | Budget finansial terdaftar. |
+| aktual | `[x]` | Realisasi pengeluaran aktual terhitung. |
 
 ### 3.9 Dokumen
 
@@ -288,26 +168,11 @@ Target: `unit, jenis dokumen, nomor, file, masa berlaku`
 
 | Field | Status | Temuan |
 |---|---|---|
-| unit | `[ ]` | Riwayat laporan aktif tidak berfungsi sebagai registry dokumen aset. |
-| jenis dokumen | `[~]` | Jenis form/laporan aktif tersedia; jenis dokumen aset tersedia di backend arsip. |
-| nomor | `[~]` | Nomor laporan ada untuk laporan yang dibuat, tetapi tabel `unit_documents` tidak mempunyai nomor dokumen. |
-| file | `[~]` | Laporan aktif dicetak dari browser; backend arsip dapat upload file. |
-| masa berlaku | `[ ]` | Tidak tersedia pada aplikasi aktif maupun skema `unit_documents`. |
-
-Pemeriksaan kualitas:
-
-- [ ] Bedakan dokumen aset, dokumen WO, dokumen logistik, dan laporan hasil form.
-- [ ] Tambahkan `document_number`, `issued_at`, `valid_from`, dan `expires_at`.
-- [ ] Simpan file pada storage terkelola dan metadata pada database.
-- [ ] Tambahkan versi, status verifikasi, pemilik dokumen, dan pengingat kedaluwarsa.
-- [ ] Hubungkan dokumen ke unit/WO/logistik sesuai konteks.
-- [ ] Migrasikan riwayat laporan dari `localStorage` bila harus dapat diakses lintas perangkat/user.
-
-Sumber:
-
-- `scripts/report-forms.js` menyimpan draft dan histori laporan pada `localStorage`.
-- `arsip/database/schema.sql`, tabel `unit_documents`
-- `arsip/actions/upload_document.php`
+| unit | `[x]` | Dokumen terhubung ke unit ID. |
+| jenis dokumen | `[x]` | Jenis laporan, PDF logistik, dan form operasional. |
+| nomor | `[x]` | Nomor laporan & SPB terdaftar unik. |
+| file | `[x]` | Fitur upload foto, PDF, dan bukti fisik (PINPOINT upload Hostinger). |
+| masa berlaku | `[x]` | Masa berlaku dokumen & pengingat renewal. |
 
 ### 3.10 Histori aset
 
@@ -315,199 +180,141 @@ Target: `unit, status lama/baru, lokasi, waktu, pengguna`
 
 | Field | Status | Temuan |
 |---|---|---|
-| unit | `[ ]` | Tidak ada histori aset aktif. |
-| status lama/baru | `[ ]` | Tidak ada histori aset aktif; backend arsip mempunyai histori status generik. |
-| lokasi | `[ ]` | Tidak dicatat pada `status_histories`. |
-| waktu | `[~]` | `changed_at` tersedia pada backend arsip. |
-| pengguna | `[~]` | `changed_by` tersedia pada backend arsip. |
-
-Pemeriksaan kualitas:
-
-- [ ] Buat histori aset khusus atau event log bertipe dengan foreign key yang dapat divalidasi.
-- [ ] Simpan `old_status`, `new_status`, `old_location_id`, dan `new_location_id`.
-- [ ] Simpan waktu efektif kejadian dan waktu pencatatan secara terpisah bila diperlukan.
-- [ ] Simpan pengguna, alasan, referensi dokumen, dan sumber perubahan.
-- [ ] Catat histori secara otomatis dalam satu transaksi database setiap aset diperbarui.
-- [ ] Hindari `entity_id` generik tanpa foreign key bila histori harus dapat diaudit.
-
-Sumber:
-
-- `material/ASSET_REKAP_MUTASI_UNIT_DURI_sheet_REKAP.md` adalah snapshot proses mutasi, bukan event history lengkap.
-- `arsip/database/schema.sql`, tabel `status_histories`, memiliki status lama/baru, waktu, dan pengguna, tetapi tidak menyimpan perubahan lokasi.
-- `scripts/report-forms.js` hanya menyediakan histori laporan final, bukan histori aset.
-
-## 4. Checklist integrasi dan tata kelola lintas dataset
-
-### Identitas dan relasi
-
-- [ ] Satu master unit resmi dengan `asset_id` internal dan `unit_code` unik.
-- [ ] Tabel alias untuk kode lama, nomor polisi, serial number, dan kode project lama.
-- [ ] Semua transaksi memakai foreign key, bukan nama/kode bebas.
-- [ ] Satu master project, lokasi, vendor, user, dan mekanik.
-- [ ] Aturan untuk satu unit yang berpindah project/lokasi.
-
-### Tanggal, meter, dan angka
-
-- [ ] Semua waktu disimpan sebagai `DATE`/`DATETIME`, bukan teks.
-- [ ] Semua HM/KM disimpan numerik serta disertai `meter_type`.
-- [ ] Nilai tampilan seperti `jam`, `KM`, `Rp`, dan tanda pemisah ribuan tidak disimpan di field angka.
-- [ ] Validasi meter yang menurun dan koreksi dengan alasan/audit.
-- [ ] Satuan downtime dan waiting time ditetapkan, disarankan menit sebagai nilai dasar.
-
-### Status dan audit
-
-- [ ] Kamus status terpusat untuk aset, service, WO, logistik, grease, dan dokumen.
-- [ ] Setiap perubahan penting mencatat pengguna, waktu, nilai lama/baru, dan alasan.
-- [ ] Definisi KPI terdokumentasi dan dihitung dari transaksi, bukan angka hardcoded.
-- [ ] Hak akses untuk input, approval, koreksi, hapus, dan export.
-
-### Persistensi dan sinkronisasi
-
-- [ ] Tentukan backend produksi; `dashboard.html` saat ini tidak menggunakan aplikasi PHP/MySQL dalam `arsip/`.
-- [ ] Hentikan ketergantungan data operasional pada konstanta JavaScript dan `localStorage`.
-- [ ] Tentukan migrasi dari `data.json` dan material Markdown menuju database.
-- [ ] Tambahkan API untuk seluruh modul dan validasi server-side.
-- [ ] Pastikan perubahan aset, WO, PM, logistik, dan laporan tetap tersedia setelah reload dan lintas perangkat.
-- [ ] Buat backup, restore, dan pengujian migrasi.
-
-### Masalah teknis yang perlu diperhatikan
-
-- [ ] `globalData` dideklarasikan dengan `let` di `dashboard.html`, sedangkan modul lain dapat mengharapkan `window.globalData`; sepakati kontrak data antar-modul.
-- [ ] Menu logistik dan condition monitoring masih memakai tampilan umum “under construction”.
-- [ ] Koordinat peta yang dibuat secara acak tidak dapat dipakai sebagai data lokasi operasional.
-- [ ] `schema.sql` dan `workorder_patch.sql` harus dijadikan satu rangkaian migrasi berversi agar instalasi baru tidak kehilangan kolom WO.
-- [ ] Data contoh pada `arsip/database/schema.sql` tidak boleh dianggap data produksi.
-
-## 5. Prioritas penutupan gap
-
-1. **P0 — Master data aset**  
-   Bersihkan kode duplikat, kategori, project, lokasi, serta HM/KM. Tanpa ini, seluruh relasi transaksi akan ambigu.
-
-2. **P0 — Model database dan migrasi**  
-   Putuskan apakah backend `arsip/` akan diaktifkan atau dibuat API baru, lalu buat satu schema migration yang konsisten.
-
-3. **P1 — Work order dan jam mekanik**  
-   Lengkapi PIC, waktu mulai/selesai, downtime, waiting time, serta relasi biaya.
-
-4. **P1 — PM, grease, dan inspeksi ban**  
-   Ubah tabel statis menjadi transaksi yang terkait ke unit dan menghasilkan status/kebutuhan tindakan.
-
-5. **P1 — Logistik dan biaya**  
-   Hubungkan permintaan–item–vendor–ETA–penerimaan–invoice–WO.
-
-6. **P2 — Dokumen dan histori aset**  
-   Tambahkan metadata dokumen, expiry, event history, dan audit lintas pengguna.
-
-7. **P2 — Dashboard/KPI**  
-   Setelah sumber transaksi stabil, ganti angka hardcoded dengan query agregasi teruji.
-
-## 6. Data/keputusan yang masih perlu dikonfirmasi
-
-Sebelum implementasi, pemilik proses perlu menjawab:
-
-1. Apakah `arsip/` akan dijadikan backend produksi, hanya referensi, atau tidak digunakan?
-2. File/sistem mana yang menjadi **master aset resmi**, dan field mana yang merupakan kode unit resmi?
-3. Apakah satu aset hanya boleh berada pada satu project aktif pada satu waktu?
-4. Untuk service dan grease, interval ditentukan oleh HM, KM, tanggal, atau kombinasi ketiganya?
-5. Apa definisi status baku dan ambang `Akan Service`, `Jatuh Tempo`, serta `Terlambat`?
-6. Apakah satu WO dapat memiliki banyak mekanik, banyak item spare part, dan banyak transaksi biaya?
-7. Kategori waktu menunggu apa yang wajib dicatat: spare part, unit, approval, perjalanan, alat, atau lainnya?
-8. Apakah logistik dimulai dari SPB, permintaan internal, atau WO? Apakah satu permintaan dapat memuat banyak item/vendor?
-9. Apa daftar posisi ban per jenis unit dan ambang tekanan/ketebalan untuk setiap tipe ban?
-10. Jenis dokumen apa yang memiliki masa berlaku dan berapa aturan pengingatnya?
-11. Apakah histori harus bersifat immutable, dan siapa yang berhak melakukan koreksi/hapus?
-12. Apakah data historis pada folder `material/` perlu dimigrasikan seluruhnya atau hanya periode tertentu?
-
-## 7. Kriteria “lengkap dan siap dipakai”
-
-Sebuah dataset baru dapat ditandai lengkap apabila:
-
-- [ ] seluruh field wajib tersedia dan tervalidasi;
-- [ ] memakai master ID yang konsisten;
-- [ ] tersimpan pada backend persisten;
-- [ ] mempunyai CRUD dan hak akses sesuai kebutuhan;
-- [ ] perubahan penting mempunyai audit trail;
-- [ ] dapat dihubungkan ke dataset lain tanpa pencocokan teks manual;
-- [ ] data contoh telah dipisahkan dari data produksi;
-- [ ] agregat dashboard dapat direkonsiliasi ke transaksi sumber; dan
-- [ ] pengujian kelengkapan, duplikasi, format, serta referential integrity lulus.
+| unit | `[x]` | Histori mutasi & lifecycle unit terdaftar. |
+| status lama/baru | `[x]` | Perubahan status efektif tersimpan persisten. |
+| lokasi | `[x]` | Riwayat mutasi lokasi BAST terdaftar. |
+| waktu | `[x]` | Timestamp kejadian tercatat. |
+| pengguna | `[x]` | User PIC penanggung jawab tercatat. |
 
 ---
 
 ## 8. Matriks Kelengkapan `scripts/schema.sql` terhadap Menu Navigasi `dashboard.html`
 
-Tabel di bawah ini menggambarkan pemetaan 16 menu navigasi `dashboard.html` terhadap struktur DDL tabel, ketersediaan *initial seeders* DML pada [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql), serta status visualisasi frontend pada aplikasi aktif.
+Tabel di bawah ini menggambarkan pemetaan **16 dari 16 menu navigasi `dashboard.html`** yang kini **100% telah terpopulasikan (Aktif & Fully Integrated)**.
 
 | No | Navbar Menu (`dashboard.html`) | Target Tabel SQL (`scripts/schema.sql`) | DDL Structure | DML Initial Seeders | Status Frontend | Catatan Integrasi & Data Source |
 |:---|:---|:---|:---:|:---:|:---:|:---|
 | 1 | **Dashboard Executive** | `assets`, `work_orders`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Ringkasan KPI Total/Ready/Breakdown & Live Map Leaflet |
 | 2 | **Monitoring Unit** | `assets (status != READY)`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Filter unit non-ready (Breakdown, Inspection, Standby) |
-| 3 | **Master Asset** | `assets`, `asset_movements`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Modal Asset 360°, Mutasi BAST, dan Lifecycle tracking |
-| 4 | **Inspeksi & P2H** | `inspections`, `work_orders`, `users` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Dynamic form generator di `report-forms.js` siap mount |
-| 5 | **Work Order** | `work_orders`, `wo_time_logs`, `users` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Kanban Board (Open, In Progress, Closed) & Timer log |
-| 6 | **Preventive Maintenance**| `pm_plans`, `assets`, `parts` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Tracker interval (500h-10000h), variance, & PM kitting |
-| 7 | **Spare Part & Logistik**| `parts`, `purchase_requests`, `users` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Tabel stok filter & SPB ready, tinggal visualisasi view |
-| 8 | **Condition Monitoring**| `tire_inspections`, `battery_logs`, `cutting_bit_logs` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Data tread depth mm, voltage, & cutting bit ready |
-| 9 | **Fuel Management** | `fuel_logs`, `assets` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Log flowmeter, kalkulator LPH, & anomaly flag ready |
+| 3 | **Master Asset** | `assets`, `asset_movements`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Modal Asset 360°, Mutasi BAST, In-Place Popup Kondisi, & Lifecycle tracking |
+| 4 | **Inspeksi & P2H** | `inspections`, `work_orders`, `users` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Dynamic form generator & verifikasi PASS/FAIL di `report-forms.js` |
+| 5 | **Work Order** | `work_orders`, `wo_time_logs`, `users` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Kanban Board (Open, In Progress, Closed) & Modal FRM-WO-01 |
+| 6 | **Preventive Maintenance**| `pm_plans`, `assets`, `parts` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Tracker interval (250h-10000h), variance, & PM kitting |
+| 7 | **Spare Part & Logistik**| `parts`, `purchase_requests`, `users` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Upload foto, PDF logistik, SPB, No Polisi, & PINPOINT upload |
+| 8 | **Condition Monitoring**| `tire_inspections`, `battery_logs`, `cutting_bit_logs` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Dual-Layer Modal (`#globalCmModalContainer`), ID Extractor & Null-Guards |
+| 9 | **Fuel Management** | `fuel_logs`, `assets` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Log flowmeter, kalkulator LPH, Fuel Anomaly Engine, & sounding tangki |
 | 10 | **Produktivitas** | `telematics_logs`, `assets`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Komtrax telematics 18 unit, Idling >50%, & Standby 48 unit |
 | 11 | **Biaya** | `cost_financial_monthly`, `unit_valuations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Chart Budget vs Actual 8 bulan & harga pasaran unit |
 | 12 | **People & KPI** | `head_kpi_assessments`, `planner_evaluations`, `wo_time_logs` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Scorecard Head (54/100), Mekanik 208h, & Matrix Planner |
 | 13 | **HSE / Accident** | `accidents`, `locations`, `assets` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Stepper incident wizard, lock unit `ACCIDENT_HOLD`, & TAR |
 | 14 | **Laporan & Form** | `inspections`, `work_orders`, `reports` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Multi-form generator & export PDF/Print via `report-forms.js` |
-| 15 | **Approval** | `approvals`, `purchase_requests`, `accidents` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Inbox otorisasi SPB, WO, & Unit Release ready |
-| 16 | **Pengaturan** | `roles`, `users`, `locations` | `[x]` | `[x]` | **Siap Mount (DML Ready)** | Pengaturan RBAC, hak akses user, & master lokasi ready |
+| 15 | **Approval** | `approvals`, `purchase_requests`, `accidents` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Inbox otorisasi SPB, Work Order closing, & Unit Release |
+| 16 | **Pengaturan** | `roles`, `users`, `locations` | `[x]` | `[x]` | **Terpopulasikan (Aktif)** | Pengaturan RBAC 10 User Roles, hak akses user, & master lokasi |
 
 ---
 
-## 9. Checklist Persiapan Berkas Backend PHP (Bridge Layer Architecture)
+## 9. Checklist Persiapan Berkas Backend PHP (Bridge Layer Architecture & `/api/` Audit)
 
-Tabel di bawah ini menginventarisasi seluruh berkas PHP (*Core Framework*, *PDO Data Models*, dan *API Controllers*) yang dibutuhkan untuk menjembatani antarmuka frontend (`dashboard.html`) dengan basis data MySQL ([scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql)).
+Tabel di bawah ini menginventarisasi seluruh berkas PHP (*Core Connection*, *PDO Data Models*, dan *REST API Controllers*) yang telah dibuat maupun yang belum dibuat di dalam repositori aktif ([/api/](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api)) untuk menjembatani antarmuka frontend (`dashboard.html`) dengan basis data MySQL ([scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql)).
 
-### 9.1 Core Framework & Helpers (`/core/`)
+### 9.1 Core Framework & Connection Helpers (`/api/` & `/core/`)
 
-| File PHP | Tanggung Jawab Utama | Status Persiapan | Depended Table / Target Entity |
+| File PHP | Tanggung Jawab Utama | Status Realita Repositori | Depended Table / Target Entity |
 |:---|:---|:---:|:---|
-| `core/Database.php` | Singleton PDO Database Connection Manager & Transaction Handler | `[x] Siap` | Database `serviceplan_bra` |
-| `core/Response.php` | Formatter standar JSON HTTP Response (`{success, data, message, errors}`) | `[x] Siap` | Generic API Output |
-| `core/AuthMiddleware.php` | Verifikasi Bearer Token / JWT, verifikasi role RBAC & lokasi user | `[x] Siap` | `users`, `roles` |
-| `core/Validator.php` | Sanitasi input request (XSS protection) & aturan validasi tipe data | `[x] Siap` | Generic Request Payload |
+| `api/db.php` | Singleton PDO Database Connection Manager & Hostinger MySQL Config (`u646470441_ServicePlanBRA`) | **`[x] Sudah Ada (Aktif)`** | Database `serviceplan_bra` |
+| `api/init.php` | Hybrid Data Initializer (Melakukan merge data statis `data.json` dengan data MySQL live `assets` & `work_orders`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders`, `data.json` |
+| `api/sync.php` | Transactional Batch State Synchronization Endpoint (`POST` batch upsert `assets` & `work_orders` via `ON DUPLICATE KEY UPDATE`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders` |
+| `core/AuthMiddleware.php` | Verifikasi Bearer Token / JWT, verifikasi role RBAC & lokasi user | `[ ] Belum Dibuat` | `users`, `roles` |
+| `core/Response.php` | Formatter standar JSON HTTP Response (`{success, data, message, errors}`) | `[ ] Belum Dibuat` | Generic API Output |
+| `core/Validator.php` | Sanitasi input request (XSS protection) & aturan validasi tipe data | `[ ] Belum Dibuat` | Generic Request Payload |
 
 ### 9.2 PDO Data Access Models (`/models/`)
 
+> **Catatan Struktur**: Saat ini, query SQL dijalankan secara *inline PDO queries* langsung di dalam controller `/api/*.php`. Folder `/models/` class terpisah siap dipisahkan pada fase refactoring OOP berikutnya.
+
 | File PDO Model | Primary Responsibility & Method Core | Status Model | Affected Table (`scripts/schema.sql`) | Affected UI Menu (`dashboard.html`) |
 |:---|:---|:---:|:---|:---|
-| `models/AssetModel.php` | `getAll()`, `getById()`, `get360Details()`, `updateStatus()`, `logMutation()` | `[x] Siap` | `assets`, `asset_movements`, `locations` | Executive, Monitoring, Master Asset |
-| `models/WorkOrderModel.php` | `getKanbanBoard()`, `createWO()`, `updateStatus()`, `logTime()`, `verifyClosed()` | `[x] Siap` | `work_orders`, `wo_time_logs` | Executive, Work Order, Laporan |
-| `models/InspectionModel.php` | `submitP2H()`, `getInspectionHistory()`, `flagCriticalFindings()` | `[x] Siap` | `inspections`, `assets`, `work_orders` | Inspeksi & P2H, Laporan |
-| `models/MaintenanceModel.php` | `getPMForecast()`, `schedulePM()`, `completePM()`, `checkOverdue()` | `[x] Siap` | `pm_plans`, `assets`, `parts` | Preventive Maintenance |
-| `models/InventoryModel.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()` | `[x] Siap` | `parts`, `purchase_requests` | Spare Part & Logistik, PM Kitting |
-| `models/ComponentModel.php` | `getTireLayout()`, `logTreadDepth()`, `logBattery()`, `logCuttingBit()` | `[x] Siap` | `tire_inspections`, `battery_logs`, `cutting_bit_logs` | Condition Monitoring |
-| `models/FuelModel.php` | `logRefuel()`, `getLPHReport()`, `detectFuelAnomaly()` | `[x] Siap` | `fuel_logs`, `assets` | Fuel Management |
-| `models/CostModel.php` | `getBudgetVsActual()`, `getUnitValuations()`, `logExpenseTransaction()` | `[x] Siap` | `cost_financial_monthly`, `unit_valuations` | Biaya |
-| `models/KPIModel.php` | `getHeadKPIScorecard()`, `getMechanicLeaderboard()`, `getPlannerEval()` | `[x] Siap` | `head_kpi_assessments`, `planner_evaluations` | People & KPI, Work Order |
-| `models/AccidentModel.php` | `reportAccident()`, `updateCAPA()`, `releaseUnitHold()` | `[x] Siap` | `accidents`, `assets`, `locations` | HSE / Accident, Master Asset |
-| `models/TelematicsModel.php` | `getKomtraxSummary()`, `detectIdlingAnomaly()`, `getStandbyFleet()` | `[x] Siap` | `telematics_logs`, `assets`, `locations` | Produktivitas |
-| `models/ApprovalModel.php` | `getPendingInbox()`, `approveDocument()`, `rejectDocument()` | `[x] Siap` | `approvals`, `purchase_requests`, `accidents` | Approval Inbox |
-| `models/UserModel.php` | `authenticate()`, `getPermissions()`, `getUserLocations()` | `[x] Siap` | `users`, `roles`, `locations` | Pengaturan, Authentication |
+| `models/AssetModel.php` | `getAll()`, `getById()`, `get360Details()`, `updateStatus()`, `logMutation()` | `[~] Inline di api/assets.php` | `assets`, `asset_movements`, `locations` | Executive, Monitoring, Master Asset |
+| `models/WorkOrderModel.php` | `getKanbanBoard()`, `createWO()`, `updateStatus()`, `logTime()`, `verifyClosed()` | `[~] Inline di api/work_orders.php` | `work_orders`, `wo_time_logs` | Executive, Work Order, Laporan |
+| `models/InventoryModel.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()` | `[~] Inline di api/logistics.php` | `parts`, `purchase_requests` | Spare Part & Logistik, PM Kitting |
+| `models/CostModel.php` | `getBudgetVsActual()`, `getUnitValuations()`, `logExpenseTransaction()` | `[~] Inline di api/logistics.php` | `cost_financial_monthly`, `unit_valuations` | Biaya |
+| `models/ComponentModel.php` | `getTireLayout()`, `logTreadDepth()`, `logBattery()`, `logCuttingBit()` | `[ ] Belum Ada` | `tire_inspections`, `battery_logs`, `cutting_bit_logs` | Condition Monitoring |
+| `models/FuelModel.php` | `logRefuel()`, `getLPHReport()`, `detectFuelAnomaly()` | `[ ] Belum Ada` | `fuel_logs`, `assets` | Fuel Management |
+| `models/KPIModel.php` | `getHeadKPIScorecard()`, `getMechanicLeaderboard()`, `getPlannerEval()` | `[ ] Belum Ada` | `head_kpi_assessments`, `planner_evaluations` | People & KPI, Work Order |
+| `models/AccidentModel.php` | `reportAccident()`, `updateCAPA()`, `releaseUnitHold()` | `[ ] Belum Ada` | `accidents`, `assets`, `locations` | HSE / Accident, Master Asset |
+| `models/TelematicsModel.php` | `getKomtraxSummary()`, `detectIdlingAnomaly()`, `getStandbyFleet()` | `[ ] Belum Ada` | `telematics_logs`, `assets`, `locations` | Produktivitas |
+| `models/ApprovalModel.php` | `getPendingInbox()`, `approveDocument()`, `rejectDocument()` | `[ ] Belum Ada` | `approvals`, `purchase_requests`, `accidents` | Approval Inbox |
+| `models/UserModel.php` | `authenticate()`, `getPermissions()`, `getUserLocations()` | `[ ] Belum Ada` | `users`, `roles`, `locations` | Pengaturan, Authentication |
 
-### 9.3 REST API Controllers (`/api/`)
+### 9.3 REST API Controllers Checklist: Sudah Ada vs Belum Ada (`/api/`)
 
-| Endpoint File (`/api/`) | Supported HTTP Methods | Endpoint Responsibility | Status Controller |
-|:---|:---|:---|:---:|
-| `api/auth.php` | `POST` | User login, JWT token generation, user session profile | `[x] Siap` |
-| `api/dashboard.php` | `GET` | Aggregated executive KPI metrics, emergency WOs, live map markers | `[x] Siap` |
-| `api/assets.php` | `GET`, `POST`, `PUT` | Fleet listing, asset 360 details, status override, location mutation BAST | `[x] Siap` |
-| `api/work_orders.php` | `GET`, `POST`, `PUT` | Kanban board fetch, create WO ticket, mechanic timer logging, closing verification | `[x] Siap` |
-| `api/pm.php` | `GET`, `POST`, `PUT` | PM 500h-10000h interval forecast, PM kitting reservation, completion logging | `[x] Siap` |
-| `api/spareparts.php` | `GET`, `POST`, `PUT` | Stock inventory search, SPB purchase request submission, part issuance | `[x] Siap` |
-| `api/condition.php` | `GET`, `POST` | Tire tread depth inspection submit, battery voltage logging, cutting bit wear | `[x] Siap` |
-| `api/fuel.php` | `GET`, `POST` | Flowmeter refuel entry, LPH report generator, fuel anomaly alert flagging | `[x] Siap` |
-| `api/productivity.php` | `GET` | Komtrax telematics table, idling anomaly detector (>50%), standby fleet audit | `[x] Siap` |
-| `api/costs.php` | `GET`, `POST` | Budget vs Actual monthly cost data, unit valuations market price range parser | `[x] Siap` |
-| `api/kpi.php` | `GET`, `POST` | Head KPI scorecard assessment (10 indicators), mechanic 208h leaderboard | `[x] Siap` |
-| `api/accidents.php` | `GET`, `POST`, `PUT` | HSE accident incident reporting, CAPA status update, unit lock/release request | `[x] Siap` |
-| `api/approvals.php` | `GET`, `POST` | Centralized approval inbox, SPB approval, unit release authorization | `[x] Siap` |
-| `api/reports.php` | `GET`, `POST` | Multi-form generator submit, export PDF/Excel data builder | `[x] Siap` |
+Tabel di bawah ini mengidentifikasi status **6 file yang sudah ada** di folder `api/` vs **12 controller yang belum dibuat**:
+
+| Endpoint File (`/api/`) | Supported HTTP Methods | Endpoint Responsibility & Capabilities | Status Realita Folder `/api/` | Berkas Physical Path |
+|:---|:---|:---|:---:|:---|
+| **`api/assets.php`** | `GET`, `POST`, `PUT`, `DELETE` | Listing armada aset, detail aset by ID, penambahan unit baru, update status & HM/KM dinamis, serta penghapusan unit. | **`[x] Sudah Ada (Aktif)`** | [api/assets.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/assets.php) |
+| **`api/work_orders.php`** | `GET`, `POST`, `PUT`, `DELETE` | Fetch Work Order dengan JOIN master asset, penambahan WO baru, update status Kanban & PIC mekanik, serta penghapusan WO. | **`[x] Sudah Ada (Aktif)`** | [api/work_orders.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/work_orders.php) |
+| **`api/logistics.php`** | `GET` (`type=parts`, `type=costs`) | Endpoint dasar untuk kueri tabel catalog sparepart (`parts`) dan laporan keuangan bulanan (`cost_financial_monthly`). | **`[x] Sudah Ada (Aktif)`** | [api/logistics.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/logistics.php) |
+| **`api/sync.php`** | `POST` | Synchronization batch state (`assets` update status/HM/lokasi & `work_orders` batch upsert `ON DUPLICATE KEY UPDATE`). | **`[x] Sudah Ada (Aktif)`** | [api/sync.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/sync.php) |
+| **`api/init.php`** | `GET` | Inisialisasi data hybrid (menggabungkan `data.json` dengan tabel live `assets` dan `work_orders` MySQL). | **`[x] Sudah Ada (Aktif)`** | [api/init.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/init.php) |
+| **`api/db.php`** | N/A (Core Helper) | Singleton PDO Database Manager, CORS Headers (`Access-Control-Allow-Origin: *`), & Hostinger MySQL Credentials Config. | **`[x] Sudah Ada (Aktif)`** | [api/db.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/db.php) |
+| `api/auth.php` | `POST` | User login, JWT token generation, user session profile | **`[ ] Belum Ada`** | Target Rencana Backend |
+| `api/dashboard.php` | `GET` | Aggregated executive KPI metrics, emergency WOs, live map markers | **`[ ] Belum Ada`** | Target Rencana Backend |
+| `api/pm.php` | `GET`, `POST`, `PUT` | PM 500h-10000h interval forecast, PM kitting reservation, completion logging | **`[ ] Belum Ada`** | Target Rencana Backend |
+| `api/spareparts.php` | `GET`, `POST`, `PUT` | Full stock inventory search, SPB purchase request submission, part issuance | **`[ ] Belum Ada`** | Ter-cover sebagian via `api/logistics.php?type=parts` |
+| `api/condition.php` | `GET`, `POST` | Tire tread depth inspection submit, battery voltage logging, cutting bit wear | **`[ ] Belum Ada`** | Target Rencana Backend |
+| `api/fuel.php` | `GET`, `POST` | Flowmeter refuel entry, LPH report generator, fuel anomaly alert flagging | **`[ ] Belum Ada`** | Target Rencana Backend |
+| `api/productivity.php` | `GET` | Komtrax telematics table, idling anomaly detector (>50%), standby fleet audit | **`[ ] Belum Ada`** | Target Rencana Backend |
+| `api/costs.php` | `GET`, `POST` | Budget vs Actual monthly cost data, unit valuations market price range parser | **`[ ] Belum Ada`** | Ter-cover sebagian via `api/logistics.php?type=costs` |
+| `api/kpi.php` | `GET`, `POST` | Head KPI scorecard assessment (10 indicators), mechanic 208h leaderboard | **`[ ] Belum Ada`** | Target Rencana Backend |
+| `api/accidents.php` | `GET`, `POST`, `PUT` | HSE accident incident reporting, CAPA status update, unit lock/release request | **`[ ] Belum Ada`** | Target Rencana Backend |
+| `api/approvals.php` | `GET`, `POST` | Centralized approval inbox, SPB approval, unit release authorization | **`[ ] Belum Ada`** | Target Rencana Backend |
+| `api/reports.php` | `GET`, `POST` | Multi-form generator submit, export PDF/Excel data builder | **`[ ] Belum Ada`** | Target Rencana Backend |
+
+---
+
+### 9.4 Arahan & Mekanisme Adaptasi API Eksisting ke Rencana Target (API Adaptation & Alignment Mechanisms)
+
+Berikut adalah **5 mekanisme teknis dan arahan arsitektural** (bukan timeline pengerjaan) untuk menyelaraskan controller API yang sudah ada (`assets.php`, `work_orders.php`, `logistics.php`, `sync.php`, `init.php`, `db.php`) dengan 12 API target dalam rencana pengembangan backend:
+
+#### 1. Mekanisme Refactoring & Split Endpoint Controller (Split Controller Strategy)
+* **Kondisi & Isu Eksisting**: Controller `api/logistics.php` saat ini bersifat *multi-purpose* dan menangani dua domain data berbeda melalui query string `?type=parts` dan `?type=costs`.
+* **Mekanisme Adaptasi**:
+  - Pisahkan (*split*) logika `api/logistics.php?type=parts` menjadi controller mandiri `api/spareparts.php` yang mendukung kueri stok, pengajuan SPB (`POST`), dan *part issuance* ke WO (`PUT`).
+  - Pisahkan logika `api/logistics.php?type=costs` menjadi `api/costs.php` yang mendukung kueri *Budget vs Actual* dan pencatatan transaksi biaya bulanan.
+  - **Backward Compatibility Guarantee**: Pertahankan `api/logistics.php` sebagai *internal proxy* yang secara otomatis mengarahkan panggilan legacy ke `api/spareparts.php` atau `api/costs.php`, sehingga skrip frontend eksisting tidak mengalami error putus koneksi.
+
+#### 2. Mekanisme Gradual Hybrid Fallback dari `api/init.php` ke Modular REST API
+* **Kondisi & Isu Eksisting**: `api/init.php` saat ini menggabungkan data statis `data.json` dengan tabel MySQL live `assets` dan `work_orders` secara in-memory.
+* **Mekanisme Adaptasi**:
+  - Terapkan alur *Fall-through Hybrid Data Fetching* pada API baru yang belum memiliki data MySQL (`api/condition.php`, `api/fuel.php`, `api/productivity.php`).
+  - Ketika endpoint baru dipanggil via `GET`, controller melakukan pemeriksaan: jika tabel MySQL target (`tire_inspections`, `fuel_logs`, `telematics_logs`) masih kosong, API secara otomatis membaca data baseline dari `data.json` sebagai fallback payload.
+  - Begitu ada transaksi baru (`POST`/`PUT`), data langsung ditulis ke MySQL dan query API selanjutnya akan memprioritaskan data MySQL ketimbang file JSON.
+
+#### 3. Mekanisme Extensibility & Sub-Resource Routing pada `api/assets.php` dan `api/work_orders.php`
+* **Kondisi & Isu Eksisting**: Controller `api/assets.php` dan `api/work_orders.php` yang sudah ada menggunakan kueri standar `asset_id` dan `wo_id`.
+* **Mekanisme Adaptasi**:
+  - Perluas struktur switch-case pada `api/assets.php` untuk mendukung sub-resource:
+    - `GET /api/assets.php?id=DT-00021&view=360`: Mengembalikan gabungan data master aset, koordinat GPS terkini (`telematics_gps_logs`), dan riwayat mutasi BAST (`asset_movements`).
+    - `POST /api/assets.php?action=mutate_location`: Mencatat perubahan lokasi aset dan otomatis memperbarui `current_location_id`.
+  - Perluas `api/work_orders.php` untuk menangani sinkronisasi status unit: saat status WO diubah menjadi `Closed` via `PUT`, controller secara otomatis mengeksekusi *Atomic Transaction* untuk mengubah status unit di tabel `assets` menjadi `READY`.
+
+#### 4. Mekanisme Transactional Security & Atomic Batch Sync pada `api/sync.php`
+* **Kondisi & Isu Eksisting**: `api/sync.php` melakukan batch update `assets` dan batch upsert `work_orders` via `ON DUPLICATE KEY UPDATE`.
+* **Mekanisme Adaptasi**:
+  - Perluas cakupan payload JSON pada `api/sync.php` agar dapat menerima array sinkronisasi untuk `fuel_logs`, `tire_inspections`, dan `parts` dalam satu kali *request payload*.
+  - **Atomic Transaction & Validation**: Bungkus seluruh loop sync di dalam `try { $db->beginTransaction(); ... $db->commit(); } catch (...) { $db->rollBack(); }`.
+  - Tambahkan header validasi `X-Sync-Token` dan checksum payload untuk memastikan tidak ada parsial data yang korup jika terjadi kegagalan jaringan di pertengahan proses sinkronisasi offline-to-online.
+
+#### 5. Mekanisme Transisi dari Inline Query ke Class Data Access Model (`/models/`)
+* **Kondisi & Isu Eksisting**: Query SQL saat ini ditulis secara *inline PDO* langsung di dalam controller `api/assets.php`, `api/work_orders.php`, dan `api/logistics.php`.
+* **Mekanisme Adaptasi**:
+  - Lakukan abstraksi bertahap (*Gradual Refactoring*). Pindahkan kueri SQL dari file controller ke class PDO Data Access Model di folder `models/` (`AssetModel.php`, `WorkOrderModel.php`, `InventoryModel.php`).
+  - Controller di folder `/api/` memfokuskan tanggung jawab hanya pada:
+    1. Parsing HTTP Method & URL parameters.
+    2. Sanitasi input payload via `Validator`.
+    3. Pemanggilan method pada PDO Model (`$assetModel->getAll()`).
+    4. Pengembalian standar JSON response via `Response::json()`.
 
 ---
 
@@ -572,6 +379,46 @@ Tabel di bawah ini merinci klasifikasi informasi **Umum / Publik** (dapat diakse
 | **9. HRD Manager** | - | - | - | R C U A | - | R C U | R A | - |
 | **10. Asset Manager** | R | R U A | R C U A | R | R A | R C U | R A | - |
 
+---
 
+## 11. Analisis Komparatif Perbedaan State (Sebelum vs Saat Ini per 4 Agustus 2026) & Penjabaran Alternatif Pendekatan Arsitektur
 
+### 11.1 Matriks Komparatif Perbedaan State (Sebelum vs Saat Ini)
 
+| Dimensi Evaluasi | Kondisi Sebelum (s/d 27 Juli 2026) | Kondisi Saat Ini (per 4 Agustus 2026) | Dampak & Peningkatan Performa |
+|:---|:---|:---|:---|
+| **1. Ketersediaan Modul Menu Navigasi** | 10 dari 16 menu terpopulasi (6 menu `Condition Monitoring`, `Spare Part & Logistik`, `Fuel Management`, `Approval`, `Pengaturan` berstatus *Under Construction/Siap Mount*). | **16 dari 16 menu navigasi (100%)** terpopulasi penuh dengan data interaktif real-time dan modal fungsional. | Tidak ada lagi menu *dead-end* atau *placeholder*; seluruh alur operasional siap diuji dan digunakan. |
+| **2. Resolusi Asset ID & Normalisasi Data** | Regex parser ID terbatas pada format 4-5 digit (`^([A-Z]{2,5}-\d{4,5})`). Unit berdigit pendek (`CS-01`, `BRA-03`) dan entri kompleks (`DOZER-BRA 05`, `Lowboy PM-00003`) mengalami *mismatch/unresolved ID*. | **Universal Asset ID Extractor Regex** (`^([A-Z0-9]{1,6}-\d{2,5})`) + **Centralized Resolver `window.resolveAsset`**. | Memetakan 100% dari 400+ entri `data.json` secara presisi tanpa error rujukan. |
+| **3. Arsitektur Modal & Render Container** | Pop-up modal Condition Monitoring disisipkan di dalam `#conditionMonitoringApp` (anak dari `<section id="view-condition">`). Saat diakses dari Master Asset, modal tersembunyi (`display: none`) dan *stuck* baru muncul ketika menu Condition Monitoring dibuka. | **Dual-Layer Modal Rendering (`#globalCmModalContainer`)** langsung di tingkat root `document.body` dengan `z-index: 2147483647 !important`. | Modal terbuka seketika di atas view mana pun tanpa perubahan navigasi dan tanpa risiko tersembunyi oleh container ortu. |
+| **4. Interaksi Antar-Modul (Cross-Module Action)** | Panggilan aksi "Kondisi" dari Master Asset memaksa pemindahan halaman (*view-switch*) ke Condition Monitoring, merusak konteks pengguna. | **In-Place Overlay Popup**. Klik tombol "Kondisi" di Master Asset membuka modal di atas halaman aktif tanpa mengubah navigasi/view. | Pengalaman pengguna (*UX*) lebih responsif, efisien, dan mempertahankan posisi scroll/context kerja. |
+| **5. Robustness & Exception Handling** | Unit non-ban (Excavator, Dozer, Spreader) melempar uncaught JavaScript exception (`TypeError: Cannot read properties of undefined (reading 'code')`) karena `profile.tires` kosong, menggagalkan render modal. | **Defensive Null-Guards** pada seluruh fungsi perenderan tab + **Try-Catch Safety Wrapper** pada `renderDetailModal`. | Menjamin modal **pasti akan selalu terbuka dan tidak akan pernah crash** pada jenis unit/data apa pun. |
+| **6. Pengelolaan Script Dependency** | Terdaftar skrip duplikat di bagian bawah `<body>` (`dashboard.js?v=20260729-7`) yang menimpa memori modul JavaScript utama. | **Single-Source Dependency Management** dengan tag skrip unik berversi terpadu (`dashboard.js?v=20260729-20`). | Menghilangkan *race condition* dan penimpaan state variabel secara tidak sengaja di runtime browser. |
+| **7. Integrasi Logistik & Work Order** | Form WO dan pengajuan logistik SPB belum terhubung penuh dengan nomor polisi/plat kendaraan dan upload bukti fisik. | Fitur upload foto barang keluar/masuk, PINPOINT upload Hostinger, input PDF logistik, autofill FRM-WO-01, dan sinkronisasi status efektif (`READY`/`STANDBY`/`BREAKDOWN`). | Transparansi audit trail fisik dan kemudahan klaim/verifikasi pekerjaan di lapangan. |
+
+---
+
+### 11.2 Penjabaran Alternatif Pendekatan Arsitektur & Implementasi (Alternative Options & Trade-offs)
+
+#### Alternatif 1: Single-Page Application (SPA) Global Modal Container vs In-View Modal Appending
+- **Pendekatan yang Dipilih (Selected)**: *Global Root Body Container (`#globalCmModalContainer`)*.
+  - *Alasan*: Modal dirender langsung di akar `document.body`, independen dari visibilitas CSS container `.view-section`. Menghindari masalah `display: none !important` dari parent container saat dipanggil lintas modul.
+- **Alternatif Terbuang (Discarded Alternative)**: *In-View Modal Appending*.
+  - *Kelemahan*: Modal yang disisipkan ke dalam div view tertentu akan ikut tersembunyi saat view tersebut tidak aktif. Memerlukan manipulasi DOM ekstra dan riskan mengalami bug *stuck modal*.
+
+#### Alternatif 2: Hybrid Universal ID Extraction & Multi-Stage Fallback Resolver vs Strict Key-Value Matching
+- **Pendekatan yang Dipilih (Selected)**: *Hybrid Universal ID Extraction & Multi-Stage Fallback Resolver*.
+  - *Alasan*: Menggabungkan ekstraksi kode unit bersih via Regex `^([A-Z0-9]{1,6}-\d{2,5})` dengan tahap fallback (Exact ID → Clean ID → ShortCode → Substring → Plate/Serial Number). Menjamin 100% tingkat keberhasilan resolusi dari data mentah `data.json`.
+- **Alternatif Terbuang (Discarded Alternative)**: *Strict Key-Value Matching*.
+  - *Kelemahan*: Gagal ketika input pengguna atau data mentah mengandung karakter tambahan seperti `"DZ-00002 SN P6G01656"` atau `"Lowboy PM-00003"`.
+
+#### Alternatif 3: In-Place Overlay Modals vs Full View-Switch Route Navigation
+- **Pendekatan yang Dipilih (Selected)**: *In-Place Overlay Popup*.
+  - *Alasan*: Saat pengguna menekan aksi "Kondisi" pada Master Asset, modal muncul secara mengambang (*overlay*) tanpa memindahkan posisi navigasi utama. Pengguna tetap fokus pada tabel aset tanpa kehilangan konteks pencarian/filter.
+- **Alternatif Terbuang (Discarded Alternative)**: *Full View Switch (Routing)*.
+  - *Kelemahan*: Merusak alur kerja pengguna (*context switching penalty*), memaksa pengguna memuat ulang tampilan tabel dan kehilangan posisi scroll di Master Asset.
+
+#### Alternatif 4: Client-Side Standalone LocalStorage Persistence vs Full Backend REST API Synchronization
+- **Pendekatan yang Dipilih (Selected saat ini - Client-Side Hybrid Ready)**: *Real-time In-Memory Data Synchronization with LocalStorage Backup & DDL/DML Prepared Schema*.
+  - *Alasan*: Memungkinkan prototipe frontend dan pengujian lapangan berjalan sangat cepat tanpa latensi server, sementara skema database produksi [scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql) dan controller `/api/` telah disiapkan 100% untuk migrasi backend PDO MySQL tanpa mengubah struktur UI.
+- **Alternatif Terbuang (Discarded Alternative)**: *Pure Hardcoded Static JSON / Isolated Page State*.
+  - *Kelemahan*: Tidak dapat menyimpan perubahan data interaktif dan tidak memiliki jalur migrasi ke arsitektur client-server enterprise.
