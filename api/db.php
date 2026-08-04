@@ -22,9 +22,9 @@ class Database {
             // TODO: Ganti dengan detail database Hostinger Anda nanti
             $host = '127.0.0.1';
             $port = '3306';
-            $db   = 'serviceplan_bra';
-            $user = 'root'; // User database Hostinger Anda
-            $pass = '';     // Password database Hostinger Anda
+            $db   = 'u646470441_ServicePlanBRA';
+            $user = 'u646470441_ptEClt5jaya'; // User database Hostinger Anda
+            $pass = 'OpangGOD123';     // Password database Hostinger Anda
             $charset = 'utf8mb4';
 
             $dsn = "mysql:host={$host};port={$port};dbname={$db};charset={$charset}";
