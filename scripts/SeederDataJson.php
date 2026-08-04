@@ -227,7 +227,7 @@ class SeederDataJson {
 }
 
 // CLI Execution
-if (php_sapi_name() === 'cli') {
-    $seeder = new SeederDataJson();
-    $seeder->run();
-}
+// Langsung jalankan saat diakses via browser
+$seeder = new SeederDataJson();
+$seeder->run();
+
