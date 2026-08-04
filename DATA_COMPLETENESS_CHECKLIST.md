@@ -224,6 +224,7 @@ Tabel di bawah ini menginventarisasi secara menyeluruh seluruh berkas PHP (*Core
 | **`api/db.php`** | Singleton PDO Database Connection Manager, CORS Headers Handler, & Hostinger MySQL Config (`u646470441_ServicePlanBRA`) | **`[x] Sudah Ada (Aktif)`** | Database `serviceplan_bra` | [api/db.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/db.php) (1.9 KB) |
 | **`api/init.php`** | Hybrid Data Initializer (Melakukan merge data statis `data.json` dengan data MySQL live `assets` & `work_orders`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders`, `data.json` | [api/init.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/init.php) (1.2 KB) |
 | **`api/sync.php`** | Transactional Batch State Synchronization Endpoint (`POST` batch upsert `assets` & `work_orders` via `ON DUPLICATE KEY UPDATE`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders` | [api/sync.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/sync.php) (2.6 KB) |
+| **`api/p2h.php`** | P2H Inspection Record Submission & Auto-DDL Engine (`CREATE TABLE IF NOT EXISTS p2h_records`, `POST` submission, `DELETE`) | **`[x] Sudah Ada (Aktif)`** | `p2h_records`, `inspections` | [api/p2h.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/p2h.php) (2.9 KB) |
 | `core/AuthMiddleware.php` | Verifikasi Bearer Token / JWT, verifikasi role RBAC & lokasi user | `[ ] Belum Dibuat` | `users`, `roles` | Target Rencana Framework |
 | `core/Response.php` | Formatter standar JSON HTTP Response (`{success, data, message, errors}`) | `[ ] Belum Dibuat` | Generic API Output | Target Rencana Framework |
 | `core/Validator.php` | Sanitasi input request (XSS protection) & aturan validasi tipe data | `[ ] Belum Dibuat` | Generic Request Payload | Target Rencana Framework |
@@ -236,6 +237,7 @@ Tabel di bawah ini menginventarisasi secara menyeluruh seluruh berkas PHP (*Core
 |:---|:---|:---:|:---|:---|
 | `models/AssetModel.php` | `getAll()`, `getById()`, `get360Details()`, `updateStatus()`, `logMutation()` | `[~] Inline Query di api/assets.php` | `assets`, `asset_movements`, `locations` | Executive, Monitoring, Master Asset |
 | `models/WorkOrderModel.php` | `getKanbanBoard()`, `createWO()`, `updateStatus()`, `logTime()`, `verifyClosed()` | `[~] Inline Query di api/work_orders.php` | `work_orders`, `wo_time_logs` | Executive, Work Order, Laporan |
+| `models/InspectionModel.php` | `submitP2H()`, `deleteP2H()`, `getInspectionHistory()` | `[~] Inline Query & DDL di api/p2h.php` | `p2h_records`, `inspections` | Inspeksi & P2H, Laporan |
 | `models/InventoryModel.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()` | `[~] Inline Query di api/logistics.php` | `parts`, `purchase_requests` | Spare Part & Logistik, PM Kitting |
 | `models/CostModel.php` | `getBudgetVsActual()`, `getUnitValuations()`, `logExpenseTransaction()` | `[~] Inline Query di api/logistics.php` | `cost_financial_monthly`, `unit_valuations` | Biaya |
 | `models/ComponentModel.php` | `getTireLayout()`, `logTreadDepth()`, `logBattery()`, `logCuttingBit()` | `[ ] Belum Ada` | `tire_inspections`, `battery_logs`, `cutting_bit_logs` | Condition Monitoring |
@@ -248,12 +250,13 @@ Tabel di bawah ini menginventarisasi secara menyeluruh seluruh berkas PHP (*Core
 
 ### 9.3 REST API Controllers Checklist: Sudah Ada vs Belum Ada (`/api/`)
 
-Tabel di bawah ini mengidentifikasi status **6 file yang sudah ada** di folder `api/` vs **12 controller yang belum dibuat**:
+Tabel di bawah ini mengidentifikasi status **7 file yang sudah ada** di folder `api/` vs **11 controller yang belum dibuat**:
 
 | Endpoint File (`/api/`) | Supported HTTP Methods | Endpoint Responsibility & Capabilities | Status Realita Folder `/api/` | Berkas Physical Path |
 |:---|:---|:---|:---:|:---|
 | **`api/assets.php`** | `GET`, `POST`, `PUT`, `DELETE` | Listing armada aset, detail aset by ID, penambahan unit baru, update status & HM/KM dinamis, serta penghapusan unit. | **`[x] Sudah Ada (Aktif)`** | [api/assets.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/assets.php) |
 | **`api/work_orders.php`** | `GET`, `POST`, `PUT`, `DELETE` | Fetch Work Order dengan JOIN master asset, penambahan WO baru, update status Kanban & PIC mekanik, serta penghapusan WO. | **`[x] Sudah Ada (Aktif)`** | [api/work_orders.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/work_orders.php) |
+| **`api/p2h.php`** | `POST`, `DELETE` | Submission hasil inspeksi P2H (operator, NRP, site, SMR start/end, critical fails, warnings, raw JSON) & DDL auto-create `p2h_records`. | **`[x] Sudah Ada (Aktif)`** | [api/p2h.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/p2h.php) |
 | **`api/logistics.php`** | `GET` (`type=parts`, `type=costs`) | Endpoint dasar untuk kueri tabel catalog sparepart (`parts`) dan laporan keuangan bulanan (`cost_financial_monthly`). | **`[x] Sudah Ada (Aktif)`** | [api/logistics.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/logistics.php) |
 | **`api/sync.php`** | `POST` | Synchronization batch state (`assets` update status/HM/lokasi & `work_orders` batch upsert `ON DUPLICATE KEY UPDATE`). | **`[x] Sudah Ada (Aktif)`** | [api/sync.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/sync.php) |
 | **`api/init.php`** | `GET` | Inisialisasi data hybrid (menggabungkan `data.json` dengan tabel live `assets` dan `work_orders` MySQL). | **`[x] Sudah Ada (Aktif)`** | [api/init.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/init.php) |
