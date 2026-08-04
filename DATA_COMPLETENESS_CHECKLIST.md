@@ -213,31 +213,31 @@ Tabel di bawah ini menggambarkan pemetaan **16 dari 16 menu navigasi `dashboard.
 
 ---
 
-## 9. Checklist Persiapan Berkas Backend PHP (Bridge Layer Architecture & `/api/` Audit)
+## 9. Checklist Audit & Persiapan Berkas Backend PHP (Bridge Layer Architecture & `/api/` Folder)
 
-Tabel di bawah ini menginventarisasi seluruh berkas PHP (*Core Connection*, *PDO Data Models*, dan *REST API Controllers*) yang telah dibuat maupun yang belum dibuat di dalam repositori aktif ([/api/](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api)) untuk menjembatani antarmuka frontend (`dashboard.html`) dengan basis data MySQL ([scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql)).
+Tabel di bawah ini menginventarisasi secara menyeluruh seluruh berkas PHP (*Core Connection*, *PDO Data Access Models*, dan *REST API Controllers*) yang **sudah ada (aktif)** vs **belum dibuat (rencana)** di dalam repositori aktif ([/api/](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api)) untuk menjembatani antarmuka frontend (`dashboard.html`) dengan basis data MySQL ([scripts/schema.sql](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/schema.sql)).
 
 ### 9.1 Core Framework & Connection Helpers (`/api/` & `/core/`)
 
-| File PHP | Tanggung Jawab Utama | Status Realita Repositori | Depended Table / Target Entity |
-|:---|:---|:---:|:---|
-| `api/db.php` | Singleton PDO Database Connection Manager & Hostinger MySQL Config (`u646470441_ServicePlanBRA`) | **`[x] Sudah Ada (Aktif)`** | Database `serviceplan_bra` |
-| `api/init.php` | Hybrid Data Initializer (Melakukan merge data statis `data.json` dengan data MySQL live `assets` & `work_orders`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders`, `data.json` |
-| `api/sync.php` | Transactional Batch State Synchronization Endpoint (`POST` batch upsert `assets` & `work_orders` via `ON DUPLICATE KEY UPDATE`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders` |
-| `core/AuthMiddleware.php` | Verifikasi Bearer Token / JWT, verifikasi role RBAC & lokasi user | `[ ] Belum Dibuat` | `users`, `roles` |
-| `core/Response.php` | Formatter standar JSON HTTP Response (`{success, data, message, errors}`) | `[ ] Belum Dibuat` | Generic API Output |
-| `core/Validator.php` | Sanitasi input request (XSS protection) & aturan validasi tipe data | `[ ] Belum Dibuat` | Generic Request Payload |
+| File PHP | Tanggung Jawab Utama | Status Realita Repositori | Depended Table / Target Entity | Berkas Physical Path |
+|:---|:---|:---:|:---|:---|
+| **`api/db.php`** | Singleton PDO Database Connection Manager, CORS Headers Handler, & Hostinger MySQL Config (`u646470441_ServicePlanBRA`) | **`[x] Sudah Ada (Aktif)`** | Database `serviceplan_bra` | [api/db.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/db.php) (1.9 KB) |
+| **`api/init.php`** | Hybrid Data Initializer (Melakukan merge data statis `data.json` dengan data MySQL live `assets` & `work_orders`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders`, `data.json` | [api/init.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/init.php) (1.2 KB) |
+| **`api/sync.php`** | Transactional Batch State Synchronization Endpoint (`POST` batch upsert `assets` & `work_orders` via `ON DUPLICATE KEY UPDATE`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders` | [api/sync.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/sync.php) (2.6 KB) |
+| `core/AuthMiddleware.php` | Verifikasi Bearer Token / JWT, verifikasi role RBAC & lokasi user | `[ ] Belum Dibuat` | `users`, `roles` | Target Rencana Framework |
+| `core/Response.php` | Formatter standar JSON HTTP Response (`{success, data, message, errors}`) | `[ ] Belum Dibuat` | Generic API Output | Target Rencana Framework |
+| `core/Validator.php` | Sanitasi input request (XSS protection) & aturan validasi tipe data | `[ ] Belum Dibuat` | Generic Request Payload | Target Rencana Framework |
 
 ### 9.2 PDO Data Access Models (`/models/`)
 
-> **Catatan Struktur**: Saat ini, query SQL dijalankan secara *inline PDO queries* langsung di dalam controller `/api/*.php`. Folder `/models/` class terpisah siap dipisahkan pada fase refactoring OOP berikutnya.
+> **Catatan Struktur Database**: Saat ini, query SQL dieksekusi secara *inline PDO queries* langsung di dalam controller `/api/*.php`. Folder `/models/` class terpisah siap dipisahkan pada fase refactoring OOP berikutnya.
 
-| File PDO Model | Primary Responsibility & Method Core | Status Model | Affected Table (`scripts/schema.sql`) | Affected UI Menu (`dashboard.html`) |
+| File PDO Model | Primary Responsibility & Method Core | Status Model per Realita Repo | Affected Table (`scripts/schema.sql`) | Affected UI Menu (`dashboard.html`) |
 |:---|:---|:---:|:---|:---|
-| `models/AssetModel.php` | `getAll()`, `getById()`, `get360Details()`, `updateStatus()`, `logMutation()` | `[~] Inline di api/assets.php` | `assets`, `asset_movements`, `locations` | Executive, Monitoring, Master Asset |
-| `models/WorkOrderModel.php` | `getKanbanBoard()`, `createWO()`, `updateStatus()`, `logTime()`, `verifyClosed()` | `[~] Inline di api/work_orders.php` | `work_orders`, `wo_time_logs` | Executive, Work Order, Laporan |
-| `models/InventoryModel.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()` | `[~] Inline di api/logistics.php` | `parts`, `purchase_requests` | Spare Part & Logistik, PM Kitting |
-| `models/CostModel.php` | `getBudgetVsActual()`, `getUnitValuations()`, `logExpenseTransaction()` | `[~] Inline di api/logistics.php` | `cost_financial_monthly`, `unit_valuations` | Biaya |
+| `models/AssetModel.php` | `getAll()`, `getById()`, `get360Details()`, `updateStatus()`, `logMutation()` | `[~] Inline Query di api/assets.php` | `assets`, `asset_movements`, `locations` | Executive, Monitoring, Master Asset |
+| `models/WorkOrderModel.php` | `getKanbanBoard()`, `createWO()`, `updateStatus()`, `logTime()`, `verifyClosed()` | `[~] Inline Query di api/work_orders.php` | `work_orders`, `wo_time_logs` | Executive, Work Order, Laporan |
+| `models/InventoryModel.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()` | `[~] Inline Query di api/logistics.php` | `parts`, `purchase_requests` | Spare Part & Logistik, PM Kitting |
+| `models/CostModel.php` | `getBudgetVsActual()`, `getUnitValuations()`, `logExpenseTransaction()` | `[~] Inline Query di api/logistics.php` | `cost_financial_monthly`, `unit_valuations` | Biaya |
 | `models/ComponentModel.php` | `getTireLayout()`, `logTreadDepth()`, `logBattery()`, `logCuttingBit()` | `[ ] Belum Ada` | `tire_inspections`, `battery_logs`, `cutting_bit_logs` | Condition Monitoring |
 | `models/FuelModel.php` | `logRefuel()`, `getLPHReport()`, `detectFuelAnomaly()` | `[ ] Belum Ada` | `fuel_logs`, `assets` | Fuel Management |
 | `models/KPIModel.php` | `getHeadKPIScorecard()`, `getMechanicLeaderboard()`, `getPlannerEval()` | `[ ] Belum Ada` | `head_kpi_assessments`, `planner_evaluations` | People & KPI, Work Order |
