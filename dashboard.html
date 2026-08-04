@@ -4123,26 +4123,52 @@
             function openModal(id) { window.openModal(id); }
             function closeModal(id) { window.closeModal(id); }
 
-            function submitNewAsset() {
+            async function submitNewAsset() {
                 const id = document.getElementById('na-id').value;
                 const cat = document.getElementById('na-cat').value;
                 const loc = document.getElementById('na-loc').value;
                 if (!id) return alert('ID harus diisi');
-                globalData.assets.unshift({
-                    id: id,
-                    type: 'Heavy Equipment',
-                    category: cat,
-                    status: 'READY',
-                    location: loc || 'Yard',
-                    lastUpdate: 'Baru saja',
-                    statusSource: 'Master Asset',
-                    statusReference: 'Registrasi unit baru',
-                    statusEvents: []
-                });
-                rebuildFleetSummary();
-                closeModal('modalNewAsset');
-                alert('Aset berhasil didaftarkan');
-                window.syncFleetState();
+
+                try {
+                    // Simpan ke database melalui API
+                    const response = await fetch('api/assets.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            asset_id: id,
+                            asset_code: id,
+                            category: cat,
+                            type: 'Heavy Equipment',
+                            status: 'READY'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        // Update UI state
+                        globalData.assets.unshift({
+                            id: id,
+                            type: 'Heavy Equipment',
+                            category: cat,
+                            status: 'READY',
+                            location: loc || 'Yard',
+                            lastUpdate: 'Baru saja',
+                            statusSource: 'Master Asset',
+                            statusReference: 'Registrasi unit baru',
+                            statusEvents: []
+                        });
+                        rebuildFleetSummary();
+                        closeModal('modalNewAsset');
+                        alert('Aset berhasil didaftarkan ke database');
+                        window.syncFleetState();
+                    } else {
+                        alert('Gagal menyimpan aset ke database: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error saving asset:', error);
+                    alert('Terjadi kesalahan jaringan atau server saat menyimpan aset');
+                }
             }
 
             function triggerUpdateStatus() {
@@ -4150,7 +4176,7 @@
                 window.openIntegratedStatusUpdate(id);
             }
 
-            function submitUpdateStatus() {
+            async function submitUpdateStatus() {
                 const id = document.getElementById('us-id').value;
                 const status = document.getElementById('us-status').value;
                 const loc = document.getElementById('us-loc').value;
@@ -4163,35 +4189,79 @@
                         alert(`Unit belum dapat diubah ke READY karena ${activeWo.woId} masih aktif. Tutup Work Order terlebih dahulu.`);
                         return;
                     }
-                    if (loc) asset.location = loc;
-                    setIntegratedAssetStatus(id, status, 'Master Asset', 'Update status manual', notes);
 
-                    if (status === 'BREAKDOWN') {
-                        if (!activeWo) {
-                            const woId = 'WO-26-' + String(Date.now()).slice(-5);
-                            globalData.work_orders.unshift({
-                                woId,
-                                assetId: asset.id,
-                                location: asset.location,
-                                issue: notes || 'Status unit diperbarui menjadi BREAKDOWN dari Master Asset',
-                                downtime: '0 jam',
-                                status: 'Open',
-                                priority: 'High',
-                                assignedTo: 'Pending',
-                                source: 'Master Asset'
-                            });
-                            asset.statusReference = woId;
-                            alert(`Status diupdate ke BREAKDOWN. Tiket WO darurat dibuat otomatis: ${woId}`);
-                        } else {
-                            asset.statusReference = activeWo.woId;
-                            alert(`Status diupdate ke BREAKDOWN dan ditautkan ke WO aktif ${activeWo.woId}.`);
+                    try {
+                        let payload = {
+                            assets: [{
+                                id: id,
+                                status: status,
+                                location: loc || asset.location,
+                                last_hm_km: asset.last_hm_km || 0
+                            }],
+                            work_orders: []
+                        };
+
+                        if (status === 'BREAKDOWN') {
+                            if (!activeWo) {
+                                const woId = 'WO-26-' + String(Date.now()).slice(-5);
+                                payload.work_orders.push({
+                                    woId: woId,
+                                    assetId: id,
+                                    status: 'Open',
+                                    priority: 'High',
+                                    issue: notes || 'Status unit diperbarui menjadi BREAKDOWN dari Master Asset',
+                                    assignedTo: 'Pending',
+                                    downtime: '0 jam'
+                                });
+                            }
                         }
-                    } else {
-                        alert('Status berhasil diupdate');
+
+                        const response = await fetch('api/sync.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.status === 'success') {
+                            if (loc) asset.location = loc;
+                            setIntegratedAssetStatus(id, status, 'Master Asset', 'Update status manual', notes);
+
+                            if (status === 'BREAKDOWN') {
+                                if (!activeWo) {
+                                    const woId = payload.work_orders[0].woId;
+                                    globalData.work_orders.unshift({
+                                        woId,
+                                        assetId: id,
+                                        location: asset.location,
+                                        issue: payload.work_orders[0].issue,
+                                        downtime: '0 jam',
+                                        status: 'Open',
+                                        priority: 'High',
+                                        assignedTo: 'Pending',
+                                        source: 'Master Asset'
+                                    });
+                                    asset.statusReference = woId;
+                                    alert(`Status diupdate ke BREAKDOWN dan tersimpan di database. Tiket WO darurat dibuat otomatis: ${woId}`);
+                                } else {
+                                    asset.statusReference = activeWo.woId;
+                                    alert(`Status diupdate ke BREAKDOWN di database dan ditautkan ke WO aktif ${activeWo.woId}.`);
+                                }
+                            } else {
+                                alert('Status berhasil diupdate ke database');
+                            }
+                            
+                            closeModal('modalUpdateStatus');
+                            window.syncFleetState();
+                        } else {
+                            alert('Gagal mengupdate status ke database: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error updating status:', error);
+                        alert('Terjadi kesalahan jaringan atau server saat mengupdate status');
                     }
                 }
-                closeModal('modalUpdateStatus');
-                window.syncFleetState();
             }
 
             function openNewWOModal() {
@@ -4200,7 +4270,7 @@
                 openModal('modalNewWO');
             }
 
-            function submitNewWO() {
+            async function submitNewWO() {
                 const id = document.getElementById('nwo-id').value;
                 const prio = document.getElementById('nwo-prio').value;
                 const issue = document.getElementById('nwo-issue').value;
@@ -4211,20 +4281,67 @@
                 const woId = 'WO-26-' + Math.floor(Math.random() * 1000);
                 const asset = globalData.assets.find(a => a.id === id);
 
-                if (down === 'Yes' && asset && asset.status !== 'BREAKDOWN') {
-                    setIntegratedAssetStatus(id, 'BREAKDOWN', 'Work Order', woId, issue);
-                    alert(`Unit ${id} otomatis diubah statusnya menjadi BREAKDOWN karena laporan downtime`);
-                } else if (down === 'No' && asset && asset.status === 'READY') {
-                    setIntegratedAssetStatus(id, 'STANDBY', 'Work Order', woId, issue);
+                try {
+                    let payload = {
+                        work_orders: [{
+                            woId: woId,
+                            assetId: id,
+                            status: 'Open',
+                            priority: prio,
+                            issue: issue,
+                            assignedTo: 'Belum ada',
+                            downtime: down === 'Yes' ? '0' : '-'
+                        }],
+                        assets: []
+                    };
+
+                    let newAssetStatus = null;
+                    if (down === 'Yes' && asset && asset.status !== 'BREAKDOWN') {
+                        newAssetStatus = 'BREAKDOWN';
+                    } else if (down === 'No' && asset && asset.status === 'READY') {
+                        newAssetStatus = 'STANDBY';
+                    }
+
+                    if (newAssetStatus) {
+                        payload.assets.push({
+                            id: id,
+                            status: newAssetStatus,
+                            location: asset.location,
+                            last_hm_km: asset.last_hm_km || 0
+                        });
+                    }
+
+                    // Gunakan api/sync.php agar insert WO dan update status unit terjadi secara transaksional
+                    const response = await fetch('api/sync.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        if (newAssetStatus) {
+                            setIntegratedAssetStatus(id, newAssetStatus, 'Work Order', woId, issue);
+                            if (newAssetStatus === 'BREAKDOWN') {
+                                alert(`Unit ${id} otomatis diubah statusnya menjadi BREAKDOWN karena laporan downtime`);
+                            }
+                        }
+
+                        globalData.work_orders.unshift({
+                            woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: issue, downtime: down === 'Yes' ? '0' : '-', status: 'Open', priority: prio, assignedTo: 'Belum ada'
+                        });
+
+                        closeModal('modalNewWO');
+                        alert('Work Order berhasil dibuat dan tersimpan di database');
+                        window.syncFleetState();
+                    } else {
+                        alert('Gagal membuat Work Order: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error creating WO:', error);
+                    alert('Terjadi kesalahan jaringan atau server saat membuat Work Order');
                 }
-
-                globalData.work_orders.unshift({
-                    woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: issue, downtime: down === 'Yes' ? '0' : '-', status: 'Open', priority: prio, assignedTo: 'Pending'
-                });
-
-                closeModal('modalNewWO');
-                alert('Work Order berhasil dibuat');
-                window.syncFleetState();
             }
 
             function refreshAllViews() {
