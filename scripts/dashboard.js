@@ -15195,7 +15195,7 @@
     // 4. SUBMIT FORM & AUTOMATIC WORK ORDER TRIGGER ENGINE
     // =========================================================================
 
-    window.submitP2HForm = function () {
+    window.submitP2HForm = async function () {
         const assetId = document.getElementById('p2hFormAssetSelect').value;
         const operator = document.getElementById('p2hFormOperator').value.trim();
         const nrp = document.getElementById('p2hFormNRP').value.trim();
@@ -15243,6 +15243,23 @@
             answers: { ...currentFormData.answers },
             itemNotes: { ...currentFormData.notes }
         };
+
+        try {
+            const response = await fetch('api/p2h.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newP2H)
+            });
+            const result = await response.json();
+            if (result.status !== 'success') {
+                alert('Gagal menyimpan P2H ke database: ' + result.message);
+                return;
+            }
+        } catch (error) {
+            console.error('Error saving P2H:', error);
+            alert('Terjadi kesalahan jaringan atau server saat menyimpan P2H.');
+            return;
+        }
 
         // Add to History
         inspectionHistory.unshift(newP2H);
@@ -15325,6 +15342,30 @@
     // 5. HISTORY TABLE & FILTERING
     // =========================================================================
 
+    window.deleteP2H = async function(id) {
+        if (!confirm(`Apakah Anda yakin ingin menghapus tiket P2H ${id}?`)) return;
+        try {
+            const response = await fetch(`api/p2h.php?id=${encodeURIComponent(id)}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                inspectionHistory = inspectionHistory.filter(x => x.id !== id);
+                if (window.globalData && window.globalData.inspections) {
+                    window.globalData.inspections = window.globalData.inspections.filter(x => x.id !== id);
+                }
+                alert('Tiket P2H berhasil dihapus.');
+                renderHistoryTable();
+                updateKpiSummary();
+            } else {
+                alert('Gagal menghapus P2H: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error deleting P2H:', error);
+            alert('Terjadi kesalahan jaringan atau server.');
+        }
+    };
+
     function renderHistoryTable() {
         const tbody = document.getElementById('tbP2HHistoryBody');
         if (!tbody) return;
@@ -15354,6 +15395,9 @@
                     <td>
                         <button type="button" class="btn" style="padding:3px 8px; font-size:0.78rem; background:var(--primary); color:#fff;" onclick="window.viewP2HDetail('${escapeHtml(p.id)}')">
                             <i class="fa-solid fa-eye"></i> Detail
+                        </button>
+                        <button type="button" class="btn" style="padding:3px 8px; font-size:0.78rem; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; margin-left:4px;" onclick="window.deleteP2H('${escapeHtml(p.id)}')">
+                            <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
                 </tr>
