@@ -3731,6 +3731,11 @@
                                     title="Lihat / Buat Work Order Unit ${escapeHtml(asset.id)}">
                                     <i class="fa-solid fa-wrench"></i> WO
                                 </button>
+                                <button type="button" class="btn btn-sm" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:4px 8px; font-size:0.75rem; font-weight:700; white-space:nowrap; border-radius:5px; display:inline-flex; align-items:center; gap:4px;" 
+                                    onclick="event.stopPropagation(); deleteAsset('${escapeHtml(asset.id)}')" 
+                                    title="Hapus Unit ${escapeHtml(asset.id)} dari sistem">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                                 <button type="button" class="btn btn-sm" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; padding:4px 8px; font-size:0.75rem; font-weight:700; white-space:nowrap; border-radius:5px; display:inline-flex; align-items:center; gap:4px;" 
                                     onclick="ConditionMonitoring.openForAsset('${escapeHtml(asset.id)}', 'overview')" 
                                     title="Cek Kesehatan Komponen Condition Monitoring Unit ${escapeHtml(asset.id)}">
@@ -4168,6 +4173,31 @@
                 } catch (error) {
                     console.error('Error saving asset:', error);
                     alert('Terjadi kesalahan jaringan atau server saat menyimpan aset');
+                }
+            }
+
+            async function deleteAsset(id) {
+                if (!confirm(`Apakah Anda yakin ingin menghapus unit ${id} secara permanen? Data yang sudah dihapus tidak dapat dikembalikan.`)) return;
+
+                try {
+                    const response = await fetch(`api/assets.php?id=${encodeURIComponent(id)}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        if (globalData && globalData.assets) {
+                            globalData.assets = globalData.assets.filter(a => a.id !== id);
+                        }
+                        alert(`Unit ${id} berhasil dihapus dari database`);
+                        window.syncFleetState();
+                    } else {
+                        alert('Gagal menghapus unit: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error deleting asset:', error);
+                    alert('Terjadi kesalahan jaringan atau server saat menghapus unit');
                 }
             }
 
