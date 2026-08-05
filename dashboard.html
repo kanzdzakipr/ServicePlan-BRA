@@ -3611,9 +3611,78 @@
                         if (typeof renderTableMasuk === 'function') renderTableMasuk();
                         if (typeof renderTableKeluar === 'function') renderTableKeluar();
                     }
-                    const response = await fetch('api/init.php');
-                    if (!response.ok) throw new Error('Data not found');
-                    globalData = await response.json();
+                    
+                    // Fetch all initialization data concurrently
+                    const [resInit, resFuel, resPm, resTire] = await Promise.all([
+                        fetch('api/init.php'),
+                        fetch('api/fuel_logs.php'),
+                        fetch('api/pm_plans.php'),
+                        fetch('api/tire_inspections.php')
+                    ]);
+
+                    if (!resInit.ok) throw new Error('Data not found');
+                    
+                    globalData = await resInit.json();
+                    
+                    // Assign Fuel Logs
+                    if (resFuel.ok) {
+                        const fuelData = await resFuel.json();
+                        if (fuelData.status === 'success') {
+                            globalFuelLogs = fuelData.data.map(f => ({
+                                trxId: f.fuel_log_id,
+                                timeStr: f.refuel_date,
+                                unitId: f.asset_id,
+                                category: f.asset_code || 'Unknown',
+                                location: 'Auto',
+                                fuelman: 'System',
+                                operator: f.driver_name || 'Unknown',
+                                meterType: 'HM/KM',
+                                meterPrev: f.flowmeter_start,
+                                meterCurr: f.flowmeter_end,
+                                meterDiff: f.current_hm_km,
+                                liter: f.liters_issued,
+                                rateActual: f.calculated_lph,
+                                targetRate: f.baseline_lph,
+                                deviationPct: 0,
+                                costRp: f.liters_issued * 12000,
+                                anomalyStatus: f.is_anomaly == 1 ? 'RED' : 'GREEN',
+                                status: 'Verified',
+                                notes: f.notes
+                            }));
+                        }
+                    }
+
+                    // Assign PM Plans
+                    if (resPm.ok) {
+                        const pmData = await resPm.json();
+                        if (pmData.status === 'success') {
+                            globalPmComparisons = pmData.data.map(p => ({
+                                unitId: p.asset_id,
+                                model: p.asset_code || 'Unknown',
+                                schedule: 'PM ' + p.interval_hm + ' Hours',
+                                location: 'Workshop',
+                                planCost: 0,
+                                actCost: 0,
+                                diff: 0,
+                                notes: p.planner_note || ''
+                            }));
+                        }
+                    }
+
+                    // Assign Tire Inspections
+                    if (resTire.ok) {
+                        const tireData = await resTire.json();
+                        if (tireData.status === 'success') {
+                            // tireInspectionStore maps positions to { tread, pressure }
+                            tireData.data.forEach(t => {
+                                tireInspectionStore[t.tire_position] = {
+                                    tread: t.tread_depth_mm,
+                                    pressure: t.air_pressure_psi
+                                };
+                            });
+                        }
+                    }
+
                     normalizeAssetRegistry(globalData);
                     restoreFleetState();
                     linkExistingWorkflowRecords();
@@ -4781,98 +4850,9 @@
             // ==========================================
             // COMPREHENSIVE FUEL MANAGEMENT ENGINE
             // ==========================================
-            let globalFuelLogs = [
-                {
-                    trxId: 'BBM-20260727-0001',
-                    timeStr: 'Hari ini, 10:15',
-                    unitId: 'EXC-210 (Pit)',
-                    category: 'Excavator',
-                    location: 'Pit',
-                    fuelman: 'Fuelman A',
-                    operator: 'Budi Santoso',
-                    meterType: 'HM',
-                    meterPrev: 8431,
-                    meterCurr: 8450,
-                    meterDiff: 19,
-                    liter: 361,
-                    rateActual: 19.0,
-                    targetRate: 15.0,
-                    deviationPct: 26.7,
-                    costRp: 4332000,
-                    anomalyStatus: 'RED',
-                    status: 'Diajukan',
-                    notes: 'Beban kerja heavy excavation di pit utama'
-                },
-                {
-                    trxId: 'BBM-20260726-0042',
-                    timeStr: 'Kemarin, 16:30',
-                    unitId: 'DT-054 - B 9701 PYW',
-                    category: 'Dump Truck',
-                    location: 'Borrow Pit',
-                    fuelman: 'Fuelman B',
-                    operator: 'Rahmat Hidayat',
-                    meterType: 'KM',
-                    meterPrev: 45200,
-                    meterCurr: 45760,
-                    meterDiff: 560,
-                    liter: 200,
-                    rateActual: 2.8,
-                    targetRate: 3.5,
-                    deviationPct: -20.0,
-                    costRp: 2400000,
-                    anomalyStatus: 'ORANGE',
-                    status: 'Diajukan',
-                    notes: 'Jalur hauling licin & tanjakan curam'
-                },
-                {
-                    trxId: 'BBM-20260726-0038',
-                    timeStr: 'Kemarin, 14:00',
-                    unitId: 'GRD-535 - GD535-5',
-                    category: 'Motor Grader',
-                    location: 'Yard KM 12 Duri',
-                    fuelman: 'Fuelman A',
-                    operator: 'Supriadi',
-                    meterType: 'HM',
-                    meterPrev: 3120,
-                    meterCurr: 3130,
-                    meterDiff: 10,
-                    liter: 120,
-                    rateActual: 12.0,
-                    targetRate: 13.0,
-                    deviationPct: -7.7,
-                    costRp: 1440000,
-                    anomalyStatus: 'GREEN',
-                    status: 'Terverifikasi',
-                    notes: 'Penataan jalan yard rutin'
-                },
-                {
-                    trxId: 'BBM-20260726-0012',
-                    timeStr: '26 Juli 2026, 09:00',
-                    unitId: 'DZ-00002 SN P6G01656',
-                    category: 'Bulldozer',
-                    location: 'Yard KM 12 Duri',
-                    fuelman: 'Logistik Duri',
-                    operator: 'Ahmad Dahlan',
-                    meterType: 'HM',
-                    meterPrev: 5120,
-                    meterCurr: 5130,
-                    meterDiff: 10,
-                    liter: 180,
-                    rateActual: 18.0,
-                    targetRate: 16.0,
-                    deviationPct: 12.5,
-                    costRp: 2160000,
-                    anomalyStatus: 'ORANGE',
-                    status: 'Diajukan',
-                    notes: 'Ripping material keras'
-                }
-            ];
+            let globalFuelLogs = [];
 
-            let globalTanks = [
-                { id: 'TANK-01', name: 'Fuel Tank Yard Duri', location: 'Yard KM 12 Duri', capacity: 25000, sysBalance: 18500, phySounding: 18420, diff: -80, status: 'Aman', lastUpdate: 'Hari ini, 07:00' },
-                { id: 'FT-01', name: 'Fuel Truck 01 Site Alpha', location: 'Pit', capacity: 8000, sysBalance: 4200, phySounding: 4190, diff: -10, status: 'Aman', lastUpdate: 'Hari ini, 08:30' },
-                { id: 'TANK-02', name: 'Fuel Tank Borrow Pit', location: 'Borrow Pit', capacity: 15000, sysBalance: 10200, phySounding: 10200, diff: 0, status: 'Nominal', lastUpdate: 'Kemarin, 17:00' }
-            ];
+            let globalTanks = [];
 
             window.initFuelEngine = function (data) {
                 if (!data) return;
@@ -5495,12 +5475,7 @@
                 { poId: 'SPPU-001-02-26', date: '10 Feb 2026', vendor: 'Kas Operasional Zona 4', desc: 'Pengeluaran Uang Tanggap Darurat Repair Site', woId: 'WO-26-870', spbId: 'SPB-2026-02-004', subtotal: 3585000, ppn: 0, total: 3585000, status: 'Lunas' }
             ];
 
-            let globalPmComparisons = [
-                { unitId: 'EXC-210 (Pit)', model: 'Komatsu PC210-10M0', schedule: 'PM 250 Hours', location: 'Pit', planCost: 4500000, actCost: 4850000, diff: -350000, notes: 'Penggantian filter oli & solar tambahan' },
-                { unitId: 'DT-054', model: 'Mercedes Axor 2528 R', schedule: 'PM 500 Hours', location: 'Borrow Pit', planCost: 7200000, actCost: 6900000, diff: 300000, notes: 'Sesuai jadwal tanpa penggantian ekstra' },
-                { unitId: 'DZ-088', model: 'Komatsu D85ESS-2', schedule: 'PM 1000 Hours', location: 'Yard KM 12 Duri', planCost: 15000000, actCost: 16800000, diff: -1800000, notes: 'Penggantian oli transmisi & final drive' },
-                { unitId: 'GRD-120K', model: 'CAT 120K Grader', schedule: 'PM 250 Hours', location: 'Yard Prabumulih', planCost: 5000000, actCost: 4900000, diff: 100000, notes: 'Pengisian ulang gemuk & oli sistem' }
-            ];
+            let globalPmComparisons = [];
 
             window.initBiayaEngine = function (costsData) {
                 renderCostDashboard();
@@ -6186,19 +6161,7 @@
                 alert('Seluruh konfigurasi sistem (RBAC 10 Roles, Threshold SLA, Site Project & Security) berhasil disimpan!');
             };
 
-            // Condition Monitoring: Tire Inspection Data Store & Highlight Engine
-            let tireInspectionStore = {
-                'FL': { tread: 11.2, pressure: 110 },
-                'FR': { tread: 10.8, pressure: 108 },
-                'R1L': { tread: 9.5, pressure: 112 },
-                'R1LI': { tread: 8.2, pressure: 105 },
-                'R1R': { tread: 9.0, pressure: 110 },
-                'R1RI': { tread: 7.8, pressure: 104 },
-                'R2L': { tread: 6.5, pressure: 98 },
-                'R2LI': { tread: 5.4, pressure: 95 },
-                'R2R': { tread: 3.0, pressure: 85 },
-                'R2RI': { tread: 2.8, pressure: 82 }
-            };
+            let tireInspectionStore = {};
 
             window.inspectTire = function (tireCode) {
                 if (!tireCode) return;
