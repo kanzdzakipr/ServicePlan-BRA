@@ -3049,7 +3049,7 @@
                 openModal('modalWoStatusConfirm');
             };
 
-            window.submitWoStatusChange = function () {
+            window.submitWoStatusChange = async function () {
                 const woId = document.getElementById('woConfirmId').value;
                 const targetStatus = document.getElementById('woConfirmTargetStatus').value;
                 const assetId = document.getElementById('woConfirmAssetId').value;
@@ -3066,45 +3066,68 @@
                 }
 
                 const previousStatus = wo.status;
-                wo.status = targetStatus;
-                wo.lastUpdate = new Date().toISOString();
-                wo.assignedTo = mechanic;
-                wo.statusHistory = Array.isArray(wo.statusHistory) ? wo.statusHistory : [];
-                wo.statusHistory.unshift({
-                    fromStatus: previousStatus,
-                    toStatus: targetStatus,
-                    mechanic,
-                    action: actionLog,
-                    updatedAt: wo.lastUpdate
-                });
-                if (actionLog) wo.issue = `${wo.issue || ''} | [Log ${mechanic}]: ${actionLog}`;
+                const payload = {
+                    wo_id: woId,
+                    status: targetStatus,
+                    assigned_mechanic: mechanic,
+                    issue_description: `${wo.issue || ''} | [Log ${mechanic}]: ${actionLog}`
+                };
 
-                // Tempatkan WO terbaru di urutan pertama agar perpindahannya langsung
-                // terlihat, termasuk pada kolom Closed yang berisi ratusan card.
-                const updatedWoIndex = globalData.work_orders.findIndex(item => item.woId === woId);
-                if (updatedWoIndex > 0) {
-                    globalData.work_orders.splice(updatedWoIndex, 1);
-                    globalData.work_orders.unshift(wo);
+                try {
+                    const response = await fetch('./api/work_orders.php', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const res = await response.json();
+
+                    if (res.status === 'success') {
+                        wo.status = targetStatus;
+                        wo.lastUpdate = new Date().toISOString();
+                        wo.assignedTo = mechanic;
+                        wo.statusHistory = Array.isArray(wo.statusHistory) ? wo.statusHistory : [];
+                        wo.statusHistory.unshift({
+                            fromStatus: previousStatus,
+                            toStatus: targetStatus,
+                            mechanic,
+                            action: actionLog,
+                            updatedAt: wo.lastUpdate
+                        });
+                        if (actionLog) wo.issue = payload.issue_description;
+
+                        // Tempatkan WO terbaru di urutan pertama agar perpindahannya langsung
+                        // terlihat, termasuk pada kolom Closed yang berisi ratusan card.
+                        const updatedWoIndex = globalData.work_orders.findIndex(item => item.woId === woId);
+                        if (updatedWoIndex > 0) {
+                            globalData.work_orders.splice(updatedWoIndex, 1);
+                            globalData.work_orders.unshift(wo);
+                        }
+
+                        // Sync integrated status for Asset & Monitoring Unit
+                        if (assetId && globalData.assets) {
+                            setIntegratedAssetStatus(assetId, unitStatus, 'Work Order', woId, actionLog);
+                        }
+
+                        closeModal('modalWoStatusConfirm');
+
+                        // Synchronize state and update all UI views instantly
+                        window.syncFleetState();
+
+                        const movedCard = document.getElementById(`wo-card-${woId}`);
+                        if (movedCard) {
+                            movedCard.classList.add('status-change-success');
+                            movedCard.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+                            setTimeout(() => movedCard.classList.remove('status-change-success'), 3200);
+                        }
+
+                        showWoStatusToast(`${woId} berhasil dipindahkan ke ${targetStatus}`);
+                    } else {
+                        alert('Gagal update WO: ' + res.message);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Gagal terhubung ke server.');
                 }
-
-                // Sync integrated status for Asset & Monitoring Unit
-                if (assetId && globalData.assets) {
-                    setIntegratedAssetStatus(assetId, unitStatus, 'Work Order', woId, actionLog);
-                }
-
-                closeModal('modalWoStatusConfirm');
-
-                // Synchronize state and update all UI views instantly
-                window.syncFleetState();
-
-                const movedCard = document.getElementById(`wo-card-${woId}`);
-                if (movedCard) {
-                    movedCard.classList.add('status-change-success');
-                    movedCard.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
-                    setTimeout(() => movedCard.classList.remove('status-change-success'), 3200);
-                }
-
-                showWoStatusToast(`${woId} berhasil dipindahkan ke ${targetStatus}`);
             };
 
             window.openWoDetailModal = function (woId, fallbackAssetId, fallbackIssue) {
@@ -5170,7 +5193,7 @@
                 }
             };
 
-            window.submitFuelForm = function () {
+            window.submitFuelForm = async function () {
                 const voucher = document.getElementById('frmFuelVoucher').value;
                 const unitId = document.getElementById('frmFuelUnitId').value;
                 const loc = document.getElementById('frmFuelLocation').value;
@@ -5195,32 +5218,62 @@
                 else if (devPct > 10) anomalyStatus = 'ORANGE';
                 else if (devPct > 5) anomalyStatus = 'YELLOW';
 
-                const newLog = {
-                    trxId: voucher,
-                    timeStr: 'Hari ini, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    unitId: unitId,
-                    category: isKm ? 'Dump Truck' : 'Excavator',
-                    location: loc,
-                    fuelman: fuelman,
-                    operator: operator,
-                    meterType: isKm ? 'KM' : 'HM',
-                    meterPrev: prev,
-                    meterCurr: curr,
-                    meterDiff: diff,
-                    liter: liter,
-                    rateActual: actualRate,
-                    targetRate: targetRate,
-                    deviationPct: devPct,
-                    costRp: liter * 12000,
-                    anomalyStatus: anomalyStatus,
-                    status: 'Diajukan',
-                    notes: notes || 'Pengisian rutin site'
+                const payload = {
+                    asset_id: unitId,
+                    refuel_date: new Date().toISOString(),
+                    flowmeter_start: prev,
+                    flowmeter_end: curr,
+                    liters_issued: liter,
+                    current_hm_km: curr,
+                    calculated_lph: actualRate,
+                    baseline_lph: targetRate,
+                    is_anomaly: anomalyStatus !== 'GREEN',
+                    driver_name: operator,
+                    notes: notes
                 };
 
-                globalFuelLogs.unshift(newLog);
-                closeModal('modalFuelInput');
-                renderFuelDashboard(globalFuelLogs);
-                alert(`Transaksi pengisian BBM ${voucher} berhasil diajukan dan dicatat dalam audit trail!`);
+                try {
+                    const response = await fetch('./api/fuel_logs.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const res = await response.json();
+                    if (res.status === 'success') {
+                        closeModal('modalFuelInput');
+                        alert(`Transaksi pengisian BBM ${voucher} berhasil diajukan dan dicatat di database!`);
+                        // Ideally, we fetch logs from the server again here.
+                        // For now, we manually push to the local array to update the UI without full reload.
+                        const newLog = {
+                            trxId: voucher,
+                            timeStr: 'Baru saja',
+                            unitId: unitId,
+                            category: isKm ? 'Dump Truck' : 'Excavator',
+                            location: loc,
+                            fuelman: fuelman,
+                            operator: operator,
+                            meterType: isKm ? 'KM' : 'HM',
+                            meterPrev: prev,
+                            meterCurr: curr,
+                            meterDiff: diff,
+                            liter: liter,
+                            rateActual: actualRate,
+                            targetRate: targetRate,
+                            deviationPct: devPct,
+                            costRp: liter * 12000,
+                            anomalyStatus: anomalyStatus,
+                            status: 'Diajukan',
+                            notes: notes || 'Pengisian rutin site'
+                        };
+                        globalFuelLogs.unshift(newLog);
+                        renderFuelDashboard(globalFuelLogs);
+                    } else {
+                        alert('Gagal menyimpan: ' + res.message);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Gagal terhubung ke server.');
+                }
             };
 
             window.verifyFuelLog = function (trxId) {
@@ -5690,7 +5743,7 @@
                 document.getElementById('npm-parts').value = pmData.parts;
             };
 
-            window.submitNewPM = function () {
+            window.submitNewPM = async function () {
                 const unitId = document.getElementById('npm-id').value;
                 const schedule = document.getElementById('npm-schedule').value;
                 const parts = document.getElementById('npm-parts').value;
@@ -5704,22 +5757,47 @@
 
                 const asset = globalData.assets.find(a => a.id === unitId);
                 const modelName = asset ? asset.name : 'Unknown Model';
+                
+                const intervalVal = parseInt(schedule.replace(/\D/g, '')) || 250;
 
-                // Masukkan ke globalPmComparisons
-                globalPmComparisons.unshift({
-                    unitId: unitId,
-                    model: modelName,
-                    schedule: schedule,
-                    location: loc || 'Workshop',
-                    planCost: cost,
-                    actCost: 0, // Belum direalisasi
-                    diff: cost,
-                    notes: `Draft PM: Butuh parts (${parts})`
-                });
+                const payload = {
+                    asset_id: unitId,
+                    interval_hm: intervalVal,
+                    current_smr: 0, 
+                    target_due_hm: intervalVal,
+                    planner_note: `Draft PM: Butuh parts (${parts}). Estimasi biaya: Rp ${cost}. Lokasi: ${loc}`
+                };
 
-                renderCostPmCompTable(globalPmComparisons);
-                closeModal('modalNewPM');
-                alert('Rencana Service PM Berhasil Ditambahkan dengan estimasi biaya dari spreadsheet!');
+                try {
+                    const response = await fetch('./api/pm_plans.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const res = await response.json();
+                    if (res.status === 'success') {
+                        // Masukkan ke globalPmComparisons
+                        globalPmComparisons.unshift({
+                            unitId: unitId,
+                            model: modelName,
+                            schedule: schedule,
+                            location: loc || 'Workshop',
+                            planCost: cost,
+                            actCost: 0, // Belum direalisasi
+                            diff: cost,
+                            notes: `Draft PM: Butuh parts (${parts})`
+                        });
+
+                        renderCostPmCompTable(globalPmComparisons);
+                        closeModal('modalNewPM');
+                        alert('Rencana Service PM Berhasil Ditambahkan ke Database!');
+                    } else {
+                        alert('Gagal menyimpan: ' + res.message);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Gagal terhubung ke server.');
+                }
             };
 
             window.renderCostPmCompTable = function (pmList) {
@@ -6153,7 +6231,7 @@
                 if (pressureInput) pressureInput.value = data.pressure;
             };
 
-            window.saveTireInspection = function () {
+            window.saveTireInspection = async function () {
                 const hiddenEl = document.getElementById('selected-tire');
                 const code = hiddenEl ? hiddenEl.value.toUpperCase() : 'FL';
                 const treadInput = document.getElementById('tire-tread');
@@ -6167,21 +6245,55 @@
                     return;
                 }
 
-                tireInspectionStore[code] = { tread, pressure };
-
-                // Dynamically update tire indicator status badge color
-                const targetId = 'tire-' + code.toLowerCase();
-                const targetEl = document.getElementById(targetId);
-                if (targetEl) {
-                    targetEl.classList.remove('warning', 'danger');
-                    if (tread < 3.2) {
-                        targetEl.classList.add('danger');
-                    } else if (tread <= 8.5) {
-                        targetEl.classList.add('warning');
-                    }
+                let colorCondition = 'GREEN';
+                if (tread < 3.2) {
+                    colorCondition = 'RED';
+                } else if (tread <= 8.5) {
+                    colorCondition = 'YELLOW';
                 }
 
-                alert(`✅ Inspeksi Ban (${code}) Berhasil Disimpan:\n- Tread Depth: ${tread} mm\n- Tekanan Angin: ${pressure || '-'} PSI`);
+                // Temporary fallback for asset_id if not explicitly selected in this view
+                const assetId = window.activeAssetId || 'DT-00049'; // fallback ke Hino Ranger
+
+                const payload = {
+                    asset_id: assetId,
+                    tire_position: code,
+                    tread_depth_mm: tread,
+                    air_pressure_psi: pressure,
+                    condition_color: colorCondition
+                };
+
+                try {
+                    const response = await fetch('./api/tire_inspections.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const res = await response.json();
+                    
+                    if (res.status === 'success') {
+                        tireInspectionStore[code] = { tread, pressure };
+
+                        // Dynamically update tire indicator status badge color
+                        const targetId = 'tire-' + code.toLowerCase();
+                        const targetEl = document.getElementById(targetId);
+                        if (targetEl) {
+                            targetEl.classList.remove('warning', 'danger');
+                            if (tread < 3.2) {
+                                targetEl.classList.add('danger');
+                            } else if (tread <= 8.5) {
+                                targetEl.classList.add('warning');
+                            }
+                        }
+
+                        alert(`Inspeksi Ban (${code}) Berhasil Disimpan ke Database:\n- Tread Depth: ${tread} mm\n- Tekanan Angin: ${pressure || '-'} PSI`);
+                    } else {
+                        alert('Gagal menyimpan inspeksi ban: ' + res.message);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Gagal terhubung ke server.');
+                }
             };
 
             function saveSettings() {

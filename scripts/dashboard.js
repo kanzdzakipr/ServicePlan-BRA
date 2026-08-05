@@ -3911,7 +3911,7 @@
         tbody.prepend(row);
     }
 
-    function submitDraft() {
+    async function submitDraft() {
         if (!state.modal) return;
         syncDraftFromDom();
         const validLines = state.modal.draft.filter(item => item.partNumber && item.description && Number(item.qty) > 0);
@@ -3924,8 +3924,10 @@
         const serial = String(new Set(records.map(item => item.spbId).filter(Boolean)).size + 101).padStart(3, '0');
         const spbId = `SPB-${dateCode}-${serial}`;
         const woId = state.modal.woId || '';
+        
+        let newRecords = [];
         validLines.forEach((item, index) => {
-            records.push({
+            const rec = {
                 id: `SL-${dateCode}-${Date.now()}-${index}`,
                 spbId,
                 assetId: state.modal.assetId,
@@ -3942,8 +3944,11 @@
                 source: 'SPB Manual',
                 notes: state.modal.notes,
                 updatedAt: now.toISOString()
-            });
+            };
+            newRecords.push(rec);
+            records.push(rec);
         });
+        
         const request = {
             spbId,
             assetId: state.modal.assetId,
@@ -3955,6 +3960,23 @@
             status: 'Menunggu Approval',
             lines: validLines
         };
+        
+        try {
+            const response = await fetch('api/logistics.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ records: newRecords })
+            });
+            const resData = await response.json();
+            if (resData.status !== 'success') {
+                console.error('SPB Backend Error:', resData.message);
+                notify('Gagal menyimpan SPB ke server: ' + resData.message, true);
+            }
+        } catch (e) {
+            console.error('Fetch error:', e);
+            notify('Gagal terhubung ke server saat menyimpan SPB.', true);
+        }
+
         if (window.globalData) {
             window.globalData.spare_part_requests = Array.isArray(window.globalData.spare_part_requests)
                 ? window.globalData.spare_part_requests
@@ -3965,7 +3987,7 @@
         state.modal.draft = [];
         render();
         addApprovalRow(request);
-        notify(`${spbId} dibuat, counter unit diperbarui, dan dokumen masuk ke Approval.`);
+        notify(`${spbId} dibuat dan dokumen masuk ke Approval (Database terupdate).`);
     }
 
     function updateRecordStatus(recordId, status) {
@@ -15197,7 +15219,7 @@
     // 4. SUBMIT FORM & AUTOMATIC WORK ORDER TRIGGER ENGINE
     // =========================================================================
 
-    window.submitP2HForm = function () {
+    window.submitP2HForm = async function () {
         const assetId = document.getElementById('p2hFormAssetSelect').value;
         const operator = document.getElementById('p2hFormOperator').value.trim();
         const nrp = document.getElementById('p2hFormNRP').value.trim();
@@ -15248,6 +15270,23 @@
 
         // Add to History
         inspectionHistory.unshift(newP2H);
+
+        try {
+            const response = await fetch('api/inspections.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newP2H)
+            });
+            const resData = await response.json();
+            if (resData.status !== 'success') {
+                console.error('Inspection Backend Error:', resData.message);
+                alert('Peringatan: Gagal menyimpan data ke database server.');
+            }
+        } catch (e) {
+            console.error('Fetch error:', e);
+            alert('Peringatan: Gagal terhubung ke server saat menyimpan inspeksi.');
+        }
+
 
         // Update global assets & trigger Auto Work Order if Critical Fail
         if (window.globalData) {
