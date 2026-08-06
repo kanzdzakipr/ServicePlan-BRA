@@ -223,8 +223,8 @@ Tabel di bawah ini menginventarisasi secara menyeluruh seluruh berkas PHP (*Core
 |:---|:---|:---:|:---|:---|
 | **`api/db.php`** | Singleton PDO Database Connection Manager, CORS Headers Handler, & Hostinger MySQL Config (`u646470441_ServicePlanBRA`) | **`[x] Sudah Ada (Aktif)`** | Database `serviceplan_bra` | [api/db.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/db.php) (1.9 KB) |
 | **`api/init.php`** | Hybrid Data Initializer (Melakukan merge data statis `data.json` dengan data MySQL live `assets` & `work_orders`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders`, `data.json` | [api/init.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/init.php) (1.2 KB) |
-| **`api/sync.php`** | Transactional Batch State Synchronization Endpoint (`POST` batch upsert `assets` & `work_orders` via `ON DUPLICATE KEY UPDATE`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders` | [api/sync.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/sync.php) (2.6 KB) |
-| **`api/p2h.php`** | P2H Inspection Record Submission & Auto-DDL Engine (`CREATE TABLE IF NOT EXISTS p2h_records`, `POST` submission, `DELETE`) | **`[x] Sudah Ada (Aktif)`** | `p2h_records`, `inspections` | [api/p2h.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/p2h.php) (2.9 KB) |
+| **`api/sync.php`** | Transactional Batch State Synchronization Endpoint (`POST` batch upsert `assets` & `work_orders` via `ON DUPLICATE KEY UPDATE`) | **`[x] Sudah Ada (Aktif)`** | `assets`, `work_orders` | [api/sync.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/sync.php) (2.7 KB) |
+| **`api/seed_dummy.php`** | Database Seeder Script (Populate dummy data live untuk `fuel_logs` & `tire_inspections`) | **`[x] Sudah Ada (Aktif)`** | `fuel_logs`, `tire_inspections` | [api/seed_dummy.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/seed_dummy.php) (3.7 KB) |
 | `core/AuthMiddleware.php` | Verifikasi Bearer Token / JWT, verifikasi role RBAC & lokasi user | `[ ] Belum Dibuat` | `users`, `roles` | Target Rencana Framework |
 | `core/Response.php` | Formatter standar JSON HTTP Response (`{success, data, message, errors}`) | `[ ] Belum Dibuat` | Generic API Output | Target Rencana Framework |
 | `core/Validator.php` | Sanitasi input request (XSS protection) & aturan validasi tipe data | `[ ] Belum Dibuat` | Generic Request Payload | Target Rencana Framework |
@@ -237,11 +237,13 @@ Tabel di bawah ini menginventarisasi secara menyeluruh seluruh berkas PHP (*Core
 |:---|:---|:---:|:---|:---|
 | `models/AssetModel.php` | `getAll()`, `getById()`, `get360Details()`, `updateStatus()`, `logMutation()` | `[~] Inline Query di api/assets.php` | `assets`, `asset_movements`, `locations` | Executive, Monitoring, Master Asset |
 | `models/WorkOrderModel.php` | `getKanbanBoard()`, `createWO()`, `updateStatus()`, `logTime()`, `verifyClosed()` | `[~] Inline Query di api/work_orders.php` | `work_orders`, `wo_time_logs` | Executive, Work Order, Laporan |
-| `models/InspectionModel.php` | `submitP2H()`, `deleteP2H()`, `getInspectionHistory()` | `[~] Inline Query & DDL di api/p2h.php` | `p2h_records`, `inspections` | Inspeksi & P2H, Laporan |
-| `models/InventoryModel.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()` | `[~] Inline Query di api/logistics.php` | `parts`, `purchase_requests` | Spare Part & Logistik, PM Kitting |
+| `models/InspectionModel.php` | `submitInspection()`, `getHistory()`, `determineResult()` | `[~] Inline Query di api/inspections.php` | `inspections` | Inspeksi & P2H, Laporan |
+| `models/FuelModel.php` | `logRefuel()`, `getLPHReport()`, `detectFuelAnomaly()` | `[~] Inline Query di api/fuel_logs.php` | `fuel_logs`, `assets` | Fuel Management |
+| `models/PMPlanModel.php` | `getPMForecast()`, `createPMPlan()`, `updateSMR()` | `[~] Inline Query di api/pm_plans.php` | `pm_plans`, `assets` | Preventive Maint. |
+| `models/ComponentModel.php` | `getTireLayout()`, `logTreadDepth()`, `logPressure()` | `[~] Inline Query di api/tire_inspections.php` | `tire_inspections`, `battery_logs` | Condition Monitoring |
+| `models/InventoryModel.php` | `searchParts()`, `submitSPB()`, `reserveStock()`, `issuePartToWO()` | `[~] Inline Query di api/logistics.php` | `parts`, `purchase_requests`, `purchase_request_items` | Spare Part & Logistik, PM Kitting |
 | `models/CostModel.php` | `getBudgetVsActual()`, `getUnitValuations()`, `logExpenseTransaction()` | `[~] Inline Query di api/logistics.php` | `cost_financial_monthly`, `unit_valuations` | Biaya |
-| `models/ComponentModel.php` | `getTireLayout()`, `logTreadDepth()`, `logBattery()`, `logCuttingBit()` | `[ ] Belum Ada` | `tire_inspections`, `battery_logs`, `cutting_bit_logs` | Condition Monitoring |
-| `models/FuelModel.php` | `logRefuel()`, `getLPHReport()`, `detectFuelAnomaly()` | `[ ] Belum Ada` | `fuel_logs`, `assets` | Fuel Management |
+| `models/ReportModel.php` | `getTemplates()`, `submitReport()`, `manageDrafts()` | `[~] Inline Query & DDL Engine di api/reports.php` | `report_templates`, `report_records` | Laporan & Form |
 | `models/KPIModel.php` | `getHeadKPIScorecard()`, `getMechanicLeaderboard()`, `getPlannerEval()` | `[ ] Belum Ada` | `head_kpi_assessments`, `planner_evaluations` | People & KPI, Work Order |
 | `models/AccidentModel.php` | `reportAccident()`, `updateCAPA()`, `releaseUnitHold()` | `[ ] Belum Ada` | `accidents`, `assets`, `locations` | HSE / Accident, Master Asset |
 | `models/TelematicsModel.php` | `getKomtraxSummary()`, `detectIdlingAnomaly()`, `getStandbyFleet()` | `[ ] Belum Ada` | `telematics_logs`, `assets`, `locations` | Produktivitas |
@@ -250,29 +252,28 @@ Tabel di bawah ini menginventarisasi secara menyeluruh seluruh berkas PHP (*Core
 
 ### 9.3 REST API Controllers Checklist: Sudah Ada vs Belum Ada (`/api/`)
 
-Tabel di bawah ini mengidentifikasi status **7 file yang sudah ada** di folder `api/` vs **11 controller yang belum dibuat**:
+Tabel di bawah ini mengidentifikasi status **11 controller & 1 seeder/helper yang sudah ada (Total 12 berkas PHP)** di folder `api/` vs **6 controller yang belum dibuat**:
 
 | Endpoint File (`/api/`) | Supported HTTP Methods | Endpoint Responsibility & Capabilities | Status Realita Folder `/api/` | Berkas Physical Path |
 |:---|:---|:---|:---:|:---|
-| **`api/assets.php`** | `GET`, `POST`, `PUT`, `DELETE` | Listing armada aset, detail aset by ID, penambahan unit baru, update status & HM/KM dinamis, serta penghapusan unit. | **`[x] Sudah Ada (Aktif)`** | [api/assets.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/assets.php) |
-| **`api/work_orders.php`** | `GET`, `POST`, `PUT`, `DELETE` | Fetch Work Order dengan JOIN master asset, penambahan WO baru, update status Kanban & PIC mekanik, serta penghapusan WO. | **`[x] Sudah Ada (Aktif)`** | [api/work_orders.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/work_orders.php) |
-| **`api/p2h.php`** | `POST`, `DELETE` | Submission hasil inspeksi P2H (operator, NRP, site, SMR start/end, critical fails, warnings, raw JSON) & DDL auto-create `p2h_records`. | **`[x] Sudah Ada (Aktif)`** | [api/p2h.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/p2h.php) |
-| **`api/logistics.php`** | `GET` (`type=parts`, `type=costs`) | Endpoint dasar untuk kueri tabel catalog sparepart (`parts`) dan laporan keuangan bulanan (`cost_financial_monthly`). | **`[x] Sudah Ada (Aktif)`** | [api/logistics.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/logistics.php) |
-| **`api/sync.php`** | `POST` | Synchronization batch state (`assets` update status/HM/lokasi & `work_orders` batch upsert `ON DUPLICATE KEY UPDATE`). | **`[x] Sudah Ada (Aktif)`** | [api/sync.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/sync.php) |
-| **`api/init.php`** | `GET` | Inisialisasi data hybrid (menggabungkan `data.json` dengan tabel live `assets` dan `work_orders` MySQL). | **`[x] Sudah Ada (Aktif)`** | [api/init.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/init.php) |
-| **`api/db.php`** | N/A (Core Helper) | Singleton PDO Database Manager, CORS Headers (`Access-Control-Allow-Origin: *`), & Hostinger MySQL Credentials Config. | **`[x] Sudah Ada (Aktif)`** | [api/db.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/db.php) |
+| **`api/assets.php`** | `GET`, `POST`, `PUT`, `DELETE` | Listing armada aset, detail aset by ID, penambahan unit baru, update status & HM/KM dinamis, serta penghapusan unit. | **`[x] Sudah Ada (Aktif)`** | [api/assets.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/assets.php) (4.3 KB) |
+| **`api/work_orders.php`** | `GET`, `POST`, `PUT`, `DELETE` | Fetch Work Order dengan JOIN master asset, penambahan WO baru, update status Kanban & PIC mekanik, serta penghapusan WO. | **`[x] Sudah Ada (Aktif)`** | [api/work_orders.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/work_orders.php) (4.0 KB) |
+| **`api/inspections.php`** | `GET`, `POST` | Entry hasil inspeksi P2H (`PASS`, `WARNING`, `FAIL`), auto-calculation status, logging HM/KM, dan summary catatan temuan. | **`[x] Sudah Ada (Aktif)`** | [api/inspections.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/inspections.php) (2.7 KB) |
+| **`api/fuel_logs.php`** | `GET`, `POST` | Logging pengisian solar flowmeter, kalkulasi otomatis LPH (liter/jam), deteksi anomali konsumsi BBM, & update HM/KM unit. | **`[x] Sudah Ada (Aktif)`** | [api/fuel_logs.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/fuel_logs.php) (2.8 KB) |
+| **`api/pm_plans.php`** | `GET`, `POST` | Perencanaan interval PM (250h-10000h), tracking target due HM, perhitungan varians, & logging garansi. | **`[x] Sudah Ada (Aktif)`** | [api/pm_plans.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/pm_plans.php) (2.3 KB) |
+| **`api/tire_inspections.php`** | `GET`, `POST` | Inspection ban unit (posisi FL, FR, R1L, R1R, tread depth mm, tekanan angin PSI, & klasifikasi warna GREEN/YELLOW/RED). | **`[x] Sudah Ada (Aktif)`** | [api/tire_inspections.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/tire_inspections.php) (2.0 KB) |
+| **`api/logistics.php`** | `GET` (`parts`, `costs`, `spb`), `POST` | Kueri katalog sparepart (`parts`), biaya bulanan (`costs`), pengajuan SPB header & line items (`purchase_request_items`). | **`[x] Sudah Ada (Aktif)`** | [api/logistics.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/logistics.php) (4.0 KB) |
+| **`api/reports.php`** | `GET`, `POST`, `PUT`, `DELETE` | Dynamic Multi-Form Engine, pengelolaan `report_templates` & `report_records`, DDL auto-creation, draft management, & export payload. | **`[x] Sudah Ada (Aktif)`** | [api/reports.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/reports.php) (21.2 KB) |
+| **`api/sync.php`** | `POST` | Transactional batch state sync (`assets` update status/HM/lokasi & `work_orders` batch upsert `ON DUPLICATE KEY UPDATE`). | **`[x] Sudah Ada (Aktif)`** | [api/sync.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/sync.php) (2.7 KB) |
+| **`api/init.php`** | `GET` | Inisialisasi data hybrid (menggabungkan `data.json` dengan tabel live `assets` dan `work_orders` MySQL). | **`[x] Sudah Ada (Aktif)`** | [api/init.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/init.php) (1.2 KB) |
+| **`api/db.php`** | N/A (Core Helper) | Singleton PDO Database Manager, CORS Headers (`Access-Control-Allow-Origin: *`), & Hostinger MySQL Credentials Config. | **`[x] Sudah Ada (Aktif)`** | [api/db.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/db.php) (1.9 KB) |
+| **`api/seed_dummy.php`** | N/A (Seeder Script) | Populator data dummy live ke MySQL untuk pengujian instan tabel `fuel_logs` & `tire_inspections`. | **`[x] Sudah Ada (Aktif)`** | [api/seed_dummy.php](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/api/seed_dummy.php) (3.7 KB) |
 | `api/auth.php` | `POST` | User login, JWT token generation, user session profile | **`[ ] Belum Ada`** | Target Rencana Backend |
 | `api/dashboard.php` | `GET` | Aggregated executive KPI metrics, emergency WOs, live map markers | **`[ ] Belum Ada`** | Target Rencana Backend |
-| `api/pm.php` | `GET`, `POST`, `PUT` | PM 500h-10000h interval forecast, PM kitting reservation, completion logging | **`[ ] Belum Ada`** | Target Rencana Backend |
-| `api/spareparts.php` | `GET`, `POST`, `PUT` | Full stock inventory search, SPB purchase request submission, part issuance | **`[ ] Belum Ada`** | Ter-cover sebagian via `api/logistics.php?type=parts` |
-| `api/condition.php` | `GET`, `POST` | Tire tread depth inspection submit, battery voltage logging, cutting bit wear | **`[ ] Belum Ada`** | Target Rencana Backend |
-| `api/fuel.php` | `GET`, `POST` | Flowmeter refuel entry, LPH report generator, fuel anomaly alert flagging | **`[ ] Belum Ada`** | Target Rencana Backend |
 | `api/productivity.php` | `GET` | Komtrax telematics table, idling anomaly detector (>50%), standby fleet audit | **`[ ] Belum Ada`** | Target Rencana Backend |
-| `api/costs.php` | `GET`, `POST` | Budget vs Actual monthly cost data, unit valuations market price range parser | **`[ ] Belum Ada`** | Ter-cover sebagian via `api/logistics.php?type=costs` |
 | `api/kpi.php` | `GET`, `POST` | Head KPI scorecard assessment (10 indicators), mechanic 208h leaderboard | **`[ ] Belum Ada`** | Target Rencana Backend |
 | `api/accidents.php` | `GET`, `POST`, `PUT` | HSE accident incident reporting, CAPA status update, unit lock/release request | **`[ ] Belum Ada`** | Target Rencana Backend |
 | `api/approvals.php` | `GET`, `POST` | Centralized approval inbox, SPB approval, unit release authorization | **`[ ] Belum Ada`** | Target Rencana Backend |
-| `api/reports.php` | `GET`, `POST` | Multi-form generator submit, export PDF/Excel data builder | **`[ ] Belum Ada`** | Target Rencana Backend |
 
 ---
 
