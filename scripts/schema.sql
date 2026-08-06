@@ -455,6 +455,83 @@ CREATE TABLE `approvals` (
     FOREIGN KEY (`approver_user_id`) REFERENCES `users`(`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ----------------------------------------------------------------------------
+-- 18. REPORT TEMPLATES (Versioned definitions for Laporan & Form)
+-- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `report_audit_logs`;
+DROP TABLE IF EXISTS `report_items`;
+DROP TABLE IF EXISTS `report_records`;
+DROP TABLE IF EXISTS `report_templates`;
+CREATE TABLE `report_templates` (
+    `template_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `template_key` VARCHAR(100) NOT NULL,
+    `code` VARCHAR(80) NOT NULL,
+    `title` VARCHAR(190) NOT NULL,
+    `version` INT UNSIGNED NOT NULL DEFAULT 1,
+    `schema_json` JSON NOT NULL,
+    `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY `uq_report_template_version` (`template_key`, `version`),
+    KEY `idx_report_template_active` (`template_key`, `is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 19. REPORT RECORDS (Draft, final, and void document header)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `report_records` (
+    `report_id` CHAR(36) PRIMARY KEY,
+    `template_id` BIGINT UNSIGNED NOT NULL,
+    `client_key` VARCHAR(64) NOT NULL,
+    `report_number` VARCHAR(190) NULL,
+    `status` ENUM('DRAFT', 'FINAL', 'VOID') NOT NULL DEFAULT 'DRAFT',
+    `source_method` VARCHAR(40) NOT NULL DEFAULT 'manual',
+    `field_data` JSON NOT NULL,
+    `draft_data` JSON NULL,
+    `standardized_payload` JSON NULL,
+    `cloned_from_report_id` CHAR(36) NULL,
+    `has_pending_attachments` BOOLEAN NOT NULL DEFAULT FALSE,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `finalized_at` TIMESTAMP NULL,
+    `voided_at` TIMESTAMP NULL,
+    `final_number_key` VARCHAR(320) NULL,
+    UNIQUE KEY `uq_report_final_number` (`final_number_key`),
+    KEY `idx_report_status_updated` (`status`, `updated_at`),
+    KEY `idx_report_client_draft` (`client_key`, `status`, `template_id`),
+    CONSTRAINT `fk_report_template` FOREIGN KEY (`template_id`) REFERENCES `report_templates` (`template_id`),
+    CONSTRAINT `fk_report_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 20. REPORT ITEMS (Repeatable table rows)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `report_items` (
+    `item_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `position` INT UNSIGNED NOT NULL,
+    `item_data` JSON NOT NULL,
+    UNIQUE KEY `uq_report_item_position` (`report_id`, `position`),
+    CONSTRAINT `fk_report_item_record` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 21. REPORT AUDIT LOG (Important lifecycle events)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `report_audit_logs` (
+    `audit_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `client_key` VARCHAR(64) NOT NULL,
+    `actor_id` INT NULL,
+    `action` VARCHAR(40) NOT NULL,
+    `payload_json` JSON NULL,
+    `occurred_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_report_audit_record` (`report_id`, `occurred_at`),
+    CONSTRAINT `fk_report_audit_record` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_report_audit_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Re-enable foreign key checks
 SET FOREIGN_KEY_CHECKS = 1;
 

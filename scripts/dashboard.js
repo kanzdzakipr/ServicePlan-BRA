@@ -801,6 +801,11 @@
     const pageSize = 8;
     const storagePrefix = 'fleetmonitor-report-draft-';
     const historyStorageKey = 'fleetmonitor-report-history-v1';
+    const reportClientKeyStorage = 'fleetmonitor-report-client-id-v1';
+    const reportApiUrl = 'api/reports.php';
+    const backendDraftTimers = new Map();
+    const backendDraftSyncChains = new Map();
+    let reportClientKeyCache = '';
     const evidenceRequiredFormIds = new Set(['ppb', 'spb', 'sppu', 'sppu-006-pf04-cs10']);
     const calculatedRowKeys = new Set(['saldo_sekarang', 'sisa', 'jam_kerja', 'hm_operasi', 'total', 'durasi', 'in_total', 'out_total', 'saldo', 'nilai_saldo', 'selisih_pcs', 'realisasi_persen', 'total_waktu_aktual', 'nomor']);
     const importRowMetadataKeys = new Set(['_import']);
@@ -838,6 +843,189 @@
 
     function writeHistory(records) {
         localStorage.setItem(historyStorageKey, JSON.stringify(records));
+    }
+
+    function getReportClientKey() {
+        if (reportClientKeyCache) return reportClientKeyCache;
+        try {
+            reportClientKeyCache = localStorage.getItem(reportClientKeyStorage) || '';
+        } catch (error) {
+            reportClientKeyCache = '';
+        }
+        if (!reportClientKeyCache) {
+            reportClientKeyCache = window.crypto?.randomUUID?.()
+                || `client-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+            try {
+                localStorage.setItem(reportClientKeyStorage, reportClientKeyCache);
+            } catch (error) {
+                // Sesi tetap dapat memakai identitas sementara ketika localStorage dibatasi.
+            }
+        }
+        return reportClientKeyCache;
+    }
+
+    function backendSafeDraft(draft) {
+        let hasPendingAttachments = Boolean(draft?._hasPendingAttachments);
+        const json = JSON.stringify(draft, (key, value) => {
+            if (key === 'dataUrl' && typeof value === 'string' && value) {
+                hasPendingAttachments = true;
+                return undefined;
+            }
+            return value;
+        });
+        const safeDraft = JSON.parse(json || '{}');
+        delete safeDraft._serverReportId;
+        delete safeDraft._hasPendingAttachments;
+        return { draft: safeDraft, hasPendingAttachments };
+    }
+
+    function reportTemplatePayload(schema) {
+        return {
+            id: schema.id,
+            code: schema.code,
+            title: schema.title,
+            version: 1,
+            schema: cloneData(schema)
+        };
+    }
+
+    async function reportApiRequest(query = '', options = {}) {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 8000);
+        try {
+            const response = await fetch(`${reportApiUrl}${query}`, {
+                cache: 'no-store',
+                ...options,
+                headers: {
+                    Accept: 'application/json',
+                    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+                    ...(options.headers || {})
+                },
+                signal: controller.signal
+            });
+            const raw = await response.text();
+            let payload;
+            try {
+                payload = JSON.parse(raw);
+            } catch (error) {
+                return { available: false, ok: false, message: 'API PHP tidak aktif pada server ini.' };
+            }
+            return {
+                available: true,
+                ok: response.ok && payload.status === 'success',
+                data: payload.data,
+                message: payload.message || (response.ok ? '' : `HTTP ${response.status}`)
+            };
+        } catch (error) {
+            return { available: false, ok: false, message: 'Server laporan tidak dapat dijangkau.' };
+        } finally {
+            window.clearTimeout(timeout);
+        }
+    }
+
+    function setDraftSyncBadge(markup) {
+        const badge = document.getElementById('autosaveBadge');
+        if (badge) badge.innerHTML = markup;
+    }
+
+    async function syncDraftToBackend(schema) {
+        if (!schema) return;
+        let draft;
+        try {
+            draft = JSON.parse(localStorage.getItem(storagePrefix + schema.id));
+        } catch (error) {
+            draft = null;
+        }
+        if (!draft?.fields || !Array.isArray(draft.rows)) return;
+        const safe = backendSafeDraft(draft);
+        setDraftSyncBadge('<i class="fa-solid fa-rotate"></i> Menyinkronkan...');
+        const result = await reportApiRequest('', {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'save_draft',
+                clientKey: getReportClientKey(),
+                reportId: draft._serverReportId || null,
+                template: reportTemplatePayload(schema),
+                draft: safe.draft,
+                sourceMethod: draft.importSource ? 'import' : 'form',
+                hasPendingAttachments: safe.hasPendingAttachments
+            })
+        });
+        if (result.ok && result.data?.id) {
+            draft._serverReportId = result.data.id;
+            if (safe.hasPendingAttachments) draft._hasPendingAttachments = true;
+            try {
+                localStorage.setItem(storagePrefix + schema.id, JSON.stringify(draft));
+            } catch (error) {
+                // Draft server sudah aman meskipun metadata lokal gagal diperbarui.
+            }
+            if (activeSchema?.id === schema.id && activeDraft) activeDraft._serverReportId = result.data.id;
+            setDraftSyncBadge('<i class="fa-solid fa-cloud-circle-check"></i> Tersimpan di server');
+        } else if (result.available) {
+            setDraftSyncBadge('<i class="fa-solid fa-triangle-exclamation"></i> Sinkronisasi gagal');
+        } else {
+            setDraftSyncBadge('<i class="fa-solid fa-hard-drive"></i> Tersimpan lokal');
+        }
+    }
+
+    function queueDraftBackendSync(schema) {
+        if (!schema) return;
+        window.clearTimeout(backendDraftTimers.get(schema.id));
+        backendDraftTimers.set(schema.id, window.setTimeout(() => {
+            backendDraftTimers.delete(schema.id);
+            const previous = backendDraftSyncChains.get(schema.id) || Promise.resolve();
+            const next = previous.catch(() => null).then(() => syncDraftToBackend(schema));
+            backendDraftSyncChains.set(schema.id, next);
+            next.finally(() => {
+                if (backendDraftSyncChains.get(schema.id) === next) backendDraftSyncChains.delete(schema.id);
+            });
+        }, 700));
+    }
+
+    async function hydrateDraftFromBackend(schema, openedUpdatedAt) {
+        const result = await reportApiRequest(`?action=draft&schema_id=${encodeURIComponent(schema.id)}&client_key=${encodeURIComponent(getReportClientKey())}`);
+        if (!result.ok || !result.data?.draft || activeSchema?.id !== schema.id) return;
+        if ((activeDraft?.updatedAt || null) !== (openedUpdatedAt || null)) return;
+        const serverDraft = result.data.draft;
+        const localTime = Date.parse(openedUpdatedAt || '') || 0;
+        const serverTime = Date.parse(serverDraft.updatedAt || result.data.updatedAt || '') || 0;
+        if (openedUpdatedAt && serverTime <= localTime) {
+            activeDraft._serverReportId = result.data.id;
+            if (result.data.hasPendingAttachments) activeDraft._hasPendingAttachments = true;
+            try { localStorage.setItem(storagePrefix + schema.id, JSON.stringify(activeDraft)); } catch (error) { /* noop */ }
+            return;
+        }
+        activeDraft = {
+            ...serverDraft,
+            fields: { ...(schema.seedFields || {}), ...(serverDraft.fields || {}) },
+            rows: Array.isArray(serverDraft.rows) ? serverDraft.rows : [{}],
+            _serverReportId: result.data.id,
+            _hasPendingAttachments: Boolean(result.data.hasPendingAttachments)
+        };
+        try { localStorage.setItem(storagePrefix + schema.id, JSON.stringify(activeDraft)); } catch (error) { /* noop */ }
+        openForm(schema.id, { skipBackendHydration: true });
+        showToast('Draft terbaru berhasil dimuat dari server.');
+    }
+
+    async function syncBackendHistory() {
+        const result = await reportApiRequest('?status=FINAL&limit=200');
+        if (!result.ok || !Array.isArray(result.data)) return;
+        const localRecords = readHistory();
+        const localById = new Map(localRecords.map(record => [record.id, record]));
+        const merged = result.data.map(serverRecord => {
+            const localRecord = localById.get(serverRecord.id);
+            return localRecord ? { ...serverRecord, ...localRecord, status: serverRecord.status, backend: true } : serverRecord;
+        });
+        localRecords.filter(record => !record.backend).forEach(record => {
+            if (!merged.some(item => item.id === record.id)) merged.push(record);
+        });
+        merged.sort((a, b) => (Date.parse(b.finalizedAt || b.createdAt) || 0) - (Date.parse(a.finalizedAt || a.createdAt) || 0));
+        try {
+            writeHistory(merged);
+            renderHistory();
+        } catch (error) {
+            // Riwayat server tetap tersedia pada permintaan berikutnya jika localStorage penuh.
+        }
     }
 
     function escapeHtml(value) {
@@ -1153,6 +1341,7 @@
         });
         renderCatalog();
         renderHistory();
+        syncBackendHistory();
 
         const queryRoute = new URLSearchParams(window.location.search).get('view');
         const route = window.location.hash.match(/^#reports(?:\/([a-z0-9-]+))?$/i)
@@ -1219,7 +1408,10 @@
         if (window.location.hash !== panelRoute) {
             window.history.replaceState(null, '', panelRoute);
         }
-        if (showHistory) renderHistory();
+        if (showHistory) {
+            renderHistory();
+            syncBackendHistory();
+        }
         if (showImport) {
             document.dispatchEvent(new CustomEvent('fleetreport:import-visible'));
         }
@@ -1264,7 +1456,7 @@
                                     <div class="history-actions">
                                         <button type="button" data-history-view="${escapeHtml(record.id)}"><i class="fa-regular fa-eye"></i> Lihat/Cetak</button>
                                         <button type="button" class="primary" data-history-clone="${escapeHtml(record.id)}"><i class="fa-regular fa-copy"></i> Gunakan Ulang</button>
-                                        <button type="button" class="danger" data-history-delete="${escapeHtml(record.id)}"><i class="fa-regular fa-trash-can"></i> Hapus</button>
+                                        <button type="button" class="danger" data-history-delete="${escapeHtml(record.id)}"><i class="fa-solid fa-ban"></i> ${record.backend ? 'Void' : 'Hapus lokal'}</button>
                                     </div>
                                 </td>
                             </tr>
@@ -1308,7 +1500,7 @@
         });
     }
 
-    function duplicateSavedReport(recordId) {
+    async function duplicateSavedReport(recordId) {
         const record = readHistory().find(item => item.id === recordId);
         const schema = record && formSchemas.find(item => item.id === record.schemaId);
         if (!record || !schema) {
@@ -1320,24 +1512,53 @@
         if (reportNumberKey) draft.fields[reportNumberKey] = schema.seedFields?.[reportNumberKey] || '';
         delete draft.finalizedAt;
         draft.updatedAt = new Date().toISOString();
+        if (record.backend) {
+            const result = await reportApiRequest('', {
+                method: 'POST',
+                body: JSON.stringify({ action: 'clone', clientKey: getReportClientKey(), reportId: record.id })
+            });
+            if (result.available && !result.ok) {
+                showToast(result.message || 'Laporan gagal diduplikat di server.', true);
+                return;
+            }
+            if (result.ok && result.data?.id) draft._serverReportId = result.data.id;
+            if (!result.available) delete draft._serverReportId;
+        } else {
+            delete draft._serverReportId;
+        }
         localStorage.setItem(storagePrefix + schema.id, JSON.stringify(draft));
         switchReportPanel('templates');
         openForm(schema.id);
         showToast('Laporan diduplikat. Perbarui nomor dan detail yang berubah.');
     }
 
-    function deleteSavedReport(recordId) {
+    async function deleteSavedReport(recordId) {
         const records = readHistory();
         const record = records.find(item => item.id === recordId);
         if (!record) {
             showToast('Data laporan tidak ditemukan.', true);
             return;
         }
-        const confirmed = window.confirm(
-            `Hapus laporan “${record.reportNumber}”?\n\nData final dan lampirannya akan dihapus dari riwayat browser ini dan tidak dapat dipulihkan.`
+        const confirmed = window.confirm(record.backend
+            ? `Batalkan (void) laporan “${record.reportNumber}”?\n\nLaporan tidak akan muncul lagi sebagai laporan final. Jejak perubahannya tetap dicatat di server.`
+            : `Hapus laporan lokal “${record.reportNumber}”?\n\nData ini belum tersimpan di server dan akan dihapus dari browser ini.`
         );
         if (!confirmed) return;
         try {
+            if (record.backend) {
+                const result = await reportApiRequest('', {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'void', clientKey: getReportClientKey(), reportId: record.id })
+                });
+                if (result.available && !result.ok) {
+                    showToast(result.message || 'Laporan gagal di-void pada server.', true);
+                    return;
+                }
+                if (!result.available) {
+                    showToast('Server tidak aktif. Laporan backend tidak diubah agar riwayat tetap konsisten.', true);
+                    return;
+                }
+            }
             writeHistory(records.filter(item => item.id !== recordId));
             const preview = document.getElementById('historyPrintArea');
             if (preview) {
@@ -1345,7 +1566,7 @@
                 preview.innerHTML = '';
             }
             renderHistory();
-            showToast('Laporan berhasil dihapus dari riwayat.');
+            showToast(record.backend ? 'Laporan berhasil dibatalkan (void).' : 'Laporan lokal berhasil dihapus dari riwayat.');
         } catch (error) {
             showToast('Laporan gagal dihapus. Silakan coba kembali.', true);
         }
@@ -1440,7 +1661,8 @@
             localStorage.setItem(storagePrefix + activeSchema.id, JSON.stringify(activeDraft));
             const badge = document.getElementById('autosaveBadge');
             if (badge) badge.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Tersimpan lokal';
-            if (showMessage) showToast('Draft berhasil disimpan di perangkat ini.');
+            queueDraftBackendSync(activeSchema);
+            if (showMessage) showToast('Draft tersimpan lokal dan sedang disinkronkan ke server.');
             return true;
         } catch (error) {
             if (showMessage) showToast('Penyimpanan lokal tidak tersedia pada browser ini.', true);
@@ -2150,13 +2372,14 @@
         container.innerHTML = markup ? `<div class="summary-card">${markup}</div>` : '';
     }
 
-    function openForm(formId) {
+    function openForm(formId, options = {}) {
         activeSchema = formSchemas.find(item => item.id === formId);
         if (!activeSchema) return;
         if (window.location.hash !== `#reports/${formId}`) {
             window.history.replaceState(null, '', `#reports/${formId}`);
         }
         activeDraft = loadDraft(activeSchema);
+        const openedUpdatedAt = activeDraft.updatedAt || null;
         calculateAllRows();
 
         const workspace = document.getElementById('formWorkspace');
@@ -2226,7 +2449,7 @@
                         ${renderAdditionalAttachmentsBox()}
                     </div>
                     <div class="form-builder-footer">
-                        <div class="form-footer-note"><i class="fa-solid fa-shield-halved"></i> Data prototipe tersimpan lokal di browser, belum dikirim ke server.</div>
+                        <div class="form-footer-note"><i class="fa-solid fa-shield-halved"></i> Draft disimpan lokal dan disinkronkan ke server saat API tersedia. Lampiran tetap lokal pada fase ini.</div>
                         <div class="form-footer-actions">
                             <button type="button" class="form-secondary-btn" id="saveReportDraft"><i class="fa-regular fa-floppy-disk"></i> Simpan Draft</button>
                             <button type="button" class="form-secondary-btn danger-soft" id="resetReportForm"><i class="fa-solid fa-rotate-left"></i> Reset</button>
@@ -2267,6 +2490,7 @@
 
         updateAdditionalAttachmentsGrid();
         renderRows();
+        if (!options.skipBackendHydration) hydrateDraftFromBackend(activeSchema, openedUpdatedAt);
         document.getElementById('reportModule').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
@@ -2374,13 +2598,41 @@
         document.getElementById('reportModule').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    function resetActiveForm() {
+    async function resetActiveForm() {
         if (!activeSchema) return;
         const schemaId = activeSchema.id;
+        let resetMessage = 'Form dan draft berhasil direset.';
         if (!window.confirm('Kosongkan seluruh isian dan hapus draft form ini?')) return;
+        window.clearTimeout(backendDraftTimers.get(schemaId));
+        backendDraftTimers.delete(schemaId);
+        const pendingSync = backendDraftSyncChains.get(schemaId);
+        if (pendingSync) await pendingSync.catch(() => null);
+        let storedDraft = activeDraft;
+        try {
+            storedDraft = JSON.parse(localStorage.getItem(storagePrefix + schemaId)) || activeDraft;
+        } catch (error) {
+            storedDraft = activeDraft;
+        }
+        if (storedDraft?._serverReportId) {
+            const result = await reportApiRequest('', {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'discard_draft',
+                    clientKey: getReportClientKey(),
+                    reportId: storedDraft._serverReportId
+                })
+            });
+            if (result.available && !result.ok) {
+                showToast(result.message || 'Draft server gagal dikosongkan.', true);
+                return;
+            }
+            if (!result.available) {
+                resetMessage = 'Draft lokal dikosongkan, tetapi API belum aktif sehingga draft server lama belum terhapus.';
+            }
+        }
         localStorage.removeItem(storagePrefix + schemaId);
-        openForm(schemaId);
-        showToast('Form dan draft berhasil direset.');
+        openForm(schemaId, { skipBackendHydration: true });
+        showToast(resetMessage, resetMessage !== 'Form dan draft berhasil direset.');
     }
 
     function cuttingBitDraftSemanticIssue() {
@@ -2605,10 +2857,32 @@
         renderPreview(populatedRows);
     }
 
-    function finalizeReport() {
+    async function finalizeReport() {
         const populatedRows = validateDraft();
         if (!populatedRows) return;
+        const finalizeButton = document.getElementById('finalizeReport');
+        if (finalizeButton?.disabled) return;
+        if (finalizeButton) {
+            finalizeButton.disabled = true;
+            finalizeButton.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> Menyimpan...';
+        }
+        const schemaAtSubmit = activeSchema;
+        window.clearTimeout(backendDraftTimers.get(schemaAtSubmit.id));
+        backendDraftTimers.delete(schemaAtSubmit.id);
+        const pendingSync = backendDraftSyncChains.get(schemaAtSubmit.id);
+        if (pendingSync) await pendingSync.catch(() => null);
+        if (activeSchema?.id !== schemaAtSubmit.id || !activeDraft) {
+            if (finalizeButton?.isConnected) {
+                finalizeButton.disabled = false;
+                finalizeButton.innerHTML = '<i class="fa-solid fa-check"></i> Simpan Laporan';
+            }
+            return;
+        }
         const createdAt = new Date().toISOString();
+        const resolvedNumber = getReportNumber(activeSchema, activeDraft.fields);
+        const reportNumber = resolvedNumber.includes('TANPA NOMOR')
+            ? `${activeSchema.code}/${createdAt.replace(/[-:TZ.]/g, '').slice(0, 14)}`
+            : resolvedNumber;
         const record = {
             id: `RPT-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
             schemaVersion: 'report-template-v2',
@@ -2616,7 +2890,7 @@
             schemaId: activeSchema.id,
             code: activeSchema.code,
             title: activeSchema.title,
-            reportNumber: getReportNumber(activeSchema, activeDraft.fields),
+            reportNumber,
             createdAt,
             draft: cloneData({ ...activeDraft, finalizedAt: createdAt }),
             standardizedPayload: cloneData({
@@ -2626,7 +2900,40 @@
                 rows: populatedRows
             })
         };
+        const safe = backendSafeDraft({ ...activeDraft, rows: populatedRows, finalizedAt: createdAt });
         try {
+            const result = await reportApiRequest('', {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'finalize',
+                    clientKey: getReportClientKey(),
+                    reportId: activeDraft._serverReportId || null,
+                    template: reportTemplatePayload(activeSchema),
+                    reportNumber,
+                    draft: safe.draft,
+                    standardizedPayload: {
+                        schemaId: activeSchema.id,
+                        schemaVersion: 'report-template-v2',
+                        fields: safe.draft.fields,
+                        rows: safe.draft.rows
+                    },
+                    sourceMethod: activeDraft.importSource ? 'import' : 'form',
+                    hasPendingAttachments: safe.hasPendingAttachments
+                })
+            });
+            if (result.available && !result.ok) {
+                showToast(result.message || 'Laporan gagal disimpan ke server.', true);
+                return;
+            }
+            if (result.ok && result.data?.id) {
+                record.id = result.data.id;
+                record.backend = true;
+                record.status = 'FINAL';
+                record.createdAt = result.data.createdAt || createdAt;
+                record.finalizedAt = result.data.finalizedAt || createdAt;
+                record.updatedAt = result.data.updatedAt || createdAt;
+                record.hasPendingAttachments = safe.hasPendingAttachments;
+            }
             const records = readHistory();
             records.unshift(record);
             writeHistory(records);
@@ -2634,9 +2941,16 @@
             localStorage.removeItem(storagePrefix + schemaId);
             openForm(schemaId);
             renderHistory();
-            showToast('Laporan berhasil disimpan. Form sudah dikosongkan untuk pengisian berikutnya.');
+            showToast(result.ok
+                ? 'Laporan final berhasil disimpan ke server. Form sudah dikosongkan.'
+                : 'API belum aktif. Laporan disimpan lokal dan form sudah dikosongkan.');
         } catch (error) {
             showToast('Laporan gagal disimpan. Kapasitas penyimpanan browser mungkin penuh.', true);
+        } finally {
+            if (finalizeButton?.isConnected) {
+                finalizeButton.disabled = false;
+                finalizeButton.innerHTML = '<i class="fa-solid fa-check"></i> Simpan Laporan';
+            }
         }
     }
 
@@ -3145,7 +3459,7 @@
     }
 
     window.FleetReportForms = Object.freeze({
-        version: '1.3.0',
+        version: '1.4.0',
         getSchemas: () => cloneData(formSchemas),
         getDraftState(schemaId) {
             const schema = formSchemas.find(item => item.id === schemaId);
