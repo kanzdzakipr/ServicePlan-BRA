@@ -3197,8 +3197,88 @@
 
             let globalData = null;
             let mapInitialized = false;
+            let dashboardMapInstance = null;
             const FLEET_STATE_KEY = 'fleetmonitor-integrated-state-v1';
             const ASSET_STATUS_PRIORITY = { READY: 1, STANDBY: 2, INSPEKSI: 3, BREAKDOWN: 4, ACCIDENT_HOLD: 5 };
+            const MASTER_LOCATION_COORDINATES = Object.freeze({
+                'Yard Duri': { lat: 1.2854300, lng: 101.2185400 },
+                'Yard Prabumulih': { lat: -3.4354200, lng: 104.2384500 },
+                'Borrow Pit Harapan Baru': { lat: 1.3124500, lng: 101.2451200 },
+                'Workshop Bay KM 12': { lat: 1.2789000, lng: 101.2112000 },
+                'Site Sunter Area Stadium': { lat: -6.1451200, lng: 106.8741500 },
+                'Site Alpha Duri': { lat: 1.2991000, lng: 101.2311000 },
+                'PKB PEKANBARU Branch': { lat: 0.5070680, lng: 101.4477790 },
+                'PLB PALEMBANG Branch': { lat: -2.9760740, lng: 104.7754310 },
+                'MDN MEDAN Branch': { lat: 3.5951960, lng: 98.6722230 },
+                'SMG SEMARANG Rep Office': { lat: -6.9666670, lng: 110.4166640 },
+                'Minas Field Project': { lat: 0.7321400, lng: 101.4421100 }
+            });
+
+            function validMapCoordinate(lat, lng) {
+                return Number.isFinite(lat) && Number.isFinite(lng)
+                    && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+            }
+
+            function stableLocationHash(value) {
+                let hash = 2166136261;
+                for (const character of String(value || '')) {
+                    hash ^= character.charCodeAt(0);
+                    hash = Math.imul(hash, 16777619);
+                }
+                return hash >>> 0;
+            }
+
+            function representativeLocationPosition(location) {
+                const normalized = String(location || '').trim().toLowerCase();
+                if (!normalized) return null;
+
+                let anchor = MASTER_LOCATION_COORDINATES['Site Alpha Duri'];
+                if (normalized.includes('km 12')) anchor = MASTER_LOCATION_COORDINATES['Workshop Bay KM 12'];
+                else if (normalized.includes('pekanbaru')) anchor = MASTER_LOCATION_COORDINATES['PKB PEKANBARU Branch'];
+                else if (normalized.includes('prabumulih')) anchor = MASTER_LOCATION_COORDINATES['Yard Prabumulih'];
+                else if (normalized.includes('minas')) anchor = MASTER_LOCATION_COORDINATES['Minas Field Project'];
+                else if (normalized.includes('sunter')) anchor = MASTER_LOCATION_COORDINATES['Site Sunter Area Stadium'];
+                else if (normalized.includes('palembang')) anchor = MASTER_LOCATION_COORDINATES['PLB PALEMBANG Branch'];
+                else if (normalized.includes('medan')) anchor = MASTER_LOCATION_COORDINATES['MDN MEDAN Branch'];
+                else if (normalized.includes('semarang')) anchor = MASTER_LOCATION_COORDINATES['SMG SEMARANG Rep Office'];
+
+                const hash = stableLocationHash(normalized);
+                const angle = (hash % 360) * Math.PI / 180;
+                const radius = 0.004 + ((hash >>> 9) % 42) / 1000;
+                const longitudeScale = Math.max(0.3, Math.cos(anchor.lat * Math.PI / 180));
+                return {
+                    lat: anchor.lat + Math.sin(angle) * radius,
+                    lng: anchor.lng + Math.cos(angle) * radius / longitudeScale,
+                    source: 'Posisi representatif berdasarkan nama lokasi',
+                    isRepresentative: true
+                };
+            }
+
+            function resolveAssetMapPosition(asset, fallbackLocation = '') {
+                const individualPairs = [
+                    [asset?.last_latitude, asset?.last_longitude],
+                    [asset?.lastLatitude, asset?.lastLongitude],
+                    [asset?.latitude, asset?.longitude],
+                    [asset?.lat, asset?.lng]
+                ];
+
+                for (const [rawLat, rawLng] of individualPairs) {
+                    if (rawLat === null || rawLat === undefined || rawLat === ''
+                        || rawLng === null || rawLng === undefined || rawLng === '') continue;
+                    const lat = Number(rawLat);
+                    const lng = Number(rawLng);
+                    if (validMapCoordinate(lat, lng)) {
+                        return { lat, lng, source: 'Koordinat individual aset', isRepresentative: false };
+                    }
+                }
+
+                const location = String(asset?.location || asset?.location_name || fallbackLocation || '').trim();
+                const masterPosition = MASTER_LOCATION_COORDINATES[location];
+                if (masterPosition) {
+                    return { ...masterPosition, source: 'Koordinat master lokasi', isRepresentative: false };
+                }
+                return representativeLocationPosition(location);
+            }
 
             function rebuildFleetSummary() {
                 if (!globalData || !globalData.assets) return;
@@ -3383,6 +3463,7 @@
                 initMonitoringView(scopedData.assets);
                 initAssetView(scopedData.assets);
                 initWorkOrderView(scopedData.work_orders);
+                if (mapInitialized) initMap(scopedData.assets);
                 window.SpareLogistics?.refresh?.();
                 renderProjectMaster();
                 document.dispatchEvent(new CustomEvent('fleetproject:change', {
@@ -3603,6 +3684,19 @@
                 }
             };
 
+            async function fetchJsonSafely(url) {
+                try {
+                    const response = await fetch(url, { cache: 'no-store' });
+                    if (!response.ok) return null;
+                    const rawBody = await response.text();
+                    if (!rawBody.trim()) return null;
+                    return JSON.parse(rawBody.replace(/^\uFEFF/, ''));
+                } catch (error) {
+                    console.warn(`Sumber data ${url} tidak tersedia:`, error.message || error);
+                    return null;
+                }
+            }
+
             document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     if (window.loadAssetMapping) {
@@ -3613,21 +3707,56 @@
                     }
                     
                     // Fetch all initialization data concurrently
-                    const [resInit, resFuel, resPm, resTire] = await Promise.all([
-                        fetch('api/init.php'),
-                        fetch('api/fuel_logs.php'),
-                        fetch('api/pm_plans.php'),
-                        fetch('api/tire_inspections.php')
+                    const [apiInitData, assetPayload, fuelData, pmData, tireData] = await Promise.all([
+                        fetchJsonSafely('api/init.php'),
+                        fetchJsonSafely('api/assets.php'),
+                        fetchJsonSafely('api/fuel_logs.php'),
+                        fetchJsonSafely('api/pm_plans.php'),
+                        fetchJsonSafely('api/tire_inspections.php')
                     ]);
 
-                    if (!resInit.ok) throw new Error('Data not found');
-                    
-                    globalData = await resInit.json();
+                    const fallbackData = Array.isArray(apiInitData?.assets)
+                        ? null
+                        : await fetchJsonSafely('data.json');
+                    globalData = Array.isArray(apiInitData?.assets) ? apiInitData : fallbackData;
+                    if (!globalData || !Array.isArray(globalData.assets)) {
+                        throw new Error('Data Master Asset tidak dapat dimuat dari API maupun data.json');
+                    }
+
+                    // Enrich the initialization payload with spatial asset fields.
+                    // api/init.php intentionally returns a compact asset shape, while
+                    // api/assets.php exposes last_latitude/last_longitude and location_name.
+                    if (assetPayload?.status === 'success' && Array.isArray(assetPayload.data)) {
+                            const databaseAssetsById = new Map();
+                            assetPayload.data.forEach(asset => {
+                                const rawId = String(asset.asset_id || asset.id || '').trim();
+                                if (!rawId) return;
+                                databaseAssetsById.set(rawId.toLowerCase(), asset);
+                                databaseAssetsById.set(extractCleanAssetId(rawId).toLowerCase(), asset);
+                                if (asset.asset_code) {
+                                    databaseAssetsById.set(String(asset.asset_code).trim().toLowerCase(), asset);
+                                }
+                            });
+
+                            globalData.assets = (globalData.assets || []).map(asset => {
+                                const rawId = String(asset.id || asset.asset_id || '').trim();
+                                const databaseAsset = databaseAssetsById.get(rawId.toLowerCase())
+                                    || databaseAssetsById.get(extractCleanAssetId(rawId).toLowerCase());
+                                if (!databaseAsset) return asset;
+                                return {
+                                    ...asset,
+                                    location: asset.location || databaseAsset.location_name || databaseAsset.raw_location_notes || '',
+                                    location_name: databaseAsset.location_name || '',
+                                    current_location_id: databaseAsset.current_location_id ?? asset.current_location_id,
+                                    last_latitude: databaseAsset.last_latitude ?? asset.last_latitude,
+                                    last_longitude: databaseAsset.last_longitude ?? asset.last_longitude,
+                                    gps_updated_at: databaseAsset.gps_updated_at ?? asset.gps_updated_at
+                                };
+                            });
+                    }
                     
                     // Assign Fuel Logs
-                    if (resFuel.ok) {
-                        const fuelData = await resFuel.json();
-                        if (fuelData.status === 'success') {
+                    if (fuelData?.status === 'success' && Array.isArray(fuelData.data)) {
                             globalFuelLogs = fuelData.data.map(f => ({
                                 trxId: f.fuel_log_id,
                                 timeStr: f.refuel_date,
@@ -3649,13 +3778,10 @@
                                 status: 'Verified',
                                 notes: f.notes
                             }));
-                        }
                     }
 
                     // Assign PM Plans
-                    if (resPm.ok) {
-                        const pmData = await resPm.json();
-                        if (pmData.status === 'success') {
+                    if (pmData?.status === 'success' && Array.isArray(pmData.data)) {
                             globalPmComparisons = pmData.data.map(p => ({
                                 unitId: p.asset_id,
                                 model: p.asset_code || 'Unknown',
@@ -3666,13 +3792,10 @@
                                 diff: 0,
                                 notes: p.planner_note || ''
                             }));
-                        }
                     }
 
                     // Assign Tire Inspections
-                    if (resTire.ok) {
-                        const tireData = await resTire.json();
-                        if (tireData.status === 'success') {
+                    if (tireData?.status === 'success' && Array.isArray(tireData.data)) {
                             // tireInspectionStore maps positions to { tread, pressure }
                             tireData.data.forEach(t => {
                                 tireInspectionStore[t.tire_position] = {
@@ -3680,7 +3803,6 @@
                                     pressure: t.air_pressure_psi
                                 };
                             });
-                        }
                     }
 
                     normalizeAssetRegistry(globalData);
@@ -4246,24 +4368,50 @@
                 const locName = document.getElementById('modalLokasi').textContent || 'Yard Duri';
                 const statusName = document.getElementById('modalStatus').textContent || 'READY';
 
-                // Coordinates mapping based on location
-                let lat = 1.4851, lng = 101.3524; // Default Duri
-                if (locName.toLowerCase().includes('prabumulih')) { lat = -3.4283; lng = 104.2291; }
-                else if (locName.toLowerCase().includes('borrow') || locName.toLowerCase().includes('pit')) { lat = 1.4920; lng = 101.3610; }
-                else if (locName.toLowerCase().includes('sunter')) { lat = -6.1352; lng = 106.8654; }
+                const asset = (globalData?.assets || []).find(item => String(item.id) === String(unitId))
+                    || { id: unitId, location: locName };
+                const position = resolveAssetMapPosition(asset, locName);
 
                 const gpsCoordEl = document.getElementById('modalGpsCoord');
-                if (gpsCoordEl) gpsCoordEl.innerText = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-
                 const btnGmaps = document.getElementById('btnGoogleMaps');
-                if (btnGmaps) {
-                    btnGmaps.href = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
-                }
 
                 if (modalUnitMapInstance) {
                     modalUnitMapInstance.remove();
                     modalUnitMapInstance = null;
                 }
+
+                if (!position) {
+                    if (gpsCoordEl) gpsCoordEl.innerText = 'Koordinat belum tersedia';
+                    if (btnGmaps) {
+                        btnGmaps.removeAttribute('href');
+                        btnGmaps.setAttribute('aria-disabled', 'true');
+                        btnGmaps.style.pointerEvents = 'none';
+                        btnGmaps.style.opacity = '0.55';
+                    }
+                    mapContainer.innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; padding:24px; text-align:center; color:var(--text-muted); background:var(--bg-body);">
+                        <div><i class="fa-solid fa-location-crosshairs" style="font-size:2rem; margin-bottom:10px;"></i><br>
+                        Koordinat untuk <strong>${escapeHtml(locName)}</strong> belum tersedia.<br><small>Lokasi tidak digabung dengan lokasi lain karena nama datanya berbeda.</small></div>
+                    </div>`;
+                    return;
+                }
+
+                const { lat, lng } = position;
+                if (gpsCoordEl) {
+                    gpsCoordEl.innerText = position.isRepresentative
+                        ? `${position.source} — koordinat aktual belum tersedia`
+                        : `${position.source}: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                }
+                if (btnGmaps) {
+                    btnGmaps.href = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+                    btnGmaps.removeAttribute('aria-disabled');
+                    btnGmaps.title = position.isRepresentative
+                        ? 'Buka posisi representatif pada Google Maps'
+                        : 'Buka posisi pada Google Maps';
+                    btnGmaps.style.pointerEvents = '';
+                    btnGmaps.style.opacity = '';
+                }
+
+                mapContainer.innerHTML = '';
 
                 modalUnitMapInstance = L.map('modalUnitMap').setView([lat, lng], 14);
 
@@ -4284,7 +4432,7 @@
 
                 L.marker([lat, lng], { icon: customIcon })
                     .addTo(modalUnitMapInstance)
-                    .bindPopup(`<b>${escapeHtml(unitId)}</b><br>Lokasi: ${escapeHtml(locName)}<br>Status: <b>${escapeHtml(statusName)}</b>`)
+                    .bindPopup(`<b>${escapeHtml(unitId)}</b><br>Lokasi: ${escapeHtml(locName)}<br>Status: <b>${escapeHtml(statusName)}</b><br><small>${escapeHtml(position.source)}${position.isRepresentative ? ' — bukan GPS aktual' : ''}</small>`)
                     .openPopup();
 
                 setTimeout(() => {
@@ -4622,9 +4770,13 @@
                 const content = document.querySelector('.content');
                 if (content) content.scrollTop = 0;
 
-                if (viewName === 'dashboard' && !mapInitialized && globalData) {
-                    initMap(globalData.assets);
-                    mapInitialized = true;
+                if (viewName === 'dashboard' && globalData) {
+                    if (!mapInitialized) {
+                        initMap(window.getProjectScopedAssets?.() || globalData.assets);
+                        mapInitialized = true;
+                    } else {
+                        setTimeout(() => dashboardMapInstance?.invalidateSize(), 100);
+                    }
                 }
                 if (viewName === 'condition' && window.ConditionMonitoring) {
                     window.ConditionMonitoring.refresh();
@@ -4652,31 +4804,115 @@
             });
 
             function initMap(assets) {
-                const map = L.map('map').setView([1.2721, 101.2173], 12);
+                const mapContainer = document.getElementById('map');
+                if (!mapContainer || typeof L === 'undefined') return;
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+                if (dashboardMapInstance) {
+                    dashboardMapInstance.remove();
+                    dashboardMapInstance = null;
+                }
+                mapContainer.innerHTML = '';
 
-                const iconOperating = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#28a745; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15] });
-                const iconBreakdown = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#dc3545; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15] });
-                const iconStandby = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#17a2b8; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15] });
-                const iconInspeksi = L.divIcon({ className: 'custom-div-icon', html: "<div style='background-color:#ffc107; width:15px; height:15px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);'></div>", iconSize: [15, 15] });
+                const map = L.map('map').setView([1.2854300, 101.2185400], 10);
+                dashboardMapInstance = map;
 
-                const dummyCenter = { lat: 1.2721, lng: 101.2173 };
-                const sampleUnits = assets.slice(0, 25); // map 25 units
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: 'Â© OpenStreetMap'
+                }).addTo(map);
 
-                sampleUnits.forEach((unit) => {
-                    const lat = dummyCenter.lat + (Math.random() - 0.5) * 0.05;
-                    const lng = dummyCenter.lng + (Math.random() - 0.5) * 0.05;
+                const coordinateGroups = new Map();
+                const unmappedAssets = [];
 
-                    let icon = iconOperating;
-                    if (unit.status === 'BREAKDOWN') icon = iconBreakdown;
-                    else if (unit.status === 'STANDBY') icon = iconStandby;
-                    else if (unit.status === 'INSPEKSI') icon = iconInspeksi;
-
-                    L.marker([lat, lng], { icon: icon }).addTo(map)
-                        .bindPopup(`<b>${escapeHtml(unit.id)}</b><br>Kategori: ${escapeHtml(unit.category)}<br>Status: ${escapeHtml(unit.status)}`);
+                (Array.isArray(assets) ? assets : []).forEach(asset => {
+                    const position = resolveAssetMapPosition(asset);
+                    if (!position) {
+                        unmappedAssets.push(asset);
+                        return;
+                    }
+                    const location = String(asset.location || asset.location_name || 'Lokasi belum ditetapkan').trim();
+                    const key = `${location}|${position.lat.toFixed(7)}|${position.lng.toFixed(7)}|${position.source}`;
+                    if (!coordinateGroups.has(key)) {
+                        coordinateGroups.set(key, { ...position, location, assets: [] });
+                    }
+                    coordinateGroups.get(key).assets.push(asset);
                 });
-                setTimeout(() => { map.invalidateSize(); }, 500);
+
+                const bounds = [];
+                coordinateGroups.forEach(group => {
+                    const statusCounts = group.assets.reduce((counts, asset) => {
+                        const status = String(asset.status || 'READY').toUpperCase();
+                        counts[status] = (counts[status] || 0) + 1;
+                        return counts;
+                    }, {});
+                    const dominantStatus = group.assets.reduce((selected, asset) => {
+                        const status = String(asset.status || 'READY').toUpperCase();
+                        return (ASSET_STATUS_PRIORITY[status] || 0) > (ASSET_STATUS_PRIORITY[selected] || 0)
+                            ? status : selected;
+                    }, 'READY');
+                    const markerColor = ['BREAKDOWN', 'ACCIDENT_HOLD'].includes(dominantStatus) ? '#dc3545'
+                        : dominantStatus === 'INSPEKSI' ? '#ffc107'
+                            : dominantStatus === 'STANDBY' ? '#17a2b8' : '#28a745';
+                    const countLabel = group.assets.length > 99 ? '99+' : String(group.assets.length);
+                    const markerBorder = group.isRepresentative ? '2px dashed #fd7e14' : '2px solid #fff';
+                    const icon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="background:${markerColor}; min-width:28px; height:28px; padding:0 6px; border-radius:15px; border:${markerBorder}; box-shadow:0 2px 7px rgba(0,0,0,.42); color:#fff; display:flex; align-items:center; justify-content:center; font:700 11px sans-serif;">${countLabel}</div>`,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    });
+                    const statusSummary = Object.entries(statusCounts)
+                        .map(([status, count]) => `${escapeHtml(status)}: ${count}`)
+                        .join(' &middot; ');
+                    const assetRows = group.assets
+                        .slice()
+                        .sort((a, b) => String(a.id).localeCompare(String(b.id), 'id'))
+                        .map(asset => `<button type="button" class="map-asset-link" data-map-asset-id="${escapeHtml(asset.id)}" style="display:flex; width:100%; gap:8px; justify-content:space-between; border:0; border-bottom:1px solid #eee; background:#fff; padding:7px 4px; cursor:pointer; text-align:left;">
+                            <span><strong>${escapeHtml(asset.id)}</strong><br><small>${escapeHtml(asset.category || 'Alat Berat')}</small></span>
+                            <span class="badge" style="align-self:center;">${escapeHtml(asset.status || 'READY')}</span>
+                        </button>`).join('');
+                    const popup = `<div style="min-width:260px; max-width:360px;">
+                        <strong style="font-size:14px;">${escapeHtml(group.location)}</strong><br>
+                        <small>${escapeHtml(group.source)}${group.isRepresentative ? ' &middot; koordinat aktual belum tersedia' : ` &middot; ${group.lat.toFixed(6)}, ${group.lng.toFixed(6)}`}</small>
+                        <p style="margin:7px 0;"><b>${group.assets.length} unit</b><br><small>${statusSummary}</small></p>
+                        <div style="max-height:230px; overflow:auto; border-top:1px solid #ddd;">${assetRows}</div>
+                        <a href="https://www.google.com/maps?q=${group.lat.toFixed(6)},${group.lng.toFixed(6)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px; margin-top:9px; color:#0d6efd; font-weight:600; text-decoration:none;">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Google Maps${group.isRepresentative ? ' (representatif)' : ''}
+                        </a>
+                    </div>`;
+
+                    L.marker([group.lat, group.lng], { icon }).addTo(map).bindPopup(popup, { maxWidth: 390 });
+                    bounds.push([group.lat, group.lng]);
+                });
+
+                map.on('popupopen', event => {
+                    event.popup.getElement()?.querySelectorAll('[data-map-asset-id]').forEach(button => {
+                        button.addEventListener('click', () => {
+                            const asset = (globalData?.assets || []).find(item => String(item.id) === button.dataset.mapAssetId);
+                            if (asset) openAssetModal(asset.id, asset.status, asset.category, asset.location);
+                        });
+                    });
+                });
+
+                const coverageControl = L.control({ position: 'topright' });
+                coverageControl.onAdd = function () {
+                    const control = L.DomUtil.create('div');
+                    control.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 5px rgba(0,0,0,.3);font:12px/1.4 Segoe UI,sans-serif;';
+                    const mappedCount = (Array.isArray(assets) ? assets.length : 0) - unmappedAssets.length;
+                    const representativeCount = Array.from(coordinateGroups.values())
+                        .filter(group => group.isRepresentative)
+                        .reduce((total, group) => total + group.assets.length, 0);
+                    const verifiedCount = mappedCount - representativeCount;
+                    control.innerHTML = `<strong>Cakupan Maps</strong><br><span style="color:#198754">${verifiedCount} koordinat terverifikasi</span><br><span style="color:#fd7e14">${representativeCount} posisi representatif</span><br><span style="color:${unmappedAssets.length ? '#dc3545' : '#198754'}">${unmappedAssets.length} tanpa data lokasi</span>`;
+                    L.DomEvent.disableClickPropagation(control);
+                    return control;
+                };
+                coverageControl.addTo(map);
+
+                if (bounds.length === 1) map.setView(bounds[0], 14);
+                else if (bounds.length > 1) map.fitBounds(bounds, { padding: [35, 35], maxZoom: 14 });
+
+                setTimeout(() => map.invalidateSize(), 500);
             }
 
             function initMonitoringView(assets) {
