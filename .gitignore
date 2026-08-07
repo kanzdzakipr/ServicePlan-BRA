@@ -15,10 +15,11 @@ data.json
 config/database.local.php
 config/constants.local.php
 
-# 3. Server SQL Dumps & Database Schemas
-*.sql
-scripts/schema.sql
-schema.sql
+# 3. Server SQL Dumps & Database Schemas (Aktifkan sementara folder scripts)
+# *.sql
+# scripts/schema.sql
+# schema.sql
+!scripts/
 
 # 4. Storage & Dynamic Uploads
 uploads/*
@@ -40,5 +41,5 @@ scratch/
 .gemini/
 
 # Eksklusi Mutlak Pemindaian AI Antigravity
-scripts/vendor/
+# scripts/vendor/
 # tests/fixtures/ # (Jika folder testing memiliki sampel payload dokumen berukuran besar)
