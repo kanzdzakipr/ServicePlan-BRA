@@ -4558,34 +4558,54 @@
     };
 
     const TIRE_POSITIONS_10 = [
-        { code: 'P1', label: 'Depan kiri', row: 1, col: 1 },
-        { code: 'P2', label: 'Depan kanan', row: 1, col: 4 },
-        { code: 'P3', label: 'Axle 1 kiri luar', row: 2, col: 1 },
-        { code: 'P4', label: 'Axle 1 kiri dalam', row: 2, col: 2 },
-        { code: 'P5', label: 'Axle 1 kanan dalam', row: 2, col: 3 },
-        { code: 'P6', label: 'Axle 1 kanan luar', row: 2, col: 4 },
-        { code: 'P7', label: 'Axle 2 kiri luar', row: 3, col: 1 },
-        { code: 'P8', label: 'Axle 2 kiri dalam', row: 3, col: 2 },
-        { code: 'P9', label: 'Axle 2 kanan dalam', row: 3, col: 3 },
-        { code: 'P10', label: 'Axle 2 kanan luar', row: 3, col: 4 }
+        { code: 'P1', posCode: 'FL', label: 'Depan kiri', row: 1, col: 1 },
+        { code: 'P2', posCode: 'FR', label: 'Depan kanan', row: 1, col: 4 },
+        { code: 'P3', posCode: 'R1LO', label: 'Axle 1 kiri luar', row: 2, col: 1 },
+        { code: 'P4', posCode: 'R1LI', label: 'Axle 1 kiri dalam', row: 2, col: 2 },
+        { code: 'P5', posCode: 'R1RI', label: 'Axle 1 kanan dalam', row: 2, col: 3 },
+        { code: 'P6', posCode: 'R1RO', label: 'Axle 1 kanan luar', row: 2, col: 4 },
+        { code: 'P7', posCode: 'R2LO', label: 'Axle 2 kiri luar', row: 3, col: 1 },
+        { code: 'P8', posCode: 'R2LI', label: 'Axle 2 kiri dalam', row: 3, col: 2 },
+        { code: 'P9', posCode: 'R2RI', label: 'Axle 2 kanan dalam', row: 3, col: 3 },
+        { code: 'P10', posCode: 'R2RO', label: 'Axle 2 kanan luar', row: 3, col: 4 }
     ];
-    const TIRE_POSITIONS_4 = [
-        { code: 'FL', label: 'Depan kiri', row: 1, col: 1 },
-        { code: 'FR', label: 'Depan kanan', row: 1, col: 4 },
-        { code: 'RL', label: 'Belakang kiri', row: 3, col: 1 },
-        { code: 'RR', label: 'Belakang kanan', row: 3, col: 4 }
+    const TIRE_POSITIONS_14 = [
+        { code: 'P1', posCode: 'FL', label: 'Depan kiri', row: 1, col: 1 },
+        { code: 'P2', posCode: 'FR', label: 'Depan kanan', row: 1, col: 4 },
+        { code: 'P3', posCode: 'R1LO', label: 'Axle 1 kiri luar', row: 2, col: 1 },
+        { code: 'P4', posCode: 'R1LI', label: 'Axle 1 kiri dalam', row: 2, col: 2 },
+        { code: 'P5', posCode: 'R1RI', label: 'Axle 1 kanan dalam', row: 2, col: 3 },
+        { code: 'P6', posCode: 'R1RO', label: 'Axle 1 kanan luar', row: 2, col: 4 },
+        { code: 'P7', posCode: 'R2LO', label: 'Axle 2 kiri luar', row: 3, col: 1 },
+        { code: 'P8', posCode: 'R2LI', label: 'Axle 2 kiri dalam', row: 3, col: 2 },
+        { code: 'P9', posCode: 'R2RI', label: 'Axle 2 kanan dalam', row: 3, col: 3 },
+        { code: 'P10', posCode: 'R2RO', label: 'Axle 2 kanan luar', row: 3, col: 4 },
+        { code: 'P11', posCode: 'T1LO', label: 'Trailer 1 kiri luar', row: 4, col: 1 },
+        { code: 'P12', posCode: 'T1LI', label: 'Trailer 1 kiri dalam', row: 4, col: 2 },
+        { code: 'P13', posCode: 'T1RI', label: 'Trailer 1 kanan dalam', row: 4, col: 3 },
+        { code: 'P14', posCode: 'T1RO', label: 'Trailer 1 kanan luar', row: 4, col: 4 }
+    ];
+    const TIRE_POSITIONS_6 = [
+        { code: 'FL', posCode: 'FL', label: 'Depan kiri', row: 1, col: 1 },
+        { code: 'FR', posCode: 'FR', label: 'Depan kanan', row: 1, col: 4 },
+        { code: 'R1L', posCode: 'R1L', label: 'Belakang 1 kiri', row: 2, col: 1 },
+        { code: 'R1R', posCode: 'R1R', label: 'Belakang 1 kanan', row: 2, col: 4 },
+        { code: 'R2L', posCode: 'R2L', label: 'Belakang 2 kiri', row: 3, col: 1 },
+        { code: 'R2R', posCode: 'R2R', label: 'Belakang 2 kanan', row: 3, col: 4 }
+    ];
+    const TIRE_POSITIONS_5 = [
+        { code: 'FL', posCode: 'FL', label: 'Depan kiri', row: 1, col: 1 },
+        { code: 'FR', posCode: 'FR', label: 'Depan kanan', row: 1, col: 4 },
+        { code: 'RL', posCode: 'RL', label: 'Belakang kiri', row: 3, col: 1 },
+        { code: 'RR', posCode: 'RR', label: 'Belakang kanan', row: 3, col: 4 },
+        { code: 'SPARE', posCode: 'SPARE', label: 'Ban Cadangan (Spare)', row: 4, col: 2 }
+    ];
+    const TIRE_POSITIONS_2 = [
+        { code: 'RL', posCode: 'RL', label: 'Roda Belakang Kiri', row: 2, col: 1 },
+        { code: 'RR', posCode: 'RR', label: 'Roda Belakang Kanan', row: 2, col: 4 }
     ];
 
-    const TIRE_REPORT_OVERRIDES = {
-        'DT-04042': { P7: ['DG', null, 0], P8: ['DG', null, 0], P9: ['DG', null, 0], P10: ['DG', null, 0] },
-        'DT-04053': { P7: ['DG', null, 0], P8: ['DG', null, 0], P9: ['DG', null, 0], P10: ['DG', null, 0] },
-        'DT-00029': { P7: ['DG', null, 0], P8: ['DG', null, 0], P9: ['DG', null, 0] },
-        'DT-00020': { P3: ['DG', null, 0], P4: ['DG', null, 0] },
-        'DT-00050': { P7: ['DG', null, 0], P8: ['DG', null, 0] },
-        'DT-00056': { P1: ['Baik', 3.55, 88], P2: ['Aus tidak rata', 6.71, 86] },
-        'DT-00049': { P2: ['Aus tidak rata', 3.77, 84] },
-        'DT-00048': { P1: ['Aus tidak rata', 4.06, 86], P2: ['Rotasi', 8.39, 89] }
-    };
+    const TIRE_REPORT_OVERRIDES = {};
 
     const state = loadState();
     const catalogState = { query: '', status: 'ALL', type: 'ALL', page: 1, pageSize: 20 };
@@ -4694,21 +4714,71 @@
         return asset?.category || 'Heavy Equipment';
     }
 
+    function getTireLayoutForAsset(asset) {
+        const cat = String(asset?.category || '').trim();
+        const code = shortCode(asset?.id || '');
+        const model = String(asset?.model || asset?.make_model || '').trim();
+
+        if (cat === 'Dump Truck') {
+            if (/NMR|Isuzu|4x2/i.test(model)) return TIRE_POSITIONS_6;
+            return TIRE_POSITIONS_10;
+        }
+        if (cat === 'Trado' || cat === 'Prime Mover' || /^SL-|^PM-|^FBT-|^LB-/i.test(code)) {
+            return TIRE_POSITIONS_14;
+        }
+        if (cat === 'Motor Grader' || /^MG-/i.test(code)) {
+            return TIRE_POSITIONS_6;
+        }
+        if (cat === 'Water Truck' || /^WT-|^TMC-/i.test(code)) {
+            return TIRE_POSITIONS_10;
+        }
+        if (cat === 'Light Vehicle' || /^LV-/i.test(code)) {
+            return TIRE_POSITIONS_5;
+        }
+        if (cat === 'Vibro Compactor' || /^PF-|^SD-/i.test(code)) {
+            return TIRE_POSITIONS_2;
+        }
+        if (/Excavator|Bulldozer|Reclaimer|^EX-|^EXC-|^DZ-|^RM-/i.test(cat + ' ' + code)) {
+            return []; // Tracked equipment has no pneumatic tires
+        }
+        return TIRE_POSITIONS_10;
+    }
+
     function makeTirePositions(asset, hash) {
-        const layout = isDumpTruck(asset) ? TIRE_POSITIONS_10 : TIRE_POSITIONS_4;
-        const code = shortCode(asset.id);
-        const overrides = TIRE_REPORT_OVERRIDES[code] || {};
+        const layout = getTireLayoutForAsset(asset);
+        if (!layout || !layout.length) return []; // Tracked unit
+
+        const rawAssetId = String(asset.id || asset.asset_id || '').trim();
+        const code = shortCode(rawAssetId);
+        
+        const dbAssetInspections = window.globalTireInspectionsByAsset
+            ? (window.globalTireInspectionsByAsset[rawAssetId.toLowerCase()] || window.globalTireInspectionsByAsset[code.toLowerCase()])
+            : null;
+
         return layout.map((position, index) => {
+            let dbRecord = dbAssetInspections ? (dbAssetInspections[position.posCode] || dbAssetInspections[position.code]) : null;
+            if (dbRecord) {
+                return {
+                    ...position,
+                    physical: dbRecord.condition_color === 'GREEN' ? 'Baik' : (dbRecord.condition_color === 'YELLOW' ? 'Perlu Rotasi / Aus' : 'Aus Berat / Ganti'),
+                    tread: Number(dbRecord.tread_depth_mm),
+                    pressure: Number(dbRecord.air_pressure_psi),
+                    serialNo: dbRecord.tire_serial_no || '',
+                    wearPattern: dbRecord.condition_color === 'GREEN' ? 'Merata' : 'Aus Tidak Rata',
+                    action: dbRecord.condition_color === 'RED' ? 'Ganti segera' : (dbRecord.condition_color === 'YELLOW' ? 'Rotasi ban' : 'Monitor'),
+                    updatedAt: dbRecord.inspected_at || '2026-08-07T08:00:00+07:00'
+                };
+            }
+
             const defaultTread = Number((9.1 + ((hash + index * 17) % 34) / 10).toFixed(1));
-            const override = overrides[position.code];
             return {
                 ...position,
-                physical: override ? override[0] : 'Baik',
-                tread: override ? override[1] : defaultTread,
-                pressure: override ? override[2] : 96 + ((hash + index * 5) % 15),
-                wearPattern: override && /aus|rotasi/i.test(override[0]) ? override[0] : 'Merata',
-                action: override && override[0] === 'DG' ? 'Ganti segera' : 'Monitor',
-                updatedAt: '2026-07-19T08:00:00+07:00'
+                physical: 'Baik',
+                tread: defaultTread,
+                pressure: 96 + ((hash + index * 5) % 15),
+                wearPattern: 'Merata',
+                action: 'Monitor',
+                updatedAt: '2026-08-07T08:00:00+07:00'
             };
         });
     }
