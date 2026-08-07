@@ -172,17 +172,86 @@
 
                 <div class="dashboard-layout">
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-map-location-dot"></i> Live Map (Posisi
-                                Terakhir Unit)</span></div>
+                        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; position:relative;">
+                            <span style="font-weight:700; font-size:0.98rem; display:inline-flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-map-location-dot" style="color:var(--primary);"></i> Live Map (Posisi Terakhir Unit)
+                            </span>
+                            
+                            <!-- Compact Filter Button & Dropdown Popover -->
+                            <div style="position:relative;">
+                                <button type="button" id="btnMapFilterToggle" onclick="toggleMapFilterPopover(event)" class="btn btn-sm" style="font-size:0.82rem; font-weight:600; padding:5px 12px; display:inline-flex; align-items:center; gap:6px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer; color:#334155; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                                    <i class="fa-solid fa-sliders" style="color:var(--primary);"></i> Filter...
+                                    <span id="mapFilterBadge" style="background:var(--primary); color:#fff; font-size:10px; padding:1px 6px; border-radius:10px; display:none;">0</span>
+                                </button>
+
+                                <!-- Floating Popover Card -->
+                                <div id="mapFilterPopover" onclick="event.stopPropagation()" style="display:none; position:absolute; right:0; top:36px; z-index:2000; background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.18); width:300px; padding:14px; font-size:0.83rem;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
+                                        <strong style="color:#0f172a; font-size:0.88rem;"><i class="fa-solid fa-filter" style="color:var(--primary);"></i> Filter Atribut Peta</strong>
+                                        <button type="button" onclick="resetMapFilters()" style="background:none; border:none; color:#0d6efd; font-size:0.78rem; font-weight:600; cursor:pointer;">Reset</button>
+                                    </div>
+                                    
+                                    <!-- Status Filter -->
+                                    <div style="margin-bottom:8px;">
+                                        <label style="font-weight:600; color:#475569; display:block; margin-bottom:3px; font-size:0.78rem;">Status Unit:</label>
+                                        <select id="mapStatusFilter" class="form-control" style="font-size:0.8rem; padding:4px 8px; height:32px; width:100%;" onchange="applyMapFilters()">
+                                            <option value="ALL">Semua Status</option>
+                                            <option value="READY">Ready / Operating (Hijau)</option>
+                                            <option value="BREAKDOWN">Breakdown (Merah)</option>
+                                            <option value="INSPEKSI">Inspeksi / P2H (Kuning)</option>
+                                            <option value="STANDBY">Standby (Biru)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Location Filter -->
+                                    <div style="margin-bottom:8px;">
+                                        <label style="font-weight:600; color:#475569; display:block; margin-bottom:3px; font-size:0.78rem;">Lokasi / Cabang:</label>
+                                        <select id="mapLocationFilter" class="form-control" style="font-size:0.8rem; padding:4px 8px; height:32px; width:100%;" onchange="applyMapFilters()">
+                                            <option value="ALL">Semua Lokasi / Cabang</option>
+                                            <option value="pekanbaru">Pekanbaru Branch</option>
+                                            <option value="duri">Duri Branch</option>
+                                            <option value="perawang">Perawang Branch</option>
+                                            <option value="dumai">Dumai Branch</option>
+                                            <option value="pelalawan">Pelalawan Branch</option>
+                                            <option value="kuansing">Kuansing Branch</option>
+                                            <option value="rohil">Rohil Branch</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Time Recency Filter -->
+                                    <div style="margin-bottom:10px;">
+                                        <label style="font-weight:600; color:#475569; display:block; margin-bottom:3px; font-size:0.78rem;">Waktu Update Terakhir:</label>
+                                        <select id="mapTimeFilter" class="form-control" style="font-size:0.8rem; padding:4px 8px; height:32px; width:100%;" onchange="applyMapFilters()">
+                                            <option value="ALL">Semua Waktu Update</option>
+                                            <option value="24H">&lt; 24 Jam Terakhir</option>
+                                            <option value="7D">1 - 7 Hari Terakhir</option>
+                                            <option value="OLD">&gt; 7 Hari</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Search Input -->
+                                    <div style="margin-bottom:10px;">
+                                        <label style="font-weight:600; color:#475569; display:block; margin-bottom:3px; font-size:0.78rem;">Cari Kode Unit / Kategori:</label>
+                                        <input type="text" id="mapSearchInput" placeholder="Ketik Kode Unit (mis. DT-00001)..." onkeyup="applyMapFilters()" style="font-size:0.8rem; padding:4px 8px; height:32px; width:100%; border-radius:4px; border:1px solid #cbd5e1;">
+                                    </div>
+
+                                    <!-- Toggle Cluster -->
+                                    <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;">
+                                        <span style="font-weight:600; color:#334155; font-size:0.78rem;"><i class="fa-solid fa-object-group" style="color:var(--primary);"></i> Klusterisasi Titik</span>
+                                        <input type="checkbox" id="mapClusterToggle" checked onchange="applyMapFilters()" style="cursor:pointer; width:16px; height:16px;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="panel-body" style="padding: 0;">
-                            <div id="map"></div>
+                            <div id="map" style="height: 530px; border-radius: 0 0 8px 8px;"></div>
                         </div>
                     </div>
                     <div class="panel">
                         <div class="panel-header"><span><i class="fa-solid fa-triangle-exclamation"></i> Panel Perhatian
                                 (WO Emergency)</span></div>
                         <div class="panel-body" style="padding: 10px;">
-                            <ul class="attention-list" id="attentionList"></ul>
+                            <ul class="attention-list" id="attentionList" style="height: 530px; max-height: 530px; overflow-y: auto; padding-right: 4px;"></ul>
                         </div>
                     </div>
                 </div>
@@ -4809,23 +4878,115 @@
                 });
             });
 
-            function initMap(assets) {
-                const mapContainer = document.getElementById('map');
-                if (!mapContainer || typeof L === 'undefined') return;
+            let currentRawAssets = [];
+            let mapMarkersLayer = null;
+            let coverageControlInstance = null;
 
-                if (dashboardMapInstance) {
-                    dashboardMapInstance.remove();
-                    dashboardMapInstance = null;
+            function toggleMapFilterPopover(event) {
+                if (event) event.stopPropagation();
+                const popover = document.getElementById('mapFilterPopover');
+                if (!popover) return;
+                const isVisible = popover.style.display === 'block';
+                popover.style.display = isVisible ? 'none' : 'block';
+            }
+
+            document.addEventListener('click', (e) => {
+                const popover = document.getElementById('mapFilterPopover');
+                const btn = document.getElementById('btnMapFilterToggle');
+                if (popover && popover.style.display === 'block') {
+                    if (!popover.contains(e.target) && !btn.contains(e.target)) {
+                        popover.style.display = 'none';
+                    }
                 }
-                mapContainer.innerHTML = '';
+            });
 
-                const map = L.map('map').setView([1.2854300, 101.2185400], 10);
-                dashboardMapInstance = map;
+            function resetMapFilters() {
+                if (document.getElementById('mapStatusFilter')) document.getElementById('mapStatusFilter').value = 'ALL';
+                if (document.getElementById('mapLocationFilter')) document.getElementById('mapLocationFilter').value = 'ALL';
+                if (document.getElementById('mapTimeFilter')) document.getElementById('mapTimeFilter').value = 'ALL';
+                if (document.getElementById('mapSearchInput')) document.getElementById('mapSearchInput').value = '';
+                if (document.getElementById('mapClusterToggle')) document.getElementById('mapClusterToggle').checked = true;
+                applyMapFilters(true);
+            }
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: 'ƒâ€š© OpenStreetMap'
-                }).addTo(map);
+            function applyMapFilters(shouldFitBounds = false) {
+                if (!dashboardMapInstance) return;
+
+                const statusVal = document.getElementById('mapStatusFilter')?.value || 'ALL';
+                const locationVal = document.getElementById('mapLocationFilter')?.value || 'ALL';
+                const timeVal = document.getElementById('mapTimeFilter')?.value || 'ALL';
+                const isCluster = document.getElementById('mapClusterToggle')?.checked ?? true;
+                const searchVal = (document.getElementById('mapSearchInput')?.value || '').trim().toLowerCase();
+
+                let activeFilterCount = 0;
+                if (statusVal !== 'ALL') activeFilterCount++;
+                if (locationVal !== 'ALL') activeFilterCount++;
+                if (timeVal !== 'ALL') activeFilterCount++;
+                if (searchVal) activeFilterCount++;
+
+                const badgeEl = document.getElementById('mapFilterBadge');
+                if (badgeEl) {
+                    if (activeFilterCount > 0) {
+                        badgeEl.innerText = activeFilterCount;
+                        badgeEl.style.display = 'inline-block';
+                    } else {
+                        badgeEl.style.display = 'none';
+                    }
+                }
+
+                const now = new Date();
+
+                const filteredAssets = (currentRawAssets || []).filter(asset => {
+                    // 1. Status Filter
+                    if (statusVal !== 'ALL') {
+                        const s = String(asset.status || 'READY').toUpperCase();
+                        if (statusVal === 'BREAKDOWN' && !['BREAKDOWN', 'ACCIDENT_HOLD'].includes(s)) return false;
+                        if (statusVal !== 'BREAKDOWN' && s !== statusVal) return false;
+                    }
+
+                    // 2. Location Filter (Flexible keyword matching e.g. "pekanbaru" matches "PKB PEKANBARU Branch", "Pekanbaru Yard", etc.)
+                    if (locationVal !== 'ALL') {
+                        const loc = String(asset.location || asset.location_name || '').toLowerCase();
+                        const keyword = locationVal.toLowerCase().replace(/\s*branch\s*/g, '').trim();
+                        if (!loc.includes(keyword)) return false;
+                    }
+
+                    // 3. Search Filter
+                    if (searchVal) {
+                        const code = String(asset.id || asset.asset_code || '').toLowerCase();
+                        const cat = String(asset.category || '').toLowerCase();
+                        const loc = String(asset.location || asset.location_name || '').toLowerCase();
+                        if (!code.includes(searchVal) && !cat.includes(searchVal) && !loc.includes(searchVal)) return false;
+                    }
+
+                    // 4. Time Recency Filter
+                    if (timeVal !== 'ALL') {
+                        const timeStr = asset.gps_updated_at || asset.updated_at || asset.created_at;
+                        if (timeStr) {
+                            const updatedAt = new Date(timeStr);
+                            if (!isNaN(updatedAt.getTime())) {
+                                const diffHours = (now - updatedAt) / (1000 * 60 * 60);
+                                if (timeVal === '24H' && diffHours > 24) return false;
+                                if (timeVal === '7D' && (diffHours < 24 || diffHours > 168)) return false;
+                                if (timeVal === 'OLD' && diffHours <= 168) return false;
+                            }
+                        }
+                    }
+
+                    return true;
+                });
+
+                renderMapMarkers(filteredAssets, isCluster, shouldFitBounds);
+            }
+
+            function renderMapMarkers(assets, enableClustering, shouldFitBounds = false) {
+                const map = dashboardMapInstance;
+                if (!map) return;
+
+                if (mapMarkersLayer) {
+                    map.removeLayer(mapMarkersLayer);
+                }
+                mapMarkersLayer = L.layerGroup().addTo(map);
 
                 const coordinateGroups = new Map();
                 const unmappedAssets = [];
@@ -4837,58 +4998,198 @@
                         return;
                     }
                     const location = String(asset.location || asset.location_name || 'Lokasi belum ditetapkan').trim();
-                    const key = `${location}|${position.lat.toFixed(7)}|${position.lng.toFixed(7)}|${position.source}`;
+                    const key = `${location}|${position.lat.toFixed(6)}|${position.lng.toFixed(6)}|${position.source}`;
                     if (!coordinateGroups.has(key)) {
                         coordinateGroups.set(key, { ...position, location, assets: [] });
                     }
                     coordinateGroups.get(key).assets.push(asset);
                 });
 
+                const rawNodes = Array.from(coordinateGroups.values());
+
+                // Perform Deterministic Geographic Distance Clustering
+                let finalClusters = [];
+
+                if (enableClustering) {
+                    const currentZoom = map.getZoom() || 10;
+                    // Geographic distance threshold (in degrees lat/lng) scales with zoom
+                    let geoRadiusDeg = 0.05;
+                    if (currentZoom >= 13) geoRadiusDeg = 0.008;      // ~800 meters
+                    else if (currentZoom >= 11) geoRadiusDeg = 0.02;  // ~2 km
+                    else if (currentZoom >= 9) geoRadiusDeg = 0.05;   // ~5 km
+                    else geoRadiusDeg = 0.12;                        // ~12 km
+
+                    const processed = new Set();
+
+                    rawNodes.forEach((nodeA, i) => {
+                        if (processed.has(i)) return;
+
+                        const clusterGroup = [nodeA];
+                        processed.add(i);
+
+                        rawNodes.forEach((nodeB, j) => {
+                            if (processed.has(j)) return;
+                            const dLat = nodeA.lat - nodeB.lat;
+                            const dLng = nodeA.lng - nodeB.lng;
+                            const geoDist = Math.sqrt(dLat * dLat + dLng * dLng);
+
+                            if (geoDist <= geoRadiusDeg) {
+                                clusterGroup.push(nodeB);
+                                processed.add(j);
+                            }
+                        });
+
+                        // Merge nodes into cluster
+                        const totalAssets = clusterGroup.flatMap(g => g.assets);
+                        const avgLat = clusterGroup.reduce((sum, g) => sum + g.lat, 0) / clusterGroup.length;
+                        const avgLng = clusterGroup.reduce((sum, g) => sum + g.lng, 0) / clusterGroup.length;
+                        const locations = Array.from(new Set(clusterGroup.map(g => g.location))).join(', ');
+                        const isRep = clusterGroup.some(g => g.isRepresentative);
+
+                        finalClusters.push({
+                            lat: avgLat,
+                            lng: avgLng,
+                            location: clusterGroup.length > 1 ? `Kluster Area (${clusterGroup.length} Titik)` : nodeA.location,
+                            assets: totalAssets,
+                            isRepresentative: isRep,
+                            nodes: clusterGroup
+                        });
+                    });
+                } else {
+                    finalClusters = rawNodes;
+                }
+
                 const bounds = [];
-                coordinateGroups.forEach(group => {
-                    const statusCounts = group.assets.reduce((counts, asset) => {
+
+                finalClusters.forEach(cluster => {
+                    const statusCounts = cluster.assets.reduce((counts, asset) => {
                         const status = String(asset.status || 'READY').toUpperCase();
                         counts[status] = (counts[status] || 0) + 1;
                         return counts;
                     }, {});
-                    const dominantStatus = group.assets.reduce((selected, asset) => {
+
+                    const dominantStatus = cluster.assets.reduce((selected, asset) => {
                         const status = String(asset.status || 'READY').toUpperCase();
-                        return (ASSET_STATUS_PRIORITY[status] || 0) > (ASSET_STATUS_PRIORITY[selected] || 0)
-                            ? status : selected;
+                        return (ASSET_STATUS_PRIORITY[status] || 0) > (ASSET_STATUS_PRIORITY[selected] || 0) ? status : selected;
                     }, 'READY');
+
                     const markerColor = ['BREAKDOWN', 'ACCIDENT_HOLD'].includes(dominantStatus) ? '#dc3545'
                         : dominantStatus === 'INSPEKSI' ? '#ffc107'
                             : dominantStatus === 'STANDBY' ? '#17a2b8' : '#28a745';
-                    const countLabel = group.assets.length > 99 ? '99+' : String(group.assets.length);
-                    const markerBorder = group.isRepresentative ? '2px dashed #fd7e14' : '2px solid #fff';
+
+                    const isMulti = cluster.assets.length > 1;
+                    const countLabel = cluster.assets.length > 99 ? '99+' : String(cluster.assets.length);
+                    const markerBorder = cluster.isRepresentative ? '2px dashed #fd7e14' : '2px solid #fff';
+
+                    const iconHtml = `<div style="background:${markerColor}; min-width:30px; height:30px; padding:0 6px; border-radius:15px; border:${markerBorder}; box-shadow:0 3px 10px rgba(0,0,0,.45); color:#fff; display:flex; align-items:center; justify-content:center; font:800 12px sans-serif; cursor:pointer;">
+                        ${isMulti ? `<i class="fa-solid fa-layer-group" style="font-size:10px; margin-right:4px;"></i>` : ''}${countLabel}
+                    </div>`;
+
                     const icon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div style="background:${markerColor}; min-width:28px; height:28px; padding:0 6px; border-radius:15px; border:${markerBorder}; box-shadow:0 2px 7px rgba(0,0,0,.42); color:#fff; display:flex; align-items:center; justify-content:center; font:700 11px sans-serif;">${countLabel}</div>`,
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
+                        html: iconHtml,
+                        iconSize: [34, 34],
+                        iconAnchor: [17, 17]
                     });
+
                     const statusSummary = Object.entries(statusCounts)
-                        .map(([status, count]) => `${escapeHtml(status)}: ${count}`)
-                        .join(' &middot; ');
-                    const assetRows = group.assets
+                        .map(([status, count]) => `<span class="badge" style="background:${status === 'READY' ? '#28a745' : (status === 'BREAKDOWN' ? '#dc3545' : '#ffc107')}; color:#fff; padding:2px 6px; font-size:10px;">${escapeHtml(status)}: ${count}</span>`)
+                        .join(' ');
+
+                    const assetRows = cluster.assets
                         .slice()
                         .sort((a, b) => String(a.id).localeCompare(String(b.id), 'id'))
                         .map(asset => `<button type="button" class="map-asset-link" data-map-asset-id="${escapeHtml(asset.id)}" style="display:flex; width:100%; gap:8px; justify-content:space-between; border:0; border-bottom:1px solid #eee; background:#fff; padding:7px 4px; cursor:pointer; text-align:left;">
-                            <span><strong>${escapeHtml(asset.id)}</strong><br><small>${escapeHtml(asset.category || 'Alat Berat')}</small></span>
-                            <span class="badge" style="align-self:center;">${escapeHtml(asset.status || 'READY')}</span>
+                            <span><strong>${escapeHtml(asset.id)}</strong><br><small>${escapeHtml(asset.category || 'Alat Berat')} &middot; ${escapeHtml(asset.location || '')}</small></span>
+                            <span class="badge" style="align-self:center; font-size:11px;">${escapeHtml(asset.status || 'READY')}</span>
                         </button>`).join('');
-                    const popup = `<div style="min-width:260px; max-width:360px;">
-                        <strong style="font-size:14px;">${escapeHtml(group.location)}</strong><br>
-                        <small>${escapeHtml(group.source)}${group.isRepresentative ? ' &middot; koordinat aktual belum tersedia' : ` &middot; ${group.lat.toFixed(6)}, ${group.lng.toFixed(6)}`}</small>
-                        <p style="margin:7px 0;"><b>${group.assets.length} unit</b><br><small>${statusSummary}</small></p>
-                        <div style="max-height:230px; overflow:auto; border-top:1px solid #ddd;">${assetRows}</div>
-                        <a href="https://www.google.com/maps?q=${group.lat.toFixed(6)},${group.lng.toFixed(6)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px; margin-top:9px; color:#0d6efd; font-weight:600; text-decoration:none;">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Google Maps${group.isRepresentative ? ' (representatif)' : ''}
-                        </a>
+
+                    const popup = `<div style="min-width:270px; max-width:370px;">
+                        <strong style="font-size:14px; color:#1e293b;">${escapeHtml(cluster.location)}</strong><br>
+                        <small style="color:#64748b;">${cluster.isRepresentative ? 'Koordinat representatif cabang' : `${cluster.lat.toFixed(6)}, ${cluster.lng.toFixed(6)}`}</small>
+                        <p style="margin:8px 0;"><b>Total ${cluster.assets.length} Unit Armada</b><br><div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">${statusSummary}</div></p>
+                        <div style="max-height:220px; overflow-y:auto; border-top:1px solid #e2e8f0; margin-top:6px;">${assetRows}</div>
+                        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+                            <a href="https://www.google.com/maps?q=${cluster.lat.toFixed(6)},${cluster.lng.toFixed(6)}" target="_blank" rel="noopener noreferrer" style="color:#0d6efd; font-weight:600; text-decoration:none; font-size:12px;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Google Maps
+                            </a>
+                        </div>
                     </div>`;
 
-                    L.marker([group.lat, group.lng], { icon }).addTo(map).bindPopup(popup, { maxWidth: 390 });
-                    bounds.push([group.lat, group.lng]);
+                    const marker = L.marker([cluster.lat, cluster.lng], { icon }).addTo(mapMarkersLayer).bindPopup(popup, { maxWidth: 400 });
+
+                    if (isMulti && enableClustering) {
+                        marker.on('dblclick', () => {
+                            map.setView([cluster.lat, cluster.lng], map.getZoom() + 2);
+                        });
+                    }
+
+                    bounds.push([cluster.lat, cluster.lng]);
+                });
+
+                // Update Coverage Control Card
+                if (coverageControlInstance) {
+                    map.removeControl(coverageControlInstance);
+                }
+
+                coverageControlInstance = L.control({ position: 'topright' });
+                coverageControlInstance.onAdd = function () {
+                    const control = L.DomUtil.create('div');
+                    control.style.cssText = 'background:#fff;padding:8px 12px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2);font:12px/1.4 Segoe UI,sans-serif; border:1px solid #e2e8f0;';
+                    const totalFiltered = assets.length;
+                    const clusterCount = finalClusters.length;
+                    const mappedCount = totalFiltered - unmappedAssets.length;
+                    
+                    control.innerHTML = `
+                        <div style="font-weight:700; color:#0f172a; margin-bottom:4px; font-size:13px;"><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Cakupan & Kluster Peta</div>
+                        <div style="color:#198754; font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${mappedCount} unit terpetakan</div>
+                        <div style="color:#0d6efd; font-weight:600;"><i class="fa-solid fa-object-group"></i> ${clusterCount} titik kluster kelompok</div>
+                        <div style="color:${unmappedAssets.length ? '#dc3545' : '#64748b'};"><i class="fa-solid fa-triangle-exclamation"></i> ${unmappedAssets.length} tanpa data lokasi</div>
+                    `;
+                    L.DomEvent.disableClickPropagation(control);
+                    return control;
+                };
+                coverageControlInstance.addTo(map);
+
+                // Only fit bounds on explicit filter changes or initial load, NOT on user zoom events
+                if (shouldFitBounds) {
+                    if (bounds.length === 1) {
+                        map.setView(bounds[0], 11);
+                    } else if (bounds.length > 1) {
+                        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+                    } else {
+                        map.setView([1.1500, 101.4000], 10);
+                    }
+                }
+            }
+
+            function initMap(assets) {
+                const mapContainer = document.getElementById('map');
+                if (!mapContainer || typeof L === 'undefined') return;
+
+                currentRawAssets = Array.isArray(assets) ? assets : [];
+
+                if (dashboardMapInstance) {
+                    dashboardMapInstance.remove();
+                    dashboardMapInstance = null;
+                }
+                mapContainer.innerHTML = '';
+
+                // Default focus view centered on Riau Operations Region (Pekanbaru/Duri)
+                const map = L.map('map', { minZoom: 3, maxZoom: 19 }).setView([1.1500, 101.4000], 10);
+                dashboardMapInstance = map;
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                // Re-cluster on user zoom without resetting camera position
+                map.on('zoomend', () => {
+                    const isCluster = document.getElementById('mapClusterToggle')?.checked ?? true;
+                    if (isCluster) {
+                        applyMapFilters(false);
+                    }
                 });
 
                 map.on('popupopen', event => {
@@ -4900,24 +5201,10 @@
                     });
                 });
 
-                const coverageControl = L.control({ position: 'topright' });
-                coverageControl.onAdd = function () {
-                    const control = L.DomUtil.create('div');
-                    control.style.cssText = 'background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 5px rgba(0,0,0,.3);font:12px/1.4 Segoe UI,sans-serif;';
-                    const mappedCount = (Array.isArray(assets) ? assets.length : 0) - unmappedAssets.length;
-                    const representativeCount = Array.from(coordinateGroups.values())
-                        .filter(group => group.isRepresentative)
-                        .reduce((total, group) => total + group.assets.length, 0);
-                    const verifiedCount = mappedCount - representativeCount;
-                    control.innerHTML = `<strong>Cakupan Maps</strong><br><span style="color:#198754">${verifiedCount} koordinat terverifikasi</span><br><span style="color:#fd7e14">${representativeCount} posisi representatif</span><br><span style="color:${unmappedAssets.length ? '#dc3545' : '#198754'}">${unmappedAssets.length} tanpa data lokasi</span>`;
-                    L.DomEvent.disableClickPropagation(control);
-                    return control;
-                };
-                coverageControl.addTo(map);
+                applyMapFilters(true);
 
-                if (bounds.length === 1) map.setView(bounds[0], 14);
-                else if (bounds.length > 1) map.fitBounds(bounds, { padding: [35, 35], maxZoom: 14 });
-
+                // Multi-pass size invalidation to ensure map markers render perfectly after container layout settles
+                setTimeout(() => map.invalidateSize(), 150);
                 setTimeout(() => map.invalidateSize(), 500);
             }
 

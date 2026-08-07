@@ -12230,4 +12230,98 @@ body.sl-modal-open {
     }
 }
 
+/* ==========================================================================
+   Enhanced Spacious Sizing & Full Action Popup Modals for PM, Logistics & CM
+   ========================================================================== */
+
+/* 1. Preventive Maintenance (PM Control Center) Sizing */
+.pm-overview-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) !important;
+    gap: 16px !important;
+}
+
+.pm-priority-list {
+    max-height: 520px !important;
+    min-height: 380px !important;
+    overflow-y: auto !important;
+    padding-right: 4px !important;
+}
+
+.pm-table-wrap {
+    max-height: 600px !important;
+    min-height: 420px !important;
+    overflow: auto !important;
+}
+
+.pm-table td, .pm-table th {
+    padding: 12px 14px !important;
+    font-size: 0.82rem !important;
+}
+
+.pm-row-action {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 6px 14px !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 5px rgba(2, 132, 199, 0.2) !important;
+}
+
+.pm-row-action:hover {
+    background: #0369a1 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* 2. Spare Part & Logistik Sizing */
+.logistics-data-table-wrap,
+.sl-catalog-table-wrap,
+.sl-table-wrap {
+    max-height: 600px !important;
+    min-height: 440px !important;
+    overflow: auto !important;
+}
+
+.sl-table td, .sl-table th {
+    padding: 12px 14px !important;
+    font-size: 0.82rem !important;
+}
+
+/* 3. Condition Monitoring Sizing & Action Buttons */
+.cm-catalog-table-wrap {
+    max-height: 600px !important;
+    min-height: 440px !important;
+    overflow: auto !important;
+}
+
+.cm-catalog-table td, .cm-catalog-table th {
+    padding: 12px 14px !important;
+    font-size: 0.82rem !important;
+}
+
+.cm-detail-button {
+    background: var(--primary, #007bff) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 6px 14px !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.22) !important;
+    transition: all 0.2s ease !important;
+}
+
+.cm-detail-button:hover {
+    background: #0056b3 !important;
+    transform: translateY(-1px) !important;
+}
+
 
