@@ -1,10 +1,10 @@
 <?php
 /**
  * Database Connection Config for ServicePlan-BRA API
- * Update these credentials with your Hostinger database details later.
+ * Hybrid Environment Support (Hostinger Production & Local Laragon/XAMPP)
  */
 
-// Allow CORS for development (if needed). In production on Hostinger, this might not be needed if frontend and backend are on the same domain.
+// Allow CORS for development & production
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -19,12 +19,51 @@ class Database {
 
     public static function getInstance() {
         if (self::$instance === null) {
-            // TODO: Ganti dengan detail database Hostinger Anda nanti
-            $host = '127.0.0.1';
-            $port = '3306';
-            $db   = 'u646470441_ServicePlanBRA';
-            $user = 'u646470441_ptEClt5jaya'; // User database Hostinger Anda
-            $pass = 'OpangGOD123';     // Password database Hostinger Anda
+            // 1. Deteksi Lingkungan (Hybrid Hosting vs Local Laragon)
+            $appEnv = strtolower((string) (getenv('APP_ENV') ?: ''));
+            $requestHost = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+            $hostName = (string) (parse_url('http://' . $requestHost, PHP_URL_HOST) ?: $requestHost);
+            
+            $endsWith = static function ($value, $suffix) {
+                return $suffix === '' || substr($value, -strlen($suffix)) === $suffix;
+            };
+
+            $localHosts = ['localhost', '127.0.0.1', '::1'];
+            $isLocalHost = in_array($hostName, $localHosts, true)
+                || $endsWith($hostName, '.test')
+                || $endsWith($hostName, '.local');
+
+            // Eksekusi via CLI atau domain lokal dianggap sebagai lingkungan lokal
+            $isLocal = $appEnv === 'local'
+                || $appEnv === 'development'
+                || ($appEnv !== 'production' && $appEnv !== 'live' && ($isLocalHost || PHP_SAPI === 'cli'));
+
+            // 2. Konfigurasi Lingkungan
+            $localConfig = [
+                'host' => '127.0.0.1',
+                'port' => '3306',
+                'name' => 'u646470441_ServicePlanBRA',
+                'user' => 'root',
+                'pass' => '',
+            ];
+
+            $hostingConfig = [
+                'host' => '127.0.0.1',
+                'port' => '3306',
+                'name' => 'u646470441_ServicePlanBRA',
+                'user' => 'u646470441_ptEClt5jaya',
+                'pass' => 'OpangGOD123',
+            ];
+
+            $config = $isLocal ? $localConfig : $hostingConfig;
+
+            // Environment variable mengutamakan konfigurasi server tanpa perlu mengubah kode
+            $host = getenv('DB_HOST') ?: $config['host'];
+            $port = getenv('DB_PORT') ?: $config['port'];
+            $db   = getenv('DB_NAME') ?: $config['name'];
+            $user = getenv('DB_USER') ?: $config['user'];
+            $pass = getenv('DB_PASS');
+            $pass = $pass !== false ? $pass : $config['pass'];
             $charset = 'utf8mb4';
 
             $dsn = "mysql:host={$host};port={$port};dbname={$db};charset={$charset}";
@@ -38,8 +77,21 @@ class Database {
             try {
                 self::$instance = new PDO($dsn, $user, $pass, $options);
             } catch (PDOException $e) {
-                // Untuk produksi, mungkin jangan echo error PDO langsung agar aman
-                echo json_encode(["status" => "error", "message" => "Database Connection Error: " . $e->getMessage()]);
+                // Fallback otomatis jika di lokal Laragon memakai nama database serviceplan_bra
+                if ($isLocal && $db === 'u646470441_ServicePlanBRA') {
+                    try {
+                        $fallbackDsn = "mysql:host={$host};port={$port};dbname=serviceplan_bra;charset={$charset}";
+                        self::$instance = new PDO($fallbackDsn, $user, $pass, $options);
+                        return self::$instance;
+                    } catch (PDOException $ex) {
+                        // Jika fallback juga gagal, lempar pesan error utama
+                    }
+                }
+
+                echo json_encode([
+                    "status" => "error",
+                    "message" => "Database Connection Error (" . ($isLocal ? 'Lokal Laragon' : 'Hosting Hostinger') . "): " . $e->getMessage()
+                ]);
                 exit;
             }
         }
