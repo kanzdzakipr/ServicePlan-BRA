@@ -13933,8 +13933,11 @@
                     <div class="pk-panel">
                         <div class="pk-panel-header">
                             <span><i class="fa-solid fa-table-list"></i> Daftar Laporan Resmi Insiden & Accident Alat Berat</span>
-                            <div class="search-bar" style="max-width:240px;">
-                                <input type="text" id="searchAccident" placeholder="Cari kode unit / lokasi..." onkeyup="window.filterAccidentTable()">
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <div class="search-bar" style="max-width:240px; margin-bottom:0;">
+                                    <input type="text" id="searchAccident" placeholder="Cari kode unit / lokasi..." onkeyup="window.filterAccidentTable()">
+                                </div>
+                                <button class="btn btn-sm" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;" onclick="showView('archive'); window.switchArchiveTab('accident');"><i class="fa-solid fa-box-archive"></i> Lihat Arsip</button>
                             </div>
                         </div>
                         <div class="pk-panel-body no-padding">
@@ -14266,6 +14269,7 @@
         if (!tbody) return;
 
         tbody.innerHTML = initialAccidentLogs.map((log, idx) => {
+            if (log.isArchived) return '';
             let sevBadge = `<span class="hse-badge hse-badge-minor">${log.severity}</span>`;
             if (log.severity === 'Moderate') sevBadge = `<span class="hse-badge hse-badge-moderate">${log.severity}</span>`;
             else if (log.severity === 'Critical') sevBadge = `<span class="hse-badge hse-badge-critical">${log.severity}</span>`;
@@ -14291,6 +14295,7 @@
                     <td>${capaBadge}</td>
                     <td>
                         <button class="btn btn-primary" style="padding:4px 8px; font-size:0.78rem;" onclick="window.openAccidentDetail(${idx})"><i class="fa-solid fa-eye"></i> Detail</button>
+                        <button class="btn btn-sm" style="padding:4px 8px; font-size:0.78rem; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;" onclick="window.archiveData('accident', '${escapeHtml(log.docNo)}')"><i class="fa-solid fa-box-archive"></i> Archive</button>
                     </td>
                 </tr>
             `;
@@ -15323,6 +15328,7 @@
                                         <option value="PASS">LULUS (PASS)</option>
                                         <option value="FAIL">GAGAL (CRITICAL FAIL)</option>
                                     </select>
+                                    <button class="btn btn-sm" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;" onclick="showView('archive'); window.switchArchiveTab('p2h');"><i class="fa-solid fa-box-archive"></i> Lihat Arsip</button>
                                 </div>
                             </div>
 
@@ -15762,6 +15768,7 @@
         }
 
         tbody.innerHTML = dataToRender.map(p => {
+            if (p.isArchived) return '';
             let badgeClass = 'p2h-badge-pass';
             if (p.status.includes('GAGAL') || p.status.includes('FAIL')) badgeClass = 'p2h-badge-fail';
             else if (p.status.includes('CATATAN') || p.status.includes('WARN')) badgeClass = 'p2h-badge-warn';
@@ -15779,6 +15786,9 @@
                     <td>
                         <button type="button" class="btn" style="padding:3px 8px; font-size:0.78rem; background:var(--primary); color:#fff;" onclick="window.viewP2HDetail('${escapeHtml(p.id)}')">
                             <i class="fa-solid fa-eye"></i> Detail
+                        </button>
+                        <button type="button" class="btn" style="padding:3px 8px; font-size:0.78rem; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;" onclick="window.archiveData('p2h', '${escapeHtml(p.id)}')">
+                            <i class="fa-solid fa-box-archive"></i> Archive
                         </button>
                     </td>
                 </tr>
@@ -16905,3 +16915,149 @@ document.addEventListener('click', function (e) {
         resultsContainer.style.display = 'none';
     }
 });
+
+// ==========================================
+// ARCHIVE FUNCTIONALITY
+// ==========================================
+
+window.archiveData = function(type, id) {
+    if(!confirm('Apakah Anda yakin ingin memindahkan data ini ke Archive?')) return;
+    
+    if (type === 'asset') {
+        const item = window.globalData.assets.find(a => a.id === id);
+        if (item) item.isArchived = true;
+        if (typeof initAssetView === 'function') initAssetView(window.globalData.assets);
+        if (typeof updateKpiSummary === 'function') updateKpiSummary();
+    } else if (type === 'p2h') {
+        const list = window.globalData && window.globalData.inspections ? window.globalData.inspections : (typeof inspectionHistory !== 'undefined' ? inspectionHistory : []);
+        const item = list.find(a => a.id === id);
+        if (item) item.isArchived = true;
+        if (typeof renderHistoryTable === 'function') renderHistoryTable();
+    } else if (type === 'accident') {
+        if (typeof initialAccidentLogs !== 'undefined') {
+            const item = initialAccidentLogs.find(a => a.docNo === id);
+            if (item) item.isArchived = true;
+            if (typeof renderAccidentTable === 'function') renderAccidentTable();
+        }
+    }
+    
+    window.renderArchiveTables();
+};
+
+window.restoreData = function(type, id) {
+    if(!confirm('Kembalikan data ini dari Archive ke tampilan utama?')) return;
+    
+    if (type === 'asset') {
+        const item = window.globalData.assets.find(a => a.id === id);
+        if (item) item.isArchived = false;
+        if (typeof initAssetView === 'function') initAssetView(window.globalData.assets);
+        if (typeof updateKpiSummary === 'function') updateKpiSummary();
+    } else if (type === 'p2h') {
+        const list = window.globalData && window.globalData.inspections ? window.globalData.inspections : (typeof inspectionHistory !== 'undefined' ? inspectionHistory : []);
+        const item = list.find(a => a.id === id);
+        if (item) item.isArchived = false;
+        if (typeof renderHistoryTable === 'function') renderHistoryTable();
+    } else if (type === 'accident') {
+        if (typeof initialAccidentLogs !== 'undefined') {
+            const item = initialAccidentLogs.find(a => a.docNo === id);
+            if (item) item.isArchived = false;
+            if (typeof renderAccidentTable === 'function') renderAccidentTable();
+        }
+    }
+    
+    window.renderArchiveTables();
+};
+
+window.switchArchiveTab = function(tabName) {
+    document.getElementById('archiveSectionAsset').style.display = 'none';
+    document.getElementById('archiveSectionP2H').style.display = 'none';
+    document.getElementById('archiveSectionAccident').style.display = 'none';
+    
+    document.getElementById('archiveTabBtnAsset').classList.remove('active');
+    document.getElementById('archiveTabBtnP2H').classList.remove('active');
+    document.getElementById('archiveTabBtnAccident').classList.remove('active');
+    
+    if (tabName === 'asset') {
+        document.getElementById('archiveSectionAsset').style.display = 'block';
+        document.getElementById('archiveTabBtnAsset').classList.add('active');
+    } else if (tabName === 'p2h') {
+        document.getElementById('archiveSectionP2H').style.display = 'block';
+        document.getElementById('archiveTabBtnP2H').classList.add('active');
+    } else if (tabName === 'accident') {
+        document.getElementById('archiveSectionAccident').style.display = 'block';
+        document.getElementById('archiveTabBtnAccident').classList.add('active');
+    }
+    
+    window.renderArchiveTables();
+};
+
+window.renderArchiveTables = function() {
+    const tbAsset = document.getElementById('tbArchiveAssetBody');
+    if (tbAsset && window.globalData && window.globalData.assets) {
+        const archivedAssets = window.globalData.assets.filter(a => a.isArchived);
+        if (archivedAssets.length === 0) {
+            tbAsset.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">Tidak ada data Armada di arsip.</td></tr>';
+        } else {
+            tbAsset.innerHTML = archivedAssets.map(asset => {
+                const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
+                return <tr>
+                    <td><strong> + escapeHtml(parsed.unitId) + </strong></td>
+                    <td> + escapeHtml(parsed.snPlat) + </td>
+                    <td> + escapeHtml(asset.category) + </td>
+                    <td> + escapeHtml(asset.status) + </td>
+                    <td> + escapeHtml(asset.location) + </td>
+                    <td> + escapeHtml(asset.lastUpdate) + </td>
+                    <td>
+                        <button class="btn btn-sm" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc;" onclick="window.restoreData('asset', ' + escapeHtml(asset.id) + ')"><i class="fa-solid fa-rotate-left"></i> Restore</button>
+                    </td>
+                </tr>;
+            }).join('');
+        }
+    }
+    
+    const tbP2H = document.getElementById('tbArchiveP2HBody');
+    if (tbP2H) {
+        const listP2H = window.globalData && window.globalData.inspections ? window.globalData.inspections : (typeof inspectionHistory !== 'undefined' ? inspectionHistory : []);
+        const archivedP2H = listP2H.filter(a => a.isArchived);
+        if (archivedP2H.length === 0) {
+            tbP2H.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8;">Tidak ada data P2H di arsip.</td></tr>';
+        } else {
+            tbP2H.innerHTML = archivedP2H.map(p => {
+                return <tr>
+                    <td><strong> + escapeHtml(p.id) + </strong></td>
+                    <td> + escapeHtml(p.date) + </td>
+                    <td><strong> + escapeHtml(p.unitId) + </strong></td>
+                    <td> + escapeHtml(p.operator) + </td>
+                    <td> + escapeHtml(p.site) + </td>
+                    <td> + p.hmStart +  Jam</td>
+                    <td> + escapeHtml(p.status) + </td>
+                    <td>
+                        <button class="btn btn-sm" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc;" onclick="window.restoreData('p2h', ' + escapeHtml(p.id) + ')"><i class="fa-solid fa-rotate-left"></i> Restore</button>
+                    </td>
+                </tr>;
+            }).join('');
+        }
+    }
+    
+    const tbAccident = document.getElementById('tbArchiveAccidentBody');
+    if (tbAccident && typeof initialAccidentLogs !== 'undefined') {
+        const archivedAccident = initialAccidentLogs.filter(a => a.isArchived);
+        if (archivedAccident.length === 0) {
+            tbAccident.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">Tidak ada data Insiden di arsip.</td></tr>';
+        } else {
+            tbAccident.innerHTML = archivedAccident.map(log => {
+                return <tr>
+                    <td><strong> + escapeHtml(log.docNo) + </strong></td>
+                    <td> + escapeHtml(log.incidentDate) + </td>
+                    <td><strong> + escapeHtml(log.unitCode) + </strong></td>
+                    <td> + escapeHtml(log.location) + </td>
+                    <td> + escapeHtml(log.operatorName) + </td>
+                    <td> + escapeHtml(log.severity) + </td>
+                    <td>
+                        <button class="btn btn-sm" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc;" onclick="window.restoreData('accident', ' + escapeHtml(log.docNo) + ')"><i class="fa-solid fa-rotate-left"></i> Restore</button>
+                    </td>
+                </tr>;
+            }).join('');
+        }
+    }
+};

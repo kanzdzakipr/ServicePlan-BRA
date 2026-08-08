@@ -68,6 +68,9 @@
             <li><a onclick="showView('approval', '', 'menu-approval')" id="menu-approval" role="button" tabindex="0"
                     title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a>
             </li>
+            <li><a onclick="showView('archive', '', 'menu-archive')" id="menu-archive" role="button" tabindex="0"
+                    title="Archive"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Archive</span></a>
+            </li>
             <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" role="button" tabindex="0"
                     title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a>
             </li>
@@ -449,9 +452,12 @@
                     <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
                         <span><i class="fa-solid fa-list-check"></i> Daftar Unit Armada & Linkage Sistem
                             Integrasi</span>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">
-                            <i class="fa-solid fa-link"></i> Klik tombol aksi untuk berpindah langsung ke P2H, WO, atau
-                            Condition Monitoring
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div style="font-size:0.8rem; color:var(--text-muted);">
+                                <i class="fa-solid fa-link"></i> Klik tombol aksi untuk berpindah langsung ke P2H, WO, atau
+                                Condition Monitoring
+                            </div>
+                            <button class="btn btn-sm" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;" onclick="showView('archive'); window.switchArchiveTab('asset');"><i class="fa-solid fa-box-archive"></i> Lihat Arsip</button>
                         </div>
                     </div>
                     <div class="panel-body">
@@ -2007,6 +2013,94 @@
                             </div>
                         </div>
 
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: ARCHIVE -->
+            <div id="view-archive" class="view-section" style="display:none;">
+                <h1 class="page-title"><i class="fa-solid fa-box-archive"></i> Archive Data</h1>
+                
+                <div class="panel">
+                    <div class="p2h-nav-tabs">
+                        <button class="p2h-tab-btn active" id="archiveTabBtnAsset" onclick="window.switchArchiveTab('asset')">
+                            <i class="fa-solid fa-truck"></i> Unit Armada
+                        </button>
+                        <button class="p2h-tab-btn" id="archiveTabBtnP2H" onclick="window.switchArchiveTab('p2h')">
+                            <i class="fa-solid fa-list-check"></i> Riwayat P2H
+                        </button>
+                        <button class="p2h-tab-btn" id="archiveTabBtnAccident" onclick="window.switchArchiveTab('accident')">
+                            <i class="fa-solid fa-file-medical"></i> Insiden / Accident
+                        </button>
+                    </div>
+
+                    <div class="panel-body" style="padding: 20px;">
+                        <!-- TAB: ASSET ARCHIVE -->
+                        <div id="archiveSectionAsset">
+                            <div class="table-responsive">
+                                <table class="table" id="tbArchiveAsset">
+                                    <thead>
+                                        <tr>
+                                            <th>Asset ID / Kode</th>
+                                            <th>Nomor Lambung</th>
+                                            <th>Kategori Unit</th>
+                                            <th>Status</th>
+                                            <th>Lokasi / Base</th>
+                                            <th>Reading Akhir</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbArchiveAssetBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB: P2H ARCHIVE -->
+                        <div id="archiveSectionP2H" style="display:none;">
+                            <div class="table-responsive">
+                                <table class="table" id="tbArchiveP2H">
+                                    <thead>
+                                        <tr>
+                                            <th>No. Tiket P2H</th>
+                                            <th>Tanggal & Waktu</th>
+                                            <th>Unit ID / Kategori</th>
+                                            <th>Operator / NRP</th>
+                                            <th>Site / Lokasi</th>
+                                            <th>Reading HM</th>
+                                            <th>Status Kelayakan</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbArchiveP2HBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB: ACCIDENT ARCHIVE -->
+                        <div id="archiveSectionAccident" style="display:none;">
+                            <div class="table-responsive">
+                                <table class="table" id="tbArchiveAccident">
+                                    <thead>
+                                        <tr>
+                                            <th>No. Dokumen</th>
+                                            <th>Tanggal & Jam</th>
+                                            <th>Kode Unit</th>
+                                            <th>Lokasi Kejadian</th>
+                                            <th>Operator</th>
+                                            <th>Severitas</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbArchiveAccidentBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4108,6 +4202,8 @@
             function initAssetView(assets) {
                 const tbody = document.getElementById('assetTableBody');
                 if (!assets || !tbody) return;
+                
+                assets = assets.filter(a => !a.isArchived);
 
                 // 1. Calculate Master Asset KPI Stats
                 const totalCount = assets.length || 48;
@@ -4178,6 +4274,11 @@
                                     onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')" 
                                     title="Update Status Efektif Unit ${escapeHtml(asset.id)}">
                                     <i class="fa-solid fa-pen-to-square"></i> Edit
+                                </button>
+                                <button type="button" class="btn btn-sm" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:4px 8px; font-size:0.85rem; font-weight:700; white-space:nowrap; border-radius:5px; display:inline-flex; align-items:center; gap:4px;" 
+                                    onclick="window.archiveData('asset', '${escapeHtml(asset.id)}')" 
+                                    title="Arsipkan Data Unit ${escapeHtml(asset.id)}">
+                                    <i class="fa-solid fa-box-archive"></i> Archive
                                 </button>
                             </div>
                         </td>
