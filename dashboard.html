@@ -27,12 +27,15 @@
             <span class="brand-label">FleetMonitor</span>
         </div>
         <ul class="sidebar-menu">
+            <li class="nav-section-label">Overview</li>
             <li><a onclick="showView('dashboard')" id="menu-dashboard" class="active" role="button" tabindex="0"
                     aria-current="page" title="Dashboard"><i class="fa-solid fa-gauge-high"></i><span
                         class="nav-label">Dashboard</span></a></li>
             <li><a onclick="showView('monitoring')" id="menu-monitoring" role="button" tabindex="0"
                     title="Monitoring Unit"><i class="fa-solid fa-location-dot"></i><span class="nav-label">Monitoring
                         Unit</span></a></li>
+
+            <li class="nav-section-label">Asset & Maintenance</li>
             <li><a onclick="showView('asset')" id="menu-asset" role="button" tabindex="0" title="Master Asset"><i
                         class="fa-solid fa-cubes"></i><span class="nav-label">Master Asset</span></a></li>
             <li><a onclick="showView('inspection', '', 'menu-inspection')" id="menu-inspection" role="button"
@@ -43,12 +46,14 @@
             <li><a onclick="showView('pm')" id="menu-pm" role="button" tabindex="0" title="Preventive Maintenance"><i
                         class="fa-regular fa-calendar-check"></i><span class="nav-label">Preventive Maint.</span></a>
             </li>
-            <li><a onclick="showView('logistics', '', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0"
-                    title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare
-                        Part & Logistik</span></a></li>
             <li><a onclick="showView('condition', '', 'menu-condition')" id="menu-condition" role="button" tabindex="0"
                     title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span
                         class="nav-label">Condition Monitoring</span></a></li>
+
+            <li class="nav-section-label">Operations</li>
+            <li><a onclick="showView('logistics', '', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0"
+                    title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare
+                        Part & Logistik</span></a></li>
             <li><a onclick="showView('fuel', '', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0"
                     title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a>
             </li>
@@ -57,6 +62,8 @@
                         class="nav-label">Produktivitas</span></a></li>
             <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" title="Biaya"><i
                         class="fa-solid fa-money-bill-trend-up"></i><span class="nav-label">Biaya</span></a></li>
+
+            <li class="nav-section-label">Governance</li>
             <li><a onclick="showView('people', '', 'menu-people')" id="menu-people" role="button" tabindex="0"
                     title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People &
                         KPI</span></a></li>
@@ -68,6 +75,8 @@
             <li><a onclick="showView('approval', '', 'menu-approval')" id="menu-approval" role="button" tabindex="0"
                     title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a>
             </li>
+
+            <li class="nav-section-label">System</li>
             <li><a onclick="showView('archive', '', 'menu-archive'); window.renderArchiveTables();" id="menu-archive" role="button" tabindex="0"
                     title="Archive"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Archive</span></a>
             </li>
@@ -117,62 +126,76 @@
             <div id="view-dashboard" class="view-section active">
                 <h1 class="page-title">Executive Dashboard</h1>
 
-                <!-- Ringkasan status unit -->
-                <div class="kpi-grid">
-                    <div class="kpi-card total">
-                        <div class="kpi-info">
-                            <h3>Total Unit</h3>
-                            <div class="value" id="kpiTotal">-</div>
+                <!-- Ringkasan Status Telemetri Fleet -->
+                <div class="telemetry-status-grid">
+                    <div class="telemetry-metric-item">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Total Unit Fleet</span>
+                            <i class="fa-solid fa-truck" style="color: var(--text-muted); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-truck"></i></div>
-                        <button type="button" onclick="openStatusDetailModal('ALL')" class="kpi-action-btn"
-                            title="Lihat Tabulasi Semua Unit">
-                            Detail <i class="fa-solid fa-arrow-right"></i>
-                        </button>
+                        <div class="telemetry-metric-value" id="kpiTotal">-</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-info">Semua Unit</span>
+                            <button type="button" onclick="openStatusDetailModal('ALL')" class="telemetry-action-link" title="Lihat Tabulasi Semua Unit">
+                                Detail <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="kpi-card operating">
-                        <div class="kpi-info">
-                            <h3>Operating/Ready</h3>
-                            <div class="value" id="kpiReady">-</div>
+
+                    <div class="telemetry-metric-item">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Operating / Ready</span>
+                            <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-person-digging"></i></div>
-                        <button type="button" onclick="openStatusDetailModal('READY')" class="kpi-action-btn"
-                            title="Lihat Tabulasi Unit Ready">
-                            Detail <i class="fa-solid fa-arrow-right"></i>
-                        </button>
+                        <div class="telemetry-metric-value" id="kpiReady" style="color: var(--success);">-</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-success">Operational</span>
+                            <button type="button" onclick="openStatusDetailModal('READY')" class="telemetry-action-link" title="Lihat Tabulasi Unit Ready">
+                                Detail <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="kpi-card standby">
-                        <div class="kpi-info">
-                            <h3>Standby</h3>
-                            <div class="value" id="kpiStandby">-</div>
+
+                    <div class="telemetry-metric-item">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Unit Standby</span>
+                            <i class="fa-solid fa-pause-circle" style="color: var(--warning); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-pause"></i></div>
-                        <button type="button" onclick="openStatusDetailModal('STANDBY')" class="kpi-action-btn"
-                            title="Lihat Tabulasi Unit Standby">
-                            Detail <i class="fa-solid fa-arrow-right"></i>
-                        </button>
+                        <div class="telemetry-metric-value" id="kpiStandby" style="color: var(--warning);">-</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-warning">Idle / Standby</span>
+                            <button type="button" onclick="openStatusDetailModal('STANDBY')" class="telemetry-action-link" title="Lihat Tabulasi Unit Standby">
+                                Detail <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="kpi-card breakdown">
-                        <div class="kpi-info">
-                            <h3>Breakdown</h3>
-                            <div class="value" id="kpiBreakdown">-</div>
+
+                    <div class="telemetry-metric-item">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Breakdown Unit</span>
+                            <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-wrench"></i></div>
-                        <button type="button" onclick="openStatusDetailModal('BREAKDOWN')" class="kpi-action-btn"
-                            title="Lihat Tabulasi Unit Breakdown">
-                            Detail <i class="fa-solid fa-arrow-right"></i>
-                        </button>
+                        <div class="telemetry-metric-value" id="kpiBreakdown" style="color: var(--danger);">-</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-danger">Out of Order</span>
+                            <button type="button" onclick="openStatusDetailModal('BREAKDOWN')" class="telemetry-action-link" title="Lihat Tabulasi Unit Breakdown">
+                                Detail <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="kpi-card pm">
-                        <div class="kpi-info">
-                            <h3>Inspec./PM</h3>
-                            <div class="value" id="kpiInspeksi">-</div>
+
+                    <div class="telemetry-metric-item">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Inspeksi & PM</span>
+                            <i class="fa-solid fa-clipboard-list" style="color: var(--info); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-                        <button type="button" onclick="openStatusDetailModal('INSPEKSI')" class="kpi-action-btn"
-                            title="Lihat Tabulasi Unit Inspeksi/PM">
-                            Detail <i class="fa-solid fa-arrow-right"></i>
-                        </button>
+                        <div class="telemetry-metric-value" id="kpiInspeksi" style="color: var(--info);">-</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-info">In Service</span>
+                            <button type="button" onclick="openStatusDetailModal('INSPEKSI')" class="telemetry-action-link" title="Lihat Tabulasi Unit Inspeksi/PM">
+                                Detail <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -388,66 +411,72 @@
                     </div>
                 </div>
 
-                <!-- 6 Compact Synchronized Executive KPI Cards Master Asset -->
-                <div class="kpi-grid"
-                    style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 12px;">
-                    <div class="kpi-card total" style="padding: 10px 14px;" title="Total Armada Aset Terdaftar">
-                        <div class="kpi-info">
-                            <h3 style="font-size:0.85rem; margin-bottom:2px;">Total Armada Aset</h3>
-                            <div class="value" id="kpiAssetTotal" style="font-size:1.25rem; font-weight:800;">48 Unit
-                            </div>
+                <!-- Synchronized Master Asset Telemetry Strip -->
+                <div class="telemetry-status-grid" style="grid-template-columns: repeat(6, 1fr);">
+                    <div class="telemetry-metric-item" title="Total Armada Aset Terdaftar">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Total Armada Aset</span>
+                            <i class="fa-solid fa-truck-monster" style="color: var(--primary); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon" style="font-size:1.4rem;"><i class="fa-solid fa-truck-monster"
-                                style="color: var(--primary);"></i></div>
+                        <div class="telemetry-metric-value" id="kpiAssetTotal">48 Unit</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-info">Inventaris Aset</span>
+                        </div>
                     </div>
-                    <div class="kpi-card operating" style="padding: 10px 14px;" title="Unit Status Ready / Operasional">
-                        <div class="kpi-info">
-                            <h3 style="font-size:0.85rem; margin-bottom:2px;">Ready / Operasional</h3>
-                            <div class="value" id="kpiAssetReady"
-                                style="color: var(--success); font-size:1.25rem; font-weight:800;">28 Unit</div>
+
+                    <div class="telemetry-metric-item" title="Unit Status Ready / Operasional">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Ready / Operasional</span>
+                            <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon" style="font-size:1.4rem;"><i class="fa-solid fa-circle-check"
-                                style="color: var(--success);"></i></div>
+                        <div class="telemetry-metric-value" id="kpiAssetReady" style="color: var(--success);">28 Unit</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-success">Active Fleet</span>
+                        </div>
                     </div>
-                    <div class="kpi-card standby" style="border-left-color: var(--warning); padding: 10px 14px;"
-                        title="Unit Status Standby / Idle">
-                        <div class="kpi-info">
-                            <h3 style="font-size:0.85rem; margin-bottom:2px;">Standby / Idle</h3>
-                            <div class="value" id="kpiAssetStandby"
-                                style="color: var(--warning); font-size:1.25rem; font-weight:800;">14 Unit</div>
+
+                    <div class="telemetry-metric-item" title="Unit Status Standby / Idle">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Standby / Idle</span>
+                            <i class="fa-solid fa-pause" style="color: var(--warning); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon" style="font-size:1.4rem;"><i class="fa-solid fa-pause"
-                                style="color: var(--warning);"></i></div>
+                        <div class="telemetry-metric-value" id="kpiAssetStandby" style="color: var(--warning);">14 Unit</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-warning">Available</span>
+                        </div>
                     </div>
-                    <div class="kpi-card breakdown" style="padding: 10px 14px;"
-                        title="Unit Status Breakdown / Under Repair">
-                        <div class="kpi-info">
-                            <h3 style="font-size:0.85rem; margin-bottom:2px;">Breakdown / WO</h3>
-                            <div class="value" id="kpiAssetBreakdown"
-                                style="color: var(--danger); font-size:1.25rem; font-weight:800;">6 Unit</div>
+
+                    <div class="telemetry-metric-item" title="Unit Status Breakdown / Under Repair">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Breakdown / WO</span>
+                            <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon" style="font-size:1.4rem;"><i class="fa-solid fa-triangle-exclamation"
-                                style="color: var(--danger);"></i></div>
+                        <div class="telemetry-metric-value" id="kpiAssetBreakdown" style="color: var(--danger);">6 Unit</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-danger">Maintenance</span>
+                        </div>
                     </div>
-                    <div class="kpi-card" style="border-left-color: #0284c7; padding: 10px 14px;"
-                        title="Total Valuasi Pasaran Armada Aset">
-                        <div class="kpi-info">
-                            <h3 style="font-size:0.85rem; margin-bottom:2px;">Valuasi Pasaran Aset</h3>
-                            <div class="value" id="kpiAssetMarketVal"
-                                style="color: #0284c7; font-size:1.2rem; font-weight:800;">Rp 18.450 Jt</div>
+
+                    <div class="telemetry-metric-item" title="Total Valuasi Pasaran Armada Aset">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Valuasi Aset</span>
+                            <i class="fa-solid fa-money-bill-trend-up" style="color: var(--info); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon" style="font-size:1.4rem;"><i class="fa-solid fa-money-bill-trend-up"
-                                style="color: #0284c7;"></i></div>
+                        <div class="telemetry-metric-value tabular-nums" id="kpiAssetMarketVal" style="color: var(--info); font-size: 1.35rem;">Rp 18.450 Jt</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-info">Market Valuation</span>
+                        </div>
                     </div>
-                    <div class="kpi-card" style="border-left-color: #7c3aed; padding: 10px 14px;"
-                        title="Physical Availability (PA) Ketersediaan Fisik Armada">
-                        <div class="kpi-info">
-                            <h3 style="font-size:0.85rem; margin-bottom:2px;">Physical Availability</h3>
-                            <div class="value" id="kpiAssetPA"
-                                style="color: #7c3aed; font-size:1.25rem; font-weight:800;">87.5%</div>
+
+                    <div class="telemetry-metric-item" title="Physical Availability (PA) Ketersediaan Fisik Armada">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Phys. Availability</span>
+                            <i class="fa-solid fa-chart-pie" style="color: var(--primary); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="kpi-icon" style="font-size:1.4rem;"><i class="fa-solid fa-chart-pie"
-                                style="color: #7c3aed;"></i></div>
+                        <div class="telemetry-metric-value tabular-nums" id="kpiAssetPA" style="color: var(--primary); font-size: 1.5rem;">87.5%</div>
+                        <div class="telemetry-metric-footer">
+                            <span class="badge badge-info">PA Ratio</span>
+                        </div>
                     </div>
                 </div>
 
@@ -610,111 +639,62 @@
                     </div>
                 </div>
 
-                <div class="panel"
-                    style="margin-bottom: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 12px; overflow: hidden;">
-                    <div class="panel-header"
-                        style="background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 15px 20px;">
-                        <span style="font-size: 1.1rem; font-weight: 600;"><i class="fa-solid fa-file-pen"
-                                style="margin-right: 8px;"></i> Input Administrasi & Logistik</span>
+                <div class="panel" style="margin-bottom: 20px;">
+                    <div class="panel-header">
+                        <span><i class="fa-solid fa-file-pen"></i> Input Administrasi & Logistik</span>
                     </div>
-                    <div class="panel-body" style="padding: 20px; background: #ffffff;">
-                        <div
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div class="panel-body" style="padding: 16px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
 
                             <!-- 1. SPB & No Polisi -->
-                            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; cursor: default;"
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';"
-                                onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
-                                <h4
-                                    style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-                                    <div
-                                        style="width: 32px; height: 32px; border-radius: 8px; background: #e0e7ff; color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                                        <i class="fa-solid fa-truck"></i></div>
-                                    Input SPB & Unit
+                            <div class="panel" style="padding: 16px; margin: 0; background: var(--bg-subtle);">
+                                <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.92rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-truck" style="color: var(--primary);"></i> Input SPB & Unit
                                 </h4>
-                                <div class="form-group" style="margin-bottom: 12px;">
-                                    <label
-                                        style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Kode
-                                        Nomor SPB</label>
-                                    <input type="text" class="form-control" placeholder="Contoh: SPB-2026-001"
-                                        style="border-radius: 6px; padding: 10px;">
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Kode Nomor SPB</label>
+                                    <input type="text" class="form-control" placeholder="Contoh: SPB-2026-001">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label
-                                        style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">No
-                                        Polisi / Unit</label>
-                                    <input type="text" class="form-control" placeholder="Contoh: B 1234 XYZ / DT-001"
-                                        style="border-radius: 6px; padding: 10px;">
+                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">No Polisi / Unit</label>
+                                    <input type="text" class="form-control" placeholder="Contoh: B 1234 XYZ / DT-001">
                                 </div>
-                                <button class="btn btn-primary"
-                                    style="margin-top: 15px; width: 100%; border-radius: 6px; padding: 10px; font-weight: 600; transition: background 0.2s;"><i
-                                        class="fa-solid fa-save" style="margin-right: 5px;"></i> Simpan Data
-                                    SPB</button>
+                                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;"><i class="fa-solid fa-save"></i> Simpan Data SPB</button>
                             </div>
 
                             <!-- 2. Sheet Oli -->
-                            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; cursor: default;"
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';"
-                                onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
-                                <h4
-                                    style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-                                    <div
-                                        style="width: 32px; height: 32px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fa-solid fa-oil-can"></i></div>
-                                    Sheet Oli (Pemakaian/Pemasukan)
+                            <div class="panel" style="padding: 16px; margin: 0; background: var(--bg-subtle);">
+                                <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.92rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-oil-can" style="color: var(--warning);"></i> Sheet Oli (Pemakaian/Pemasukan)
                                 </h4>
-                                <div class="form-group" style="margin-bottom: 12px;">
-                                    <label
-                                        style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Jenis
-                                        Transaksi</label>
-                                    <select class="form-control" style="border-radius: 6px; padding: 10px;">
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Jenis Transaksi</label>
+                                    <select class="form-control">
                                         <option>Pemakaian Oli</option>
                                         <option>Pemasukan Oli</option>
                                     </select>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label
-                                        style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Upload
-                                        Sheet (Excel/CSV)</label>
-                                    <input type="file" class="form-control" accept=".xlsx,.xls,.csv"
-                                        style="border-radius: 6px; padding: 7px 10px; background: white;">
+                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Upload Sheet (Excel/CSV)</label>
+                                    <input type="file" class="form-control" accept=".xlsx,.xls,.csv" style="background: white;">
                                 </div>
-                                <button class="btn btn-success"
-                                    style="margin-top: 15px; width: 100%; border-radius: 6px; padding: 10px; font-weight: 600; background-color: #10b981; border-color: #10b981;"><i
-                                        class="fa-solid fa-upload" style="margin-right: 5px;"></i> Upload Sheet
-                                    Oli</button>
+                                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;"><i class="fa-solid fa-upload"></i> Upload Sheet Oli</button>
                             </div>
 
                             <!-- 3. Upload Foto & PDF -->
-                            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; cursor: default;"
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';"
-                                onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
-                                <h4
-                                    style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-                                    <div
-                                        style="width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; color: #ef4444; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fa-solid fa-file-pdf"></i></div>
-                                    Upload Administrasi Logistik
+                            <div class="panel" style="padding: 16px; margin: 0; background: var(--bg-subtle);">
+                                <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.92rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-file-pdf" style="color: var(--danger);"></i> Upload Administrasi Logistik
                                 </h4>
-                                <div class="form-group" style="margin-bottom: 12px;">
-                                    <label
-                                        style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Foto
-                                        Barang Keluar & Masuk</label>
-                                    <input type="file" class="form-control" accept="image/*" multiple
-                                        style="border-radius: 6px; padding: 7px 10px; background: white;"
-                                        title="Pilih foto barang masuk/keluar">
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Foto Barang Keluar & Masuk</label>
+                                    <input type="file" class="form-control" accept="image/*" multiple style="background: white;" title="Pilih foto barang masuk/keluar">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label
-                                        style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Laporan
-                                        PDF Administrasi</label>
-                                    <input type="file" class="form-control" accept=".pdf"
-                                        style="border-radius: 6px; padding: 7px 10px; background: white;">
+                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Laporan PDF Administrasi</label>
+                                    <input type="file" class="form-control" accept=".pdf" style="background: white;">
                                 </div>
-                                <button class="btn btn-primary"
-                                    style="margin-top: 15px; width: 100%; border-radius: 6px; padding: 10px; font-weight: 600; background-color: #3b82f6; border-color: #3b82f6;"><i
-                                        class="fa-solid fa-cloud-arrow-up" style="margin-right: 5px;"></i> Upload
-                                    Berkas</button>
+                                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Berkas</button>
                             </div>
 
                         </div>
@@ -1012,7 +992,7 @@
                     <span class="cm-source-chip"><i class="fa-solid fa-database"></i> Sumber BRA tervalidasi</span>
                 </div>
                 <div id="conditionMonitoringApp" class="cm-app" aria-live="polite">
-                    <div class="cm-loading"><i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan data inspeksi unit¢â¬¦
+                    <div class="cm-loading"><i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan data inspeksi unit...
                     </div>
                 </div>
             </div>
@@ -1070,62 +1050,68 @@
                             <option value="RED">Merah (Deviasi >20% Boros)</option>
                             <option value="ORANGE">Oranye (Deviasi 10-20%)</option>
                             <option value="YELLOW">Kuning (Deviasi 5-10%)</option>
-                            <option value="GREEN">Hijau (Normal â‰¤ 5%)</option>
+                            <option value="GREEN">Hijau (Normal ≤ 5%)</option>
                         </select>
                         <button class="btn btn-primary" style="padding: 5px 15px;" onclick="filterFuelDashboard()"><i
                                 class="fa-solid fa-magnifying-glass"></i> Terapkan</button>
                     </div>
                 </div>
 
-                <!-- Synchronized KPI Grid (6 Cards) -->
-                <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-                    <div class="kpi-card total">
-                        <div class="kpi-info">
-                            <h3>Liter Hari Ini</h3>
-                            <div class="value" id="kpiFuelToday">2,450 L</div>
+                <!-- Synchronized Telemetry Status Strip (6 Columns) -->
+                <div class="telemetry-status-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                    <div class="telemetry-metric-item">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Liter Hari Ini</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-gas-pump" style="color: var(--primary);"></i></div>
+                        <div class="telemetry-metric-value" id="kpiFuelToday">2,450 L</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-gas-pump"></i> Consumed</span>
+                        </div>
                     </div>
-                    <div class="kpi-card operating">
-                        <div class="kpi-info">
-                            <h3>Liter Bulan Ini</h3>
-                            <div class="value" id="kpiFuelMonth">45,200 L</div>
+                    <div class="telemetry-metric-item">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Liter Bulan Ini</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-droplet" style="color: var(--info);"></i></div>
+                        <div class="telemetry-metric-value" id="kpiFuelMonth">45,200 L</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-droplet"></i> MTD Total</span>
+                        </div>
                     </div>
-                    <div class="kpi-card standby">
-                        <div class="kpi-info">
-                            <h3>Biaya BBM Bulan Ini</h3>
-                            <div class="value" id="kpiFuelCost" style="font-size: 1.15rem; color: #2b8a3e;">Rp 542,4 Jt
-                            </div>
+                    <div class="telemetry-metric-item">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Biaya BBM Bulan Ini</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-money-bill-trend-up"
-                                style="color: var(--success);"></i></div>
+                        <div class="telemetry-metric-value font-mono" id="kpiFuelCost" style="font-size: 1.25rem; color: var(--success);">Rp 542,4 Jt</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-coins"></i> Valuation</span>
+                        </div>
                     </div>
-                    <div class="kpi-card breakdown" style="cursor:pointer;" onclick="filterFuelByAnomaly('RED')"
-                        title="Klik untuk filter unit boros">
-                        <div class="kpi-info">
-                            <h3>Unit Boros (Anomali)</h3>
-                            <div class="value" id="kpiFuelBoros" style="color: var(--danger);">4 Unit</div>
+                    <div class="telemetry-metric-item" style="cursor:pointer;" onclick="filterFuelByAnomaly('RED')" title="Klik untuk filter unit boros">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Unit Boros (Anomali)</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-fire" style="color: var(--danger);"></i></div>
+                        <div class="telemetry-metric-value font-mono" id="kpiFuelBoros" style="color: var(--danger);">4 Unit</div>
+                        <div class="telemetry-metric-footer">
+                            <button class="telemetry-action-link"><i class="fa-solid fa-triangle-exclamation"></i> Filter Anomali</button>
+                        </div>
                     </div>
-                    <div class="kpi-card pm" style="cursor:pointer;" onclick="filterFuelByStatus('Diajukan')"
-                        title="Klik untuk filter transaksi belum diverifikasi">
-                        <div class="kpi-info">
-                            <h3>Belum Diverifikasi</h3>
-                            <div class="value" id="kpiFuelUnverified" style="color: var(--warning);">12 Trx</div>
+                    <div class="telemetry-metric-item" style="cursor:pointer;" onclick="filterFuelByStatus('Diajukan')" title="Klik untuk filter transaksi belum diverifikasi">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Belum Diverifikasi</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-clipboard-question"
-                                style="color: var(--warning);"></i></div>
+                        <div class="telemetry-metric-value font-mono" id="kpiFuelUnverified" style="color: var(--warning);">12 Trx</div>
+                        <div class="telemetry-metric-footer">
+                            <button class="telemetry-action-link"><i class="fa-solid fa-clock-rotate-left"></i> Review Trx</button>
+                        </div>
                     </div>
-                    <div class="kpi-card" style="border-left-color: #6f42c1;">
-                        <div class="kpi-info">
-                            <h3>Stok Tangki Site</h3>
-                            <div class="value" id="kpiFuelStock" style="font-size:1.05rem; color:#6f42c1;">32.810 L
-                            </div>
+                    <div class="telemetry-metric-item">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Stok Tangki Site</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-warehouse" style="color: #6f42c1;"></i></div>
+                        <div class="telemetry-metric-value font-mono" id="kpiFuelStock" style="font-size:1.25rem; color:var(--primary);">32.810 L</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-warehouse"></i> Storage Tank</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1186,7 +1172,7 @@
                                             <th>Kode Unit</th>
                                             <th>Kategori & Lokasi</th>
                                             <th>Fuelman / Operator</th>
-                                            <th>Meter Awal ¢â€ â€™ Akhir</th>
+                                            <th>Meter Awal - "™ Akhir</th>
                                             <th>Liter</th>
                                             <th>Aktual vs Standar</th>
                                             <th>Deviasi</th>
@@ -1347,51 +1333,60 @@
                     </div>
                 </div>
 
-                <!-- 6 Synchronized Executive KPI Cards (Anti-Overflow Responsive Layout) -->
-                <div class="kpi-grid cost-kpi-grid"
-                    style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px;">
-                    <div class="kpi-card total" title="Total Budget Berjalan: Rp 2.960 Jt">
-                        <div class="kpi-info">
-                            <h3>Total Budget Berjalan</h3>
-                            <div class="value" id="kpiCostBudget">Rp 2.960 Jt</div>
+                <!-- 6 Synchronized Telemetry Status Strip (6 Columns) -->
+                <div class="telemetry-status-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 15px;">
+                    <div class="telemetry-metric-item" title="Total Budget Berjalan: Rp 2.960 Jt">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Total Budget Berjalan</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-wallet" style="color: var(--primary);"></i></div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostBudget">Rp 2.960 Jt</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-wallet"></i> Budget YTD</span>
+                        </div>
                     </div>
-                    <div class="kpi-card breakdown" title="Pengeluaran Aktual: Rp 12.144 Jt">
-                        <div class="kpi-info">
-                            <h3>Pengeluaran Aktual</h3>
-                            <div class="value" id="kpiCostActual" style="color: var(--danger);">Rp 12.144 Jt</div>
+                    <div class="telemetry-metric-item" title="Pengeluaran Aktual: Rp 12.144 Jt">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Pengeluaran Aktual</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-file-invoice-dollar"
-                                style="color: var(--danger);"></i></div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostActual" style="color: var(--danger);">Rp 12.144 Jt</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-file-invoice-dollar"></i> Actual Expenses</span>
+                        </div>
                     </div>
-                    <div class="kpi-card pm" title="Deviasi Budget: +310.2% (Over)">
-                        <div class="kpi-info">
-                            <h3>Deviasi Budget</h3>
-                            <div class="value" id="kpiCostDev" style="color: #fd7e14;">+310.2% (Over)</div>
+                    <div class="telemetry-metric-item" title="Deviasi Budget: +310.2% (Over)">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Deviasi Budget</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-chart-line" style="color: #fd7e14;"></i></div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostDev" style="color: var(--warning);">+310.2% (Over)</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-chart-line"></i> Variance Rate</span>
+                        </div>
                     </div>
-                    <div class="kpi-card operating" title="Nilai Buku Aset (7 Unit): Rp 3.347 Jt">
-                        <div class="kpi-info">
-                            <h3>Nilai Buku Aset (7 Unit)</h3>
-                            <div class="value" id="kpiCostBookValue" style="color: var(--success);">Rp 3.347 Jt</div>
+                    <div class="telemetry-metric-item" title="Nilai Buku Aset (7 Unit): Rp 3.347 Jt">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Nilai Buku Aset (7 Unit)</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-book" style="color: var(--success);"></i></div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostBookValue" style="color: var(--success);">Rp 3.347 Jt</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-book"></i> Book Value</span>
+                        </div>
                     </div>
-                    <div class="kpi-card standby" title="Harga Penawaran Buyer: Rp 4.070 Jt">
-                        <div class="kpi-info">
-                            <h3>Harga Penawaran Buyer</h3>
-                            <div class="value" id="kpiCostMarketValue" style="color: var(--info);">Rp 4.070 Jt</div>
+                    <div class="telemetry-metric-item" title="Harga Penawaran Buyer: Rp 4.070 Jt">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Harga Penawaran Buyer</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-tags" style="color: var(--info);"></i></div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostMarketValue" style="color: var(--primary);">Rp 4.070 Jt</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-tags"></i> Buyer Bids</span>
+                        </div>
                     </div>
-                    <div class="kpi-card" style="border-left-color: #2b8a3e;" title="Proyeksi Net Gain BRA: +Rp 610 Jt">
-                        <div class="kpi-info">
-                            <h3>Proyeksi Net Gain BRA</h3>
-                            <div class="value" id="kpiCostMargin" style="color: #2b8a3e;">+Rp 610 Jt</div>
+                    <div class="telemetry-metric-item" title="Proyeksi Net Gain BRA: +Rp 610 Jt">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Proyeksi Net Gain BRA</span>
                         </div>
-                        <div class="kpi-icon"><i class="fa-solid fa-hand-holding-dollar" style="color: #2b8a3e;"></i>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostMargin" style="color: var(--success);">+Rp 610 Jt</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-hand-holding-dollar"></i> Net Margin</span>
                         </div>
                     </div>
                 </div>
@@ -1660,8 +1655,7 @@
                 <div class="settings-layout" style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
 
                     <!-- Left Sub-Menu Navigation Sidebar -->
-                    <div class="settings-sidebar-nav"
-                        style="flex:0 0 270px; min-width:240px; background:#fff; border-radius:10px; border:1px solid var(--border); padding:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                    <div class="settings-sidebar-nav" style="flex: 0 0 270px; min-width: 240px; background: var(--bg-surface); border-radius: var(--radius-panel); border: 1px solid var(--border); padding: 12px;">
                         <div
                             style="font-size:0.85rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); padding:6px 10px 10px 10px; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; margin-bottom:10px;">
                             <i class="fa-solid fa-bars-staggered"></i> Menu Pengaturan
@@ -2129,8 +2123,8 @@
                     style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:15px;">
                     <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">
                         Target User Role & Modul</div>
-                    <div style="font-size:0.95rem; font-weight:700; color:var(--primary);" id="editRbacRoleName">¢â¬â€</div>
-                    <div style="font-size:0.85rem; font-weight:600; color:var(--text-dark);" id="editRbacModuleName">¢â¬â€
+                    <div style="font-size:0.95rem; font-weight:700; color:var(--primary);" id="editRbacRoleName">-</div>
+                    <div style="font-size:0.85rem; font-weight:600; color:var(--text-dark);" id="editRbacModuleName">-
                     </div>
                 </div>
 
@@ -2144,31 +2138,31 @@
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#eff6ff; padding:7px 10px; border-radius:6px; border:1px solid #dbeafe;">
                             <input type="checkbox" id="chkRbacR" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#1e40af;">R ¢â¬â€ Read / View</span>
+                            <span style="font-weight:700; color:#1e40af;">R - Read / View</span>
                             <small style="color:var(--text-muted);">(Melihat data modul)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#f0fdf4; padding:7px 10px; border-radius:6px; border:1px solid #dcfce7;">
                             <input type="checkbox" id="chkRbacC" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#15803d;">C ¢â¬â€ Create / Add</span>
+                            <span style="font-weight:700; color:#15803d;">C - Create / Add</span>
                             <small style="color:var(--text-muted);">(Menambah data baru)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#fffbeb; padding:7px 10px; border-radius:6px; border:1px solid #fef3c7;">
                             <input type="checkbox" id="chkRbacU" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#b45309;">U ¢â¬â€ Update / Edit</span>
+                            <span style="font-weight:700; color:#b45309;">U - Update / Edit</span>
                             <small style="color:var(--text-muted);">(Mengubah data eksisting)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#faf5ff; padding:7px 10px; border-radius:6px; border:1px solid #f3e8ff;">
                             <input type="checkbox" id="chkRbacA" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#6b21a8;">A ¢â¬â€ Approve / Sign</span>
+                            <span style="font-weight:700; color:#6b21a8;">A - Approve / Sign</span>
                             <small style="color:var(--text-muted);">(Menyetujui dokumen/WO/PO)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#fff1f2; padding:7px 10px; border-radius:6px; border:1px solid #ffe4e6;">
                             <input type="checkbox" id="chkRbacO" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#be123c;">O ¢â¬â€ Owner / Override</span>
+                            <span style="font-weight:700; color:#be123c;">O - Owner / Override</span>
                             <small style="color:var(--text-muted);">(Akses pengubah master sistem)</small>
                         </label>
                     </div>
@@ -2382,7 +2376,7 @@
                         </div>
                         <div class="movement-timeline-item">
                             <div class="movement-timeline-title">Borrow Pit Harapan Baru</div>
-                            <div class="movement-timeline-meta">Pekerjaan Cut & Fill Project | 15 Mei 2026 ¢â¬â€œ 01 Juli
+                            <div class="movement-timeline-meta">Pekerjaan Cut & Fill Project | 15 Mei 2026 -œ 01 Juli
                                 2026</div>
                         </div>
                         <div class="movement-timeline-item">
@@ -4271,36 +4265,36 @@
                         </td>
                         <td>${badge}</td>
                         <td onclick="event.stopPropagation();">
-                            <div class="asset-row-actions" style="display:flex; gap:5px; align-items:center; justify-content:center; flex-wrap:nowrap;">
-                                <button type="button" class="btn btn-sm" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:4px 8px; font-size:0.85rem; font-weight:700; white-space:nowrap; border-radius:5px; display:inline-flex; align-items:center; gap:4px;" 
+                            <div class="asset-row-actions" style="display:flex; gap:4px; align-items:center; justify-content:center; flex-wrap:nowrap;">
+                                <button type="button" class="btn btn-sm btn-primary" style="padding:3px 8px; font-size:0.76rem; font-weight:700; white-space:nowrap; border-radius:2px; display:inline-flex; align-items:center; gap:3px;" 
                                     onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" 
                                     title="Buka Detail 360° Unit ${escapeHtml(asset.id)}">
-                                    <i class="fa-solid fa-eye"></i> 360°
+                                    <i class="fa-solid fa-cube" style="font-size:0.7rem;"></i> 360°
                                 </button>
-                                <button type="button" class="btn btn-sm" style="background:#fef3c7; color:#b45309; border:1px solid #fde047; padding:4px 8px; font-size:0.85rem; font-weight:700; white-space:nowrap; border-radius:5px; display:inline-flex; align-items:center; gap:4px;" 
+                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
                                     onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'history')" 
                                     title="Lihat Riwayat Inspeksi & P2H Unit ${escapeHtml(asset.id)}">
-                                    <i class="fa-solid fa-clipboard-check"></i> P2H
+                                    P2H
                                 </button>
-                                <button type="button" class="btn btn-sm" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; padding:4px 8px; font-size:0.85rem; font-weight:700; white-space:nowrap; border-radius:5px; display:inline-flex; align-items:center; gap:4px;" 
+                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
                                     onclick="openIntegratedWO('${escapeHtml(asset.id)}')" 
                                     title="Lihat / Buat Work Order Unit ${escapeHtml(asset.id)}">
-                                    <i class="fa-solid fa-wrench"></i> WO
+                                    WO
                                 </button>
-                                <button type="button" class="btn btn-sm" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; padding:4px 8px; font-size:0.85rem; font-weight:700; white-space:nowrap; border-radius:5px; display:inline-flex; align-items:center; gap:4px;" 
+                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
                                     onclick="ConditionMonitoring.openForAsset('${escapeHtml(asset.id)}', 'overview')" 
-                                    title="Cek Kesehatan Komponen Condition Monitoring Unit ${escapeHtml(asset.id)}">
-                                    <i class="fa-solid fa-stethoscope"></i> Kondisi
+                                    title="Buka Condition Monitoring Unit ${escapeHtml(asset.id)}">
+                                    Condition
                                 </button>
-                                <button type="button" class="btn btn-sm" style="background:#f3e8ff; color:#6b21a8; border:1px solid #d8b4fe; padding:4px 8px; font-size:0.85rem; font-weight:700; white-space:nowrap; border-radius:5px; display:inline-flex; align-items:center; gap:4px;" 
-                                    onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')" 
-                                    title="Update Status Efektif Unit ${escapeHtml(asset.id)}">
-                                    <i class="fa-solid fa-pen-to-square"></i> Edit
+                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
+                                    onclick="openEditAssetModal('${escapeHtml(asset.id)}')" 
+                                    title="Edit Metadata Asset ${escapeHtml(asset.id)}">
+                                    Edit
                                 </button>
-                                <button type="button" class="btn btn-sm" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:4px 8px; font-size:0.85rem; font-weight:700; white-space:nowrap; border-radius:5px; display:inline-flex; align-items:center; gap:4px;" 
-                                    onclick="window.archiveData('asset', '${escapeHtml(asset.id)}')" 
-                                    title="Arsipkan Data Unit ${escapeHtml(asset.id)}">
-                                    <i class="fa-solid fa-box-archive"></i> Archive
+                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
+                                    onclick="archiveAsset('${escapeHtml(asset.id)}')" 
+                                    title="Arsipkan Unit ${escapeHtml(asset.id)}">
+                                    Arsip
                                 </button>
                             </div>
                         </td>
@@ -4312,7 +4306,7 @@
             function renderKanbanCardHtml(wo, statusKey) {
                 const isEmergency = wo.priority === 'High';
                 const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
-                const issueShort = escapeHtml(issueText.length > 45 ? issueText.substring(0, 45) + '...' : issueText);
+                const issueShort = escapeHtml(issueText.length > 55 ? issueText.substring(0, 55) + '...' : issueText);
                 const escapedIssue = escapeHtml(issueText).replace(/'/g, "&#039;");
                 const escapedAsset = escapeHtml(wo.assetId);
 
@@ -4325,20 +4319,22 @@
                      draggable="false"
                      aria-grabbed="false"
                      onclick="handleWoCardClick(event, '${escapeHtml(wo.woId)}', '${escapedAsset}')"
-                     style="cursor:grab;" 
-                     title="Klik untuk Detail 360° | Drag ke kolom lain untuk ubah status">
-                    <div class="kanban-card-title" style="display:flex; justify-content:space-between; align-items:center;">
-                        <span><strong>${escapeHtml(wo.woId)}</strong></span>
-                        ${isEmergency ? '<span class="badge bg-breakdown" style="font-size:0.85rem;"><i class="fa-solid fa-fire"></i> Emergency</span>' : ''}
+                     style="cursor:grab; background:var(--bg-surface); border:1px solid var(--border); border-left:3px solid ${isEmergency ? 'var(--danger)' : 'var(--primary)'}; border-radius:2px; padding:10px 12px; margin-bottom:8px; box-shadow:none;" 
+                     title="Klik untuk Detail 360° | Drag untuk ubah status">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:6px; margin-bottom:6px;">
+                        <span class="font-mono" style="font-weight:700; color:var(--primary); font-size:0.85rem;">${escapeHtml(wo.woId)}</span>
+                        <span class="font-mono" style="font-weight:700; color:var(--text-main); font-size:0.82rem;">${escapedAsset}</span>
                     </div>
-                    <div class="kanban-card-meta">
-                        <i class="fa-solid fa-truck"></i> <strong>${escapedAsset}</strong><br>
-                        <i class="fa-solid fa-wrench"></i> ${issueShort}
-                        ${wo.downtime ? `<br><span style="color:#dc3545; font-size:0.85rem; font-weight:600;"><i class="fa-regular fa-clock"></i> ${escapeHtml(wo.downtime)}</span>` : ''}
+                    <div style="font-size:0.8rem; color:var(--text-main); line-height:1.35; margin-bottom:8px; font-weight:500;">
+                        ${issueShort}
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                        <span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(wo.priority)}</span>
-                        <span class="wo-card-drag-label"><i class="fa-solid fa-grip-vertical"></i> Drag untuk ubah status</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
+                        <span style="color:var(--text-muted); font-family:var(--font-mono);">
+                            ${wo.downtime ? `<i class="fa-regular fa-clock" style="color:var(--danger);"></i> <strong style="color:var(--danger);">${escapeHtml(wo.downtime)}</strong>` : '<i class="fa-regular fa-clock"></i> Normal'}
+                        </span>
+                        <span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}" style="border-radius:2px; font-size:0.7rem; padding:2px 6px;">
+                            ${isEmergency ? 'EMERGENCY' : escapeHtml(wo.priority || 'NORMAL')}
+                        </span>
                     </div>
                 </div>
             `;
@@ -4596,7 +4592,7 @@
                 const { lat, lng } = position;
                 if (gpsCoordEl) {
                     gpsCoordEl.innerText = position.isRepresentative
-                        ? `${position.source} ¢â¬â€ koordinat aktual belum tersedia`
+                        ? `${position.source} - koordinat aktual belum tersedia`
                         : `${position.source}: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
                 }
                 if (btnGmaps) {
@@ -4630,7 +4626,7 @@
 
                 L.marker([lat, lng], { icon: customIcon })
                     .addTo(modalUnitMapInstance)
-                    .bindPopup(`<b>${escapeHtml(unitId)}</b><br>Lokasi: ${escapeHtml(locName)}<br>Status: <b>${escapeHtml(statusName)}</b><br><small>${escapeHtml(position.source)}${position.isRepresentative ? ' ¢â¬â€ bukan GPS aktual' : ''}</small>`)
+                    .bindPopup(`<b>${escapeHtml(unitId)}</b><br>Lokasi: ${escapeHtml(locName)}<br>Status: <b>${escapeHtml(statusName)}</b><br><small>${escapeHtml(position.source)}${position.isRepresentative ? ' - bukan GPS aktual' : ''}</small>`)
                     .openPopup();
 
                 setTimeout(() => {
@@ -5638,7 +5634,7 @@
                         </td>
                         <td>${escapeHtml(l.category)}<br><small class="text-muted">${escapeHtml(l.location)}</small></td>
                         <td>${escapeHtml(l.fuelman)}<br><small class="text-muted">Op: ${escapeHtml(l.operator)}</small></td>
-                        <td>${l.meterPrev} ¢â€ â€™ ${l.meterCurr} <small>(${l.meterDiff} ${l.meterType})</small></td>
+                        <td>${l.meterPrev} - "™ ${l.meterCurr} <small>(${l.meterDiff} ${l.meterType})</small></td>
                         <td><strong>${l.liter} L</strong></td>
                         <td>${l.rateActual} ${l.meterType === 'HM' ? 'L/HM' : 'Km/L'} <br><small class="text-muted">Std: ${l.targetRate}</small></td>
                         <td style="font-weight:bold; color:${l.deviationPct > 10 || l.deviationPct < -15 ? 'var(--danger)' : 'var(--success)'};">
@@ -6002,7 +5998,7 @@
                     buyYear: 2022,
                     depreciationPct: 40,
                     depreciationVal: 240000000,
-                    marketRange: '450.000.000 ¢â¬â€œ 520.000.000',
+                    marketRange: '450.000.000 -œ 520.000.000',
                     offeredPrice: 550000000,
                     netPriceBra: 450000000,
                     selisih: 100000000,
@@ -6021,7 +6017,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 366000000,
-                    marketRange: '750.000.000 ¢â¬â€œ 900.000.000',
+                    marketRange: '750.000.000 -œ 900.000.000',
                     offeredPrice: 950000000,
                     netPriceBra: 820000000,
                     selisih: 130000000,
@@ -6040,7 +6036,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 252414000,
-                    marketRange: '420.000.000 ¢â¬â€œ 480.000.000',
+                    marketRange: '420.000.000 -œ 480.000.000',
                     offeredPrice: 520000000,
                     netPriceBra: 460000000,
                     selisih: 60000000,
@@ -6059,7 +6055,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 252414000,
-                    marketRange: '420.000.000 ¢â¬â€œ 480.000.000',
+                    marketRange: '420.000.000 -œ 480.000.000',
                     offeredPrice: 510000000,
                     netPriceBra: 450000000,
                     selisih: 60000000,
@@ -6078,7 +6074,7 @@
                     buyYear: 2022,
                     depreciationPct: 40,
                     depreciationVal: 320000000,
-                    marketRange: '420.000.000 ¢â¬â€œ 500.000.000',
+                    marketRange: '420.000.000 -œ 500.000.000',
                     offeredPrice: 520000000,
                     netPriceBra: 450000000,
                     selisih: 70000000,
@@ -6097,7 +6093,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 124500000,
-                    marketRange: '400.000.000 ¢â¬â€œ 550.000.000',
+                    marketRange: '400.000.000 -œ 550.000.000',
                     offeredPrice: 500000000,
                     netPriceBra: 430000000,
                     selisih: 70000000,
@@ -6116,7 +6112,7 @@
                     buyYear: 2021,
                     depreciationPct: 50,
                     depreciationVal: 185000000,
-                    marketRange: '400.000.00 ¢â¬â€œ 580.000.000',
+                    marketRange: '400.000.00 -œ 580.000.000',
                     offeredPrice: 520000000,
                     netPriceBra: 400000000,
                     selisih: 120000000,
