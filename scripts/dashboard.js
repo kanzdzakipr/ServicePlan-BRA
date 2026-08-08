@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     'use strict';
 
     window.assetDbMapping = null;
@@ -16919,9 +16919,25 @@ document.addEventListener('click', function (e) {
 // ARCHIVE FUNCTIONALITY
 // ==========================================
 
-window.archiveData = function(type, id) {
+window.archiveData = async function(type, id) {
     if(!confirm('Apakah Anda yakin ingin memindahkan data ini ke Archive?')) return;
     
+    try {
+        const res = await fetch('api/archive.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, id, action: 'archive' })
+        });
+        const data = await res.json();
+        if (data.status !== 'success') {
+            alert('Gagal mengarsipkan: ' + (data.message || 'Unknown error'));
+            return;
+        }
+    } catch (e) {
+        alert('Terjadi kesalahan koneksi saat mengarsipkan.');
+        return;
+    }
+
     if (type === 'asset') {
         const item = window.globalData.assets.find(a => a.id === id);
         if (item) item.isArchived = true;
@@ -16943,9 +16959,25 @@ window.archiveData = function(type, id) {
     window.renderArchiveTables();
 };
 
-window.restoreData = function(type, id) {
+window.restoreData = async function(type, id) {
     if(!confirm('Kembalikan data ini dari Archive ke tampilan utama?')) return;
     
+    try {
+        const res = await fetch('api/archive.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, id, action: 'restore' })
+        });
+        const data = await res.json();
+        if (data.status !== 'success') {
+            alert('Gagal mengembalikan data: ' + (data.message || 'Unknown error'));
+            return;
+        }
+    } catch (e) {
+        alert('Terjadi kesalahan koneksi saat mengembalikan data.');
+        return;
+    }
+
     if (type === 'asset') {
         const item = window.globalData.assets.find(a => a.id === id);
         if (item) item.isArchived = false;
