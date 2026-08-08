@@ -3868,13 +3868,15 @@
                     }
                     
                     // Fetch all initialization data concurrently
-                    const [apiInitData, assetPayload, fuelData, pmData, tireData, archiveDataRes] = await Promise.all([
+                    const [apiInitData, assetPayload, fuelData, pmData, tireData, archiveDataRes, inspectionsRes, accidentsRes] = await Promise.all([
                         fetchJsonSafely('api/init.php'),
                         fetchJsonSafely('api/assets.php'),
                         fetchJsonSafely('api/fuel_logs.php'),
                         fetchJsonSafely('api/pm_plans.php'),
                         fetchJsonSafely('api/tire_inspections.php'),
-                        fetchJsonSafely('api/archive.php')
+                        fetchJsonSafely('api/archive.php'),
+                        fetchJsonSafely('api/inspections.php'),
+                        fetchJsonSafely('api/accidents.php')
                     ]);
 
                     const fallbackData = Array.isArray(apiInitData?.assets)
@@ -3978,17 +3980,31 @@
                     linkExistingWorkflowRecords();
                     rebuildFleetSummary();
                     
-                    // Apply Archive Flags
+                    if (inspectionsRes?.status === 'success' && Array.isArray(inspectionsRes.data)) {
+                        globalData.inspections = inspectionsRes.data;
+                    } else {
+                        globalData.inspections = [];
+                    }
+                    
+                    if (accidentsRes?.status === 'success' && Array.isArray(accidentsRes.data)) {
+                        globalData.accidents = accidentsRes.data;
+                    } else {
+                        globalData.accidents = [];
+                    }
+                    
                     if (archiveDataRes?.status === 'success' && Array.isArray(archiveDataRes.data)) {
-                        const archivedAssets = new Set(archiveDataRes.data.filter(x => x.item_type === 'asset').map(x => x.item_id));
-                        const archivedP2H = new Set(archiveDataRes.data.filter(x => x.item_type === 'p2h').map(x => x.item_id));
-                        const archivedAccidents = new Set(archiveDataRes.data.filter(x => x.item_type === 'accident').map(x => x.item_id));
+                        const archivedAssets = new Set(archiveDataRes.data.filter(x => x.item_type === 'asset').map(x => String(x.item_id).trim()));
+                        const archivedP2H = new Set(archiveDataRes.data.filter(x => x.item_type === 'p2h').map(x => String(x.item_id).trim()));
+                        const archivedAccidents = new Set(archiveDataRes.data.filter(x => x.item_type === 'accident').map(x => String(x.item_id).trim()));
                         
                         if (globalData.assets) {
-                            globalData.assets.forEach(a => { if (archivedAssets.has(a.id)) a.isArchived = true; });
+                            globalData.assets.forEach(a => { if (archivedAssets.has(String(a.id).trim())) a.isArchived = true; });
                         }
-                        if (typeof inspectionHistory !== 'undefined') {
-                            inspectionHistory.forEach(a => { if (archivedP2H.has(a.id)) a.isArchived = true; });
+                        if (globalData.inspections) {
+                            globalData.inspections.forEach(a => { if (archivedP2H.has(String(a.id).trim())) a.isArchived = true; });
+                        }
+                        if (globalData.accidents) {
+                            globalData.accidents.forEach(a => { if (archivedAccidents.has(String(a.docNo).trim())) a.isArchived = true; });
                         }
                         if (typeof initialAccidentLogs !== 'undefined') {
                             initialAccidentLogs.forEach(a => { if (archivedAccidents.has(a.docNo)) a.isArchived = true; });

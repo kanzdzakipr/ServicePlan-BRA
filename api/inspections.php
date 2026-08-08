@@ -3,10 +3,22 @@ require_once 'db.php';
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Auto-add payload_json column if missing
+try {
+    $db->exec("ALTER TABLE inspections ADD COLUMN payload_json JSON NULL AFTER findings_summary");
+} catch (PDOException $e) {
+    // Ignore error if column already exists
+}
+
 switch ($method) {
     case 'GET':
-        $stmt = $db->query("SELECT * FROM inspections ORDER BY inspection_date DESC LIMIT 100");
-        echo json_encode(["status" => "success", "data" => $stmt->fetchAll()]);
+        $stmt = $db->query("SELECT payload_json FROM inspections WHERE payload_json IS NOT NULL ORDER BY inspection_date DESC LIMIT 300");
+        $results = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $parsed = json_decode($row['payload_json'], true);
+            if ($parsed) $results[] = $parsed;
+        }
+        echo json_encode(["status" => "success", "data" => $results]);
         break;
 
     case 'POST':
@@ -18,8 +30,8 @@ switch ($method) {
 
         try {
             $db->beginTransaction();
-            $stmt = $db->prepare("INSERT INTO inspections (asset_id, inspector_id, inspection_date, current_hm_km, overall_result, findings_summary) 
-                                  VALUES (:asset, :inspector, :date, :hm, :result, :summary)");
+            $stmt = $db->prepare("INSERT INTO inspections (asset_id, inspector_id, inspection_date, current_hm_km, overall_result, findings_summary, payload_json) 
+                                  VALUES (:asset, :inspector, :date, :hm, :result, :summary, :payload)");
             
             // Accept either single object or array
             $inspections = isset($input[0]) ? $input : [$input];
@@ -46,7 +58,8 @@ switch ($method) {
                     ':date' => $date,
                     ':hm' => $hm,
                     ':result' => $result,
-                    ':summary' => $summary
+                    ':summary' => $summary,
+                    ':payload' => json_encode($ins)
                 ]);
             }
 

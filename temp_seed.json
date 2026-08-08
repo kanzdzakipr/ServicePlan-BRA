@@ -1,0 +1,72 @@
+[
+        {
+            "docNo": "01/ACC/BRA/DURI/2026",
+            "reportDate": "2026-05-14",
+            "incidentDate": "2026-05-11 14:30",
+            "unitName": "Powder Binder Spreader XCMG XKC185",
+            "unitCode": "CS-41001",
+            "makeModel": "XCMG XKC185",
+            "licensePlate": "BM 9012 RWI",
+            "location": "Site RWI Duri (Project Zona 4)",
+            "operatorName": "M. Fajar DC",
+            "operatorTenure": "< 1 bulan (Unit Baru)",
+            "chronology": "Pada tanggal 11 Mei 2026 pukul 14.30 WIB, unit sedang melakukan pengisian material powder binder/cement di area pengisian. Terjadi Error System Penaburan cement yang disebabkan pada saat pengisian cement operator tidak menyalakan tombol pada monitor sehingga sistem error dan cement tidak dapat ditabur.",
+            "environment": {
+                "weather": "Cerah",
+                "roadCondition": "Kering / Rata",
+                "lighting": "Siang Hari (Terang)",
+                "density": "Padat Operasional",
+                "cargo": "Overload Pengisian Cement"
+            },
+            "impact": {
+                "physicalDamage": "Error System Penaburan & Valve Blockage",
+                "estimatedRepairCost": 15500000,
+                "estimatedDowntimeDays": 3,
+                "productionImpact": "Penaburan Semen Terhenti (Delay Stabilisasi)",
+                "totalFinancialImpact": 28000000
+            },
+            "causeFactors": ["Human factor", "Procedural / System failure"],
+            "causeExplanation": "Operator tidak mengikuti urutan tombol pengisian monitor saat mengisi material cement, serta belum ada interlock otomatis.",
+            "correctiveAction": "Unit dihentikan operasional (ACCIDENT_HOLD). Sebagian cement dibongkar dan diisi ulang oleh teknisi XCMG.",
+            "preventiveAction": "Refresher training operator penabur semen, update SOP serah terima unit baru, dan penambahan label urutan instruksi di kabin.",
+            "severity": "Moderate",
+            "isUnitLocked": true,
+            "status": "CAPA_Pending",
+            "tarNo": "01/TAR/05/2026"
+        },
+        {
+            "docNo": "02/ACC/BRA/YARD/2026",
+            "reportDate": "2026-06-20",
+            "incidentDate": "2026-06-19 16:15",
+            "unitName": "Dump Truck Hino Ranger FM 280 JD",
+            "unitCode": "DT-00052",
+            "makeModel": "Hino Ranger FM 280 JD",
+            "licensePlate": "B 9642 KYW",
+            "location": "Yard KM 12 Area Workshop",
+            "operatorName": "Suwardi (Welder/Mekanik)",
+            "operatorTenure": "2 Tahun",
+            "chronology": "Saat bermanuver mundur di area bay workshop, engsel pintu Ombeng tersangkut pada tiang penyangga sehingga engsel patah, kunci pintu bengkok, dan pelat lantai robek.",
+            "environment": {
+                "weather": "Hujan Gerimis",
+                "roadCondition": "Licin/Berlumpur",
+                "lighting": "Sore Hari (Redup)",
+                "density": "Sepi",
+                "cargo": "Kosong (Unloaded)"
+            },
+            "impact": {
+                "physicalDamage": "Pintu ombeng belakang rusak, pelat sobek 30cm, engsel patah 2 titik.",
+                "estimatedRepairCost": 4500000,
+                "estimatedDowntimeDays": 1,
+                "productionImpact": "Keterlambatan mobilisasi unit ke tambang.",
+                "totalFinancialImpact": 5500000
+            },
+            "causeFactors": ["Human factor", "Environmental conditions"],
+            "causeExplanation": "Kurangnya observasi pandangan belakang akibat kaca spion kotor dan kondisi redup.",
+            "correctiveAction": "Perbaikan pintu ombeng (fabrikasi dan welding lokal). Unit ditahan sementara (ACCIDENT_HOLD).",
+            "preventiveAction": "Pemasangan rubber stopper di area tiang penyangga, wajib ada spotter/pemandu saat unit mundur di area workshop sempit.",
+            "severity": "Minor",
+            "isUnitLocked": true,
+            "status": "Investigating",
+            "tarNo": ""
+        }
+]
