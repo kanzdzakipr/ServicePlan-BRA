@@ -1,0 +1,114 @@
+{
+    "BRA-03": {
+        "old_id": "BRA-03",
+        "new_id": "EXC-00006",
+        "license_plate": "B 9096 ZYT",
+        "category": "Excavator",
+        "make_model": null
+    },
+    "CC-00001": {
+        "old_id": "CC-00001",
+        "new_id": "EXC-00007",
+        "license_plate": "CC 600 V",
+        "category": "Excavator",
+        "make_model": null
+    },
+    "EX-00001": {
+        "old_id": "EX-00001",
+        "new_id": "EXC-00008",
+        "license_plate": "-",
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320"
+    },
+    "EX-00003": {
+        "old_id": "EX-00003",
+        "new_id": "EXC-00009",
+        "license_plate": "C51503",
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320"
+    },
+    "EX-00004": {
+        "old_id": "EX-00004",
+        "new_id": "EXC-00010",
+        "license_plate": "DBCH 0366",
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320"
+    },
+    "EX-00005": {
+        "old_id": "EX-00005",
+        "new_id": "EXC-00011",
+        "license_plate": "SYW01364",
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320"
+    },
+    "EX-00007": {
+        "old_id": "EX-00007",
+        "new_id": "EXC-00012",
+        "license_plate": "C51502",
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320"
+    },
+    "EX-00008": {
+        "old_id": "EX-00008",
+        "new_id": "EXC-00014",
+        "license_plate": "C01531",
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320"
+    },
+    "EX-00009": {
+        "old_id": "EX-00009",
+        "new_id": "EXC-00015",
+        "license_plate": "DBCH2941",
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320"
+    },
+    "EX-00011": {
+        "old_id": "EX-00011",
+        "new_id": "EXC-00016",
+        "license_plate": "-",
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320"
+    },
+    "EX-00012": {
+        "old_id": "EX-00012",
+        "new_id": "EXC-00017",
+        "license_plate": "DBCH1801",
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320"
+    },
+    "FT-00001": {
+        "old_id": "FT-00001",
+        "new_id": "EXC-00018",
+        "license_plate": "BA 9016 QU",
+        "category": "Excavator",
+        "make_model": null
+    },
+    "MB-00006": {
+        "old_id": "MB-00006",
+        "new_id": "EXC-00019",
+        "license_plate": "BM 7680 TU",
+        "category": "Excavator",
+        "make_model": null
+    },
+    "ML-41001": {
+        "old_id": "ML-41001",
+        "new_id": "EXC-00020",
+        "license_plate": "-",
+        "category": "Excavator",
+        "make_model": null
+    },
+    "WL-31001": {
+        "old_id": "WL-31001",
+        "new_id": "EXC-31001",
+        "license_plate": "-",
+        "category": "Excavator",
+        "make_model": null
+    },
+    "SD-00001": {
+        "old_id": "SD-00001",
+        "new_id": "PF-00002",
+        "license_plate": "BW 211 D",
+        "category": "Vibro Compactor",
+        "make_model": "Vibro Compactor Bomag BW211D-40SL \/ Sakai"
+    }
+}
