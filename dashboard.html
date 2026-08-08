@@ -68,7 +68,7 @@
             <li><a onclick="showView('approval', '', 'menu-approval')" id="menu-approval" role="button" tabindex="0"
                     title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a>
             </li>
-            <li><a onclick="showView('archive', '', 'menu-archive')" id="menu-archive" role="button" tabindex="0"
+            <li><a onclick="showView('archive', '', 'menu-archive'); window.renderArchiveTables();" id="menu-archive" role="button" tabindex="0"
                     title="Archive"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Archive</span></a>
             </li>
             <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" role="button" tabindex="0"
@@ -2018,7 +2018,7 @@
             </div>
 
             <!-- VIEW: ARCHIVE -->
-            <div id="view-archive" class="view-section" style="display:none;">
+            <div id="view-archive" class="view-section">
                 <h1 class="page-title"><i class="fa-solid fa-box-archive"></i> Archive Data</h1>
                 
                 <div class="panel">
