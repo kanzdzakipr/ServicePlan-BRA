@@ -1371,9 +1371,6 @@ body.sidebar-collapsed .sidebar:hover .sidebar-menu .nav-section-label {
     display: block;
     font-variant-numeric: tabular-nums;
 }
-    font-size: 1.15rem;
-    line-height: 1;
-}
 
 .report-counter span {
     font-size: .72rem;
