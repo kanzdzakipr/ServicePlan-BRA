@@ -83,6 +83,9 @@
         <!-- Header -->
         <header class="top-header">
             <div class="header-left">
+                <button type="button" id="sidebarToggle" onclick="toggleSidebar()" class="btn-sidebar-toggle" title="Kecilkan / Perluas Navbar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <div class="dropdown">
                     <select id="globalProjectFilter" onchange="applyGlobalProjectFilter(this.value)"
                         aria-label="Filter global berdasarkan project atau lokasi">
@@ -188,16 +191,16 @@
                                 </button>
 
                                 <!-- Floating Popover Card -->
-                                <div id="mapFilterPopover" onclick="event.stopPropagation()" style="display:none; position:absolute; right:0; top:36px; z-index:2000; background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.18); width:300px; padding:14px; font-size:0.83rem;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
-                                        <strong style="color:#0f172a; font-size:0.88rem;"><i class="fa-solid fa-filter" style="color:var(--primary);"></i> Filter Atribut Peta</strong>
-                                        <button type="button" onclick="resetMapFilters()" style="background:none; border:none; color:#0d6efd; font-size:0.78rem; font-weight:600; cursor:pointer;">Reset</button>
+                                <div id="mapFilterPopover" onclick="event.stopPropagation()" class="map-filter-card">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+                                        <strong style="color:var(--text-main); font-size:0.88rem;"><i class="fa-solid fa-filter" style="color:var(--primary);"></i> Filter Atribut Peta</strong>
+                                        <button type="button" onclick="resetMapFilters()" style="background:none; border:none; color:var(--primary); font-size:0.78rem; font-weight:600; cursor:pointer;">Reset</button>
                                     </div>
                                     
                                     <!-- Status Filter -->
-                                    <div style="margin-bottom:8px;">
-                                        <label style="font-weight:600; color:#475569; display:block; margin-bottom:3px; font-size:0.78rem;">Status Unit:</label>
-                                        <select id="mapStatusFilter" class="form-control" style="font-size:0.8rem; padding:4px 8px; height:32px; width:100%;" onchange="applyMapFilters()">
+                                    <div class="map-filter-group">
+                                        <label class="map-filter-label">Status Unit:</label>
+                                        <select id="mapStatusFilter" class="form-control map-filter-input" onchange="applyMapFilters()">
                                             <option value="ALL">Semua Status</option>
                                             <option value="READY">Ready / Operating (Hijau)</option>
                                             <option value="BREAKDOWN">Breakdown (Merah)</option>
@@ -207,9 +210,9 @@
                                     </div>
 
                                     <!-- Location Filter -->
-                                    <div style="margin-bottom:8px;">
-                                        <label style="font-weight:600; color:#475569; display:block; margin-bottom:3px; font-size:0.78rem;">Lokasi / Cabang:</label>
-                                        <select id="mapLocationFilter" class="form-control" style="font-size:0.8rem; padding:4px 8px; height:32px; width:100%;" onchange="applyMapFilters()">
+                                    <div class="map-filter-group">
+                                        <label class="map-filter-label">Lokasi / Cabang:</label>
+                                        <select id="mapLocationFilter" class="form-control map-filter-input" onchange="applyMapFilters()">
                                             <option value="ALL">Semua Lokasi / Cabang</option>
                                             <option value="pekanbaru">Pekanbaru Branch</option>
                                             <option value="duri">Duri Branch</option>
@@ -222,9 +225,9 @@
                                     </div>
 
                                     <!-- Time Recency Filter -->
-                                    <div style="margin-bottom:10px;">
-                                        <label style="font-weight:600; color:#475569; display:block; margin-bottom:3px; font-size:0.78rem;">Waktu Update Terakhir:</label>
-                                        <select id="mapTimeFilter" class="form-control" style="font-size:0.8rem; padding:4px 8px; height:32px; width:100%;" onchange="applyMapFilters()">
+                                    <div class="map-filter-group">
+                                        <label class="map-filter-label">Waktu Update Terakhir:</label>
+                                        <select id="mapTimeFilter" class="form-control map-filter-input" onchange="applyMapFilters()">
                                             <option value="ALL">Semua Waktu Update</option>
                                             <option value="24H">&lt; 24 Jam Terakhir</option>
                                             <option value="7D">1 - 7 Hari Terakhir</option>
@@ -233,14 +236,14 @@
                                     </div>
 
                                     <!-- Search Input -->
-                                    <div style="margin-bottom:10px;">
-                                        <label style="font-weight:600; color:#475569; display:block; margin-bottom:3px; font-size:0.78rem;">Cari Kode Unit / Kategori:</label>
-                                        <input type="text" id="mapSearchInput" placeholder="Ketik Kode Unit (mis. DT-00001)..." onkeyup="applyMapFilters()" style="font-size:0.8rem; padding:4px 8px; height:32px; width:100%; border-radius:4px; border:1px solid #cbd5e1;">
+                                    <div class="map-filter-group">
+                                        <label class="map-filter-label">Cari Kode Unit / Kategori:</label>
+                                        <input type="text" id="mapSearchInput" placeholder="Ketik Kode Unit (mis. DT-00001)..." onkeyup="applyMapFilters()" class="map-filter-input">
                                     </div>
 
                                     <!-- Toggle Cluster -->
-                                    <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:6px 10px; border-radius:6px; border:1px solid #e2e8f0;">
-                                        <span style="font-weight:600; color:#334155; font-size:0.78rem;"><i class="fa-solid fa-object-group" style="color:var(--primary);"></i> Klusterisasi Titik</span>
+                                    <div class="map-cluster-box">
+                                        <span style="font-weight:600; color:var(--text-secondary); font-size:0.78rem;"><i class="fa-solid fa-object-group" style="color:var(--primary);"></i> Klusterisasi Titik</span>
                                         <input type="checkbox" id="mapClusterToggle" checked onchange="applyMapFilters()" style="cursor:pointer; width:16px; height:16px;">
                                     </div>
                                 </div>
@@ -610,7 +613,7 @@
                 <div class="panel"
                     style="margin-bottom: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 12px; overflow: hidden;">
                     <div class="panel-header"
-                        style="background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%); color: white; padding: 15px 20px;">
+                        style="background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 15px 20px;">
                         <span style="font-size: 1.1rem; font-weight: 600;"><i class="fa-solid fa-file-pen"
                                 style="margin-right: 8px;"></i> Input Administrasi & Logistik</span>
                     </div>
@@ -4934,6 +4937,22 @@
                 initAssetView(globalData.assets);
                 initWorkOrderView(globalData.work_orders);
                 initNewViews();
+            }
+
+            function toggleSidebar() {
+                document.body.classList.toggle('sidebar-collapsed');
+                const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+                try {
+                    localStorage.setItem('fleetmonitor_sidebar_collapsed', isCollapsed ? '1' : '0');
+                } catch(e){}
+                if (window.dashboardMapInstance) {
+                    setTimeout(() => { window.dashboardMapInstance.invalidateSize(); }, 250);
+                }
+            }
+            window.toggleSidebar = toggleSidebar;
+
+            if (localStorage.getItem('fleetmonitor_sidebar_collapsed') === '1') {
+                document.body.classList.add('sidebar-collapsed');
             }
 
             function clearActiveMenus() {
