@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="scripts/dashboard.css?v=20260731-1">
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
-    <script src="scripts/dashboard.js?v=20260801-1"></script>
+    <script src="scripts/dashboard.js?v=20260808-1"></script>
 
 </head>
 
@@ -77,8 +77,9 @@
             </li>
 
             <li class="nav-section-label">System</li>
-            <li><a onclick="showView('archive', '', 'menu-archive'); window.renderArchiveTables();" id="menu-archive" role="button" tabindex="0"
-                    title="Archive"><i class="fa-solid fa-box-archive"></i><span class="nav-label">Archive</span></a>
+            <li><a onclick="showView('archive', '', 'menu-archive'); window.renderArchiveTables();" id="menu-archive"
+                    role="button" tabindex="0" title="Archive"><i class="fa-solid fa-box-archive"></i><span
+                        class="nav-label">Archive</span></a>
             </li>
             <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" role="button" tabindex="0"
                     title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a>
@@ -92,7 +93,8 @@
         <!-- Header -->
         <header class="top-header">
             <div class="header-left">
-                <button type="button" id="sidebarToggle" onclick="toggleSidebar()" class="btn-sidebar-toggle" title="Kecilkan / Perluas Navbar">
+                <button type="button" id="sidebarToggle" onclick="toggleSidebar()" class="btn-sidebar-toggle"
+                    title="Kecilkan / Perluas Navbar">
                     <i class="fa-solid fa-bars"></i>
                 </button>
                 <div class="dropdown">
@@ -136,7 +138,8 @@
                         <div class="telemetry-metric-value" id="kpiTotal">-</div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-info">Semua Unit</span>
-                            <button type="button" onclick="openStatusDetailModal('ALL')" class="telemetry-action-link" title="Lihat Tabulasi Semua Unit">
+                            <button type="button" onclick="openStatusDetailModal('ALL')" class="telemetry-action-link"
+                                title="Lihat Tabulasi Semua Unit">
                                 Detail <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
@@ -150,7 +153,8 @@
                         <div class="telemetry-metric-value" id="kpiReady" style="color: var(--success);">-</div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-success">Operational</span>
-                            <button type="button" onclick="openStatusDetailModal('READY')" class="telemetry-action-link" title="Lihat Tabulasi Unit Ready">
+                            <button type="button" onclick="openStatusDetailModal('READY')" class="telemetry-action-link"
+                                title="Lihat Tabulasi Unit Ready">
                                 Detail <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
@@ -164,7 +168,8 @@
                         <div class="telemetry-metric-value" id="kpiStandby" style="color: var(--warning);">-</div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-warning">Idle / Standby</span>
-                            <button type="button" onclick="openStatusDetailModal('STANDBY')" class="telemetry-action-link" title="Lihat Tabulasi Unit Standby">
+                            <button type="button" onclick="openStatusDetailModal('STANDBY')"
+                                class="telemetry-action-link" title="Lihat Tabulasi Unit Standby">
                                 Detail <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
@@ -173,12 +178,14 @@
                     <div class="telemetry-metric-item">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Breakdown Unit</span>
-                            <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger); font-size: 0.9rem;"></i>
+                            <i class="fa-solid fa-triangle-exclamation"
+                                style="color: var(--danger); font-size: 0.9rem;"></i>
                         </div>
                         <div class="telemetry-metric-value" id="kpiBreakdown" style="color: var(--danger);">-</div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-danger">Out of Order</span>
-                            <button type="button" onclick="openStatusDetailModal('BREAKDOWN')" class="telemetry-action-link" title="Lihat Tabulasi Unit Breakdown">
+                            <button type="button" onclick="openStatusDetailModal('BREAKDOWN')"
+                                class="telemetry-action-link" title="Lihat Tabulasi Unit Breakdown">
                                 Detail <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
@@ -192,7 +199,8 @@
                         <div class="telemetry-metric-value" id="kpiInspeksi" style="color: var(--info);">-</div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-info">In Service</span>
-                            <button type="button" onclick="openStatusDetailModal('INSPEKSI')" class="telemetry-action-link" title="Lihat Tabulasi Unit Inspeksi/PM">
+                            <button type="button" onclick="openStatusDetailModal('INSPEKSI')"
+                                class="telemetry-action-link" title="Lihat Tabulasi Unit Inspeksi/PM">
                                 Detail <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
@@ -201,31 +209,43 @@
 
                 <div class="dashboard-layout">
                     <div class="panel">
-                        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; position:relative;">
-                            <span style="font-weight:700; font-size:0.98rem; display:inline-flex; align-items:center; gap:8px;">
-                                <i class="fa-solid fa-map-location-dot" style="color:var(--primary);"></i> Live Map (Posisi Terakhir Unit)
+                        <div class="panel-header"
+                            style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; position:relative;">
+                            <span
+                                style="font-weight:700; font-size:0.98rem; display:inline-flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-map-location-dot" style="color:var(--primary);"></i> Live Map
+                                (Posisi Terakhir Unit)
                             </span>
-                            
+
                             <!-- Compact Filter Button & Dropdown Popover -->
                             <div style="position:relative;">
-                                <button type="button" id="btnMapFilterToggle" onclick="toggleMapFilterPopover(event)" class="btn btn-sm" style="font-size:0.82rem; font-weight:600; padding:5px 12px; display:inline-flex; align-items:center; gap:6px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer; color:#334155; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                                <button type="button" id="btnMapFilterToggle" onclick="toggleMapFilterPopover(event)"
+                                    class="btn btn-sm"
+                                    style="font-size:0.82rem; font-weight:600; padding:5px 12px; display:inline-flex; align-items:center; gap:6px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer; color:#334155; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                                     <i class="fa-solid fa-sliders" style="color:var(--primary);"></i> Filter...
-                                    <span id="mapFilterBadge" style="background:var(--primary); color:#fff; font-size:10px; padding:1px 6px; border-radius:10px; display:none;">0</span>
+                                    <span id="mapFilterBadge"
+                                        style="background:var(--primary); color:#fff; font-size:10px; padding:1px 6px; border-radius:10px; display:none;">0</span>
                                 </button>
 
                                 <!-- Floating Popover Card -->
                                 <div id="mapFilterPopover" onclick="event.stopPropagation()" class="map-filter-card">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
-                                        <strong style="color:var(--text-main); font-size:0.88rem;"><i class="fa-solid fa-filter" style="color:var(--primary);"></i> Filter Atribut Peta</strong>
-                                        <button type="button" onclick="resetMapFilters()" style="background:none; border:none; color:var(--primary); font-size:0.78rem; font-weight:600; cursor:pointer;">Reset</button>
+                                    <div
+                                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+                                        <strong style="color:var(--text-main); font-size:0.88rem;"><i
+                                                class="fa-solid fa-filter" style="color:var(--primary);"></i> Filter
+                                            Atribut Peta</strong>
+                                        <button type="button" onclick="resetMapFilters()"
+                                            style="background:none; border:none; color:var(--primary); font-size:0.78rem; font-weight:600; cursor:pointer;">Reset</button>
                                     </div>
-                                    
+
                                     <!-- Status Filter -->
                                     <div class="map-filter-group">
                                         <label class="map-filter-label">Status Unit:</label>
-                                        <select id="mapStatusFilter" class="form-control map-filter-input" onchange="applyMapFilters()">
+                                        <select id="mapStatusFilter" class="form-control map-filter-input"
+                                            onchange="applyMapFilters()">
                                             <option value="ALL">Semua Status</option>
-                                            <option value="READY">Ready / Operating (Hijau)</option>
+                                            <option value="READY">Ready (Siap Kerja)</option>
+                                            <option value="OPERATING">Operating (Beroperasi)</option>
                                             <option value="BREAKDOWN">Breakdown (Merah)</option>
                                             <option value="INSPEKSI">Inspeksi / P2H (Kuning)</option>
                                             <option value="STANDBY">Standby (Biru)</option>
@@ -235,7 +255,8 @@
                                     <!-- Location Filter -->
                                     <div class="map-filter-group">
                                         <label class="map-filter-label">Lokasi / Cabang:</label>
-                                        <select id="mapLocationFilter" class="form-control map-filter-input" onchange="applyMapFilters()">
+                                        <select id="mapLocationFilter" class="form-control map-filter-input"
+                                            onchange="applyMapFilters()">
                                             <option value="ALL">Semua Lokasi / Cabang</option>
                                             <option value="pekanbaru">Pekanbaru Branch</option>
                                             <option value="duri">Duri Branch</option>
@@ -250,7 +271,8 @@
                                     <!-- Time Recency Filter -->
                                     <div class="map-filter-group">
                                         <label class="map-filter-label">Waktu Update Terakhir:</label>
-                                        <select id="mapTimeFilter" class="form-control map-filter-input" onchange="applyMapFilters()">
+                                        <select id="mapTimeFilter" class="form-control map-filter-input"
+                                            onchange="applyMapFilters()">
                                             <option value="ALL">Semua Waktu Update</option>
                                             <option value="24H">&lt; 24 Jam Terakhir</option>
                                             <option value="7D">1 - 7 Hari Terakhir</option>
@@ -261,13 +283,20 @@
                                     <!-- Search Input -->
                                     <div class="map-filter-group">
                                         <label class="map-filter-label">Cari Kode Unit / Kategori:</label>
-                                        <input type="text" id="mapSearchInput" placeholder="Ketik Kode Unit (mis. DT-00001)..." onkeyup="applyMapFilters()" class="map-filter-input">
+                                        <input type="text" id="mapSearchInput"
+                                            placeholder="Ketik Kode Unit (mis. DT-00001)..." onkeyup="applyMapFilters()"
+                                            class="map-filter-input">
                                     </div>
 
                                     <!-- Toggle Cluster -->
                                     <div class="map-cluster-box">
-                                        <span style="font-weight:600; color:var(--text-secondary); font-size:0.78rem;"><i class="fa-solid fa-object-group" style="color:var(--primary);"></i> Klusterisasi Titik</span>
-                                        <input type="checkbox" id="mapClusterToggle" checked onchange="applyMapFilters()" style="cursor:pointer; width:16px; height:16px;">
+                                        <span
+                                            style="font-weight:600; color:var(--text-secondary); font-size:0.78rem;"><i
+                                                class="fa-solid fa-object-group" style="color:var(--primary);"></i>
+                                            Klusterisasi Titik</span>
+                                        <input type="checkbox" id="mapClusterToggle" checked
+                                            onchange="applyMapFilters()"
+                                            style="cursor:pointer; width:16px; height:16px;">
                                     </div>
                                 </div>
                             </div>
@@ -280,7 +309,8 @@
                         <div class="panel-header"><span><i class="fa-solid fa-triangle-exclamation"></i> Panel Perhatian
                                 (WO Emergency)</span></div>
                         <div class="panel-body" style="padding: 10px;">
-                            <ul class="attention-list" id="attentionList" style="height: 530px; max-height: 530px; overflow-y: auto; padding-right: 4px;"></ul>
+                            <ul class="attention-list" id="attentionList"
+                                style="height: 530px; max-height: 530px; overflow-y: auto; padding-right: 4px;"></ul>
                         </div>
                     </div>
                 </div>
@@ -357,17 +387,20 @@
                 </div>
                 <div class="panel">
                     <div class="panel-header">
-                        <span><i class="fa-solid fa-triangle-exclamation"></i> Daftar Unit Tidak Ready</span>
+                        <span><i class="fa-solid fa-list-check"></i> Daftar Monitoring Status Unit</span>
                         <div class="monitoring-toolbar">
                             <select id="monitoringStatusFilter" class="form-control"
                                 onchange="initMonitoringView(globalData.assets)" aria-label="Filter status monitoring">
-                                <option value="ALL">Semua status non-ready</option>
-                                <option value="BREAKDOWN">Breakdown</option>
-                                <option value="INSPEKSI">Inspeksi / P2H</option>
+                                <option value="ALL">Semua Status Unit</option>
+                                <option value="READY">Ready</option>
+                                <option value="OPERATING">Operating</option>
                                 <option value="STANDBY">Standby</option>
+                                <option value="INSPEKSI">Inspeksi / P2H</option>
+                                <option value="BREAKDOWN">Breakdown</option>
+                                <option value="ACCIDENT HOLD">Accident Hold</option>
                             </select>
                             <div class="search-bar">
-                                <input type="text" id="searchMonitoring" placeholder="Cari unit bermasalah..."
+                                <input type="text" id="searchMonitoring" placeholder="Cari unit ID, lokasi, status..."
                                     onkeyup="searchTableMonitoring()">
                             </div>
                         </div>
@@ -429,7 +462,8 @@
                             <span class="telemetry-metric-label">Ready / Operasional</span>
                             <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="telemetry-metric-value" id="kpiAssetReady" style="color: var(--success);">28 Unit</div>
+                        <div class="telemetry-metric-value" id="kpiAssetReady" style="color: var(--success);">28 Unit
+                        </div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-success">Active Fleet</span>
                         </div>
@@ -440,7 +474,8 @@
                             <span class="telemetry-metric-label">Standby / Idle</span>
                             <i class="fa-solid fa-pause" style="color: var(--warning); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="telemetry-metric-value" id="kpiAssetStandby" style="color: var(--warning);">14 Unit</div>
+                        <div class="telemetry-metric-value" id="kpiAssetStandby" style="color: var(--warning);">14 Unit
+                        </div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-warning">Available</span>
                         </div>
@@ -449,9 +484,11 @@
                     <div class="telemetry-metric-item" title="Unit Status Breakdown / Under Repair">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Breakdown / WO</span>
-                            <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger); font-size: 0.9rem;"></i>
+                            <i class="fa-solid fa-triangle-exclamation"
+                                style="color: var(--danger); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="telemetry-metric-value" id="kpiAssetBreakdown" style="color: var(--danger);">6 Unit</div>
+                        <div class="telemetry-metric-value" id="kpiAssetBreakdown" style="color: var(--danger);">6 Unit
+                        </div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-danger">Maintenance</span>
                         </div>
@@ -460,9 +497,11 @@
                     <div class="telemetry-metric-item" title="Total Valuasi Pasaran Armada Aset">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Valuasi Aset</span>
-                            <i class="fa-solid fa-money-bill-trend-up" style="color: var(--info); font-size: 0.9rem;"></i>
+                            <i class="fa-solid fa-money-bill-trend-up"
+                                style="color: var(--info); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="telemetry-metric-value tabular-nums" id="kpiAssetMarketVal" style="color: var(--info); font-size: 1.35rem;">Rp 18.450 Jt</div>
+                        <div class="telemetry-metric-value tabular-nums" id="kpiAssetMarketVal"
+                            style="color: var(--info); font-size: 1.35rem;">Rp 18.450 Jt</div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-info">Market Valuation</span>
                         </div>
@@ -473,7 +512,8 @@
                             <span class="telemetry-metric-label">Phys. Availability</span>
                             <i class="fa-solid fa-chart-pie" style="color: var(--primary); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="telemetry-metric-value tabular-nums" id="kpiAssetPA" style="color: var(--primary); font-size: 1.5rem;">87.5%</div>
+                        <div class="telemetry-metric-value tabular-nums" id="kpiAssetPA"
+                            style="color: var(--primary); font-size: 1.5rem;">87.5%</div>
                         <div class="telemetry-metric-footer">
                             <span class="badge badge-info">PA Ratio</span>
                         </div>
@@ -486,10 +526,14 @@
                             Integrasi</span>
                         <div style="display:flex; align-items:center; gap:15px;">
                             <div style="font-size:0.8rem; color:var(--text-muted);">
-                                <i class="fa-solid fa-link"></i> Klik tombol aksi untuk berpindah langsung ke P2H, WO, atau
+                                <i class="fa-solid fa-link"></i> Klik tombol aksi untuk berpindah langsung ke P2H, WO,
+                                atau
                                 Condition Monitoring
                             </div>
-                            <button class="btn btn-sm" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;" onclick="showView('archive'); window.switchArchiveTab('asset');"><i class="fa-solid fa-box-archive"></i> Lihat Arsip</button>
+                            <button class="btn btn-sm"
+                                style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;"
+                                onclick="showView('archive'); window.switchArchiveTab('asset');"><i
+                                    class="fa-solid fa-box-archive"></i> Lihat Arsip</button>
                         </div>
                     </div>
                     <div class="panel-body">
@@ -520,7 +564,7 @@
             <div id="view-wo" class="view-section">
                 <div class="wo-workspace-header">
                     <div>
-                        <span class="wo-workspace-eyebrow">Corrective maintenance · data WO aktif</span>
+                        <span class="wo-workspace-eyebrow">Corrective maintenance &middot; data WO aktif</span>
                         <h1 class="page-title">Manajemen Work Order</h1>
                         <p>WO dipertahankan sebagai tiket kerusakan. Nomor JO lama tidak diubah menjadi SPK secara
                             otomatis.</p>
@@ -644,57 +688,80 @@
                         <span><i class="fa-solid fa-file-pen"></i> Input Administrasi & Logistik</span>
                     </div>
                     <div class="panel-body" style="padding: 16px;">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
 
                             <!-- 1. SPB & No Polisi -->
                             <div class="panel" style="padding: 16px; margin: 0; background: var(--bg-subtle);">
-                                <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.92rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                <h4
+                                    style="margin-top: 0; margin-bottom: 12px; font-size: 0.92rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
                                     <i class="fa-solid fa-truck" style="color: var(--primary);"></i> Input SPB & Unit
                                 </h4>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Kode Nomor SPB</label>
+                                    <label
+                                        style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Kode
+                                        Nomor SPB</label>
                                     <input type="text" class="form-control" placeholder="Contoh: SPB-2026-001">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">No Polisi / Unit</label>
+                                    <label
+                                        style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">No
+                                        Polisi / Unit</label>
                                     <input type="text" class="form-control" placeholder="Contoh: B 1234 XYZ / DT-001">
                                 </div>
-                                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;"><i class="fa-solid fa-save"></i> Simpan Data SPB</button>
+                                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;"><i
+                                        class="fa-solid fa-save"></i> Simpan Data SPB</button>
                             </div>
 
                             <!-- 2. Sheet Oli -->
                             <div class="panel" style="padding: 16px; margin: 0; background: var(--bg-subtle);">
-                                <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.92rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-                                    <i class="fa-solid fa-oil-can" style="color: var(--warning);"></i> Sheet Oli (Pemakaian/Pemasukan)
+                                <h4
+                                    style="margin-top: 0; margin-bottom: 12px; font-size: 0.92rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-oil-can" style="color: var(--warning);"></i> Sheet Oli
+                                    (Pemakaian/Pemasukan)
                                 </h4>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Jenis Transaksi</label>
+                                    <label
+                                        style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Jenis
+                                        Transaksi</label>
                                     <select class="form-control">
                                         <option>Pemakaian Oli</option>
                                         <option>Pemasukan Oli</option>
                                     </select>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Upload Sheet (Excel/CSV)</label>
-                                    <input type="file" class="form-control" accept=".xlsx,.xls,.csv" style="background: white;">
+                                    <label
+                                        style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Upload
+                                        Sheet (Excel/CSV)</label>
+                                    <input type="file" class="form-control" accept=".xlsx,.xls,.csv"
+                                        style="background: white;">
                                 </div>
-                                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;"><i class="fa-solid fa-upload"></i> Upload Sheet Oli</button>
+                                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;"><i
+                                        class="fa-solid fa-upload"></i> Upload Sheet Oli</button>
                             </div>
 
                             <!-- 3. Upload Foto & PDF -->
                             <div class="panel" style="padding: 16px; margin: 0; background: var(--bg-subtle);">
-                                <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 0.92rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-                                    <i class="fa-solid fa-file-pdf" style="color: var(--danger);"></i> Upload Administrasi Logistik
+                                <h4
+                                    style="margin-top: 0; margin-bottom: 12px; font-size: 0.92rem; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-file-pdf" style="color: var(--danger);"></i> Upload
+                                    Administrasi Logistik
                                 </h4>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Foto Barang Keluar & Masuk</label>
-                                    <input type="file" class="form-control" accept="image/*" multiple style="background: white;" title="Pilih foto barang masuk/keluar">
+                                    <label
+                                        style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Foto
+                                        Barang Keluar & Masuk</label>
+                                    <input type="file" class="form-control" accept="image/*" multiple
+                                        style="background: white;" title="Pilih foto barang masuk/keluar">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Laporan PDF Administrasi</label>
+                                    <label
+                                        style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Laporan
+                                        PDF Administrasi</label>
                                     <input type="file" class="form-control" accept=".pdf" style="background: white;">
                                 </div>
-                                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Berkas</button>
+                                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;"><i
+                                        class="fa-solid fa-cloud-arrow-up"></i> Upload Berkas</button>
                             </div>
 
                         </div>
@@ -894,7 +961,8 @@
                                     <input type="search" id="search-logistics-oil"
                                         placeholder="Cari produk oli, coolant, unit, atau tanggal...">
                                 </div>
-                                <span class="logistics-source-note"><i class="fa-solid fa-database"></i> Ledger aktual ·
+                                <span class="logistics-source-note"><i class="fa-solid fa-database"></i> Ledger aktual
+                                    &middot;
                                     Yard KM 12 Kulim</span>
                             </div>
                             <div id="logistics-oil-loader" class="logistics-data-loader"><i
@@ -1050,7 +1118,7 @@
                             <option value="RED">Merah (Deviasi >20% Boros)</option>
                             <option value="ORANGE">Oranye (Deviasi 10-20%)</option>
                             <option value="YELLOW">Kuning (Deviasi 5-10%)</option>
-                            <option value="GREEN">Hijau (Normal ≤ 5%)</option>
+                            <option value="GREEN">Hijau (Normal &le; 5%)</option>
                         </select>
                         <button class="btn btn-primary" style="padding: 5px 15px;" onclick="filterFuelDashboard()"><i
                                 class="fa-solid fa-magnifying-glass"></i> Terapkan</button>
@@ -1065,7 +1133,8 @@
                         </div>
                         <div class="telemetry-metric-value" id="kpiFuelToday">2,450 L</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-gas-pump"></i> Consumed</span>
+                            <span style="font-size:0.75rem; color:var(--text-muted);"><i
+                                    class="fa-solid fa-gas-pump"></i> Consumed</span>
                         </div>
                     </div>
                     <div class="telemetry-metric-item">
@@ -1074,43 +1143,54 @@
                         </div>
                         <div class="telemetry-metric-value" id="kpiFuelMonth">45,200 L</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-droplet"></i> MTD Total</span>
+                            <span style="font-size:0.75rem; color:var(--text-muted);"><i
+                                    class="fa-solid fa-droplet"></i> MTD Total</span>
                         </div>
                     </div>
                     <div class="telemetry-metric-item">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Biaya BBM Bulan Ini</span>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiFuelCost" style="font-size: 1.25rem; color: var(--success);">Rp 542,4 Jt</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiFuelCost"
+                            style="font-size: 1.25rem; color: var(--success);">Rp 542,4 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-coins"></i> Valuation</span>
+                            <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-coins"></i>
+                                Valuation</span>
                         </div>
                     </div>
-                    <div class="telemetry-metric-item" style="cursor:pointer;" onclick="filterFuelByAnomaly('RED')" title="Klik untuk filter unit boros">
+                    <div class="telemetry-metric-item" style="cursor:pointer;" onclick="filterFuelByAnomaly('RED')"
+                        title="Klik untuk filter unit boros">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Unit Boros (Anomali)</span>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiFuelBoros" style="color: var(--danger);">4 Unit</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiFuelBoros" style="color: var(--danger);">4
+                            Unit</div>
                         <div class="telemetry-metric-footer">
-                            <button class="telemetry-action-link"><i class="fa-solid fa-triangle-exclamation"></i> Filter Anomali</button>
+                            <button class="telemetry-action-link"><i class="fa-solid fa-triangle-exclamation"></i>
+                                Filter Anomali</button>
                         </div>
                     </div>
-                    <div class="telemetry-metric-item" style="cursor:pointer;" onclick="filterFuelByStatus('Diajukan')" title="Klik untuk filter transaksi belum diverifikasi">
+                    <div class="telemetry-metric-item" style="cursor:pointer;" onclick="filterFuelByStatus('Diajukan')"
+                        title="Klik untuk filter transaksi belum diverifikasi">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Belum Diverifikasi</span>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiFuelUnverified" style="color: var(--warning);">12 Trx</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiFuelUnverified"
+                            style="color: var(--warning);">12 Trx</div>
                         <div class="telemetry-metric-footer">
-                            <button class="telemetry-action-link"><i class="fa-solid fa-clock-rotate-left"></i> Review Trx</button>
+                            <button class="telemetry-action-link"><i class="fa-solid fa-clock-rotate-left"></i> Review
+                                Trx</button>
                         </div>
                     </div>
                     <div class="telemetry-metric-item">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Stok Tangki Site</span>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiFuelStock" style="font-size:1.25rem; color:var(--primary);">32.810 L</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiFuelStock"
+                            style="font-size:1.25rem; color:var(--primary);">32.810 L</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-warehouse"></i> Storage Tank</span>
+                            <span style="font-size:0.75rem; color:var(--text-muted);"><i
+                                    class="fa-solid fa-warehouse"></i> Storage Tank</span>
                         </div>
                     </div>
                 </div>
@@ -1172,7 +1252,7 @@
                                             <th>Kode Unit</th>
                                             <th>Kategori & Lokasi</th>
                                             <th>Fuelman / Operator</th>
-                                            <th>Meter Awal - "™ Akhir</th>
+                                            <th>Meter Awal &rarr; Akhir</th>
                                             <th>Liter</th>
                                             <th>Aktual vs Standar</th>
                                             <th>Deviasi</th>
@@ -1334,59 +1414,71 @@
                 </div>
 
                 <!-- 6 Synchronized Telemetry Status Strip (6 Columns) -->
-                <div class="telemetry-status-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 15px;">
+                <div class="telemetry-status-grid"
+                    style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 15px;">
                     <div class="telemetry-metric-item" title="Total Budget Berjalan: Rp 2.960 Jt">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Total Budget Berjalan</span>
                         </div>
                         <div class="telemetry-metric-value font-mono" id="kpiCostBudget">Rp 2.960 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-wallet"></i> Budget YTD</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-wallet"></i>
+                                Budget YTD</span>
                         </div>
                     </div>
                     <div class="telemetry-metric-item" title="Pengeluaran Aktual: Rp 12.144 Jt">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Pengeluaran Aktual</span>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostActual" style="color: var(--danger);">Rp 12.144 Jt</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostActual" style="color: var(--danger);">
+                            Rp 12.144 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-file-invoice-dollar"></i> Actual Expenses</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i
+                                    class="fa-solid fa-file-invoice-dollar"></i> Actual Expenses</span>
                         </div>
                     </div>
                     <div class="telemetry-metric-item" title="Deviasi Budget: +310.2% (Over)">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Deviasi Budget</span>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostDev" style="color: var(--warning);">+310.2% (Over)</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostDev" style="color: var(--warning);">
+                            +310.2% (Over)</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-chart-line"></i> Variance Rate</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i
+                                    class="fa-solid fa-chart-line"></i> Variance Rate</span>
                         </div>
                     </div>
                     <div class="telemetry-metric-item" title="Nilai Buku Aset (7 Unit): Rp 3.347 Jt">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Nilai Buku Aset (7 Unit)</span>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostBookValue" style="color: var(--success);">Rp 3.347 Jt</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostBookValue"
+                            style="color: var(--success);">Rp 3.347 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-book"></i> Book Value</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-book"></i>
+                                Book Value</span>
                         </div>
                     </div>
                     <div class="telemetry-metric-item" title="Harga Penawaran Buyer: Rp 4.070 Jt">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Harga Penawaran Buyer</span>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostMarketValue" style="color: var(--primary);">Rp 4.070 Jt</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostMarketValue"
+                            style="color: var(--primary);">Rp 4.070 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-tags"></i> Buyer Bids</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-tags"></i>
+                                Buyer Bids</span>
                         </div>
                     </div>
                     <div class="telemetry-metric-item" title="Proyeksi Net Gain BRA: +Rp 610 Jt">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Proyeksi Net Gain BRA</span>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostMargin" style="color: var(--success);">+Rp 610 Jt</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostMargin" style="color: var(--success);">
+                            +Rp 610 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-hand-holding-dollar"></i> Net Margin</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i
+                                    class="fa-solid fa-hand-holding-dollar"></i> Net Margin</span>
                         </div>
                     </div>
                 </div>
@@ -1655,7 +1747,8 @@
                 <div class="settings-layout" style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
 
                     <!-- Left Sub-Menu Navigation Sidebar -->
-                    <div class="settings-sidebar-nav" style="flex: 0 0 270px; min-width: 240px; background: var(--bg-surface); border-radius: var(--radius-panel); border: 1px solid var(--border); padding: 12px;">
+                    <div class="settings-sidebar-nav"
+                        style="flex: 0 0 270px; min-width: 240px; background: var(--bg-surface); border-radius: var(--radius-panel); border: 1px solid var(--border); padding: 12px;">
                         <div
                             style="font-size:0.85rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); padding:6px 10px 10px 10px; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; margin-bottom:10px;">
                             <i class="fa-solid fa-bars-staggered"></i> Menu Pengaturan
@@ -1859,8 +1952,8 @@
                                             Santoso (Eq Manager)</div>
                                         <div><i class="fa-solid fa-truck-monster"></i> <strong>Aset Aktif:</strong> 42
                                             Unit</div>
-                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2584° N,
-                                            101.2145° E</div>
+                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2584&deg; N,
+                                            101.2145&deg; E</div>
                                     </div>
                                 </div>
 
@@ -1878,8 +1971,8 @@
                                             Widodo (Planner)</div>
                                         <div><i class="fa-solid fa-truck-monster"></i> <strong>Aset Aktif:</strong> 18
                                             Unit</div>
-                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2890° N,
-                                            101.2400° E</div>
+                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2890&deg; N,
+                                            101.2400&deg; E</div>
                                     </div>
                                 </div>
 
@@ -1897,8 +1990,8 @@
                                             Dahlan (Logistics)</div>
                                         <div><i class="fa-solid fa-truck-monster"></i> <strong>Aset Aktif:</strong> 14
                                             Unit</div>
-                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 3.4312° S,
-                                            104.2341° E</div>
+                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 3.4312&deg; S,
+                                            104.2341&deg; E</div>
                                     </div>
                                 </div>
                             </div>
@@ -2017,16 +2110,18 @@
             <!-- VIEW: ARCHIVE -->
             <div id="view-archive" class="view-section">
                 <h1 class="page-title"><i class="fa-solid fa-box-archive"></i> Archive Data</h1>
-                
+
                 <div class="panel">
                     <div class="p2h-nav-tabs">
-                        <button class="p2h-tab-btn active" id="archiveTabBtnAsset" onclick="window.switchArchiveTab('asset')">
+                        <button class="p2h-tab-btn active" id="archiveTabBtnAsset"
+                            onclick="window.switchArchiveTab('asset')">
                             <i class="fa-solid fa-truck"></i> Unit Armada
                         </button>
                         <button class="p2h-tab-btn" id="archiveTabBtnP2H" onclick="window.switchArchiveTab('p2h')">
                             <i class="fa-solid fa-list-check"></i> Riwayat P2H
                         </button>
-                        <button class="p2h-tab-btn" id="archiveTabBtnAccident" onclick="window.switchArchiveTab('accident')">
+                        <button class="p2h-tab-btn" id="archiveTabBtnAccident"
+                            onclick="window.switchArchiveTab('accident')">
                             <i class="fa-solid fa-file-medical"></i> Insiden / Accident
                         </button>
                     </div>
@@ -2123,7 +2218,8 @@
                     style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:15px;">
                     <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">
                         Target User Role & Modul</div>
-                    <div style="font-size:0.95rem; font-weight:700; color:var(--primary);" id="editRbacRoleName">-</div>
+                    <div style="font-size:0.95rem; font-weight:700; color:var(--primary);" id="editRbacRoleName">-
+                    </div>
                     <div style="font-size:0.85rem; font-weight:600; color:var(--text-dark);" id="editRbacModuleName">-
                     </div>
                 </div>
@@ -2138,31 +2234,31 @@
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#eff6ff; padding:7px 10px; border-radius:6px; border:1px solid #dbeafe;">
                             <input type="checkbox" id="chkRbacR" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#1e40af;">R - Read / View</span>
+                            <span style="font-weight:700; color:#1e40af;">R - Read / View</span>
                             <small style="color:var(--text-muted);">(Melihat data modul)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#f0fdf4; padding:7px 10px; border-radius:6px; border:1px solid #dcfce7;">
                             <input type="checkbox" id="chkRbacC" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#15803d;">C - Create / Add</span>
+                            <span style="font-weight:700; color:#15803d;">C - Create / Add</span>
                             <small style="color:var(--text-muted);">(Menambah data baru)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#fffbeb; padding:7px 10px; border-radius:6px; border:1px solid #fef3c7;">
                             <input type="checkbox" id="chkRbacU" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#b45309;">U - Update / Edit</span>
+                            <span style="font-weight:700; color:#b45309;">U - Update / Edit</span>
                             <small style="color:var(--text-muted);">(Mengubah data eksisting)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#faf5ff; padding:7px 10px; border-radius:6px; border:1px solid #f3e8ff;">
                             <input type="checkbox" id="chkRbacA" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#6b21a8;">A - Approve / Sign</span>
+                            <span style="font-weight:700; color:#6b21a8;">A - Approve / Sign</span>
                             <small style="color:var(--text-muted);">(Menyetujui dokumen/WO/PO)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#fff1f2; padding:7px 10px; border-radius:6px; border:1px solid #ffe4e6;">
                             <input type="checkbox" id="chkRbacO" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#be123c;">O - Owner / Override</span>
+                            <span style="font-weight:700; color:#be123c;">O - Owner / Override</span>
                             <small style="color:var(--text-muted);">(Akses pengubah master sistem)</small>
                         </label>
                     </div>
@@ -2224,7 +2320,7 @@
                         title="Kembali ke Daftar Tabulasi Unit">
                         <i class="fa-solid fa-arrow-left"></i> Kembali
                     </button>
-                    <h2 style="margin: 0; font-size: 1.2rem;">Detail 360° Unit: <span id="modalAssetId"></span></h2>
+                    <h2 style="margin: 0; font-size: 1.2rem;">Detail 360&deg; Unit: <span id="modalAssetId"></span></h2>
                 </div>
                 <button onclick="closeModal('assetModal')"
                     style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
@@ -2291,7 +2387,7 @@
 
                     <!-- Placeholder View Tampak Depan, Belakang & Samping -->
                     <h3 style="margin-top:20px; margin-bottom:10px; font-size:1.05rem;"><i
-                            class="fa-solid fa-camera"></i> Visualisasi 360° Sudut Pandang Unit</h3>
+                            class="fa-solid fa-camera"></i> Visualisasi 360&deg; Sudut Pandang Unit</h3>
                     <div class="asset-view-gallery">
                         <!-- Tampak Depan -->
                         <div class="asset-view-card">
@@ -2376,7 +2472,7 @@
                         </div>
                         <div class="movement-timeline-item">
                             <div class="movement-timeline-title">Borrow Pit Harapan Baru</div>
-                            <div class="movement-timeline-meta">Pekerjaan Cut & Fill Project | 15 Mei 2026 -œ 01 Juli
+                            <div class="movement-timeline-meta">Pekerjaan Cut & Fill Project | 15 Mei 2026 s/d 01 Juli
                                 2026</div>
                         </div>
                         <div class="movement-timeline-item">
@@ -2653,10 +2749,12 @@
                 <input type="hidden" id="us-id">
                 <label>Status Baru</label>
                 <select id="us-status" class="form-control">
-                    <option value="READY">READY / OPERATING</option>
-                    <option value="STANDBY">STANDBY</option>
+                    <option value="READY">READY (Siap Kerja)</option>
+                    <option value="OPERATING">OPERATING (Sedang Beroperasi)</option>
+                    <option value="STANDBY">STANDBY (Idle / Cadangan)</option>
                     <option value="INSPEKSI">INSPECTION / PM</option>
                     <option value="BREAKDOWN">BREAKDOWN</option>
+                    <option value="ACCIDENT HOLD">ACCIDENT HOLD</option>
                 </select>
                 <label>Update Lokasi (Opsional)</label>
                 <input type="text" id="us-loc" placeholder="Biarkan kosong jika tidak pindah" class="form-control">
@@ -2758,7 +2856,7 @@
                 </div>
             </div>
         </div>
-        <!-- Modal Detail Work Order 360° -->
+        <!-- Modal Detail Work Order 360&deg; -->
         <div class="modal-overlay" id="modalWoDetail">
             <div class="modal-content" style="max-width: 650px; width: 95%;">
                 <div class="modal-header"
@@ -2796,7 +2894,7 @@
                         <button class="btn btn-secondary" onclick="closeModal('modalWoDetail')"
                             style="padding: 6px 14px;">Tutup</button>
                         <button class="btn btn-primary" id="modalWoAssetBtn" style="padding: 6px 14px;"><i
-                                class="fa-solid fa-truck"></i> Detail Aset 360°</button>
+                                class="fa-solid fa-truck"></i> Detail Aset 360&deg;</button>
                         <button class="btn btn-success" id="modalWoSpbBtn" style="padding: 6px 14px;"><i
                                 class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)</button>
                     </div>
@@ -2852,6 +2950,7 @@
                     <label style="font-weight:bold;">Status Efektif Unit Setelah Perbaikan</label>
                     <select id="woConfirmUnitStatus" class="form-control" style="margin-bottom: 15px;">
                         <option value="READY">READY - Unit Siap Operasi Full</option>
+                        <option value="OPERATING">OPERATING - Unit Langsung Beroperasi</option>
                         <option value="STANDBY">STANDBY - Unit Siap Pakai Cadangan</option>
                         <option value="BREAKDOWN">BREAKDOWN - Perbaikan Lanjutan Masih Dibutuhkan</option>
                     </select>
@@ -3334,7 +3433,7 @@
             };
 
             window.openWoDetailView = function (woId, assetId, issueText) {
-                // First: Open Modal Detail for Instant 360° Visual Feedback
+                // First: Open Modal Detail for Instant 360&deg; Visual Feedback
                 openWoDetailModal(woId, assetId, issueText);
 
                 // Second: Switch to Work Order Kanban view and highlight card if present
@@ -3359,7 +3458,7 @@
             let mapInitialized = false;
             let dashboardMapInstance = null;
             const FLEET_STATE_KEY = 'fleetmonitor-integrated-state-v1';
-            const ASSET_STATUS_PRIORITY = { READY: 1, STANDBY: 2, INSPEKSI: 3, BREAKDOWN: 4, ACCIDENT_HOLD: 5 };
+            const ASSET_STATUS_PRIORITY = { READY: 1, STANDBY: 2, INSPEKSI: 3, BREAKDOWN: 4, 'ACCIDENT HOLD': 5 };
             const MASTER_LOCATION_COORDINATES = Object.freeze({
                 'Yard Duri': { lat: 1.2854300, lng: 101.2185400 },
                 'Yard Prabumulih': { lat: -3.4354200, lng: 104.2384500 },
@@ -3442,7 +3541,7 @@
 
             function rebuildFleetSummary() {
                 if (!globalData || !globalData.assets) return;
-                const counts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, ACCIDENT_HOLD: 0 };
+                const counts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, 'ACCIDENT HOLD': 0 };
                 globalData.assets.forEach(asset => {
                     const key = asset.status || 'READY';
                     counts[key] = (counts[key] || 0) + 1;
@@ -3550,7 +3649,7 @@
             function buildProjectScopedData() {
                 const assets = window.getProjectScopedAssets();
                 const workOrders = window.getProjectScopedWorkOrders();
-                const statusCounts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, ACCIDENT_HOLD: 0 };
+                const statusCounts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, 'ACCIDENT HOLD': 0 };
                 assets.forEach(asset => {
                     const status = asset.status || 'READY';
                     statusCounts[status] = (statusCounts[status] || 0) + 1;
@@ -3589,7 +3688,7 @@
                     <div class="project-master-notice"><i class="fa-solid fa-circle-info"></i><span>Nama lokasi masih mengikuti data sumber. Karena belum tersedia ID project, PIC, koordinat, dan periode kontrak yang tervalidasi, sistem tidak membuat data project fiktif.</span></div>
                     <div class="project-master-grid">
                         ${sortedLocations.map(([location, assets]) => {
-                    const active = assets.filter(asset => !['BREAKDOWN', 'ACCIDENT_HOLD'].includes(asset.status)).length;
+                    const active = assets.filter(asset => !['BREAKDOWN', 'ACCIDENT HOLD'].includes(asset.status)).length;
                     const breakdown = assets.filter(asset => asset.status === 'BREAKDOWN').length;
                     const categories = new Set(assets.map(asset => asset.category).filter(Boolean)).size;
                     return `<button type="button" class="project-master-card${activeProjectLocation === location ? ' active' : ''}" data-project-location="${escapeHtml(location)}" onclick="applyGlobalProjectFilter(this.dataset.projectLocation)">
@@ -3866,7 +3965,7 @@
                         if (typeof renderTableMasuk === 'function') renderTableMasuk();
                         if (typeof renderTableKeluar === 'function') renderTableKeluar();
                     }
-                    
+
                     // Fetch all initialization data concurrently
                     const [apiInitData, assetPayload, fuelData, pmData, tireData, archiveDataRes, inspectionsRes, accidentsRes] = await Promise.all([
                         fetchJsonSafely('api/init.php'),
@@ -3891,95 +3990,94 @@
                     // api/init.php intentionally returns a compact asset shape, while
                     // api/assets.php exposes last_latitude/last_longitude and location_name.
                     if (assetPayload?.status === 'success' && Array.isArray(assetPayload.data)) {
-                            const databaseAssetsById = new Map();
-                            assetPayload.data.forEach(asset => {
-                                const rawId = String(asset.asset_id || asset.id || '').trim();
-                                if (!rawId) return;
-                                databaseAssetsById.set(rawId.toLowerCase(), asset);
-                                databaseAssetsById.set(extractCleanAssetId(rawId).toLowerCase(), asset);
-                                if (asset.asset_code) {
-                                    databaseAssetsById.set(String(asset.asset_code).trim().toLowerCase(), asset);
-                                }
-                            });
+                        const databaseAssetsById = new Map();
+                        assetPayload.data.forEach(asset => {
+                            const rawId = String(asset.asset_id || asset.id || '').trim();
+                            if (!rawId) return;
+                            databaseAssetsById.set(rawId.toLowerCase(), asset);
+                            databaseAssetsById.set(extractCleanAssetId(rawId).toLowerCase(), asset);
+                            if (asset.asset_code) {
+                                databaseAssetsById.set(String(asset.asset_code).trim().toLowerCase(), asset);
+                            }
+                        });
 
-                            globalData.assets = (globalData.assets || []).map(asset => {
-                                const rawId = String(asset.id || asset.asset_id || '').trim();
-                                const databaseAsset = databaseAssetsById.get(rawId.toLowerCase())
-                                    || databaseAssetsById.get(extractCleanAssetId(rawId).toLowerCase());
-                                if (!databaseAsset) return asset;
-                                return {
-                                    ...asset,
-                                    location: asset.location || databaseAsset.location_name || databaseAsset.raw_location_notes || '',
-                                    location_name: databaseAsset.location_name || '',
-                                    current_location_id: databaseAsset.current_location_id ?? asset.current_location_id,
-                                    last_latitude: databaseAsset.last_latitude ?? asset.last_latitude,
-                                    last_longitude: databaseAsset.last_longitude ?? asset.last_longitude,
-                                    gps_updated_at: databaseAsset.gps_updated_at ?? asset.gps_updated_at
-                                };
-                            });
+                        globalData.assets = (globalData.assets || []).map(asset => {
+                            const rawId = String(asset.id || asset.asset_id || '').trim();
+                            const databaseAsset = databaseAssetsById.get(rawId.toLowerCase())
+                                || databaseAssetsById.get(extractCleanAssetId(rawId).toLowerCase());
+                            if (!databaseAsset) return asset;
+                            return {
+                                ...asset,
+                                location: asset.location || databaseAsset.location_name || databaseAsset.raw_location_notes || '',
+                                location_name: databaseAsset.location_name || '',
+                                current_location_id: databaseAsset.current_location_id ?? asset.current_location_id,
+                                last_latitude: databaseAsset.last_latitude ?? asset.last_latitude,
+                                last_longitude: databaseAsset.last_longitude ?? asset.last_longitude,
+                                gps_updated_at: databaseAsset.gps_updated_at ?? asset.gps_updated_at
+                            };
+                        });
                     }
-                    
+
                     // Assign Fuel Logs
                     if (fuelData?.status === 'success' && Array.isArray(fuelData.data)) {
-                            globalFuelLogs = fuelData.data.map(f => ({
-                                trxId: f.fuel_log_id,
-                                timeStr: f.refuel_date,
-                                unitId: f.asset_id,
-                                category: f.asset_code || 'Unknown',
-                                location: 'Auto',
-                                fuelman: 'System',
-                                operator: f.driver_name || 'Unknown',
-                                meterType: 'HM/KM',
-                                meterPrev: f.flowmeter_start,
-                                meterCurr: f.flowmeter_end,
-                                meterDiff: f.current_hm_km,
-                                liter: f.liters_issued,
-                                rateActual: f.calculated_lph,
-                                targetRate: f.baseline_lph,
-                                deviationPct: 0,
-                                costRp: f.liters_issued * 12000,
-                                anomalyStatus: f.is_anomaly == 1 ? 'RED' : 'GREEN',
-                                status: 'Verified',
-                                notes: f.notes
-                            }));
+                        globalFuelLogs = fuelData.data.map(f => ({
+                            trxId: f.fuel_log_id,
+                            timeStr: f.refuel_date,
+                            unitId: f.asset_id,
+                            category: f.asset_code || 'Unknown',
+                            location: 'Auto',
+                            fuelman: 'System',
+                            operator: f.driver_name || 'Unknown',
+                            meterType: 'HM/KM',
+                            meterPrev: f.flowmeter_start,
+                            meterCurr: f.flowmeter_end,
+                            meterDiff: f.current_hm_km,
+                            liter: f.liters_issued,
+                            rateActual: f.calculated_lph,
+                            targetRate: f.baseline_lph,
+                            deviationPct: 0,
+                            costRp: f.liters_issued * 12000,
+                            anomalyStatus: f.is_anomaly == 1 ? 'RED' : 'GREEN',
+                            status: 'Verified',
+                            notes: f.notes
+                        }));
                     }
 
                     // Assign PM Plans
                     if (pmData?.status === 'success' && Array.isArray(pmData.data)) {
-                            globalPmComparisons = pmData.data.map(p => ({
-                                unitId: p.asset_id,
-                                model: p.asset_code || 'Unknown',
-                                schedule: 'PM ' + p.interval_hm + ' Hours',
-                                location: 'Workshop',
-                                planCost: 0,
-                                actCost: 0,
-                                diff: 0,
-                                notes: p.planner_note || ''
-                            }));
+                        globalPmComparisons = pmData.data.map(p => ({
+                            unitId: p.asset_id,
+                            model: p.asset_code || 'Unknown',
+                            schedule: 'PM ' + p.interval_hm + ' Hours',
+                            location: 'Workshop',
+                            planCost: 0,
+                            actCost: 0,
+                            diff: 0,
+                            notes: p.planner_note || ''
+                        }));
                     }
 
                     // Assign Tire Inspections
                     if (tireData?.status === 'success' && Array.isArray(tireData.data)) {
-                            window.globalTireInspectionsByAsset = {};
-                            tireData.data.forEach(t => {
-                                const rawId = String(t.asset_id || '').trim().toLowerCase();
-                                if (!rawId) return;
-                                if (!window.globalTireInspectionsByAsset[rawId]) {
-                                    window.globalTireInspectionsByAsset[rawId] = {};
-                                }
-                                window.globalTireInspectionsByAsset[rawId][t.tire_position] = t;
-                                tireInspectionStore[t.tire_position] = {
-                                    tread: t.tread_depth_mm,
-                                    pressure: t.air_pressure_psi
-                                };
-                            });
+                        window.globalTireInspectionsByAsset = {};
+                        tireData.data.forEach(t => {
+                            const rawId = String(t.asset_id || '').trim().toLowerCase();
+                            if (!rawId) return;
+                            if (!window.globalTireInspectionsByAsset[rawId]) {
+                                window.globalTireInspectionsByAsset[rawId] = {};
+                            }
+                            window.globalTireInspectionsByAsset[rawId][t.tire_position] = t;
+                            tireInspectionStore[t.tire_position] = {
+                                tread: t.tread_depth_mm,
+                                pressure: t.air_pressure_psi
+                            };
+                        });
                     }
 
                     normalizeAssetRegistry(globalData);
                     restoreFleetState();
                     linkExistingWorkflowRecords();
                     rebuildFleetSummary();
-                    
                     if (inspectionsRes?.status === 'success' && Array.isArray(inspectionsRes.data)) {
                         globalData.inspections = inspectionsRes.data;
                     } else {
@@ -3996,7 +4094,6 @@
                         const archivedAssets = new Set(archiveDataRes.data.filter(x => x.item_type === 'asset').map(x => String(x.item_id).trim()));
                         const archivedP2H = new Set(archiveDataRes.data.filter(x => x.item_type === 'p2h').map(x => String(x.item_id).trim()));
                         const archivedAccidents = new Set(archiveDataRes.data.filter(x => x.item_type === 'accident').map(x => String(x.item_id).trim()));
-                        
                         if (globalData.assets) {
                             globalData.assets.forEach(a => { if (archivedAssets.has(String(a.id).trim())) a.isArchived = true; });
                         }
@@ -4010,7 +4107,7 @@
                             initialAccidentLogs.forEach(a => { if (archivedAccidents.has(a.docNo)) a.isArchived = true; });
                         }
                     }
-                    
+
                     window.globalData = globalData;
                     initializeProjectMaster();
 
@@ -4025,11 +4122,11 @@
                     initNewViews();
                     window.FleetInspectionModule?.refresh();
                     initMonitoringView(initialData.assets);
-                    
+
                     if (window.renderHistoryTable) window.renderHistoryTable();
                     if (window.renderAccidentTable) window.renderAccidentTable();
                     if (window.renderCapaTable) window.renderCapaTable();
-                    
+
                     document.dispatchEvent(new CustomEvent('fleetdata:ready', { detail: initialData }));
 
                     const queryView = new URLSearchParams(window.location.search).get('view') || '';
@@ -4096,8 +4193,8 @@
                                 <button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${assetIdEsc}')" title="Buka Modul Work Order">
                                     <i class="fa-solid fa-wrench"></i> Detail WO
                                 </button>
-                                <button class="attention-action-btn" onclick="openAssetModal('${assetIdEsc}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat Riwayat & Detail 360° Unit">
-                                    <i class="fa-solid fa-truck"></i> Aset 360°
+                                <button class="attention-action-btn" onclick="openAssetModal('${assetIdEsc}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat Riwayat & Detail 360&deg; Unit">
+                                    <i class="fa-solid fa-truck"></i> Aset 360&deg;
                                 </button>
                                 <button class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${assetIdEsc}')" title="Buat Permintaan Sparepart (SPB)">
                                     <i class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)
@@ -4213,7 +4310,7 @@
                         <td>${badge}</td>
                         <td style="text-align: center;">
                             <button onclick="closeModal('modalStatusDetail'); openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}', 'modalStatusDetail')" 
-                                style="border:1px solid var(--border); background:#fff; padding:4px 8px; border-radius:4px; cursor:pointer;" title="Lihat Detail Asset 360°">
+                                style="border:1px solid var(--border); background:#fff; padding:4px 8px; border-radius:4px; cursor:pointer;" title="Lihat Detail Asset 360&deg;">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </td>
@@ -4240,7 +4337,7 @@
             function initAssetView(assets) {
                 const tbody = document.getElementById('assetTableBody');
                 if (!assets || !tbody) return;
-                
+
                 assets = assets.filter(a => !a.isArchived);
 
                 // 1. Calculate Master Asset KPI Stats
@@ -4272,7 +4369,7 @@
                     else if (asset.status === 'INSPEKSI') badge = '<span class="badge bg-inspeksi">INSPECTION</span>';
 
                     return `
-                    <tr onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" style="cursor:pointer;" title="Klik untuk membuka Detail 360° Unit ${escapeHtml(asset.id)}">
+                    <tr onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" style="cursor:pointer;" title="Klik untuk membuka Detail 360&deg; Unit ${escapeHtml(asset.id)}">
                         <td>
                             <strong style="color:var(--primary);">${escapeHtml(parsed.unitId)}</strong>
                         </td>
@@ -4290,8 +4387,8 @@
                             <div class="asset-row-actions" style="display:flex; gap:4px; align-items:center; justify-content:center; flex-wrap:nowrap;">
                                 <button type="button" class="btn btn-sm btn-primary" style="padding:3px 8px; font-size:0.76rem; font-weight:700; white-space:nowrap; border-radius:2px; display:inline-flex; align-items:center; gap:3px;" 
                                     onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" 
-                                    title="Buka Detail 360° Unit ${escapeHtml(asset.id)}">
-                                    <i class="fa-solid fa-cube" style="font-size:0.7rem;"></i> 360°
+                                    title="Buka Detail 360&deg; Unit ${escapeHtml(asset.id)}">
+                                    <i class="fa-solid fa-cube" style="font-size:0.7rem;"></i> 360&deg;
                                 </button>
                                 <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
                                     onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'history')" 
@@ -4309,7 +4406,7 @@
                                     Condition
                                 </button>
                                 <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
-                                    onclick="openEditAssetModal('${escapeHtml(asset.id)}')" 
+                                    onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" 
                                     title="Edit Metadata Asset ${escapeHtml(asset.id)}">
                                     Edit
                                 </button>
@@ -4342,7 +4439,7 @@
                      aria-grabbed="false"
                      onclick="handleWoCardClick(event, '${escapeHtml(wo.woId)}', '${escapedAsset}')"
                      style="cursor:grab; background:var(--bg-surface); border:1px solid var(--border); border-left:3px solid ${isEmergency ? 'var(--danger)' : 'var(--primary)'}; border-radius:2px; padding:10px 12px; margin-bottom:8px; box-shadow:none;" 
-                     title="Klik untuk Detail 360° | Drag untuk ubah status">
+                     title="Klik untuk Detail 360&deg; | Drag untuk ubah status">
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:6px; margin-bottom:6px;">
                         <span class="font-mono" style="font-weight:700; color:var(--primary); font-size:0.85rem;">${escapeHtml(wo.woId)}</span>
                         <span class="font-mono" style="font-weight:700; color:var(--text-main); font-size:0.82rem;">${escapedAsset}</span>
@@ -4508,6 +4605,13 @@
             let previousModalId = null;
             let modalUnitMapInstance = null;
 
+            window.openEditAssetModal = function (id) {
+                const assetObj = globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null;
+                if (assetObj) {
+                    openAssetModal(assetObj.id, assetObj.status, assetObj.category, assetObj.location);
+                }
+            };
+
             function openAssetModal(id, status, category, location, fromModal = null) {
                 previousModalId = fromModal;
                 const assetObj = globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null;
@@ -4517,7 +4621,7 @@
                 document.getElementById('modalLokasi').textContent = location;
                 const statusSource = document.getElementById('modalStatusSource');
                 if (statusSource) {
-                    statusSource.innerHTML = `<i class="fa-solid fa-link"></i> ${escapeHtml(assetObj?.statusSource || 'Master Asset')} · ${escapeHtml(assetObj?.statusReference || 'Data awal')}`;
+                    statusSource.innerHTML = `<i class="fa-solid fa-link"></i> ${escapeHtml(assetObj?.statusSource || 'Master Asset')} &middot; ${escapeHtml(assetObj?.statusReference || 'Data awal')}`;
                 }
 
                 // Populate Specs based on category
@@ -4611,10 +4715,9 @@
                     return;
                 }
 
-                const { lat, lng } = position;
-                if (gpsCoordEl) {
+                const { lat, lng } = position; if (gpsCoordEl) {
                     gpsCoordEl.innerText = position.isRepresentative
-                        ? `${position.source} - koordinat aktual belum tersedia`
+                        ? `${position.source} - koordinat aktual belum tersedia`
                         : `${position.source}: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
                 }
                 if (btnGmaps) {
@@ -4633,7 +4736,7 @@
 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
-                    attribution: '© OpenStreetMap'
+                    attribution: '&copy; OpenStreetMap'
                 }).addTo(modalUnitMapInstance);
 
                 const markerColor = statusName === 'READY' ? '#28a745' : (statusName === 'BREAKDOWN' ? '#dc3545' : '#17a2b8');
@@ -4648,7 +4751,7 @@
 
                 L.marker([lat, lng], { icon: customIcon })
                     .addTo(modalUnitMapInstance)
-                    .bindPopup(`<b>${escapeHtml(unitId)}</b><br>Lokasi: ${escapeHtml(locName)}<br>Status: <b>${escapeHtml(statusName)}</b><br><small>${escapeHtml(position.source)}${position.isRepresentative ? ' - bukan GPS aktual' : ''}</small>`)
+                    .bindPopup(`<b>${escapeHtml(unitId)}</b><br>Lokasi: ${escapeHtml(locName)}<br>Status: <b>${escapeHtml(statusName)}</b><br><small>${escapeHtml(position.source)}${position.isRepresentative ? ' - bukan GPS aktual' : ''}</small>`)
                     .openPopup();
 
                 setTimeout(() => {
@@ -4790,8 +4893,8 @@
                 const asset = globalData.assets.find(a => a.id === id);
                 if (asset) {
                     const activeWo = globalData.work_orders.find(wo => wo.assetId === asset.id && wo.status !== 'Closed');
-                    if (status === 'READY' && activeWo) {
-                        alert(`Unit belum dapat diubah ke READY karena ${activeWo.woId} masih aktif. Tutup Work Order terlebih dahulu.`);
+                    if ((status === 'READY' || status === 'OPERATING') && activeWo) {
+                        alert(`Unit belum dapat diubah ke ${status} karena ${activeWo.woId} masih aktif. Tutup Work Order terlebih dahulu.`);
                         return;
                     }
 
@@ -4962,7 +5065,7 @@
                 const isCollapsed = document.body.classList.contains('sidebar-collapsed');
                 try {
                     localStorage.setItem('fleetmonitor_sidebar_collapsed', isCollapsed ? '1' : '0');
-                } catch(e){}
+                } catch (e) { }
                 if (window.dashboardMapInstance) {
                     setTimeout(() => { window.dashboardMapInstance.invalidateSize(); }, 250);
                 }
@@ -5097,7 +5200,7 @@
                     // 1. Status Filter
                     if (statusVal !== 'ALL') {
                         const s = String(asset.status || 'READY').toUpperCase();
-                        if (statusVal === 'BREAKDOWN' && !['BREAKDOWN', 'ACCIDENT_HOLD'].includes(s)) return false;
+                        if (statusVal === 'BREAKDOWN' && !['BREAKDOWN', 'ACCIDENT HOLD'].includes(s)) return false;
                         if (statusVal !== 'BREAKDOWN' && s !== statusVal) return false;
                     }
 
@@ -5230,7 +5333,7 @@
                         return (ASSET_STATUS_PRIORITY[status] || 0) > (ASSET_STATUS_PRIORITY[selected] || 0) ? status : selected;
                     }, 'READY');
 
-                    const markerColor = ['BREAKDOWN', 'ACCIDENT_HOLD'].includes(dominantStatus) ? '#dc3545'
+                    const markerColor = ['BREAKDOWN', 'ACCIDENT HOLD'].includes(dominantStatus) ? '#dc3545'
                         : dominantStatus === 'INSPEKSI' ? '#ffc107'
                             : dominantStatus === 'STANDBY' ? '#17a2b8' : '#28a745';
 
@@ -5296,7 +5399,7 @@
                     const totalFiltered = assets.length;
                     const clusterCount = finalClusters.length;
                     const mappedCount = totalFiltered - unmappedAssets.length;
-                    
+
                     control.innerHTML = `
                         <div style="font-weight:700; color:#0f172a; margin-bottom:4px; font-size:13px;"><i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Cakupan & Kluster Peta</div>
                         <div style="color:#198754; font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${mappedCount} unit terpetakan</div>
@@ -5366,35 +5469,43 @@
             }
 
             function initMonitoringView(assets) {
+                if (!assets) return;
                 const filterEl = document.getElementById('monitoringStatusFilter');
                 const selectedStatus = filterEl ? filterEl.value : 'ALL';
-                const allProblematic = assets.filter(a => a.status !== 'READY');
-                const problematic = selectedStatus === 'ALL'
-                    ? allProblematic
-                    : allProblematic.filter(asset => asset.status === selectedStatus);
+
+                const totalCount = assets.length;
+                const readyCount = assets.filter(a => a.status === 'READY').length;
+                const operatingCount = assets.filter(a => a.status === 'OPERATING').length;
+                const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN').length;
+                const inspectionCount = assets.filter(a => a.status === 'INSPEKSI').length;
+                const standbyCount = assets.filter(a => a.status === 'STANDBY').length;
+                const activeWos = (globalData?.work_orders || []).filter(wo => wo.status !== 'Closed').length;
 
                 const summaryEl = document.getElementById('monitoringSummary');
                 if (summaryEl) {
-                    const breakdown = allProblematic.filter(a => a.status === 'BREAKDOWN').length;
-                    const inspection = allProblematic.filter(a => a.status === 'INSPEKSI').length;
-                    const standby = allProblematic.filter(a => a.status === 'STANDBY').length;
-                    const activeWos = (globalData?.work_orders || []).filter(wo => wo.status !== 'Closed').length;
                     summaryEl.innerHTML = `
-                    <div><strong>${assets.length}</strong><span>Unit unik</span></div>
-                    <div class="danger"><strong>${breakdown}</strong><span>Breakdown</span></div>
-                    <div class="warning"><strong>${inspection}</strong><span>Perlu P2H</span></div>
-                    <div class="info"><strong>${standby}</strong><span>Standby</span></div>
-                    <div><strong>${activeWos}</strong><span>WO aktif</span></div>
+                    <div><strong>${totalCount}</strong><span>Total Unit</span></div>
+                    <div class="success"><strong style="color:#16a34a;">${readyCount}</strong><span>Ready</span></div>
+                    <div class="info"><strong style="color:#0284c7;">${operatingCount}</strong><span>Operating</span></div>
+                    <div class="warning"><strong style="color:#d97706;">${standbyCount}</strong><span>Standby</span></div>
+                    <div class="warning"><strong style="color:#ea580c;">${inspectionCount}</strong><span>Inspeksi</span></div>
+                    <div class="danger"><strong style="color:#dc2626;">${breakdownCount}</strong><span>Breakdown</span></div>
+                    <div><strong>${activeWos}</strong><span>WO Aktif</span></div>
                 `;
                 }
 
+                const filtered = selectedStatus === 'ALL'
+                    ? assets
+                    : assets.filter(asset => asset.status === selectedStatus);
+
                 const tbody = document.getElementById('monTableBody');
                 if (!tbody) return;
-                if (problematic.length === 0) {
+                if (filtered.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="monitoring-empty"><i class="fa-solid fa-circle-check"></i> Tidak ada unit untuk filter ini.</td></tr>';
                     return;
                 }
-                tbody.innerHTML = problematic.map(asset => {
+
+                tbody.innerHTML = filtered.map(asset => {
                     let badge = '';
                     let action = '';
                     const context = getUnitIntegrationContext(asset);
@@ -5402,7 +5513,20 @@
                     const inspection = context.latestInspection;
                     const source = asset.statusSource || (activeWo ? 'Work Order' : inspection ? 'Inspeksi & P2H' : 'Master Asset');
                     const reference = asset.statusReference || (activeWo ? activeWo.woId : inspection ? inspection.id : 'Data awal');
-                    if (asset.status === 'STANDBY') {
+
+                    if (asset.status === 'READY') {
+                        badge = '<span class="badge bg-operating">READY</span>';
+                        action = `
+                        <button class="integrated-action success" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-play"></i> Tugaskan</button>
+                        <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
+                    }
+                    else if (asset.status === 'OPERATING') {
+                        badge = '<span class="badge bg-operating">OPERATING</span>';
+                        action = `
+                        <button class="integrated-action primary" onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')"><i class="fa-solid fa-gauge-high"></i> Telemetri</button>
+                        <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
+                    }
+                    else if (asset.status === 'STANDBY') {
                         badge = '<span class="badge bg-standby">STANDBY</span>';
                         action = `
                         <button class="integrated-action primary" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Evaluasi Status</button>
@@ -5420,6 +5544,16 @@
                         <button class="integrated-action warning" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'history')"><i class="fa-solid fa-clipboard-check"></i> Review P2H</button>
                         ${activeWo ? `<button class="integrated-action" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-wrench"></i> ${escapeHtml(activeWo.woId)}</button>` : `<button class="integrated-action" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'form')"><i class="fa-solid fa-plus"></i> Inspeksi</button>`}`;
                     }
+                    else if (asset.status === 'ACCIDENT HOLD') {
+                        badge = '<span class="badge bg-breakdown">ACCIDENT HOLD</span>';
+                        action = `
+                        <button class="integrated-action danger" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-shield-cat"></i> Investigasi</button>
+                        <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
+                    }
+                    else {
+                        badge = `<span class="badge bg-operating">${escapeHtml(asset.status || 'READY')}</span>`;
+                        action = `<button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update Status</button>`;
+                    }
 
                     return `
                     <tr class="monitoring-unit-row">
@@ -5431,7 +5565,7 @@
                         <td>${escapeHtml(asset.location)}</td>
                         <td>
                             ${badge}
-                            <span class="status-source-line"><i class="fa-solid fa-link"></i> ${escapeHtml(source)} · ${escapeHtml(reference)}</span>
+                            <span class="status-source-line"><i class="fa-solid fa-link"></i> ${escapeHtml(source)} &middot; ${escapeHtml(reference)}</span>
                         </td>
                         <td><div class="integrated-actions">${action}</div></td>
                     </tr>
@@ -5656,7 +5790,7 @@
                         </td>
                         <td>${escapeHtml(l.category)}<br><small class="text-muted">${escapeHtml(l.location)}</small></td>
                         <td>${escapeHtml(l.fuelman)}<br><small class="text-muted">Op: ${escapeHtml(l.operator)}</small></td>
-                        <td>${l.meterPrev} - "™ ${l.meterCurr} <small>(${l.meterDiff} ${l.meterType})</small></td>
+                        <td>${l.meterPrev} &rarr; ${l.meterCurr} <small>(${l.meterDiff} ${l.meterType})</small></td>
                         <td><strong>${l.liter} L</strong></td>
                         <td>${l.rateActual} ${l.meterType === 'HM' ? 'L/HM' : 'Km/L'} <br><small class="text-muted">Std: ${l.targetRate}</small></td>
                         <td style="font-weight:bold; color:${l.deviationPct > 10 || l.deviationPct < -15 ? 'var(--danger)' : 'var(--success)'};">
@@ -5667,7 +5801,7 @@
                         <td>${badgeStatus}</td>
                         <td>
                             <div style="display:flex; gap:4px;">
-                                <button onclick="openAssetModal('${escapeHtml(unitShort)}', 'READY', '${escapeHtml(l.category)}', '${escapeHtml(l.location)}')" class="btn" style="padding:3px 6px; font-size:0.85rem; background:#f8f9fa; border:1px solid var(--border);" title="Detail 360° Unit">
+                                <button onclick="openAssetModal('${escapeHtml(unitShort)}', 'READY', '${escapeHtml(l.category)}', '${escapeHtml(l.location)}')" class="btn" style="padding:3px 6px; font-size:0.85rem; background:#f8f9fa; border:1px solid var(--border);" title="Detail 360&deg; Unit">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                                 ${l.anomalyStatus === 'RED' ? `
@@ -6020,7 +6154,7 @@
                     buyYear: 2022,
                     depreciationPct: 40,
                     depreciationVal: 240000000,
-                    marketRange: '450.000.000 -œ 520.000.000',
+                    marketRange: '450.000.000 - 520.000.000',
                     offeredPrice: 550000000,
                     netPriceBra: 450000000,
                     selisih: 100000000,
@@ -6039,7 +6173,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 366000000,
-                    marketRange: '750.000.000 -œ 900.000.000',
+                    marketRange: '750.000.000 - 900.000.000',
                     offeredPrice: 950000000,
                     netPriceBra: 820000000,
                     selisih: 130000000,
@@ -6058,7 +6192,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 252414000,
-                    marketRange: '420.000.000 -œ 480.000.000',
+                    marketRange: '420.000.000 - 480.000.000',
                     offeredPrice: 520000000,
                     netPriceBra: 460000000,
                     selisih: 60000000,
@@ -6077,7 +6211,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 252414000,
-                    marketRange: '420.000.000 -œ 480.000.000',
+                    marketRange: '420.000.000 - 480.000.000',
                     offeredPrice: 510000000,
                     netPriceBra: 450000000,
                     selisih: 60000000,
@@ -6096,7 +6230,7 @@
                     buyYear: 2022,
                     depreciationPct: 40,
                     depreciationVal: 320000000,
-                    marketRange: '420.000.000 -œ 500.000.000',
+                    marketRange: '420.000.000 - 500.000.000',
                     offeredPrice: 520000000,
                     netPriceBra: 450000000,
                     selisih: 70000000,
@@ -6115,7 +6249,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 124500000,
-                    marketRange: '400.000.000 -œ 550.000.000',
+                    marketRange: '400.000.000 - 550.000.000',
                     offeredPrice: 500000000,
                     netPriceBra: 430000000,
                     selisih: 70000000,
@@ -6134,7 +6268,7 @@
                     buyYear: 2021,
                     depreciationPct: 50,
                     depreciationVal: 185000000,
-                    marketRange: '400.000.00 -œ 580.000.000',
+                    marketRange: '400.000.000 - 580.000.000',
                     offeredPrice: 520000000,
                     netPriceBra: 400000000,
                     selisih: 120000000,
@@ -6237,11 +6371,11 @@
                                 📅 Bulan ${m.month} 2026
                             </div>
                             <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:3px;">
-                                <span><span style="color:#2563eb;">¢— </span> Budget Planning:</span>
+                                <span><span style="color:#2563eb;">&bull; </span> Budget Planning:</span>
                                 <strong>Rp ${m.budget} Jt</strong>
                             </div>
                             <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px;">
-                                <span><span style="color:${isOver ? '#dc2626' : '#16a34a'};">¢— </span> Realisasi Actual:</span>
+                                <span><span style="color:${isOver ? '#dc2626' : '#16a34a'};">&bull; </span> Realisasi Actual:</span>
                                 <strong style="color:${isOver ? '#dc2626' : '#16a34a'};">Rp ${m.actual} Jt</strong>
                             </div>
                             <div style="border-top:1px dashed #cbd5e1; padding-top:4px; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -6307,8 +6441,8 @@
                         <td><strong>${(v.netPriceBra / 1000000).toFixed(0)} Jt</strong></td>
                         <td style="font-weight:bold; color:var(--success);">+${(v.selisih / 1000000).toFixed(0)} Jt</td>
                         <td>
-                            <button onclick="openAssetModal('${escapeHtml(shortId)}', 'READY', 'Bulldozer', 'Yard Duri')" class="btn" style="padding:3px 6px; font-size:0.85rem; background:#f8f9fa; border:1px solid var(--border);" title="Lihat Detail 360° Aset">
-                                <i class="fa-solid fa-eye"></i> Detail 360°
+                            <button onclick="openAssetModal('${escapeHtml(shortId)}', 'READY', 'Bulldozer', 'Yard Duri')" class="btn" style="padding:3px 6px; font-size:0.85rem; background:#f8f9fa; border:1px solid var(--border);" title="Lihat Detail 360&deg; Aset">
+                                <i class="fa-solid fa-eye"></i> Detail 360&deg;
                             </button>
                         </td>
                     </tr>
@@ -6418,13 +6552,13 @@
 
                 const asset = globalData.assets.find(a => a.id === unitId);
                 const modelName = asset ? asset.name : 'Unknown Model';
-                
+
                 const intervalVal = parseInt(schedule.replace(/\D/g, '')) || 250;
 
                 const payload = {
                     asset_id: unitId,
                     interval_hm: intervalVal,
-                    current_smr: 0, 
+                    current_smr: 0,
                     target_due_hm: intervalVal,
                     planner_note: `Draft PM: Butuh parts (${parts}). Estimasi biaya: Rp ${cost}. Lokasi: ${loc}`
                 };
@@ -6919,7 +7053,7 @@
                         body: JSON.stringify(payload)
                     });
                     const res = await response.json();
-                    
+
                     if (res.status === 'success') {
                         tireInspectionStore[code] = { tread, pressure };
 
