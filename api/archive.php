@@ -4,6 +4,18 @@ require_once 'db.php';
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Auto-create table if it doesn't exist
+try {
+    $db->exec("CREATE TABLE IF NOT EXISTS archived_items (
+        item_type VARCHAR(50) NOT NULL,
+        item_id VARCHAR(100) NOT NULL,
+        archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (item_type, item_id)
+    )");
+} catch (PDOException $e) {
+    // Ignore error if we don't have permission, let the query fail later if so
+}
+
 switch ($method) {
     case 'GET':
         // Retrieve all archived items
