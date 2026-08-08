@@ -53,8 +53,8 @@ Write-Host "`n[2/3] Verifying & preparing MySQL database '$DbName'..." -Foregrou
 if ($mysqlExe -and (Test-Path $mysqlExe)) {
     Write-Host "Found MySQL executable: $mysqlExe" -ForegroundColor Gray
     
-    # Create DB
-    $createDbCmd = "DROP DATABASE IF EXISTS $DbName; CREATE DATABASE $DbName CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    # Create DB (Do not drop, preserve data like archived items)
+    $createDbCmd = "CREATE DATABASE IF NOT EXISTS $DbName CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
     if ($DbPassword) {
         & $mysqlExe -u $DbUser "-p$DbPassword" -e $createDbCmd
     } else {
