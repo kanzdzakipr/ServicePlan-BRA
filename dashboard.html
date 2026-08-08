@@ -4020,27 +4020,39 @@
 
                     // Assign Fuel Logs
                     if (fuelData?.status === 'success' && Array.isArray(fuelData.data)) {
-                        globalFuelLogs = fuelData.data.map(f => ({
-                            trxId: f.fuel_log_id,
-                            timeStr: f.refuel_date,
-                            unitId: f.asset_id,
-                            category: f.asset_code || 'Unknown',
-                            location: 'Auto',
-                            fuelman: 'System',
-                            operator: f.driver_name || 'Unknown',
-                            meterType: 'HM/KM',
-                            meterPrev: f.flowmeter_start,
-                            meterCurr: f.flowmeter_end,
-                            meterDiff: f.current_hm_km,
-                            liter: f.liters_issued,
-                            rateActual: f.calculated_lph,
-                            targetRate: f.baseline_lph,
-                            deviationPct: 0,
-                            costRp: f.liters_issued * 12000,
-                            anomalyStatus: f.is_anomaly == 1 ? 'RED' : 'GREEN',
-                            status: 'Verified',
-                            notes: f.notes
-                        }));
+                        globalFuelLogs = fuelData.data.map(f => {
+                            const rateActual = parseFloat(f.calculated_lph) || 0;
+                            const targetRate = parseFloat(f.baseline_lph) || 0;
+                            let devPct = 0;
+                            if (targetRate > 0) devPct = ((rateActual - targetRate) / targetRate) * 100;
+                            
+                            let anomaly = 'GREEN';
+                            if (devPct > 20) anomaly = 'RED';
+                            else if (devPct > 10) anomaly = 'ORANGE';
+                            else if (devPct > 5) anomaly = 'YELLOW';
+
+                            return {
+                                trxId: f.fuel_log_id,
+                                timeStr: f.refuel_date,
+                                unitId: f.asset_id,
+                                category: f.asset_category || 'Unknown',
+                                location: 'Auto',
+                                fuelman: 'System',
+                                operator: f.driver_name || 'Unknown',
+                                meterType: 'HM/KM',
+                                meterPrev: parseFloat(f.flowmeter_start) || 0,
+                                meterCurr: parseFloat(f.flowmeter_end) || 0,
+                                meterDiff: parseFloat(f.current_hm_km) || 0,
+                                liter: parseFloat(f.liters_issued) || 0,
+                                rateActual: rateActual,
+                                targetRate: targetRate,
+                                deviationPct: parseFloat(devPct.toFixed(1)),
+                                costRp: (parseFloat(f.liters_issued) || 0) * 12000,
+                                anomalyStatus: (f.is_anomaly == 1) ? 'RED' : anomaly,
+                                status: 'Terverifikasi',
+                                notes: f.notes
+                            };
+                        });
                     }
 
                     // Assign PM Plans
@@ -5685,23 +5697,35 @@
             };
 
             window.renderFuelDashboard = function (fuelLogs) {
-                const todayLiters = fuelLogs.filter(l => l.timeStr.includes('Hari ini')).reduce((acc, curr) => acc + curr.liter, 0) + 2450;
-                const monthLiters = fuelLogs.reduce((acc, curr) => acc + curr.liter, 0) + 44000;
+                const today = new Date().toDateString();
+                const todayLiters = fuelLogs.filter(l => l.timeStr.includes('Hari ini') || (new Date(l.timeStr).toDateString() === today)).reduce((acc, curr) => acc + (parseFloat(curr.liter) || 0), 0);
+                const monthLiters = fuelLogs.reduce((acc, curr) => acc + (parseFloat(curr.liter) || 0), 0);
                 const monthCostRp = monthLiters * 12000;
                 const anomalyCount = fuelLogs.filter(l => l.anomalyStatus === 'RED' || l.anomalyStatus === 'ORANGE').length;
                 const unverifiedCount = fuelLogs.filter(l => l.status === 'Diajukan').length;
-                const totalStock = globalTanks.reduce((acc, curr) => acc + curr.phySounding, 0);
+                const totalStock = globalTanks.reduce((acc, curr) => acc + (parseFloat(curr.phySounding) || 0), 0);
+                const p = document.getElementById('fuelFilterPeriode')?.value || 'ALL';
+                const l = document.getElementById('fuelFilterLokasi')?.value || 'ALL';
+                const k = document.getElementById('fuelFilterKategori')?.value || 'ALL';
+                const s = document.getElementById('fuelFilterStatus')?.value || 'ALL';
 
-                document.getElementById('kpiFuelToday').textContent = todayLiters.toLocaleString('id-ID') + ' L';
-                document.getElementById('kpiFuelMonth').textContent = monthLiters.toLocaleString('id-ID') + ' L';
+                let filtered = fuelLogs;
+
+                if (p === 'TODAY') filtered = filtered.filter(log => log.timeStr.includes('Hari ini') || (new Date(log.timeStr).toDateString() === today));
+                if (l !== 'ALL') filtered = filtered.filter(log => log.location.toLowerCase().includes(l.toLowerCase()));
+                if (k !== 'ALL') filtered = filtered.filter(log => log.category.toLowerCase().includes(k.toLowerCase()));
+                if (s !== 'ALL') filtered = filtered.filter(log => log.anomalyStatus === s);
+
+                document.getElementById('kpiFuelToday').textContent = Math.round(todayLiters).toLocaleString('id-ID') + ' L';
+                document.getElementById('kpiFuelMonth').textContent = Math.round(monthLiters).toLocaleString('id-ID') + ' L';
                 document.getElementById('kpiFuelCost').textContent = 'Rp ' + (monthCostRp / 1000000).toFixed(1) + ' Jt';
                 document.getElementById('kpiFuelBoros').textContent = anomalyCount + ' Unit';
                 document.getElementById('kpiFuelUnverified').textContent = unverifiedCount + ' Trx';
-                document.getElementById('kpiFuelStock').textContent = totalStock.toLocaleString('id-ID') + ' L';
+                document.getElementById('kpiFuelStock').textContent = Math.round(totalStock).toLocaleString('id-ID') + ' L';
 
-                renderFuelChart(fuelLogs);
-                renderFuelTopBoros(fuelLogs);
-                renderFuelTable(fuelLogs);
+                renderFuelChart(filtered);
+                renderFuelTopBoros(filtered);
+                renderFuelTable(filtered);
             };
 
             window.renderFuelChart = function (logs) {

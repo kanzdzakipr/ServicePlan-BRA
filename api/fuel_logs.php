@@ -8,7 +8,7 @@ switch ($method) {
     case 'GET':
         // Retrieve fuel logs
         $stmt = $db->query("
-            SELECT f.*, a.asset_code 
+            SELECT f.*, a.category AS asset_category 
             FROM fuel_logs f 
             LEFT JOIN assets a ON f.asset_id = a.asset_id 
             ORDER BY f.refuel_date DESC 
