@@ -14270,6 +14270,7 @@
     }
 
     function renderAccidentTable() {
+        window.renderAccidentTable = renderAccidentTable;
         const tbody = document.getElementById('tbAccidentBody');
         if (!tbody) return;
 
@@ -14308,6 +14309,7 @@
     }
 
     function renderCapaTable() {
+        window.renderCapaTable = renderCapaTable;
         const tbody = document.getElementById('tbCapaBody');
         if (!tbody) return;
 

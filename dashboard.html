@@ -4008,6 +4008,11 @@
                     initNewViews();
                     window.FleetInspectionModule?.refresh();
                     initMonitoringView(initialData.assets);
+                    
+                    if (window.renderHistoryTable) window.renderHistoryTable();
+                    if (window.renderAccidentTable) window.renderAccidentTable();
+                    if (window.renderCapaTable) window.renderCapaTable();
+                    
                     document.dispatchEvent(new CustomEvent('fleetdata:ready', { detail: initialData }));
 
                     const queryView = new URLSearchParams(window.location.search).get('view') || '';
