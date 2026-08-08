@@ -17008,8 +17008,9 @@ window.renderArchiveTables = function() {
     }
     
     const tbAccident = document.getElementById('tbArchiveAccidentBody');
-    if (tbAccident && typeof initialAccidentLogs !== 'undefined') {
-        const archivedAccident = getAccidentLogs().filter(a => a.isArchived);
+    if (tbAccident) {
+        const listAccidents = window.globalData && window.globalData.accidents ? window.globalData.accidents : [];
+        const archivedAccident = listAccidents.filter(a => a.isArchived);
         if (archivedAccident.length === 0) {
             tbAccident.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">Tidak ada data Insiden di arsip.</td></tr>';
         } else {

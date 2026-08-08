@@ -4103,9 +4103,6 @@
                         if (globalData.accidents) {
                             globalData.accidents.forEach(a => { if (archivedAccidents.has(String(a.docNo).trim())) a.isArchived = true; });
                         }
-                        if (typeof initialAccidentLogs !== 'undefined') {
-                            initialAccidentLogs.forEach(a => { if (archivedAccidents.has(a.docNo)) a.isArchived = true; });
-                        }
                     }
 
                     window.globalData = globalData;
