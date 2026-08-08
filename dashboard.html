@@ -4083,13 +4083,13 @@
                     } else {
                         globalData.inspections = [];
                     }
-                    
+
                     if (accidentsRes?.status === 'success' && Array.isArray(accidentsRes.data)) {
                         globalData.accidents = accidentsRes.data;
                     } else {
                         globalData.accidents = [];
                     }
-                    
+
                     if (archiveDataRes?.status === 'success' && Array.isArray(archiveDataRes.data)) {
                         const archivedAssets = new Set(archiveDataRes.data.filter(x => x.item_type === 'asset').map(x => String(x.item_id).trim()));
                         const archivedP2H = new Set(archiveDataRes.data.filter(x => x.item_type === 'p2h').map(x => String(x.item_id).trim()));
