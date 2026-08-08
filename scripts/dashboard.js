@@ -16971,12 +16971,12 @@ window.archiveData = async function(type, id) {
         const list = window.globalData && window.globalData.inspections ? window.globalData.inspections : (typeof inspectionHistory !== 'undefined' ? inspectionHistory : []);
         const item = list.find(a => a.id === id);
         if (item) item.isArchived = true;
-        if (typeof renderHistoryTable === 'function') renderHistoryTable();
+        if (typeof window.renderHistoryTable === 'function') window.renderHistoryTable();
     } else if (type === 'accident') {
         if (typeof initialAccidentLogs !== 'undefined') {
             const item = initialAccidentLogs.find(a => a.docNo === id);
             if (item) item.isArchived = true;
-            if (typeof renderAccidentTable === 'function') renderAccidentTable();
+            if (typeof window.renderAccidentTable === 'function') window.renderAccidentTable();
         }
     }
     
@@ -17011,12 +17011,12 @@ window.restoreData = async function(type, id) {
         const list = window.globalData && window.globalData.inspections ? window.globalData.inspections : (typeof inspectionHistory !== 'undefined' ? inspectionHistory : []);
         const item = list.find(a => a.id === id);
         if (item) item.isArchived = false;
-        if (typeof renderHistoryTable === 'function') renderHistoryTable();
+        if (typeof window.renderHistoryTable === 'function') window.renderHistoryTable();
     } else if (type === 'accident') {
         if (typeof initialAccidentLogs !== 'undefined') {
             const item = initialAccidentLogs.find(a => a.docNo === id);
             if (item) item.isArchived = false;
-            if (typeof renderAccidentTable === 'function') renderAccidentTable();
+            if (typeof window.renderAccidentTable === 'function') window.renderAccidentTable();
         }
     }
     
