@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     'use strict';
 
     window.assetDbMapping = null;
@@ -69,8 +69,9 @@
     };
 
     window.formatUnitId = function (unit) {
-        if (!unit) return unit;
-        return unit.replace(/DT[\s-]+(\d+)/gi, (match, numStr) => {
+        if (unit === null || unit === undefined) return '';
+        const strUnit = String(unit);
+        return strUnit.replace(/DT[\s-]+(\d+)/gi, (match, numStr) => {
             const num = parseInt(numStr, 10);
             return `DT-${num.toString().padStart(5, '0')}`;
         });
@@ -3946,7 +3947,7 @@
                         ${categories.map(category => `<option value="${escapeHtml(category)}" ${state.category === category ? 'selected' : ''}>${escapeHtml(category)}</option>`).join('')}
                     </select>
                     <select class="form-control" data-sl-filter="assetStatus" aria-label="Filter status aset">
-                        ${['ALL', 'READY', 'STANDBY', 'INSPEKSI', 'BREAKDOWN', 'ACCIDENT_HOLD'].map(status => `<option value="${status}" ${state.assetStatus === status ? 'selected' : ''}>${status === 'ALL' ? 'Semua status aset' : status}</option>`).join('')}
+                        ${['ALL', 'READY', 'STANDBY', 'INSPEKSI', 'BREAKDOWN', 'ACCIDENT HOLD'].map(status => `<option value="${status}" ${state.assetStatus === status ? 'selected' : ''}>${status === 'ALL' ? 'Semua status aset' : status}</option>`).join('')}
                     </select>
                     <button type="button" class="sl-reset-button" data-sl-action="reset"><i class="fa-solid fa-rotate-left"></i>Reset</button>
                 </div>
@@ -4914,7 +4915,7 @@
     }
 
     function catalogAssets() {
-        const priority = { ACCIDENT_HOLD: 5, BREAKDOWN: 4, INSPEKSI: 3, STANDBY: 2, READY: 1 };
+        const priority = { 'ACCIDENT HOLD': 5, BREAKDOWN: 4, INSPEKSI: 3, STANDBY: 2, READY: 1 };
         const registry = new Map();
         allAssets().forEach(asset => {
             const key = shortCode(asset.id).toUpperCase();
@@ -5449,7 +5450,7 @@
             });
         }
 
-        if (status === 'danger' && !['BREAKDOWN', 'ACCIDENT_HOLD'].includes(asset.status) && window.setIntegratedAssetStatus) {
+        if (status === 'danger' && !['BREAKDOWN', 'ACCIDENT HOLD'].includes(asset.status) && window.setIntegratedAssetStatus) {
             window.setIntegratedAssetStatus(asset.id, 'INSPEKSI', 'Condition Monitoring', item.id, summary);
         }
         state.notice = {
@@ -7931,7 +7932,7 @@
                 case 'checkBox': {
                     const checked = elementsByLocalName(current, 'checked')[0];
                     const value = attributeByLocalName(checked, 'val').toLowerCase();
-                    parts.push(checked && !['0', 'false', 'off'].includes(value) ? '[x]' : 'ƒ¢‹Å“');
+                    parts.push(checked && !['0', 'false', 'off'].includes(value) ? '[x]' : '[ ]');
                     return;
                 }
                 case 'instrText':
@@ -13069,7 +13070,7 @@
                     <div class="pk-panel">
                         <div class="pk-panel-header">
                             <span><i class="fa-solid fa-list-check"></i> Matriks 10 Indikator Kinerja Utama (Head of Equipment)</span>
-                            <span class="text-muted" style="font-size:0.85rem;">Formula: Nilai Bobot = Skor × Bobot ƒÆ’ ·  5</span>
+                            <span class="text-muted" style="font-size:0.85rem;">Formula: Nilai Bobot = Skor × Bobot &divide;  5</span>
                         </div>
                         <div class="pk-panel-body no-padding">
                             <div class="table-responsive">
@@ -13784,11 +13785,11 @@
             },
             causeFactors: ['Human factor', 'Procedural / System failure'],
             causeExplanation: 'Operator tidak mengikuti urutan tombol pengisian monitor saat mengisi material cement, serta belum ada interlock otomatis.',
-            correctiveAction: 'Unit dihentikan operasional (ACCIDENT_HOLD). Sebagian cement dibongkar dan diisi ulang oleh teknisi XCMG.',
+            correctiveAction: 'Unit dihentikan operasional (ACCIDENT HOLD). Sebagian cement dibongkar dan diisi ulang oleh teknisi XCMG.',
             preventiveAction: 'Refresher training operator penabur semen, update SOP serah terima unit baru, dan penambahan label urutan instruksi di kabin.',
             severity: 'Moderate',
             isUnitLocked: true,
-            status: 'CAPA_Pending',
+            status: 'CAPA Pending',
             tarNo: '01/TAR/05/2026'
         },
         {
@@ -13854,7 +13855,7 @@
             },
             causeFactors: ['Environmental factor', 'Mechanical factor'],
             causeExplanation: 'Kondisi struktur geologi tanah gembur pasca hujan deras malam sebelumnya.',
-            correctiveAction: 'Unit di-lock (ACCIDENT_HOLD), tim mekanik welder diterjunkan untuk penggantian bracket cylinder.',
+            correctiveAction: 'Unit di-lock (ACCIDENT HOLD), tim mekanik welder diterjunkan untuk penggantian bracket cylinder.',
             preventiveAction: 'Inspeksi kestabilan slope pit oleh K3L sebelum unit berat beroperasi.',
             severity: 'Critical',
             isUnitLocked: true,
@@ -13880,7 +13881,7 @@
                 <div class="hse-header">
                     <div class="hse-header-title">
                         <h2><i class="fa-solid fa-triangle-exclamation text-danger"></i> Manajemen HSE & Laporan Insiden Kecelakaan Unit</h2>
-                        <p>Pencatatan resmi insiden, kronologi, kondisi lingkungan, analisa akar penyebab, dan kontrol penahanan unit (ACCIDENT_HOLD)</p>
+                        <p>Pencatatan resmi insiden, kronologi, kondisi lingkungan, analisa akar penyebab, dan kontrol penahanan unit (ACCIDENT HOLD)</p>
                     </div>
                     <div style="display:flex; gap:10px;">
                         <button class="btn btn-danger" onclick="window.openNewIncidentModal()"><i class="fa-solid fa-plus"></i> Laporkan Insiden Baru</button>
@@ -13913,7 +13914,7 @@
                             <div class="hse-card-info">
                                 <h4>Unit Locked (HOLD)</h4>
                                 <div class="hse-val" id="lblLockedUnits">2 Unit</div>
-                                <div class="hse-sub">Status ACCIDENT_HOLD</div>
+                                <div class="hse-sub">Status ACCIDENT HOLD</div>
                             </div>
                             <div class="hse-card-icon"><i class="fa-solid fa-lock"></i></div>
                         </div>
@@ -14106,7 +14107,7 @@
                                         <label>Tingkat Severitas Insiden</label>
                                         <select id="incSeverity" class="hse-form-control">
                                             <option value="Minor">Minor (Kerusakan Ringan, No Downtime > 1 Hari)</option>
-                                            <option value="Moderate">Moderate (Kerusakan Sedang, Lock Unit ACCIDENT_HOLD)</option>
+                                            <option value="Moderate">Moderate (Kerusakan Sedang, Lock Unit ACCIDENT HOLD)</option>
                                             <option value="Critical">Critical (Kerusakan Komponen Utama / Major Impact)</option>
                                         </select>
                                     </div>
@@ -14257,7 +14258,7 @@
                     <div class="hse-lock-content">
                         <div class="hse-lock-icon"><i class="fa-solid fa-lock"></i></div>
                         <div class="hse-lock-text">
-                            <h4>Peringatan Keselamatan: ${locked.length} Unit Dalam Status ACCIDENT_HOLD</h4>
+                            <h4>Peringatan Keselamatan: ${locked.length} Unit Dalam Status ACCIDENT HOLD</h4>
                             <p>Unit berikut dikunci dari operasional & WO baru: <strong>${locked.map(a => a.unitCode).join(', ')}</strong>. Diperlukan persetujuan rilis resmi dari Equipment Mgr / Safety Head.</p>
                         </div>
                     </div>
@@ -14281,7 +14282,7 @@
             else if (log.severity === 'Critical') sevBadge = `<span class="hse-badge hse-badge-critical">${log.severity}</span>`;
 
             let lockBadge = log.isUnitLocked ?
-                `<span class="hse-badge hse-badge-hold"><i class="fa-solid fa-lock"></i> ACCIDENT_HOLD</span>` :
+                `<span class="hse-badge hse-badge-hold"><i class="fa-solid fa-lock"></i> ACCIDENT HOLD</span>` :
                 `<span class="hse-badge hse-badge-released"><i class="fa-solid fa-lock-open"></i> RELEASED</span>`;
 
             let capaBadge = `<span class="pk-badge pk-badge-warning">${log.status}</span>`;
@@ -14447,14 +14448,14 @@
                 if (window.globalData.summary && window.globalData.summary.status_counts[targetAsset.status]) {
                     window.globalData.summary.status_counts[targetAsset.status]--;
                 }
-                targetAsset.status = 'ACCIDENT_HOLD';
-                if (!window.globalData.summary.status_counts['ACCIDENT_HOLD']) window.globalData.summary.status_counts['ACCIDENT_HOLD'] = 0;
-                window.globalData.summary.status_counts['ACCIDENT_HOLD']++;
+                targetAsset.status = 'ACCIDENT HOLD';
+                if (!window.globalData.summary.status_counts['ACCIDENT HOLD']) window.globalData.summary.status_counts['ACCIDENT HOLD'] = 0;
+                window.globalData.summary.status_counts['ACCIDENT HOLD']++;
             }
         }
 
         window.closeIncidentModal();
-        alert(`Laporan Insiden ${docNo} berhasil disimpan. ${isLocked ? 'Unit otomatis dikunci ke status ACCIDENT_HOLD.' : ''}`);
+        alert(`Laporan Insiden ${docNo} berhasil disimpan. ${isLocked ? 'Unit otomatis dikunci ke status ACCIDENT HOLD.' : ''}`);
         renderHSEModuleContent();
     };
 
@@ -14523,7 +14524,7 @@
         const log = initialAccidentLogs[idx];
         if (!log) return;
 
-        if (confirm(`Apakah Anda yakin memverifikasi bahwa unit ${log.unitCode} telah lulus perbaikan & safety audit untuk di-RELEASE dari ACCIDENT_HOLD?`)) {
+        if (confirm(`Apakah Anda yakin memverifikasi bahwa unit ${log.unitCode} telah lulus perbaikan & safety audit untuk di-RELEASE dari ACCIDENT HOLD?`)) {
             log.isUnitLocked = false;
             log.status = 'Closed';
 
@@ -16754,11 +16755,7 @@ function renderTableKeluar(filterText = '') {
             <td style="padding: 12px 15px;">${escapeHtml(item.noSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.tglSpb) || '-'}</td>
             <td style="padding: 12px 15px;">${escapeHtml(item.noJo) || '-'}</td>
-<<<<<<< HEAD
-            <td style="padding: 12px 15px;"><button type="button" onclick="openLogisticsAsset('${escapeHtml(item.idUnit)}')" class="badge" style="border:0; cursor:pointer; background:var(--primary); color:white; padding:4px 8px; border-radius:4px;" title="Buka pada katalog Master Asset">${escapeHtml(item.idUnit) || '-'}</button></td>
-=======
-            <td style="padding: 12px 15px;"><button type="button" onclick="openLogisticsAsset('${escapeHtml(window.formatUnitId(item.idUnit))}')" class="badge" style="border:0; cursor:pointer; background:var(--primary); color:white; padding:4px 8px; border-radius:4px;" title="Buka pada katalog Master Asset">${escapeHtml(window.formatUnitId(item.idUnit)) || '-'}</button></td>
->>>>>>> 33a5c879b0b12838945e5282b1259e314bb1d0e6
+            <td style="padding: 12px 15px;"><button type="button" onclick="openLogisticsAsset('${escapeHtml(window.formatUnitId ? window.formatUnitId(item.idUnit) : item.idUnit)}')" class="badge" style="border:0; cursor:pointer; background:var(--primary); color:white; padding:4px 8px; border-radius:4px;" title="Buka pada katalog Master Asset">${escapeHtml(window.formatUnitId ? window.formatUnitId(item.idUnit) : item.idUnit) || '-'}</button></td>
             <td style="padding: 12px 15px;"><strong style="color:var(--text-muted);">${escapeHtml(window.getSnPlatFromUnit(item.idUnit))}</strong></td>
             <td style="padding: 12px 15px;"><strong>${escapeHtml(item.namaSparepart) || '-'}</strong></td>
             <td style="padding: 12px 15px;">${escapeHtml(item.spesifikasi) || '-'}</td>

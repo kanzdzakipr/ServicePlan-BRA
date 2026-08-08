@@ -368,7 +368,7 @@
                                 <option value="STANDBY">Standby</option>
                                 <option value="INSPEKSI">Inspeksi / P2H</option>
                                 <option value="BREAKDOWN">Breakdown</option>
-                                <option value="ACCIDENT_HOLD">Accident Hold</option>
+                                <option value="ACCIDENT HOLD">Accident Hold</option>
                             </select>
                             <div class="search-bar">
                                 <input type="text" id="searchMonitoring" placeholder="Cari unit ID, lokasi, status..."
@@ -2662,7 +2662,7 @@
                     <option value="STANDBY">STANDBY (Idle / Cadangan)</option>
                     <option value="INSPEKSI">INSPECTION / PM</option>
                     <option value="BREAKDOWN">BREAKDOWN</option>
-                    <option value="ACCIDENT_HOLD">ACCIDENT HOLD</option>
+                    <option value="ACCIDENT HOLD">ACCIDENT HOLD</option>
                 </select>
                 <label>Update Lokasi (Opsional)</label>
                 <input type="text" id="us-loc" placeholder="Biarkan kosong jika tidak pindah" class="form-control">
@@ -3366,7 +3366,7 @@
             let mapInitialized = false;
             let dashboardMapInstance = null;
             const FLEET_STATE_KEY = 'fleetmonitor-integrated-state-v1';
-            const ASSET_STATUS_PRIORITY = { READY: 1, STANDBY: 2, INSPEKSI: 3, BREAKDOWN: 4, ACCIDENT_HOLD: 5 };
+            const ASSET_STATUS_PRIORITY = { READY: 1, STANDBY: 2, INSPEKSI: 3, BREAKDOWN: 4, 'ACCIDENT HOLD': 5 };
             const MASTER_LOCATION_COORDINATES = Object.freeze({
                 'Yard Duri': { lat: 1.2854300, lng: 101.2185400 },
                 'Yard Prabumulih': { lat: -3.4354200, lng: 104.2384500 },
@@ -3449,7 +3449,7 @@
 
             function rebuildFleetSummary() {
                 if (!globalData || !globalData.assets) return;
-                const counts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, ACCIDENT_HOLD: 0 };
+                const counts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, 'ACCIDENT HOLD': 0 };
                 globalData.assets.forEach(asset => {
                     const key = asset.status || 'READY';
                     counts[key] = (counts[key] || 0) + 1;
@@ -3557,7 +3557,7 @@
             function buildProjectScopedData() {
                 const assets = window.getProjectScopedAssets();
                 const workOrders = window.getProjectScopedWorkOrders();
-                const statusCounts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, ACCIDENT_HOLD: 0 };
+                const statusCounts = { READY: 0, STANDBY: 0, INSPEKSI: 0, BREAKDOWN: 0, 'ACCIDENT HOLD': 0 };
                 assets.forEach(asset => {
                     const status = asset.status || 'READY';
                     statusCounts[status] = (statusCounts[status] || 0) + 1;
@@ -3596,7 +3596,7 @@
                     <div class="project-master-notice"><i class="fa-solid fa-circle-info"></i><span>Nama lokasi masih mengikuti data sumber. Karena belum tersedia ID project, PIC, koordinat, dan periode kontrak yang tervalidasi, sistem tidak membuat data project fiktif.</span></div>
                     <div class="project-master-grid">
                         ${sortedLocations.map(([location, assets]) => {
-                    const active = assets.filter(asset => !['BREAKDOWN', 'ACCIDENT_HOLD'].includes(asset.status)).length;
+                    const active = assets.filter(asset => !['BREAKDOWN', 'ACCIDENT HOLD'].includes(asset.status)).length;
                     const breakdown = assets.filter(asset => asset.status === 'BREAKDOWN').length;
                     const categories = new Set(assets.map(asset => asset.category).filter(Boolean)).size;
                     return `<button type="button" class="project-master-card${activeProjectLocation === location ? ' active' : ''}" data-project-location="${escapeHtml(location)}" onclick="applyGlobalProjectFilter(this.dataset.projectLocation)">
@@ -4300,7 +4300,7 @@
                                     Condition
                                 </button>
                                 <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
-                                    onclick="openEditAssetModal('${escapeHtml(asset.id)}')" 
+                                    onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" 
                                     title="Edit Metadata Asset ${escapeHtml(asset.id)}">
                                     Edit
                                 </button>
@@ -4498,6 +4498,13 @@
 
             let previousModalId = null;
             let modalUnitMapInstance = null;
+
+            window.openEditAssetModal = function (id) {
+                const assetObj = globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null;
+                if (assetObj) {
+                    openAssetModal(assetObj.id, assetObj.status, assetObj.category, assetObj.location);
+                }
+            };
 
             function openAssetModal(id, status, category, location, fromModal = null) {
                 previousModalId = fromModal;
@@ -5087,7 +5094,7 @@
                     // 1. Status Filter
                     if (statusVal !== 'ALL') {
                         const s = String(asset.status || 'READY').toUpperCase();
-                        if (statusVal === 'BREAKDOWN' && !['BREAKDOWN', 'ACCIDENT_HOLD'].includes(s)) return false;
+                        if (statusVal === 'BREAKDOWN' && !['BREAKDOWN', 'ACCIDENT HOLD'].includes(s)) return false;
                         if (statusVal !== 'BREAKDOWN' && s !== statusVal) return false;
                     }
 
@@ -5220,7 +5227,7 @@
                         return (ASSET_STATUS_PRIORITY[status] || 0) > (ASSET_STATUS_PRIORITY[selected] || 0) ? status : selected;
                     }, 'READY');
 
-                    const markerColor = ['BREAKDOWN', 'ACCIDENT_HOLD'].includes(dominantStatus) ? '#dc3545'
+                    const markerColor = ['BREAKDOWN', 'ACCIDENT HOLD'].includes(dominantStatus) ? '#dc3545'
                         : dominantStatus === 'INSPEKSI' ? '#ffc107'
                             : dominantStatus === 'STANDBY' ? '#17a2b8' : '#28a745';
 
@@ -5431,7 +5438,7 @@
                         <button class="integrated-action warning" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'history')"><i class="fa-solid fa-clipboard-check"></i> Review P2H</button>
                         ${activeWo ? `<button class="integrated-action" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-wrench"></i> ${escapeHtml(activeWo.woId)}</button>` : `<button class="integrated-action" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'form')"><i class="fa-solid fa-plus"></i> Inspeksi</button>`}`;
                     }
-                    else if (asset.status === 'ACCIDENT_HOLD') {
+                    else if (asset.status === 'ACCIDENT HOLD') {
                         badge = '<span class="badge bg-breakdown">ACCIDENT HOLD</span>';
                         action = `
                         <button class="integrated-action danger" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-shield-cat"></i> Investigasi</button>

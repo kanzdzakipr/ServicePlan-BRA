@@ -506,9 +506,7 @@ Risikonya:
 Pada `dashboard.js` masih terdapat teks:
 
 ```text
-<<<<<<< HEAD
-=======
->>>>>>> 33a5c879b0b12838945e5282b1259e314bb1d0e6
+
 ```
 
 Marker tersebut berada di dalam template tabel Barang Keluar. JavaScript tetap dapat lolos pemeriksaan sintaks karena marker berada di dalam template string, tetapi teks konflik dapat ikut dirender ke halaman dan menunjukkan proses merge belum selesai.

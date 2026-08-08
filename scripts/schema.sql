@@ -99,7 +99,7 @@ CREATE TABLE `assets` (
     `sub_group_branch` VARCHAR(100) NULL, -- e.g., 'PKB PEKANBARU Branch', 'PLB PALEMBANG Branch'
     `year_manufacture` INT NULL,
     `ownership` ENUM('Milik Sendiri', 'Sewa', 'Leasing') DEFAULT 'Milik Sendiri',
-    `status` ENUM('READY', 'OPERATING', 'STANDBY', 'INSPEKSI', 'BREAKDOWN', 'ACCIDENT_HOLD', 'INACTIVE') DEFAULT 'READY',
+    `status` ENUM('READY', 'OPERATING', 'STANDBY', 'INSPEKSI', 'BREAKDOWN', 'ACCIDENT HOLD', 'INACTIVE') DEFAULT 'READY',
     `current_location_id` INT NULL,
     `raw_location_notes` TEXT NULL,       -- Preserves raw HTML notes
     `last_hm_km` DECIMAL(10,2) DEFAULT 0.00,
@@ -435,7 +435,7 @@ CREATE TABLE `accidents` (
     `corrective_action` TEXT NULL,
     `preventive_action` TEXT NULL,
     `is_unit_locked` BOOLEAN DEFAULT TRUE,
-    `status` ENUM('Reported', 'Investigating', 'CAPA_Pending', 'Closed') DEFAULT 'Reported',
+    `status` ENUM('Reported', 'Investigating', 'CAPA Pending', 'Closed') DEFAULT 'Reported',
     FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE,
     FOREIGN KEY (`location_id`) REFERENCES `locations`(`location_id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -613,7 +613,7 @@ INSERT INTO `assets` (`asset_id`, `asset_code`, `serial_number`, `license_plate`
 ('DZ-00002 SN P6G01656', 'DZ-00002', 'P6G01656', NULL, 'Bulldozer', 'Caterpillar D6G 2XL', 'PKB PEKANBARU Branch', 2024, 'READY', 3, 2177.00, 1.3124500, 101.2451200, CURRENT_TIMESTAMP),
 ('DT-00049 - B 9104 ZYT', 'DT-00049', NULL, 'B 9104 ZYT', 'Dump Truck', 'Hino Ranger FM 280 JD', 'PKB PEKANBARU Branch', 2024, 'BREAKDOWN', 4, 34500.00, 1.2789000, 101.2112000, CURRENT_TIMESTAMP),
 ('EXC-00001', 'EXC-00001', 'C51502', NULL, 'Excavator', 'Komatsu PC200-10M0 CE', 'PKB PEKANBARU Branch', 2024, 'OPERATING', 6, 2443.00, 1.2991000, 101.2311000, CURRENT_TIMESTAMP),
-('CS-41001', 'CS-41001', 'XK185-001', 'BM 9012 RWI', 'Other', 'Powder Binder Spreader XCMG XKC185', 'PKB PEKANBARU Branch', 2026, 'ACCIDENT_HOLD', 6, 150.00, 1.2991500, 101.2311500, CURRENT_TIMESTAMP),
+('CS-41001', 'CS-41001', 'XK185-001', 'BM 9012 RWI', 'Other', 'Powder Binder Spreader XCMG XKC185', 'PKB PEKANBARU Branch', 2026, 'ACCIDENT HOLD', 6, 150.00, 1.2991500, 101.2311500, CURRENT_TIMESTAMP),
 ('PF-00001', 'PF-00001', '961884301016', NULL, 'Vibro Compactor', 'Vibro Bomag Pad Foot BW 211D-40SL', 'PKB PEKANBARU Branch', 2024, 'INSPEKSI', 1, 1894.20, 1.2854300, 101.2185400, CURRENT_TIMESTAMP),
 ('MG-00004', 'MG-00004', 'GR135-99', NULL, 'Motor Grader', 'Motor Grader XCMG GR135 MAX', 'PKB PEKANBARU Branch', 2025, 'STANDBY', 1, 2446.10, 1.2855000, 101.2186000, CURRENT_TIMESTAMP),
 ('VIBRO BW BRA-01', 'BRA-01', '961582391008', NULL, 'Vibro Compactor', 'Bomag Smooth Drum BW211D-40 SL', 'PKB PEKANBARU Branch', 2020, 'STANDBY', 1, 6365.00, 1.2854100, 101.2185200, CURRENT_TIMESTAMP),
@@ -671,7 +671,7 @@ INSERT INTO `planner_evaluations` (`planner_user_id`, `competency_name`, `job_st
 
 -- 11. SEED HSE ACCIDENTS
 INSERT INTO `accidents` (`accident_id`, `asset_id`, `report_date`, `incident_datetime`, `location_id`, `operator_name`, `operator_tenure`, `chronology`, `weather`, `road_condition`, `lighting_condition`, `severity`, `physical_damage`, `estimated_repair_cost`, `estimated_downtime_days`, `total_financial_loss`, `corrective_action`, `preventive_action`, `is_unit_locked`, `status`) VALUES
-('01/ACC/BRA/DURI/2026', 'CS-41001', '2026-05-14', '2026-05-11 14:30:00', 6, 'M. Fajar DC', '< 1 bulan (Unit Baru)', 'Pada tanggal 11 Mei 2026 pukul 14.30 WIB, unit sedang melakukan pengisian material powder binder/cement di area pengisian. Terjadi Error System Penaburan cement yang disebabkan pada saat pengisian cement operator tidak menyalakan tombol pada monitor sehingga sistem error.', 'Cerah', 'Kering / Rata', 'Siang Hari (Terang)', 'Moderate', 'Error System Penaburan & Valve Blockage', 15500000.00, 3, 28000000.00, 'Unit dihentikan operasional (ACCIDENT_HOLD). Sebagian cement dibongkar dan diisi ulang oleh teknisi XCMG.', 'Refresher training operator penabur semen, update SOP serah terima unit baru.', TRUE, 'CAPA_Pending');
+('01/ACC/BRA/DURI/2026', 'CS-41001', '2026-05-14', '2026-05-11 14:30:00', 6, 'M. Fajar DC', '< 1 bulan (Unit Baru)', 'Pada tanggal 11 Mei 2026 pukul 14.30 WIB, unit sedang melakukan pengisian material powder binder/cement di area pengisian. Terjadi Error System Penaburan cement yang disebabkan pada saat pengisian cement operator tidak menyalakan tombol pada monitor sehingga sistem error.', 'Cerah', 'Kering / Rata', 'Siang Hari (Terang)', 'Moderate', 'Error System Penaburan & Valve Blockage', 15500000.00, 3, 28000000.00, 'Unit dihentikan operasional (ACCIDENT HOLD). Sebagian cement dibongkar dan diisi ulang oleh teknisi XCMG.', 'Refresher training operator penabur semen, update SOP serah terima unit baru.', TRUE, 'CAPA Pending');
 
 -- 12. SEED MONTHLY FINANCIAL COSTS
 INSERT INTO `cost_financial_monthly` (`month_label`, `year_period`, `budget_amount`, `actual_amount`) VALUES
