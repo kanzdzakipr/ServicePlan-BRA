@@ -225,7 +225,8 @@
                                         <label class="map-filter-label">Status Unit:</label>
                                         <select id="mapStatusFilter" class="form-control map-filter-input" onchange="applyMapFilters()">
                                             <option value="ALL">Semua Status</option>
-                                            <option value="READY">Ready / Operating (Hijau)</option>
+                                            <option value="READY">Ready (Siap Kerja)</option>
+                                            <option value="OPERATING">Operating (Beroperasi)</option>
                                             <option value="BREAKDOWN">Breakdown (Merah)</option>
                                             <option value="INSPEKSI">Inspeksi / P2H (Kuning)</option>
                                             <option value="STANDBY">Standby (Biru)</option>
@@ -357,17 +358,20 @@
                 </div>
                 <div class="panel">
                     <div class="panel-header">
-                        <span><i class="fa-solid fa-triangle-exclamation"></i> Daftar Unit Tidak Ready</span>
+                        <span><i class="fa-solid fa-list-check"></i> Daftar Monitoring Status Unit</span>
                         <div class="monitoring-toolbar">
                             <select id="monitoringStatusFilter" class="form-control"
                                 onchange="initMonitoringView(globalData.assets)" aria-label="Filter status monitoring">
-                                <option value="ALL">Semua status non-ready</option>
-                                <option value="BREAKDOWN">Breakdown</option>
-                                <option value="INSPEKSI">Inspeksi / P2H</option>
+                                <option value="ALL">Semua Status Unit</option>
+                                <option value="READY">Ready</option>
+                                <option value="OPERATING">Operating</option>
                                 <option value="STANDBY">Standby</option>
+                                <option value="INSPEKSI">Inspeksi / P2H</option>
+                                <option value="BREAKDOWN">Breakdown</option>
+                                <option value="ACCIDENT_HOLD">Accident Hold</option>
                             </select>
                             <div class="search-bar">
-                                <input type="text" id="searchMonitoring" placeholder="Cari unit bermasalah..."
+                                <input type="text" id="searchMonitoring" placeholder="Cari unit ID, lokasi, status..."
                                     onkeyup="searchTableMonitoring()">
                             </div>
                         </div>
@@ -520,7 +524,7 @@
             <div id="view-wo" class="view-section">
                 <div class="wo-workspace-header">
                     <div>
-                        <span class="wo-workspace-eyebrow">Corrective maintenance · data WO aktif</span>
+                        <span class="wo-workspace-eyebrow">Corrective maintenance &middot; data WO aktif</span>
                         <h1 class="page-title">Manajemen Work Order</h1>
                         <p>WO dipertahankan sebagai tiket kerusakan. Nomor JO lama tidak diubah menjadi SPK secara
                             otomatis.</p>
@@ -894,7 +898,7 @@
                                     <input type="search" id="search-logistics-oil"
                                         placeholder="Cari produk oli, coolant, unit, atau tanggal...">
                                 </div>
-                                <span class="logistics-source-note"><i class="fa-solid fa-database"></i> Ledger aktual ·
+                                <span class="logistics-source-note"><i class="fa-solid fa-database"></i> Ledger aktual &middot;
                                     Yard KM 12 Kulim</span>
                             </div>
                             <div id="logistics-oil-loader" class="logistics-data-loader"><i
@@ -1050,7 +1054,7 @@
                             <option value="RED">Merah (Deviasi >20% Boros)</option>
                             <option value="ORANGE">Oranye (Deviasi 10-20%)</option>
                             <option value="YELLOW">Kuning (Deviasi 5-10%)</option>
-                            <option value="GREEN">Hijau (Normal ≤ 5%)</option>
+                            <option value="GREEN">Hijau (Normal &le; 5%)</option>
                         </select>
                         <button class="btn btn-primary" style="padding: 5px 15px;" onclick="filterFuelDashboard()"><i
                                 class="fa-solid fa-magnifying-glass"></i> Terapkan</button>
@@ -1172,7 +1176,7 @@
                                             <th>Kode Unit</th>
                                             <th>Kategori & Lokasi</th>
                                             <th>Fuelman / Operator</th>
-                                            <th>Meter Awal - "™ Akhir</th>
+                                            <th>Meter Awal &rarr; Akhir</th>
                                             <th>Liter</th>
                                             <th>Aktual vs Standar</th>
                                             <th>Deviasi</th>
@@ -1859,8 +1863,8 @@
                                             Santoso (Eq Manager)</div>
                                         <div><i class="fa-solid fa-truck-monster"></i> <strong>Aset Aktif:</strong> 42
                                             Unit</div>
-                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2584° N,
-                                            101.2145° E</div>
+                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2584&deg; N,
+                                            101.2145&deg; E</div>
                                     </div>
                                 </div>
 
@@ -1878,8 +1882,8 @@
                                             Widodo (Planner)</div>
                                         <div><i class="fa-solid fa-truck-monster"></i> <strong>Aset Aktif:</strong> 18
                                             Unit</div>
-                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2890° N,
-                                            101.2400° E</div>
+                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 1.2890&deg; N,
+                                            101.2400&deg; E</div>
                                     </div>
                                 </div>
 
@@ -1897,8 +1901,8 @@
                                             Dahlan (Logistics)</div>
                                         <div><i class="fa-solid fa-truck-monster"></i> <strong>Aset Aktif:</strong> 14
                                             Unit</div>
-                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 3.4312° S,
-                                            104.2341° E</div>
+                                        <div><i class="fa-solid fa-map-pin"></i> <strong>GPS:</strong> 3.4312&deg; S,
+                                            104.2341&deg; E</div>
                                     </div>
                                 </div>
                             </div>
@@ -2138,31 +2142,31 @@
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#eff6ff; padding:7px 10px; border-radius:6px; border:1px solid #dbeafe;">
                             <input type="checkbox" id="chkRbacR" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#1e40af;">R - Read / View</span>
+                            <span style="font-weight:700; color:#1e40af;">R - Read / View</span>
                             <small style="color:var(--text-muted);">(Melihat data modul)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#f0fdf4; padding:7px 10px; border-radius:6px; border:1px solid #dcfce7;">
                             <input type="checkbox" id="chkRbacC" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#15803d;">C - Create / Add</span>
+                            <span style="font-weight:700; color:#15803d;">C - Create / Add</span>
                             <small style="color:var(--text-muted);">(Menambah data baru)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#fffbeb; padding:7px 10px; border-radius:6px; border:1px solid #fef3c7;">
                             <input type="checkbox" id="chkRbacU" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#b45309;">U - Update / Edit</span>
+                            <span style="font-weight:700; color:#b45309;">U - Update / Edit</span>
                             <small style="color:var(--text-muted);">(Mengubah data eksisting)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#faf5ff; padding:7px 10px; border-radius:6px; border:1px solid #f3e8ff;">
                             <input type="checkbox" id="chkRbacA" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#6b21a8;">A - Approve / Sign</span>
+                            <span style="font-weight:700; color:#6b21a8;">A - Approve / Sign</span>
                             <small style="color:var(--text-muted);">(Menyetujui dokumen/WO/PO)</small>
                         </label>
                         <label
                             style="display:flex; align-items:center; gap:8px; cursor:pointer; background:#fff1f2; padding:7px 10px; border-radius:6px; border:1px solid #ffe4e6;">
                             <input type="checkbox" id="chkRbacO" style="width:16px; height:16px;">
-                            <span style="font-weight:700; color:#be123c;">O - Owner / Override</span>
+                            <span style="font-weight:700; color:#be123c;">O - Owner / Override</span>
                             <small style="color:var(--text-muted);">(Akses pengubah master sistem)</small>
                         </label>
                     </div>
@@ -2224,7 +2228,7 @@
                         title="Kembali ke Daftar Tabulasi Unit">
                         <i class="fa-solid fa-arrow-left"></i> Kembali
                     </button>
-                    <h2 style="margin: 0; font-size: 1.2rem;">Detail 360° Unit: <span id="modalAssetId"></span></h2>
+                    <h2 style="margin: 0; font-size: 1.2rem;">Detail 360&deg; Unit: <span id="modalAssetId"></span></h2>
                 </div>
                 <button onclick="closeModal('assetModal')"
                     style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
@@ -2291,7 +2295,7 @@
 
                     <!-- Placeholder View Tampak Depan, Belakang & Samping -->
                     <h3 style="margin-top:20px; margin-bottom:10px; font-size:1.05rem;"><i
-                            class="fa-solid fa-camera"></i> Visualisasi 360° Sudut Pandang Unit</h3>
+                            class="fa-solid fa-camera"></i> Visualisasi 360&deg; Sudut Pandang Unit</h3>
                     <div class="asset-view-gallery">
                         <!-- Tampak Depan -->
                         <div class="asset-view-card">
@@ -2376,7 +2380,7 @@
                         </div>
                         <div class="movement-timeline-item">
                             <div class="movement-timeline-title">Borrow Pit Harapan Baru</div>
-                            <div class="movement-timeline-meta">Pekerjaan Cut & Fill Project | 15 Mei 2026 -œ 01 Juli
+                            <div class="movement-timeline-meta">Pekerjaan Cut & Fill Project | 15 Mei 2026 s/d 01 Juli
                                 2026</div>
                         </div>
                         <div class="movement-timeline-item">
@@ -2653,10 +2657,12 @@
                 <input type="hidden" id="us-id">
                 <label>Status Baru</label>
                 <select id="us-status" class="form-control">
-                    <option value="READY">READY / OPERATING</option>
-                    <option value="STANDBY">STANDBY</option>
+                    <option value="READY">READY (Siap Kerja)</option>
+                    <option value="OPERATING">OPERATING (Sedang Beroperasi)</option>
+                    <option value="STANDBY">STANDBY (Idle / Cadangan)</option>
                     <option value="INSPEKSI">INSPECTION / PM</option>
                     <option value="BREAKDOWN">BREAKDOWN</option>
+                    <option value="ACCIDENT_HOLD">ACCIDENT HOLD</option>
                 </select>
                 <label>Update Lokasi (Opsional)</label>
                 <input type="text" id="us-loc" placeholder="Biarkan kosong jika tidak pindah" class="form-control">
@@ -2758,7 +2764,7 @@
                 </div>
             </div>
         </div>
-        <!-- Modal Detail Work Order 360° -->
+        <!-- Modal Detail Work Order 360&deg; -->
         <div class="modal-overlay" id="modalWoDetail">
             <div class="modal-content" style="max-width: 650px; width: 95%;">
                 <div class="modal-header"
@@ -2796,7 +2802,7 @@
                         <button class="btn btn-secondary" onclick="closeModal('modalWoDetail')"
                             style="padding: 6px 14px;">Tutup</button>
                         <button class="btn btn-primary" id="modalWoAssetBtn" style="padding: 6px 14px;"><i
-                                class="fa-solid fa-truck"></i> Detail Aset 360°</button>
+                                class="fa-solid fa-truck"></i> Detail Aset 360&deg;</button>
                         <button class="btn btn-success" id="modalWoSpbBtn" style="padding: 6px 14px;"><i
                                 class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)</button>
                     </div>
@@ -2852,6 +2858,7 @@
                     <label style="font-weight:bold;">Status Efektif Unit Setelah Perbaikan</label>
                     <select id="woConfirmUnitStatus" class="form-control" style="margin-bottom: 15px;">
                         <option value="READY">READY - Unit Siap Operasi Full</option>
+                        <option value="OPERATING">OPERATING - Unit Langsung Beroperasi</option>
                         <option value="STANDBY">STANDBY - Unit Siap Pakai Cadangan</option>
                         <option value="BREAKDOWN">BREAKDOWN - Perbaikan Lanjutan Masih Dibutuhkan</option>
                     </select>
@@ -3334,7 +3341,7 @@
             };
 
             window.openWoDetailView = function (woId, assetId, issueText) {
-                // First: Open Modal Detail for Instant 360° Visual Feedback
+                // First: Open Modal Detail for Instant 360&deg; Visual Feedback
                 openWoDetailModal(woId, assetId, issueText);
 
                 // Second: Switch to Work Order Kanban view and highlight card if present
@@ -4080,8 +4087,8 @@
                                 <button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${assetIdEsc}')" title="Buka Modul Work Order">
                                     <i class="fa-solid fa-wrench"></i> Detail WO
                                 </button>
-                                <button class="attention-action-btn" onclick="openAssetModal('${assetIdEsc}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat Riwayat & Detail 360° Unit">
-                                    <i class="fa-solid fa-truck"></i> Aset 360°
+                                <button class="attention-action-btn" onclick="openAssetModal('${assetIdEsc}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat Riwayat & Detail 360&deg; Unit">
+                                    <i class="fa-solid fa-truck"></i> Aset 360&deg;
                                 </button>
                                 <button class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${assetIdEsc}')" title="Buat Permintaan Sparepart (SPB)">
                                     <i class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)
@@ -4197,7 +4204,7 @@
                         <td>${badge}</td>
                         <td style="text-align: center;">
                             <button onclick="closeModal('modalStatusDetail'); openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}', 'modalStatusDetail')" 
-                                style="border:1px solid var(--border); background:#fff; padding:4px 8px; border-radius:4px; cursor:pointer;" title="Lihat Detail Asset 360°">
+                                style="border:1px solid var(--border); background:#fff; padding:4px 8px; border-radius:4px; cursor:pointer;" title="Lihat Detail Asset 360&deg;">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </td>
@@ -4256,7 +4263,7 @@
                     else if (asset.status === 'INSPEKSI') badge = '<span class="badge bg-inspeksi">INSPECTION</span>';
 
                     return `
-                    <tr onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" style="cursor:pointer;" title="Klik untuk membuka Detail 360° Unit ${escapeHtml(asset.id)}">
+                    <tr onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" style="cursor:pointer;" title="Klik untuk membuka Detail 360&deg; Unit ${escapeHtml(asset.id)}">
                         <td>
                             <strong style="color:var(--primary);">${escapeHtml(parsed.unitId)}</strong>
                         </td>
@@ -4274,8 +4281,8 @@
                             <div class="asset-row-actions" style="display:flex; gap:4px; align-items:center; justify-content:center; flex-wrap:nowrap;">
                                 <button type="button" class="btn btn-sm btn-primary" style="padding:3px 8px; font-size:0.76rem; font-weight:700; white-space:nowrap; border-radius:2px; display:inline-flex; align-items:center; gap:3px;" 
                                     onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" 
-                                    title="Buka Detail 360° Unit ${escapeHtml(asset.id)}">
-                                    <i class="fa-solid fa-cube" style="font-size:0.7rem;"></i> 360°
+                                    title="Buka Detail 360&deg; Unit ${escapeHtml(asset.id)}">
+                                    <i class="fa-solid fa-cube" style="font-size:0.7rem;"></i> 360&deg;
                                 </button>
                                 <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
                                     onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'history')" 
@@ -4326,7 +4333,7 @@
                      aria-grabbed="false"
                      onclick="handleWoCardClick(event, '${escapeHtml(wo.woId)}', '${escapedAsset}')"
                      style="cursor:grab; background:var(--bg-surface); border:1px solid var(--border); border-left:3px solid ${isEmergency ? 'var(--danger)' : 'var(--primary)'}; border-radius:2px; padding:10px 12px; margin-bottom:8px; box-shadow:none;" 
-                     title="Klik untuk Detail 360° | Drag untuk ubah status">
+                     title="Klik untuk Detail 360&deg; | Drag untuk ubah status">
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:6px; margin-bottom:6px;">
                         <span class="font-mono" style="font-weight:700; color:var(--primary); font-size:0.85rem;">${escapeHtml(wo.woId)}</span>
                         <span class="font-mono" style="font-weight:700; color:var(--text-main); font-size:0.82rem;">${escapedAsset}</span>
@@ -4501,7 +4508,7 @@
                 document.getElementById('modalLokasi').textContent = location;
                 const statusSource = document.getElementById('modalStatusSource');
                 if (statusSource) {
-                    statusSource.innerHTML = `<i class="fa-solid fa-link"></i> ${escapeHtml(assetObj?.statusSource || 'Master Asset')} · ${escapeHtml(assetObj?.statusReference || 'Data awal')}`;
+                    statusSource.innerHTML = `<i class="fa-solid fa-link"></i> ${escapeHtml(assetObj?.statusSource || 'Master Asset')} &middot; ${escapeHtml(assetObj?.statusReference || 'Data awal')}`;
                 }
 
                 // Populate Specs based on category
@@ -4595,10 +4602,9 @@
                     return;
                 }
 
-                const { lat, lng } = position;
-                if (gpsCoordEl) {
+                const { lat, lng } = position;                if (gpsCoordEl) {
                     gpsCoordEl.innerText = position.isRepresentative
-                        ? `${position.source} - koordinat aktual belum tersedia`
+                        ? `${position.source} - koordinat aktual belum tersedia`
                         : `${position.source}: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
                 }
                 if (btnGmaps) {
@@ -4617,7 +4623,7 @@
 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
-                    attribution: '© OpenStreetMap'
+                    attribution: '&copy; OpenStreetMap'
                 }).addTo(modalUnitMapInstance);
 
                 const markerColor = statusName === 'READY' ? '#28a745' : (statusName === 'BREAKDOWN' ? '#dc3545' : '#17a2b8');
@@ -4632,7 +4638,7 @@
 
                 L.marker([lat, lng], { icon: customIcon })
                     .addTo(modalUnitMapInstance)
-                    .bindPopup(`<b>${escapeHtml(unitId)}</b><br>Lokasi: ${escapeHtml(locName)}<br>Status: <b>${escapeHtml(statusName)}</b><br><small>${escapeHtml(position.source)}${position.isRepresentative ? ' - bukan GPS aktual' : ''}</small>`)
+                    .bindPopup(`<b>${escapeHtml(unitId)}</b><br>Lokasi: ${escapeHtml(locName)}<br>Status: <b>${escapeHtml(statusName)}</b><br><small>${escapeHtml(position.source)}${position.isRepresentative ? ' - bukan GPS aktual' : ''}</small>`)
                     .openPopup();
 
                 setTimeout(() => {
@@ -4774,8 +4780,8 @@
                 const asset = globalData.assets.find(a => a.id === id);
                 if (asset) {
                     const activeWo = globalData.work_orders.find(wo => wo.assetId === asset.id && wo.status !== 'Closed');
-                    if (status === 'READY' && activeWo) {
-                        alert(`Unit belum dapat diubah ke READY karena ${activeWo.woId} masih aktif. Tutup Work Order terlebih dahulu.`);
+                    if ((status === 'READY' || status === 'OPERATING') && activeWo) {
+                        alert(`Unit belum dapat diubah ke ${status} karena ${activeWo.woId} masih aktif. Tutup Work Order terlebih dahulu.`);
                         return;
                     }
 
@@ -5350,35 +5356,43 @@
             }
 
             function initMonitoringView(assets) {
+                if (!assets) return;
                 const filterEl = document.getElementById('monitoringStatusFilter');
                 const selectedStatus = filterEl ? filterEl.value : 'ALL';
-                const allProblematic = assets.filter(a => a.status !== 'READY');
-                const problematic = selectedStatus === 'ALL'
-                    ? allProblematic
-                    : allProblematic.filter(asset => asset.status === selectedStatus);
+
+                const totalCount = assets.length;
+                const readyCount = assets.filter(a => a.status === 'READY').length;
+                const operatingCount = assets.filter(a => a.status === 'OPERATING').length;
+                const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN').length;
+                const inspectionCount = assets.filter(a => a.status === 'INSPEKSI').length;
+                const standbyCount = assets.filter(a => a.status === 'STANDBY').length;
+                const activeWos = (globalData?.work_orders || []).filter(wo => wo.status !== 'Closed').length;
 
                 const summaryEl = document.getElementById('monitoringSummary');
                 if (summaryEl) {
-                    const breakdown = allProblematic.filter(a => a.status === 'BREAKDOWN').length;
-                    const inspection = allProblematic.filter(a => a.status === 'INSPEKSI').length;
-                    const standby = allProblematic.filter(a => a.status === 'STANDBY').length;
-                    const activeWos = (globalData?.work_orders || []).filter(wo => wo.status !== 'Closed').length;
                     summaryEl.innerHTML = `
-                    <div><strong>${assets.length}</strong><span>Unit unik</span></div>
-                    <div class="danger"><strong>${breakdown}</strong><span>Breakdown</span></div>
-                    <div class="warning"><strong>${inspection}</strong><span>Perlu P2H</span></div>
-                    <div class="info"><strong>${standby}</strong><span>Standby</span></div>
-                    <div><strong>${activeWos}</strong><span>WO aktif</span></div>
+                    <div><strong>${totalCount}</strong><span>Total Unit</span></div>
+                    <div class="success"><strong style="color:#16a34a;">${readyCount}</strong><span>Ready</span></div>
+                    <div class="info"><strong style="color:#0284c7;">${operatingCount}</strong><span>Operating</span></div>
+                    <div class="warning"><strong style="color:#d97706;">${standbyCount}</strong><span>Standby</span></div>
+                    <div class="warning"><strong style="color:#ea580c;">${inspectionCount}</strong><span>Inspeksi</span></div>
+                    <div class="danger"><strong style="color:#dc2626;">${breakdownCount}</strong><span>Breakdown</span></div>
+                    <div><strong>${activeWos}</strong><span>WO Aktif</span></div>
                 `;
                 }
 
+                const filtered = selectedStatus === 'ALL'
+                    ? assets
+                    : assets.filter(asset => asset.status === selectedStatus);
+
                 const tbody = document.getElementById('monTableBody');
                 if (!tbody) return;
-                if (problematic.length === 0) {
+                if (filtered.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="monitoring-empty"><i class="fa-solid fa-circle-check"></i> Tidak ada unit untuk filter ini.</td></tr>';
                     return;
                 }
-                tbody.innerHTML = problematic.map(asset => {
+
+                tbody.innerHTML = filtered.map(asset => {
                     let badge = '';
                     let action = '';
                     const context = getUnitIntegrationContext(asset);
@@ -5386,7 +5400,20 @@
                     const inspection = context.latestInspection;
                     const source = asset.statusSource || (activeWo ? 'Work Order' : inspection ? 'Inspeksi & P2H' : 'Master Asset');
                     const reference = asset.statusReference || (activeWo ? activeWo.woId : inspection ? inspection.id : 'Data awal');
-                    if (asset.status === 'STANDBY') {
+
+                    if (asset.status === 'READY') {
+                        badge = '<span class="badge bg-operating">READY</span>';
+                        action = `
+                        <button class="integrated-action success" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-play"></i> Tugaskan</button>
+                        <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
+                    }
+                    else if (asset.status === 'OPERATING') {
+                        badge = '<span class="badge bg-operating">OPERATING</span>';
+                        action = `
+                        <button class="integrated-action primary" onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')"><i class="fa-solid fa-gauge-high"></i> Telemetri</button>
+                        <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
+                    }
+                    else if (asset.status === 'STANDBY') {
                         badge = '<span class="badge bg-standby">STANDBY</span>';
                         action = `
                         <button class="integrated-action primary" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Evaluasi Status</button>
@@ -5404,6 +5431,16 @@
                         <button class="integrated-action warning" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'history')"><i class="fa-solid fa-clipboard-check"></i> Review P2H</button>
                         ${activeWo ? `<button class="integrated-action" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-wrench"></i> ${escapeHtml(activeWo.woId)}</button>` : `<button class="integrated-action" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'form')"><i class="fa-solid fa-plus"></i> Inspeksi</button>`}`;
                     }
+                    else if (asset.status === 'ACCIDENT_HOLD') {
+                        badge = '<span class="badge bg-breakdown">ACCIDENT HOLD</span>';
+                        action = `
+                        <button class="integrated-action danger" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-shield-cat"></i> Investigasi</button>
+                        <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
+                    }
+                    else {
+                        badge = `<span class="badge bg-operating">${escapeHtml(asset.status || 'READY')}</span>`;
+                        action = `<button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update Status</button>`;
+                    }
 
                     return `
                     <tr class="monitoring-unit-row">
@@ -5415,7 +5452,7 @@
                         <td>${escapeHtml(asset.location)}</td>
                         <td>
                             ${badge}
-                            <span class="status-source-line"><i class="fa-solid fa-link"></i> ${escapeHtml(source)} · ${escapeHtml(reference)}</span>
+                            <span class="status-source-line"><i class="fa-solid fa-link"></i> ${escapeHtml(source)} &middot; ${escapeHtml(reference)}</span>
                         </td>
                         <td><div class="integrated-actions">${action}</div></td>
                     </tr>
@@ -5640,7 +5677,7 @@
                         </td>
                         <td>${escapeHtml(l.category)}<br><small class="text-muted">${escapeHtml(l.location)}</small></td>
                         <td>${escapeHtml(l.fuelman)}<br><small class="text-muted">Op: ${escapeHtml(l.operator)}</small></td>
-                        <td>${l.meterPrev} - "™ ${l.meterCurr} <small>(${l.meterDiff} ${l.meterType})</small></td>
+                        <td>${l.meterPrev} &rarr; ${l.meterCurr} <small>(${l.meterDiff} ${l.meterType})</small></td>
                         <td><strong>${l.liter} L</strong></td>
                         <td>${l.rateActual} ${l.meterType === 'HM' ? 'L/HM' : 'Km/L'} <br><small class="text-muted">Std: ${l.targetRate}</small></td>
                         <td style="font-weight:bold; color:${l.deviationPct > 10 || l.deviationPct < -15 ? 'var(--danger)' : 'var(--success)'};">
@@ -5651,7 +5688,7 @@
                         <td>${badgeStatus}</td>
                         <td>
                             <div style="display:flex; gap:4px;">
-                                <button onclick="openAssetModal('${escapeHtml(unitShort)}', 'READY', '${escapeHtml(l.category)}', '${escapeHtml(l.location)}')" class="btn" style="padding:3px 6px; font-size:0.85rem; background:#f8f9fa; border:1px solid var(--border);" title="Detail 360° Unit">
+                                <button onclick="openAssetModal('${escapeHtml(unitShort)}', 'READY', '${escapeHtml(l.category)}', '${escapeHtml(l.location)}')" class="btn" style="padding:3px 6px; font-size:0.85rem; background:#f8f9fa; border:1px solid var(--border);" title="Detail 360&deg; Unit">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                                 ${l.anomalyStatus === 'RED' ? `
@@ -6004,7 +6041,7 @@
                     buyYear: 2022,
                     depreciationPct: 40,
                     depreciationVal: 240000000,
-                    marketRange: '450.000.000 -œ 520.000.000',
+                    marketRange: '450.000.000 - 520.000.000',
                     offeredPrice: 550000000,
                     netPriceBra: 450000000,
                     selisih: 100000000,
@@ -6023,7 +6060,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 366000000,
-                    marketRange: '750.000.000 -œ 900.000.000',
+                    marketRange: '750.000.000 - 900.000.000',
                     offeredPrice: 950000000,
                     netPriceBra: 820000000,
                     selisih: 130000000,
@@ -6042,7 +6079,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 252414000,
-                    marketRange: '420.000.000 -œ 480.000.000',
+                    marketRange: '420.000.000 - 480.000.000',
                     offeredPrice: 520000000,
                     netPriceBra: 460000000,
                     selisih: 60000000,
@@ -6061,7 +6098,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 252414000,
-                    marketRange: '420.000.000 -œ 480.000.000',
+                    marketRange: '420.000.000 - 480.000.000',
                     offeredPrice: 510000000,
                     netPriceBra: 450000000,
                     selisih: 60000000,
@@ -6080,7 +6117,7 @@
                     buyYear: 2022,
                     depreciationPct: 40,
                     depreciationVal: 320000000,
-                    marketRange: '420.000.000 -œ 500.000.000',
+                    marketRange: '420.000.000 - 500.000.000',
                     offeredPrice: 520000000,
                     netPriceBra: 450000000,
                     selisih: 70000000,
@@ -6099,7 +6136,7 @@
                     buyYear: 2023,
                     depreciationPct: 30,
                     depreciationVal: 124500000,
-                    marketRange: '400.000.000 -œ 550.000.000',
+                    marketRange: '400.000.000 - 550.000.000',
                     offeredPrice: 500000000,
                     netPriceBra: 430000000,
                     selisih: 70000000,
@@ -6118,7 +6155,7 @@
                     buyYear: 2021,
                     depreciationPct: 50,
                     depreciationVal: 185000000,
-                    marketRange: '400.000.00 -œ 580.000.000',
+                    marketRange: '400.000.000 - 580.000.000',
                     offeredPrice: 520000000,
                     netPriceBra: 400000000,
                     selisih: 120000000,
@@ -6221,11 +6258,11 @@
                                 📅 Bulan ${m.month} 2026
                             </div>
                             <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:3px;">
-                                <span><span style="color:#2563eb;">¢— </span> Budget Planning:</span>
+                                <span><span style="color:#2563eb;">&bull; </span> Budget Planning:</span>
                                 <strong>Rp ${m.budget} Jt</strong>
                             </div>
                             <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px;">
-                                <span><span style="color:${isOver ? '#dc2626' : '#16a34a'};">¢— </span> Realisasi Actual:</span>
+                                <span><span style="color:${isOver ? '#dc2626' : '#16a34a'};">&bull; </span> Realisasi Actual:</span>
                                 <strong style="color:${isOver ? '#dc2626' : '#16a34a'};">Rp ${m.actual} Jt</strong>
                             </div>
                             <div style="border-top:1px dashed #cbd5e1; padding-top:4px; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -6291,8 +6328,8 @@
                         <td><strong>${(v.netPriceBra / 1000000).toFixed(0)} Jt</strong></td>
                         <td style="font-weight:bold; color:var(--success);">+${(v.selisih / 1000000).toFixed(0)} Jt</td>
                         <td>
-                            <button onclick="openAssetModal('${escapeHtml(shortId)}', 'READY', 'Bulldozer', 'Yard Duri')" class="btn" style="padding:3px 6px; font-size:0.85rem; background:#f8f9fa; border:1px solid var(--border);" title="Lihat Detail 360° Aset">
-                                <i class="fa-solid fa-eye"></i> Detail 360°
+                            <button onclick="openAssetModal('${escapeHtml(shortId)}', 'READY', 'Bulldozer', 'Yard Duri')" class="btn" style="padding:3px 6px; font-size:0.85rem; background:#f8f9fa; border:1px solid var(--border);" title="Lihat Detail 360&deg; Aset">
+                                <i class="fa-solid fa-eye"></i> Detail 360&deg;
                             </button>
                         </td>
                     </tr>
