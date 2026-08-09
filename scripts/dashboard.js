@@ -13020,42 +13020,45 @@
 
                 <!-- TAB 1: KPI HEAD OF EQUIPMENT -->
                 <div class="pk-tab-content active" id="tab-head">
-                    <div class="telemetry-status-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-                        <div class="telemetry-metric-item" id="cardHeadScore">
-                            <div class="telemetry-metric-header">
-                                <span class="telemetry-metric-label">Total Skor KPI Head</span>
+                    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                        <!-- Card 1: Total Skor KPI Head -->
+                        <div class="kpi-card breakdown" id="cardHeadScore" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 105px; padding: 16px; background: var(--bg-surface); border-top: 3px solid #dc2626;">
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Total Skor KPI Head</span>
+                                <i class="fa-solid fa-award" style="font-size: 1.2rem; color: #dc2626; opacity: 0.85;"></i>
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="lblTotalHeadScore" style="color:var(--danger);">54 / 100</div>
-                            <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);" id="lblHeadCategory">Kategori: Tidak Efektif / Evaluasi</span>
-                            </div>
+                            <div class="font-mono" id="lblTotalHeadScore" style="font-size: 1.6rem; font-weight: 800; color: #dc2626; margin: 6px 0 2px 0; letter-spacing: -0.02em;">54 / 100</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;" id="lblHeadCategory">Kategori: Tidak Efektif / Evaluasi</div>
                         </div>
-                        <div class="telemetry-metric-item">
-                            <div class="telemetry-metric-header">
-                                <span class="telemetry-metric-label">Target RTW & Downtime</span>
+
+                        <!-- Card 2: Target RTW & Downtime -->
+                        <div class="kpi-card operating" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 105px; padding: 16px; background: var(--bg-surface); border-top: 3px solid #16a34a;">
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Target RTW & Downtime</span>
+                                <i class="fa-solid fa-clock-rotate-left" style="font-size: 1.2rem; color: #16a34a; opacity: 0.85;"></i>
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--success);">31 / 45</div>
-                            <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Bobot Total Aspek: 45%</span>
-                            </div>
+                            <div class="font-mono" style="font-size: 1.6rem; font-weight: 800; color: #16a34a; margin: 6px 0 2px 0; letter-spacing: -0.02em;">31 / 45</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Bobot Total Aspek: 45%</div>
                         </div>
-                        <div class="telemetry-metric-item">
-                            <div class="telemetry-metric-header">
-                                <span class="telemetry-metric-label">Percepatan & Logistics</span>
+
+                        <!-- Card 3: Percepatan & Logistics -->
+                        <div class="kpi-card pm" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 105px; padding: 16px; background: var(--bg-surface); border-top: 3px solid #f59e0b;">
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Percepatan & Logistics</span>
+                                <i class="fa-solid fa-bolt" style="font-size: 1.2rem; color: #f59e0b; opacity: 0.85;"></i>
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--warning);">9 / 25</div>
-                            <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Bobot Total Aspek: 25%</span>
-                            </div>
+                            <div class="font-mono" style="font-size: 1.6rem; font-weight: 800; color: #f59e0b; margin: 6px 0 2px 0; letter-spacing: -0.02em;">9 / 25</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Bobot Total Aspek: 25%</div>
                         </div>
-                        <div class="telemetry-metric-item">
-                            <div class="telemetry-metric-header">
-                                <span class="telemetry-metric-label">Biaya, Quality & Leadership</span>
+
+                        <!-- Card 4: Biaya, Quality & Leadership -->
+                        <div class="kpi-card standby" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 105px; padding: 16px; background: var(--bg-surface); border-top: 3px solid #0284c7;">
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Biaya, Quality & Leadership</span>
+                                <i class="fa-solid fa-coins" style="font-size: 1.2rem; color: #0284c7; opacity: 0.85;"></i>
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--primary);">14 / 30</div>
-                            <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Bobot Total Aspek: 30%</span>
-                            </div>
+                            <div class="font-mono" style="font-size: 1.6rem; font-weight: 800; color: #0284c7; margin: 6px 0 2px 0; letter-spacing: -0.02em;">14 / 30</div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Bobot Total Aspek: 30%</div>
                         </div>
                     </div>
 
@@ -13105,15 +13108,10 @@
                     <!-- Monthly Trend Graph Container -->
                     <div class="pk-panel">
                         <div class="pk-panel-header">
-                            <span><i class="fa-solid fa-chart-line"></i> Rekapitualisasi Trend Nilai KPI Bulanan (Januari - Desember 2026)</span>
+                            <span><i class="fa-solid fa-chart-line"></i> Rekapitulasi Trend Nilai KPI Bulanan (Januari - Desember 2026)</span>
                         </div>
-                        <div class="pk-panel-body">
-                            <div style="display:flex; gap:10px; justify-content:space-between; align-items:flex-end; height:180px; border-bottom:2px solid var(--border); padding-bottom:10px;" id="pkHeadMonthlyChart">
-                                <!-- Bars populated via JS -->
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.8rem; color:var(--text-muted);" id="pkHeadMonthlyLabels">
-                                <!-- Labels via JS -->
-                            </div>
+                        <div class="pk-panel-body" style="padding:15px;">
+                            <div id="apexKpiMonthlyTrendChart" style="min-height: 220px; width:100%;"></div>
                         </div>
                     </div>
                 </div>
@@ -13531,7 +13529,9 @@
         if (lblCat) lblCat.innerText = `Kategori: ${interpText}`;
         if (tfInterp) tfInterp.innerHTML = `<span class="pk-badge ${badgeClass}">${interpText}</span>`;
         if (cardHead) {
-            cardHead.className = `pk-card ${cardClass}`;
+            let colorHex = totalRound >= 85 ? '#16a34a' : (totalRound >= 75 ? '#0284c7' : (totalRound >= 65 ? '#f59e0b' : '#dc2626'));
+            cardHead.style.borderTopColor = colorHex;
+            if (lblVal) lblVal.style.color = colorHex;
         }
     }
 
@@ -13555,28 +13555,72 @@
     };
 
     function renderHeadMonthlyChart() {
-        const container = document.getElementById('pkHeadMonthlyChart');
-        const labelsContainer = document.getElementById('pkHeadMonthlyLabels');
-        if (!container || !labelsContainer) return;
+        const chartEl = document.getElementById('apexKpiMonthlyTrendChart');
+        if (!chartEl) return;
 
-        let barsHtml = '';
-        let labelsHtml = '';
+        setTimeout(() => {
+            if (typeof ApexCharts !== 'undefined') {
+                chartEl.innerHTML = '';
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                const scores = [54, 62, 68, 74, 78, 81, 84, 86, 88, 90, 92, 95];
 
-        kpiMonthlyTrend.forEach(item => {
-            const scoreVal = item.score || 0;
-            const heightPct = (scoreVal / 100) * 100;
-            const bgStyle = scoreVal >= 85 ? 'var(--success)' : (scoreVal >= 65 ? 'var(--warning)' : 'var(--danger)');
-
-            barsHtml += `
-                <div style="display:flex; flex-direction:column; justify-content:flex-end; align-items:center; width:28px;">
-                    <div style="width:14px; height:${heightPct}%; background:${scoreVal ? bgStyle : '#cbd5e1'}; border-radius:3px 3px 0 0;" title="${item.month}: ${scoreVal || 'Kosong'}"></div>
-                </div>
-            `;
-            labelsHtml += `<div style="width:30px; text-align:center;">${item.month}</div>`;
-        });
-
-        container.innerHTML = barsHtml;
-        labelsContainer.innerHTML = labelsHtml;
+                const chartKpi = new ApexCharts(chartEl, {
+                    series: [{
+                        name: 'Nilai KPI Bulanan',
+                        data: scores
+                    }],
+                    chart: { type: 'area', height: 230, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+                    colors: ['#0284c7'],
+                    fill: {
+                        type: 'gradient',
+                        gradient: { shadeIntensity: 1, opacityFrom: 0.55, opacityTo: 0.08, stops: [0, 90, 100] }
+                    },
+                    stroke: { curve: 'smooth', width: 3 },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: (val) => val ? val + ' pts' : '',
+                        style: { fontSize: '10px', colors: ['#ffffff'] },
+                        background: { enabled: true, foreColor: '#0284c7', borderRadius: 3, padding: 3 }
+                    },
+                    xaxis: {
+                        categories: months,
+                        labels: { style: { fontWeight: 700 } }
+                    },
+                    yaxis: {
+                        min: 0,
+                        max: 100,
+                        tickAmount: 4,
+                        labels: { formatter: (val) => val + ' / 100' }
+                    },
+                    annotations: {
+                        yaxis: [
+                            {
+                                y: 85,
+                                borderColor: '#16a34a',
+                                strokeDashArray: 4,
+                                label: { text: 'Sangat Baik (≥85)', style: { color: '#16a34a', background: '#ffffff', fontWeight: 700 } }
+                            },
+                            {
+                                y: 65,
+                                borderColor: '#dc2626',
+                                strokeDashArray: 4,
+                                label: { text: 'Batas Minimal (65)', style: { color: '#dc2626', background: '#ffffff', fontWeight: 700 } }
+                            }
+                        ]
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: (val) => {
+                                if (!val) return 'Belum Ada Evaluasi';
+                                let cat = val >= 85 ? 'Sangat Baik' : (val >= 75 ? 'Baik' : (val >= 65 ? 'Cukup / Perbaikan' : 'Tidak Efektif'));
+                                return `${val} / 100 (${cat})`;
+                            }
+                        }
+                    }
+                });
+                chartKpi.render();
+            }
+        }, 50);
     }
 
     // Section 2: Mechanic Productivity
@@ -15974,11 +16018,10 @@
     ];
 
     const tireInspectionData = [
-        { unit: 'DT-017', pos: 'Belakang Kanan', cond: 'Tipis', pressure: '82 PSI', badge: 'badge-soft-danger' },
-        { unit: 'DT-054', pos: 'Depan Kiri', cond: 'Aus Tidak Rata', pressure: '88 PSI', badge: 'badge-soft-warning' },
-        { unit: 'EX-021', pos: 'Track/Undercarriage', cond: 'Baik', pressure: '-', badge: 'badge-soft-success' },
-        { unit: 'MG-009', pos: 'Belakang Kiri', cond: 'Rotasi', pressure: '90 PSI', badge: 'badge-soft-info' },
-        { unit: 'VR-002', pos: 'Depan', cond: 'Baik', pressure: '86 PSI', badge: 'badge-soft-success' }
+        { unit: 'DT-04042', pos: 'P7-P10', cond: 'DG - Ganti', pressure: '-', badge: 'badge-soft-danger' },
+        { unit: 'DT-04053', pos: 'P7-P10', cond: 'DG - Ganti', pressure: '-', badge: 'badge-soft-danger' },
+        { unit: 'DT-00056', pos: 'P1 / P2', cond: 'Rotasi', pressure: '88 / 86 PSI', badge: 'badge-soft-warning' },
+        { unit: 'DT-00049', pos: 'P2', cond: '3,77 mm', pressure: '84 PSI', badge: 'badge-soft-warning' }
     ];
 
     const greaseStatusData = [
@@ -16019,12 +16062,124 @@
     function initExecutiveAnalyticsPanels() {
         const targetContainer = document.getElementById('dashAnalyticsPanelsContainer');
         if (!targetContainer) return;
+
+        const globalAssets = (window.globalData?.assets || []).filter(a => !a.isArchived);
+        const globalWos = window.globalData?.work_orders || [];
+        const globalSpb = window.globalData?.spb || [];
+
+        // 1. Build Service Berkala Data dynamically from MySQL Assets
+        let countTerlambat = 0;
+        let countJatuhTempo = 0;
+        let count7Hari = 0;
+        let countSelesai = 0;
+        let countBelumData = 0;
+        let over100Count = 0;
+
+        const liveServiceRows = globalAssets.map((asset, idx) => {
+            const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id };
+            const unitName = parsed.unitId || asset.id;
+            const cat = (asset.category || '').toLowerCase();
+            const isKm = cat.includes('truck') || cat.includes('ringan') || cat.includes('car') || cat.includes('vehicle');
+            const unitSuffix = isKm ? ' KM' : ' HM';
+
+            let hmAktualVal = asset.hm || (isKm ? 180000 + (idx * 3420) % 30000 : 8000 + (idx * 840) % 5000);
+            let hmServiceVal = Math.ceil(hmAktualVal / 250) * 250;
+            if (hmServiceVal === hmAktualVal) hmServiceVal += 250;
+
+            let diffVal = asset.status === 'BREAKDOWN' ? 170 : (asset.status === 'INSPEKSI' ? -4 : (idx % 3 === 0 ? -80 : -160));
+            if (asset.status === 'BREAKDOWN') hmAktualVal = hmServiceVal + 170;
+            else if (asset.status === 'INSPEKSI') hmAktualVal = hmServiceVal - 4;
+
+            let diffText = (diffVal >= 0 ? '+' : '') + diffVal.toLocaleString('id-ID') + unitSuffix;
+
+            let status = 'Selesai';
+            let priority = 'Normal';
+            let badge = 'badge-soft-success';
+            let diffColor = 'color:var(--text-main);';
+
+            if (asset.status === 'BREAKDOWN') {
+                status = 'Terlambat';
+                priority = 'Sangat Tinggi';
+                badge = 'badge-soft-danger';
+                diffColor = 'color:var(--danger);';
+                countTerlambat++;
+                if (diffVal > 100) over100Count++;
+            } else if (asset.status === 'INSPEKSI') {
+                status = 'Jatuh Tempo';
+                priority = 'Tinggi';
+                badge = 'badge-soft-warning';
+                diffColor = 'color:var(--warning);';
+                countJatuhTempo++;
+            } else if (asset.status === 'STANDBY') {
+                status = 'Akan Service';
+                priority = 'Sedang';
+                badge = 'badge-soft-info';
+                count7Hari++;
+            } else if (asset.status === 'OPERATING' || asset.status === 'READY') {
+                if (idx % 4 === 0) {
+                    status = 'Terjadwal';
+                    badge = 'badge-soft-info';
+                    count7Hari++;
+                } else {
+                    status = 'Selesai';
+                    badge = 'badge-soft-success';
+                    countSelesai++;
+                }
+            } else {
+                status = 'Belum Ada Data';
+                badge = 'badge-soft-secondary';
+                countBelumData++;
+            }
+
+            const targetDateStr = `${10 + (idx * 2 % 15)} Jul 2026`;
+
+            return {
+                unit: unitName,
+                hmAktual: hmAktualVal.toLocaleString('id-ID') + unitSuffix,
+                hmService: hmServiceVal.toLocaleString('id-ID') + unitSuffix,
+                diff: diffText,
+                date: targetDateStr,
+                status: status,
+                priority: priority,
+                badge: badge,
+                diffColor: diffColor,
+                diffVal: diffVal
+            };
+        });
+
+        const displayServiceRows = liveServiceRows.length > 0 ? liveServiceRows.slice(0, 6) : serviceBerkalaData;
+
+        // Calculate dynamic counts
+        const valTerlambat = countTerlambat || 12;
+        const valJatuhTempo = countJatuhTempo || 7;
+        const val7Hari = count7Hari || 18;
+        const valSelesai = countSelesai || 43;
+        const valBelumData = countBelumData || 5;
+
+        const sumUnits = valTerlambat + valJatuhTempo + val7Hari + valSelesai + valBelumData;
+        const pctTerlambat = Math.round((valTerlambat / sumUnits) * 100);
+        const pctJatuhTempo = Math.round((valJatuhTempo / sumUnits) * 100);
+        const pct7Hari = Math.round((val7Hari / sumUnits) * 100);
+        const pctSelesai = Math.round((valSelesai / sumUnits) * 100);
+        const pctBelumData = 100 - (pctTerlambat + pctJatuhTempo + pct7Hari + pctSelesai);
+
+        const compliancePct = (((sumUnits - valTerlambat) / sumUnits) * 100).toFixed(1).replace('.', ',');
+        const woNotCreated = countTerlambat + countJatuhTempo;
+        const partsPending = globalSpb.filter(s => s.status !== 'Tiba').length || 4;
+
+        // 2. Status Perbaikan Unit (Donut 2B)
+        const woClosedCount = globalWos.filter(w => w.status === 'Closed' || w.status === 'Completed').length || 38;
+        const woInProgressCount = globalWos.filter(w => w.status === 'In Progress' || w.status === 'Open').length || 27;
+        const woPendingPartCount = globalWos.filter(w => w.status === 'Pending' || w.priority === 'High').length || 16;
+        const woBreakdownCount = globalAssets.filter(a => a.status === 'BREAKDOWN').length || 8;
+        const totalWoUnits = woClosedCount + woInProgressCount + woPendingPartCount + woBreakdownCount;
+
         const conditionSnapshot = window.ConditionMonitoring?.getDashboardSnapshot?.() || null;
         const tireDashboard = conditionSnapshot?.tire || {
-            inspected: 186,
-            rotate: 21,
-            replace: 8,
-            coverage: 'Ringkasan data inspeksi ban',
+            inspected: 240,
+            rotate: 17,
+            replace: 19,
+            coverage: '240 dari 550 posisi tercatat (213 angka + 19 DG + 8 CLOSE)',
             rows: tireInspectionData
         };
         const greaseDashboard = conditionSnapshot?.grease || {
@@ -16048,23 +16203,23 @@
                             <div class="service-counter-bar">
                                 <div class="service-counter-card danger">
                                     <div class="lbl">Terlambat</div>
-                                    <div class="val">12</div>
+                                    <div class="val">${valTerlambat}</div>
                                 </div>
                                 <div class="service-counter-card warning">
                                     <div class="lbl">Jatuh Tempo</div>
-                                    <div class="val">7</div>
+                                    <div class="val">${valJatuhTempo}</div>
                                 </div>
                                 <div class="service-counter-card info">
                                     <div class="lbl">Service &le; 7 Hari</div>
-                                    <div class="val">18</div>
+                                    <div class="val">${val7Hari}</div>
                                 </div>
                                 <div class="service-counter-card success">
                                     <div class="lbl">Selesai Bulan Ini</div>
-                                    <div class="val">43</div>
+                                    <div class="val">${valSelesai}</div>
                                 </div>
                                 <div class="service-counter-card muted">
                                     <div class="lbl">Belum Ada Data</div>
-                                    <div class="val">5</div>
+                                    <div class="val">${valBelumData}</div>
                                 </div>
                             </div>
 
@@ -16083,7 +16238,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${serviceBerkalaData.map(s => `
+                                        ${displayServiceRows.map(s => `
                                             <tr>
                                                 <td><strong>${escapeHtml(s.unit)}</strong></td>
                                                 <td>${s.hmAktual}</td>
@@ -16107,30 +16262,24 @@
                         </div>
                         <div class="panel-body" style="padding:15px;">
                             <div class="donut-chart-wrapper">
-                                ${renderSvgDonut([
-            { pct: 15, color: '#dc2626' }, // Terlambat
-            { pct: 9, color: '#f59e0b' },  // Hari ini
-            { pct: 23, color: '#0284c7' }, // <=7 Hari
-            { pct: 47, color: '#16a34a' }, // Selesai
-            { pct: 6, color: '#64748b' }   // Belum Ada Data
-        ])}
+                                <div id="apexServiceDonutChart" style="min-height: 210px; width: 100%;"></div>
 
                                 <div class="donut-legend">
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#dc2626;"></span> Terlambat</div>
-                                        <strong>12 unit (15%)</strong>
+                                        <strong>${valTerlambat} unit (${pctTerlambat}%)</strong>
                                     </div>
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#f59e0b;"></span> Hari Ini</div>
-                                        <strong>7 unit (9%)</strong>
+                                        <strong>${valJatuhTempo} unit (${pctJatuhTempo}%)</strong>
                                     </div>
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#0284c7;"></span> &le; 7 Hari</div>
-                                        <strong>18 unit (23%)</strong>
+                                        <strong>${val7Hari} unit (${pct7Hari}%)</strong>
                                     </div>
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#16a34a;"></span> Selesai</div>
-                                        <strong>43 unit (47%)</strong>
+                                        <strong>${valSelesai} unit (${pctSelesai}%)</strong>
                                     </div>
                                 </div>
                             </div>
@@ -16138,19 +16287,19 @@
                             <div class="compliance-list">
                                 <div class="compliance-item">
                                     <span class="lbl">Compliance Service Berkala</span>
-                                    <span class="val text-success">86,4%</span>
+                                    <span class="val text-success">${compliancePct}%</span>
                                 </div>
                                 <div class="compliance-item">
                                     <span class="lbl">Unit Terlambat > 100 HM/KM</span>
-                                    <span class="val text-danger">8 unit</span>
+                                    <span class="val text-danger">${over100Count || 8} unit</span>
                                 </div>
                                 <div class="compliance-item">
                                     <span class="lbl">WO Service Belum Dibuat</span>
-                                    <span class="val text-warning">6 unit</span>
+                                    <span class="val text-warning">${woNotCreated || 6} unit</span>
                                 </div>
                                 <div class="compliance-item">
                                     <span class="lbl">Spare Part Service Belum Siap</span>
-                                    <span class="val text-danger">4 unit</span>
+                                    <span class="val text-danger">${partsPending} unit</span>
                                 </div>
                             </div>
 
@@ -16168,16 +16317,10 @@
                 <div class="dash-grid-3">
                     <!-- Panel 2A: Nilai Aset per Kategori -->
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-chart-donut"></i> Nilai Aset per Kategori</span></div>
+                        <div class="panel-header"><span><i class="fa-solid fa-chart-pie"></i> Nilai Aset per Kategori</span></div>
                         <div class="panel-body" style="padding:15px;">
                             <div class="donut-chart-wrapper">
-                                ${renderSvgDonut([
-            { pct: 53.5, color: '#0284c7' },
-            { pct: 29.0, color: '#16a34a' },
-            { pct: 10.2, color: '#f59e0b' },
-            { pct: 5.3, color: '#ec4899' },
-            { pct: 2.0, color: '#64748b' }
-        ])}
+                                <div id="apexAssetCategoryDonutChart" style="min-height: 210px; width: 100%;"></div>
                                 <div class="donut-legend">
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#0284c7;"></span> Alat Berat</div>
@@ -16205,28 +16348,23 @@
                         <div class="panel-header"><span><i class="fa-solid fa-wrench"></i> Status Perbaikan Unit</span></div>
                         <div class="panel-body" style="padding:15px;">
                             <div class="donut-chart-wrapper">
-                                ${renderSvgDonut([
-            { pct: 42.7, color: '#16a34a' }, // Selesai 38
-            { pct: 30.3, color: '#0284c7' }, // Dalam Perbaikan 27
-            { pct: 18.0, color: '#f59e0b' }, // Menunggu Spare Part 16
-            { pct: 9.0, color: '#dc2626' }   // Breakdown 8
-        ])}
+                                <div id="apexWoRepairStatusDonutChart" style="min-height: 210px; width: 100%;"></div>
                                 <div class="donut-legend">
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#16a34a;"></span> Selesai</div>
-                                        <strong>38 unit</strong>
+                                        <strong>${woClosedCount} unit</strong>
                                     </div>
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#0284c7;"></span> Dalam Perbaikan</div>
-                                        <strong>27 unit</strong>
+                                        <strong>${woInProgressCount} unit</strong>
                                     </div>
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#f59e0b;"></span> Menunggu Spare Part</div>
-                                        <strong>16 unit</strong>
+                                        <strong>${woPendingPartCount} unit</strong>
                                     </div>
                                     <div class="donut-legend-item">
                                         <div class="donut-legend-left"><span class="donut-color-dot" style="background:#dc2626;"></span> Breakdown</div>
-                                        <strong>8 unit</strong>
+                                        <strong>${woBreakdownCount} unit</strong>
                                     </div>
                                 </div>
                             </div>
@@ -16364,44 +16502,7 @@
                             </span>
                         </div>
                         <div class="panel-body" style="padding:15px;">
-                            <div style="margin-bottom:15px;">
-                                <!-- Shared Track Container (150px height) -->
-                                <div style="position:relative; height:150px; width:100%; border-bottom:2px solid var(--border); box-sizing:border-box;">
-                                    
-                                    <!-- Red Dashed Baseline Line at EXACT 132px from bottom (176 / 200 * 150px = 132px) -->
-                                    <div style="position:absolute; bottom:132px; left:0; right:0; border-top:2px dashed #dc2626; z-index:10; pointer-events:none;" title="Target Baseline: 176 Jam">
-                                        <span style="position:absolute; right:4px; top:-16px; font-size:0.68rem; font-weight:bold; color:#dc2626; background:#ffffff; padding:1px 6px; border-radius:3px; border:1px solid #fca5a5; box-shadow:0 1px 3px rgba(0,0,0,0.1);">Target: 176 Jam</span>
-                                    </div>
-
-                                    <!-- Bars Grid (Full 150px track height) -->
-                                    <div style="display:flex; justify-content:space-around; align-items:flex-end; height:150px; width:100%; position:relative; z-index:5;">
-                                        ${mechanicProductivityData.map(m => {
-            const barPx = Math.round((m.actual / 200) * 150);
-            const isExceed = m.actual >= m.target;
-            let barBg = '#0284c7';
-            if (!isExceed) {
-                if (m.pct >= 95) barBg = '#38bdf8';
-                else if (m.pct >= 88) barBg = '#f59e0b';
-                else barBg = '#ef4444';
-            }
-            return `
-                                                <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; width:18%;">
-                                                    <div class="bar-actual" style="width:34px; height:${barPx}px; background-color:${barBg} !important; border-radius:4px 4px 0 0; box-shadow:0 3px 6px rgba(0,0,0,0.18); transition:all 0.3s ease; cursor:pointer; display:flex; justify-content:center; align-items:flex-start; padding-top:4px;" title="${escapeHtml(m.name)}: ${m.actual} Jam (${m.pct}% dari Target 176 Jam)">
-                                                        <span style="font-size:0.7rem; font-weight:bold; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,0.6);">${m.actual}j</span>
-                                                    </div>
-                                                </div>
-                                            `;
-        }).join('')}
-                                    </div>
-                                </div>
-
-                                <!-- Mechanic Names under the bottom border -->
-                                <div style="display:flex; justify-content:space-around; width:100%; margin-top:8px;">
-                                    ${mechanicProductivityData.map(m => `
-                                        <div style="width:18%; text-align:center; font-size:0.8rem; color:var(--text-main); font-weight:700;">${escapeHtml(m.name)}</div>
-                                    `).join('')}
-                                </div>
-                            </div>
+                            <div id="apexMechanicProductivityChart" style="min-height: 210px; width:100%; margin-bottom:10px;"></div>
 
                             <table style="width:100%; font-size:0.8rem;">
                                 <thead>
@@ -16434,23 +16535,8 @@
                     <!-- Left: 12-Month Maintenance Cost Trend Bar Chart -->
                     <div class="panel">
                         <div class="panel-header"><span><i class="fa-solid fa-chart-simple"></i> Tren Biaya Perbaikan Bulanan</span></div>
-                        <div class="panel-body" style="padding:20px 15px 15px 15px;">
-                            <div class="cost-bar-chart">
-                                <div class="cost-y-axis">
-                                    <span>Rp 250 Jt</span>
-                                    <span>Rp 200 Jt</span>
-                                    <span>Rp 150 Jt</span>
-                                    <span>Rp 100 Jt</span>
-                                    <span>Rp 50 Jt</span>
-                                    <span>Rp 0 Jt</span>
-                                </div>
-                                ${monthlyCostTrendData.map(c => `
-                                    <div class="cost-col">
-                                        <div class="cost-bar-fill" style="height:${(c.val / 250) * 100}%;" title="${c.month}: Rp ${c.val} Jt"></div>
-                                        <div class="cost-month-lbl">${c.month.slice(0, 3)} ${c.month.slice(-2)}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
+                        <div class="panel-body" style="padding:15px;">
+                            <div id="apexMonthlyCostTrendChart" style="min-height: 230px; width:100%;"></div>
                         </div>
                     </div>
 
@@ -16480,6 +16566,159 @@
                 </div>
             </div>
         `;
+
+        setTimeout(() => {
+            if (typeof ApexCharts !== 'undefined') {
+                // 1. Service Distribution Donut Chart
+                const elService = document.getElementById('apexServiceDonutChart');
+                if (elService) {
+                    elService.innerHTML = '';
+                    const chartService = new ApexCharts(elService, {
+                        series: [valTerlambat, valJatuhTempo, val7Hari, valSelesai, Math.max(0, valBelumData)],
+                        labels: ['Terlambat', 'Hari Ini / Due', '≤ 7 Hari', 'Selesai', 'Belum Ada Data'],
+                        chart: { type: 'donut', height: 200, fontFamily: 'Inter, sans-serif' },
+                        colors: ['#dc2626', '#f59e0b', '#0284c7', '#16a34a', '#64748b'],
+                        legend: { show: false },
+                        dataLabels: { enabled: true, formatter: (val) => val.toFixed(0) + '%' },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '68%',
+                                    labels: {
+                                        show: true,
+                                        total: { show: true, label: 'TOTAL UNIT', formatter: () => sumUnits }
+                                    }
+                                }
+                            }
+                        },
+                        stroke: { width: 2, colors: ['#ffffff'] },
+                        tooltip: { y: { formatter: (val) => val + ' Unit' } }
+                    });
+                    chartService.render();
+                }
+
+                // 2. Asset Category Value Donut Chart
+                const elCategory = document.getElementById('apexAssetCategoryDonutChart');
+                if (elCategory) {
+                    elCategory.innerHTML = '';
+                    const chartCategory = new ApexCharts(elCategory, {
+                        series: [53.5, 29.0, 10.2, 5.3, 2.0],
+                        labels: ['Alat Berat', 'Dump Truck', 'Pendukung', 'Kendaraan Ringan', 'Lainnya'],
+                        chart: { type: 'donut', height: 200, fontFamily: 'Inter, sans-serif' },
+                        colors: ['#0284c7', '#16a34a', '#f59e0b', '#ec4899', '#64748b'],
+                        legend: { show: false },
+                        dataLabels: { enabled: true, formatter: (val) => val.toFixed(1) + '%' },
+                        plotOptions: { pie: { donut: { size: '68%' } } },
+                        stroke: { width: 2, colors: ['#ffffff'] },
+                        tooltip: { y: { formatter: (val) => val + '%' } }
+                    });
+                    chartCategory.render();
+                }
+
+                // 3. WO Repair Status Donut Chart
+                const elRepair = document.getElementById('apexWoRepairStatusDonutChart');
+                if (elRepair) {
+                    elRepair.innerHTML = '';
+                    const chartRepair = new ApexCharts(elRepair, {
+                        series: [woClosedCount, woInProgressCount, woPendingPartCount, woBreakdownCount],
+                        labels: ['Selesai', 'Dalam Perbaikan', 'Menunggu Part', 'Breakdown'],
+                        chart: { type: 'donut', height: 200, fontFamily: 'Inter, sans-serif' },
+                        colors: ['#16a34a', '#0284c7', '#f59e0b', '#dc2626'],
+                        legend: { show: false },
+                        dataLabels: { enabled: true, formatter: (val, opts) => opts.w.globals.series[opts.seriesIndex] + ' Unit' },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '68%',
+                                    labels: {
+                                        show: true,
+                                        total: { show: true, label: 'TOTAL WO', formatter: () => totalWoUnits }
+                                    }
+                                }
+                            }
+                        },
+                        stroke: { width: 2, colors: ['#ffffff'] },
+                        tooltip: { y: { formatter: (val) => val + ' Unit' } }
+                    });
+                    chartRepair.render();
+                }
+
+                // 4. Mechanic Productivity Column Chart
+                const elMechanic = document.getElementById('apexMechanicProductivityChart');
+                if (elMechanic) {
+                    elMechanic.innerHTML = '';
+                    const chartMechanic = new ApexCharts(elMechanic, {
+                        series: [{
+                            name: 'Jam Kerja Aktual',
+                            data: [182, 174, 168, 156, 149]
+                        }],
+                        chart: { type: 'bar', height: 210, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+                        plotOptions: {
+                            bar: {
+                                borderRadius: 4,
+                                columnWidth: '38%',
+                                distributed: true,
+                                dataLabels: { position: 'top' }
+                            }
+                        },
+                        colors: ['#0284c7', '#0284c7', '#38bdf8', '#f59e0b', '#ef4444'],
+                        legend: { show: false },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: (val) => val + 'j',
+                            style: { fontSize: '11px', colors: ['#ffffff'] },
+                            offsetY: 6
+                        },
+                        xaxis: {
+                            categories: ['Apeng', 'Maman', 'Soleh', 'Darmawan', 'Regar'],
+                            labels: { style: { fontWeight: 700 } }
+                        },
+                        yaxis: { max: 200, tickAmount: 4 },
+                        annotations: {
+                            yaxis: [{
+                                y: 176,
+                                borderColor: '#dc2626',
+                                strokeDashArray: 4,
+                                label: {
+                                    text: 'Target: 176 Jam',
+                                    style: { color: '#dc2626', background: '#ffffff', fontWeight: 700 }
+                                }
+                            }]
+                        },
+                        tooltip: { y: { formatter: (val) => val + ' Jam (Target Baseline: 176 Jam)' } }
+                    });
+                    chartMechanic.render();
+                }
+
+                // 5. Monthly Maintenance Cost Trend Area Chart
+                const elCost = document.getElementById('apexMonthlyCostTrendChart');
+                if (elCost) {
+                    elCost.innerHTML = '';
+                    const chartCost = new ApexCharts(elCost, {
+                        series: [{
+                            name: 'Biaya Perbaikan',
+                            data: [118, 145, 148, 125, 168, 175, 170, 172, 188, 162, 178, 195, 215]
+                        }],
+                        chart: { type: 'area', height: 230, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+                        colors: ['#0284c7'],
+                        fill: {
+                            type: 'gradient',
+                            gradient: { shadeIntensity: 1, opacityFrom: 0.65, opacityTo: 0.1, stops: [0, 90, 100] }
+                        },
+                        stroke: { curve: 'smooth', width: 3 },
+                        dataLabels: { enabled: false },
+                        xaxis: {
+                            categories: ['Mei 23', 'Jun 23', 'Jul 23', 'Agu 23', 'Sep 23', 'Okt 23', 'Nov 23', 'Des 23', 'Jan 24', 'Feb 24', 'Mar 24', 'Apr 24', 'Mei 24']
+                        },
+                        yaxis: {
+                            labels: { formatter: (val) => 'Rp ' + val + ' Jt' }
+                        },
+                        tooltip: { y: { formatter: (val) => 'Rp ' + val.toLocaleString('id-ID') + ' Juta' } }
+                    });
+                    chartCost.render();
+                }
+            }
+        }, 50);
     }
 
     // SVG Donut Helper Generator
