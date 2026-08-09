@@ -87,12 +87,20 @@ $usesCompromisedSeedHash = $user
         'eeff4d1bcd7b68413c85d06797b16fc8470aac23a6e828c4406f249400e78ac7',
         hash('sha256', (string) $user['password_hash'])
     );
+$usesPredictableTemporaryPassword = hash_equals($username . '123', $password);
 
-if (!$user || (app_is_production() && $usesCompromisedSeedHash) || !password_verify($password, (string) $user['password_hash'])) {
+if (
+    !$user
+    || (app_is_production() && ($usesCompromisedSeedHash || $usesPredictableTemporaryPassword))
+    || !password_verify($password, (string) $user['password_hash'])
+) {
     $attempts[] = $now;
     $_SESSION['login_attempts'] = $attempts;
     if ($usesCompromisedSeedHash) {
         error_log('Authentication blocked because the account still uses a compromised seed password hash.');
+    }
+    if (app_is_production() && $usesPredictableTemporaryPassword) {
+        error_log('Authentication blocked because a local-only temporary password pattern was submitted.');
     }
     error_log('Authentication failed for a submitted username from ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
     usleep(random_int(150000, 300000));

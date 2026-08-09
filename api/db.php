@@ -64,6 +64,7 @@ final class Database
             ]);
         }
 
+        $authenticationOptional = defined('API_AUTH_OPTIONAL') && API_AUTH_OPTIONAL === true;
         if (!$authenticationOptional) {
             api_refresh_authenticated_user(self::$instance);
             api_authorize_current_route();

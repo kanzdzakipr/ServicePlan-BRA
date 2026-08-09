@@ -39,6 +39,10 @@ akses production:
 - hapus credential contoh dari data production;
 - nonaktifkan akun yang tidak diperlukan.
 
+Untuk development lokal saja, `scripts/set_local_temporary_passwords.php` dapat menghasilkan
+password sementara dengan pola `username123`. Script menolak environment production, dan
+login production juga menolak pola tersebut walaupun hash database lokal ikut tersalin.
+
 ## 4. Web server
 
 - Document root harus mengarah ke project ini dengan `.htaccess` aktif.
