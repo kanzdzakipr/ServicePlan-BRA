@@ -168,11 +168,12 @@ function replaceReportItems($db, $reportId, $rows) {
 }
 
 function writeReportAudit($db, $reportId, $clientKey, $action, $payload = null) {
-    $stmt = $db->prepare("INSERT INTO report_audit_logs (report_id, client_key, action, payload_json)
-        VALUES (:report_id, :client_key, :action, :payload_json)");
+    $stmt = $db->prepare("INSERT INTO report_audit_logs (report_id, client_key, actor_id, action, payload_json)
+        VALUES (:report_id, :client_key, :actor_id, :action, :payload_json)");
     $stmt->execute([
         ':report_id' => $reportId,
         ':client_key' => $clientKey,
+        ':actor_id' => (int) api_current_user()['id'],
         ':action' => $action,
         ':payload_json' => $payload === null ? null : reportJson($payload)
     ]);
@@ -317,9 +318,9 @@ try {
             } else {
                 $stmt = $db->prepare("INSERT INTO report_records
                     (report_id, template_id, client_key, report_number, status, source_method, field_data, draft_data,
-                     standardized_payload, has_pending_attachments, finalized_at, final_number_key)
+                     standardized_payload, has_pending_attachments, created_by, finalized_at, final_number_key)
                     VALUES (:report_id, :template_id, :client_key, :report_number, :status, :source_method, :field_data,
-                     :draft_data, :standardized_payload, :has_pending_attachments, :finalized_at, :final_number_key)");
+                     :draft_data, :standardized_payload, :has_pending_attachments, :created_by, :finalized_at, :final_number_key)");
             }
             $params = [
                 ':report_id' => $reportId,
@@ -334,7 +335,10 @@ try {
                 ':finalized_at' => $status === 'FINAL' ? date('Y-m-d H:i:s') : null,
                 ':final_number_key' => $finalNumberKey
             ];
-            if (!$current) $params[':client_key'] = $clientKey;
+            if (!$current) {
+                $params[':client_key'] = $clientKey;
+                $params[':created_by'] = (int) api_current_user()['id'];
+            }
             $stmt->execute($params);
             replaceReportItems($db, $reportId, $rows);
             writeReportAudit($db, $reportId, $clientKey, strtoupper($action), ['reportNumber' => $reportNumber]);
@@ -376,13 +380,14 @@ try {
         $newId = reportUuid();
         $db->beginTransaction();
         $stmt = $db->prepare("INSERT INTO report_records
-            (report_id, template_id, client_key, report_number, status, source_method, field_data, draft_data, cloned_from_report_id, has_pending_attachments)
-            VALUES (:report_id, :template_id, :client_key, NULL, 'DRAFT', 'clone', :field_data, :draft_data, :cloned_from, :has_pending_attachments)");
+            (report_id, template_id, client_key, report_number, status, source_method, field_data, draft_data, cloned_from_report_id, has_pending_attachments, created_by)
+            VALUES (:report_id, :template_id, :client_key, NULL, 'DRAFT', 'clone', :field_data, :draft_data, :cloned_from, :has_pending_attachments, :created_by)");
         $stmt->execute([
             ':report_id' => $newId, ':template_id' => $templateId, ':client_key' => $clientKey,
             ':field_data' => reportJson($source['draft']['fields'] ?? []),
             ':draft_data' => reportJson(['updatedAt' => date(DATE_ATOM)]),
-            ':cloned_from' => $sourceId, ':has_pending_attachments' => !empty($source['hasPendingAttachments']) ? 1 : 0
+            ':cloned_from' => $sourceId, ':has_pending_attachments' => !empty($source['hasPendingAttachments']) ? 1 : 0,
+            ':created_by' => (int) api_current_user()['id']
         ]);
         replaceReportItems($db, $newId, $source['draft']['rows'] ?? []);
         writeReportAudit($db, $newId, $clientKey, 'CLONE', ['sourceReportId' => $sourceId]);
@@ -391,6 +396,7 @@ try {
     }
 
     if ($action === 'void') {
+        api_require_permission('reports.approve');
         $reportId = trim((string)($input['reportId'] ?? ''));
         $reason = trim((string)($input['reason'] ?? ''));
         $stmt = $db->prepare("UPDATE report_records SET status = 'VOID', voided_at = CURRENT_TIMESTAMP,

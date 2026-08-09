@@ -62,7 +62,7 @@ switch ($method) {
                     ':spb' => $r['spbId'],
                     ':wo' => $r['woId'] ?? '',
                     ':asset' => $r['assetId'] ?? '',
-                    ':user' => 1, // Default user
+                    ':user' => (int) api_current_user()['id'],
                     ':status' => 'Submitted'
                 ]);
                 

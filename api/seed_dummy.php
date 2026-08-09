@@ -3,6 +3,23 @@ require_once 'db.php';
 
 $db = Database::getInstance();
 
+if (!in_array(app_environment(), ['local', 'development', 'test'], true)) {
+    api_json_response(404, [
+        'status' => 'error',
+        'code' => 'NOT_FOUND',
+        'message' => 'Endpoint tidak tersedia.',
+    ]);
+}
+
+if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'POST') {
+    header('Allow: POST');
+    api_json_response(405, [
+        'status' => 'error',
+        'code' => 'METHOD_NOT_ALLOWED',
+        'message' => 'Gunakan POST untuk menjalankan seeder.',
+    ]);
+}
+
 echo "Starting dummy data seeding...\n";
 
 // 1. Seed Fuel Logs

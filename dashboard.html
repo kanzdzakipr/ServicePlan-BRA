@@ -12,6 +12,7 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
     <link rel="stylesheet" href="scripts/dashboard.css?v=20260731-1">
+    <script src="scripts/auth-client.js?v=20260809-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -152,7 +153,10 @@
                 </div>
                 <div class="profile">
                     <img src="https://ui-avatars.com/api/?name=Admin+Manager&background=007bff&color=fff" alt="User">
-                    <span>Manager Equipment</span>
+                    <span><strong id="authenticatedUserName">Memuat pengguna...</strong><small id="authenticatedUserRole" style="display:block; color:var(--text-muted);"></small></span>
+                    <button type="button" id="logoutButton" title="Keluar dari sesi" style="border:1px solid var(--border); background:#fff; color:var(--danger); padding:6px 9px; cursor:pointer; border-radius:4px;">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
                 </div>
             </div>
         </header>
@@ -4032,12 +4036,9 @@
                         fetchJsonSafely('api/accidents.php')
                     ]);
 
-                    const fallbackData = Array.isArray(apiInitData?.assets)
-                        ? null
-                        : await fetchJsonSafely('data.json');
-                    globalData = Array.isArray(apiInitData?.assets) ? apiInitData : fallbackData;
+                    globalData = Array.isArray(apiInitData?.assets) ? apiInitData : null;
                     if (!globalData || !Array.isArray(globalData.assets)) {
-                        throw new Error('Data Master Asset tidak dapat dimuat dari API maupun data.json');
+                        throw new Error('Data Master Asset tidak dapat dimuat dari API terproteksi');
                     }
 
                     // Enrich the initialization payload with spatial asset fields.

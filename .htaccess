@@ -7,7 +7,7 @@
 Options -Indexes
 
 # 2. Set Default Index Page
-DirectoryIndex dashboard.html index.html index.php
+DirectoryIndex index.html dashboard.php index.php
 
 # 3. Security Headers (Harden Browser Protection)
 <IfModule mod_headers.c>
@@ -21,7 +21,16 @@ DirectoryIndex dashboard.html index.html index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Block access to arsip folder (material/ & raw-material/ unblocked temporarily)
+    # Legacy dashboard URL must pass through the server-side session guard.
+    RewriteRule ^dashboard\.html$ dashboard.php [R=302,L,NE]
+
+    # Data sources and repository metadata are never public web assets.
+    RewriteRule ^(?:data\.json|\.git(?:/|$)|material(?:/|$)|raw-material(?:/|$)) - [F,L,NC]
+
+    # Internal API bootstrap files cannot be invoked as controllers.
+    RewriteRule ^api/(?:db|security)\.php$ - [F,L,NC]
+
+    # Block access to the deprecated arsip folder.
     RewriteRule ^(arsip)/ - [F,L]
 
     # Block access to core backend PHP class folders & internal configs
