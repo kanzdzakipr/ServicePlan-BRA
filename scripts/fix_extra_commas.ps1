@@ -2,7 +2,7 @@
 # ServicePlan-BRA: Remove Extra '‚' (U+201A Single Low-9 Quotation Mark)
 # ============================================================================
 
-$filePath = "dashboard.html"
+$filePath = "dashboard.view.php"
 $bytes = [System.IO.File]::ReadAllBytes($filePath)
 $text = [System.Text.Encoding]::UTF8.GetString($bytes)
 

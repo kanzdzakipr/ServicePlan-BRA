@@ -1,6 +1,6 @@
 <?php
 $files = [
-    __DIR__ . '/../dashboard.html',
+    __DIR__ . '/../dashboard.view.php',
     __DIR__ . '/../scripts/dashboard.js',
     __DIR__ . '/../scripts/dashboard.css'
 ];

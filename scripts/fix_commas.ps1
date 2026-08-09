@@ -2,7 +2,7 @@
 # ServicePlan-BRA: Remove Extra Commas Near Middle Dot (·) and Degree (°)
 # ============================================================================
 
-$filePath = "dashboard.html"
+$filePath = "dashboard.view.php"
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $content = [System.IO.File]::ReadAllText($filePath, $utf8NoBom)
 

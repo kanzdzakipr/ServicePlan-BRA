@@ -42,7 +42,9 @@ akses production:
 ## 4. Web server
 
 - Document root harus mengarah ke project ini dengan `.htaccess` aktif.
-- `dashboard.html` harus diarahkan ke `dashboard.php`.
+- `dashboard.html` hanya berisi shell pengarah login dan pada Apache diarahkan ke
+  `dashboard.php`.
+- `dashboard.view.php` adalah view internal; akses HTTP langsung harus ditolak.
 - Tolak akses ke `.git`, `data.json`, `material/`, `raw-material/`, SQL dump, dan config.
 - Untuk Nginx, salin aturan tersebut ke konfigurasi Nginx; `.htaccess` tidak berlaku.
 - Paksa HTTPS sebelum production.
@@ -55,6 +57,7 @@ Uji pada staging:
 2. `POST /api/assets.php` tanpa CSRF menghasilkan HTTP 419.
 3. User tanpa permission menghasilkan HTTP 403.
 4. `GET /dashboard.html` diarahkan ke session-protected `dashboard.php`.
-5. `GET /data.json`, `/.git/HEAD`, `/material/...`, dan `/raw-material/...` ditolak.
-6. Login sukses meregenerasi session ID dan logout menghapus cookie.
-7. Request dari Origin yang tidak diizinkan menghasilkan HTTP 403.
+5. `GET /dashboard.view.php` ditolak atau diarahkan kembali ke login.
+6. `GET /data.json`, `/.git/HEAD`, `/material/...`, dan `/raw-material/...` ditolak.
+7. Login sukses meregenerasi session ID dan logout menghapus cookie.
+8. Request dari Origin yang tidak diizinkan menghasilkan HTTP 403.

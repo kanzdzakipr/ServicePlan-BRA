@@ -2,7 +2,7 @@
 # ServicePlan-BRA: Deep Check & Removal for 'Ã' (U+00C3) and 'Â' (U+00C2)
 # ============================================================================
 
-$filePath = "dashboard.html"
+$filePath = "dashboard.view.php"
 $bytes = [System.IO.File]::ReadAllBytes($filePath)
 $text = [System.Text.Encoding]::UTF8.GetString($bytes)
 

@@ -2,7 +2,7 @@
 # ServicePlan-BRA: Inspect All Lines Containing Middle Dot (·) or Degree (°)
 # ============================================================================
 
-$filePath = "dashboard.html"
+$filePath = "dashboard.view.php"
 $text = [System.IO.File]::ReadAllText($filePath, [System.Text.Encoding]::UTF8)
 
 $dot = [char]0x00B7

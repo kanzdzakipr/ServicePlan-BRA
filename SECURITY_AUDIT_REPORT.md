@@ -29,8 +29,9 @@ Remediasi yang telah diterapkan:
 - Metode POST/PUT/PATCH/DELETE membutuhkan CSRF token.
 - Permission user dimuat ulang dari database pada setiap API request.
 - CORS wildcard dihapus dan Origin yang tidak diizinkan ditolak.
-- `dashboard.php` menjadi server-side session guard; URL lama `dashboard.html` diarahkan
-  melalui `.htaccess`.
+- `dashboard.php` menjadi server-side session guard; aplikasi penuh dipindahkan ke
+  `dashboard.view.php` yang menolak akses langsung. URL lama `dashboard.html` sekarang
+  hanya berupa shell pengarah login dan juga diarahkan melalui `.htaccess` pada Apache.
 - Akses web ke `data.json`, `.git`, `material/`, `raw-material/`, dan API bootstrap internal
   diblokir melalui `.htaccess`.
 - Database configuration sekarang hanya berasal dari environment variable; tidak ada lagi

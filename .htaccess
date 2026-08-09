@@ -24,6 +24,9 @@ DirectoryIndex index.html dashboard.php index.php
     # Legacy dashboard URL must pass through the server-side session guard.
     RewriteRule ^dashboard\.html$ dashboard.php [R=302,L,NE]
 
+    # The full dashboard view may only be included by dashboard.php.
+    RewriteRule ^dashboard\.view\.php$ - [F,L,NC]
+
     # Data sources and repository metadata are never public web assets.
     RewriteRule ^(?:data\.json|\.git(?:/|$)|material(?:/|$)|raw-material(?:/|$)) - [F,L,NC]
 

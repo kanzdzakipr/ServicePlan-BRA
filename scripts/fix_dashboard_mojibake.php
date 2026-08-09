@@ -1,5 +1,5 @@
 <?php
-$filePath = __DIR__ . '/../dashboard.html';
+$filePath = __DIR__ . '/../dashboard.view.php';
 $content = file_get_contents($filePath);
 
 // Clean non-breaking space bytes (\xA0 / \x00\xA0 / \xC2\xA0)

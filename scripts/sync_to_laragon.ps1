@@ -79,6 +79,6 @@ if ($mysqlExe -and (Test-Path $mysqlExe)) {
 
 Write-Host "`n============================================================================" -ForegroundColor Green
 Write-Host "Synchronization finished!" -ForegroundColor Green
-Write-Host "Access local hosting at: http://localhost/$(Split-Path $destDir -Leaf)/dashboard.html" -ForegroundColor Green
+Write-Host "Access local hosting at: http://localhost/$(Split-Path $destDir -Leaf)/index.html" -ForegroundColor Green
 Write-Host "============================================================================" -ForegroundColor Green
 

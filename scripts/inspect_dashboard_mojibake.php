@@ -1,5 +1,5 @@
 <?php
-$filePath = __DIR__ . '/../dashboard.html';
+$filePath = __DIR__ . '/../dashboard.view.php';
 $lines = explode("\n", file_get_contents($filePath));
 
 $mojibakeMap = [

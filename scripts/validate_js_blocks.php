@@ -1,5 +1,5 @@
 <?php
-$htmlPath = __DIR__ . '/../dashboard.html';
+$htmlPath = __DIR__ . '/../dashboard.view.php';
 $jsPath = __DIR__ . '/../scripts/dashboard.js';
 
 function checkBrackets($filePath) {
