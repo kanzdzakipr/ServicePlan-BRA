@@ -655,7 +655,7 @@ body.sidebar-collapsed .sidebar-menu li a i {
 }
 
 .kpi-card.standby {
-    border-top-color: var(--warning);
+    border-top-color: var(--info);
 }
 
 .kpi-card.breakdown {
@@ -663,7 +663,7 @@ body.sidebar-collapsed .sidebar-menu li a i {
 }
 
 .kpi-card.pm {
-    border-top-color: var(--info);
+    border-top-color: var(--warning);
 }
 
 .kpi-info h3 {
@@ -729,35 +729,124 @@ body.sidebar-collapsed .sidebar-menu li a i {
 
         .attention-list {
             list-style: none;
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        .attention-list li {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
+            padding: 0;
+            margin: 0;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 12px;
         }
 
-        .attention-list .danger i {
-            color: var(--danger);
-            font-size: 1.2rem;
+        .attention-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #ef4444;
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+            position: relative;
         }
 
-        .attention-details {
-            flex-grow: 1;
+        .attention-item:hover {
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
         }
 
-        .attention-details strong {
-            display: block;
-            font-size: 0.95rem;
+        .attention-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 8px;
         }
 
-        .attention-details span {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+        .attention-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .attention-wo-badge {
+            font-family: var(--font-mono, monospace);
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+
+        .attention-asset-pill {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: var(--font-mono, monospace);
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .attention-downtime {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            font-size: 0.74rem;
+            font-weight: 700;
+            font-family: var(--font-mono, monospace);
+            padding: 3px 9px;
+            border-radius: 99px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .attention-desc {
+            font-size: 0.82rem;
+            color: #334155;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .attention-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .attention-action-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .attention-action-btn:hover {
+            background: #007bff;
+            border-color: #007bff;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.25);
+        }
+
+        .attention-action-btn.btn-spb {
+            border-color: #fbbf24;
+            color: #92400e;
+            background: #fffbeb;
+        }
+
+        .attention-action-btn.btn-spb:hover {
+            background: #d97706;
+            border-color: #d97706;
+            color: #ffffff;
+            box-shadow: 0 4px 8px rgba(217, 119, 6, 0.25);
         }
 
         /* Master Asset View specific styles */
@@ -13202,6 +13291,287 @@ body.sl-modal-open {
     color: #64748b;
     font-size: 0.72rem;
 }
+
+/* ==========================================================================
+   EXECUTIVE DASHBOARD ANTI-SLOP HIGH-END CARD REDESIGN STYLES
+   ========================================================================== */
+
+/* Service Counter Bento Grid */
+.service-counter-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.service-counter-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.service-counter-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.service-counter-card .lbl {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.service-counter-card .val {
+    font-family: var(--font-mono, monospace);
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.service-counter-card.danger { border-top: 3px solid #dc2626; }
+.service-counter-card.danger .val { color: #dc2626; }
+
+.service-counter-card.warning { border-top: 3px solid #f59e0b; }
+.service-counter-card.warning .val { color: #d97706; }
+
+.service-counter-card.info { border-top: 3px solid #0284c7; }
+.service-counter-card.info .val { color: #0284c7; }
+
+.service-counter-card.success { border-top: 3px solid #16a34a; }
+.service-counter-card.success .val { color: #16a34a; }
+
+.service-counter-card.muted { border-top: 3px solid #94a3b8; }
+.service-counter-card.muted .val { color: #64748b; }
+
+/* Compliance List Item Styling */
+.compliance-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.compliance-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+}
+
+.compliance-item .lbl {
+    color: #475569;
+    font-weight: 500;
+}
+
+.compliance-item .val {
+    font-family: var(--font-mono, monospace);
+    font-weight: 700;
+    font-size: 0.86rem;
+}
+
+/* Alert Banner Styling */
+.dash-alert-banner {
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-left: 4px solid #f59e0b;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 14px;
+    font-size: 0.78rem;
+    color: #92400e;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    line-height: 1.4;
+}
+
+.dash-alert-banner.pink {
+    background: #fdf2f8;
+    border-color: #fce7f3;
+    border-left-color: #ec4899;
+    color: #9d174d;
+}
+
+/* Tire KPI Box Styling */
+.tire-kpi-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.tire-kpi-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+
+.tire-kpi-box .lbl {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.tire-kpi-box .val {
+    font-family: var(--font-mono, monospace);
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* Grease Progress List Styling */
+.grease-progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.grease-progress-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.grease-progress-hdr {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #334155;
+    font-weight: 600;
+}
+
+.grease-bar-bg {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.grease-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease;
+}
+
+/* Donut Chart & Legend Component */
+.donut-chart-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.donut-legend {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.donut-legend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+}
+
+.donut-legend-item:hover {
+    background: #f8fafc;
+}
+
+.donut-legend-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+}
+
+.donut-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Sub-Filter Button Select for OPERATING / READY Modal */
+.op-sub-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.op-sub-btn:hover {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.op-sub-btn.active {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.op-sub-count {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: #cbd5e1;
+    color: #334155;
+    transition: all 0.15s ease;
+}
+
+.op-sub-btn.active .op-sub-count {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+.op-sub-count.badge-op {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.op-sub-btn.active .op-sub-count.badge-op {
+    background: #16a34a;
+    color: #ffffff;
+}
+
+.op-sub-count.badge-rd {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.op-sub-btn.active .op-sub-count.badge-rd {
+    background: #0284c7;
+    color: #ffffff;
+}
+
 
 
 
