@@ -52,5 +52,5 @@ function cleanMojibake($filePath) {
     }
 }
 
-cleanMojibake(__DIR__ . '/../dashboard.html');
+cleanMojibake(__DIR__ . '/../dashboard.view.php');
 cleanMojibake(__DIR__ . '/../scripts/dashboard.js');

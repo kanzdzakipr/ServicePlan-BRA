@@ -1,5 +1,5 @@
 <?php
-$filePath = __DIR__ . '/../dashboard.html';
+$filePath = __DIR__ . '/../dashboard.view.php';
 $content = file_get_contents($filePath);
 
 $lines = explode("\n", $content);

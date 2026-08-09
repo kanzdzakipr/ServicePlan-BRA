@@ -9,6 +9,7 @@ if (!api_is_authenticated()) {
     header('Location: index.html?reason=session', true, 302);
     exit;
 }
+
 $db = Database::getInstance();
 $context = api_load_user_context($db, (int) api_current_user()['id']);
 if ($context === null) {
@@ -16,6 +17,7 @@ if ($context === null) {
     header('Location: index.html?reason=account', true, 302);
     exit;
 }
+
 $_SESSION['auth_user'] = $context;
 if (!api_has_permission('dashboard.read')) {
     http_response_code(403);
@@ -30,4 +32,5 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header('Referrer-Policy: same-origin');
 
-readfile(__DIR__ . '/dashboard.html');
+define('DASHBOARD_RENDER_ALLOWED', true);
+require __DIR__ . '/dashboard.view.php';

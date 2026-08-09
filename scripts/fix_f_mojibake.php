@@ -23,5 +23,5 @@ function cleanFMojibake($filePath) {
     }
 }
 
-cleanFMojibake(__DIR__ . '/../dashboard.html');
+cleanFMojibake(__DIR__ . '/../dashboard.view.php');
 cleanFMojibake(__DIR__ . '/../scripts/dashboard.js');
