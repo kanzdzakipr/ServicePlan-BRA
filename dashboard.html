@@ -10,7 +10,7 @@
     <!-- Leaflet for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="icon" type="image/png" href="assets/logo-pt-bina-rekayasa-anugrah.png">
+    <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
     <link rel="stylesheet" href="scripts/dashboard.css?v=20260731-1">
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
@@ -19,70 +19,75 @@
 </head>
 
 <body>
+    <!-- Floating Side Hover Tooltip Element -->
+    <div id="sidebarHoverTooltip" class="sidebar-hover-tooltip"></div>
 
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img src="assets/logo-pt-bina-rekayasa-anugrah.png" alt="PT Bina Rekayasa Anugrah" class="sidebar-logo-img">
+            <img src="assets/logo-pt-bina-rekayasa-anugrah.png" alt="PT Bina Rekayasa Anugrah" class="sidebar-logo-img sidebar-logo-full">
+            <div class="sidebar-logo-circle-container" title="PT Bina Rekayasa Anugrah">
+                <img src="assets/logogram-pt-bina-rekayasa-anugrah.png" alt="PT BRA Logogram" class="sidebar-logo-circle-img">
+            </div>
             <span class="brand-label">FleetMonitor</span>
         </div>
         <ul class="sidebar-menu">
             <li class="nav-section-label">Overview</li>
             <li><a onclick="showView('dashboard')" id="menu-dashboard" class="active" role="button" tabindex="0"
-                    aria-current="page" title="Dashboard"><i class="fa-solid fa-gauge-high"></i><span
+                    aria-current="page" data-title="Dashboard"><i class="fa-solid fa-gauge-high"></i><span
                         class="nav-label">Dashboard</span></a></li>
             <li><a onclick="showView('monitoring')" id="menu-monitoring" role="button" tabindex="0"
-                    title="Monitoring Unit"><i class="fa-solid fa-location-dot"></i><span class="nav-label">Monitoring
+                    data-title="Monitoring Unit"><i class="fa-solid fa-location-dot"></i><span class="nav-label">Monitoring
                         Unit</span></a></li>
 
             <li class="nav-section-label">Asset & Maintenance</li>
-            <li><a onclick="showView('asset')" id="menu-asset" role="button" tabindex="0" title="Master Asset"><i
+            <li><a onclick="showView('asset')" id="menu-asset" role="button" tabindex="0" data-title="Master Asset"><i
                         class="fa-solid fa-cubes"></i><span class="nav-label">Master Asset</span></a></li>
             <li><a onclick="showView('inspection', '', 'menu-inspection')" id="menu-inspection" role="button"
-                    tabindex="0" title="Inspeksi & P2H"><i class="fa-solid fa-clipboard-check"></i><span
+                    tabindex="0" data-title="Inspeksi & P2H"><i class="fa-solid fa-clipboard-check"></i><span
                         class="nav-label">Inspeksi & P2H</span></a></li>
-            <li><a onclick="showView('wo')" id="menu-wo" role="button" tabindex="0" title="Work Order"><i
+            <li><a onclick="showView('wo')" id="menu-wo" role="button" tabindex="0" data-title="Work Order"><i
                         class="fa-solid fa-screwdriver-wrench"></i><span class="nav-label">Work Order</span></a></li>
-            <li><a onclick="showView('pm')" id="menu-pm" role="button" tabindex="0" title="Preventive Maintenance"><i
+            <li><a onclick="showView('pm')" id="menu-pm" role="button" tabindex="0" data-title="Preventive Maintenance"><i
                         class="fa-regular fa-calendar-check"></i><span class="nav-label">Preventive Maint.</span></a>
             </li>
             <li><a onclick="showView('condition', '', 'menu-condition')" id="menu-condition" role="button" tabindex="0"
-                    title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span
+                    data-title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span
                         class="nav-label">Condition Monitoring</span></a></li>
 
             <li class="nav-section-label">Operations</li>
             <li><a onclick="showView('logistics', '', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0"
-                    title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare
+                    data-title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare
                         Part & Logistik</span></a></li>
             <li><a onclick="showView('fuel', '', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0"
-                    title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a>
+                    data-title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a>
             </li>
             <li><a onclick="showView('productivity', '', 'menu-productivity')" id="menu-productivity" role="button"
-                    tabindex="0" title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span
+                    tabindex="0" data-title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span
                         class="nav-label">Produktivitas</span></a></li>
-            <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" title="Biaya"><i
+            <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" data-title="Biaya"><i
                         class="fa-solid fa-money-bill-trend-up"></i><span class="nav-label">Biaya</span></a></li>
 
             <li class="nav-section-label">Governance</li>
             <li><a onclick="showView('people', '', 'menu-people')" id="menu-people" role="button" tabindex="0"
-                    title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People &
+                    data-title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People &
                         KPI</span></a></li>
             <li><a onclick="showView('hse', '', 'menu-hse')" id="menu-hse" role="button" tabindex="0"
-                    title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE /
+                    data-title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE /
                         Accident</span></a></li>
-            <li><a onclick="showView('reports')" id="menu-reports" role="button" tabindex="0" title="Laporan & Form"><i
+            <li><a onclick="showView('reports')" id="menu-reports" role="button" tabindex="0" data-title="Laporan & Form"><i
                         class="fa-solid fa-file-invoice"></i><span class="nav-label">Laporan & Form</span></a></li>
             <li><a onclick="showView('approval', '', 'menu-approval')" id="menu-approval" role="button" tabindex="0"
-                    title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a>
+                    data-title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a>
             </li>
 
             <li class="nav-section-label">System</li>
             <li><a onclick="showView('archive', '', 'menu-archive'); window.renderArchiveTables();" id="menu-archive"
-                    role="button" tabindex="0" title="Archive"><i class="fa-solid fa-box-archive"></i><span
+                    role="button" tabindex="0" data-title="Archive"><i class="fa-solid fa-box-archive"></i><span
                         class="nav-label">Archive</span></a>
             </li>
             <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" role="button" tabindex="0"
-                    title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a>
+                    data-title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a></li>
             </li>
         </ul>
     </aside>
@@ -105,6 +110,36 @@
                 </div>
             </div>
             <div class="header-right">
+                <!-- System Notifications Bell Wrapper -->
+                <div class="notification-wrapper" style="position: relative;">
+                    <button type="button" class="btn-notification-bell" id="btnNotificationBell" onclick="toggleNotificationDropdown(event)" title="Notifikasi Aktivitas Sistem">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                    </button>
+                    <!-- Floating Notification Dropdown Panel -->
+                    <div class="notification-dropdown-panel" id="notificationDropdownPanel" style="display: none;" onclick="event.stopPropagation()">
+                        <div class="notification-panel-header">
+                            <div class="notification-title-group">
+                                <h3><i class="fa-solid fa-bell text-primary"></i> Notifikasi Aktivitas</h3>
+                                <span class="notification-count-pill" id="notifUnreadPill">0 Belum Dibaca</span>
+                            </div>
+                            <button type="button" class="btn-mark-all-read" onclick="markAllNotificationsAsRead()" title="Tandai Semua Dibaca">
+                                <i class="fa-solid fa-check-double"></i> Tandai Dibaca
+                            </button>
+                        </div>
+                        <div class="notification-panel-tabs">
+                            <button type="button" class="notif-tab-btn active" data-filter="ALL" onclick="filterNotifications('ALL', this)">Semua</button>
+                            <button type="button" class="notif-tab-btn" data-filter="UNREAD" onclick="filterNotifications('UNREAD', this)">Belum Dibaca</button>
+                        </div>
+                        <div class="notification-panel-list" id="notificationPanelList">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                        <div class="notification-panel-footer">
+                            <small><i class="fa-solid fa-shield-halved"></i> Audit Trail & Activity Log Terintegrasi</small>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="search-bar" style="position: relative;">
                     <input type="text" id="globalSearchInput" onkeyup="handleGlobalSearch()"
                         onfocus="if(this.value.length >= 2) document.getElementById('globalSearchResults').style.display='block';"

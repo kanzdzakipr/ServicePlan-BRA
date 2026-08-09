@@ -341,7 +341,7 @@
             columns: [
                 column('kelompok', 'Tahap', 'select', false, ['Sebelum pemanasan', 'Setelah pemanasan', 'Saat operasi', 'Setelah operasi']),
                 column('item', 'Item pemeriksaan'),
-                column('kondisi', 'Kondisi', 'select', false, ['V â€” Normal', 'X â€” Tidak normal', 'OK â€” Sudah diperbaiki']),
+                column('kondisi', 'Kondisi', 'select', false, ['V — Normal', 'X — Tidak normal', 'OK — Sudah diperbaiki']),
                 column('tambahan', 'Penambahan oil / cairan (L)', 'number'),
                 column('tindakan', 'Tindakan / catatan')
             ],
@@ -372,7 +372,7 @@
             columns: [
                 column('kelompok', 'Tahap', 'select', false, ['Sebelum pemanasan', 'Setelah pemanasan', 'Saat operasi', 'Setelah operasi']),
                 column('item', 'Item pemeriksaan'),
-                column('kondisi', 'Kondisi', 'select', false, ['V â€” Normal', 'X â€” Tidak normal', 'OK â€” Sudah diperbaiki']),
+                column('kondisi', 'Kondisi', 'select', false, ['V — Normal', 'X — Tidak normal', 'OK — Sudah diperbaiki']),
                 column('tambahan', 'Penambahan oil / cairan (L)', 'number'),
                 column('tindakan', 'Tindakan / catatan')
             ],
@@ -600,7 +600,7 @@
         {
             id: 'maintenance-board', code: 'MB-A2B', category: 'Maintenance',
             title: 'Maintenance Board A2B',
-            description: 'Rencana maintenance 500â€“2000 HM dan status pemesanan parts.',
+            description: 'Rencana maintenance 500–2000 HM dan status pemesanan parts.',
             source: 'Maintenance_Board_A2B_Tabulasi.md',
             fields: [
                 field('lokasi', 'Lokasi', 'text', true),
@@ -1276,8 +1276,8 @@
                     <div class="report-filter-field">
                         <label for="reportSort">Urutkan</label>
                         <select id="reportSort" class="report-select">
-                            <option value="title-asc">Nama Aâ€“Z</option>
-                            <option value="title-desc">Nama Zâ€“A</option>
+                            <option value="title-asc">Nama A–Z</option>
+                            <option value="title-desc">Nama Z–A</option>
                             <option value="category">Kategori</option>
                         </select>
                     </div>
@@ -1362,7 +1362,7 @@
     }
 
     function formatDateTime(value) {
-        if (!value) return 'â€”';
+        if (!value) return '—';
         return new Intl.DateTimeFormat('id-ID', {
             dateStyle: 'long',
             timeStyle: 'short'
@@ -1598,7 +1598,7 @@
         const grid = document.getElementById('reportGrid');
 
         document.getElementById('reportResultCount').innerHTML = items.length
-            ? `Menampilkan <strong>${start + 1}â€“${Math.min(start + pageSize, items.length)}</strong> dari <strong>${items.length}</strong> form`
+            ? `Menampilkan <strong>${start + 1}–${Math.min(start + pageSize, items.length)}</strong> dari <strong>${items.length}</strong> form`
             : 'Tidak ada form yang sesuai filter';
 
         grid.innerHTML = visibleItems.length ? visibleItems.map(item => `
@@ -1970,7 +1970,7 @@
             showToast('Gambar bukti berhasil dilampirkan.');
         } catch (error) {
             if (error?.code === 'LOW_RESOLUTION') {
-                showToast(`Resolusi ${error.width}Ã—${error.height}px terlalu kecil. Gunakan minimal HD 1280Ã—720px.`, true);
+                showToast(`Resolusi ${error.width}×${error.height}px terlalu kecil. Gunakan minimal HD 1280×720px.`, true);
             } else {
                 showToast('Gambar gagal dibaca. Silakan pilih ulang.', true);
             }
@@ -2058,7 +2058,7 @@
                                     <div class="guide-reference-row">
                                         <strong>Bukti gambar & keterangan</strong>
                                         <span><em class="required">Wajib</em></span>
-                                        <p>Unggah satu foto minimal HD 1280Ã—720px untuk setiap item, lalu tuliskan konteks foto. Foto akan menjadi halaman lampiran tersendiri.</p>
+                                        <p>Unggah satu foto minimal HD 1280×720px untuk setiap item, lalu tuliskan konteks foto. Foto akan menjadi halaman lampiran tersendiri.</p>
                                     </div>
                                 ` : ''}
                             </div>
@@ -2354,7 +2354,7 @@
                 !selected || numberValue(row.jumlah) > numberValue(selected.jumlah) ? row : selected
             ), null);
             const largestLabel = largest
-                ? `${largest.nama || largest.pn || 'Parts tanpa nama'} â€” ${numberValue(largest.jumlah).toLocaleString('id-ID')} ${largest.satuan || 'unit'}`
+                ? `${largest.nama || largest.pn || 'Parts tanpa nama'} — ${numberValue(largest.jumlah).toLocaleString('id-ID')} ${largest.satuan || 'unit'}`
                 : 'Belum ada data';
             return `
                 <div class="summary-line"><span>Jumlah jenis parts</span><strong>${populatedRows.length}</strong></div>
@@ -2405,8 +2405,8 @@
                         <i class="fa-solid fa-file-shield"></i>
                         <div>
                             <strong>Draft dibuat dari ${escapeHtml(activeDraft.importSource.fileName || 'dokumen impor')}</strong>
-                            <span>SHA-256 ${escapeHtml(String(activeDraft.importSource.sha256 || '').slice(0, 16))}... Â·
-                            pemetaan ${Math.round(Number(activeDraft.importSource.mappingCoverage || 0) * 100)}% Â·
+                            <span>SHA-256 ${escapeHtml(String(activeDraft.importSource.sha256 || '').slice(0, 16))}... ·
+                            pemetaan ${Math.round(Number(activeDraft.importSource.mappingCoverage || 0) * 100)}% ·
                             ${Number(activeDraft.importSource.unmappedFragments || 0)} fragmen tetap tersimpan di arsip impor.
                             ${activeDraft.importSource.rowsLimited
                     ? ` Draft memakai ${Number(activeDraft.importSource.appliedRows || 0).toLocaleString('id-ID')} dari ${Number(activeDraft.importSource.totalMappedRows || 0).toLocaleString('id-ID')} baris terpetakan.`
@@ -2553,7 +2553,7 @@
         }
         if (validity.patternMismatch) {
             return control.type === 'tel'
-                ? 'Gunakan nomor telepon 8â€“18 digit; tanda +, spasi, kurung, dan tanda hubung diperbolehkan.'
+                ? 'Gunakan nomor telepon 8–18 digit; tanda +, spasi, kurung, dan tanda hubung diperbolehkan.'
                 : `${fieldLabel} belum mengikuti format yang diminta.`;
         }
         if (validity.rangeUnderflow) return `${fieldLabel} minimal ${control.min}.`;
@@ -2956,7 +2956,7 @@
 
     function displayValue(item, value) {
         if (item.type === 'number' && /harga|total|nilai|estimasi/.test(item.key)) return formatRupiah(value);
-        return value === 0 || value === '0' ? '0' : value || 'â€”';
+        return value === 0 || value === '0' ? '0' : value || '—';
     }
 
     function resolveReportPrintLayout(schema, rows = []) {
@@ -3019,7 +3019,7 @@
                     <img src="${escapeHtml(att.dataUrl)}" alt="Lampiran Foto ${index + 1}" style="max-width:100%; max-height:65vh; object-fit:contain; border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.1); display:block; margin:0 auto;">
                     <figcaption style="margin-top:15px; color:#475569; font-size:14px; line-height:1.5;">
                         <strong style="display:block; color:#1e293b; margin-bottom:4px;">Lampiran Foto ${index + 1}</strong>
-                        <span>File: ${escapeHtml(att.name || 'â€”')}</span>
+                        <span>File: ${escapeHtml(att.name || '—')}</span>
                     </figcaption>
                 </figure>
             </article>
@@ -3055,8 +3055,8 @@
                         <img src="${escapeHtml(row._evidence.dataUrl)}" alt="Dokumentasi ${escapeHtml(itemName)}">
                         <figcaption>
                             <strong>${escapeHtml(row._evidence.caption || `Dokumentasi item ${index + 1}`)}</strong>
-                            <span>File: ${escapeHtml(row._evidence.name || 'â€”')}</span>
-                            <span>Resolusi tersimpan: ${escapeHtml(`${row._evidence.width || 'â€”'} Ã— ${row._evidence.height || 'â€”'} px`)}</span>
+                            <span>File: ${escapeHtml(row._evidence.name || '—')}</span>
+                            <span>Resolusi tersimpan: ${escapeHtml(`${row._evidence.width || '—'} × ${row._evidence.height || '—'} px`)}</span>
                         </figcaption>
                     </figure>
                     <section class="documentation-context">
@@ -3154,7 +3154,7 @@
                     </div>
                 </header>
                 <div class="print-title">
-                    <span>${escapeHtml(schema.code)} Â· DOKUMEN TERKENDALI</span>
+                    <span>${escapeHtml(schema.code)} · DOKUMEN TERKENDALI</span>
                     <h1>${escapeHtml(schema.title)}</h1>
                     <div class="print-document-number">Nomor: ${escapeHtml(reportNumber)}</div>
                 </div>
@@ -3488,7 +3488,7 @@
 })();
 
 // ============================================================================
-// SPARE PART & LOGISTICS â€” per-unit catalog, SPB workflow, and module linkage
+// SPARE PART & LOGISTICS — per-unit catalog, SPB workflow, and module linkage
 // Sources: Form P-1 SPB, Report Parts Weekly, and Procurement Progress Tracker.
 // ============================================================================
 (function () {
@@ -3870,7 +3870,7 @@
     function renderPager(kind, page, totalPages, filteredCount, start, pageRows) {
         return `
             <div class="sl-table-footer">
-                <span>Menampilkan ${pageRows.length ? start + 1 : 0}â€“${Math.min(start + PAGE_SIZE, filteredCount)} dari ${filteredCount} unit</span>
+                <span>Menampilkan ${pageRows.length ? start + 1 : 0}–${Math.min(start + PAGE_SIZE, filteredCount)} dari ${filteredCount} unit</span>
                 <div>
                     <button type="button" data-sl-action="page" data-kind="${kind}" data-delta="-1" ${page <= 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>
                     <strong>Halaman ${page} / ${totalPages}</strong>
@@ -3937,7 +3937,7 @@
                         <h2>Akses Spare Part per Alat Berat</h2>
                         <p>Pencarian berlaku pada kedua tabulasi. Klik Akses untuk melihat daftar item dan membuat SPB.</p>
                     </div>
-                    <div class="sl-source-note"><i class="fa-solid fa-file-shield"></i><span><strong>Acuan BRA</strong>Form P-1 Â· Parts Weekly Â· Monitoring Pengadaan</span></div>
+                    <div class="sl-source-note"><i class="fa-solid fa-file-shield"></i><span><strong>Acuan BRA</strong>Form P-1 · Parts Weekly · Monitoring Pengadaan</span></div>
                 </div>
                 <div class="sl-toolbar">
                     <label class="sl-search"><i class="fa-solid fa-magnifying-glass"></i><input id="slUnitSearch" type="search" value="${escapeHtml(state.query)}" placeholder="Cari kode lambung, kategori, atau lokasi..." data-sl-filter="query"></label>
@@ -4033,7 +4033,7 @@
                     <header class="sl-modal-header">
                         <div class="sl-modal-title">
                             <span class="sl-modal-avatar"><i class="fa-solid ${assetIcon(asset)}"></i></span>
-                            <div><small>DETAIL SPARE PART & LOGISTIK</small><h2 id="slModalTitle">${escapeHtml(shortCode(asset.id))}</h2><p>${escapeHtml(asset.category || 'Alat Berat')} Â· ${escapeHtml(asset.location || 'Lokasi belum ditetapkan')}</p></div>
+                            <div><small>DETAIL SPARE PART & LOGISTIK</small><h2 id="slModalTitle">${escapeHtml(shortCode(asset.id))}</h2><p>${escapeHtml(asset.category || 'Alat Berat')} · ${escapeHtml(asset.location || 'Lokasi belum ditetapkan')}</p></div>
                         </div>
                         <div class="sl-modal-actions">
                             <button type="button" data-sl-action="asset" title="Buka Asset 360Â°"><i class="fa-solid fa-truck"></i><span>Aset 360Â°</span></button>
@@ -4049,7 +4049,7 @@
                         <section class="sl-modal-summary">
                             <div><span>Status aset</span><strong class="sl-asset-status ${escapeHtml(String(asset.status || 'READY').toLowerCase())}">${escapeHtml(asset.status || 'READY')}</strong></div>
                             <div><span>Item tercatat</span><strong>${summary.itemCount}<small> baris</small></strong></div>
-                            <div><span>Ketersediaan</span><strong>${summary.available}/${summary.requested}<small> qty Â· ${availablePct}%</small></strong></div>
+                            <div><span>Ketersediaan</span><strong>${summary.available}/${summary.requested}<small> qty · ${availablePct}%</small></strong></div>
                             <div><span>Referensi aktif</span><strong>${workOrders.length}<small> WO</small></strong></div>
                             <div><span>Riwayat warehouse</span><strong>${warehouseUsageCount}<small> transaksi</small></strong></div>
                         </section>
@@ -4064,7 +4064,7 @@
 
                         <section class="sl-modal-section">
                             <div class="sl-modal-section-heading">
-                                <div><span class="sl-eyebrow">BANK DATA EQUIPMENT Â· PEMAKAIAN FILTER</span><h3>Riwayat Pemakaian Warehouse</h3><p>Riwayat menggunakan ID unit baku yang sama dengan Master Asset; data informal tidak dipetakan secara spekulatif.</p></div>
+                                <div><span class="sl-eyebrow">BANK DATA EQUIPMENT · PEMAKAIAN FILTER</span><h3>Riwayat Pemakaian Warehouse</h3><p>Riwayat menggunakan ID unit baku yang sama dengan Master Asset; data informal tidak dipetakan secara spekulatif.</p></div>
                                 <span class="sl-section-count primary"><strong>${warehouseUsageCount}</strong> transaksi</span>
                             </div>
                             ${renderWarehouseUsage(asset.id)}
@@ -4072,11 +4072,11 @@
 
                         <section class="sl-modal-section sl-spb-builder">
                             <div class="sl-modal-section-heading">
-                                <div><span class="sl-eyebrow">FORM P-1 Â· SURAT PERMINTAAN BARANG</span><h3>Draft SPB Unit</h3><p>Setiap item baru akan masuk ke Approval dan tetap tertaut ke unit serta Work Order.</p></div>
+                                <div><span class="sl-eyebrow">FORM P-1 · SURAT PERMINTAAN BARANG</span><h3>Draft SPB Unit</h3><p>Setiap item baru akan masuk ke Approval dan tetap tertaut ke unit serta Work Order.</p></div>
                                 <span class="sl-form-code"><i class="fa-solid fa-file-invoice"></i> P-1</span>
                             </div>
                             <div class="sl-spb-context">
-                                <label><span>Work Order / JO aktif</span><select id="spb-wo-id" class="form-control" data-sl-modal-field="woId"><option value="">Belum ditautkan ke WO</option>${workOrders.map(wo => `<option value="${escapeHtml(wo.woId)}" ${selectedWo === wo.woId ? 'selected' : ''}>${escapeHtml(wo.woId)} Â· ${escapeHtml(wo.priority || 'Normal')}</option>`).join('')}</select></label>
+                                <label><span>Work Order / JO aktif</span><select id="spb-wo-id" class="form-control" data-sl-modal-field="woId"><option value="">Belum ditautkan ke WO</option>${workOrders.map(wo => `<option value="${escapeHtml(wo.woId)}" ${selectedWo === wo.woId ? 'selected' : ''}>${escapeHtml(wo.woId)} · ${escapeHtml(wo.priority || 'Normal')}</option>`).join('')}</select></label>
                                 <label><span>Prioritas</span><select id="spb-priority" class="form-control" data-sl-modal-field="priority">${['Normal', 'Urgent', 'Critical'].map(value => `<option ${state.modal.priority === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
                                 <label><span>Dampak terhadap RTW</span><select id="spb-rtw-impact" class="form-control" data-sl-modal-field="rtwImpact"><option value="false" ${!state.modal.rtwImpact ? 'selected' : ''}>Tidak</option><option value="true" ${state.modal.rtwImpact ? 'selected' : ''}>Ya</option></select></label>
                             </div>
@@ -4108,7 +4108,7 @@
         root.innerHTML = `
             <div class="sl-shell">
                 <header class="sl-page-header">
-                    <div><span class="sl-eyebrow">WAREHOUSE Â· PROCUREMENT Â· MAINTENANCE</span><h1>Spare Part & Logistik</h1><p>Tabulasi kebutuhan per unit, ketersediaan, SPB, pengadaan, dan dampaknya terhadap kesiapan alat.</p></div>
+                    <div><span class="sl-eyebrow">WAREHOUSE · PROCUREMENT · MAINTENANCE</span><h1>Spare Part & Logistik</h1><p>Tabulasi kebutuhan per unit, ketersediaan, SPB, pengadaan, dan dampaknya terhadap kesiapan alat.</p></div>
                     <div class="sl-header-flow"><span><b>1</b>Temuan</span><i class="fa-solid fa-chevron-right"></i><span><b>2</b>WO / SPB</span><i class="fa-solid fa-chevron-right"></i><span><b>3</b>Approval</span><i class="fa-solid fa-chevron-right"></i><span><b>4</b>Part siap</span></div>
                 </header>
                 ${renderKpis()}
@@ -4215,9 +4215,9 @@
         row.dataset.slApproval = request.spbId;
         row.innerHTML = `
             <td><strong class="font-mono" style="color:var(--primary);">${escapeHtml(request.spbId)}</strong></td>
-            <td>SPB Spare Part Â· <strong class="font-mono">${escapeHtml(shortCode(request.assetId))}</strong></td>
+            <td>SPB Spare Part · <strong class="font-mono">${escapeHtml(shortCode(request.assetId))}</strong></td>
             <td>Maintenance / Logistik</td>
-            <td>${request.lines.length} item Â· <span class="font-mono">${escapeHtml(request.woId || 'Belum terkait WO')}</span></td>
+            <td>${request.lines.length} item · <span class="font-mono">${escapeHtml(request.woId || 'Belum terkait WO')}</span></td>
             <td>
                 <button class="btn btn-sm btn-success" style="padding:3px 8px; border-radius:2px;" onclick="approveDoc(this)" title="Approve Request"><i class="fa-solid fa-check"></i> Setuju</button>
                 <button class="btn btn-sm btn-danger" style="padding:3px 8px; border-radius:2px;" onclick="rejectDoc(this, '${escapeHtml(request.spbId)}')" title="Reject Request"><i class="fa-solid fa-xmark"></i> Tolak</button>
@@ -4360,7 +4360,7 @@
                 aksi_perbaikan: '',
                 status_pengadaan: item.status,
                 rtw_terdampak: item.rtwImpact ? 'Ya' : 'Tidak',
-                kesimpulan_akhir: `${item.status} Â· ${item.source || 'Spare Part & Logistik'}`
+                kesimpulan_akhir: `${item.status} · ${item.source || 'Spare Part & Logistik'}`
             };
         });
         closeDetail();
@@ -4372,7 +4372,7 @@
                     site: asset.location || 'EQUIPMENT PHR DURI',
                     periode: period,
                     pic_logistik: 'Tim Procurement / Logistik',
-                    sumber_dokumen: 'Spare Part & Logistik Â· Master Asset Â· Bank Data Equipment'
+                    sumber_dokumen: 'Spare Part & Logistik · Master Asset · Bank Data Equipment'
                 },
                 rows,
                 importSource: {
@@ -4539,7 +4539,7 @@
 })();
 
 // ============================================================================
-// CONDITION MONITORING V2 â€” per-unit inspections and cross-module follow-up
+// CONDITION MONITORING V2 — per-unit inspections and cross-module follow-up
 // Sources: BRA tire report, weekly regreasing, cutting-bit controls, battery bank.
 // ============================================================================
 (function () {
@@ -4551,10 +4551,10 @@
     const CUTTING_LIMITS = { perDay: 30, perHm: 3, per1000m2: 5, minStock: 100 };
     const BATTERY_LIMITS = { voltageSafe: 12.6, voltageDanger: 12.0, ccaSafe: 80, ccaDanger: 60 };
     const MATERIAL_SOURCES = {
-        tire: 'REPORT BAN UPDATE 19.07.2026 Â· 55 unit / 550 posisi',
+        tire: 'REPORT BAN UPDATE 19.07.2026 · 55 unit / 550 posisi',
         grease: 'REGRESING WEEKLY MAINTENANCE 31 Januari 2026',
         cutting: 'Form Kontrol Cutting Bit CAT RM500 + tabulasi CAT/XCMG',
-        battery: 'Bank Data Equipment Pemakaian Aki Aprâ€“Des 2025'
+        battery: 'Bank Data Equipment Pemakaian Aki Apr–Des 2025'
     };
 
     const TIRE_POSITIONS_10 = [
@@ -4991,7 +4991,7 @@
                         <h2>Daftar Kondisi Komponen per Unit</h2>
                         <p>Pilih unit melalui tombol Detail untuk membuka ringkasan, inspeksi, dan riwayat komponen.</p>
                     </div>
-                    <div class="cm-catalog-source"><i class="fa-solid fa-database"></i><span><strong>Acuan material BRA</strong>Ban Â· grease Â· cutting bit Â· aki</span></div>
+                    <div class="cm-catalog-source"><i class="fa-solid fa-database"></i><span><strong>Acuan material BRA</strong>Ban · grease · cutting bit · aki</span></div>
                 </div>
                 <div class="cm-catalog-toolbar">
                     <div class="cm-catalog-search"><i class="fa-solid fa-magnifying-glass"></i><input id="cm-catalog-search" type="search" value="${esc(catalogState.query)}" placeholder="Cari kode lambung, kategori, atau lokasi..." oninput="ConditionMonitoring.filterCatalog(this.value)"></div>
@@ -5009,10 +5009,10 @@
                     </select>
                 </div>
                 <div class="cm-material-strip">
-                    <span><i class="fa-solid fa-circle-dot"></i><strong>Ban:</strong> 240/550 posisi tercatat Â· 19 DG Â· 17 warning</span>
-                    <span><i class="fa-solid fa-oil-can"></i><strong>Grease:</strong> 12 due Â· 9 overdue</span>
-                    <span><i class="fa-solid fa-screwdriver-wrench"></i><strong>Cutting bit:</strong> â‰¤3 bit/HM Â· â‰¤5 bit/1.000 mÂ²</span>
-                    <span><i class="fa-solid fa-car-battery"></i><strong>Aki:</strong> 51 unit pemakaian Â· 80,4% GS</span>
+                    <span><i class="fa-solid fa-circle-dot"></i><strong>Ban:</strong> 240/550 posisi tercatat · 19 DG · 17 warning</span>
+                    <span><i class="fa-solid fa-oil-can"></i><strong>Grease:</strong> 12 due · 9 overdue</span>
+                    <span><i class="fa-solid fa-screwdriver-wrench"></i><strong>Cutting bit:</strong> ≤3 bit/HM · ≤5 bit/1.000 m²</span>
+                    <span><i class="fa-solid fa-car-battery"></i><strong>Aki:</strong> 51 unit pemakaian · 80,4% GS</span>
                 </div>
                 <div class="table-responsive cm-catalog-table-wrap">
                     <table class="cm-catalog-table">
@@ -5025,11 +5025,11 @@
             return `<tr>
                                     <td><div class="cm-unit-table-cell"><span class="cm-unit-table-icon ${overall}"><i class="fa-solid ${supportsCuttingBit(asset) ? 'fa-road' : isDumpTruck(asset) ? 'fa-truck-moving' : 'fa-tractor'}"></i></span><div><strong>${esc(shortCode(asset.id))}</strong><small>${esc(assetType(asset))}</small></div></div></td>
                                     <td><div class="cm-location-cell"><span title="${esc(asset.location || '')}">${esc(asset.location || 'Lokasi belum ditetapkan')}</span><small class="cm-asset-status ${esc(String(asset.status || 'READY').toLowerCase())}">${esc(asset.status || 'READY')}</small></div></td>
-                                    <td>${conditionCell(summary.statuses.tire, `${summary.tireDanger} kritis Â· ${summary.tireWarning} warning`)}</td>
+                                    <td>${conditionCell(summary.statuses.tire, `${summary.tireDanger} kritis · ${summary.tireWarning} warning`)}</td>
                                     <td>${conditionCell(summary.statuses.grease, `${greaseElapsed} HM`)}</td>
                                     <td>${conditionCell(summary.statuses.cutting, profile.cutting.applicable ? `${profile.cutting.installed} pcs` : 'Tidak terpasang')}</td>
-                                    <td>${conditionCell(summary.statuses.battery, `${fmt(profile.battery.voltage)} V Â· ${fmt(profile.battery.cca, 0)}%`)}</td>
-                                    <td>${latest ? `<strong>${esc(formatDate(latest.at))}</strong><small>${esc(latest.domain)} Â· ${statusLabel(latest.status)}</small>` : '<span class="cm-no-record">Belum ada input baru</span>'}</td>
+                                    <td>${conditionCell(summary.statuses.battery, `${fmt(profile.battery.voltage)} V · ${fmt(profile.battery.cca, 0)}%`)}</td>
+                                    <td>${latest ? `<strong>${esc(formatDate(latest.at))}</strong><small>${esc(latest.domain)} · ${statusLabel(latest.status)}</small>` : '<span class="cm-no-record">Belum ada input baru</span>'}</td>
                                     <td>${activeWo ? `<button class="cm-wo-link" type="button" onclick="ConditionMonitoring.openLinkedWO('${esc(asset.id)}')"><i class="fa-solid fa-wrench"></i>${esc(activeWo.woId)}</button>` : `<span class="cm-overall-chip ${overall}">${statusLabel(overall)}</span>`}</td>
                                     <td><button class="cm-detail-button" type="button" data-asset-id="${esc(asset.id)}" onclick="window.ConditionMonitoring && window.ConditionMonitoring.openDetail('${esc(asset.id)}'); event.stopPropagation();"><i class="fa-solid fa-eye"></i> Detail</button></td>
                                 </tr>`;
@@ -5038,7 +5038,7 @@
                     </table>
                 </div>
                 <div class="cm-catalog-footer">
-                    <span>Menampilkan ${pageRows.length ? start + 1 : 0}â€“${Math.min(start + catalogState.pageSize, filtered.length)} dari ${filtered.length} unit</span>
+                    <span>Menampilkan ${pageRows.length ? start + 1 : 0}–${Math.min(start + catalogState.pageSize, filtered.length)} dari ${filtered.length} unit</span>
                     <div><button type="button" onclick="ConditionMonitoring.changePage(-1)" ${catalogState.page <= 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button><strong>Halaman ${catalogState.page} / ${totalPages}</strong><button type="button" onclick="ConditionMonitoring.changePage(1)" ${catalogState.page >= totalPages ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button></div>
                 </div>
             </section>`;
@@ -5053,7 +5053,7 @@
                         <header class="cm-detail-header">
                             <div class="cm-detail-title">
                                 <span class="cm-unit-avatar"><i class="fa-solid ${supportsCuttingBit(asset) ? 'fa-road' : isDumpTruck(asset) ? 'fa-truck-moving' : 'fa-tractor'}"></i></span>
-                                <div><small>DETAIL CONDITION MONITORING</small><h2>${esc(shortCode(asset.id))}</h2><p>${esc(assetType(asset))} Â· ${esc(asset.location || 'Lokasi belum ditetapkan')}</p></div>
+                                <div><small>DETAIL CONDITION MONITORING</small><h2>${esc(shortCode(asset.id))}</h2><p>${esc(assetType(asset))} · ${esc(asset.location || 'Lokasi belum ditetapkan')}</p></div>
                             </div>
                             <div class="cm-detail-header-actions">
                                 <button type="button" onclick="ConditionMonitoring.openAsset()" title="Buka Asset 360Â°"><i class="fa-solid fa-truck"></i><span>Aset 360Â°</span></button>
@@ -5067,14 +5067,14 @@
                             <section class="cm-detail-summary">
                                 <div><span>Status aset</span><strong class="cm-asset-status ${esc(String(asset.status || 'READY').toLowerCase())}">${esc(asset.status || 'READY')}</strong></div>
                                 <div><span>Health score</span><strong>${summary ? summary.score : 100}<small>/100</small></strong></div>
-                                <div><span>Tindak lanjut</span><strong>${summary ? summary.critical : 0} kritis Â· ${summary ? summary.warning : 0} perhatian</strong></div>
+                                <div><span>Tindak lanjut</span><strong>${summary ? summary.critical : 0} kritis · ${summary ? summary.warning : 0} perhatian</strong></div>
                                 <div><span>WO aktif</span><strong>${activeWo ? esc(activeWo.woId) : 'Tidak ada'}</strong></div>
                             </section>
                             <section class="cm-domain-kpis">
-                                ${renderDomainKpi('tire', 'Ban / Undercarriage', 'fa-circle-dot', summary ? summary.statuses.tire : 'muted', `${summary ? summary.tireDanger : 0} kritis Â· ${summary ? summary.tireWarning : 0} warning`)}
+                                ${renderDomainKpi('tire', 'Ban / Undercarriage', 'fa-circle-dot', summary ? summary.statuses.tire : 'muted', `${summary ? summary.tireDanger : 0} kritis · ${summary ? summary.tireWarning : 0} warning`)}
                                 ${renderDomainKpi('grease', 'Grease', 'fa-oil-can', summary ? summary.statuses.grease : 'muted', `${profile && profile.grease ? Math.max(profile.grease.currentHm - profile.grease.lastHm, 0) : 0} HM sejak grease`)}
                                 ${renderDomainKpi('cutting', 'Cutting Bit', 'fa-screwdriver-wrench', summary ? summary.statuses.cutting : 'muted', profile && profile.cutting && profile.cutting.applicable ? `${profile.cutting.installed} terpasang` : 'Tidak diaplikasikan')}
-                                ${renderDomainKpi('battery', 'Aki', 'fa-car-battery', summary ? summary.statuses.battery : 'muted', profile && profile.battery ? `${fmt(profile.battery.voltage, 1)} V Â· ${fmt(profile.battery.cca, 0)}% CCA` : '-')}
+                                ${renderDomainKpi('battery', 'Aki', 'fa-car-battery', summary ? summary.statuses.battery : 'muted', profile && profile.battery ? `${fmt(profile.battery.voltage, 1)} V · ${fmt(profile.battery.cca, 0)}% CCA` : '-')}
                             </section>
                             <nav class="cm-tabs" aria-label="Jenis pemeriksaan">
                                 ${[
@@ -5163,9 +5163,9 @@
         const cut = cuttingMetrics(profile.cutting);
         const alerts = [];
         if (summary.tireDanger) alerts.push({ level: 'danger', domain: 'Ban', text: `${summary.tireDanger} posisi rusak fisik atau di bawah ${TIRE_LIMITS.danger} mm. Tahan unit sampai dinilai mekanik.` });
-        if (summary.tireWarning) alerts.push({ level: 'warning', domain: 'Ban', text: `${summary.tireWarning} posisi berada pada rentang rotasi ${TIRE_LIMITS.danger}â€“${TIRE_LIMITS.safe} mm.` });
+        if (summary.tireWarning) alerts.push({ level: 'warning', domain: 'Ban', text: `${summary.tireWarning} posisi berada pada rentang rotasi ${TIRE_LIMITS.danger}–${TIRE_LIMITS.safe} mm.` });
         if (greaseStatus(profile.grease) !== 'success') alerts.push({ level: greaseStatus(profile.grease), domain: 'Grease', text: `Sudah ${profile.grease.currentHm - profile.grease.lastHm} HM sejak regreasing; interval ${profile.grease.interval} HM.` });
-        if (profile.cutting.applicable && cut.status !== 'success') alerts.push({ level: cut.status, domain: 'Cutting Bit', text: `Rasio ${fmt(cut.perHm)} bit/HM dan ${fmt(cut.per1000m2)} bit/1.000 mÂ² perlu ditinjau.` });
+        if (profile.cutting.applicable && cut.status !== 'success') alerts.push({ level: cut.status, domain: 'Cutting Bit', text: `Rasio ${fmt(cut.perHm)} bit/HM dan ${fmt(cut.per1000m2)} bit/1.000 m² perlu ditinjau.` });
         if (batteryStatus(profile.battery) !== 'success') alerts.push({ level: batteryStatus(profile.battery), domain: 'Aki', text: `Tegangan ${fmt(profile.battery.voltage)} V dan CCA ${fmt(profile.battery.cca, 0)}%; lakukan load test.` });
 
         return `
@@ -5193,13 +5193,13 @@
                         <i class="fa-solid fa-chevron-right"></i>
                         <div><span>2</span><strong>Validasi</strong><small>P2H / mekanik</small></div>
                         <i class="fa-solid fa-chevron-right"></i>
-                        <div><span>3</span><strong>Eksekusi</strong><small>WO Â· PM Â· SPB</small></div>
+                        <div><span>3</span><strong>Eksekusi</strong><small>WO · PM · SPB</small></div>
                     </div>
                     <div class="cm-action-grid">
                         <button type="button" onclick="ConditionMonitoring.openP2H()"><i class="fa-solid fa-clipboard-check"></i><span><strong>Validasi di P2H</strong><small>Checklist unit yang sama</small></span></button>
                         <button type="button" onclick="ConditionMonitoring.schedulePM()"><i class="fa-solid fa-calendar-check"></i><span><strong>Jadwalkan PM</strong><small>Grease & penggantian terencana</small></span></button>
                         <button type="button" class="danger" onclick="ConditionMonitoring.openOrCreateWO()"><i class="fa-solid fa-wrench"></i><span><strong>Buat Work Order</strong><small>Temuan safety-critical</small></span></button>
-                        <button type="button" onclick="ConditionMonitoring.requestPart()"><i class="fa-solid fa-boxes-stacked"></i><span><strong>Minta consumable</strong><small>Ban Â· grease Â· bit Â· aki</small></span></button>
+                        <button type="button" onclick="ConditionMonitoring.requestPart()"><i class="fa-solid fa-boxes-stacked"></i><span><strong>Minta consumable</strong><small>Ban · grease · bit · aki</small></span></button>
                     </div>
                 </article>
             </div>
@@ -5233,16 +5233,16 @@
                     </div>
                     <div class="cm-legend">
                         <span><i class="success"></i>&gt; 8,5 mm</span>
-                        <span><i class="warning"></i>3,2â€“8,5 mm</span>
+                        <span><i class="warning"></i>3,2–8,5 mm</span>
                         <span><i class="danger"></i>&lt; 3,2 mm / DG</span>
                         <span><i class="muted"></i>Belum diukur</span>
                     </div>
                     <div class="cm-mini-table">
-                        ${profile.tires.map(item => `<button type="button" class="${item.code === tire.code ? 'active' : ''}" onclick="ConditionMonitoring.selectTire('${item.code}')"><strong>${esc(item.code)}</strong><span>${esc(item.label)}</span><em class="${tireStatus(item)}">${item.tread === null ? esc(item.physical) : `${fmt(item.tread)} mm Â· ${item.pressure || '-'} PSI`}</em></button>`).join('')}
+                        ${profile.tires.map(item => `<button type="button" class="${item.code === tire.code ? 'active' : ''}" onclick="ConditionMonitoring.selectTire('${item.code}')"><strong>${esc(item.code)}</strong><span>${esc(item.label)}</span><em class="${tireStatus(item)}">${item.tread === null ? esc(item.physical) : `${fmt(item.tread)} mm · ${item.pressure || '-'} PSI`}</em></button>`).join('')}
                     </div>
                 </article>
                 <article class="cm-card cm-form-card">
-                    <div class="cm-card-header"><div><span class="cm-eyebrow">FORM INSPEKSI BAN</span><h3>${esc(tire.code)} Â· ${esc(tire.label)}</h3></div><span class="cm-status-pill ${tireStatus(tire)}">${statusLabel(tireStatus(tire))}</span></div>
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">FORM INSPEKSI BAN</span><h3>${esc(tire.code)} · ${esc(tire.label)}</h3></div><span class="cm-status-pill ${tireStatus(tire)}">${statusLabel(tireStatus(tire))}</span></div>
                     <div class="cm-form-grid">
                         <label><span>Tread depth (mm)</span><input id="cm-tire-tread" class="form-control" type="number" min="0" step="0.01" value="${tire.tread === null ? '' : esc(tire.tread)}" placeholder="Kosongkan bila DG"></label>
                         <label><span>Tekanan angin (PSI)</span><input id="cm-tire-pressure" class="form-control" type="number" min="0" step="1" value="${esc(tire.pressure || '')}" placeholder="Contoh 110"></label>
@@ -5250,7 +5250,7 @@
                         <label><span>Pola keausan</span><select id="cm-tire-wear" class="form-control">${['Merata', 'Aus tidak rata', 'Aus bahu', 'Aus tengah', 'Rotasi'].map(value => `<option ${tire.wearPattern === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
                         <label class="cm-field-full"><span>Rekomendasi</span><select id="cm-tire-action" class="form-control">${['Monitor', 'Atur tekanan', 'Rotasi', 'Ganti terencana', 'Ganti segera'].map(value => `<option ${tire.action === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
                     </div>
-                    <div class="cm-threshold-note"><i class="fa-solid fa-ruler"></i><span><strong>Aturan BRA:</strong> DG selalu merah. Angka 3,2â€“8,5 mm masuk rotasi/perhatian; di bawah 3,2 mm wajib penggantian.</span></div>
+                    <div class="cm-threshold-note"><i class="fa-solid fa-ruler"></i><span><strong>Aturan BRA:</strong> DG selalu merah. Angka 3,2–8,5 mm masuk rotasi/perhatian; di bawah 3,2 mm wajib penggantian.</span></div>
                     <button class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveTire()"><i class="fa-solid fa-floppy-disk"></i> Simpan inspeksi ${esc(tire.code)}</button>
                     <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.tire)}</small>
                 </article>
@@ -5308,13 +5308,13 @@
                 <article class="cm-card">
                     <div class="cm-card-header"><div><span class="cm-eyebrow">KONTROL CONSUMABLE</span><h3>Analisis cutting bit</h3></div><span class="cm-status-pill ${metrics.status}">${statusLabel(metrics.status)}</span></div>
                     <div class="cm-metric-grid">
-                        <div><span>Pemakaian / HM</span><strong>${fmt(metrics.perHm)}</strong><small>Standar â‰¤ ${CUTTING_LIMITS.perHm} bit/HM</small></div>
-                        <div><span>Pemakaian / 1.000 mÂ²</span><strong>${fmt(metrics.per1000m2)}</strong><small>Standar â‰¤ ${CUTTING_LIMITS.per1000m2} bit</small></div>
+                        <div><span>Pemakaian / HM</span><strong>${fmt(metrics.perHm)}</strong><small>Standar ≤ ${CUTTING_LIMITS.perHm} bit/HM</small></div>
+                        <div><span>Pemakaian / 1.000 m²</span><strong>${fmt(metrics.per1000m2)}</strong><small>Standar ≤ ${CUTTING_LIMITS.per1000m2} bit</small></div>
                         <div><span>Return rate</span><strong>${fmt(metrics.returnRate, 0)}%</strong><small>Target 100%</small></div>
                         <div><span>Stok akhir</span><strong>${fmt(metrics.finalStock, 0)}</strong><small>Minimum ${CUTTING_LIMITS.minStock} pcs</small></div>
                     </div>
-                    <div class="cm-cost-highlight"><span>Biaya pemakaian shift</span><strong>${rupiah(metrics.cost)}</strong><small>${cutting.installed} pcs Ã— ${rupiah(PRICE_CUTTING_BIT)}</small></div>
-                    <div class="cm-threshold-note ${metrics.status}"><i class="fa-solid ${statusIcon(metrics.status)}"></i><span>Hilang &gt; 0 langsung <strong>Over Limit</strong>. Warning pada 101â€“120% standar; Over Limit di atas 120%.</span></div>
+                    <div class="cm-cost-highlight"><span>Biaya pemakaian shift</span><strong>${rupiah(metrics.cost)}</strong><small>${cutting.installed} pcs × ${rupiah(PRICE_CUTTING_BIT)}</small></div>
+                    <div class="cm-threshold-note ${metrics.status}"><i class="fa-solid ${statusIcon(metrics.status)}"></i><span>Hilang &gt; 0 langsung <strong>Over Limit</strong>. Warning pada 101–120% standar; Over Limit di atas 120%.</span></div>
                 </article>
                 <article class="cm-card cm-form-card">
                     <div class="cm-card-header"><div><span class="cm-eyebrow">FORM SHIFT</span><h3>Pemakaian & pengembalian bit</h3></div></div>
@@ -5342,7 +5342,7 @@
         return `
             <div class="cm-inspection-grid">
                 <article class="cm-card">
-                    <div class="cm-card-header"><div><span class="cm-eyebrow">BATTERY HEALTH</span><h3>${esc(battery.brand)} Â· ${esc(battery.type)}</h3></div><span class="cm-status-pill ${status}">${statusLabel(status)}</span></div>
+                    <div class="cm-card-header"><div><span class="cm-eyebrow">BATTERY HEALTH</span><h3>${esc(battery.brand)} · ${esc(battery.type)}</h3></div><span class="cm-status-pill ${status}">${statusLabel(status)}</span></div>
                     <div class="cm-battery-visual ${status}">
                         <div class="cm-battery-terminal plus">+</div><div class="cm-battery-terminal minus">âˆ’</div>
                         <div class="cm-battery-level" style="--battery-level:${Math.min(Math.max(battery.cca, 0), 100)}%"></div>
@@ -5354,7 +5354,7 @@
                         <div><span>Elektrolit</span><strong>${esc(battery.electrolyte)}</strong></div>
                         <div><span>Casing</span><strong>${esc(battery.caseCondition)}</strong></div>
                     </div>
-                    <div class="cm-threshold-note ${status}"><i class="fa-solid fa-bolt"></i><span>Aman â‰¥12,6 V dan CCA â‰¥80%. Di bawah 12,0 V atau CCA &lt;60% memerlukan recharge/replace.</span></div>
+                    <div class="cm-threshold-note ${status}"><i class="fa-solid fa-bolt"></i><span>Aman ≥12,6 V dan CCA ≥80%. Di bawah 12,0 V atau CCA &lt;60% memerlukan recharge/replace.</span></div>
                 </article>
                 <article class="cm-card cm-form-card">
                     <div class="cm-card-header"><div><span class="cm-eyebrow">FORM INSPEKSI AKI</span><h3>Load test & kondisi fisik</h3></div></div>
@@ -5370,7 +5370,7 @@
                     </div>
                     <label class="cm-block-label"><span>Catatan</span><textarea id="cm-bat-note" class="form-control" rows="3">${esc(battery.note)}</textarea></label>
                     <button class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveBattery()"><i class="fa-solid fa-floppy-disk"></i> Simpan inspeksi aki</button>
-                    <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.battery)} Â· 51 aki / 31 transaksi, GS 80,4%</small>
+                    <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.battery)} · 51 aki / 31 transaksi, GS 80,4%</small>
                 </article>
             </div>`;
     }
@@ -5485,7 +5485,7 @@
         let wo = findActiveWo(asset.id);
         if (!wo) {
             const finding = worstFinding(profile);
-            const approved = window.confirm(`Buat Work Order untuk ${shortCode(asset.id)}?\n\nTemuan: ${finding.domain} â€” ${finding.text}`);
+            const approved = window.confirm(`Buat Work Order untuk ${shortCode(asset.id)}?\n\nTemuan: ${finding.domain} — ${finding.text}`);
             if (!approved) return null;
             wo = {
                 woId: `WO-CM-${Date.now().toString().slice(-6)}`,
@@ -5656,7 +5656,7 @@
             tire.action = valueOf('cm-tire-action');
             tire.updatedAt = new Date().toISOString();
             const status = tireStatus(tire);
-            addHistory('Ban', status, `${tire.code} ${tire.tread === null ? tire.physical : `${tire.tread} mm / ${tire.pressure || '-'} PSI`} Â· ${tire.action}`);
+            addHistory('Ban', status, `${tire.code} ${tire.tread === null ? tire.physical : `${tire.tread} mm / ${tire.pressure || '-'} PSI`} · ${tire.action}`);
         },
         saveGrease() {
             const grease = getProfile().grease;
@@ -5678,7 +5678,7 @@
             });
             grease.updatedAt = new Date().toISOString();
             const status = greaseStatus(grease);
-            addHistory('Grease', status, `${current - last} HM sejak grease Â· ${grease.quantity} kg ${grease.greaseType}`);
+            addHistory('Grease', status, `${current - last} HM sejak grease · ${grease.quantity} kg ${grease.greaseType}`);
         },
         saveCutting() {
             const cutting = getProfile().cutting;
@@ -5697,7 +5697,7 @@
             }
             cutting.updatedAt = new Date().toISOString();
             const metrics = cuttingMetrics(cutting);
-            addHistory('Cutting Bit', metrics.status, `${fmt(metrics.perHm)} bit/HM Â· ${fmt(metrics.per1000m2)} bit/1.000 mÂ² Â· return ${fmt(metrics.returnRate, 0)}%`);
+            addHistory('Cutting Bit', metrics.status, `${fmt(metrics.perHm)} bit/HM · ${fmt(metrics.per1000m2)} bit/1.000 m² · return ${fmt(metrics.returnRate, 0)}%`);
         },
         saveBattery() {
             const battery = getProfile().battery;
@@ -5715,7 +5715,7 @@
                 return;
             }
             battery.updatedAt = new Date().toISOString();
-            addHistory('Aki', batteryStatus(battery), `${battery.voltage} V Â· ${battery.cca}% CCA Â· ${battery.terminal}`);
+            addHistory('Aki', batteryStatus(battery), `${battery.voltage} V · ${battery.cca}% CCA · ${battery.terminal}`);
         },
         openAsset() {
             const asset = selectedAsset();
@@ -5805,8 +5805,8 @@
                     replace: 19,
                     coverage: '240 dari 550 posisi tercatat (213 angka + 19 DG + 8 CLOSE)',
                     rows: [
-                        { unit: 'DT-04042', pos: 'P7â€“P10', cond: 'DG Â· Ganti', pressure: '-', badge: 'badge-soft-danger' },
-                        { unit: 'DT-04053', pos: 'P7â€“P10', cond: 'DG Â· Ganti', pressure: '-', badge: 'badge-soft-danger' },
+                        { unit: 'DT-04042', pos: 'P7–P10', cond: 'DG · Ganti', pressure: '-', badge: 'badge-soft-danger' },
+                        { unit: 'DT-04053', pos: 'P7–P10', cond: 'DG · Ganti', pressure: '-', badge: 'badge-soft-danger' },
                         { unit: 'DT-00056', pos: 'P1 / P2', cond: 'Rotasi', pressure: '88 / 86 PSI', badge: 'badge-soft-warning' },
                         { unit: 'DT-00049', pos: 'P2', cond: '3,77 mm', pressure: '84 PSI', badge: 'badge-soft-warning' },
                         ...(recentTire ? [{ unit: shortCode(recentTire.assetId), pos: 'Terbaru', cond: statusLabel(recentTire.status), pressure: '-', badge: `badge-soft-${recentTire.status === 'danger' ? 'danger' : recentTire.status === 'warning' ? 'warning' : 'success'}` }] : [])
@@ -7843,8 +7843,8 @@
 
     function docxPartTitle(name) {
         if (/document\.xml$/i.test(name)) return 'Isi utama dokumen';
-        if (/header/i.test(name)) return `Header â€” ${name.split('/').pop()}`;
-        if (/footer/i.test(name)) return `Footer â€” ${name.split('/').pop()}`;
+        if (/header/i.test(name)) return `Header — ${name.split('/').pop()}`;
+        if (/footer/i.test(name)) return `Footer — ${name.split('/').pop()}`;
         if (/footnotes/i.test(name)) return 'Catatan kaki';
         if (/endnotes/i.test(name)) return 'Catatan akhir';
         if (/comments/i.test(name)) return 'Komentar/review';
@@ -8005,7 +8005,7 @@
         const dataRows = headerLooksUseful ? rawRows.slice(1) : rawRows;
         return {
             id: `DOCX-TABLE-${globalTableIndex}`,
-            title: `${docxPartTitle(partName)} â€” tabel ${localTableIndex}`,
+            title: `${docxPartTitle(partName)} — tabel ${localTableIndex}`,
             sourceRef: `docx:${partName}#table${localTableIndex}`,
             headers,
             headerRowNumber: headerLooksUseful ? 1 : null,
@@ -8364,7 +8364,7 @@
                     const lines = pdfItemsToLines(textItems);
                     const nativeText = normalizeSpace(lines.map(line => line.text).join('\n'));
                     const garbledRatio = nativeText
-                        ? (nativeText.match(/[\uFFFDÃ¢â€“Â¡Ã¯Â¿Â½]/g) || []).length / nativeText.length
+                        ? (nativeText.match(/[\uFFFDÃ¢–Â¡Ã¯Â¿Â½]/g) || []).length / nativeText.length
                         : 1;
                     const nativeReadable = nativeText.length >= 30 && garbledRatio < 0.08;
                     if (nativeReadable) nativeTextPages += 1;
@@ -8639,7 +8639,7 @@
             ));
             return {
                 id: `PDF-${sourceType}-TABLE-${pageNumber}-${blockIndex + 1}`,
-                title: `Halaman ${pageNumber} â€” tabel ${sourceType === 'OCR' ? 'OCR' : 'text layer'} ${blockIndex + 1}`,
+                title: `Halaman ${pageNumber} — tabel ${sourceType === 'OCR' ? 'OCR' : 'text layer'} ${blockIndex + 1}`,
                 sourceRef: `pdf:p${pageNumber}:${sourceType.toLowerCase()}-table${blockIndex + 1}`,
                 headers,
                 headerRowNumber: 1,
@@ -10526,7 +10526,7 @@
     }
 
     function formatDateTime(value) {
-        if (!value) return 'â€”';
+        if (!value) return '—';
         try {
             return new Intl.DateTimeFormat('id-ID', {
                 dateStyle: 'medium',
@@ -10962,8 +10962,8 @@
                 <div class="official-template-file"><i class="fa-regular fa-file-excel"></i><span>XLSX</span></div>
                 <div>
                     <small>${escapeHtml(schema.category)}</small>
-                    <strong>${escapeHtml(schema.code)} Â· ${escapeHtml(schema.title)}</strong>
-                    <span>${schema.fields.length} field Â· ${schema.columns.length} kolom standar</span>
+                    <strong>${escapeHtml(schema.code)} · ${escapeHtml(schema.title)}</strong>
+                    <span>${schema.fields.length} field · ${schema.columns.length} kolom standar</span>
                 </div>
                 <button type="button" class="import-secondary-button" data-download-official-template="${escapeHtml(schema.id)}">
                     <i class="fa-solid fa-download"></i> Unduh
@@ -11330,8 +11330,8 @@
                     <i class="fa-solid ${batch.complete ? 'fa-clipboard-check' : 'fa-spinner fa-spin'}"></i>
                     <div>
                         <strong>Batch ${escapeHtml(batch.batchId.slice(0, 8))}: ${batch.processed}/${batch.enumerated} file diproses</strong>
-                        <span>${batch.failed} gagal Â· ${batch.warnings.length} masalah enumerasi${batch.complete ? ' Â· audit selesai' : ' Â· sedang berjalan'}</span>
-                        ${batch.warnings.length ? `<small>${escapeHtml(batch.warnings.slice(0, 3).join(' Â· '))}</small>` : ''}
+                        <span>${batch.failed} gagal · ${batch.warnings.length} masalah enumerasi${batch.complete ? ' · audit selesai' : ' · sedang berjalan'}</span>
+                        ${batch.warnings.length ? `<small>${escapeHtml(batch.warnings.slice(0, 3).join(' · '))}</small>` : ''}
                     </div>
                 </div>
             ` : ''}
@@ -11373,7 +11373,7 @@
                     <div class="import-file-type">${escapeHtml((summary.extension || '?').replace('.', '').slice(0, 4).toUpperCase())}</div>
                     <div class="import-queue-copy">
                         <strong title="${escapeHtml(summary.relativePath || summary.fileName)}">${escapeHtml(summary.fileName)}</strong>
-                        <span>${formatBytes(summary.size)} Â· ${escapeHtml(summary.target?.code || 'Belum dipetakan')}</span>
+                        <span>${formatBytes(summary.size)} · ${escapeHtml(summary.target?.code || 'Belum dipetakan')}</span>
                         <em class="import-status ${status.className}"><i class="fa-solid ${status.icon}"></i>${status.label}</em>
                         ${summary.status === 'processing' || summary.status === 'queued' ? `
                             <div class="import-card-progress" role="progressbar" aria-label="Progres ${escapeHtml(summary.fileName)}"
@@ -11477,9 +11477,9 @@
         const unitSummary = record.extraction.format === 'pdf'
             ? `${stats.pagesProcessed || 0}/${stats.pagesExpected || 0} halaman`
             : ['xlsx', 'xls', 'xlsm', 'csv', 'tsv'].includes(record.extraction.format)
-                ? `${stats.sheets || 0} sheet Â· ${(stats.nonEmptyCells || 0).toLocaleString('id-ID')} sel berisi data`
+                ? `${stats.sheets || 0} sheet · ${(stats.nonEmptyCells || 0).toLocaleString('id-ID')} sel berisi data`
                 : record.extraction.format === 'docx'
-                    ? `${stats.xmlPartsProcessed || 0} bagian Â· ${stats.tables || 0} tabel`
+                    ? `${stats.xmlPartsProcessed || 0} bagian · ${stats.tables || 0} tabel`
                     : `${(stats.fragments || 0).toLocaleString('id-ID')} fragmen`;
 
         container.innerHTML = `
@@ -11489,7 +11489,7 @@
                     <div>
                         <div class="import-detail-kicker">${escapeHtml(record.source.relativePath || record.source.fileName)}</div>
                         <h2>${escapeHtml(record.source.fileName)}</h2>
-                        <p>${formatBytes(record.source.size)} Â· ${escapeHtml(unitSummary)} Â· SHA-256 <code>${escapeHtml(record.source.sha256.slice(0, 16))}...</code></p>
+                        <p>${formatBytes(record.source.size)} · ${escapeHtml(unitSummary)} · SHA-256 <code>${escapeHtml(record.source.sha256.slice(0, 16))}...</code></p>
                     </div>
                 </div>
                 <div class="import-detail-actions">
@@ -11505,14 +11505,14 @@
                 <div class="import-template-selector">
                     <label for="importTargetSchema">Tipe laporan tujuan</label>
                     <select id="importTargetSchema" class="report-select">
-                        <option value="__none__" ${!record.target && record.classification.mode === 'manual' ? 'selected' : ''}>â€” Belum ada template yang dipilih â€”</option>
+                        <option value="__none__" ${!record.target && record.classification.mode === 'manual' ? 'selected' : ''}>— Belum ada template yang dipilih —</option>
                         ${schemas.map(schema => `
                             <option value="${escapeHtml(schema.id)}" ${record.target?.schemaId === schema.id ? 'selected' : ''}>
-                                ${escapeHtml(schema.code)} â€” ${escapeHtml(schema.title)}
+                                ${escapeHtml(schema.code)} — ${escapeHtml(schema.title)}
                             </option>
                         `).join('')}
                     </select>
-                    <span>Deteksi ${escapeHtml(confidenceLabel(record.classification.confidence))} Â· skor ${formatPercent(record.classification.score)}</span>
+                    <span>Deteksi ${escapeHtml(confidenceLabel(record.classification.confidence))} · skor ${formatPercent(record.classification.score)}</span>
                 </div>
                 <div class="import-review-action">
                     <em class="import-status ${status.className}"><i class="fa-solid ${status.icon}"></i>${status.label}</em>
@@ -11530,7 +11530,7 @@
                 <div class="import-quality-card warnings">
                     <span>Audit & konflik</span>
                     <strong>${(warningCounts.error || 0) + (warningCounts.warning || 0)}</strong>
-                    <small>${warningCounts.error || 0} error Â· ${warningCounts.warning || 0} warning Â· ${record.quality.conflicts || 0} konflik</small>
+                    <small>${warningCounts.error || 0} error · ${warningCounts.warning || 0} warning · ${record.quality.conflicts || 0} konflik</small>
                 </div>
             </div>
             ${record.duplicateOf ? `
@@ -11566,7 +11566,7 @@
             none: 'belum meyakinkan',
             manual: 'dipilih manual'
         };
-        return labels[value] || value || 'â€”';
+        return labels[value] || value || '—';
     }
 
     function qualityGauge(label, value, note) {
@@ -11707,8 +11707,8 @@
                                     <tr class="${value === undefined || value === '' ? 'missing' : ''}">
                                         <td><strong>${escapeHtml(field.label)}</strong>${field.required ? '<small>WAJIB</small>' : ''}</td>
                                         <td>${value !== undefined && value !== '' ? escapeHtml(value) : '<em>Belum ditemukan</em>'}</td>
-                                        <td>${provenance ? formatPercent(provenance.confidence) : 'â€”'}</td>
-                                        <td><code>${escapeHtml(provenance?.sourceRef || 'â€”')}</code></td>
+                                        <td>${provenance ? formatPercent(provenance.confidence) : '—'}</td>
+                                        <td><code>${escapeHtml(provenance?.sourceRef || '—')}</code></td>
                                     </tr>
                                 `;
         }).join('')}
@@ -11791,7 +11791,7 @@
                     <select id="importTableSelect" class="report-select">
                         ${tables.map((item, index) => `
                             <option value="${index}" ${index === state.tableIndex ? 'selected' : ''}>
-                                ${escapeHtml(item.title)} â€” ${(item.rows || []).length} baris
+                                ${escapeHtml(item.title)} — ${(item.rows || []).length} baris
                             </option>
                         `).join('')}
                     </select>
@@ -11848,7 +11848,7 @@
                 <div class="import-section-title"><h3>Artefak & bagian non-teks</h3><span>${record.extraction.artifacts.length} item</span></div>
                 <div class="import-artifact-list">
                     ${record.extraction.artifacts.slice(0, 300).map(artifact => `
-                        <div><i class="fa-regular fa-file"></i><span><strong>${escapeHtml(artifact.name)}</strong><small>${escapeHtml(artifact.kind)} Â· ${formatBytes(artifact.size)} Â· ${escapeHtml(artifact.sourceRef)}</small></span></div>
+                        <div><i class="fa-regular fa-file"></i><span><strong>${escapeHtml(artifact.name)}</strong><small>${escapeHtml(artifact.kind)} · ${formatBytes(artifact.size)} · ${escapeHtml(artifact.sourceRef)}</small></span></div>
                     `).join('') || '<em>Tidak ada artefak tambahan.</em>'}
                 </div>
             </section>
@@ -12236,12 +12236,12 @@
     }
 
     function formatNumber(value) {
-        if (value == null || value === '') return 'â€”';
+        if (value == null || value === '') return '—';
         return Number(value).toLocaleString('id-ID', { maximumFractionDigits: 1 });
     }
 
     function formatDate(value) {
-        if (!value) return 'â€”';
+        if (!value) return '—';
         const parts = value.split('-');
         return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
             .format(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
@@ -12360,7 +12360,7 @@
         root.innerHTML = `
             <div class="pm-page-header">
                 <div>
-                    <div class="pm-eyebrow">Maintenance Planning Â· M05</div>
+                    <div class="pm-eyebrow">Maintenance Planning · M05</div>
                     <h1>Preventive Maintenance Control Center</h1>
                     <p>Forecast interval HM/KM, realisasi service, kualitas histori, dan kesiapan referensi filter dalam satu tampilan kerja planner.</p>
                 </div>
@@ -12371,13 +12371,13 @@
             </div>
             ${conditionContext ? `<div class="pm-condition-context">
                 <i class="fa-solid fa-link"></i>
-                <div><strong>Konteks dari ${escapeHtml(conditionContext.source || 'Condition Monitoring')}: ${escapeHtml(conditionContext.assetId)}</strong><span>${escapeHtml(conditionContext.finding?.domain || 'Komponen')} Â· ${escapeHtml(conditionContext.finding?.text || 'Perlu tindak lanjut terencana')}</span></div>
+                <div><strong>Konteks dari ${escapeHtml(conditionContext.source || 'Condition Monitoring')}: ${escapeHtml(conditionContext.assetId)}</strong><span>${escapeHtml(conditionContext.finding?.domain || 'Komponen')} · ${escapeHtml(conditionContext.finding?.text || 'Perlu tindak lanjut terencana')}</span></div>
                 <button type="button" id="pmBackToCondition">${conditionContext.source === 'Spare Part & Logistik' ? 'Kembali ke logistik' : 'Buka inspeksi unit'}</button>
             </div>` : ''}
             <div class="pm-context-bar">
                 <div class="pm-context-group">
                     <i class="fa-regular fa-calendar"></i>
-                    <div><div class="pm-context-label">Periode aktif</div><div class="pm-context-value">Juli 2026 Â· WUR EW Project</div></div>
+                    <div><div class="pm-context-label">Periode aktif</div><div class="pm-context-value">Juli 2026 · WUR EW Project</div></div>
                 </div>
                 <div class="pm-context-group">
                     <i class="fa-solid fa-bell"></i>
@@ -12477,7 +12477,7 @@
                 ${kpiCard('blue', 'Rencana Service', summary.total, 'unit periode Juli', 'fa-calendar-check')}
                 ${kpiCard('green', 'Realisasi', summary.completed, `${summary.achievement.toFixed(1).replace('.', ',')}% ketercapaian`, 'fa-circle-check', summary.achievement)}
                 ${kpiCard('red', 'Overdue Aktif', summary.overdue, 'belum direalisasikan', 'fa-triangle-exclamation')}
-                ${kpiCard('amber', 'Due / Due Soon', summary.dueSoon, `HM â‰¤ ${thresholds.HM} Â· KM â‰¤ ${thresholds.KM}`, 'fa-bell')}
+                ${kpiCard('amber', 'Due / Due Soon', summary.dueSoon, `HM ≤ ${thresholds.HM} · KM ≤ ${thresholds.KM}`, 'fa-bell')}
                 ${kpiCard('purple', 'Isu Kualitas Data', summary.issues, 'butuh verifikasi planner', 'fa-shield-halved')}
             </div>
             <div class="pm-overview-grid">
@@ -12524,7 +12524,7 @@
                 <i class="fa-solid fa-calculator"></i>
                 <div><strong>Target service</strong>Service terakhir + interval</div>
                 <div><strong>Selisih jatuh tempo</strong>Meter terkini âˆ’ target service</div>
-                <div><strong>Status otomatis</strong>Positif = Overdue Â· 0 = Due Â· dalam warning window = Due Soon</div>
+                <div><strong>Status otomatis</strong>Positif = Overdue · 0 = Due · dalam warning window = Due Soon</div>
             </div>
         `;
 
@@ -12561,7 +12561,7 @@
             const status = statusOf(plan);
             return `<li class="pm-priority-item">
                 <div class="pm-priority-meter">${meterType(plan)}</div>
-                <div class="pm-priority-copy"><strong>${escapeHtml(plan.code || plan.id)} Â· ${escapeHtml(plan.id)}</strong><span>${escapeHtml(plan.asset)}</span></div>
+                <div class="pm-priority-copy"><strong>${escapeHtml(plan.code || plan.id)} · ${escapeHtml(plan.id)}</strong><span>${escapeHtml(plan.asset)}</span></div>
                 <div class="pm-priority-variance">${status === 'OVERDUE' ? '+' : ''}${formatNumber(variance)} ${meterType(plan)}<br><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}">Tindak lanjut</button></div>
             </li>`;
         }).join('');
@@ -12589,8 +12589,8 @@
             const usage = intervalUsage(plan);
             const barClass = status === 'COMPLETED' ? 'complete' : status === 'OVERDUE' ? 'danger' : ['DUE', 'DUE SOON'].includes(status) ? 'warning' : '';
             return `<tr>
-                <td class="pm-unit-cell"><strong>${escapeHtml(plan.code || 'Kode belum ada')}</strong><span>${escapeHtml(plan.id)} Â· ${meterType(plan)}</span><span class="pm-link-state ${linkedAsset ? 'linked' : 'unlinked'}"><i class="fa-solid ${linkedAsset ? 'fa-link' : 'fa-link-slash'}"></i> ${linkedAsset ? 'Master Asset' : 'Belum terpetakan'}</span></td>
-                <td class="pm-asset-cell"><strong title="${escapeHtml(plan.asset)}">${escapeHtml(plan.asset)}</strong><span>${plan.year} Â· ${escapeHtml(plan.warranty)}</span></td>
+                <td class="pm-unit-cell"><strong>${escapeHtml(plan.code || 'Kode belum ada')}</strong><span>${escapeHtml(plan.id)} · ${meterType(plan)}</span><span class="pm-link-state ${linkedAsset ? 'linked' : 'unlinked'}"><i class="fa-solid ${linkedAsset ? 'fa-link' : 'fa-link-slash'}"></i> ${linkedAsset ? 'Master Asset' : 'Belum terpetakan'}</span></td>
+                <td class="pm-asset-cell"><strong title="${escapeHtml(plan.asset)}">${escapeHtml(plan.asset)}</strong><span>${plan.year} · ${escapeHtml(plan.warranty)}</span></td>
                 <td><strong>${formatNumber(plan.current)} ${meterType(plan)}</strong><br><span class="pm-card-caption">${formatDate(plan.tracking)}</span></td>
                 <td><strong>${formatNumber(plan.last)}</strong><br><span class="pm-card-caption">${formatDate(plan.lastDate)}</span></td>
                 <td><strong>${formatNumber(plan.target)}</strong><br><span class="pm-card-caption">Interval ${formatNumber(plan.interval)}</span></td>
@@ -12637,7 +12637,7 @@
                         ${attention.map(rawPlan => {
             const plan = mergedPlan(rawPlan);
             const status = statusOf(plan);
-            return `<li><div><strong>${escapeHtml(plan.code || plan.id)}</strong><span>${status === 'COMPLETED' ? 'Detail realisasi belum lengkap' : `${status} Â· ${varianceOf(plan) > 0 ? '+' : ''}${formatNumber(varianceOf(plan))} ${meterType(plan)}`}</span></div><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}">Buka</button></li>`;
+            return `<li><div><strong>${escapeHtml(plan.code || plan.id)}</strong><span>${status === 'COMPLETED' ? 'Detail realisasi belum lengkap' : `${status} · ${varianceOf(plan) > 0 ? '+' : ''}${formatNumber(varianceOf(plan))} ${meterType(plan)}`}</span></div><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}">Buka</button></li>`;
         }).join('')}
                     </ul>
                 </section>
@@ -12690,7 +12690,7 @@
             </section>
             <div class="pm-formula-strip">
                 <i class="fa-solid fa-boxes-stacked"></i>
-                <div><strong>Input berikutnya</strong>Qty required Â· stock available Â· reserved Â· on order</div>
+                <div><strong>Input berikutnya</strong>Qty required · stock available · reserved · on order</div>
                 <div><strong>Shortage</strong>MAX(Qty required âˆ’ stock yang dapat dialokasikan, 0)</div>
                 <div><strong>Qty to order</strong>MAX(Shortage âˆ’ on order, 0) setelah PN tervalidasi</div>
             </div>
@@ -12717,7 +12717,7 @@
         overlay.innerHTML = `
             <div class="pm-detail-dialog">
                 <div class="pm-detail-header">
-                    <div class="pm-detail-title"><i class="fa-solid fa-screwdriver-wrench"></i><div><h2>${escapeHtml(plan.code || 'Kode belum tersedia')} Â· ${escapeHtml(plan.id)}</h2><p>${escapeHtml(plan.asset)}</p></div></div>
+                    <div class="pm-detail-title"><i class="fa-solid fa-screwdriver-wrench"></i><div><h2>${escapeHtml(plan.code || 'Kode belum tersedia')} · ${escapeHtml(plan.id)}</h2><p>${escapeHtml(plan.asset)}</p></div></div>
                     <button class="pm-close" data-close-pm><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="pm-detail-body">
@@ -12732,8 +12732,8 @@
                     <div class="pm-detail-section">
                         <h3>Dasar Perhitungan</h3>
                         <div class="pm-detail-grid">
-                            ${detailStat('Service terakhir', `${formatNumber(plan.last)} Â· ${formatDate(plan.lastDate)}`)}
-                            ${detailStat('Tracking terakhir', `${formatNumber(plan.current)} Â· ${formatDate(plan.tracking)}`)}
+                            ${detailStat('Service terakhir', `${formatNumber(plan.last)} · ${formatDate(plan.lastDate)}`)}
+                            ${detailStat('Tracking terakhir', `${formatNumber(plan.current)} · ${formatDate(plan.tracking)}`)}
                             ${detailStat('Pemakaian interval', `${intervalUsage(plan)}%`)}
                         </div>
                     </div>
@@ -12786,7 +12786,7 @@
         overlay.innerHTML = `
             <div class="pm-detail-dialog" style="max-width:650px">
                 <div class="pm-detail-header">
-                    <div class="pm-detail-title"><i class="fa-solid fa-box-open"></i><div><h2>${escapeHtml(kit.code)} Â· ${escapeHtml(kit.id)}</h2><p>${escapeHtml(kit.model)}</p></div></div>
+                    <div class="pm-detail-title"><i class="fa-solid fa-box-open"></i><div><h2>${escapeHtml(kit.code)} · ${escapeHtml(kit.id)}</h2><p>${escapeHtml(kit.model)}</p></div></div>
                     <button class="pm-close" data-close-pm><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="pm-detail-body">
@@ -12865,14 +12865,14 @@
 
     // Data 1: Head of Equipment KPI Assessment Template (from Template_KPI_Head_of_Equipment.md)
     const kpiHeadIndicators = [
-        { id: 1, aspect: 'RTW & Downtime', indicator: '% Unit Selesai â‰¤ Target RTW', target: 'â‰¥ 90%', score: 5, weight: 15, notes: 'Target RTW final disepakati & lulus test function' },
-        { id: 2, aspect: 'RTW & Downtime', indicator: 'Rata-rata Downtime per Unit', target: 'â‰¤ Standar', score: 4, weight: 20, notes: 'Dump Truck â‰¤ 5-7 hari; Tidak ada unit >7 hari / kronis >14 hari' },
-        { id: 3, aspect: 'RTW & Downtime', indicator: 'Kepatuhan PM Tepat Waktu', target: 'â‰¥ 95%', score: 4, weight: 10, notes: 'PM on-time %; Breakdown akibat PM gagal NIHIL' },
-        { id: 4, aspect: 'Percepatan', indicator: 'Waktu Respon Awal Kerusakan', target: 'â‰¤ 24 jam', score: 3, weight: 10, notes: 'Respons awal troubleshooting & JO diterbitkan' },
-        { id: 5, aspect: 'Percepatan', indicator: 'Keterlambatan karena Spare Part', target: 'â‰¤ 10%', score: 1, weight: 10, notes: 'Penurunan kerugian downtime â‰¥30-40%/bln' },
-        { id: 6, aspect: 'Percepatan', indicator: 'Keterlambatan karena Manpower', target: 'â‰¤ 5%', score: 1, weight: 5, notes: 'Ketersediaan mekanik, welder, dan vendor' },
-        { id: 7, aspect: 'Biaya & Kualitas', indicator: 'Deviasi Biaya Corrective', target: 'â‰¤ 110%', score: 1, weight: 10, notes: 'Realisasi biaya vs budget rencana corrective' },
-        { id: 8, aspect: 'Biaya & Kualitas', indicator: 'Repeat Breakdown â‰¤ 30 Hari', target: 'â‰¤ 5%', score: 1, weight: 10, notes: 'Kerusakan berulang unit/komponen yang sama' },
+        { id: 1, aspect: 'RTW & Downtime', indicator: '% Unit Selesai ≤ Target RTW', target: '≥ 90%', score: 5, weight: 15, notes: 'Target RTW final disepakati & lulus test function' },
+        { id: 2, aspect: 'RTW & Downtime', indicator: 'Rata-rata Downtime per Unit', target: '≤ Standar', score: 4, weight: 20, notes: 'Dump Truck ≤ 5-7 hari; Tidak ada unit >7 hari / kronis >14 hari' },
+        { id: 3, aspect: 'RTW & Downtime', indicator: 'Kepatuhan PM Tepat Waktu', target: '≥ 95%', score: 4, weight: 10, notes: 'PM on-time %; Breakdown akibat PM gagal NIHIL' },
+        { id: 4, aspect: 'Percepatan', indicator: 'Waktu Respon Awal Kerusakan', target: '≤ 24 jam', score: 3, weight: 10, notes: 'Respons awal troubleshooting & JO diterbitkan' },
+        { id: 5, aspect: 'Percepatan', indicator: 'Keterlambatan karena Spare Part', target: '≤ 10%', score: 1, weight: 10, notes: 'Penurunan kerugian downtime ≥30-40%/bln' },
+        { id: 6, aspect: 'Percepatan', indicator: 'Keterlambatan karena Manpower', target: '≤ 5%', score: 1, weight: 5, notes: 'Ketersediaan mekanik, welder, dan vendor' },
+        { id: 7, aspect: 'Biaya & Kualitas', indicator: 'Deviasi Biaya Corrective', target: '≤ 110%', score: 1, weight: 10, notes: 'Realisasi biaya vs budget rencana corrective' },
+        { id: 8, aspect: 'Biaya & Kualitas', indicator: 'Repeat Breakdown ≤ 30 Hari', target: '≤ 5%', score: 1, weight: 10, notes: 'Kerusakan berulang unit/komponen yang sama' },
         { id: 9, aspect: 'Kepemimpinan', indicator: 'Monitoring & Pelaporan Unit', target: 'Konsisten', score: 1, weight: 5, notes: 'Disiplin update JO mekanik, target RTW, & report harian' },
         { id: 10, aspect: 'Kepemimpinan', indicator: 'Inisiatif Percepatan Perbaikan', target: 'Aktif', score: 1, weight: 5, notes: 'Solusi percepatan (shift tambahan, vendor, prioritas)' }
     ];
@@ -13069,7 +13069,7 @@
                     <div class="pk-panel">
                         <div class="pk-panel-header">
                             <span><i class="fa-solid fa-list-check"></i> Matriks 10 Indikator Kinerja Utama (Head of Equipment)</span>
-                            <span class="text-muted" style="font-size:0.85rem;">Formula: Nilai Bobot = Skor Ã— Bobot ÃƒÂ· 5</span>
+                            <span class="text-muted" style="font-size:0.85rem;">Formula: Nilai Bobot = Skor × Bobot Ãƒ· 5</span>
                         </div>
                         <div class="pk-panel-body no-padding">
                             <div class="table-responsive">
@@ -13131,7 +13131,7 @@
                         </div>
                         <div class="pk-card success">
                             <div class="pk-card-info">
-                                <h4>Jam Normal (â‰¤16:00)</h4>
+                                <h4>Jam Normal (≤16:00)</h4>
                                 <div class="pk-val">430.11 Jam</div>
                                 <div class="pk-sub">87.8% Jam Operasional</div>
                             </div>
@@ -13515,7 +13515,7 @@
         let cardClass = 'danger';
 
         if (totalRound >= 85) {
-            interpText = 'Sangat Baik (â‰¥85)';
+            interpText = 'Sangat Baik (≥85)';
             badgeClass = 'pk-badge-success';
             cardClass = 'success';
         } else if (totalRound >= 75) {
@@ -15709,12 +15709,42 @@
                 }
                 if (targetAsset) targetAsset.statusReference = autoWoId;
 
-                alert(`âš ï¸ ATENSI AUTO-WO!\n\nP2H ditolak karena ditemukan ${criticalFailsCount} item kritikal.\n\nSistem otomatis:\n1. Mengubah status unit ${assetId} menjadi BREAKDOWN\n2. ${existingWo ? 'Menautkan temuan ke Work Order aktif' : 'Membuat tiket Work Order darurat'} #${autoWoId}`);
+                window.pushSystemNotification?.({
+                    menu: 'Inspeksi P2H',
+                    badgeClass: 'p2h',
+                    user: newP2H.operatorName || 'Operator',
+                    role: 'Operator',
+                    actionType: 'P2H_REJECT',
+                    title: `Inspeksi P2H Ditolak - ${assetId} (BREAKDOWN)`,
+                    message: `Operator ${newP2H.operatorName || 'Operator'} menyerahkan Form P2H #${newP2H.id} untuk unit ${assetId} dengan ${criticalFailsCount} temuan kritikal. Tiket WO darurat #${autoWoId} otomatis diterbitkan.`,
+                    involvedParties: [newP2H.operatorName || 'Operator', 'Mekanik Lead', 'Supervisor Area'],
+                    relatedTables: {
+                        tables: ['p2h_inspections', 'assets', 'work_orders'],
+                        records: [{ table: 'p2h_inspections', id: String(newP2H.id) }, { table: 'assets', id: assetId }, { table: 'work_orders', id: autoWoId }]
+                    }
+                });
+
+                alert(`⚠️ ATENSI AUTO-WO!\n\nP2H ditolak karena ditemukan ${criticalFailsCount} item kritikal.\n\nSistem otomatis:\n1. Mengubah status unit ${assetId} menjadi BREAKDOWN\n2. ${existingWo ? 'Menautkan temuan ke Work Order aktif' : 'Membuat tiket Work Order darurat'} #${autoWoId}`);
             } else {
-                alert(`âœ… Successful!\n\nForm P2H #${newP2H.id} untuk unit ${assetId} berhasil disimpan dengan status: ${statusLabel}.`);
+                window.pushSystemNotification?.({
+                    menu: 'Inspeksi P2H',
+                    badgeClass: 'p2h',
+                    user: newP2H.operatorName || 'Operator',
+                    role: 'Operator',
+                    actionType: 'P2H_SUBMIT',
+                    title: `Form P2H #${newP2H.id} Disetujui (${assetId})`,
+                    message: `Form P2H #${newP2H.id} untuk unit ${assetId} berhasil disimpan dengan status ${statusLabel}.`,
+                    involvedParties: [newP2H.operatorName || 'Operator', 'Supervisor Yard'],
+                    relatedTables: {
+                        tables: ['p2h_inspections', 'assets'],
+                        records: [{ table: 'p2h_inspections', id: String(newP2H.id) }, { table: 'assets', id: assetId }]
+                    }
+                });
+
+                alert(`✅ Successful!\n\nForm P2H #${newP2H.id} untuk unit ${assetId} berhasil disimpan dengan status: ${statusLabel}.`);
             }
         } else {
-            alert(`âœ… Form P2H #${newP2H.id} berhasil disimpan.`);
+            alert(`✅ Form P2H #${newP2H.id} berhasil disimpan.`);
         }
 
         renderHistoryTable();
@@ -17059,6 +17089,385 @@ window.renderArchiveTables = function() {
         }
     }
 };
+
+/* ==========================================================================
+   SYSTEM NOTIFICATION BELL SERVICE & EVENT AUDIT TRAIL LOGIC
+   ========================================================================== */
+(function() {
+    'use strict';
+
+    // Initial mock/database notification state
+    const initialNotifications = [
+        {
+            id: 1,
+            menu: 'Inspeksi P2H',
+            badgeClass: 'p2h',
+            user: 'M. Fajar DC',
+            role: 'Operator',
+            actionType: 'P2H_REJECT',
+            title: 'Inspeksi P2H Ditolak - CS-41001 (BREAKDOWN)',
+            message: 'Operator M. Fajar DC menyerahkan Form P2H #1042 untuk Powder Binder Spreader CS-41001 dengan temuan 3 item kritikal (Error System Penaburan & Valve Blockage). Status unit otomatis dialihkan ke BREAKDOWN dan tiket WO darurat #WO-26-102 diterbitkan.',
+            involvedParties: ['M. Fajar DC (Operator)', 'Rahmad K (Mekanik)', 'Teknisi XCMG', 'Budi Nugraha (Supervisor)'],
+            relatedTables: {
+                tables: ['p2h_inspections', 'assets', 'work_orders'],
+                records: [
+                    { table: 'p2h_inspections', id: '1042' },
+                    { table: 'assets', id: 'CS-41001' },
+                    { table: 'work_orders', id: 'WO-26-102' }
+                ]
+            },
+            isRead: false,
+            timestamp: '14:15 WIB (Hari Ini)'
+        },
+        {
+            id: 2,
+            menu: 'Work Order Kanban',
+            badgeClass: 'wo',
+            user: 'Agus Sudradjat',
+            role: 'Planner',
+            actionType: 'WO_DISPATCH',
+            title: 'Disposisi Work Order #WO-26-101 (DT-00049)',
+            message: 'Planner Agus Sudradjat mengalihkan status WO-26-101 dari OPEN menjadi IN_PROGRESS untuk perbaikan Kopling & Transmisi Dump Truck DT-00049 di Bay 2 Workshop Duri.',
+            involvedParties: ['Agus Sudradjat (Planner)', 'Suwardi (Welder/Mekanik)', 'Rahmad K (Mekanik Lead)'],
+            relatedTables: {
+                tables: ['work_orders', 'work_order_logs', 'assets'],
+                records: [
+                    { table: 'work_orders', id: 'WO-26-101' },
+                    { table: 'assets', id: 'DT-00049' }
+                ]
+            },
+            isRead: false,
+            timestamp: '13:40 WIB (Hari Ini)'
+        },
+        {
+            id: 3,
+            menu: 'Condition Monitoring',
+            badgeClass: 'cm',
+            user: 'Bambang Irawan',
+            role: 'Inspector',
+            actionType: 'CM_CUTTING_LOG',
+            title: 'Peringatan Konsumabel Cutting Bit Over Limit - PM-41001',
+            message: 'Inspector Bambang Irawan memasukkan kontrol shift Cutting Bit untuk unit Cold Milling PM-41001. Terdeteksi 2 pcs bit hilang dan rasio 3.4 bit/HM (di atas limit 3.0 bit/HM).',
+            involvedParties: ['Bambang Irawan (Inspector)', 'Joko W (Supervisor Logistik)', 'Brian Nugraha (Head of Equipment)'],
+            relatedTables: {
+                tables: ['condition_monitoring_logs', 'consumable_items'],
+                records: [
+                    { table: 'condition_monitoring_logs', id: 'CM-CUT-20260809-01' }
+                ]
+            },
+            isRead: false,
+            timestamp: '12:20 WIB (Hari Ini)'
+        },
+        {
+            id: 4,
+            menu: 'Fleet Standby Audit',
+            badgeClass: 'audit',
+            user: 'Kanz Dzakipr',
+            role: 'Auditor',
+            actionType: 'STANDBY_AUDIT',
+            title: 'Pembaruan Audit Lapangan 48 Unit Standby',
+            message: 'Auditor Kanz Dzakipr merekonsiliasi lokasi unit standby: 35 Unit di Yard Duri (Dump Truck) dan 13 Unit di Yard Prabumulih (Excavator). Berkas rekomendasi redeployment diterbitkan.',
+            involvedParties: ['Kanz Dzakipr (Auditor)', 'Brian Nugraha (Head of Equipment)', 'Site Manager Duri'],
+            relatedTables: {
+                tables: ['assets', 'asset_locations', 'standby_audits'],
+                records: [
+                    { table: 'standby_audits', id: 'AUD-2026-08' }
+                ]
+            },
+            isRead: true,
+            timestamp: '10:05 WIB (Hari Ini)'
+        },
+        {
+            id: 5,
+            menu: 'PM Forecast Tracker',
+            badgeClass: 'pm',
+            user: 'Heri Setiawan',
+            role: 'Maintenance Planner',
+            actionType: 'PM_FORECAST',
+            title: 'Penjadwalan Ulang PM 500 HM - EXC-00007',
+            message: 'Maintenance Planner Heri Setiawan memperbarui jadwal service berkala 500 HM untuk Excavator Komatsu EXC-00007 setelah verifikasi SMR Telematika KOMTRAX.',
+            involvedParties: ['Heri Setiawan (Planner)', 'Tim Mekanik Yard Duri'],
+            relatedTables: {
+                tables: ['pm_schedules', 'telematics_komtrax'],
+                records: [
+                    { table: 'pm_schedules', id: 'PM-EXC-00007-500' }
+                ]
+            },
+            isRead: true,
+            timestamp: '08:30 WIB (Hari Ini)'
+        }
+    ];
+
+    let systemNotificationsState = [...initialNotifications];
+    let currentFilter = 'ALL';
+
+    function fetchNotificationsFromApi() {
+        fetch('api/notifications.php?limit=50')
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === 'success' && Array.isArray(res.data) && res.data.length > 0) {
+                    systemNotificationsState = res.data;
+                    updateBadge();
+                    const panel = document.getElementById('notificationDropdownPanel');
+                    if (panel && panel.style.display !== 'none') {
+                        renderNotifications();
+                    }
+                }
+            })
+            .catch(() => {
+                // Fallback to local state if API is offline
+            });
+    }
+
+    window.toggleNotificationDropdown = function(event) {
+        if (event) event.stopPropagation();
+        const panel = document.getElementById('notificationDropdownPanel');
+        if (!panel) return;
+
+        const isVisible = panel.style.display === 'flex' || panel.style.display === 'block';
+        if (isVisible) {
+            panel.style.display = 'none';
+        } else {
+            panel.style.display = 'flex';
+            fetchNotificationsFromApi();
+            renderNotifications();
+        }
+    };
+
+    window.filterNotifications = function(filterType, btn) {
+        currentFilter = filterType;
+        document.querySelectorAll('.notif-tab-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        renderNotifications();
+    };
+
+    window.markNotificationAsRead = function(id) {
+        const item = systemNotificationsState.find(n => n.id === id);
+        if (item) {
+            item.isRead = true;
+            updateBadge();
+            renderNotifications();
+
+            // Sync to MySQL API
+            fetch('api/notifications.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'MARK_READ', notification_id: id })
+            }).catch(() => {});
+        }
+    };
+
+    window.markAllNotificationsAsRead = function() {
+        systemNotificationsState.forEach(n => n.isRead = true);
+        updateBadge();
+        renderNotifications();
+
+        // Sync to MySQL API
+        fetch('api/notifications.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'MARK_ALL_READ' })
+        }).catch(() => {});
+    };
+
+    window.toggleJsonBlock = function(id, event) {
+        if (event) event.stopPropagation();
+        const jsonBlock = document.getElementById(`notifJson_${id}`);
+        if (!jsonBlock) return;
+        const current = jsonBlock.style.display;
+        jsonBlock.style.display = (current === 'block') ? 'none' : 'block';
+    };
+
+    window.pushSystemNotification = function(notif) {
+        const newNotif = {
+            id: Date.now(),
+            menu: notif.menu || 'System',
+            badgeClass: notif.badgeClass || 'wo',
+            user: notif.user || 'System User',
+            role: notif.role || 'Operator',
+            actionType: notif.actionType || 'UPDATE',
+            title: notif.title || 'Pembaruan Aktivitas Sistem',
+            message: notif.message || 'Pembaruan transaksi tercatat di sistem.',
+            involvedParties: notif.involvedParties || ['Admin Manager'],
+            relatedTables: notif.relatedTables || { tables: ['system_notifications'] },
+            isRead: false,
+            timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+        };
+
+        systemNotificationsState.unshift(newNotif);
+        updateBadge();
+        const panel = document.getElementById('notificationDropdownPanel');
+        if (panel && panel.style.display !== 'none') {
+            renderNotifications();
+        }
+
+        // Sync to MySQL API
+        fetch('api/notifications.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'CREATE',
+                menu_name: newNotif.menu,
+                user_name: newNotif.user,
+                user_role: newNotif.role,
+                action_type: newNotif.actionType,
+                title: newNotif.title,
+                message: newNotif.message,
+                involved_parties_json: newNotif.involvedParties,
+                related_tables_json: newNotif.relatedTables
+            })
+        }).catch(() => {});
+    };
+
+    function updateBadge() {
+        const unreadCount = systemNotificationsState.filter(n => !n.isRead).length;
+        const badge = document.getElementById('notificationBadge');
+        const pill = document.getElementById('notifUnreadPill');
+
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.innerText = unreadCount;
+                badge.style.display = 'inline-flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        if (pill) {
+            pill.innerText = `${unreadCount} Belum Dibaca`;
+        }
+    }
+
+    function renderNotifications() {
+        const container = document.getElementById('notificationPanelList');
+        if (!container) return;
+
+        let filtered = systemNotificationsState;
+        if (currentFilter === 'UNREAD') {
+            filtered = systemNotificationsState.filter(n => !n.isRead);
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div style="padding: 30px 16px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
+                    <i class="fa-solid fa-bell-slash" style="font-size: 1.8rem; margin-bottom: 8px; color: #cbd5e1; display: block;"></i>
+                    Tidak ada notifikasi ${currentFilter === 'UNREAD' ? 'belum dibaca' : ''}.
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map(n => `
+            <div class="notif-item ${!n.isRead ? 'unread' : ''}" onclick="markNotificationAsRead(${n.id})">
+                <div class="notif-avatar">
+                    <i class="fa-solid ${getMenuIcon(n.badgeClass)}"></i>
+                </div>
+                <div class="notif-body">
+                    <div class="notif-header-line">
+                        <span class="notif-menu-badge ${n.badgeClass}">${escapeHtml(n.menu)}</span>
+                        <span class="notif-time">${escapeHtml(n.timestamp)}</span>
+                    </div>
+                    <div class="notif-title">${escapeHtml(n.title)}</div>
+                    <div class="notif-desc">${escapeHtml(n.message)}</div>
+                    
+                    <div class="notif-meta-tags">
+                        <span class="notif-user-pill">
+                            <i class="fa-solid fa-user-check text-primary"></i> ${escapeHtml(n.user)} (${escapeHtml(n.role)})
+                        </span>
+                        ${(n.involvedParties && n.involvedParties.length > 0) ? `
+                            <span class="notif-parties-pill" title="Pihak Terlibat">
+                                <i class="fa-solid fa-users"></i> ${escapeHtml(n.involvedParties.slice(0, 2).join(', '))}${n.involvedParties.length > 2 ? ' +' + (n.involvedParties.length - 2) : ''}
+                            </span>
+                        ` : ''}
+                    </div>
+
+                    ${n.relatedTables ? `
+                        <button type="button" class="notif-json-toggle" onclick="toggleJsonBlock(${n.id}, event)">
+                            <i class="fa-solid fa-code"></i> Detail Tabel Terkait (JSON)
+                        </button>
+                        <div class="notif-json-block" id="notifJson_${n.id}">
+                            ${escapeHtml(JSON.stringify(n.relatedTables, null, 2))}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function getMenuIcon(badgeClass) {
+        switch (badgeClass) {
+            case 'p2h': return 'fa-clipboard-check';
+            case 'wo': return 'fa-screwdriver-wrench';
+            case 'cm': return 'fa-bolt';
+            case 'audit': return 'fa-boxes-stacked';
+            case 'pm': return 'fa-clock-rotate-left';
+            default: return 'fa-bell';
+        }
+    }
+
+    function escapeHtml(str) {
+        if (typeof str !== 'string') return str;
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Close notification dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const panel = document.getElementById('notificationDropdownPanel');
+        const btn = document.getElementById('btnNotificationBell');
+        if (panel && panel.style.display !== 'none') {
+            if (!panel.contains(event.target) && !btn.contains(event.target)) {
+                panel.style.display = 'none';
+            }
+        }
+    });
+
+    // Initialize badge count on DOMReady
+    document.addEventListener('DOMContentLoaded', function() {
+        updateBadge();
+    });
+
+    // Also run immediately if DOM is already ready
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        updateBadge();
+    }
+})();
+
+/* Floating Tooltip Element Handler for Sidebar Shrink State */
+(function initSidebarHoverTooltips() {
+    function setupListeners() {
+        const tooltip = document.getElementById('sidebarHoverTooltip');
+        if (!tooltip) return;
+
+        document.querySelectorAll('.sidebar-menu li a').forEach(a => {
+            a.addEventListener('mouseenter', function() {
+                if (!document.body.classList.contains('sidebar-collapsed')) return;
+
+                const labelSpan = a.querySelector('.nav-label');
+                const text = (labelSpan ? labelSpan.innerText : '') || a.getAttribute('data-title') || a.getAttribute('title') || '';
+                if (!text.trim()) return;
+
+                const rect = a.getBoundingClientRect();
+                tooltip.innerText = text.trim();
+                tooltip.style.left = (rect.right + 10) + 'px';
+                tooltip.style.top = (rect.top + (rect.height / 2)) + 'px';
+                tooltip.style.display = 'flex';
+                tooltip.style.opacity = '1';
+            });
+
+            a.addEventListener('mouseleave', function() {
+                if (tooltip) {
+                    tooltip.style.display = 'none';
+                    tooltip.style.opacity = '0';
+                }
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupListeners);
+    } else {
+        setupListeners();
+    }
+})();
 
 
 

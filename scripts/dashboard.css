@@ -223,11 +223,20 @@ body {
     color: #007bff; /* Bright Blue Icon */
 }
 
-/* Collapsed & Pop-up Hover System */
+.sidebar-logo-full {
+    display: block;
+}
+
+.sidebar-logo-circle-container {
+    display: none;
+}
+
+/* Collapsed Sidebar System: Floating Side Hover Badges (No Expand, No Dividers) */
 body.sidebar-collapsed .sidebar {
     flex: 0 0 var(--sidebar-collapsed-width);
     min-width: var(--sidebar-collapsed-width);
     width: var(--sidebar-collapsed-width);
+    overflow: visible !important;
 }
 
 body.sidebar-collapsed .sidebar-header {
@@ -236,15 +245,53 @@ body.sidebar-collapsed .sidebar-header {
 }
 
 body.sidebar-collapsed .brand-label {
-    display: none;
+    display: none !important;
 }
 
-body.sidebar-collapsed .sidebar-logo-img {
-    height: 24px;
-    max-width: 44px;
+body.sidebar-collapsed .sidebar-logo-full {
+    display: none !important;
+}
+
+body.sidebar-collapsed .sidebar-logo-circle-container {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #ffffff;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.sidebar-collapsed .sidebar-logo-circle-container:hover {
+    transform: scale(1.08);
+}
+
+body.sidebar-collapsed .sidebar-logo-circle-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+body.sidebar-collapsed .sidebar-menu {
+    overflow-x: visible !important;
+    overflow-y: auto;
+}
+
+body.sidebar-collapsed .sidebar-menu .nav-section-label {
+    display: none !important;
+}
+
+body.sidebar-collapsed .sidebar-menu li {
+    position: relative;
 }
 
 body.sidebar-collapsed .sidebar-menu li a {
+    position: relative;
     padding: 0;
     justify-content: center;
 }
@@ -258,41 +305,35 @@ body.sidebar-collapsed .sidebar-menu li a i {
     font-size: 1.15rem;
 }
 
-/* Floating Pop-up Expand on Hover when Collapsed */
-body.sidebar-collapsed .sidebar:hover {
+/* Explicit Floating Element Side Tooltip for Shrink State */
+.sidebar-hover-tooltip {
+    position: fixed !important;
+    display: none;
+    align-items: center;
+    transform: translateY(-50%);
+    background: #0f172a !important;
+    color: #ffffff !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    padding: 6px 14px !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
+    z-index: 999999 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    pointer-events: none !important;
+    transition: opacity 0.12s ease;
+}
+
+.sidebar-hover-tooltip::before {
+    content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 2000;
-    flex: 0 0 var(--sidebar-width);
-    min-width: var(--sidebar-width);
-    width: var(--sidebar-width);
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.35);
-}
-
-body.sidebar-collapsed .sidebar:hover .brand-label,
-body.sidebar-collapsed .sidebar:hover .sidebar-menu .nav-label {
-    display: block;
-}
-
-body.sidebar-collapsed .sidebar:hover .sidebar-header {
-    padding: 0 14px;
-    justify-content: flex-start;
-}
-
-body.sidebar-collapsed .sidebar:hover .sidebar-logo-img {
-    height: 38px;
-    max-width: 105px;
-}
-
-body.sidebar-collapsed .sidebar:hover .sidebar-menu li a {
-    padding: 0 16px;
-    justify-content: flex-start;
-}
-
-body.sidebar-collapsed .sidebar:hover .sidebar-menu li a i {
-    margin-right: 12px;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #0f172a transparent transparent;
 }
 
 .sidebar-menu li a:focus-visible {
@@ -301,7 +342,7 @@ body.sidebar-collapsed .sidebar:hover .sidebar-menu li a i {
     outline: none;
 }
 
-/* Sidebar Section Headers (5 Operational Domains) */
+/* Sidebar Section Headers (Expanded State Only) */
 .sidebar-menu .nav-section-label {
     font-size: 0.68rem;
     font-weight: 700;
@@ -312,14 +353,6 @@ body.sidebar-collapsed .sidebar:hover .sidebar-menu li a i {
     margin-top: 4px;
     pointer-events: none;
     user-select: none;
-}
-
-body.sidebar-collapsed .sidebar-menu .nav-section-label {
-    display: none;
-}
-
-body.sidebar-collapsed .sidebar:hover .sidebar-menu .nav-section-label {
-    display: block;
 }
 
 /* Controlled Brutalist Fleet Telemetry Status Strip */
@@ -12848,5 +12881,327 @@ body.sl-modal-open {
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
 }
+
+/* ==========================================================================
+   SYSTEM NOTIFICATION BELL & DROPDOWN PANEL (TACTICAL TELEMETRY STYLING)
+   ========================================================================== */
+.notification-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-notification-bell {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.btn-notification-bell:hover {
+    background: #f8fafc;
+    border-color: #007bff;
+    color: #007bff;
+    transform: translateY(-1px);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    font-family: var(--font-mono, monospace);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.4);
+}
+
+.notification-dropdown-panel {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    width: 450px !important;
+    max-width: 92vw !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 20px 30px -5px rgba(15, 23, 42, 0.25), 0 8px 12px -6px rgba(15, 23, 42, 0.15) !important;
+    z-index: 99999 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.notification-panel-header {
+    padding: 12px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.notification-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notification-title-group h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.notification-count-pill {
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-family: var(--font-mono, monospace);
+}
+
+.btn-mark-all-read {
+    background: transparent;
+    border: none;
+    color: #007bff;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.btn-mark-all-read:hover {
+    background: #f0f9ff;
+}
+
+.notification-panel-tabs {
+    display: flex;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 4px 12px;
+    gap: 6px;
+}
+
+.notif-tab-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.notif-tab-btn.active {
+    background: #ffffff;
+    color: #007bff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.notification-panel-list {
+    max-height: 440px;
+    overflow-y: auto;
+    background: #ffffff;
+}
+
+.notif-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    gap: 12px;
+    position: relative;
+    background: #ffffff;
+    transition: background 0.15s ease;
+    cursor: pointer;
+    text-align: left;
+}
+
+.notif-item:hover {
+    background: #f8fafc;
+}
+
+.notif-item.unread {
+    background: #f0f9ff;
+}
+
+.notif-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 18px;
+    width: 6px;
+    height: 6px;
+    background: #0284c7;
+    border-radius: 50%;
+}
+
+.notif-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e0f2fe;
+    color: #0284c7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.notif-body {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.notif-header-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+
+.notif-menu-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    color: #475569;
+    font-family: var(--font-mono, monospace);
+}
+
+.notif-menu-badge.p2h { background: #fee2e2; color: #991b1b; }
+.notif-menu-badge.wo { background: #dbeafe; color: #1e40af; }
+.notif-menu-badge.cm { background: #fef3c7; color: #92400e; }
+.notif-menu-badge.audit { background: #e0e7ff; color: #3730a3; }
+.notif-menu-badge.pm { background: #dcfce7; color: #166534; }
+
+.notif-time {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    font-family: var(--font-mono, monospace);
+}
+
+.notif-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+    line-height: 1.25;
+}
+
+.notif-desc {
+    font-size: 0.78rem;
+    color: #334155;
+    line-height: 1.38;
+    margin-bottom: 6px;
+}
+
+.notif-meta-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.notif-user-pill {
+    font-size: 0.7rem;
+    color: #475569;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.notif-parties-pill {
+    font-size: 0.68rem;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.notif-json-toggle {
+    background: transparent;
+    border: none;
+    color: #0284c7;
+    font-size: 0.68rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.notif-json-toggle:hover {
+    text-decoration: underline;
+}
+
+.notif-json-block {
+    display: none;
+    margin-top: 8px;
+    padding: 10px;
+    background: #0f172a;
+    color: #38bdf8;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.68rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border: 1px solid #1e293b;
+}
+
+.notification-panel-footer {
+    padding: 8px 16px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.72rem;
+}
+
 
 
