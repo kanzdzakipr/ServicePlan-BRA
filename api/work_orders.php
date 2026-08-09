@@ -43,6 +43,21 @@ switch ($method) {
                 ':prio' => $data['priority'] ?? 'Normal',
                 ':pic' => $data['assigned_mechanic'] ?? 'Belum ada PIC'
             ]);
+
+            // Auto-create system notification
+            try {
+                $notifStmt = $db->prepare("INSERT INTO system_notifications 
+                    (menu_name, user_name, user_role, action_type, title, message, involved_parties_json, related_tables_json, is_read, created_at)
+                    VALUES ('Work Order Kanban', :user, 'Planner', 'WO_CREATE', :title, :msg, :parties, :tables, 0, NOW())");
+                $notifStmt->execute([
+                    ':user' => $data['created_by'] ?? 'Planner',
+                    ':title' => "Penerbitan Work Order #{$data['wo_id']} ({$data['asset_id']})",
+                    ':msg' => "Work Order #{$data['wo_id']} diterbitkan untuk unit {$data['asset_id']}. Prioritas: " . ($data['priority'] ?? 'Normal') . ". PIC: " . ($data['assigned_mechanic'] ?? 'Belum ada PIC'),
+                    ':parties' => json_encode([$data['created_by'] ?? 'Planner', $data['assigned_mechanic'] ?? 'Tim Mekanik']),
+                    ':tables' => json_encode(['tables' => ['work_orders', 'assets'], 'records' => [['table' => 'work_orders', 'id' => $data['wo_id']], ['table' => 'assets', 'id' => $data['asset_id']]]])
+                ]);
+            } catch (Exception $ne) {}
+
             echo json_encode(["status" => "success", "message" => "Work Order created"]);
         } catch (PDOException $e) {
             echo json_encode(["status" => "error", "message" => $e->getMessage()]);
@@ -78,6 +93,21 @@ switch ($method) {
         
         try {
             $stmt->execute($params);
+
+            // Auto-create system notification for WO update
+            try {
+                $notifStmt = $db->prepare("INSERT INTO system_notifications 
+                    (menu_name, user_name, user_role, action_type, title, message, involved_parties_json, related_tables_json, is_read, created_at)
+                    VALUES ('Work Order Kanban', :user, 'Planner', 'WO_UPDATE', :title, :msg, :parties, :tables, 0, NOW())");
+                $notifStmt->execute([
+                    ':user' => $data['updated_by'] ?? 'Planner',
+                    ':title' => "Pembaruan Status Work Order #{$id}",
+                    ':msg' => "Work Order #{$id} diperbarui" . (isset($data['status']) ? " menjadi status {$data['status']}" : "") . (isset($data['assigned_mechanic']) ? " dengan PIC {$data['assigned_mechanic']}" : ""),
+                    ':parties' => json_encode([$data['updated_by'] ?? 'Planner', $data['assigned_mechanic'] ?? 'Tim Mekanik']),
+                    ':tables' => json_encode(['tables' => ['work_orders'], 'records' => [['table' => 'work_orders', 'id' => $id]]])
+                ]);
+            } catch (Exception $ne) {}
+
             echo json_encode(["status" => "success", "message" => "Work Order updated"]);
         } catch (PDOException $e) {
             echo json_encode(["status" => "error", "message" => $e->getMessage()]);

@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 8.4.3, for Win64 (x86_64)
+﻿-- MySQL dump 10.13  Distrib 8.4.3, for Win64 (x86_64)
 --
 -- Host: localhost    Database: u646470441_ServicePlanBRA
 -- ------------------------------------------------------
@@ -1070,3 +1070,49 @@ UNLOCK TABLES;
 -- Dump completed on 2026-08-08 18:17:44
 
 
+
+--
+--
+
+--
+-- Table structure for table `system_notifications`
+--
+
+DROP TABLE IF EXISTS `system_notifications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `system_notifications` (
+  `notification_id` int NOT NULL AUTO_INCREMENT,
+  `menu_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_role` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'User',
+  `action_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `involved_parties_json` json DEFAULT NULL,
+  `related_tables_json` json DEFAULT NULL,
+  `is_read` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`notification_id`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `idx_is_read` (`is_read`),
+  KEY `idx_menu_name` (`menu_name`),
+  CONSTRAINT `chk_system_notifications_involved_parties` CHECK (json_valid(`involved_parties_json`)),
+  CONSTRAINT `chk_system_notifications_related_tables` CHECK (json_valid(`related_tables_json`))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `system_notifications`
+--
+
+LOCK TABLES `system_notifications` WRITE;
+/*!40000 ALTER TABLE `system_notifications` DISABLE KEYS */;
+INSERT INTO `system_notifications` VALUES 
+(1, 'Inspeksi P2H', 'M. Fajar DC', 'Operator', 'P2H_REJECT', 'Inspeksi P2H Ditolak - CS-41001 (BREAKDOWN)', 'Operator M. Fajar DC menyerahkan Form P2H #1042 untuk Powder Binder Spreader CS-41001 dengan temuan 3 item kritikal (Error System Penaburan & Valve Blockage). Status unit otomatis dialihkan ke BREAKDOWN dan tiket WO darurat #WO-26-102 diterbitkan.', '["M. Fajar DC (Operator)", "Rahmad K (Mekanik)", "Teknisi XCMG", "Budi Nugraha (Supervisor)"]', '{"tables": ["p2h_inspections", "assets", "work_orders"], "records": [{"table": "p2h_inspections", "id": "1042"}, {"table": "assets", "id": "CS-41001"}, {"table": "work_orders", "id": "WO-26-102"}]}', 0, '2026-08-09 14:15:00'),
+(2, 'Work Order Kanban', 'Agus Sudradjat', 'Planner', 'WO_DISPATCH', 'Disposisi Work Order #WO-26-101 (DT-00049)', 'Planner Agus Sudradjat mengalihkan status WO-26-101 dari OPEN menjadi IN_PROGRESS untuk perbaikan Kopling & Transmisi Dump Truck DT-00049 di Bay 2 Workshop Duri.', '["Agus Sudradjat (Planner)", "Suwardi (Welder/Mekanik)", "Rahmad K (Mekanik Lead)"]', '{"tables": ["work_orders", "work_order_logs", "assets"], "records": [{"table": "work_orders", "id": "WO-26-101"}, {"table": "assets", "id": "DT-00049"}]}', 0, '2026-08-09 13:40:00'),
+(3, 'Condition Monitoring', 'Bambang Irawan', 'Inspector', 'CM_CUTTING_LOG', 'Peringatan Konsumabel Cutting Bit Over Limit - PM-41001', 'Inspector Bambang Irawan memasukkan kontrol shift Cutting Bit untuk unit Cold Milling PM-41001. Terdeteksi 2 pcs bit hilang dan rasio 3.4 bit/HM (di atas limit 3.0 bit/HM).', '["Bambang Irawan (Inspector)", "Joko W (Supervisor Logistik)", "Brian Nugraha (Head of Equipment)"]', '{"tables": ["condition_monitoring_logs", "consumable_items"], "records": [{"table": "condition_monitoring_logs", "id": "CM-CUT-20260809-01"}]}', 0, '2026-08-09 12:20:00'),
+(4, 'Fleet Standby Audit', 'Kanz Dzakipr', 'Auditor', 'STANDBY_AUDIT', 'Pembaruan Audit Lapangan 48 Unit Standby', 'Auditor Kanz Dzakipr merekonsiliasi lokasi unit standby: 35 Unit di Yard Duri (Dump Truck) dan 13 Unit di Yard Prabumulih (Excavator). Berkas rekomendasi redeployment diterbitkan.', '["Kanz Dzakipr (Auditor)", "Brian Nugraha (Head of Equipment)", "Site Manager Duri"]', '{"tables": ["assets", "asset_locations", "standby_audits"], "records": [{"table": "standby_audits", "id": "AUD-2026-08"}]}', 1, '2026-08-09 10:05:00'),
+(5, 'PM Forecast Tracker', 'Heri Setiawan', 'Maintenance Planner', 'PM_FORECAST', 'Penjadwalan Ulang PM 500 HM - EXC-00007', 'Maintenance Planner Heri Setiawan memperbarui jadwal service berkala 500 HM untuk Excavator Komatsu EXC-00007 setelah verifikasi SMR Telematika KOMTRAX.', '["Heri Setiawan (Planner)", "Tim Mekanik Yard Duri"]', '{"tables": ["pm_schedules", "telematics_komtrax"], "records": [{"table": "pm_schedules", "id": "PM-EXC-00007-500"}]}', 1, '2026-08-09 08:30:00');
+/*!40000 ALTER TABLE `system_notifications` ENABLE KEYS */;
+UNLOCK TABLES;

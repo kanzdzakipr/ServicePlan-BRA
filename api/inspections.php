@@ -61,6 +61,29 @@ switch ($method) {
                     ':summary' => $summary,
                     ':payload' => json_encode($ins)
                 ]);
+
+                // Auto-create notification entry in system_notifications
+                try {
+                    $insId = $db->lastInsertId();
+                    $notifStmt = $db->prepare("INSERT INTO system_notifications 
+                        (menu_name, user_name, user_role, action_type, title, message, involved_parties_json, related_tables_json, is_read, created_at)
+                        VALUES ('Inspections', :user, 'Inspector', :type, :title, :msg, :parties, :tables, 0, NOW())");
+                    
+                    $actionType = ($result === 'FAIL') ? 'P2H_REJECT' : 'P2H_SUBMIT';
+                    $titleStr = ($result === 'FAIL') ? "Inspeksi P2H Ditolak - {$assetId} (BREAKDOWN)" : "Form P2H #${insId} Disetujui ({$assetId})";
+                    $msgStr = "Inspector memasukkan data inspeksi P2H untuk unit {$assetId}. Hasil: {$result}. " . ($summary ? "Catatan: {$summary}" : "");
+                    
+                    $notifStmt->execute([
+                        ':user' => $ins['operatorName'] ?? 'Inspector',
+                        ':type' => $actionType,
+                        ':title' => $titleStr,
+                        ':msg' => $msgStr,
+                        ':parties' => json_encode([$ins['operatorName'] ?? 'Inspector', 'Supervisor Yard']),
+                        ':tables' => json_encode(['tables' => ['inspections', 'assets'], 'records' => [['table' => 'inspections', 'id' => (string)$insId], ['table' => 'assets', 'id' => $assetId]]])
+                    ]);
+                } catch (Exception $ne) {
+                    // Ignore non-critical notification error
+                }
             }
 
             $db->commit();
