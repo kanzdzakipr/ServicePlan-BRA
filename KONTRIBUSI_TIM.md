@@ -1,23 +1,23 @@
 # 📊 Laporan Bobot & Persentase Kontribusi Pengerjaan Tim ServicePlan-BRA
 
 > **Repositori**: `kanzdzakipr/ServicePlan-BRA`  
-> **Tanggal Audit**: 8 Agustus 2026  
+> **Tanggal Audit**: 9 Agustus 2026  
 > **Metode Evaluasi**: Analisis Komparatif Multi-Faktor (Jumlah Commit, Kebaruan Fitur, Arsitektur Sistem, Tabulasi Data, & Manajemen Dokumentasi)  
-> **Skema Periode**: **Term 1** (Periode Awal s/d 27 Juli 2026) & **Term 2** (Periode Lanjutan 28 Juli – 8 Agustus 2026 per hari ini)
+> **Skema Periode**: **Term 1** (Periode Awal s/d 27 Juli 2026) & **Term 2** (Periode Lanjutan 28 Juli – 9 Agustus 2026 per hari ini)
 
 ---
 
 ## 🏆 Ringkasan Persentase Kontribusi Tim
 
-### 📌 1. Akumulasi Total / All-Time (Term 1 + Term 2 per 8 Agustus 2026)
+### 📌 1. Akumulasi Total / All-Time (Term 1 + Term 2 per 9 Agustus 2026)
 
 | Rank | Kontributor / Contributor | Total Commit | Estimasi Lines Added/Modified | Bobot Kontribusi Fitur & Arsitektur Utama | **Persentase Kontribusi Akumulasi** |
 | :---: | :--- | :---: | :---: | :--- | :---: |
-| 🥇 | **briannugraha** | 86 (38,6%) | ~60.300+ | Blueprint Implementation Plan 1 & 2, Hybrid DB Config, Asset Population pt.1 & 2, Map Update & GPS Link, Fuel Anomaly Engine, Cost Control & Valuasi, Asset 360°, Productivity & KPI Modules, Master Asset & Logistik Refurbish, Dual-Layer CM Modal, Status Badge & Mojibake Fixes | **40.0%** |
-| 🥈 | **seagrass489-cell** | 57 (25,6%) | ~24.300+ | Parser Engine Data 9.400+ baris, Multi-Device Form Backend Fix, Pinpoint Upload Hostinger, Tabulasi Logistik PDF & Oli Pemakaian, Input Inspeksi Dumptruck & SN/Plat Kendaraan, Data Completeness Audit Checklist, Integration Testing | **25.3%** |
-| 🥉 | **kanzdzakipr** | 51 (22,9%) | ~20.000+ | Inisialisasi Repositori, Hostinger Live DB Migration (`u646470441_ServicePlanBRA`), Sistem Manajemen Arsip DB-Synced (`archived_items`), Global Window Scope Binding (`renderHistoryTable`, `renderAccidentTable`), Anti-Cache API Headers, Searchbar, & Laragon Sync Protection | **18.9%** |
-| 4 | **bisamelihat** | 29 (13,0%) | ~24.300+ | Fondasi Struktur Proyek, Prisma ORM Architecture, Seeder Data Engine (`seeder.js`), Integration Skill UI Anti-Slop, Redesign Visual Tipis Antarmuka, UTF-8 Encoding Resolution, PRD & Data Model Documentation | **15.8%** |
-| **TOTAL** | **4 Kontributor** | **223 Commit** | **~128.900+ Lines** | **100% Modul Tercover & Tersertifikasi Real-Time** | **100.0%** |
+| 🥇 | **briannugraha** | 92 (39,8%) | ~64.500+ | Blueprint Implementation Plan 1 & 2, Hybrid DB Config, Asset Population pt.1 & 2, Map Update & GPS Link, Fuel Anomaly Engine, Cost Control & Valuasi, Asset 360°, Productivity & KPI Modules, Master Asset & Logistik Refurbish, Dual-Layer CM Modal, Status Badge & Mojibake Fixes, ApexCharts Engine (Executive, Mechanic 176h, Cost & KPI Trend), Material Population (Ban & Grease), Redesign KPI Cards & Monitoring Unit 3x2 Grid, Git Conflict Resolution & 4-Step Laragon Sync | **40.5%** |
+| 🥈 | **seagrass489-cell** | 57 (24,7%) | ~24.300+ | Parser Engine Data 9.400+ baris, Multi-Device Form Backend Fix, Pinpoint Upload Hostinger, Tabulasi Logistik PDF & Oli Pemakaian, Input Inspeksi Dumptruck & SN/Plat Kendaraan, Data Completeness Audit Checklist, Integration Testing | **25.0%** |
+| 🥉 | **kanzdzakipr** | 53 (22,9%) | ~20.500+ | Inisialisasi Repositori, Hostinger Live DB Migration (`u646470441_ServicePlanBRA`), Sistem Manajemen Arsip DB-Synced (`archived_items`), Global Window Scope Binding (`renderHistoryTable`, `renderAccidentTable`), Anti-Cache API Headers, Searchbar, & Laragon Sync Protection | **19.0%** |
+| 4 | **bisamelihat** | 29 (12,6%) | ~24.300+ | Fondasi Struktur Proyek, Prisma ORM Architecture, Seeder Data Engine (`seeder.js`), Integration Skill UI Anti-Slop, Redesign Visual Tipis Antarmuka, UTF-8 Encoding Resolution, PRD & Data Model Documentation | **15.5%** |
+| **TOTAL** | **4 Kontributor** | **231 Commit** | **~133.600+ Lines** | **100% Modul Tercover & Tersertifikasi Real-Time** | **100.0%** |
 
 ---
 
@@ -33,15 +33,15 @@
 
 ---
 
-### 📌 3. Evaluasi Term 2 (Periode Lanjutan: 28 Juli – 8 Agustus 2026 per Hari Ini)
+### 📌 3. Evaluasi Term 2 (Periode Lanjutan: 28 Juli – 9 Agustus 2026 per Hari Ini)
 
 | Rank | Kontributor / Contributor | Commit Term 2 | Estimasi Lines Term 2 | Bobot Kontribusi Fitur & Arsitektur Term 2 | **Persentase Term 2** |
 | :---: | :--- | :---: | :---: | :--- | :---: |
-| 🥇 | **briannugraha** | 39 (33,1%) | ~22.800+ | Database Normalization & Hybrid Environment Support (`api/db.php`), Populasian Asset Master pt.1 & pt.2, Leaflet Live Map Updates & GPS Tombol, Refurbish Master Asset/Sparepart/Logistik, Reform Condition Monitoring (Dual-Layer Modal & Universal ID Resolver), Status Badge & Mojibake Fixes | **36.2%** |
-| 🥈 | **kanzdzakipr** | 42 (35,6%) | ~11.200+ | Sistem Manajemen Arsip Terintegrasi DB MySQL (`archived_items`), Auto-Create Table `archive.php`, Window Global Scope Binding Handlers (`renderHistoryTable`, `renderAccidentTable`), Anti-Cache API Headers, Migrasi Database Hostinger (`9103193`), Searchbar, & Laragon DB Protection | **34.5%** |
-| 🥉 | **seagrass489-cell** | 30 (25,4%) | ~9.800+ | Fiksasi Form Backend Multi-Device (`e11efd6`), Pinpoint Upload Hostinger, Input Inspeksi Dumptruck & SN/Plat Kendaraan, Tabulasi Logistik PDF & Pemakaian Oli, Testing & Validasi Modul Monitoring Unit & P2H | **22.8%** |
-| 4 | **bisamelihat** | 7 (5,9%) | ~12.500+ | Integrasi Skill UI Anti-Slop, Redesign Visual Tipis Antarmuka Dashboard, Resolution UTF-8 Encoding Conflicts (`dashboard.js`), Sync Laragon, Maintenance Data Seeder & Dokumentasi | **6.5%** |
-| **SUBTOTAL** | **4 Kontributor** | **118 Commit** | **~56.300+ Lines** | **Sistem Arsip DB Sync, Hybrid DB Engine, Asset Population, Anti-Slop Redesign, Multi-Device Form Fix, & Hostinger/Laragon Protection** | **100.0%** |
+| 🥇 | **briannugraha** | 45 (35,7%) | ~27.000+ | Database Normalization & Hybrid Environment Support (`api/db.php`), Populasian Asset Master pt.1 & pt.2, Leaflet Live Map Updates & GPS Tombol, Refurbish Master Asset/Sparepart/Logistik, Reform Condition Monitoring (Dual-Layer Modal & Universal ID Resolver), Material Data Population (Ban & Grease), ApexCharts Engine (Executive, Mechanic 176h, Cost & KPI Trend), Redesign KPI Cards & Monitoring Unit 3x2 Grid, Git Conflict Resolution & 4-Step Laragon Sync | **37.5%** |
+| 🥈 | **kanzdzakipr** | 44 (34,9%) | ~11.700+ | Sistem Manajemen Arsip Terintegrasi DB MySQL (`archived_items`), Auto-Create Table `archive.php`, Window Global Scope Binding Handlers (`renderHistoryTable`, `renderAccidentTable`), Anti-Cache API Headers, Migrasi Database Hostinger (`9103193`), Searchbar, & Laragon DB Protection | **33.8%** |
+| 🥉 | **seagrass489-cell** | 30 (23,8%) | ~9.800+ | Fiksasi Form Backend Multi-Device (`e11efd6`), Pinpoint Upload Hostinger, Input Inspeksi Dumptruck & SN/Plat Kendaraan, Tabulasi Logistik PDF & Pemakaian Oli, Testing & Validasi Modul Monitoring Unit & P2H | **22.2%** |
+| 4 | **bisamelihat** | 7 (5,6%) | ~12.500+ | Integrasi Skill UI Anti-Slop, Redesign Visual Tipis Antarmuka Dashboard, Resolution UTF-8 Encoding Conflicts (`dashboard.js`), Sync Laragon, Maintenance Data Seeder & Dokumentasi | **6.5%** |
+| **SUBTOTAL** | **4 Kontributor** | **126 Commit** | **~61.000+ Lines** | **Sistem Arsip DB Sync, Hybrid DB Engine, Asset Population, ApexCharts & Material Integration, Anti-Slop Redesign, Multi-Device Form Fix, & Hostinger/Laragon 4-Step Sync Protection** | **100.0%** |
 
 ---
 
@@ -56,11 +56,11 @@ Total Skor Akumulasi = (Bobot Term 1 × 60%) + (Bobot Term 2 × 40%)
 ### Breakdown Distribusi Kontribusi:
 
 ```mermaid
-pie title Distribusi Persentase Kontribusi Akumulasi Total (All-Time per 8 Agustus 2026)
-    "briannugraha (40.0%)" : 40.0
-    "seagrass489-cell (25.3%)" : 25.3
-    "kanzdzakipr (18.9%)" : 18.9
-    "bisamelihat (15.8%)" : 15.8
+pie title Distribusi Persentase Kontribusi Akumulasi Total (All-Time per 9 Agustus 2026)
+    "briannugraha (40.5%)" : 40.5
+    "seagrass489-cell (25.0%)" : 25.0
+    "kanzdzakipr (19.0%)" : 19.0
+    "bisamelihat (15.5%)" : 15.5
 ```
 
 #### Perbandingan Distribusi per Term:
@@ -74,10 +74,10 @@ pie title Distribusi Kontribusi Term 1 (s/d 27 Juli 2026)
 ```
 
 ```mermaid
-pie title Distribusi Kontribusi Term 2 (28 Juli - 8 Agustus 2026)
-    "briannugraha (36.2%)" : 36.2
-    "kanzdzakipr (34.5%)" : 34.5
-    "seagrass489-cell (22.8%)" : 22.8
+pie title Distribusi Kontribusi Term 2 (28 Juli - 9 Agustus 2026)
+    "briannugraha (37.5%)" : 37.5
+    "kanzdzakipr (33.8%)" : 33.8
+    "seagrass489-cell (22.2%)" : 22.2
     "bisamelihat (6.5%)" : 6.5
 ```
 
@@ -85,9 +85,9 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 8 Agustus 2026)
 
 ## 🔍 Detail Rincian Kontribusi per Kontributor
 
-### 1. `briannugraha` — **40.0%** *(Lead Feature & Implementation Architect)*
-* **Total Commit**: 86 Commit (38,6% dari total 223 commit repositori).
-* **Breakdown Commit**: 47 Commit (Term 1) + 39 Commit (Term 2).
+### 1. `briannugraha` — **40.5%** *(Lead Feature & Implementation Architect)*
+* **Total Commit**: 92 Commit (39,8% dari total 231 commit repositori).
+* **Breakdown Commit**: 47 Commit (Term 1) + 45 Commit (Term 2).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Implementation Plan 1 & 2**: Merancang arsitektur menyeluruh sistem monitoring alat berat ServicePlan-BRA (`implementation-plan-1.md`, `implementation-plan-2.md`).
@@ -104,6 +104,11 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 8 Agustus 2026)
     - **Reform Condition Monitoring**: Implementasi Dual-Layer Modal Rendering (`#globalCmModalContainer` at `document.body` level) & Universal Asset ID Extractor Regex (`^([A-Z0-9]{1,6}-\d{2,5})`) untuk seluruh 400+ entri `data.json`.
     - **Refurbish Master Asset & In-Place Popup**: Integrasi modal popup Kondisi tanpa pemindahan view navigasi, sinkronisasi `window.resolveAsset`, dan pembersihan duplikasi skrip.
     - **Refurbish Sparepart & Logistik, Biaya, & Pengaturan**: Penyesuaian layout responsive, manajemen role pengeluaran barang, dan visual audit brand.
+    - **Populasi Datasets Material Ban & Grease (9 Agt)**: Mempopulasikan data real dari `REPORT_BAN_UPDATE_19.07.2026.md` (240 ban diperiksa, 17 rotasi, 19 ganti) dan `REGRESING_WEEKLY_MAINTENANCE_31_Januari_2026.md` (74 sesuai jadwal, 12 jatuh tempo, 9 terlambat) ke modul Condition Monitoring & Executive Dashboard.
+    - **ApexCharts Engine Full Implementation (9 Agt)**: Menggantikan grafik CSS/HTML statis pada Executive Dashboard dengan ApexCharts interaktif (Donut Service Status, Donut Asset Category, Donut WO Status, Bar Jam Kerja Mekanik dengan garis target 176 jam, dan Area Gradient Tren Biaya Perbaikan Bulanan).
+    - **Enhancement & Redesign People & KPI (9 Agt)**: Membangun ApexCharts Area Chart interaktif untuk *Rekapitulasi Trend Nilai KPI Bulanan (Jan-Des 2026)* dengan annotation line `Sangat Baik (≥85)` & `Batas Minimal (65)`. Melakukan redesign kartu KPI Head menggunakan `.kpi-grid` & `.kpi-card` berikon FontAwesome (`fa-award`, `fa-clock-rotate-left`, `fa-bolt`, `fa-coins`) serta warna border dinamis.
+    - **Redesign Monitoring Unit Grid 3x2 (9 Agt)**: Menata ulang kartu status unit pada menu *Monitoring Unit Terintegrasi* menjadi 3 menyamping × 2 kebawah (Grid 3x2) lengkap dengan ikon FontAwesome (`fa-cubes`, `fa-circle-check`, `fa-play`, `fa-pause-circle`, `fa-clipboard-check`, `fa-triangle-exclamation`).
+    - **Git Conflict Resolution & 4-Step Laragon Sync (9 Agt)**: Penyelesaian total konflik Git pada `dashboard.html` (bebas 100% marker conflict), serta eksekusi utility `sync_to_laragon.ps1` 4-step sync ke MySQL lokal `u646470441_ServicePlanBRA` dan pembuatan password tes lokal.
 
 ---
 
@@ -160,7 +165,7 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 8 Agustus 2026)
 
 ## 📈 Log Riwayat Graph Commit Utama
 
-### 📌 Log Commit Term 2 (28 Juli – 8 Agustus 2026 per Hari Ini)
+### 📌 Log Commit Term 2 (28 Juli – 9 Agustus 2026 per Hari Ini)
 
 ```git
 * 249ba9c (briannugraha) fix bug
