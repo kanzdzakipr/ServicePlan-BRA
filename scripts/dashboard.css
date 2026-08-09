@@ -334,6 +334,35 @@ body.sidebar-collapsed .sidebar:hover .sidebar-menu .nav-section-label {
     overflow: hidden;
 }
 
+.telemetry-status-grid.kpi-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.telemetry-status-grid.kpi-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.telemetry-status-grid.kpi-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 992px) {
+    .telemetry-status-grid.kpi-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .telemetry-status-grid.kpi-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .telemetry-status-grid.kpi-grid-4,
+    .telemetry-status-grid.kpi-grid-2,
+    .telemetry-status-grid.kpi-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
 .telemetry-metric-item {
     background-color: var(--bg-surface);
     padding: 14px 16px;
@@ -353,6 +382,16 @@ body.sidebar-collapsed .sidebar:hover .sidebar-menu .nav-section-label {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 6px;
+}
+
+.mini-donut-chart {
+    transform: rotate(-90deg);
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.telemetry-metric-item:hover .mini-donut-chart {
+    transform: rotate(-90deg) scale(1.12);
 }
 
 .telemetry-metric-label {

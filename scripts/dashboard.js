@@ -5320,7 +5320,7 @@
                     <div class="cm-card-header"><div><span class="cm-eyebrow">FORM SHIFT</span><h3>Pemakaian & pengembalian bit</h3></div></div>
                     <div class="cm-form-grid">
                         <label><span>Shift</span><select id="cm-cut-shift" class="form-control"><option ${cutting.shift === 'Shift 1' ? 'selected' : ''}>Shift 1</option><option ${cutting.shift === 'Shift 2' ? 'selected' : ''}>Shift 2</option></select></label>
-                        <label><span>Produksi (mÂ²)</span><input id="cm-cut-production" class="form-control" type="number" min="0" value="${esc(cutting.production)}"></label>
+                        <label><span>Produksi (m&sup2;)</span><input id="cm-cut-production" class="form-control" type="number" min="0" value="${esc(cutting.production)}"></label>
                         <label><span>HM awal</span><input id="cm-cut-hm-start" class="form-control" type="number" min="0" step="0.1" value="${esc(cutting.hmStart)}"></label>
                         <label><span>HM akhir</span><input id="cm-cut-hm-end" class="form-control" type="number" min="0" step="0.1" value="${esc(cutting.hmEnd)}"></label>
                         <label><span>Stok awal (pcs)</span><input id="cm-cut-stock" class="form-control" type="number" min="0" value="${esc(cutting.stockStart)}"></label>
@@ -12503,7 +12503,7 @@
             </div>
             <section class="pm-card">
                 <div class="pm-card-header">
-                    <div><div class="pm-card-title"><i class="fa-solid fa-list-check"></i> PM Forecast Tracker</div><div class="pm-card-caption">Target = service terakhir + interval Â· selisih positif berarti overdue</div></div>
+                    <div><div class="pm-card-title"><i class="fa-solid fa-list-check"></i> PM Forecast Tracker</div><div class="pm-card-caption">Target = service terakhir + interval &middot; selisih positif berarti overdue</div></div>
                     <span class="pm-card-caption" id="pmTableCount"></span>
                 </div>
                 <div class="pm-filter-bar">
@@ -14564,6 +14564,21 @@
     // 2. MAIN MODULE RENDER FUNCTION
     // =========================================================================
 
+    function renderMiniDonutChartSVG(val, strokeColor = 'var(--primary)', size = 28) {
+        const numericVal = Math.min(100, Math.max(0, parseFloat(val) || 0));
+        const r = 11;
+        const circumference = 2 * Math.PI * r;
+        const dashOffset = (circumference * (1 - numericVal / 100)).toFixed(2);
+        
+        return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" class="mini-donut-chart" title="${numericVal}%" style="transform: rotate(-90deg); flex-shrink: 0;">
+            <circle cx="16" cy="16" r="${r}" fill="none" stroke="var(--border, rgba(0,0,0,0.1))" stroke-width="3" />
+            <circle cx="16" cy="16" r="${r}" fill="none" stroke="${strokeColor}" stroke-width="3" 
+                stroke-dasharray="${circumference.toFixed(2)}" 
+                stroke-dashoffset="${dashOffset}" 
+                stroke-linecap="round" />
+        </svg>`;
+    }
+
     function createProductivityModule() {
         const container = document.getElementById('productivityModule');
         if (!container) return;
@@ -14589,37 +14604,42 @@
 
                 <!-- TAB 1: AVAILABILITY & KPI DASHBOARD -->
                 <div class="prod-tab-content active" id="tab-kpi-dash">
-                    <div class="telemetry-status-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <!-- Row 1: Primary Availability & Efficiency (4 Columns) -->
+                    <div class="telemetry-status-grid kpi-grid-4">
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Physical Availability (PA)</span>
+                                ${renderMiniDonutChartSVG(fleetKPIs.physicalAvailability, 'var(--success)', 28)}
                             </div>
                             <div class="telemetry-metric-value font-mono" style="color:var(--success);">${fleetKPIs.physicalAvailability}%</div>
                             <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Target: â‰¥ 90.0%</span>
+                                <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 90.0%</span>
                             </div>
                         </div>
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Use of Availability (UA)</span>
+                                ${renderMiniDonutChartSVG(fleetKPIs.useOfAvailability, 'var(--success)', 28)}
                             </div>
                             <div class="telemetry-metric-value font-mono" style="color:var(--success);">${fleetKPIs.useOfAvailability}%</div>
                             <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Target: â‰¥ 80.0%</span>
+                                <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 80.0%</span>
                             </div>
                         </div>
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Breakdown Rate (BR)</span>
+                                ${renderMiniDonutChartSVG(fleetKPIs.breakdownRate, 'var(--primary)', 28)}
                             </div>
                             <div class="telemetry-metric-value font-mono" style="color:var(--primary);">${fleetKPIs.breakdownRate}%</div>
                             <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Target: â‰¤ 10.0%</span>
+                                <span style="font-size:0.72rem; color:var(--text-muted);">Target: &le; 10.0%</span>
                             </div>
                         </div>
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Utilization Rate (UT)</span>
+                                ${renderMiniDonutChartSVG(fleetKPIs.utilizationRate, 'var(--warning)', 28)}
                             </div>
                             <div class="telemetry-metric-value font-mono" style="color:var(--warning);">${fleetKPIs.utilizationRate}%</div>
                             <div class="telemetry-metric-footer">
@@ -14628,50 +14648,59 @@
                         </div>
                     </div>
 
-                    <!-- Additional Secondary KPIs -->
-                    <div class="telemetry-status-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-top: -10px;">
+                    <!-- Row 2: Failure Reliability & Operating Hours (2 Columns) -->
+                    <div class="telemetry-status-grid kpi-grid-2" style="margin-top: -10px;">
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">MTBF (Mean Time Between Failures)</span>
                             </div>
                             <div class="telemetry-metric-value font-mono" style="color:var(--primary);">${fleetKPIs.mtbf} Jam</div>
                             <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Target: â‰¥ 100 Jam</span>
+                                <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 100 Jam</span>
                             </div>
                         </div>
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
-                                <span class="telemetry-metric-label">MTTR (Mean Time To Repair)</span>
+                                <span class="telemetry-metric-label">Total Jam Kerja Terjadwal Armada</span>
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--primary);">${fleetKPIs.mttr} Jam</div>
+                            <div class="telemetry-metric-value font-mono" style="color:var(--text-main);">${fleetKPIs.totalWorkingHours.toLocaleString()} Jam</div>
                             <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Target: â‰¤ 6.0 Jam</span>
+                                <span style="font-size:0.72rem; color:var(--text-muted);">Operational Baseline 18 Unit</span>
                             </div>
                         </div>
                     </div>
-                        <div class="prod-card primary">
-                            <div class="prod-card-info">
-                                <h4>MTTR (Mean Time to Repair)</h4>
-                                <div class="prod-val">${fleetKPIs.mttr} Jam</div>
-                                <div class="prod-sub">Target Benchmark: â‰¤ 4.0 Jam</div>
+
+                    <!-- Row 3: Repair, Fuel & Idling Telemetry (3 Columns) -->
+                    <div class="telemetry-status-grid kpi-grid-3" style="margin-top: -10px;">
+                        <div class="telemetry-metric-item">
+                            <div class="telemetry-metric-header">
+                                <span class="telemetry-metric-label">MTTR (Mean Time To Repair)</span>
+                                <i class="fa-solid fa-screwdriver-wrench text-muted" style="font-size:0.8rem;"></i>
                             </div>
-                            <div class="prod-card-icon"><i class="fa-solid fa-screwdriver"></i></div>
+                            <div class="telemetry-metric-value font-mono" style="color:var(--primary);">${fleetKPIs.mttr} Jam</div>
+                            <div class="telemetry-metric-footer">
+                                <span style="font-size:0.72rem; color:var(--text-muted);">Target Benchmark: &le; 4.0 Jam</span>
+                            </div>
                         </div>
-                        <div class="prod-card dark">
-                            <div class="prod-card-info">
-                                <h4>Total Fuel Fleet Consumed</h4>
-                                <div class="prod-val">${fleetKPIs.totalFuelConsumed.toLocaleString()} L</div>
-                                <div class="prod-sub">Rata-rata: ${fleetKPIs.avgFuelLPH} L/H</div>
+                        <div class="telemetry-metric-item">
+                            <div class="telemetry-metric-header">
+                                <span class="telemetry-metric-label">Total Fuel Fleet Consumed</span>
+                                <i class="fa-solid fa-gas-pump text-muted" style="font-size:0.8rem;"></i>
                             </div>
-                            <div class="prod-card-icon"><i class="fa-solid fa-gas-pump"></i></div>
+                            <div class="telemetry-metric-value font-mono" style="color:var(--text-main);">${fleetKPIs.totalFuelConsumed.toLocaleString()} L</div>
+                            <div class="telemetry-metric-footer">
+                                <span style="font-size:0.72rem; color:var(--text-muted);">Rata-rata: ${fleetKPIs.avgFuelLPH} L/H</span>
+                            </div>
                         </div>
-                        <div class="prod-card danger">
-                            <div class="prod-card-info">
-                                <h4>Rata-rata Idling Fleet</h4>
-                                <div class="prod-val">${fleetKPIs.avgIdlingRatio}%</div>
-                                <div class="prod-sub">Memerlukan Evaluasi Sopir/Mekanik</div>
+                        <div class="telemetry-metric-item">
+                            <div class="telemetry-metric-header">
+                                <span class="telemetry-metric-label">Rata-rata Idling Fleet</span>
+                                ${renderMiniDonutChartSVG(fleetKPIs.avgIdlingRatio, 'var(--danger)', 28)}
                             </div>
-                            <div class="prod-card-icon"><i class="fa-solid fa-fire"></i></div>
+                            <div class="telemetry-metric-value font-mono" style="color:var(--danger);">${fleetKPIs.avgIdlingRatio}%</div>
+                            <div class="telemetry-metric-footer">
+                                <span style="font-size:0.72rem; color:var(--danger);">Memerlukan Evaluasi Sopir/Mekanik</span>
+                            </div>
                         </div>
                     </div>
 
@@ -14683,22 +14712,22 @@
                         <div class="pk-panel-body">
                             <div class="prod-formula-grid">
                                 <div class="prod-formula-box">
-                                    <h4><span>Physical Availability (PA)</span> <span class="prod-badge prod-badge-success">Target â‰¥ 90%</span></h4>
-                                    <code>PA = (Scheduled Hours - Breakdown Hours) / Scheduled Hours Ã— 100%</code>
+                                    <h4><span>Physical Availability (PA)</span> <span class="prod-badge prod-badge-success">Target &ge; 90%</span></h4>
+                                    <code>PA = (Scheduled Hours - Breakdown Hours) / Scheduled Hours &times; 100%</code>
                                     <p style="font-size:0.8rem; color:var(--text-muted);">Mengukur kesiapan fisik alat berat untuk beroperasi bebas dari kerusakan mekanis.</p>
                                 </div>
                                 <div class="prod-formula-box">
-                                    <h4><span>Use of Availability (UA)</span> <span class="prod-badge prod-badge-success">Target â‰¥ 80%</span></h4>
-                                    <code>UA = Operating Hours / (Scheduled Hours - Breakdown Hours) Ã— 100%</code>
+                                    <h4><span>Use of Availability (UA)</span> <span class="prod-badge prod-badge-success">Target &ge; 80%</span></h4>
+                                    <code>UA = Operating Hours / (Scheduled Hours - Breakdown Hours) &times; 100%</code>
                                     <p style="font-size:0.8rem; color:var(--text-muted);">Mengukur efektivitas pemanfaatan unit yang sedang berstatus siap pakai (Ready).</p>
                                 </div>
                                 <div class="prod-formula-box">
-                                    <h4><span>Breakdown Rate (BR)</span> <span class="prod-badge prod-badge-info">Target â‰¤ 10%</span></h4>
-                                    <code>BR = Breakdown Hours / Scheduled Hours Ã— 100%</code>
+                                    <h4><span>Breakdown Rate (BR)</span> <span class="prod-badge prod-badge-info">Target &le; 10%</span></h4>
+                                    <code>BR = Breakdown Hours / Scheduled Hours &times; 100%</code>
                                     <p style="font-size:0.8rem; color:var(--text-muted);">Persentase total jam mati/kerusakan terhadap total jam kerja terjadwal.</p>
                                 </div>
                                 <div class="prod-formula-box">
-                                    <h4><span>Mean Time Between Failures (MTBF)</span> <span class="prod-badge prod-badge-success">Target â‰¥ 100h</span></h4>
+                                    <h4><span>Mean Time Between Failures (MTBF)</span> <span class="prod-badge prod-badge-success">Target &ge; 100h</span></h4>
                                     <code>MTBF = Total Operating Time / Jumlah Kejadian Breakdown</code>
                                     <p style="font-size:0.8rem; color:var(--text-muted);">Rata-rata selang waktu jam kerja di antara dua insiden kerusakan.</p>
                                 </div>
@@ -15023,7 +15052,7 @@
                     ]
                 },
                 {
-                    title: 'B. Pemanasan Mesin (Engine Warm-Up Â±5 Mnt)',
+                    title: 'B. Pemanasan Mesin (Engine Warm-Up &plusmn;5 Mnt)',
                     items: [
                         { id: 'exc_201', text: 'Indikator Tekanan Oli Engine (Engine Oil Pressure Gauge)', critical: true },
                         { id: 'exc_202', text: 'Gauge Temperatur Air Engine (Radiator Temperature)', critical: true },
@@ -15044,7 +15073,7 @@
                     items: [
                         { id: 'exc_301', text: 'Unit diparkir di tempat aman, rata & bebas bahaya longsor', critical: false },
                         { id: 'exc_302', text: 'Attachment (Bucket) diturunkan menyentuh tanah', critical: false },
-                        { id: 'exc_303', text: 'Engine didinginkan (Cool Down Idle) Â±5 menit sebelum dimatikan', critical: false },
+                        { id: 'exc_303', text: 'Engine didinginkan (Cool Down Idle) &plusmn;5 menit sebelum dimatikan', critical: false },
                         { id: 'exc_304', text: 'Lever Pengaman / Lock Lever terpasang pada posisi LOCK', critical: true },
                         { id: 'exc_305', text: 'Kunci kontak di-OFF-kan & dilepas', critical: false },
                         { id: 'exc_306', text: 'Tangki bahan bakar diisi penuh (mencegah kondensasi)', critical: false },
