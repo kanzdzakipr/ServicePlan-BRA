@@ -5682,13 +5682,54 @@
                 const summaryEl = document.getElementById('monitoringSummary');
                 if (summaryEl) {
                     summaryEl.innerHTML = `
-                    <div><strong>${totalCount}</strong><span>Total Unit</span></div>
-                    <div class="success"><strong style="color:#16a34a;">${readyCount}</strong><span>Ready</span></div>
-                    <div class="info"><strong style="color:#0284c7;">${operatingCount}</strong><span>Operating</span></div>
-                    <div class="warning"><strong style="color:#d97706;">${standbyCount}</strong><span>Standby</span></div>
-                    <div class="warning"><strong style="color:#ea580c;">${inspectionCount}</strong><span>Inspeksi</span></div>
-                    <div class="danger"><strong style="color:#dc2626;">${breakdownCount}</strong><span>Breakdown</span></div>
-                    <div><strong>${activeWos}</strong><span>WO Aktif</span></div>
+                    <div class="total">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Total Unit</span>
+                            <div class="mon-card-icon total"><i class="fa-solid fa-cubes"></i></div>
+                        </div>
+                        <strong style="color:var(--text-main);">${totalCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-layer-group"></i> Master Asset Terdaftar</div>
+                    </div>
+                    <div class="success">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Ready</span>
+                            <div class="mon-card-icon success"><i class="fa-solid fa-circle-check"></i></div>
+                        </div>
+                        <strong style="color:#16a34a;">${readyCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-check"></i> Siap Dioperasikan</div>
+                    </div>
+                    <div class="info">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Operating</span>
+                            <div class="mon-card-icon info"><i class="fa-solid fa-play"></i></div>
+                        </div>
+                        <strong style="color:#0284c7;">${operatingCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-truck-fast"></i> Beroperasi di Lapangan</div>
+                    </div>
+                    <div class="standby">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Standby</span>
+                            <div class="mon-card-icon standby"><i class="fa-solid fa-pause-circle"></i></div>
+                        </div>
+                        <strong style="color:#0ea5e9;">${standbyCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-clock"></i> Cadangan / Ready Standby</div>
+                    </div>
+                    <div class="warning">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Inspeksi & PM</span>
+                            <div class="mon-card-icon warning"><i class="fa-solid fa-clipboard-check"></i></div>
+                        </div>
+                        <strong style="color:#f59e0b;">${inspectionCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-magnifying-glass"></i> Dalam Perawatan / P2H</div>
+                    </div>
+                    <div class="danger">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Breakdown</span>
+                            <div class="mon-card-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        </div>
+                        <strong style="color:#dc2626;">${breakdownCount}</strong>
+                        <div class="mon-card-ftr" style="color:#dc2626;"><i class="fa-solid fa-wrench"></i> ${activeWos} Work Order Aktif</div>
+                    </div>
                 `;
                 }
 
