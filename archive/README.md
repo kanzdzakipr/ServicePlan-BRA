@@ -18,19 +18,14 @@
 1. Ekstrak folder ini ke `C:\laragon\www\asset-manager-laragon-v2`.
 2. Jalankan Apache dan MySQL dari Laragon.
 3. Import `database\schema.sql` melalui phpMyAdmin atau HeidiSQL.
-4. Periksa `config\database.php`. Default Laragon: user `root`, password kosong.
+4. Set `APP_ENV=local` dan konfigurasi database melalui environment variable pada `.env.example`.
 5. Buka `http://asset-manager-laragon-v2.test` atau `http://localhost/asset-manager-laragon-v2`.
 
-## Akun awal
-Semua akun contoh memakai password `admin123`:
-- Asset Manager: `admin@assetpro.local`
-- Head of Equipment: `head@assetpro.local`
-- Planner: `planner@assetpro.local`
-- Mekanik: `mekanik@assetpro.local`
-- Logistik: `logistik@assetpro.local`
-- Viewer: `viewer@assetpro.local`
+## Provisioning akun
 
-Segera ganti password setelah pengujian.
+Jangan menggunakan akun atau password bersama. Buat akun melalui proses provisioning
+administrator, gunakan password acak unik, dan distribusikan credential melalui kanal aman.
+Login production menolak hash password seed yang telah diketahui.
 
 ## Matriks akses ringkas
 - Asset Manager: seluruh menu, pengguna, backup, audit.

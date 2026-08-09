@@ -139,7 +139,7 @@
             <p>Silakan masuk ke akun Anda</p>
         </div>
 
-        <div id="errorMsg" class="error-message">Username atau password salah!</div>
+        <div id="errorMsg" class="error-message" role="alert">Username atau password salah!</div>
 
         <form id="loginForm">
             <div class="form-group">
@@ -152,28 +152,85 @@
                 <input type="password" id="password" class="form-control" placeholder="Masukkan password" required>
             </div>
 
-            <button type="submit" class="btn">Login</button>
+            <button type="submit" class="btn" id="loginButton">Login</button>
         </form>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function (e) {
+        const loginForm = document.getElementById('loginForm');
+        const loginButton = document.getElementById('loginButton');
+        const errorMsg = document.getElementById('errorMsg');
+        let csrfToken = '';
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
+
+        async function initializeLogin() {
+            try {
+                const response = await fetch('api/auth.php?action=session', {
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const payload = await response.json();
+                if (!response.ok) throw new Error('Server authentication tidak tersedia');
+                if (payload.authenticated) {
+                    window.location.replace('dashboard.php');
+                    return;
+                }
+                csrfToken = payload.csrf_token || '';
+            } catch (error) {
+                showError('Layanan login belum siap. Periksa konfigurasi server.');
+            }
+        }
+
+        loginForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const usernameInput = document.getElementById('username').value;
             const passwordInput = document.getElementById('password').value;
-            const errorMsg = document.getElementById('errorMsg');
 
-            // Validasi akun: username 'admin' dan password 'admin123'
-            if (usernameInput === 'admin' && passwordInput === 'admin123') {
-                errorMsg.style.display = 'none';
-                // Arahkan ke halaman dashboard jika berhasil
-                window.location.href = 'dashboard.html';
-            } else {
-                // Tampilkan pesan error jika salah
-                errorMsg.style.display = 'block';
+            if (!csrfToken) {
+                showError('Sesi login belum siap. Muat ulang halaman dan coba kembali.');
+                return;
+            }
+
+            errorMsg.style.display = 'none';
+            loginButton.disabled = true;
+            loginButton.textContent = 'Memverifikasi...';
+
+            try {
+                const response = await fetch('api/auth.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: JSON.stringify({
+                        action: 'login',
+                        username: usernameInput,
+                        password: passwordInput
+                    })
+                });
+                const payload = await response.json().catch(function () { return null; });
+                if (!response.ok || !payload || payload.status !== 'success') {
+                    throw new Error(payload && payload.message ? payload.message : 'Username atau password tidak sesuai.');
+                }
+                document.getElementById('password').value = '';
+                window.location.replace('dashboard.php');
+            } catch (error) {
+                showError(error.message || 'Login gagal. Silakan coba kembali.');
+                loginButton.disabled = false;
+                loginButton.textContent = 'Login';
             }
         });
+
+        initializeLogin();
     </script>
 </body>
 

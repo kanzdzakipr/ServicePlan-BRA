@@ -12,6 +12,7 @@ data.json
 # 2. Environment & Database Configuration Credentials
 .env
 .env.*
+!.env.example
 config/database.local.php
 config/constants.local.php
 
