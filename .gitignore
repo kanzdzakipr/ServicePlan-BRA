@@ -26,6 +26,7 @@ config/constants.local.php
 uploads/*
 !uploads/.gitkeep
 logs/*.log
+.runtime/
 
 # 5. IDE, Editors & OS System Files
 .vscode/
