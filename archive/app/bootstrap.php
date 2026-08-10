@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../api/security.php';
+api_load_env();
+
 $environment = strtolower(trim((string) (getenv('APP_ENV') ?: 'production')));
 $isProduction = in_array($environment, ['production', 'live'], true);
 $forwardedProto = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));

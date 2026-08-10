@@ -22,6 +22,7 @@ if ($method === 'POST') {
                 WHERE asset_id = :id
             ");
             foreach ($data['assets'] as $a) {
+                api_require_asset_access($db, (string) ($a['id'] ?? ''));
                 $stmtAsset->execute([
                     ':status' => $a['status'] ?? 'READY',
                     ':loc' => $a['location'] ?? '',
@@ -45,6 +46,20 @@ if ($method === 'POST') {
             ");
             foreach ($data['work_orders'] as $w) {
                 if (!isset($w['woId']) || !isset($w['assetId'])) continue;
+                api_require_asset_access($db, (string) $w['assetId']);
+                $existingWorkOrder = $db->prepare('SELECT asset_id FROM work_orders WHERE wo_id = :wo_id LIMIT 1');
+                $existingWorkOrder->execute([':wo_id' => (string) $w['woId']]);
+                $existingAssetId = $existingWorkOrder->fetchColumn();
+                if ($existingAssetId !== false) {
+                    api_require_work_order_access($db, (string) $w['woId']);
+                    if (!hash_equals((string) $existingAssetId, (string) $w['assetId'])) {
+                        api_json_response(409, [
+                            'status' => 'error',
+                            'code' => 'OBJECT_ID_CONFLICT',
+                            'message' => 'ID work order sudah digunakan oleh aset lain.',
+                        ]);
+                    }
+                }
                 $stmtWO->execute([
                     ':wo' => $w['woId'],
                     ':ass' => $w['assetId'],

@@ -24,6 +24,8 @@ INSERT IGNORE INTO permissions (permission_key, menu_slug, action_type, descript
 ('reports.read', 'reports', 'READ', 'View reports'),
 ('reports.write', 'reports', 'UPDATE', 'Create and edit reports'),
 ('reports.approve', 'reports', 'APPROVE', 'Void or approve final reports'),
+('reports.read_all', 'reports', 'READ', 'View reports created by other users'),
+('scope.all_locations', 'system', 'READ', 'Access records from every operational location'),
 ('archive.read', 'archive', 'READ', 'View archived records'),
 ('archive.write', 'archive', 'UPDATE', 'Archive or restore records'),
 ('sync.write', 'system', 'OVERRIDE', 'Synchronize bulk application state'),
@@ -93,4 +95,3 @@ WHERE r.role_name = 'HRD Manager'
   AND p.permission_key IN ('dashboard.read', 'assets.read', 'reports.read', 'reports.write', 'archive.read');
 
 COMMIT;
-

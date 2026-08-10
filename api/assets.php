@@ -8,15 +8,22 @@ switch ($method) {
     case 'GET':
         // Jika ada id, ambil 1 data, jika tidak, ambil semua
         if (isset($_GET['id'])) {
-            $stmt = $db->prepare("SELECT * FROM assets WHERE asset_id = :id");
-            $stmt->execute([':id' => $_GET['id']]);
+            $scope = api_location_scope_clause('a', 'asset_list_location_id');
+            $sql = "SELECT a.* FROM assets a WHERE a.asset_id = :id";
+            if ($scope['sql'] !== '') $sql .= " AND " . $scope['sql'];
+            $stmt = $db->prepare($sql);
+            $stmt->execute(array_merge([':id' => (string) $_GET['id']], $scope['params']));
             $result = $stmt->fetch();
         } else {
-            $stmt = $db->query("
+            $scope = api_location_scope_clause('a', 'asset_list_location_id');
+            $sql = "
                 SELECT a.*, l.location_name as location_name 
                 FROM assets a 
                 LEFT JOIN locations l ON a.current_location_id = l.location_id
-            ");
+            ";
+            if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
+            $stmt = $db->prepare($sql);
+            $stmt->execute($scope['params']);
             $result = $stmt->fetchAll();
         }
         echo json_encode(["status" => "success", "data" => $result]);
@@ -28,6 +35,15 @@ switch ($method) {
         if (!$data || !isset($data['asset_id'])) {
             echo json_encode(["status" => "error", "message" => "Invalid data"]);
             exit;
+        }
+
+        $targetLocationId = isset($data['current_location_id']) ? (int) $data['current_location_id'] : api_current_location_id();
+        if (!api_can_access_location($targetLocationId)) {
+            api_json_response(403, [
+                'status' => 'error',
+                'code' => 'LOCATION_SCOPE_DENIED',
+                'message' => 'Lokasi aset berada di luar cakupan akun Anda.',
+            ]);
         }
 
         $stmt = $db->prepare("
@@ -44,7 +60,7 @@ switch ($method) {
                 ':type' => $data['type'] ?? 'Heavy Equipment',
                 ':cat' => $data['category'] ?? 'Excavator',
                 ':status' => $data['status'] ?? 'READY',
-                ':loc_id' => $data['current_location_id'] ?? null
+                ':loc_id' => $targetLocationId
             ]);
             echo json_encode(["status" => "success", "message" => "Asset created"]);
         } catch (PDOException $e) {
@@ -61,6 +77,18 @@ switch ($method) {
         }
 
         $id = $_GET['id'] ?? $data['asset_id'];
+        api_require_asset_access($db, (string) $id);
+
+        if (array_key_exists('current_location_id', $data)) {
+            $targetLocationId = $data['current_location_id'] !== null ? (int) $data['current_location_id'] : null;
+            if (!api_can_access_location($targetLocationId)) {
+                api_json_response(403, [
+                    'status' => 'error',
+                    'code' => 'LOCATION_SCOPE_DENIED',
+                    'message' => 'Lokasi tujuan berada di luar cakupan akun Anda.',
+                ]);
+            }
+        }
         
         // Buat query update dinamis berdasarkan data yang dikirim
         $fields = [];
@@ -94,6 +122,7 @@ switch ($method) {
             echo json_encode(["status" => "error", "message" => "ID missing"]);
             exit;
         }
+        api_require_asset_access($db, (string) $_GET['id']);
         $stmt = $db->prepare("DELETE FROM assets WHERE asset_id = :id");
         try {
             $stmt->execute([':id' => $_GET['id']]);

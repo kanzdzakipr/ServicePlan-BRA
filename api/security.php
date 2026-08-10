@@ -78,7 +78,7 @@ function api_request_origin(): string
 
 function api_application_origin(): string
 {
-    $configured = rtrim((string) (getenv('APP_ORIGIN') ?: ''), '/');
+    $configured = rtrim(api_get_env('APP_ORIGIN'), '/');
     if ($configured !== '') {
         return $configured;
     }
@@ -93,7 +93,7 @@ function api_application_origin(): string
 function api_allowed_origins(): array
 {
     $allowed = [api_application_origin()];
-    $configured = (string) (getenv('APP_ALLOWED_ORIGINS') ?: '');
+    $configured = api_get_env('APP_ALLOWED_ORIGINS');
     foreach (explode(',', $configured) as $origin) {
         $origin = rtrim(trim($origin), '/');
         if ($origin !== '') {
@@ -145,12 +145,12 @@ function api_start_session(): void
         ini_set('log_errors', '1');
     }
 
-    $sessionSavePath = trim((string) (getenv('SESSION_SAVE_PATH') ?: ''));
+    $sessionSavePath = api_get_env('SESSION_SAVE_PATH');
     if ($sessionSavePath !== '' && is_dir($sessionSavePath) && is_writable($sessionSavePath)) {
         ini_set('session.save_path', $sessionSavePath);
     }
 
-    $sessionName = trim((string) (getenv('SESSION_NAME') ?: 'BRASESSID'));
+    $sessionName = api_get_env('SESSION_NAME', 'BRASESSID');
     session_name($sessionName !== '' ? $sessionName : 'BRASESSID');
 
     $forwardedProto = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
@@ -167,8 +167,8 @@ function api_start_session(): void
     session_start();
 
     $now = time();
-    $idleTimeout = max(300, (int) (getenv('SESSION_IDLE_TIMEOUT') ?: 1800));
-    $absoluteTimeout = max($idleTimeout, (int) (getenv('SESSION_ABSOLUTE_TIMEOUT') ?: 28800));
+    $idleTimeout = max(300, (int) api_get_env('SESSION_IDLE_TIMEOUT', '1800'));
+    $absoluteTimeout = max($idleTimeout, (int) api_get_env('SESSION_ABSOLUTE_TIMEOUT', '28800'));
 
     if (!empty($_SESSION['auth_user'])) {
         $createdAt = (int) ($_SESSION['created_at'] ?? $now);
@@ -401,6 +401,156 @@ function api_require_permission(string $permission): void
     }
 }
 
+/**
+ * Object-level authorization helpers.
+ *
+ * Route permissions answer "may this user use this API?". These helpers answer
+ * "may this user access this specific row?". Non-global users are restricted
+ * to their assigned location and to reports they created themselves.
+ */
+function api_has_global_location_scope(): bool
+{
+    return api_has_permission('scope.all_locations');
+}
+
+function api_has_global_report_scope(): bool
+{
+    return api_has_permission('reports.read_all');
+}
+
+function api_current_location_id(): ?int
+{
+    $locationId = api_current_user()['assigned_location_id'] ?? null;
+    return $locationId !== null ? (int) $locationId : null;
+}
+
+function api_can_access_location(?int $locationId): bool
+{
+    if (api_has_global_location_scope()) {
+        return true;
+    }
+
+    $assignedLocationId = api_current_location_id();
+    return $assignedLocationId !== null
+        && $locationId !== null
+        && $assignedLocationId === $locationId;
+}
+
+function api_can_access_owner(?int $ownerId): bool
+{
+    if (api_has_global_report_scope()) {
+        return true;
+    }
+
+    $currentUserId = api_current_user()['id'] ?? null;
+    return $currentUserId !== null
+        && $ownerId !== null
+        && (int) $currentUserId === $ownerId;
+}
+
+function api_scope_alias(string $alias): string
+{
+    if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $alias)) {
+        throw new InvalidArgumentException('Invalid SQL scope alias.');
+    }
+    return $alias;
+}
+
+function api_location_scope_clause(string $assetAlias = 'a', string $parameter = 'scope_location_id'): array
+{
+    if (api_has_global_location_scope()) {
+        return ['sql' => '', 'params' => []];
+    }
+
+    $assetAlias = api_scope_alias($assetAlias);
+    $parameter = api_scope_alias($parameter);
+    $locationId = api_current_location_id();
+
+    // A missing assignment is intentionally deny-all, never an implicit global scope.
+    if ($locationId === null) {
+        return ['sql' => '1 = 0', 'params' => []];
+    }
+
+    return [
+        'sql' => $assetAlias . '.current_location_id = :' . $parameter,
+        'params' => [':' . $parameter => $locationId],
+    ];
+}
+
+function api_report_owner_scope_clause(string $reportAlias = 'r', string $parameter = 'scope_owner_id'): array
+{
+    if (api_has_global_report_scope()) {
+        return ['sql' => '', 'params' => []];
+    }
+
+    $reportAlias = api_scope_alias($reportAlias);
+    $parameter = api_scope_alias($parameter);
+    $userId = api_current_user()['id'] ?? null;
+    if ($userId === null) {
+        return ['sql' => '1 = 0', 'params' => []];
+    }
+
+    return [
+        'sql' => $reportAlias . '.created_by = :' . $parameter,
+        'params' => [':' . $parameter => (int) $userId],
+    ];
+}
+
+function api_require_asset_access(PDO $db, string $assetId): array
+{
+    $assetId = trim($assetId);
+    if ($assetId === '') {
+        api_json_response(404, [
+            'status' => 'error',
+            'code' => 'OBJECT_NOT_FOUND',
+            'message' => 'Objek tidak ditemukan atau tidak dapat diakses.',
+        ]);
+    }
+
+    $scope = api_location_scope_clause('a', 'asset_scope_location_id');
+    $sql = 'SELECT a.asset_id, a.current_location_id FROM assets a WHERE a.asset_id = :asset_id';
+    if ($scope['sql'] !== '') {
+        $sql .= ' AND ' . $scope['sql'];
+    }
+    $stmt = $db->prepare($sql . ' LIMIT 1');
+    $stmt->execute(array_merge([':asset_id' => $assetId], $scope['params']));
+    $asset = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Return the same response for a missing and a cross-scope object to avoid enumeration.
+    if (!$asset) {
+        api_json_response(404, [
+            'status' => 'error',
+            'code' => 'OBJECT_NOT_FOUND',
+            'message' => 'Objek tidak ditemukan atau tidak dapat diakses.',
+        ]);
+    }
+
+    return $asset;
+}
+
+function api_require_work_order_access(PDO $db, string $workOrderId): array
+{
+    $scope = api_location_scope_clause('a', 'wo_scope_location_id');
+    $sql = 'SELECT w.wo_id, w.asset_id, a.current_location_id
+            FROM work_orders w
+            INNER JOIN assets a ON a.asset_id = w.asset_id
+            WHERE w.wo_id = :wo_id';
+    if ($scope['sql'] !== '') {
+        $sql .= ' AND ' . $scope['sql'];
+    }
+    $stmt = $db->prepare($sql . ' LIMIT 1');
+    $stmt->execute(array_merge([':wo_id' => trim($workOrderId)], $scope['params']));
+    $workOrder = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$workOrder) {
+        api_json_response(404, [
+            'status' => 'error',
+            'code' => 'OBJECT_NOT_FOUND',
+            'message' => 'Objek tidak ditemukan atau tidak dapat diakses.',
+        ]);
+    }
+    return $workOrder;
+}
+
 function api_route_permission(): ?string
 {
     $route = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
@@ -441,6 +591,7 @@ function api_authorize_current_route(): void
 
 function api_bootstrap_request(bool $authenticationOptional = false): void
 {
+    api_load_env();
     api_apply_security_headers();
     api_start_session();
 

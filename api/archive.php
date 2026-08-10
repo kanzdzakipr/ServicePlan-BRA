@@ -4,6 +4,40 @@ require_once 'db.php';
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
 
+function archiveItemAccessible(PDO $db, string $type, string $id): bool
+{
+    if (!in_array($type, ['asset', 'p2h', 'accident'], true) || trim($id) === '') return false;
+    $scope = api_location_scope_clause('a', 'archive_location_id');
+    $params = [':id' => trim($id)];
+
+    if ($type === 'asset') {
+        $sql = 'SELECT 1 FROM assets a WHERE a.asset_id = :id';
+    } elseif ($type === 'accident') {
+        $sql = 'SELECT 1 FROM accidents ac INNER JOIN assets a ON a.asset_id = ac.asset_id WHERE ac.accident_id = :id';
+    } else {
+        $sql = "SELECT 1 FROM inspections i INNER JOIN assets a ON a.asset_id = i.asset_id
+                WHERE (CAST(i.inspection_id AS CHAR) = :inspection_id
+                       OR JSON_UNQUOTE(JSON_EXTRACT(i.payload_json, '$.id')) = :payload_id)";
+        $params = [':inspection_id' => trim($id), ':payload_id' => trim($id)];
+    }
+    $params = array_merge($params, $scope['params']);
+    if ($scope['sql'] !== '') $sql .= ' AND ' . $scope['sql'];
+    $stmt = $db->prepare($sql . ' LIMIT 1');
+    $stmt->execute($params);
+    return (bool) $stmt->fetchColumn();
+}
+
+function requireArchiveItemAccess(PDO $db, string $type, string $id): void
+{
+    if (!archiveItemAccessible($db, $type, $id)) {
+        api_json_response(404, [
+            'status' => 'error',
+            'code' => 'OBJECT_NOT_FOUND',
+            'message' => 'Objek tidak ditemukan atau tidak dapat diakses.',
+        ]);
+    }
+}
+
 // Auto-create table if it doesn't exist
 try {
     $db->exec("CREATE TABLE IF NOT EXISTS archived_items (
@@ -21,7 +55,10 @@ switch ($method) {
         // Retrieve all archived items
         try {
             $stmt = $db->query("SELECT item_type, item_id FROM archived_items");
-            $result = $stmt->fetchAll();
+            $result = array_values(array_filter(
+                $stmt->fetchAll(),
+                static fn(array $row): bool => archiveItemAccessible($db, (string) $row['item_type'], (string) $row['item_id'])
+            ));
             echo json_encode(["status" => "success", "data" => $result]);
         } catch (PDOException $e) {
             echo json_encode(["status" => "error", "message" => $e->getMessage()]);
@@ -39,6 +76,7 @@ switch ($method) {
         $type = $input['type'];
         $id = $input['id'];
         $action = $input['action'];
+        requireArchiveItemAccess($db, (string) $type, (string) $id);
 
         try {
             if ($action === 'archive') {

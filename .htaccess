@@ -33,15 +33,16 @@ DirectoryIndex index.html dashboard.php index.php
     # Internal API bootstrap files cannot be invoked as controllers.
     RewriteRule ^api/(?:db|security)\.php$ - [F,L,NC]
 
-    # Block access to the deprecated arsip folder.
-    RewriteRule ^(arsip)/ - [F,L]
+    # Deprecated applications, private storage, tests, and maintenance utilities are never public.
+    RewriteRule ^(?:archive|arsip|storage|tests)(?:/|$) - [F,L,NC]
+    RewriteRule ^scripts/.*\.(?:php|ps1|sql|bat|cmd|sh|md|json)$ - [F,L,NC]
 
     # Block access to core backend PHP class folders & internal configs
     RewriteRule ^(core|config|models)/ - [F,L]
 </IfModule>
 
 # 5. Deny Direct Web Access to Sensitive Credentials & SQL Schemas
-<FilesMatch "\.(env|sql|log|git|gitignore|htaccess|ini|sh|phps)$">
+<FilesMatch "(^\.env(?:\..*)?$|\.(?:sql|log|git|gitignore|htaccess|ini|sh|phps|ps1|bat|cmd|md)$)">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

@@ -8,6 +8,107 @@
 > Audit dilakukan secara read-only terhadap source aplikasi. Nilai credential, password,
 > token, dan hash sengaja tidak direproduksi dan selalu dimasking.
 
+## SECURITY EPIC UPDATE — TERM 2 (10 AGUSTUS 2026)
+
+Status keseluruhan tetap **TIDAK AMAN UNTUK PRODUCTION** sampai temuan lain seperti stored
+DOM XSS, dependency rentan, runtime DDL, rate limiting, dan verifikasi infrastruktur selesai.
+Update ini menutup tiga epic arsitektural di level kode dan automated guardrail.
+
+### Status Epic Utama
+
+| Epic | Cakupan | Status kode | Status operasional |
+|---|---|---|---|
+| EPIC-SEC-A — Security evidence & architecture | Bukti 9 commit, trust boundary, control flow, deployment gate | ✅ COMPLETE | ⚠️ Audit harus ikut setiap release |
+| EPIC-SEC-B — Object authorization / IDOR | Location scope untuk aset dan turunannya; ownership scope laporan; collision-safe upsert | ✅ REMEDIATED IN CODE | ⚠️ Jalankan migration RBAC dan staging IDOR test |
+| EPIC-SEC-C — Upload hardening | Private storage, MIME-extension mapping, signature check, authorized download, legacy isolation | ✅ REMEDIATED IN CODE | ⚠️ Set storage path di luar webroot dan migrasikan upload lama |
+| EPIC-SEC-D — Automated security tests | Unit, static guardrail, HTTP smoke/IDOR, CI workflow | ✅ COMPLETE | ⚠️ HTTP IDOR test memerlukan akun staging terbatas |
+
+### Bukti Rantai 9 Commit
+
+Audit memverifikasi sembilan commit yang membentuk delivery chain security dan hosting.
+Dua commit adalah integration merge dan dinyatakan sebagai merge, bukan diklaim sebagai
+implementasi security baru.
+
+| No. | Commit | Author | Jenis | Bukti kontribusi |
+|---:|---|---|---|---|
+| 1 | `d045e01` | seagrass489-cell | Implementasi | Audit awal, auth/session/CSRF/CORS/RBAC, protected dashboard, secret migration |
+| 2 | `5af24cf` | seagrass489-cell | Integration merge | Mengintegrasikan security baseline dengan perubahan dashboard tim |
+| 3 | `9d8691c` | seagrass489-cell | Implementasi | Server-side dashboard guard, internal view split, audit/deployment update |
+| 4 | `a2f0367` | seagrass489-cell | Implementasi | Local-only temporary password tooling dan production rejection guard |
+| 5 | `368373d` | seagrass489-cell | Hardening | Ignore rule untuk artifact lokal sensitif |
+| 6 | `e9f5342` | seagrass489-cell | Integration merge | Rekonsiliasi security branch dan perubahan main |
+| 7 | `e7bdd38` | seagrass489-cell | Verification tooling | Laragon sync dan login/session verification workflow |
+| 8 | `75e6468` | seagrass489-cell | Security evidence | Attack simulation dan re-audit checklist 22 temuan |
+| 9 | `241ecbc` | briannugraha | Hosting integration | Perbaikan environment/auth/database untuk deployment Hostinger |
+
+### Arsitektur Security End-to-End
+
+```mermaid
+flowchart LR
+    U[Untrusted Browser] -->|HTTPS| W[Web Server Allowlist / .htaccess]
+    W --> S[Secure Session + CSRF + CORS]
+    S --> R[Route RBAC - deny by default]
+    R --> O[Object Scope]
+    O --> L[assigned_location_id]
+    O --> P[report created_by]
+    L --> Q[Prepared SQL + scoped predicates]
+    P --> Q
+    Q --> D[(Least-privilege Database)]
+    U --> F[Upload Validation]
+    F --> M[MIME map + signature + random name]
+    M --> X[Private storage outside webroot]
+    X --> C[Authorized download controller]
+    S --> A[Audit/security events]
+    R --> A
+    O --> A
+```
+
+| Layer | Trust decision | Implementasi | Invariant |
+|---|---|---|---|
+| Browser | Tidak dipercaya | Tidak memakai role, actor, location, atau owner dari client | Client tidak menentukan scope |
+| Session | Identitas server-side | Secure cookie, regeneration, timeout, CSRF | User ID berasal dari session |
+| Route RBAC | Permission per controller/method | `api_route_permission()` + deny-by-default | Route tanpa policy ditolak |
+| Object scope | Akses row per user | `api_location_scope_clause()` dan `api_report_owner_scope_clause()` | Missing assignment adalah deny-all |
+| Object mutation | Existing row diverifikasi | `api_require_asset_access()` / `api_require_work_order_access()` | ID collision tidak boleh mengambil alih object |
+| Database | Query terparameterisasi | Prepared statement + server-owned scope parameter | ID/location client tidak masuk SQL mentah |
+| Upload | Konten hostile | MIME map, magic signature, random filename, 10 MB limit | Ekstensi tidak pernah berasal dari filename user |
+| File delivery | File private | Storage luar webroot + controller berizin | Tidak ada direct URL ke upload baru |
+| Regression guard | Perubahan dianggap berisiko | Unit/static/HTTP tests + GitHub Actions | Scope/upload guard diuji setiap PR |
+
+### Cakupan Object Authorization Baru
+
+| Resource | Read scope | Write scope | Collision protection |
+|---|---|---|---|
+| Assets | `assets.current_location_id = session.assigned_location_id` | Existing dan target location diverifikasi | Duplicate asset ID gagal |
+| Work orders | Join ke asset yang accessible | Existing WO dan asset diverifikasi | WO ID tidak dapat dipindahkan ke asset lain |
+| Fuel, PM, tire, inspection, accident | Join ke asset yang accessible | Asset diverifikasi sebelum insert/update | Accident ID collision memerlukan owner scope yang sama |
+| Logistics SPB | SPB join ke asset yang accessible | Existing SPB/item dan asset diverifikasi | SPB/item ID tidak dapat mengambil alih row lokasi lain |
+| Bulk sync | Hanya asset dalam scope | Existing WO diverifikasi sebelum upsert | Cross-asset WO collision ditolak |
+| Archive state | Item asset/P2H/accident divalidasi ke lokasi | Archive/restore memakai pemeriksaan yang sama | Unknown type dan cross-scope ID ditolak |
+| Reports | `created_by = authenticated user` | Owner-only; global via permission eksplisit | `client_key` hanya defense tambahan, bukan ownership |
+
+### Automated Security Evidence
+
+| Suite | File | Coverage | Hasil 10 Agustus 2026 |
+|---|---|---|---|
+| Unit security | `tests/security_unit.php` | Location/owner decision, deny-all, alias injection, MIME map, traversal, PDF spoof | ✅ 22 PASS / 0 FAIL |
+| Static guardrail | `tests/security_static.php` | Scope coverage 12 API, upload invariants, `.htaccess`, RBAC migration | ✅ 37 PASS / 0 FAIL |
+| HTTP smoke | `tests/security_http_smoke.php` | 401, direct view, evil Origin, CSRF session, live IDOR | ⚠️ Base checks siap; live IDOR NEEDS STAGING CREDENTIALS |
+| CI | `.github/workflows/security-tests.yml` | PHP lint + unit + static pada push/PR | ✅ CONFIGURED; NEEDS CI RUN VERIFICATION |
+
+### Remediation Mapping
+
+| Finding | Status baru | Bukti | Sisa pekerjaan |
+|---|---|---|---|
+| SEC-004 — Upload-to-RCE | ✅ REMEDIATED IN CODE | `upload_security.php`, private storage, download controller, web deny rules | Konfigurasi `UPLOAD_STORAGE_PATH`, migrasi upload lama, staging test |
+| SEC-005 — IDOR/BOLA | ✅ REMEDIATED IN CODE | Location/owner SQL scopes pada API aktif | Apply RBAC migration dan jalankan live limited-user IDOR test |
+| RA-001 — Maintenance utilities public | ✅ REMEDIATED IN CODE | `.htaccess` menolak maintenance PHP/PS1/SQL/BAT/CMD/SH/MD/JSON | Verifikasi `.htaccess` aktif di Hostinger |
+| RA-003 — Conditional upload RCE | ✅ REMEDIATED IN CODE | Ekstensi server-owned dan storage luar webroot | Verifikasi filesystem path dan PHP execution policy |
+| RA-004 / RA-011 — Cross-location/report ownership | ✅ REMEDIATED IN CODE | `assigned_location_id` dan `created_by` menjadi predicate wajib | Data legacy `created_by IS NULL` perlu ownership review |
+
+`NEEDS MANUAL VERIFICATION`: hasil di atas belum menyatakan aman production sebelum migration,
+deployment, CI run, dan HTTP IDOR test pada Hostinger/staging benar-benar lulus.
+
 ## Remediation Update — SEC-001 dan SEC-002
 
 **Tanggal implementasi:** 9 Agustus 2026  

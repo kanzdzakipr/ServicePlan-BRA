@@ -7,16 +7,26 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         if (isset($_GET['id'])) {
-            $stmt = $db->prepare("SELECT * FROM work_orders WHERE wo_id = :id");
-            $stmt->execute([':id' => $_GET['id']]);
+            $scope = api_location_scope_clause('a', 'wo_list_location_id');
+            $sql = "SELECT w.*, a.asset_code, a.category AS asset_category
+                    FROM work_orders w
+                    INNER JOIN assets a ON w.asset_id = a.asset_id
+                    WHERE w.wo_id = :id";
+            if ($scope['sql'] !== '') $sql .= " AND " . $scope['sql'];
+            $stmt = $db->prepare($sql);
+            $stmt->execute(array_merge([':id' => (string) $_GET['id']], $scope['params']));
             $result = $stmt->fetch();
         } else {
-            $stmt = $db->query("
+            $scope = api_location_scope_clause('a', 'wo_list_location_id');
+            $sql = "
                 SELECT w.*, a.asset_code, a.category as asset_category
                 FROM work_orders w
-                LEFT JOIN assets a ON w.asset_id = a.asset_id
-                ORDER BY w.reported_at DESC
-            ");
+                INNER JOIN assets a ON w.asset_id = a.asset_id
+            ";
+            if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
+            $sql .= " ORDER BY w.reported_at DESC";
+            $stmt = $db->prepare($sql);
+            $stmt->execute($scope['params']);
             $result = $stmt->fetchAll();
         }
         echo json_encode(["status" => "success", "data" => $result]);
@@ -28,6 +38,7 @@ switch ($method) {
             echo json_encode(["status" => "error", "message" => "Invalid data"]);
             exit;
         }
+        api_require_asset_access($db, (string) $data['asset_id']);
 
         $stmt = $db->prepare("
             INSERT INTO work_orders (wo_id, asset_id, issue_description, status, priority, assigned_mechanic)
@@ -72,6 +83,7 @@ switch ($method) {
         }
 
         $id = $_GET['id'] ?? $data['wo_id'];
+        api_require_work_order_access($db, (string) $id);
         
         $fields = [];
         $params = [':id' => $id];
@@ -119,6 +131,7 @@ switch ($method) {
             echo json_encode(["status" => "error", "message" => "ID missing"]);
             exit;
         }
+        api_require_work_order_access($db, (string) $_GET['id']);
         $stmt = $db->prepare("DELETE FROM work_orders WHERE wo_id = :id");
         try {
             $stmt->execute([':id' => $_GET['id']]);

@@ -6,12 +6,16 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        $stmt = $db->query("
+        $scope = api_location_scope_clause('a', 'pm_location_id');
+        $sql = "
             SELECT p.*, a.asset_code 
             FROM pm_plans p 
-            LEFT JOIN assets a ON p.asset_id = a.asset_id 
-            ORDER BY p.target_due_hm ASC 
-        ");
+            INNER JOIN assets a ON p.asset_id = a.asset_id
+        ";
+        if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
+        $sql .= " ORDER BY p.target_due_hm ASC";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($scope['params']);
         $result = $stmt->fetchAll();
         echo json_encode(["status" => "success", "data" => $result]);
         break;
@@ -22,6 +26,7 @@ switch ($method) {
             echo json_encode(["status" => "error", "message" => "Invalid data"]);
             exit;
         }
+        api_require_asset_access($db, (string) $data['asset_id']);
 
         $stmt = $db->prepare("
             INSERT INTO pm_plans (

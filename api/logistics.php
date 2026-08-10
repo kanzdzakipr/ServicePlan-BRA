@@ -26,11 +26,16 @@ switch ($method) {
                 echo json_encode(["status" => "success", "data" => $stmt->fetchAll()]);
                 break;
             } elseif ($_GET['type'] == 'spb') {
-                $stmt = $db->query("
+                $scope = api_location_scope_clause('a', 'spb_location_id');
+                $sql = "
                     SELECT pr.*, pri.id as item_id, pri.part_number, pri.description, pri.qty_requested, pri.status as item_status
                     FROM purchase_requests pr 
                     LEFT JOIN purchase_request_items pri ON pr.spb_id = pri.spb_id
-                ");
+                    INNER JOIN assets a ON a.asset_id = pr.asset_id
+                ";
+                if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
+                $stmt = $db->prepare($sql);
+                $stmt->execute($scope['params']);
                 echo json_encode(["status" => "success", "data" => $stmt->fetchAll()]);
                 break;
             }
@@ -57,6 +62,39 @@ switch ($method) {
                                       ON DUPLICATE KEY UPDATE status=VALUES(status), qty_requested=VALUES(qty_requested)");
 
             foreach ($input['records'] as $r) {
+                $assetId = (string) ($r['assetId'] ?? '');
+                api_require_asset_access($db, $assetId);
+
+                $existingRequest = $db->prepare('SELECT asset_id FROM purchase_requests WHERE spb_id = :spb_id LIMIT 1');
+                $existingRequest->execute([':spb_id' => (string) ($r['spbId'] ?? '')]);
+                $existingAssetId = $existingRequest->fetchColumn();
+                if ($existingAssetId !== false) {
+                    api_require_asset_access($db, (string) $existingAssetId);
+                    if (!hash_equals((string) $existingAssetId, $assetId)) {
+                        api_json_response(409, [
+                            'status' => 'error',
+                            'code' => 'OBJECT_ID_CONFLICT',
+                            'message' => 'Nomor SPB sudah digunakan oleh objek lain.',
+                        ]);
+                    }
+                }
+
+                $existingItem = $db->prepare('SELECT pr.asset_id, pri.spb_id
+                    FROM purchase_request_items pri
+                    INNER JOIN purchase_requests pr ON pr.spb_id = pri.spb_id
+                    WHERE pri.id = :item_id LIMIT 1');
+                $existingItem->execute([':item_id' => (string) ($r['id'] ?? '')]);
+                $itemOwner = $existingItem->fetch(PDO::FETCH_ASSOC);
+                if ($itemOwner) {
+                    api_require_asset_access($db, (string) $itemOwner['asset_id']);
+                    if (!hash_equals((string) $itemOwner['spb_id'], (string) ($r['spbId'] ?? ''))) {
+                        api_json_response(409, [
+                            'status' => 'error',
+                            'code' => 'OBJECT_ID_CONFLICT',
+                            'message' => 'ID item sudah digunakan oleh SPB lain.',
+                        ]);
+                    }
+                }
                 // Insert Header (Ignore duplicates)
                 $stmtReq->execute([
                     ':spb' => $r['spbId'],

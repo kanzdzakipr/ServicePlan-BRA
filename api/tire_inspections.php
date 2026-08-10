@@ -6,13 +6,16 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        $stmt = $db->query("
+        $scope = api_location_scope_clause('a', 'tire_location_id');
+        $sql = "
             SELECT t.*, a.asset_code 
             FROM tire_inspections t 
-            LEFT JOIN assets a ON t.asset_id = a.asset_id 
-            ORDER BY t.inspected_at DESC 
-            LIMIT 100
-        ");
+            INNER JOIN assets a ON t.asset_id = a.asset_id
+        ";
+        if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
+        $sql .= " ORDER BY t.inspected_at DESC LIMIT 100";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($scope['params']);
         $result = $stmt->fetchAll();
         echo json_encode(["status" => "success", "data" => $result]);
         break;
@@ -23,6 +26,7 @@ switch ($method) {
             echo json_encode(["status" => "error", "message" => "Invalid data"]);
             exit;
         }
+        api_require_asset_access($db, (string) $data['asset_id']);
 
         $stmt = $db->prepare("
             INSERT INTO tire_inspections (

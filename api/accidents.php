@@ -12,7 +12,14 @@ try {
 
 switch ($method) {
     case 'GET':
-        $stmt = $db->query("SELECT payload_json FROM accidents WHERE payload_json IS NOT NULL ORDER BY incident_datetime DESC LIMIT 100");
+        $scope = api_location_scope_clause('a', 'accident_location_id');
+        $sql = "SELECT ac.payload_json FROM accidents ac
+                INNER JOIN assets a ON a.asset_id = ac.asset_id
+                WHERE ac.payload_json IS NOT NULL";
+        if ($scope['sql'] !== '') $sql .= " AND " . $scope['sql'];
+        $sql .= " ORDER BY ac.incident_datetime DESC LIMIT 100";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($scope['params']);
         $results = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $parsed = json_decode($row['payload_json'], true);
@@ -44,6 +51,21 @@ switch ($method) {
                 // asset_id MUST exist in `assets` table because of FOREIGN KEY
                 // The frontend passes `unitCode` as "CS-41001", but the asset_id might be "CS-41001"
                 $asset = $acc['unitCode'] ?? '';
+                api_require_asset_access($db, (string) $asset);
+
+                $existingAccident = $db->prepare('SELECT asset_id FROM accidents WHERE accident_id = :id LIMIT 1');
+                $existingAccident->execute([':id' => $id]);
+                $existingAssetId = $existingAccident->fetchColumn();
+                if ($existingAssetId !== false) {
+                    api_require_asset_access($db, (string) $existingAssetId);
+                    if (!hash_equals((string) $existingAssetId, (string) $asset)) {
+                        api_json_response(409, [
+                            'status' => 'error',
+                            'code' => 'OBJECT_ID_CONFLICT',
+                            'message' => 'Nomor laporan sudah digunakan oleh objek lain.',
+                        ]);
+                    }
+                }
                 
                 $rDate = $acc['reportDate'] ?? date('Y-m-d');
                 $iDate = $acc['incidentDate'] ?? date('Y-m-d H:i:s');
@@ -51,17 +73,6 @@ switch ($method) {
                 $chronology = $acc['chronology'] ?? '';
                 $severity = $acc['severity'] ?? 'Minor';
                 if (!in_array($severity, ['Minor', 'Moderate', 'Critical'])) $severity = 'Minor';
-
-                // Check if asset exists before inserting to prevent foreign key constraint failures
-                $checkStmt = $db->prepare("SELECT 1 FROM assets WHERE asset_id = :asset");
-                $checkStmt->execute([':asset' => $asset]);
-                if (!$checkStmt->fetch()) {
-                    // if asset doesn't exist, we must create a placeholder or skip
-                    // For safety, we will just use a generic 'UNKNOWN' asset or throw error
-                    // Let's create it on the fly if missing (this is dangerous but prevents total crash)
-                    $insertAsset = $db->prepare("INSERT IGNORE INTO assets (asset_id, asset_code) VALUES (:asset1, :asset2)");
-                    $insertAsset->execute([':asset1' => $asset, ':asset2' => $asset]);
-                }
 
                 $stmt->execute([
                     ':id' => $id,

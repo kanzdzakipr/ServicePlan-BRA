@@ -59,6 +59,7 @@ function ensureReportTables($db) {
         UNIQUE KEY uq_report_final_number (final_number_key),
         KEY idx_report_status_updated (status, updated_at),
         KEY idx_report_client_draft (client_key, status, template_id),
+        KEY idx_report_owner_status (created_by, status, updated_at),
         CONSTRAINT fk_report_template FOREIGN KEY (template_id) REFERENCES report_templates (template_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
@@ -180,10 +181,13 @@ function writeReportAudit($db, $reportId, $clientKey, $action, $payload = null) 
 }
 
 function getReportById($db, $reportId) {
-    $stmt = $db->prepare("SELECT r.*, t.template_key, t.code, t.title, t.version, t.schema_json
+    $ownerScope = api_report_owner_scope_clause('r', 'report_owner_id');
+    $sql = "SELECT r.*, t.template_key, t.code, t.title, t.version, t.schema_json
         FROM report_records r JOIN report_templates t ON t.template_id = r.template_id
-        WHERE r.report_id = :report_id LIMIT 1");
-    $stmt->execute([':report_id' => $reportId]);
+        WHERE r.report_id = :report_id";
+    if ($ownerScope['sql'] !== '') $sql .= " AND " . $ownerScope['sql'];
+    $stmt = $db->prepare($sql . " LIMIT 1");
+    $stmt->execute(array_merge([':report_id' => $reportId], $ownerScope['params']));
     $row = $stmt->fetch();
     if (!$row) return null;
 
@@ -236,11 +240,13 @@ try {
             $schemaId = trim((string)($_GET['schema_id'] ?? ''));
             $clientKey = trim((string)($_GET['client_key'] ?? ''));
             if ($schemaId === '' || !validClientKey($clientKey)) reportReply('error', null, 'Parameter draft tidak valid.', 422);
-            $stmt = $db->prepare("SELECT r.report_id FROM report_records r
+            $ownerScope = api_report_owner_scope_clause('r', 'draft_owner_id');
+            $sql = "SELECT r.report_id FROM report_records r
                 JOIN report_templates t ON t.template_id = r.template_id
-                WHERE r.status = 'DRAFT' AND r.client_key = :client_key AND t.template_key = :schema_id
-                ORDER BY r.updated_at DESC LIMIT 1");
-            $stmt->execute([':client_key' => $clientKey, ':schema_id' => $schemaId]);
+                WHERE r.status = 'DRAFT' AND r.client_key = :client_key AND t.template_key = :schema_id";
+            if ($ownerScope['sql'] !== '') $sql .= " AND " . $ownerScope['sql'];
+            $stmt = $db->prepare($sql . " ORDER BY r.updated_at DESC LIMIT 1");
+            $stmt->execute(array_merge([':client_key' => $clientKey, ':schema_id' => $schemaId], $ownerScope['params']));
             $draftId = $stmt->fetchColumn();
             reportReply('success', $draftId ? getReportById($db, $draftId) : null);
         }
@@ -251,6 +257,11 @@ try {
         $schemaId = trim((string)($_GET['schema_id'] ?? ''));
         $sql = "SELECT r.report_id FROM report_records r JOIN report_templates t ON t.template_id = r.template_id WHERE r.status = :status";
         $params = [':status' => $status];
+        $ownerScope = api_report_owner_scope_clause('r', 'report_list_owner_id');
+        if ($ownerScope['sql'] !== '') {
+            $sql .= " AND " . $ownerScope['sql'];
+            $params = array_merge($params, $ownerScope['params']);
+        }
         if ($schemaId !== '') {
             $sql .= " AND t.template_key = :schema_id";
             $params[':schema_id'] = $schemaId;
@@ -282,7 +293,8 @@ try {
             reportReply('error', null, 'Struktur laporan tidak valid.', 422);
         }
         $reportId = trim((string)($input['reportId'] ?? ''));
-        if ($reportId === '') $reportId = reportUuid();
+        $reportIdWasProvided = $reportId !== '';
+        if (!$reportIdWasProvided) $reportId = reportUuid();
         $reportNumber = trim((string)($input['reportNumber'] ?? ($fields['nomor'] ?? ($fields['no_dokumen'] ?? ''))));
         $sourceMethod = substr(trim((string)($input['sourceMethod'] ?? 'manual')), 0, 40);
         $hasPendingAttachments = !empty($input['hasPendingAttachments']) ? 1 : 0;
@@ -296,9 +308,15 @@ try {
         $db->beginTransaction();
         try {
             $templateId = upsertReportTemplate($db, $template);
-            $existing = $db->prepare("SELECT status, client_key FROM report_records WHERE report_id = :report_id FOR UPDATE");
-            $existing->execute([':report_id' => $reportId]);
+            $ownerScope = api_report_owner_scope_clause('report_records', 'report_update_owner_id');
+            $existingSql = "SELECT status, client_key, created_by FROM report_records WHERE report_id = :report_id";
+            if ($ownerScope['sql'] !== '') $existingSql .= " AND " . $ownerScope['sql'];
+            $existing = $db->prepare($existingSql . " FOR UPDATE");
+            $existing->execute(array_merge([':report_id' => $reportId], $ownerScope['params']));
             $current = $existing->fetch();
+            if ($reportIdWasProvided && !$current) {
+                throw new DomainException('Laporan tidak ditemukan atau tidak dapat diakses.');
+            }
             if ($current && $current['status'] !== 'DRAFT') throw new DomainException('Laporan yang sudah final atau void tidak dapat ditimpa.');
             if ($current && $current['client_key'] !== $clientKey) throw new DomainException('Draft ini dimiliki sesi browser lain.');
 
@@ -358,9 +376,12 @@ try {
     if ($action === 'discard_draft') {
         $reportId = trim((string)($input['reportId'] ?? ''));
         $db->beginTransaction();
-        $stmt = $db->prepare("UPDATE report_records SET status = 'VOID', voided_at = CURRENT_TIMESTAMP
-            WHERE report_id = :report_id AND client_key = :client_key AND status = 'DRAFT'");
-        $stmt->execute([':report_id' => $reportId, ':client_key' => $clientKey]);
+        $ownerScope = api_report_owner_scope_clause('report_records', 'discard_owner_id');
+        $sql = "UPDATE report_records SET status = 'VOID', voided_at = CURRENT_TIMESTAMP
+                WHERE report_id = :report_id AND client_key = :client_key AND status = 'DRAFT'";
+        if ($ownerScope['sql'] !== '') $sql .= " AND " . $ownerScope['sql'];
+        $stmt = $db->prepare($sql);
+        $stmt->execute(array_merge([':report_id' => $reportId, ':client_key' => $clientKey], $ownerScope['params']));
         if ($stmt->rowCount() < 1) {
             $db->rollBack();
             reportReply('error', null, 'Draft tidak ditemukan atau bukan milik browser ini.', 404);
@@ -399,9 +420,12 @@ try {
         api_require_permission('reports.approve');
         $reportId = trim((string)($input['reportId'] ?? ''));
         $reason = trim((string)($input['reason'] ?? ''));
-        $stmt = $db->prepare("UPDATE report_records SET status = 'VOID', voided_at = CURRENT_TIMESTAMP,
-            final_number_key = NULL WHERE report_id = :report_id AND status = 'FINAL'");
-        $stmt->execute([':report_id' => $reportId]);
+        $ownerScope = api_report_owner_scope_clause('report_records', 'void_owner_id');
+        $sql = "UPDATE report_records SET status = 'VOID', voided_at = CURRENT_TIMESTAMP,
+                final_number_key = NULL WHERE report_id = :report_id AND status = 'FINAL'";
+        if ($ownerScope['sql'] !== '') $sql .= " AND " . $ownerScope['sql'];
+        $stmt = $db->prepare($sql);
+        $stmt->execute(array_merge([':report_id' => $reportId], $ownerScope['params']));
         if ($stmt->rowCount() < 1) reportReply('error', null, 'Laporan final tidak ditemukan atau sudah void.', 404);
         writeReportAudit($db, $reportId, $clientKey, 'VOID', ['reason' => $reason]);
         reportReply('success', getReportById($db, $reportId), 'Laporan berhasil dibatalkan (void).');

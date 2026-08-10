@@ -6,8 +6,9 @@ menggunakan session authentication, CSRF, serta authorization server-side.
 ## 1. Environment variables
 
 Pasang seluruh variable pada `.env.example` melalui control panel hosting, Apache `SetEnv`,
-PHP-FPM pool, container secret, atau secret manager. File `.env` tidak dibaca otomatis oleh
-aplikasi dan tidak boleh berada dalam public webroot.
+PHP-FPM pool, container secret, atau secret manager. Loader `.env` tersedia untuk deployment;
+tempatkan file satu tingkat di atas `public_html` bila hosting mengizinkan. Jika terpaksa berada
+di document root, verifikasi request HTTP ke `.env` selalu menghasilkan 403/404.
 
 Untuk local development, set `APP_ENV=local`. Production harus menggunakan
 `APP_ENV=production` dan `APP_ORIGIN` dengan URL HTTPS final.
@@ -65,3 +66,37 @@ Uji pada staging:
 6. `GET /data.json`, `/.git/HEAD`, `/material/...`, dan `/raw-material/...` ditolak.
 7. Login sukses meregenerasi session ID dan logout menghapus cookie.
 8. Request dari Origin yang tidak diizinkan menghasilkan HTTP 403.
+
+## 6. Object authorization dan upload storage
+
+- Jalankan ulang `scripts/security_rbac_migration.sql` dengan migration account agar permission
+  `scope.all_locations` dan `reports.read_all` tersedia untuk role global.
+- User non-global wajib memiliki `assigned_location_id`; nilai kosong menghasilkan deny-all.
+- Review report legacy dengan `created_by IS NULL`. Jangan melakukan backfill ownership tanpa
+  bukti pemilik yang sah.
+- Set `UPLOAD_STORAGE_PATH` ke absolute path yang writable oleh PHP dan berada di luar
+  `public_html`/document root.
+- Migrasikan upload legacy ke private storage dan pertahankan storage key relatif pada database.
+- Pastikan `/archive`, `/storage`, `/tests`, dan maintenance file di `/scripts` memberi 403/404.
+
+## 7. Automated security tests
+
+Jalankan dari PowerShell:
+
+```powershell
+.\tests\run_security_tests.ps1
+```
+
+Untuk HTTP smoke test read-only:
+
+```powershell
+$env:SECURITY_TEST_BASE_URL='https://staging.example.com'
+$env:SECURITY_TEST_LIMITED_USER='limited-test-user'
+$env:SECURITY_TEST_LIMITED_PASSWORD='[set-via-secure-channel]'
+$env:SECURITY_TEST_CROSS_SCOPE_ASSET_ID='KNOWN-ASSET-OUTSIDE-ASSIGNMENT'
+.\tests\run_security_tests.ps1
+```
+
+Gunakan akun staging terbatas dan aset disposable/read-only. Jangan menaruh credential test di
+repository, command history bersama, screenshot, atau laporan. Hapus environment variable setelah
+pengujian. HTTP suite tidak melakukan mutasi data.

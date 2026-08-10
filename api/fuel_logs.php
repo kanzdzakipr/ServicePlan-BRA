@@ -7,13 +7,16 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         // Retrieve fuel logs
-        $stmt = $db->query("
+        $scope = api_location_scope_clause('a', 'fuel_location_id');
+        $sql = "
             SELECT f.*, a.category AS asset_category 
             FROM fuel_logs f 
-            LEFT JOIN assets a ON f.asset_id = a.asset_id 
-            ORDER BY f.refuel_date DESC 
-            LIMIT 100
-        ");
+            INNER JOIN assets a ON f.asset_id = a.asset_id
+        ";
+        if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
+        $sql .= " ORDER BY f.refuel_date DESC LIMIT 100";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($scope['params']);
         $result = $stmt->fetchAll();
         echo json_encode(["status" => "success", "data" => $result]);
         break;
@@ -25,6 +28,7 @@ switch ($method) {
             echo json_encode(["status" => "error", "message" => "Invalid data"]);
             exit;
         }
+        api_require_asset_access($db, (string) $data['asset_id']);
 
         $stmt = $db->prepare("
             INSERT INTO fuel_logs (

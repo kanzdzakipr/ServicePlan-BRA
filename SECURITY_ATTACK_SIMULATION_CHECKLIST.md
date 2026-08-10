@@ -1,5 +1,21 @@
 # SECURITY ATTACK SIMULATION & RE-AUDIT CHECKLIST
 
+## REMEDIATION UPDATE — 10 AGUSTUS 2026
+
+| Finding | Status kode | Retest yang diwajibkan |
+|---|---|---|
+| RA-001 — Maintenance utilities di webroot | ✅ REMEDIATED | Pastikan URL utility menghasilkan 403/404 di Hostinger |
+| RA-003 — Upload-to-RCE conditional | ✅ REMEDIATED | Upload spoof/polyglot harus ditolak; file baru tidak memiliki direct URL |
+| RA-004 — Cross-location BOLA | ✅ REMEDIATED | Limited user hanya melihat lokasi assignment dan cross-scope ID tidak dikembalikan |
+| RA-011 — Browser-key report ownership | ✅ REMEDIATED | User B tidak dapat read/update/discard/clone report user A |
+
+| Automated evidence | Status |
+|---|---|
+| Unit security tests | ✅ 22 PASS / 0 FAIL |
+| Static security guardrails | ✅ 37 PASS / 0 FAIL |
+| HTTP smoke/IDOR staging | ⚠️ NEEDS MANUAL VERIFICATION |
+| Production decision | ❌ Tetap blocked sampai P0/P1 lain dan deployment retest selesai |
+
 ## 1. Informasi Audit
 
 | Atribut | Nilai |

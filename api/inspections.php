@@ -12,7 +12,14 @@ try {
 
 switch ($method) {
     case 'GET':
-        $stmt = $db->query("SELECT payload_json FROM inspections WHERE payload_json IS NOT NULL ORDER BY inspection_date DESC LIMIT 300");
+        $scope = api_location_scope_clause('a', 'inspection_location_id');
+        $sql = "SELECT i.payload_json FROM inspections i
+                INNER JOIN assets a ON a.asset_id = i.asset_id
+                WHERE i.payload_json IS NOT NULL";
+        if ($scope['sql'] !== '') $sql .= " AND " . $scope['sql'];
+        $sql .= " ORDER BY i.inspection_date DESC LIMIT 300";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($scope['params']);
         $results = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $parsed = json_decode($row['payload_json'], true);
@@ -48,13 +55,14 @@ switch ($method) {
 
                 // Default ID logic
                 $assetId = $ins['unitId'] ?? $ins['assetId'] ?? '';
+                api_require_asset_access($db, (string) $assetId);
                 $hm = $ins['hmEnd'] ?? $ins['hmStart'] ?? 0;
                 $date = $ins['date'] ?? date('Y-m-d H:i:s');
                 $summary = $ins['notes'] ?? '';
 
                 $stmt->execute([
                     ':asset' => $assetId,
-                    ':inspector' => 1, // Default user
+                    ':inspector' => (int) api_current_user()['id'],
                     ':date' => $date,
                     ':hm' => $hm,
                     ':result' => $result,
@@ -70,7 +78,7 @@ switch ($method) {
                         VALUES ('Inspections', :user, 'Inspector', :type, :title, :msg, :parties, :tables, 0, NOW())");
                     
                     $actionType = ($result === 'FAIL') ? 'P2H_REJECT' : 'P2H_SUBMIT';
-                    $titleStr = ($result === 'FAIL') ? "Inspeksi P2H Ditolak - {$assetId} (BREAKDOWN)" : "Form P2H #${insId} Disetujui ({$assetId})";
+                    $titleStr = ($result === 'FAIL') ? "Inspeksi P2H Ditolak - {$assetId} (BREAKDOWN)" : "Form P2H #{$insId} Disetujui ({$assetId})";
                     $msgStr = "Inspector memasukkan data inspeksi P2H untuk unit {$assetId}. Hasil: {$result}. " . ($summary ? "Catatan: {$summary}" : "");
                     
                     $notifStmt->execute([

@@ -21,13 +21,13 @@ final class Database
         $environment = app_environment();
         $isLocal = in_array($environment, ['local', 'development', 'test'], true);
 
-        $host = api_get_env('DB_HOST', '127.0.0.1');
+        $host = api_get_env('DB_HOST', $isLocal ? '127.0.0.1' : '');
         $port = api_get_env('DB_PORT', '3306');
-        $database = api_get_env('DB_NAME', 'u646470441_ServicePlanBRA');
-        $username = api_get_env('DB_USER', $isLocal ? 'root' : 'u646470441_pttClt5jaya');
+        $database = api_get_env('DB_NAME', $isLocal ? 'serviceplan_bra' : '');
+        $username = api_get_env('DB_USER', $isLocal ? 'root' : '');
         $password = api_get_env('DB_PASSWORD', api_get_env('DB_PASS', ''));
 
-        if ($host === '' || $database === '' || $username === '') {
+        if ($host === '' || $database === '' || $username === '' || (!$isLocal && $password === '')) {
             error_log('Database configuration is incomplete for APP_ENV=' . $environment);
             api_json_response(500, [
                 'status' => 'error',
