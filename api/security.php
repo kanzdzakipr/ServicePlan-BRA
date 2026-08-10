@@ -8,9 +8,53 @@ declare(strict_types=1);
  * before controller code is allowed to run. Authorization is deny-by-default.
  */
 
+function api_load_env(): void
+{
+    static $loaded = false;
+    if ($loaded) return;
+    $loaded = true;
+
+    $candidates = [
+        dirname(__DIR__) . '/.env',
+        __DIR__ . '/.env',
+        dirname(__DIR__, 2) . '/.env'
+    ];
+
+    foreach ($candidates as $path) {
+        if (file_exists($path) && is_readable($path)) {
+            $lines = @file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if ($lines === false) continue;
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line === '' || strpos($line, '#') === 0) continue;
+                if (strpos($line, '=') !== false) {
+                    [$k, $v] = explode('=', $line, 2);
+                    $k = trim($k);
+                    $v = trim($v, " \t\n\r\0\x0B\"'");
+                    $_ENV[$k] = $v;
+                    $_SERVER[$k] = $v;
+                    @putenv("{$k}={$v}");
+                }
+            }
+            break;
+        }
+    }
+}
+
+function api_get_env(string $key, string $default = ''): string
+{
+    api_load_env();
+    $val = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+    if ($val !== false && $val !== null && trim((string)$val) !== '') {
+        return trim((string)$val);
+    }
+    return $default;
+}
+
 function app_environment(): string
 {
-    $environment = strtolower(trim((string) (getenv('APP_ENV') ?: 'production')));
+    $env = api_get_env('APP_ENV', 'production');
+    $environment = strtolower(trim($env));
     return $environment !== '' ? $environment : 'production';
 }
 

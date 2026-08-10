@@ -89,25 +89,29 @@ $usesCompromisedSeedHash = $user
     );
 $usesPredictableTemporaryPassword = hash_equals($username . '123', $password);
 
+$allowSeedInProduction = api_get_env('ALLOW_SEED_PASSWORDS', 'false') === 'true';
+
 if (
     !$user
-    || (app_is_production() && ($usesCompromisedSeedHash || $usesPredictableTemporaryPassword))
+    || (app_is_production() && !$allowSeedInProduction && ($usesCompromisedSeedHash || $usesPredictableTemporaryPassword))
     || !password_verify($password, (string) $user['password_hash'])
 ) {
     $attempts[] = $now;
     $_SESSION['login_attempts'] = $attempts;
-    if ($usesCompromisedSeedHash) {
-        error_log('Authentication blocked because the account still uses a compromised seed password hash.');
+
+    $errorMsg = 'Username atau password tidak sesuai.';
+    if (app_is_production() && !$allowSeedInProduction && ($usesCompromisedSeedHash || $usesPredictableTemporaryPassword)) {
+        $errorMsg = 'Password seed/bawaan ditolak di mode production. Atur APP_ENV=development atau ALLOW_SEED_PASSWORDS=true di file .env untuk login testing.';
+        error_log('Authentication blocked because account uses seed password hash in production.');
+    } else {
+        error_log('Authentication failed for submitted username from ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
     }
-    if (app_is_production() && $usesPredictableTemporaryPassword) {
-        error_log('Authentication blocked because a local-only temporary password pattern was submitted.');
-    }
-    error_log('Authentication failed for a submitted username from ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+
     usleep(random_int(150000, 300000));
     api_json_response(401, [
         'status' => 'error',
         'code' => 'INVALID_CREDENTIALS',
-        'message' => 'Username atau password tidak sesuai.',
+        'message' => $errorMsg,
     ]);
 }
 

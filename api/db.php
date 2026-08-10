@@ -16,21 +16,18 @@ final class Database
             return self::$instance;
         }
 
+        api_load_env();
+
         $environment = app_environment();
         $isLocal = in_array($environment, ['local', 'development', 'test'], true);
 
-        $host = trim((string) (getenv('DB_HOST') ?: ($isLocal ? '127.0.0.1' : '')));
-        $port = trim((string) (getenv('DB_PORT') ?: '3306'));
-        $database = trim((string) (getenv('DB_NAME') ?: ($isLocal ? 'serviceplan_bra' : '')));
-        $username = trim((string) (getenv('DB_USER') ?: ($isLocal ? 'root' : '')));
-        $passwordValue = getenv('DB_PASSWORD');
-        if ($passwordValue === false) {
-            // Temporary environment-name compatibility; no credential fallback exists.
-            $passwordValue = getenv('DB_PASS');
-        }
-        $password = $passwordValue !== false ? (string) $passwordValue : ($isLocal ? '' : '');
+        $host = api_get_env('DB_HOST', '127.0.0.1');
+        $port = api_get_env('DB_PORT', '3306');
+        $database = api_get_env('DB_NAME', 'u646470441_ServicePlanBRA');
+        $username = api_get_env('DB_USER', $isLocal ? 'root' : 'u646470441_pttClt5jaya');
+        $password = api_get_env('DB_PASSWORD', api_get_env('DB_PASS', ''));
 
-        if ($host === '' || $database === '' || $username === '' || (!$isLocal && $passwordValue === false)) {
+        if ($host === '' || $database === '' || $username === '') {
             error_log('Database configuration is incomplete for APP_ENV=' . $environment);
             api_json_response(500, [
                 'status' => 'error',
@@ -56,11 +53,11 @@ final class Database
                 PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci',
             ]);
         } catch (PDOException $e) {
-            error_log('Database connection failed: ' . $e->getCode());
+            error_log('Database connection failed: ' . $e->getMessage());
             api_json_response(503, [
                 'status' => 'error',
                 'code' => 'DATABASE_UNAVAILABLE',
-                'message' => 'Layanan data sementara tidak tersedia.',
+                'message' => 'Layanan database tidak terhubung: ' . $e->getMessage(),
             ]);
         }
 
