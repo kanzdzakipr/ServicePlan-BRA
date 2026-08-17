@@ -3937,7 +3937,6 @@
                         <h2>Akses Spare Part per Alat Berat</h2>
                         <p>Pencarian berlaku pada kedua tabulasi. Klik Akses untuk melihat daftar item dan membuat SPB.</p>
                     </div>
-                    <div class="sl-source-note"><i class="fa-solid fa-file-shield"></i><span><strong>Acuan BRA</strong>Form P-1 · Parts Weekly · Monitoring Pengadaan</span></div>
                 </div>
                 <div class="sl-toolbar">
                     <label class="sl-search"><i class="fa-solid fa-magnifying-glass"></i><input id="slUnitSearch" type="search" value="${escapeHtml(state.query)}" placeholder="Cari kode lambung, kategori, atau lokasi..." data-sl-filter="query"></label>
@@ -4109,7 +4108,6 @@
             <div class="sl-shell">
                 <header class="sl-page-header">
                     <div><span class="sl-eyebrow">WAREHOUSE · PROCUREMENT · MAINTENANCE</span><h1>Spare Part & Logistik</h1><p>Tabulasi kebutuhan per unit, ketersediaan, SPB, pengadaan, dan dampaknya terhadap kesiapan alat.</p></div>
-                    <div class="sl-header-flow"><span><b>1</b>Temuan</span><i class="fa-solid fa-chevron-right"></i><span><b>2</b>WO / SPB</span><i class="fa-solid fa-chevron-right"></i><span><b>3</b>Approval</span><i class="fa-solid fa-chevron-right"></i><span><b>4</b>Part siap</span></div>
                 </header>
                 ${renderKpis()}
                 ${renderToolbar()}
@@ -4991,7 +4989,6 @@
                         <h2>Daftar Kondisi Komponen per Unit</h2>
                         <p>Pilih unit melalui tombol Detail untuk membuka ringkasan, inspeksi, dan riwayat komponen.</p>
                     </div>
-                    <div class="cm-catalog-source"><i class="fa-solid fa-database"></i><span><strong>Acuan material BRA</strong>Ban · grease · cutting bit · aki</span></div>
                 </div>
                 <div class="cm-catalog-toolbar">
                     <div class="cm-catalog-search"><i class="fa-solid fa-magnifying-glass"></i><input id="cm-catalog-search" type="search" value="${esc(catalogState.query)}" placeholder="Cari kode lambung, kategori, atau lokasi..." oninput="ConditionMonitoring.filterCatalog(this.value)"></div>
@@ -12389,7 +12386,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="pm-source-note"><i class="fa-solid fa-database"></i><span>Acuan: Plan Service Juli 2026 + Kebutuhan Filter Januari 2026</span><span id="pmAssetLinkSummary" class="pm-asset-link-summary"></span></div>
             </div>
             <nav class="pm-tabs" aria-label="Submenu Preventive Maintenance">
                 <button class="pm-tab active" data-pm-tab="forecast"><i class="fa-solid fa-gauge-high"></i> Forecast & Due Tracker</button>
@@ -12561,8 +12557,8 @@
             const status = statusOf(plan);
             return `<li class="pm-priority-item">
                 <div class="pm-priority-meter">${meterType(plan)}</div>
-                <div class="pm-priority-copy"><strong>${escapeHtml(plan.code || plan.id)} · ${escapeHtml(plan.id)}</strong><span>${escapeHtml(plan.asset)}</span></div>
-                <div class="pm-priority-variance">${status === 'OVERDUE' ? '+' : ''}${formatNumber(variance)} ${meterType(plan)}<br><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}">Tindak lanjut</button></div>
+                <div class="pm-priority-copy"><strong>${escapeHtml(plan.code || plan.id)} &middot; <span style="font-family:monospace; color:#0284c7;">${escapeHtml(plan.id)}</span></strong><span>${escapeHtml(plan.asset)}</span></div>
+                <div class="pm-priority-variance"><span>${status === 'OVERDUE' ? '+' : ''}${formatNumber(variance)} ${meterType(plan)}</span><br><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}"><i class="fa-solid fa-arrow-right-to-bracket"></i> Tindak lanjut</button></div>
             </li>`;
         }).join('');
     }
@@ -13842,33 +13838,33 @@
                     <div class="hse-cards-grid">
                         <div class="hse-card danger">
                             <div class="hse-card-info">
-                                <h4>Total Insiden dilaporkan</h4>
-                                <div class="hse-val" id="lblTotalAccidents">3 Kasus</div>
-                                <div class="hse-sub">Tahun 2026</div>
+                                <span>TOTAL INSIDEN DILAPORKAN</span>
+                                <strong class="hse-val" id="lblTotalAccidents">3 Kasus</strong>
+                                <small class="hse-sub">Tahun 2026</small>
                             </div>
                             <div class="hse-card-icon"><i class="fa-solid fa-car-burst"></i></div>
                         </div>
                         <div class="hse-card warning">
                             <div class="hse-card-info">
-                                <h4>Unit Locked (HOLD)</h4>
-                                <div class="hse-val" id="lblLockedUnits">2 Unit</div>
-                                <div class="hse-sub">Status ACCIDENT_HOLD</div>
+                                <span>UNIT LOCKED (HOLD)</span>
+                                <strong class="hse-val" id="lblLockedUnits">2 Unit</strong>
+                                <small class="hse-sub">Status ACCIDENT_HOLD</small>
                             </div>
                             <div class="hse-card-icon"><i class="fa-solid fa-lock"></i></div>
                         </div>
                         <div class="hse-card primary">
                             <div class="hse-card-info">
-                                <h4>Estimasi Total Kerugian</h4>
-                                <div class="hse-val" id="lblTotalLoss">Rp 79 Jt</div>
-                                <div class="hse-sub">Kerugian Finansial & Down</div>
+                                <span>ESTIMASI TOTAL KERUGIAN</span>
+                                <strong class="hse-val" id="lblTotalLoss">Rp 79 Jt</strong>
+                                <small class="hse-sub">Kerugian Finansial & Down</small>
                             </div>
                             <div class="hse-card-icon"><i class="fa-solid fa-money-bill-trend-up"></i></div>
                         </div>
                         <div class="hse-card success">
                             <div class="hse-card-info">
-                                <h4>Kasus Selesai (Closed)</h4>
-                                <div class="hse-val" id="lblClosedAccidents">1 Kasus</div>
-                                <div class="hse-sub">CAPA Completed & Released</div>
+                                <span>KASUS SELESAI (CLOSED)</span>
+                                <strong class="hse-val" id="lblClosedAccidents">1 Kasus</strong>
+                                <small class="hse-sub">CAPA Completed & Released</small>
                             </div>
                             <div class="hse-card-icon"><i class="fa-solid fa-circle-check"></i></div>
                         </div>
@@ -14866,42 +14862,42 @@
                     <div class="prod-cards-grid">
                         <div class="prod-card danger">
                             <div class="prod-card-info">
-                                <h4>Total Unit Standby</h4>
-                                <div class="prod-val">48 Unit</div>
-                                <div class="prod-sub">Rekap Audit Lapangan</div>
+                                <span>TOTAL UNIT STANDBY</span>
+                                <strong class="prod-val">48 Unit</strong>
+                                <small class="prod-sub">Rekap Audit Lapangan</small>
                             </div>
                             <div class="prod-card-icon"><i class="fa-solid fa-pause"></i></div>
                         </div>
                         <div class="prod-card primary">
                             <div class="prod-card-info">
-                                <h4>Lokasi Yard Duri</h4>
-                                <div class="prod-val">35 Unit (72.9%)</div>
-                                <div class="prod-sub">Didominasi Dump Truck</div>
+                                <span>LOKASI YARD DURI</span>
+                                <strong class="prod-val">35 Unit <small>(72.9%)</small></strong>
+                                <small class="prod-sub">Didominasi Dump Truck</small>
                             </div>
                             <div class="prod-card-icon"><i class="fa-solid fa-warehouse"></i></div>
                         </div>
                         <div class="prod-card warning">
                             <div class="prod-card-info">
-                                <h4>Lokasi Yard Prabumulih</h4>
-                                <div class="prod-val">13 Unit (27.1%)</div>
-                                <div class="prod-sub">Didominasi Excavator</div>
+                                <span>LOKASI YARD PRABUMULIH</span>
+                                <strong class="prod-val">13 Unit <small>(27.1%)</small></strong>
+                                <small class="prod-sub">Didominasi Excavator</small>
                             </div>
                             <div class="prod-card-icon"><i class="fa-solid fa-building-flag"></i></div>
                         </div>
                     </div>
 
-                    <div class="pk-panel">
+                    <div class="pk-panel" style="margin-top: 20px;">
                         <div class="pk-panel-header">
                             <span><i class="fa-solid fa-layer-group"></i> Distribusi Kategori Armada Standby & Estimasi Dampak Operasional</span>
                         </div>
                         <div class="pk-panel-body no-padding">
                             <div class="table-responsive">
-                                <table>
+                                <table class="prod-table">
                                     <thead>
                                         <tr>
                                             <th>Jenis Kategori Armada</th>
                                             <th>Jumlah Unit Standby</th>
-                                            <th>Persentase Terhadap Total Standby</th>
+                                            <th>Persentase Standby</th>
                                             <th>Tingkat Dampak Ke Produksi</th>
                                             <th>Rekomendasi Tindakan Rilis / Re-Alokasi</th>
                                         </tr>
@@ -15007,15 +15003,18 @@
         const tbody = document.getElementById('tbStandbyCatBody');
         if (!tbody) return;
 
-        tbody.innerHTML = standbySummary.categories.map(c => `
+        tbody.innerHTML = standbySummary.categories.map(c => {
+            const iconCls = c.type.includes('Dump') ? 'fa-truck-moving' : c.type.includes('Excavator') ? 'fa-tractor' : c.type.includes('Bulldozer') ? 'fa-dumpster' : c.type.includes('Compactor') ? 'fa-compact-disc' : 'fa-truck-front';
+            return `
             <tr>
-                <td><strong>${escapeHtml(c.type)}</strong></td>
-                <td style="text-align:center; font-weight:700; font-size:1.05rem;" class="text-danger">${c.count} Unit</td>
-                <td style="text-align:center;">${c.ratio}%</td>
-                <td><span class="prod-badge ${c.count > 10 ? 'prod-badge-danger' : 'prod-badge-warning'}">${escapeHtml(c.impact)}</span></td>
-                <td style="font-size:0.82rem;">Evaluasi ketersediaan proyek & percepat kitting perbaikan PM/Breakdown.</td>
+                <td><div class="prod-cat-cell"><span class="prod-cat-icon"><i class="fa-solid ${iconCls}"></i></span><strong>${escapeHtml(c.type)}</strong></div></td>
+                <td style="text-align:center;"><strong class="prod-mono-val text-danger">${c.count} Unit</strong></td>
+                <td style="text-align:center;"><span class="prod-ratio-badge">${c.ratio}%</span></td>
+                <td><span class="prod-impact-badge ${c.count > 10 ? 'danger' : 'warning'}">${escapeHtml(c.impact)}</span></td>
+                <td style="font-size:0.82rem; color:#475569;">Evaluasi ketersediaan proyek & percepat kitting perbaikan PM/Breakdown.</td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     }
 
     window.filterKomtraxTable = function () {

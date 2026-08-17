@@ -434,7 +434,16 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <i class="fa-solid fa-arrow-right"></i>
                             <span><i class="fa-solid fa-circle-check"></i> Status Efektif</span>
                         </div>
-                        <div id="monitoringSummary" class="monitoring-summary"></div>
+                        <div class="monitoring-dashboard-layout">
+                            <div id="monitoringSummary" class="monitoring-summary"></div>
+                            <div class="monitoring-chart-card">
+                                <div class="monitoring-chart-header">
+                                    <span><i class="fa-solid fa-chart-pie" style="color:var(--primary); margin-right:4px;"></i> Komposisi Status Armada</span>
+                                    <span id="monitoringChartTotalBadge" class="monitoring-chart-badge">0 Unit</span>
+                                </div>
+                                <div id="monitoringStatusDonutChart" style="min-height: 220px;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="panel">
@@ -578,9 +587,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             Integrasi</span>
                         <div style="display:flex; align-items:center; gap:15px;">
                             <div style="font-size:0.8rem; color:var(--text-muted);">
-                                <i class="fa-solid fa-link"></i> Klik tombol aksi untuk berpindah langsung ke P2H, WO,
-                                atau
-                                Condition Monitoring
+                                <i class="fa-solid fa-link"></i> Klik 1x pada unit atau tombol Aksi untuk membuka popup integrasi modul (360&deg;, P2H, WO, Condition, Edit, Arsip)
                             </div>
                             <button class="btn btn-sm"
                                 style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;"
@@ -599,8 +606,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                         <th>Lokasi Aktif</th>
                                         <th>Update Terakhir</th>
                                         <th>Status Efektif</th>
-                                        <th style="text-align:center; min-width:270px; white-space:nowrap;">Linkage Aksi
-                                            Lanjutan Modul</th>
                                     </tr>
                                 </thead>
                                 <tbody id="assetTableBody">
@@ -1109,7 +1114,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                     class="fa-solid fa-search"></i> Lihat Hasil Inspeksi</button>
                         </div>
                     </div>
-                    <span class="cm-source-chip"><i class="fa-solid fa-database"></i> Sumber BRA tervalidasi</span>
                 </div>
                 <div id="conditionMonitoringApp" class="cm-app" aria-live="polite">
                     <div class="cm-loading"><i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan data inspeksi unit...
@@ -1174,6 +1178,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         </select>
                         <button class="btn btn-primary" style="padding: 5px 15px;" onclick="filterFuelDashboard()"><i
                                 class="fa-solid fa-magnifying-glass"></i> Terapkan</button>
+                        <button class="btn btn-secondary" style="padding: 5px 15px; background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; border-radius: 8px; font-weight: 700;" onclick="resetFuelFilter()"><i
+                                class="fa-solid fa-rotate-left"></i> Reset</button>
                     </div>
                 </div>
 
@@ -1805,7 +1811,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             style="font-size:0.85rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); padding:6px 10px 10px 10px; letter-spacing:0.05em; border-bottom:1px solid #e2e8f0; margin-bottom:10px;">
                             <i class="fa-solid fa-bars-staggered"></i> Menu Pengaturan
                         </div>
-                        <div class="settings-nav-item active" onclick="switchSettingsTab('rbac', this)">
+                        <div class="settings-nav-item" onclick="switchSettingsTab('rbac', this)">
                             <i class="fa-solid fa-shield-halved"></i>
                             <div>
                                 <strong>Manajemen Hak Akses</strong>
@@ -1853,8 +1859,19 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div class="settings-content-area"
                         style="flex:1; min-width:300px; background:#fff; border-radius:10px; border:1px solid var(--border); padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
 
+                        <!-- Default State Empty Placeholder -->
+                        <div id="settings-default-empty" class="settings-panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 60px 20px; text-align:center;">
+                            <div style="width:64px; height:64px; border-radius:50%; background:#eff6ff; color:#0284c7; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin-bottom:16px;">
+                                <i class="fa-solid fa-sliders"></i>
+                            </div>
+                            <h3 style="font-size:1.1rem; color:#0f172a; margin:0 0 6px 0; font-weight:800;">Pilih Submenu Pengaturan</h3>
+                            <p style="color:#64748b; font-size:0.84rem; max-width:420px; margin:0; line-height:1.5;">
+                                Silakan pilih salah satu opsi menu konfigurasi di sebelah kiri untuk melihat dan mengedit parameter sistem.
+                            </p>
+                        </div>
+
                         <!-- Panel 1: Hak Akses RBAC (10 Roles x 16 Modul Matrix) -->
-                        <div id="settings-rbac" class="settings-panel">
+                        <div id="settings-rbac" class="settings-panel" style="display:none;">
                             <div
                                 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
                                 <div>
@@ -4575,7 +4592,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const badge = window.getAssetStatusBadge(asset.status);
 
                     return `
-                    <tr onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" style="cursor:pointer;" title="Klik untuk membuka Detail 360&deg; Unit ${escapeHtml(asset.id)}">
+                    <tr data-asset-id="${escapeHtml(asset.id)}"
+                        data-asset-status="${escapeHtml(asset.status)}"
+                        data-asset-category="${escapeHtml(asset.category)}"
+                        data-asset-location="${escapeHtml(asset.location)}"
+                        onclick="openAssetActionCalloutFromElement(event, this)" 
+                        style="cursor:pointer;" 
+                        title="Klik 1x untuk membuka Opsi Aksi Integrasi Unit ${escapeHtml(asset.id)}">
                         <td>
                             <strong style="color:var(--primary);">${escapeHtml(parsed.unitId)}</strong>
                         </td>
@@ -4589,40 +4612,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <small class="status-source-line">${escapeHtml(asset.statusSource || 'Master Asset')}</small>
                         </td>
                         <td>${badge}</td>
-                        <td onclick="event.stopPropagation();">
-                            <div class="asset-row-actions" style="display:flex; gap:4px; align-items:center; justify-content:center; flex-wrap:nowrap;">
-                                <button type="button" class="btn btn-sm btn-primary" style="padding:3px 8px; font-size:0.76rem; font-weight:700; white-space:nowrap; border-radius:2px; display:inline-flex; align-items:center; gap:3px;" 
-                                    onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" 
-                                    title="Buka Detail 360&deg; Unit ${escapeHtml(asset.id)}">
-                                    <i class="fa-solid fa-cube" style="font-size:0.7rem;"></i> 360&deg;
-                                </button>
-                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
-                                    onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'history')" 
-                                    title="Lihat Riwayat Inspeksi & P2H Unit ${escapeHtml(asset.id)}">
-                                    P2H
-                                </button>
-                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
-                                    onclick="openIntegratedWO('${escapeHtml(asset.id)}')" 
-                                    title="Lihat / Buat Work Order Unit ${escapeHtml(asset.id)}">
-                                    WO
-                                </button>
-                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
-                                    onclick="ConditionMonitoring.openForAsset('${escapeHtml(asset.id)}', 'overview')" 
-                                    title="Buka Condition Monitoring Unit ${escapeHtml(asset.id)}">
-                                    Condition
-                                </button>
-                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
-                                    onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')" 
-                                    title="Edit Metadata Asset ${escapeHtml(asset.id)}">
-                                    Edit
-                                </button>
-                                <button type="button" class="btn btn-sm btn-action-neutral" style="padding:3px 8px; font-size:0.76rem; font-weight:600; white-space:nowrap; border-radius:2px;" 
-                                    onclick="window.archiveData('asset', '${escapeHtml(asset.id)}')" 
-                                    title="Arsipkan Unit ${escapeHtml(asset.id)}">
-                                    Arsip
-                                </button>
-                            </div>
-                        </td>
                     </tr>
                 `;
                 }).join('');
@@ -5690,14 +5679,154 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const summaryEl = document.getElementById('monitoringSummary');
                 if (summaryEl) {
                     summaryEl.innerHTML = `
-                    <div><strong>${totalCount}</strong><span>Total Unit</span></div>
-                    <div class="success"><strong style="color:#16a34a;">${readyCount}</strong><span>Ready</span></div>
-                    <div class="info"><strong style="color:#0284c7;">${operatingCount}</strong><span>Operating</span></div>
-                    <div class="warning"><strong style="color:#d97706;">${standbyCount}</strong><span>Standby</span></div>
-                    <div class="warning"><strong style="color:#ea580c;">${inspectionCount}</strong><span>Inspeksi</span></div>
-                    <div class="danger"><strong style="color:#dc2626;">${breakdownCount}</strong><span>Breakdown</span></div>
-                    <div><strong>${activeWos}</strong><span>WO Aktif</span></div>
+                    <div class="total">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Total Unit Armada</span>
+                            <div class="mon-card-icon total"><i class="fa-solid fa-cubes"></i></div>
+                        </div>
+                        <div class="mon-card-body-row">
+                            <strong style="color:var(--text-main); font-size:1.5rem; margin:0;">${totalCount} <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Unit</span></strong>
+                            <div class="mon-card-ftr"><i class="fa-solid fa-layer-group"></i> Master Asset Terdaftar</div>
+                        </div>
+                    </div>
+                    <div class="success">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Ready</span>
+                            <div class="mon-card-icon success"><i class="fa-solid fa-circle-check"></i></div>
+                        </div>
+                        <strong style="color:#16a34a;">${readyCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-check"></i> Siap Dioperasikan</div>
+                    </div>
+                    <div class="info">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Operating</span>
+                            <div class="mon-card-icon info"><i class="fa-solid fa-play"></i></div>
+                        </div>
+                        <strong style="color:#0284c7;">${operatingCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-truck-fast"></i> Beroperasi di Lapangan</div>
+                    </div>
+                    <div class="standby">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Standby</span>
+                            <div class="mon-card-icon standby"><i class="fa-solid fa-pause-circle"></i></div>
+                        </div>
+                        <strong style="color:#0ea5e9;">${standbyCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-clock"></i> Cadangan / Standby</div>
+                    </div>
+                    <div class="warning">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Inspeksi & PM</span>
+                            <div class="mon-card-icon warning"><i class="fa-solid fa-clipboard-check"></i></div>
+                        </div>
+                        <strong style="color:#f59e0b;">${inspectionCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-magnifying-glass"></i> Perawatan / P2H</div>
+                    </div>
+                    <div class="danger">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Breakdown</span>
+                            <div class="mon-card-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        </div>
+                        <strong style="color:#dc2626;">${breakdownCount}</strong>
+                        <div class="mon-card-ftr" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Kerusakan Unit</div>
+                    </div>
+                    <div class="purple">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">WO Aktif</span>
+                            <div class="mon-card-icon purple"><i class="fa-solid fa-wrench"></i></div>
+                        </div>
+                        <strong style="color:#8b5cf6;">${activeWos}</strong>
+                        <div class="mon-card-ftr" style="color:#8b5cf6;"><i class="fa-solid fa-screwdriver-wrench"></i> Work Order Berjalan</div>
+                    </div>
                 `;
+                }
+
+                // Update Total Badge pada Header Chart
+                const chartBadgeEl = document.getElementById('monitoringChartTotalBadge');
+                if (chartBadgeEl) {
+                    chartBadgeEl.textContent = `${totalCount} Unit`;
+                }
+
+                // Synchronize ApexCharts Donut Chart
+                if (typeof ApexCharts !== 'undefined') {
+                    const elChart = document.getElementById('monitoringStatusDonutChart');
+                    if (elChart) {
+                        const seriesData = [readyCount, operatingCount, standbyCount, inspectionCount, breakdownCount];
+                        const labelsData = ['Ready', 'Operating', 'Standby', 'Inspeksi & PM', 'Breakdown'];
+                        const colorsData = ['#16a34a', '#0284c7', '#0ea5e9', '#f59e0b', '#dc2626'];
+
+                        if (window.monitoringDonutChartInstance) {
+                            window.monitoringDonutChartInstance.updateOptions({
+                                series: seriesData,
+                                labels: labelsData,
+                                colors: colorsData,
+                                plotOptions: {
+                                    pie: {
+                                        donut: {
+                                            labels: {
+                                                total: {
+                                                    formatter: () => `${totalCount}`
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            elChart.innerHTML = '';
+                            window.monitoringDonutChartInstance = new ApexCharts(elChart, {
+                                series: seriesData,
+                                labels: labelsData,
+                                chart: {
+                                    type: 'donut',
+                                    height: 220,
+                                    fontFamily: "'Inter', sans-serif",
+                                    toolbar: { show: false }
+                                },
+                                colors: colorsData,
+                                legend: {
+                                    show: true,
+                                    position: 'bottom',
+                                    fontSize: '11px',
+                                    fontFamily: "'Inter', sans-serif",
+                                    markers: { width: 8, height: 8, radius: 4 },
+                                    itemMargin: { horizontal: 6, vertical: 2 }
+                                },
+                                dataLabels: {
+                                    enabled: true,
+                                    style: { fontSize: '10px', fontFamily: "'Inter', sans-serif", fontWeight: 700 },
+                                    dropShadow: { enabled: false },
+                                    formatter: (val) => val.toFixed(0) + '%'
+                                },
+                                plotOptions: {
+                                    pie: {
+                                        donut: {
+                                            size: '68%',
+                                            labels: {
+                                                show: true,
+                                                name: { show: true, fontSize: '11px', fontWeight: 600, color: '#64748b', offsetY: -4 },
+                                                value: { show: true, fontSize: '18px', fontWeight: 800, color: '#0f172a', offsetY: 4, formatter: (val) => val },
+                                                total: {
+                                                    show: true,
+                                                    label: 'TOTAL UNIT',
+                                                    fontSize: '10px',
+                                                    fontWeight: 700,
+                                                    color: '#64748b',
+                                                    formatter: () => `${totalCount}`
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                stroke: { width: 2, colors: ['#ffffff'] },
+                                tooltip: {
+                                    y: {
+                                        formatter: (val) => `${val} Unit`
+                                    }
+                                }
+                            });
+                            window.monitoringDonutChartInstance.render();
+                        }
+                    }
                 }
 
                 const filtered = selectedStatus === 'ALL'
@@ -5794,6 +5923,218 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     tr[i].style.display = visible ? "" : "none";
                 }
             }
+
+            let activeCalloutTarget = null;
+            let lastSelectedRow = null;
+            let cachedCalloutEl = null;
+
+            function getOrCreateCalloutContainer() {
+                let callout = document.getElementById('assetActionCallout');
+                if (!callout) {
+                    callout = document.createElement('div');
+                    callout.id = 'assetActionCallout';
+                    callout.className = 'asset-action-callout';
+                    callout.onclick = function (e) { e.stopPropagation(); };
+                    callout.innerHTML = `
+                        <div class="callout-header-compact" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:6px; margin-bottom:6px; border-bottom:1px solid #f1f5f9;">
+                            <div class="callout-title-wrap" style="display:flex; align-items:center; gap:8px;">
+                                <span id="cUnitBadge" class="callout-unit-badge" style="font-weight:800; color:#0284c7; background:#eff6ff; border:1px solid #bfdbfe; font-family:'JetBrains Mono', monospace, sans-serif; font-size:0.88rem; padding:2px 8px; border-radius:5px; line-height:1.2;"></span>
+                                <span id="cUnitCat" class="callout-unit-category" style="font-size:0.72rem; background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:4px; font-weight:600; line-height:1.2;"></span>
+                                <span id="cUnitLoc" style="font-size:0.73rem; color:#64748b; font-weight:500;"></span>
+                            </div>
+                            <button type="button" class="callout-close-btn" onclick="closeAssetActionCallout()" style="background:none; border:none; font-size:1.2rem; color:#94a3b8; cursor:pointer; padding:0 4px; line-height:1; font-weight:400;" title="Tutup">&times;</button>
+                        </div>
+                        <div class="callout-actions-row" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
+                            <button type="button" id="cBtn360" class="callout-btn-pill primary" style="background:#eff6ff; border:1px solid #93c5fd; color:#0284c7; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Detail 360&deg; Master Asset & Telemetri">
+                                <i class="fa-solid fa-cube"></i> <span>360&deg;</span>
+                            </button>
+                            <button type="button" id="cBtnP2H" class="callout-btn-pill success" style="background:#f0fdf4; border:1px solid #86efac; color:#16a34a; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Inspeksi & P2H Unit">
+                                <i class="fa-solid fa-clipboard-check"></i> <span>P2H</span>
+                            </button>
+                            <button type="button" id="cBtnWO" class="callout-btn-pill warning" style="background:#fffbeb; border:1px solid #fde68a; color:#d97706; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Work Order & Reparasi">
+                                <i class="fa-solid fa-screwdriver-wrench"></i> <span>WO</span>
+                            </button>
+                            <button type="button" id="cBtnCond" class="callout-btn-pill info" style="background:#f0f9ff; border:1px solid #7dd3fc; color:#0284c7; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Condition Monitoring">
+                                <i class="fa-solid fa-gauge-high"></i> <span>Condition</span>
+                            </button>
+                            <button type="button" id="cBtnEdit" class="callout-btn-pill neutral" style="background:#f8fafc; border:1px solid #cbd5e1; color:#475569; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Edit Metadata Unit">
+                                <i class="fa-solid fa-pen-to-square"></i> <span>Edit</span>
+                            </button>
+                            <button type="button" id="cBtnArsip" class="callout-btn-pill danger" style="background:#fef2f2; border:1px solid #fca5a5; color:#dc2626; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Arsipkan Unit">
+                                <i class="fa-solid fa-box-archive"></i> <span>Arsip</span>
+                            </button>
+                        </div>
+                    `;
+                    document.body.appendChild(callout);
+                } else {
+                    if (!document.getElementById('cUnitBadge')) {
+                        callout.innerHTML = `
+                            <div class="callout-header-compact" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:6px; margin-bottom:6px; border-bottom:1px solid #f1f5f9;">
+                                <div class="callout-title-wrap" style="display:flex; align-items:center; gap:8px;">
+                                    <span id="cUnitBadge" class="callout-unit-badge" style="font-weight:800; color:#0284c7; background:#eff6ff; border:1px solid #bfdbfe; font-family:'JetBrains Mono', monospace, sans-serif; font-size:0.88rem; padding:2px 8px; border-radius:5px; line-height:1.2;"></span>
+                                    <span id="cUnitCat" class="callout-unit-category" style="font-size:0.72rem; background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:4px; font-weight:600; line-height:1.2;"></span>
+                                    <span id="cUnitLoc" style="font-size:0.73rem; color:#64748b; font-weight:500;"></span>
+                                </div>
+                                <button type="button" class="callout-close-btn" onclick="closeAssetActionCallout()" style="background:none; border:none; font-size:1.2rem; color:#94a3b8; cursor:pointer; padding:0 4px; line-height:1; font-weight:400;" title="Tutup">&times;</button>
+                            </div>
+                            <div class="callout-actions-row" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
+                                <button type="button" id="cBtn360" class="callout-btn-pill primary" style="background:#eff6ff; border:1px solid #93c5fd; color:#0284c7; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Detail 360&deg; Master Asset & Telemetri">
+                                    <i class="fa-solid fa-cube"></i> <span>360&deg;</span>
+                                </button>
+                                <button type="button" id="cBtnP2H" class="callout-btn-pill success" style="background:#f0fdf4; border:1px solid #86efac; color:#16a34a; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Inspeksi & P2H Unit">
+                                    <i class="fa-solid fa-clipboard-check"></i> <span>P2H</span>
+                                </button>
+                                <button type="button" id="cBtnWO" class="callout-btn-pill warning" style="background:#fffbeb; border:1px solid #fde68a; color:#d97706; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Work Order & Reparasi">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i> <span>WO</span>
+                                </button>
+                                <button type="button" id="cBtnCond" class="callout-btn-pill info" style="background:#f0f9ff; border:1px solid #7dd3fc; color:#0284c7; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Condition Monitoring">
+                                    <i class="fa-solid fa-gauge-high"></i> <span>Condition</span>
+                                </button>
+                                <button type="button" id="cBtnEdit" class="callout-btn-pill neutral" style="background:#f8fafc; border:1px solid #cbd5e1; color:#475569; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Edit Metadata Unit">
+                                    <i class="fa-solid fa-pen-to-square"></i> <span>Edit</span>
+                                </button>
+                                <button type="button" id="cBtnArsip" class="callout-btn-pill danger" style="background:#fef2f2; border:1px solid #fca5a5; color:#dc2626; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Arsipkan Unit">
+                                    <i class="fa-solid fa-box-archive"></i> <span>Arsip</span>
+                                </button>
+                            </div>
+                        `;
+                    }
+                    if (callout.parentElement !== document.body) {
+                        document.body.appendChild(callout);
+                    }
+                }
+                cachedCalloutEl = callout;
+                return callout;
+            }
+
+            function openAssetActionCalloutFromElement(event, el) {
+                if (event) {
+                    if (event.stopPropagation) event.stopPropagation();
+                    if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+                    if (event.preventDefault) event.preventDefault();
+                }
+                if (!el) return;
+                const assetId = el.getAttribute('data-asset-id') || '';
+                const status = el.getAttribute('data-asset-status') || '';
+                const category = el.getAttribute('data-asset-category') || '';
+                const location = el.getAttribute('data-asset-location') || '';
+
+                openAssetActionCallout(event, assetId, status, category, location, el);
+            }
+
+            function openAssetActionCallout(event, assetId, status, category, location, triggerEl) {
+                if (event && event.stopPropagation) event.stopPropagation();
+                
+                // O(1) Fast row highlight
+                const targetRow = triggerEl ? (triggerEl.tagName === 'TR' ? triggerEl : triggerEl.closest('tr')) : (event && event.target ? event.target.closest('tr') : null);
+                if (lastSelectedRow && lastSelectedRow !== targetRow) {
+                    lastSelectedRow.classList.remove('asset-table-row-selected');
+                }
+                if (targetRow) {
+                    targetRow.classList.add('asset-table-row-selected');
+                    lastSelectedRow = targetRow;
+                }
+
+                const callout = getOrCreateCalloutContainer();
+
+                // Fast O(1) DOM text update without innerHTML string parsing
+                const bId = document.getElementById('cUnitBadge');
+                const bCat = document.getElementById('cUnitCat');
+                const bLoc = document.getElementById('cUnitLoc');
+
+                if (bId) bId.textContent = assetId;
+                if (bCat) bCat.textContent = category;
+                if (bLoc) bLoc.innerHTML = `<i class="fa-solid fa-location-dot" style="margin-right:2px;"></i> ${escapeHtml(location)}`;
+
+                // Update button action click handlers instantly
+                const btn360 = document.getElementById('cBtn360');
+                const btnP2H = document.getElementById('cBtnP2H');
+                const btnWO = document.getElementById('cBtnWO');
+                const btnCond = document.getElementById('cBtnCond');
+                const btnEdit = document.getElementById('cBtnEdit');
+                const btnArsip = document.getElementById('cBtnArsip');
+
+                if (btn360) btn360.onclick = () => { closeAssetActionCallout(); openAssetModal(assetId, status, category, location); };
+                if (btnP2H) btnP2H.onclick = () => { closeAssetActionCallout(); openIntegratedP2H(assetId, 'history'); };
+                if (btnWO) btnWO.onclick = () => { closeAssetActionCallout(); openIntegratedWO(assetId); };
+                if (btnCond) btnCond.onclick = () => { closeAssetActionCallout(); ConditionMonitoring.openForAsset(assetId, 'overview'); };
+                if (btnEdit) btnEdit.onclick = () => { closeAssetActionCallout(); openAssetModal(assetId, status, category, location); };
+                if (btnArsip) btnArsip.onclick = () => { closeAssetActionCallout(); window.archiveData('asset', assetId); };
+
+                // Target Asset ID cell for left alignment & scroll locking
+                activeCalloutTarget = targetRow ? (targetRow.querySelector('td') || targetRow) : (triggerEl || (event ? (event.currentTarget || event.target) : null));
+                
+                callout.style.display = 'block';
+                updateAssetCalloutPosition();
+            }
+
+            function updateAssetCalloutPosition() {
+                const callout = cachedCalloutEl || document.getElementById('assetActionCallout');
+                if (!callout || callout.style.display === 'none' || !activeCalloutTarget) return;
+
+                if (!document.body.contains(activeCalloutTarget)) {
+                    closeAssetActionCallout();
+                    return;
+                }
+
+                const rect = activeCalloutTarget.getBoundingClientRect();
+
+                // Hide callout if target row is scrolled out of viewport
+                if (rect.bottom < 10 || rect.top > window.innerHeight - 10 || rect.right < 10 || rect.left > window.innerWidth - 10) {
+                    callout.style.display = 'none';
+                    return;
+                }
+
+                const calloutWidth = 470;
+                const calloutHeight = 85;
+
+                let left = rect.left; // Align left under Asset ID
+                let top = rect.bottom + 8;
+                let arrowClass = 'arrow-top';
+
+                // Prevent overflow off right edge of window
+                if (left + calloutWidth > window.innerWidth - 10) {
+                    left = window.innerWidth - calloutWidth - 10;
+                }
+                if (left < 10) left = 10;
+
+                // Flip to open above row if overflowing bottom
+                if (top + calloutHeight > window.innerHeight) {
+                    top = rect.top - calloutHeight - 8;
+                    arrowClass = 'arrow-bottom';
+                }
+
+                callout.className = `asset-action-callout ${arrowClass}`;
+                callout.style.left = Math.round(left) + 'px';
+                callout.style.top = Math.round(top) + 'px';
+            }
+
+            function closeAssetActionCallout() {
+                const callout = cachedCalloutEl || document.getElementById('assetActionCallout');
+                if (callout) callout.style.display = 'none';
+                activeCalloutTarget = null;
+                if (lastSelectedRow) {
+                    lastSelectedRow.classList.remove('asset-table-row-selected');
+                    lastSelectedRow = null;
+                }
+            }
+
+            window.openAssetActionCalloutFromElement = openAssetActionCalloutFromElement;
+            window.openAssetActionCallout = openAssetActionCallout;
+            window.closeAssetActionCallout = closeAssetActionCallout;
+            window.updateAssetCalloutPosition = updateAssetCalloutPosition;
+
+            // Live Scroll & Resize listener in capture phase so scrolling any table/div container syncs popover position!
+            window.addEventListener('scroll', updateAssetCalloutPosition, { capture: true, passive: true });
+            window.addEventListener('resize', updateAssetCalloutPosition, { passive: true });
+
+            document.addEventListener('click', function (e) {
+                const callout = cachedCalloutEl || document.getElementById('assetActionCallout');
+                if (!callout || callout.style.display === 'none') return;
+                if (!callout.contains(e.target) && !e.target.closest('.btn-asset-action-popover') && !e.target.closest('#assetTableBody tr')) {
+                    closeAssetActionCallout();
+                }
+            });
 
             function initBiayaView(costs) {
                 if (!costs) return;
@@ -5920,55 +6261,199 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 renderFuelTable(filtered);
             };
 
+            window.resetFuelFilter = function () {
+                const p = document.getElementById('fuelFilterPeriode');
+                const l = document.getElementById('fuelFilterLokasi');
+                const k = document.getElementById('fuelFilterKategori');
+                const s = document.getElementById('fuelFilterStatus');
+                if (p) p.value = 'ALL';
+                if (l) l.value = 'ALL';
+                if (k) k.value = 'ALL';
+                if (s) s.value = 'ALL';
+                if (typeof window.filterFuelDashboard === 'function') {
+                    window.filterFuelDashboard();
+                }
+            };
+
+            let fuelTrendChartInstance = null;
             window.renderFuelChart = function (logs) {
                 const chartContainer = document.getElementById('fuelChartContainer');
                 if (!chartContainer) return;
+                if (typeof ApexCharts === 'undefined') {
+                    chartContainer.innerHTML = '<div style="padding:20px; text-align:center; color:#64748b;">ApexCharts belum dimuat.</div>';
+                    return;
+                }
 
-                const days = [
-                    { day: 'Tgl 21', liter: 1500, cost: 18.0 },
-                    { day: 'Tgl 22', liter: 1850, cost: 22.2 },
-                    { day: 'Tgl 23', liter: 1400, cost: 16.8 },
-                    { day: 'Tgl 24', liter: 2100, cost: 25.2 },
-                    { day: 'Tgl 25', liter: 1950, cost: 23.4 },
-                    { day: 'Tgl 26', liter: 2250, cost: 27.0 },
-                    { day: 'Tgl 27', liter: 2450, cost: 29.4 }
-                ];
+                if (fuelTrendChartInstance) {
+                    fuelTrendChartInstance.destroy();
+                    fuelTrendChartInstance = null;
+                }
 
-                const maxL = 3000;
-                chartContainer.innerHTML = days.map(d => {
-                    const pct = Math.min(100, (d.liter / maxL) * 100);
-                    return `
-                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end;">
-                        <div style="font-size:0.85rem; font-weight:bold; color:var(--primary); margin-bottom:4px;">${d.liter}L</div>
-                        <div style="width:70%; background:var(--primary); height:${pct}%; border-radius:4px 4px 0 0; transition:all 0.3s ease;" title="${d.day}: ${d.liter} Liter (Rp ${d.cost} Jt)"></div>
-                        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">${d.day}</div>
-                    </div>
-                `;
-                }).join('');
+                chartContainer.innerHTML = '';
+                chartContainer.style.display = 'block';
+                chartContainer.style.height = '250px';
+                chartContainer.style.padding = '0';
+
+                const days = ['21 Jul', '22 Jul', '23 Jul', '24 Jul', '25 Jul', '26 Jul', '27 Jul'];
+                const litersData = [1500, 1850, 1400, 2100, 1950, 2250, 2450];
+                const costData = [18.0, 22.2, 16.8, 25.2, 23.4, 27.0, 29.4];
+
+                const options = {
+                    series: [{
+                        name: 'Volume Konsumsi (Liter)',
+                        type: 'column',
+                        data: litersData
+                    }, {
+                        name: 'Estimasi Biaya (Jt Rp)',
+                        type: 'line',
+                        data: costData
+                    }],
+                    chart: {
+                        height: 240,
+                        type: 'line',
+                        toolbar: { show: false },
+                        fontFamily: 'Inter, system-ui, sans-serif'
+                    },
+                    stroke: {
+                        width: [0, 3],
+                        curve: 'smooth'
+                    },
+                    plotOptions: {
+                        bar: {
+                            columnWidth: '38%',
+                            borderRadius: 6
+                        }
+                    },
+                    colors: ['#0284c7', '#10b981'],
+                    fill: {
+                        opacity: [0.9, 1]
+                    },
+                    labels: days,
+                    xaxis: {
+                        type: 'category',
+                        labels: {
+                            style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 }
+                        }
+                    },
+                    yaxis: [{
+                        title: { text: 'Volume (Liter)', style: { color: '#0284c7', fontWeight: 700, fontSize: '11px' } },
+                        labels: {
+                            style: { colors: '#64748b', fontSize: '11px' },
+                            formatter: val => Math.round(val) + ' L'
+                        }
+                    }, {
+                        opposite: true,
+                        title: { text: 'Biaya (Jt Rp)', style: { color: '#10b981', fontWeight: 700, fontSize: '11px' } },
+                        labels: {
+                            style: { colors: '#64748b', fontSize: '11px' },
+                            formatter: val => 'Rp ' + val.toFixed(1) + ' Jt'
+                        }
+                    }],
+                    tooltip: {
+                        shared: true,
+                        intersect: false,
+                        y: {
+                            formatter: function (y, { seriesIndex }) {
+                                if (typeof y !== "undefined") {
+                                    return seriesIndex === 0 ? y.toLocaleString('id-ID') + " Liter" : "Rp " + y.toFixed(1) + " Jt";
+                                }
+                                return y;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        horizontalAlign: 'right',
+                        fontSize: '11px',
+                        fontWeight: 600
+                    }
+                };
+
+                fuelTrendChartInstance = new ApexCharts(chartContainer, options);
+                fuelTrendChartInstance.render();
             };
 
+            let fuelTopBorosChartInstance = null;
             window.renderFuelTopBoros = function (logs) {
                 const container = document.getElementById('fuelTopBorosContainer');
                 if (!container) return;
+                if (typeof ApexCharts === 'undefined') {
+                    container.innerHTML = '<div style="padding:20px; text-align:center; color:#64748b;">ApexCharts belum dimuat.</div>';
+                    return;
+                }
 
-                const topUnits = [
-                    { unit: 'EXC-210 (Pit)', category: 'Excavator', actual: '19.0 L/HM', dev: '+26.7%', pct: 88, color: 'var(--danger)' },
-                    { unit: 'DT-054 (Borrow Pit)', category: 'Dump Truck', actual: '2.8 Km/L', dev: '-20.0%', pct: 75, color: '#fd7e14' },
-                    { unit: 'DZ-00002 (Yard Duri)', category: 'Bulldozer', actual: '18.0 L/HM', dev: '+12.5%', pct: 62, color: '#fd7e14' },
-                    { unit: 'GRD-535 (Site Alpha)', category: 'Motor Grader', actual: '14.0 L/HM', dev: '+7.7%', pct: 45, color: 'var(--success)' }
-                ];
+                if (fuelTopBorosChartInstance) {
+                    fuelTopBorosChartInstance.destroy();
+                    fuelTopBorosChartInstance = null;
+                }
 
-                container.innerHTML = topUnits.map(u => `
-                <div style="margin-bottom: 12px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
-                        <span><strong>${escapeHtml(u.unit)}</strong></span>
-                        <span style="color:${u.color}; font-weight:bold;">${u.dev} (${u.actual})</span>
-                    </div>
-                    <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
-                        <div style="width:${u.pct}%; background:${u.color}; height:100%; border-radius:4px;"></div>
-                    </div>
-                </div>
-            `).join('');
+                container.innerHTML = '';
+                container.style.display = 'block';
+                container.style.height = '250px';
+
+                const options = {
+                    series: [{
+                        name: 'Konsumsi Aktual Unit',
+                        data: [19.0, 2.8, 18.0, 14.0]
+                    }, {
+                        name: 'Standar Baseline (LPH / KPL)',
+                        data: [15.0, 3.5, 16.0, 13.0]
+                    }],
+                    chart: {
+                        type: 'bar',
+                        height: 240,
+                        toolbar: { show: false },
+                        fontFamily: 'Inter, system-ui, sans-serif'
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: true,
+                            barHeight: '55%',
+                            borderRadius: 5,
+                            dataLabels: { position: 'top' }
+                        }
+                    },
+                    colors: ['#ef4444', '#0284c7'],
+                    dataLabels: {
+                        enabled: true,
+                        offsetX: 24,
+                        style: {
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            colors: ['#334155']
+                        },
+                        formatter: val => val + ' L'
+                    },
+                    stroke: {
+                        show: true,
+                        width: 1,
+                        colors: ['transparent']
+                    },
+                    tooltip: {
+                        shared: true,
+                        intersect: false
+                    },
+                    xaxis: {
+                        categories: ['EXC-210 (Pit)', 'DT-054 (Borrow Pit)', 'DZ-00002 (Yard Duri)', 'GRD-535 (Site Alpha)'],
+                        labels: {
+                            style: { colors: '#64748b', fontSize: '11px' }
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            style: { colors: '#0f172a', fontSize: '11px', fontWeight: 700 }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        horizontalAlign: 'right',
+                        fontSize: '11px',
+                        fontWeight: 600
+                    }
+                };
+
+                fuelTopBorosChartInstance = new ApexCharts(container, options);
+                fuelTopBorosChartInstance.render();
             };
 
             window.renderFuelTable = function (logs) {
@@ -7366,6 +7851,66 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
         <script src="scripts/vendor/tesseract-5.1.1.min.js"></script>
         <!-- Global Condition Monitoring Modal Container (Works on top of any menu) -->
         <div id="globalCmModalContainer"></div>
+
+        <!-- Floating Asset Action Callout Container -->
+        <div id="assetActionCallout" class="asset-action-callout" style="display:none;" onclick="event.stopPropagation();">
+            <div class="callout-header">
+                <div class="callout-title-wrap">
+                    <span class="callout-unit-badge" id="calloutUnitId">CS-41001</span>
+                    <span class="callout-unit-category" id="calloutUnitCategory">Excavator</span>
+                </div>
+                <button class="callout-close-btn" onclick="closeAssetActionCallout()">&times;</button>
+            </div>
+            <div class="callout-sub-header" id="calloutUnitLocation">
+                <i class="fa-solid fa-location-dot"></i> Site RWI Duri
+            </div>
+            <div class="callout-body">
+                <div class="callout-actions-grid">
+                    <button type="button" class="callout-action-btn primary" id="calloutBtn360">
+                        <div class="btn-icon"><i class="fa-solid fa-cube"></i></div>
+                        <div class="btn-text">
+                            <strong>Detail 360&deg;</strong>
+                            <small>Master & Telemetri</small>
+                        </div>
+                    </button>
+                    <button type="button" class="callout-action-btn" id="calloutBtnP2H">
+                        <div class="btn-icon success"><i class="fa-solid fa-clipboard-check"></i></div>
+                        <div class="btn-text">
+                            <strong>P2H & Inspeksi</strong>
+                            <small>Riwayat & Form</small>
+                        </div>
+                    </button>
+                    <button type="button" class="callout-action-btn" id="calloutBtnWO">
+                        <div class="btn-icon warning"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                        <div class="btn-text">
+                            <strong>Work Order</strong>
+                            <small>Tiket Repair</small>
+                        </div>
+                    </button>
+                    <button type="button" class="callout-action-btn" id="calloutBtnCondition">
+                        <div class="btn-icon info"><i class="fa-solid fa-gauge-high"></i></div>
+                        <div class="btn-text">
+                            <strong>Condition</strong>
+                            <small>Monitoring Status</small>
+                        </div>
+                    </button>
+                    <button type="button" class="callout-action-btn" id="calloutBtnEdit">
+                        <div class="btn-icon neutral"><i class="fa-solid fa-pen-to-square"></i></div>
+                        <div class="btn-text">
+                            <strong>Edit Asset</strong>
+                            <small>Ubah Metadata</small>
+                        </div>
+                    </button>
+                    <button type="button" class="callout-action-btn danger" id="calloutBtnArsip">
+                        <div class="btn-icon danger"><i class="fa-solid fa-box-archive"></i></div>
+                        <div class="btn-text">
+                            <strong>Arsipkan Unit</strong>
+                            <small>Pindahkan Arsip</small>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
 </body>
 
 </html>
