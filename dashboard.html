@@ -469,7 +469,7 @@
                         <span><i class="fa-solid fa-list-check"></i> Daftar Monitoring Status Unit</span>
                         <div class="monitoring-toolbar">
                             <select id="monitoringStatusFilter" class="form-control"
-                                onchange="initMonitoringView(globalData.assets)" aria-label="Filter status monitoring">
+                                onchange="setMonitoringStatusFilter(this.value)" aria-label="Filter status monitoring">
                                 <option value="ALL">Semua Status Unit</option>
                                 <option value="READY">Ready</option>
                                 <option value="OPERATING">Operating</option>
@@ -5681,177 +5681,42 @@
                 });
 
                 applyMapFilters(true);
-
                 // Multi-pass size invalidation to ensure map markers render perfectly after container layout settles
                 setTimeout(() => map.invalidateSize(), 150);
                 setTimeout(() => map.invalidateSize(), 500);
             }
+            window.setMonitoringStatusFilter = function (status, fromChart = false) {
+                const filterEl = document.getElementById('monitoringStatusFilter');
+                const targetStatus = status || 'ALL';
+                
+                if (filterEl) {
+                    filterEl.value = targetStatus;
+                }
+                
+                updateMonitoringActiveCard(targetStatus);
+                renderMonitoringTable();
+            };
 
-            function initMonitoringView(assets) {
-                if (!assets) return;
+            function updateMonitoringActiveCard(selectedStatus) {
+                const summaryEl = document.getElementById('monitoringSummary');
+                if (!summaryEl) return;
+                const cards = summaryEl.querySelectorAll('.mon-card-clickable');
+                cards.forEach(card => {
+                    const cardStatus = card.getAttribute('data-status');
+                    if (cardStatus === selectedStatus) {
+                        card.classList.add('active-filter');
+                    } else {
+                        card.classList.remove('active-filter');
+                    }
+                });
+            }
+
+            function renderMonitoringTable(assets) {
+                if (!assets) {
+                    assets = window.currentMonitoringAssets || (typeof buildProjectScopedData === 'function' ? buildProjectScopedData().assets : (window.globalData ? window.globalData.assets : []));
+                }
                 const filterEl = document.getElementById('monitoringStatusFilter');
                 const selectedStatus = filterEl ? filterEl.value : 'ALL';
-
-                const totalCount = assets.length;
-                const readyCount = assets.filter(a => a.status === 'READY').length;
-                const operatingCount = assets.filter(a => a.status === 'OPERATING').length;
-                const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN').length;
-                const inspectionCount = assets.filter(a => a.status === 'INSPEKSI').length;
-                const standbyCount = assets.filter(a => a.status === 'STANDBY').length;
-                const activeWos = (globalData?.work_orders || []).filter(wo => wo.status !== 'Closed').length;
-
-                const summaryEl = document.getElementById('monitoringSummary');
-                if (summaryEl) {
-                    summaryEl.innerHTML = `
-                    <div class="total">
-                        <div class="mon-card-hdr">
-                            <span class="mon-card-lbl">Total Unit Armada</span>
-                            <div class="mon-card-icon total"><i class="fa-solid fa-cubes"></i></div>
-                        </div>
-                        <div class="mon-card-body-row">
-                            <strong style="color:var(--text-main); font-size:1.5rem; margin:0;">${totalCount} <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Unit</span></strong>
-                            <div class="mon-card-ftr"><i class="fa-solid fa-layer-group"></i> Master Asset Terdaftar</div>
-                        </div>
-                    </div>
-                    <div class="success">
-                        <div class="mon-card-hdr">
-                            <span class="mon-card-lbl">Ready</span>
-                            <div class="mon-card-icon success"><i class="fa-solid fa-circle-check"></i></div>
-                        </div>
-                        <strong style="color:#16a34a;">${readyCount}</strong>
-                        <div class="mon-card-ftr"><i class="fa-solid fa-check"></i> Siap Dioperasikan</div>
-                    </div>
-                    <div class="info">
-                        <div class="mon-card-hdr">
-                            <span class="mon-card-lbl">Operating</span>
-                            <div class="mon-card-icon info"><i class="fa-solid fa-play"></i></div>
-                        </div>
-                        <strong style="color:#0284c7;">${operatingCount}</strong>
-                        <div class="mon-card-ftr"><i class="fa-solid fa-truck-fast"></i> Beroperasi di Lapangan</div>
-                    </div>
-                    <div class="standby">
-                        <div class="mon-card-hdr">
-                            <span class="mon-card-lbl">Standby</span>
-                            <div class="mon-card-icon standby"><i class="fa-solid fa-pause-circle"></i></div>
-                        </div>
-                        <strong style="color:#0ea5e9;">${standbyCount}</strong>
-                        <div class="mon-card-ftr"><i class="fa-solid fa-clock"></i> Cadangan / Standby</div>
-                    </div>
-                    <div class="warning">
-                        <div class="mon-card-hdr">
-                            <span class="mon-card-lbl">Inspeksi & PM</span>
-                            <div class="mon-card-icon warning"><i class="fa-solid fa-clipboard-check"></i></div>
-                        </div>
-                        <strong style="color:#f59e0b;">${inspectionCount}</strong>
-                        <div class="mon-card-ftr"><i class="fa-solid fa-magnifying-glass"></i> Perawatan / P2H</div>
-                    </div>
-                    <div class="danger">
-                        <div class="mon-card-hdr">
-                            <span class="mon-card-lbl">Breakdown</span>
-                            <div class="mon-card-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                        </div>
-                        <strong style="color:#dc2626;">${breakdownCount}</strong>
-                        <div class="mon-card-ftr" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Kerusakan Unit</div>
-                    </div>
-                    <div class="purple">
-                        <div class="mon-card-hdr">
-                            <span class="mon-card-lbl">WO Aktif</span>
-                            <div class="mon-card-icon purple"><i class="fa-solid fa-wrench"></i></div>
-                        </div>
-                        <strong style="color:#8b5cf6;">${activeWos}</strong>
-                        <div class="mon-card-ftr" style="color:#8b5cf6;"><i class="fa-solid fa-screwdriver-wrench"></i> Work Order Berjalan</div>
-                    </div>
-                `;
-                }
-
-                // Update Total Badge pada Header Chart
-                const chartBadgeEl = document.getElementById('monitoringChartTotalBadge');
-                if (chartBadgeEl) {
-                    chartBadgeEl.textContent = `${totalCount} Unit`;
-                }
-
-                // Synchronize ApexCharts Donut Chart
-                if (typeof ApexCharts !== 'undefined') {
-                    const elChart = document.getElementById('monitoringStatusDonutChart');
-                    if (elChart) {
-                        const seriesData = [readyCount, operatingCount, standbyCount, inspectionCount, breakdownCount];
-                        const labelsData = ['Ready', 'Operating', 'Standby', 'Inspeksi & PM', 'Breakdown'];
-                        const colorsData = ['#16a34a', '#0284c7', '#0ea5e9', '#f59e0b', '#dc2626'];
-
-                        if (window.monitoringDonutChartInstance) {
-                            window.monitoringDonutChartInstance.updateOptions({
-                                series: seriesData,
-                                labels: labelsData,
-                                colors: colorsData,
-                                plotOptions: {
-                                    pie: {
-                                        donut: {
-                                            labels: {
-                                                total: {
-                                                    formatter: () => `${totalCount}`
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        } else {
-                            elChart.innerHTML = '';
-                            window.monitoringDonutChartInstance = new ApexCharts(elChart, {
-                                series: seriesData,
-                                labels: labelsData,
-                                chart: {
-                                    type: 'donut',
-                                    height: 220,
-                                    fontFamily: "'Inter', sans-serif",
-                                    toolbar: { show: false }
-                                },
-                                colors: colorsData,
-                                legend: {
-                                    show: true,
-                                    position: 'bottom',
-                                    fontSize: '11px',
-                                    fontFamily: "'Inter', sans-serif",
-                                    markers: { width: 8, height: 8, radius: 4 },
-                                    itemMargin: { horizontal: 6, vertical: 2 }
-                                },
-                                dataLabels: {
-                                    enabled: true,
-                                    style: { fontSize: '10px', fontFamily: "'Inter', sans-serif", fontWeight: 700 },
-                                    dropShadow: { enabled: false },
-                                    formatter: (val) => val.toFixed(0) + '%'
-                                },
-                                plotOptions: {
-                                    pie: {
-                                        donut: {
-                                            size: '68%',
-                                            labels: {
-                                                show: true,
-                                                name: { show: true, fontSize: '11px', fontWeight: 600, color: '#64748b', offsetY: -4 },
-                                                value: { show: true, fontSize: '18px', fontWeight: 800, color: '#0f172a', offsetY: 4, formatter: (val) => val },
-                                                total: {
-                                                    show: true,
-                                                    label: 'TOTAL UNIT',
-                                                    fontSize: '10px',
-                                                    fontWeight: 700,
-                                                    color: '#64748b',
-                                                    formatter: () => `${totalCount}`
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                stroke: { width: 2, colors: ['#ffffff'] },
-                                tooltip: {
-                                    y: {
-                                        formatter: (val) => `${val} Unit`
-                                    }
-                                }
-                            });
-                            window.monitoringDonutChartInstance.render();
-                        }
-                    }
-                }
 
                 const filtered = selectedStatus === 'ALL'
                     ? assets
@@ -5926,6 +5791,202 @@
                 `;
                 }).join('');
                 searchTableMonitoring();
+            }
+
+            function initMonitoringView(assets) {
+                if (!assets) {
+                    assets = typeof buildProjectScopedData === 'function' ? buildProjectScopedData().assets : (window.globalData ? window.globalData.assets : []);
+                }
+                if (!assets) return;
+                window.currentMonitoringAssets = assets;
+
+                const filterEl = document.getElementById('monitoringStatusFilter');
+                const selectedStatus = filterEl ? filterEl.value : 'ALL';
+
+                const totalCount = assets.length;
+                const readyCount = assets.filter(a => a.status === 'READY').length;
+                const operatingCount = assets.filter(a => a.status === 'OPERATING').length;
+                const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN').length;
+                const inspectionCount = assets.filter(a => a.status === 'INSPEKSI').length;
+                const standbyCount = assets.filter(a => a.status === 'STANDBY').length;
+                const activeWos = (globalData?.work_orders || []).filter(wo => wo.status !== 'Closed').length;
+
+                const summaryEl = document.getElementById('monitoringSummary');
+                if (summaryEl) {
+                    summaryEl.innerHTML = `
+                    <div class="total mon-card-clickable ${selectedStatus === 'ALL' ? 'active-filter' : ''}" data-status="ALL" onclick="setMonitoringStatusFilter('ALL')" title="Klik untuk menampilkan semua unit">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Total Unit Armada</span>
+                            <div class="mon-card-icon total"><i class="fa-solid fa-cubes"></i></div>
+                        </div>
+                        <div class="mon-card-body-row">
+                            <strong style="color:var(--text-main); font-size:1.5rem; margin:0;">${totalCount} <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Unit</span></strong>
+                            <div class="mon-card-ftr"><i class="fa-solid fa-layer-group"></i> Master Asset Terdaftar</div>
+                        </div>
+                    </div>
+                    <div class="success mon-card-clickable ${selectedStatus === 'READY' ? 'active-filter' : ''}" data-status="READY" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'READY' ? 'ALL' : 'READY')" title="Klik untuk memfilter unit Ready">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Ready</span>
+                            <div class="mon-card-icon success"><i class="fa-solid fa-circle-check"></i></div>
+                        </div>
+                        <strong style="color:#16a34a;">${readyCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-check"></i> Siap Dioperasikan</div>
+                    </div>
+                    <div class="info mon-card-clickable ${selectedStatus === 'OPERATING' ? 'active-filter' : ''}" data-status="OPERATING" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'OPERATING' ? 'ALL' : 'OPERATING')" title="Klik untuk memfilter unit Operating">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Operating</span>
+                            <div class="mon-card-icon info"><i class="fa-solid fa-play"></i></div>
+                        </div>
+                        <strong style="color:#0284c7;">${operatingCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-truck-fast"></i> Beroperasi di Lapangan</div>
+                    </div>
+                    <div class="standby mon-card-clickable ${selectedStatus === 'STANDBY' ? 'active-filter' : ''}" data-status="STANDBY" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'STANDBY' ? 'ALL' : 'STANDBY')" title="Klik untuk memfilter unit Standby">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Standby</span>
+                            <div class="mon-card-icon standby"><i class="fa-solid fa-pause-circle"></i></div>
+                        </div>
+                        <strong style="color:#0ea5e9;">${standbyCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-clock"></i> Cadangan / Standby</div>
+                    </div>
+                    <div class="warning mon-card-clickable ${selectedStatus === 'INSPEKSI' ? 'active-filter' : ''}" data-status="INSPEKSI" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'INSPEKSI' ? 'ALL' : 'INSPEKSI')" title="Klik untuk memfilter unit Inspeksi / PM">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Inspeksi & PM</span>
+                            <div class="mon-card-icon warning"><i class="fa-solid fa-clipboard-check"></i></div>
+                        </div>
+                        <strong style="color:#f59e0b;">${inspectionCount}</strong>
+                        <div class="mon-card-ftr"><i class="fa-solid fa-magnifying-glass"></i> Perawatan / P2H</div>
+                    </div>
+                    <div class="danger mon-card-clickable ${selectedStatus === 'BREAKDOWN' ? 'active-filter' : ''}" data-status="BREAKDOWN" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'BREAKDOWN' ? 'ALL' : 'BREAKDOWN')" title="Klik untuk memfilter unit Breakdown">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">Breakdown</span>
+                            <div class="mon-card-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        </div>
+                        <strong style="color:#dc2626;">${breakdownCount}</strong>
+                        <div class="mon-card-ftr" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Kerusakan Unit</div>
+                    </div>
+                    <div class="purple mon-card-clickable" onclick="showView('workorder')" title="Buka modul Work Order">
+                        <div class="mon-card-hdr">
+                            <span class="mon-card-lbl">WO Aktif</span>
+                            <div class="mon-card-icon purple"><i class="fa-solid fa-wrench"></i></div>
+                        </div>
+                        <strong style="color:#8b5cf6;">${activeWos}</strong>
+                        <div class="mon-card-ftr" style="color:#8b5cf6;"><i class="fa-solid fa-screwdriver-wrench"></i> Work Order Berjalan</div>
+                    </div>
+                `;
+                }
+
+                // Update Total Badge pada Header Chart
+                const chartBadgeEl = document.getElementById('monitoringChartTotalBadge');
+                if (chartBadgeEl) {
+                    chartBadgeEl.textContent = `${totalCount} Unit`;
+                }
+
+                // Synchronize ApexCharts Donut Chart
+                if (typeof ApexCharts !== 'undefined') {
+                    const elChart = document.getElementById('monitoringStatusDonutChart');
+                    if (elChart) {
+                        const seriesData = [readyCount, operatingCount, standbyCount, inspectionCount, breakdownCount];
+                        const labelsData = ['Ready', 'Operating', 'Standby', 'Inspeksi & PM', 'Breakdown'];
+                        const colorsData = ['#16a34a', '#0284c7', '#0ea5e9', '#f59e0b', '#dc2626'];
+                        const statusMapping = ['READY', 'OPERATING', 'STANDBY', 'INSPEKSI', 'BREAKDOWN'];
+
+                        const chartOptions = {
+                            series: seriesData,
+                            labels: labelsData,
+                            chart: {
+                                type: 'donut',
+                                height: 220,
+                                fontFamily: "'Inter', sans-serif",
+                                toolbar: { show: false },
+                                events: {
+                                    dataPointSelection: function (event, chartContext, config) {
+                                        const clickedIdx = config.dataPointIndex;
+                                        const isSelected = config.selectedDataPoints && config.selectedDataPoints[0] && config.selectedDataPoints[0].length > 0;
+                                        
+                                        let targetStatus = 'ALL';
+                                        if (clickedIdx >= 0 && clickedIdx < statusMapping.length) {
+                                            if (isSelected) {
+                                                targetStatus = statusMapping[clickedIdx];
+                                            } else {
+                                                targetStatus = 'ALL';
+                                            }
+                                        }
+                                        setMonitoringStatusFilter(targetStatus, true);
+                                    },
+                                    legendClick: function (chartContext, seriesIndex, config) {
+                                        if (seriesIndex >= 0 && seriesIndex < statusMapping.length) {
+                                            const currentFilter = document.getElementById('monitoringStatusFilter')?.value || 'ALL';
+                                            const targetStatus = statusMapping[seriesIndex];
+                                            const newStatus = (currentFilter === targetStatus) ? 'ALL' : targetStatus;
+                                            setMonitoringStatusFilter(newStatus, false);
+                                        }
+                                        return false; // prevent hiding series from donut
+                                    }
+                                }
+                            },
+                            colors: colorsData,
+                            legend: {
+                                show: true,
+                                position: 'bottom',
+                                fontSize: '11px',
+                                fontFamily: "'Inter', sans-serif",
+                                markers: { width: 8, height: 8, radius: 4 },
+                                itemMargin: { horizontal: 6, vertical: 2 },
+                                onItemClick: {
+                                    toggleDataSeries: false
+                                }
+                            },
+                            dataLabels: {
+                                enabled: true,
+                                style: { fontSize: '10px', fontFamily: "'Inter', sans-serif", fontWeight: 700 },
+                                dropShadow: { enabled: false },
+                                formatter: (val) => val.toFixed(0) + '%'
+                            },
+                            plotOptions: {
+                                pie: {
+                                    donut: {
+                                        size: '68%',
+                                        labels: {
+                                            show: true,
+                                            name: { show: true, fontSize: '11px', fontWeight: 600, color: '#64748b', offsetY: -4 },
+                                            value: { show: true, fontSize: '18px', fontWeight: 800, color: '#0f172a', offsetY: 4, formatter: (val) => val },
+                                            total: {
+                                                show: true,
+                                                label: 'TOTAL UNIT',
+                                                fontSize: '10px',
+                                                fontWeight: 700,
+                                                color: '#64748b',
+                                                formatter: () => `${totalCount}`
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            stroke: { width: 2, colors: ['#ffffff'] },
+                            tooltip: {
+                                y: {
+                                    formatter: (val) => `${val} Unit`
+                                }
+                            }
+                        };
+
+                        if (window.monitoringDonutChartInstance) {
+                            window.monitoringDonutChartInstance.updateOptions({
+                                series: seriesData,
+                                labels: labelsData,
+                                colors: colorsData,
+                                plotOptions: chartOptions.plotOptions
+                            });
+                        } else {
+                            elChart.innerHTML = '';
+                            window.monitoringDonutChartInstance = new ApexCharts(elChart, chartOptions);
+                            window.monitoringDonutChartInstance.render();
+                        }
+                    }
+                }
+
+                renderMonitoringTable(assets);
+                updateMonitoringActiveCard(selectedStatus);
             }
 
             function searchTableMonitoring() {
