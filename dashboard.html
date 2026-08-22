@@ -13,6 +13,7 @@
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
     <link rel="stylesheet" href="scripts/dashboard.css?v=20260810-1">
     <script src="scripts/auth-client.js?v=20260810-1"></script>
+    <script src="scripts/rbac.js?v=20260822-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -5303,6 +5304,23 @@
             }
 
             function showView(viewName, title = '', menuId = '') {
+                // RBAC Permission Check
+                if (window.FleetRBAC) {
+                    // Normalize viewName to match rbacMatrix keys if necessary.
+                    // Most match exactly, but 'workorder' might be 'wo'.
+                    let checkMenu = viewName;
+                    if (viewName === 'workorder') checkMenu = 'wo';
+                    
+                    if (checkMenu !== 'uc' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
+                        console.warn(`RBAC: Akses ditolak untuk menu ${checkMenu}`);
+                        if (viewName !== 'dashboard') {
+                            alert('Akses Ditolak: Anda tidak memiliki hak akses untuk menu ini.');
+                            showView('dashboard');
+                        }
+                        return;
+                    }
+                }
+
                 clearActiveMenus();
 
                 const resolvedMenuId = menuId || `menu-${viewName}`;
