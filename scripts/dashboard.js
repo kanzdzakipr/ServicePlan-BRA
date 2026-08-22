@@ -15547,14 +15547,14 @@
                     </div>
             `;
 
-            sec.items.forEach((item) => {
+            sec.items.forEach((item, index) => {
                 const ans = currentFormData.answers[item.id] || 'PASS'; // Default PASS
                 currentFormData.answers[item.id] = ans;
 
                 html += `
                     <div class="p2h-item-row" id="row_${item.id}">
                         <div class="p2h-item-label">
-                            ${escapeHtml(item.text)}
+                            <strong>${index + 1}.</strong> ${escapeHtml(item.text)}
                             ${item.critical ? '<span class="p2h-critical-tag"><i class="fa-solid fa-shield"></i> CRITICAL</span>' : ''}
                             <input type="text" class="p2h-notes-input" id="note_${item.id}" placeholder="Tuliskan detail catatan temuan..." onchange="window.setP2HNote('${item.id}', this.value)" style="display:${ans !== 'PASS' ? 'block' : 'none'};">
                         </div>

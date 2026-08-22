@@ -21,6 +21,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
     <link rel="stylesheet" href="scripts/dashboard.css?v=20260731-1">
     <script src="scripts/auth-client.js?v=20260809-1"></script>
+    <script src="scripts/rbac.js?v=20260823-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -5288,6 +5289,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     activeMenu.setAttribute('aria-current', 'page');
                 }
 
+                if (window.FleetRBAC) {
+                    const checkMenu = viewName;
+                    if (checkMenu !== 'uc' && checkMenu !== 'archive' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
+                        console.warn(`RBAC: Akses ditolak untuk menu ${checkMenu}`);
+                        if (viewName !== 'dashboard') {
+                            alert('Akses Ditolak: Anda tidak memiliki hak akses untuk menu ini.');
+                            showView('dashboard');
+                        }
+                        return;
+                    }
+                }
+
                 if (viewName === 'uc') {
                     document.getElementById('ucTitle').innerText = title;
                 }
@@ -7577,6 +7590,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.openRbacOverrideModal = function (roleIdx, modIdx) {
+                if (window.FleetRBAC && !window.FleetRBAC.hasAccess('settings', 'O')) {
+                    alert("Akses Ditolak: Hanya Administrator yang berhak mengubah matriks hak akses.");
+                    return;
+                }
                 const role = activeRbacRolesData[roleIdx];
                 const moduleName = rbacModulesList[modIdx];
                 if (!role) return;
@@ -7597,6 +7614,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.saveRbacCellOverride = function () {
+                if (window.FleetRBAC && !window.FleetRBAC.hasAccess('settings', 'O')) {
+                    alert("Akses Ditolak: Hanya Administrator yang berhak menyimpan perubahan hak akses.");
+                    return;
+                }
                 const roleIdx = parseInt(document.getElementById('editRbacRoleIndex').value);
                 const modIdx = parseInt(document.getElementById('editRbacModuleIndex').value);
                 const role = activeRbacRolesData[roleIdx];
@@ -7690,6 +7711,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 <tbody>
             `;
 
+                const isAdmin = window.FleetRBAC && window.FleetRBAC.hasAccess('settings', 'O');
+
                 // 4. Helper function to format permission badge pill
                 const formatPill = (permStr) => {
                     if (permStr === '-') {
@@ -7722,9 +7745,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         ${role.permissions.map((p, modIdx) => {
                         const isCellDiff = defaultRbacRolesMaster[idx] && p !== defaultRbacRolesMaster[idx].permissions[modIdx];
                         return `
-                                <td style="text-align:center; padding:6px 8px; background:${isSelected ? (p !== '-' ? 'rgba(37,99,235,0.08)' : 'transparent') : (isCellDiff ? '#fef3c7' : 'transparent')}; cursor:pointer; position:relative;" 
-                                    onclick="openRbacOverrideModal(${idx}, ${modIdx})" 
-                                    title="Klik untuk override hak akses ${role.name} pada ${rbacModulesList[modIdx]} (Saat ini: ${p})">
+                                <td style="text-align:center; padding:6px 8px; background:${isSelected ? (p !== '-' ? 'rgba(37,99,235,0.08)' : 'transparent') : (isCellDiff ? '#fef3c7' : 'transparent')}; cursor:${isAdmin ? 'pointer' : 'default'}; position:relative;" 
+                                    ${isAdmin ? `onclick="openRbacOverrideModal(${idx}, ${modIdx})"` : ''} 
+                                    title="${isAdmin ? `Klik untuk override hak akses ${role.name} pada ${rbacModulesList[modIdx]} (Saat ini: ${p})` : `Hak akses ${role.name} pada ${rbacModulesList[modIdx]}: ${p}`}">
                                     ${formatPill(p)}
                                     ${isCellDiff ? '<i class="fa-solid fa-pen-to-square" style="font-size:0.8rem; color:#d97706; position:absolute; top:2px; right:2px;" title="Override Custom"></i>' : ''}
                                 </td>
@@ -7738,6 +7761,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.saveAllSettings = function () {
+                if (window.FleetRBAC && !window.FleetRBAC.hasAccess('settings', 'O')) {
+                    alert("Akses Ditolak: Hanya Administrator yang berhak menyimpan konfigurasi sistem.");
+                    return;
+                }
                 alert('Seluruh konfigurasi sistem (RBAC 10 Roles, Threshold SLA, Site Project & Security) berhasil disimpan!');
             };
 
