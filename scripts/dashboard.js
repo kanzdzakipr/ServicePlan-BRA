@@ -16152,10 +16152,15 @@
                 countBelumData++;
             }
 
-            const targetDateStr = `${10 + (idx * 2 % 15)} Jul 2026`;
+            const targetDate = new Date();
+            targetDate.setHours(0, 0, 0, 0);
+            targetDate.setDate(targetDate.getDate() + ((idx % 21) - 10));
 
             return {
                 unit: unitName,
+                category: asset.category || 'Lainnya',
+                dateValue: targetDate.toISOString().slice(0, 10),
+                dateLabel: targetDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
                 hmAktual: hmAktualVal.toLocaleString('id-ID') + unitSuffix,
                 hmService: hmServiceVal.toLocaleString('id-ID') + unitSuffix,
                 diff: diffText,
@@ -16168,7 +16173,13 @@
             };
         });
 
-        const displayServiceRows = liveServiceRows.length > 0 ? liveServiceRows.slice(0, 6) : serviceBerkalaData;
+        const displayServiceRows = liveServiceRows.length > 0 ? liveServiceRows : serviceBerkalaData.map(row => ({
+            ...row,
+            category: 'Lainnya',
+            dateValue: new Date().toISOString().slice(0, 10),
+            dateLabel: row.date
+        }));
+        const serviceCategories = [...new Set(displayServiceRows.map(row => row.category))].sort((a, b) => a.localeCompare(b, 'id'));
 
         // Calculate dynamic counts
         const valTerlambat = countTerlambat || 12;
@@ -16218,6 +16229,10 @@
                     <div class="panel">
                         <div class="panel-header">
                             <span><i class="fa-solid fa-clock-rotate-left"></i> Status Service Berkala Unit</span>
+                            <div class="executive-service-filters">
+                                <select id="executiveServiceCategoryFilter" aria-label="Filter jenis alat berat"><option value="ALL">Semua jenis alat</option>${serviceCategories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('')}</select>
+                                <select id="executiveServiceTimeFilter" aria-label="Filter rentang waktu"><option value="ALL">Semua waktu</option><option value="TODAY">Hari ini</option><option value="WEEK">Minggu ini</option><option value="MONTH">Bulan ini</option><option value="YTD">YTD</option><option value="YEAR">Tahun ini</option></select>
+                            </div>
                         </div>
                         <div class="panel-body">
                             <!-- 5 Counter Cards -->
@@ -16245,7 +16260,7 @@
                             </div>
 
                             <!-- Table -->
-                            <div class="table-responsive">
+                            <div class="table-responsive executive-service-table-scroll" id="executiveServiceTableScroll">
                                 <table style="margin-top:5px; font-size:0.85rem;">
                                     <thead>
                                         <tr>
@@ -16258,14 +16273,14 @@
                                             <th>Prioritas</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="executiveServiceTableBody">
                                         ${displayServiceRows.map(s => `
-                                            <tr>
+                                            <tr data-service-category="${escapeHtml(s.category)}" data-service-date="${escapeHtml(s.dateValue)}" data-service-status="${escapeHtml(s.status)}">
                                                 <td><strong>${escapeHtml(s.unit)}</strong></td>
                                                 <td>${s.hmAktual}</td>
                                                 <td>${s.hmService}</td>
                                                 <td style="font-weight:bold; ${s.diffColor}">${s.diff}</td>
-                                                <td>${s.date}</td>
+                                                <td>${escapeHtml(s.dateLabel || s.date)}</td>
                                                 <td><span class="p2h-badge ${s.badge}">${s.status}</span></td>
                                                 <td style="font-weight:600; color:${s.priority.includes('Tinggi') ? 'var(--danger)' : 'var(--text-main)'};">${s.priority}</td>
                                             </tr>
@@ -16616,6 +16631,53 @@
                         tooltip: { y: { formatter: (val) => val + ' Unit' } }
                     });
                     chartService.render();
+
+                    const categoryFilter = document.getElementById('executiveServiceCategoryFilter');
+                    const timeFilter = document.getElementById('executiveServiceTimeFilter');
+                    const serviceRows = [...document.querySelectorAll('#executiveServiceTableBody tr[data-service-date]')];
+                    const serviceStatuses = ['Terlambat', 'Jatuh Tempo', 'Akan Service', 'Terjadwal', 'Selesai', 'Belum Ada Data'];
+                    const isServiceDateInRange = (value, range) => {
+                        const date = new Date(`${value}T00:00:00`);
+                        const now = new Date();
+                        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        if (Number.isNaN(date.getTime())) return false;
+                        if (range === 'TODAY') return date.getTime() === today.getTime();
+                        if (range === 'WEEK') {
+                            const day = today.getDay() || 7;
+                            const monday = new Date(today);
+                            monday.setDate(today.getDate() - day + 1);
+                            const sunday = new Date(monday);
+                            sunday.setDate(monday.getDate() + 6);
+                            return date >= monday && date <= sunday;
+                        }
+                        if (range === 'MONTH') return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth();
+                        if (range === 'YTD') return date.getFullYear() === today.getFullYear() && date <= today;
+                        if (range === 'YEAR') return date.getFullYear() === today.getFullYear();
+                        return true;
+                    };
+                    const applyServiceFilters = () => {
+                        const category = categoryFilter?.value || 'ALL';
+                        const range = timeFilter?.value || 'ALL';
+                        const counts = Object.fromEntries(serviceStatuses.map(status => [status, 0]));
+                        serviceRows.forEach(row => {
+                            const visible = (category === 'ALL' || row.dataset.serviceCategory === category)
+                                && isServiceDateInRange(row.dataset.serviceDate, range);
+                            row.hidden = !visible;
+                            if (visible) counts[row.dataset.serviceStatus] = (counts[row.dataset.serviceStatus] || 0) + 1;
+                        });
+                        const chartSeries = [
+                            counts['Terlambat'] || 0,
+                            counts['Jatuh Tempo'] || 0,
+                            (counts['Akan Service'] || 0) + (counts['Terjadwal'] || 0),
+                            counts['Selesai'] || 0,
+                            counts['Belum Ada Data'] || 0
+                        ];
+                        chartService.updateSeries(chartSeries);
+                        const total = chartSeries.reduce((sum, value) => sum + value, 0);
+                        chartService.updateOptions({ plotOptions: { pie: { donut: { labels: { total: { formatter: () => total } } } } } });
+                    };
+                    categoryFilter?.addEventListener('change', applyServiceFilters);
+                    timeFilter?.addEventListener('change', applyServiceFilters);
                 }
 
                 // 2. Asset Category Value Donut Chart

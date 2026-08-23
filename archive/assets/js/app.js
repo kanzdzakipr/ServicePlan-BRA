@@ -11,7 +11,34 @@ if (window.Chart) {
   if(wo)new Chart(wo,{type:'doughnut',data:{labels:['Selesai','Dalam Proses','Menunggu Spare Part','Open'],datasets:[{data:parse(wo,'values'),backgroundColor:['#20b26b','#1667ff','#ff9b21','#ef4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'64%',plugins:{legend:{position:'bottom'}}}});
 
   const service=document.getElementById('serviceStatusChart');
-  if(service)new Chart(service,{type:'doughnut',data:{labels:['Terlambat','Jatuh Tempo','Akan Service','Terjadwal','Selesai'],datasets:[{data:parse(service,'values'),backgroundColor:['#ef4444','#ff9b21','#1667ff','#7b74f7','#20b26b'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'64%',plugins:{legend:{position:'bottom'}}}});
+  const serviceStatuses=['Terlambat','Jatuh Tempo','Akan Service','Terjadwal','Selesai'];
+  let serviceChart=null;
+  if(service){serviceChart=new Chart(service,{type:'doughnut',data:{labels:serviceStatuses,datasets:[{data:parse(service,'values'),backgroundColor:['#ef4444','#ff9b21','#1667ff','#7b74f7','#20b26b'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'64%',plugins:{legend:{position:'bottom'}}}});}
+
+  const serviceCategoryFilter=document.getElementById('serviceCategoryFilter');
+  const serviceTimeFilter=document.getElementById('serviceTimeFilter');
+  const serviceTable=document.getElementById('serviceScheduleTable');
+  const serviceRows=serviceTable ? [...serviceTable.querySelectorAll('tbody tr[data-service-date]')] : [];
+  const serviceInRange=(dateValue,range)=>{
+    const date=new Date(`${dateValue}T00:00:00`), now=new Date();
+    if(Number.isNaN(date.getTime())) return false;
+    const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    if(range==='TODAY') return date.getTime()===today.getTime();
+    if(range==='WEEK'){const day=today.getDay()||7; const monday=new Date(today); monday.setDate(today.getDate()-day+1); const sunday=new Date(monday); sunday.setDate(monday.getDate()+6); return date>=monday&&date<=sunday;}
+    if(range==='MONTH') return date.getFullYear()===today.getFullYear()&&date.getMonth()===today.getMonth();
+    if(range==='YTD') return date.getFullYear()===today.getFullYear()&&date<=today;
+    if(range==='YEAR') return date.getFullYear()===today.getFullYear();
+    return true;
+  };
+  const applyServiceFilters=()=>{
+    const category=serviceCategoryFilter?.value||'ALL', range=serviceTimeFilter?.value||'ALL', counts=Object.fromEntries(serviceStatuses.map(status=>[status,0]));
+    let visible=0;
+    serviceRows.forEach(row=>{const matches=(category==='ALL'||row.dataset.serviceCategory===category)&&serviceInRange(row.dataset.serviceDate,range); row.hidden=!matches; if(matches){visible++; counts[row.dataset.serviceStatus]=(counts[row.dataset.serviceStatus]||0)+1;}});
+    if(serviceChart){serviceChart.data.datasets[0].data=serviceStatuses.map(status=>counts[status]||0); serviceChart.update();}
+    const countLabel=document.getElementById('serviceFilterCount'); if(countLabel) countLabel.textContent=`${visible} unit ditampilkan`;
+  };
+  serviceCategoryFilter?.addEventListener('change',applyServiceFilters);
+  serviceTimeFilter?.addEventListener('change',applyServiceFilters);
 
   const mech=document.getElementById('mechanicHoursChart');
   if(mech)new Chart(mech,{type:'bar',data:{labels:parse(mech,'labels'),datasets:[{label:'Jam Aktual',data:parse(mech,'actual'),backgroundColor:'#1667ff',borderRadius:5},{label:'Target',data:parse(mech,'targets'),backgroundColor:'#dbe6ff',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#edf1f7'}}}}});

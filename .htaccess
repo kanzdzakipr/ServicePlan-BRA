@@ -34,6 +34,8 @@ DirectoryIndex index.html dashboard.php index.php
     RewriteRule ^api/(?:db|security)\.php$ - [F,L,NC]
 
     # Deprecated applications, private storage, tests, and maintenance utilities are never public.
+    RewriteRule ^archive/(?:dashboard|login|logout)\.php$ - [L,NC]
+    RewriteRule ^archive/assets(?:/|$) - [L,NC]
     RewriteRule ^(?:archive|arsip|storage|tests)(?:/|$) - [F,L,NC]
     RewriteRule ^scripts/.*\.(?:php|ps1|sql|bat|cmd|sh|md|json)$ - [F,L,NC]
 

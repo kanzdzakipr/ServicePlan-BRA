@@ -19,13 +19,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260731-1">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260823-3">
     <script src="scripts/auth-client.js?v=20260809-1"></script>
     <script src="scripts/rbac.js?v=20260823-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20260823-2"></script>
+    <script src="scripts/dashboard.js?v=20260823-3"></script>
 
 </head>
 

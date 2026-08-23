@@ -32,9 +32,9 @@ $serviceCounts=['Terlambat'=>0,'Jatuh Tempo'=>0,'Akan Service'=>0,'Terjadwal'=>0
 foreach($pdo->query("SELECT status,COUNT(*) total FROM service_schedules GROUP BY status") as $r){
     $serviceCounts[$r['status']] = (int)$r['total'];
 }
-$serviceRows=$pdo->query("SELECT u.unit_code,u.unit_name,u.current_meter,u.meter_type,ss.next_service_meter,ss.next_service_date,ss.status,ss.notes
+$serviceRows=$pdo->query("SELECT u.unit_code,u.unit_name,u.category,u.current_meter,u.meter_type,ss.next_service_meter,ss.next_service_date,ss.status,ss.notes
     FROM service_schedules ss JOIN units u ON u.id=ss.unit_id
-    ORDER BY FIELD(ss.status,'Terlambat','Jatuh Tempo','Akan Service','Terjadwal','Selesai'),ss.next_service_date LIMIT 8")->fetchAll();
+  ORDER BY FIELD(ss.status,'Terlambat','Jatuh Tempo','Akan Service','Terjadwal','Selesai'),ss.next_service_date")->fetchAll();
 
 $logisticsCounts=['Dipesan'=>0,'Diproses Vendor'=>0,'Dalam Pengiriman'=>0,'Tiba'=>0,'Tertunda'=>0,'Dibatalkan'=>0];
 foreach($pdo->query("SELECT status,COUNT(*) total FROM logistics_orders GROUP BY status") as $r){
@@ -138,7 +138,7 @@ $completedMaintenance=(int)$pdo->query("SELECT COUNT(*) FROM maintenance_orders 
 
 <section class="service-grid">
   <div class="card panel">
-    <h3>Status Service Berkala Unit</h3>
+    <div class="service-panel-heading"><div><h3>Status Service Berkala Unit</h3><span id="serviceFilterCount" class="service-filter-count"><?=count($serviceRows)?> unit ditampilkan</span></div><div class="service-filters"><label>Jenis alat<select id="serviceCategoryFilter"><option value="ALL">Semua jenis alat</option><?php $serviceCategories=array_values(array_unique(array_filter(array_column($serviceRows,'category'))));sort($serviceCategories);foreach($serviceCategories as $category):?><option value="<?=e($category)?>"><?=e($category)?></option><?php endforeach;?></select></label><label>Rentang waktu<select id="serviceTimeFilter"><option value="ALL">Semua waktu</option><option value="TODAY">Hari ini</option><option value="WEEK">Minggu ini</option><option value="MONTH">Bulan ini</option><option value="YTD">YTD</option><option value="YEAR">Tahun ini</option></select></label></div></div>
     <div class="service-kpis">
       <div class="service-kpi"><span class="caption">Terlambat</span><span class="num text-red"><?=$serviceCounts['Terlambat']?></span></div>
       <div class="service-kpi"><span class="caption">Jatuh Tempo</span><span class="num text-orange"><?=$serviceCounts['Jatuh Tempo']?></span></div>
@@ -146,11 +146,11 @@ $completedMaintenance=(int)$pdo->query("SELECT COUNT(*) FROM maintenance_orders 
       <div class="service-kpi"><span class="caption">Terjadwal</span><span class="num text-green"><?=$serviceCounts['Terjadwal']?></span></div>
       <div class="service-kpi"><span class="caption">Selesai</span><span class="num text-purple"><?=$serviceCounts['Selesai']?></span></div>
     </div>
-    <table><thead><tr><th>Unit</th><th>Meter Aktual</th><th>Service Berikut</th><th>Selisih</th><th>Rencana</th><th>Status</th></tr></thead><tbody>
+    <div class="service-table-scroll"><table id="serviceScheduleTable"><thead><tr><th>Unit</th><th>Meter Aktual</th><th>Service Berikut</th><th>Selisih</th><th>Rencana</th><th>Status</th></tr></thead><tbody>
     <?php foreach($serviceRows as $r): $diff=(float)$r['next_service_meter']-(float)$r['current_meter']; ?>
-      <tr><td><?=e($r['unit_code'])?></td><td><?=number_format($r['current_meter'],0,',','.')?> <?=e($r['meter_type'])?></td><td><?=number_format($r['next_service_meter'],0,',','.')?></td><td class="<?=$diff<0?'priority-high':($diff<=50?'priority-medium':'priority-low')?>"><?=number_format($diff,0,',','.')?> <?=e($r['meter_type'])?></td><td><?=e($r['next_service_date'])?></td><td><span class="status <?=status_class($r['status'])?>"><?=e($r['status'])?></span></td></tr>
+      <tr data-service-category="<?=e($r['category'])?>" data-service-date="<?=e($r['next_service_date'])?>" data-service-status="<?=e($r['status'])?>"><td><?=e($r['unit_code'])?></td><td><?=number_format($r['current_meter'],0,',','.')?> <?=e($r['meter_type'])?></td><td><?=number_format($r['next_service_meter'],0,',','.')?></td><td class="<?=$diff<0?'priority-high':($diff<=50?'priority-medium':'priority-low')?>"><?=number_format($diff,0,',','.')?> <?=e($r['meter_type'])?></td><td><?=e($r['next_service_date'])?></td><td><span class="status <?=status_class($r['status'])?>"><?=e($r['status'])?></span></td></tr>
     <?php endforeach; ?>
-    </tbody></table>
+    </tbody></table></div>
   </div>
   <div class="card panel">
     <h3>Distribusi Status Service</h3>

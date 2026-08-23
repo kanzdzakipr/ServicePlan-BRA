@@ -10277,6 +10277,50 @@ body.cm-modal-open {
     gap: 20px;
 }
 
+.executive-service-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-left: auto;
+}
+
+.executive-service-filters select {
+    min-width: 145px;
+    padding: 7px 9px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg-surface);
+    color: var(--text-main);
+    font-size: 0.78rem;
+}
+
+.executive-service-table-scroll {
+    max-height: 430px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.executive-service-table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg-surface);
+}
+
+@media (max-width: 760px) {
+    .executive-service-filters {
+        width: 100%;
+        margin-top: 8px;
+        margin-left: 0;
+    }
+
+    .executive-service-filters select {
+        min-width: 0;
+        flex: 1;
+    }
+}
+
 /* Service Counter Badges (Row 1 Header) */
 .service-counter-bar {
     display: flex;
