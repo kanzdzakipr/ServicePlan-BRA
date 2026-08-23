@@ -387,10 +387,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         </div>
                     </div>
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-clipboard-list"></i> Work Order Aktif
-                                (Terbaru)</span></div>
+                        <div class="panel-header"><a href="#work-order" class="dashboard-panel-link" onclick="event.preventDefault(); showView('wo');"><i class="fa-solid fa-clipboard-list"></i> Work Order Aktif (Terbaru)</a></div>
                         <div class="panel-body" style="padding: 0;">
-                            <div class="table-responsive">
+                            <div class="table-responsive dashboard-wo-scroll" id="dashboardWoScroll">
                                 <table style="margin: 0;">
                                     <thead>
                                         <tr>
@@ -398,6 +397,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                             <th>Unit</th>
                                             <th>Status</th>
                                             <th>Prioritas</th>
+                                            <th>Mekanik</th>
+                                            <th>Downtime</th>
                                         </tr>
                                     </thead>
                                     <tbody id="dashboardWoTable">
@@ -4358,6 +4359,69 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
             }
 
+            const DASHBOARD_WO_BATCH_SIZE = 10;
+            let dashboardWoState = { items: [], rendered: 0, loading: false, scroll: null };
+
+            function renderDashboardWoRow(wo) {
+                const badgeColor = wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating';
+                const statColor = wo.status === 'Open' ? 'color: red;' : 'color: orange;';
+                return `<tr>
+                    <td><strong>${escapeHtml(wo.woId)}</strong></td>
+                    <td>${escapeHtml(wo.assetId || wo.unitId || '-')}</td>
+                    <td><span style="font-weight:bold; ${statColor}">${escapeHtml(wo.status || 'Open')}</span></td>
+                    <td><span class="badge ${badgeColor}">${escapeHtml(wo.priority || 'Normal')}</span></td>
+                    <td>${escapeHtml(getWorkOrderMechanic(wo))}</td>
+                    <td>${escapeHtml(formatDowntime(wo))}</td>
+                </tr>`;
+            }
+
+            function loadNextDashboardWoBatch() {
+                const state = dashboardWoState;
+                const tbody = document.getElementById('dashboardWoTable');
+                if (!tbody || state.loading || state.rendered >= state.items.length) return;
+                state.loading = true;
+                const loadingRow = document.createElement('tr');
+                loadingRow.className = 'dashboard-wo-loading';
+                loadingRow.innerHTML = '<td colspan="6"><span class="attention-loading-bar"></span> Memuat 10 Work Order berikutnya...</td>';
+                tbody.appendChild(loadingRow);
+
+                requestAnimationFrame(() => {
+                    const nextItems = state.items.slice(state.rendered, state.rendered + DASHBOARD_WO_BATCH_SIZE);
+                    loadingRow.remove();
+                    tbody.insertAdjacentHTML('beforeend', nextItems.map(renderDashboardWoRow).join(''));
+                    state.rendered += nextItems.length;
+                    state.loading = false;
+                    if (state.rendered < state.items.length) {
+                        const hintRow = document.createElement('tr');
+                        hintRow.className = 'dashboard-wo-load-more-hint';
+                        hintRow.innerHTML = `<td colspan="6"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i> ${(state.items.length - state.rendered).toLocaleString('id-ID')} WO masih tersedia di bawah</td>`;
+                        tbody.appendChild(hintRow);
+                    }
+                });
+            }
+
+            function setupDashboardWoList(items) {
+                const scroll = document.getElementById('dashboardWoScroll');
+                const tbody = document.getElementById('dashboardWoTable');
+                if (!scroll || !tbody) return;
+                dashboardWoState = { items, rendered: 0, loading: false, scroll };
+                tbody.replaceChildren();
+                if (!items.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada Work Order aktif.</td></tr>';
+                    return;
+                }
+                loadNextDashboardWoBatch();
+                if (scroll.dataset.dashboardWoScrollBound !== 'true') {
+                    scroll.dataset.dashboardWoScrollBound = 'true';
+                    scroll.addEventListener('scroll', () => {
+                        if (scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 24) {
+                            tbody.querySelector('.dashboard-wo-load-more-hint')?.remove();
+                            loadNextDashboardWoBatch();
+                        }
+                    });
+                }
+            }
+
             function initDashboard(data) {
                 const assets = (data.assets || []).filter(a => !a.isArchived);
                 const totalUnits = assets.length || data.summary?.total_units || 0;
@@ -4435,7 +4499,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (catTable) {
                     catTable.innerHTML = catArr.map(([cat, stats]) => `
                     <tr>
-                        <td style="display: flex; align-items: center; white-space: nowrap;">${getCategoryIcon(cat)} <strong>${escapeHtml(cat)}</strong></td>
+                        <td style="display: flex; align-items: center; white-space: nowrap;">${getCategoryIcon(cat)} <button type="button" class="category-link" data-category="${escapeHtml(cat)}" onclick="openCategoryAssetModal(this.dataset.category)">${escapeHtml(cat)}</button></td>
                         <td style="text-align: center; font-weight: 700; color: #16a34a;">${stats.readyOp}</td>
                         <td style="text-align: center; font-weight: 700; color: #0284c7;">${stats.standby}</td>
                         <td style="text-align: center; font-weight: 700; color: #dc2626;">${stats.breakdown}</td>
@@ -4445,28 +4509,34 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 `).join('');
                 }
 
-                // Populate WO Terbaru
-                const activeWos = data.work_orders.filter(wo => wo.status !== 'Closed').slice(0, 5);
-                const woTable = document.getElementById('dashboardWoTable');
-                if (woTable) {
-                    woTable.innerHTML = activeWos.map(wo => {
-                        let badgeColor = wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating';
-                        let statColor = wo.status === 'Open' ? 'color: red;' : 'color: orange;';
-                        return `
-                        <tr>
-                            <td><strong>${escapeHtml(wo.woId)}</strong></td>
-                            <td>${escapeHtml(wo.assetId)}</td>
-                            <td><span style="font-weight:bold; ${statColor}">${escapeHtml(wo.status)}</span></td>
-                            <td><span class="badge ${badgeColor}">${escapeHtml(wo.priority)}</span></td>
-                        </tr>
-                    `;
-                    }).join('');
-                }
+                // Populate all active WOs from the same database payload as the WO view.
+                const activeWos = data.work_orders.filter(wo => wo.status !== 'Closed');
+                setupDashboardWoList(activeWos);
             }
 
             let currentStatusDetailList = [];
             let currentBaseOpReadyList = [];
             let currentOpReadySubFilter = 'ALL';
+
+            window.openCategoryAssetModal = function (category) {
+                if (!globalData || !Array.isArray(globalData.assets)) {
+                    alert('Data aset sedang dimuat, silakan coba beberapa saat lagi.');
+                    return;
+                }
+
+                const normalizedCategory = String(category || '').trim();
+                const scopedAssets = window.getProjectScopedAssets();
+                const filtered = scopedAssets.filter(asset => String(asset.category || 'Lainnya').trim() === normalizedCategory);
+                currentBaseOpReadyList = [];
+                currentOpReadySubFilter = 'ALL';
+                document.getElementById('opReadySubFilterWrapper')?.style.setProperty('display', 'none');
+                document.getElementById('statusDetailTitle').textContent = `Tabulasi Unit Kategori: ${normalizedCategory} (${filtered.length} Unit)`;
+                currentStatusDetailList = filtered;
+                const search = document.getElementById('statusDetailSearch');
+                if (search) search.value = '';
+                window.renderStatusDetailTable(filtered);
+                window.openModal('modalStatusDetail');
+            };
 
             window.openStatusDetailModal = function (statusKey) {
                 if (!globalData || !globalData.assets) {
