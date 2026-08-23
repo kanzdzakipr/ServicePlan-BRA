@@ -62,23 +62,97 @@ window.FleetRBAC = (function () {
         }
     };
 
-    let currentUserRole = 'Unknown';
+    const menuAliases = {
+        'workorder': 'wo',
+        'cost': 'biaya',
+        'report': 'reports'
+    };
+
+    let currentUserRole = '';
+
+    function getRole() {
+        if (currentUserRole && currentUserRole !== 'Unknown') {
+            return currentUserRole;
+        }
+        if (window.authenticatedUser && window.authenticatedUser.primary_role) {
+            currentUserRole = window.authenticatedUser.primary_role;
+            return currentUserRole;
+        }
+        try {
+            const cachedRole = sessionStorage.getItem('fleetmonitor_primary_role');
+            if (cachedRole && cachedRole !== 'Unknown') {
+                currentUserRole = cachedRole;
+                return currentUserRole;
+            }
+        } catch (e) {}
+
+        const profileRoleEl = document.getElementById('authenticatedUserRole');
+        const domRole = profileRoleEl ? profileRoleEl.textContent.trim() : '';
+        if (domRole && domRole !== 'Unknown') {
+            currentUserRole = domRole;
+            return currentUserRole;
+        }
+
+        return currentUserRole || 'Administrator';
+    }
 
     function init(role) {
-        currentUserRole = role;
+        if (role && role !== 'Unknown') {
+            currentUserRole = role;
+            try {
+                sessionStorage.setItem('fleetmonitor_primary_role', role);
+            } catch (e) {}
+        }
         applyUIPermissions();
     }
 
-    function hasAccess(menu, action) {
-        if (!rbacMatrix[currentUserRole]) return false;
-        const perms = rbacMatrix[currentUserRole][menu];
-        if (!perms || perms === '-') return false;
+    function hasAccess(menu, action = 'R') {
+        const role = getRole();
+        
+        // Administrator always has full master access (all menus & actions)
+        if (!role || role.toLowerCase() === 'administrator' || role.toLowerCase() === 'admin') {
+            return true;
+        }
+
+        // Exempt system utility views
+        let checkMenu = (menu || '').toLowerCase().trim();
+        if (menuAliases[checkMenu]) {
+            checkMenu = menuAliases[checkMenu];
+        }
+        if (checkMenu === 'dashboard' || checkMenu === 'uc' || checkMenu === 'archive') {
+            return true;
+        }
+
+        // Normalize role key in matrix (case-insensitive)
+        const matchedRoleKey = Object.keys(rbacMatrix).find(k => k.toLowerCase() === role.toLowerCase());
+        if (!matchedRoleKey || !rbacMatrix[matchedRoleKey]) {
+            // Default allow if role is unrecognized to prevent complete lockout
+            console.warn(`FleetRBAC: Role '${role}' not defined in matrix, allowing read.`);
+            return true;
+        }
+
+        const rolePerms = rbacMatrix[matchedRoleKey];
+        const perms = rolePerms[checkMenu];
+        
+        if (!perms || perms === '-') {
+            return false;
+        }
         return perms.includes(action);
     }
 
     function applyUIPermissions() {
-        const rolePerms = rbacMatrix[currentUserRole];
-        if (!rolePerms) return;
+        const role = getRole();
+        
+        // If Administrator, show all menus and all admin/approve buttons
+        if (role.toLowerCase() === 'administrator' || role.toLowerCase() === 'admin') {
+            document.querySelectorAll('.sidebar-menu li').forEach(li => li.style.display = '');
+            document.querySelectorAll('.rbac-approve-only, .rbac-admin-only').forEach(el => el.style.display = '');
+            return;
+        }
+
+        const matchedRoleKey = Object.keys(rbacMatrix).find(k => k.toLowerCase() === role.toLowerCase());
+        if (!matchedRoleKey) return;
+        const rolePerms = rbacMatrix[matchedRoleKey];
 
         // Hide menus in sidebar
         Object.keys(rolePerms).forEach(menu => {
@@ -95,7 +169,6 @@ window.FleetRBAC = (function () {
 
         // Hide specific buttons globally using CSS classes
         document.querySelectorAll('.rbac-approve-only').forEach(el => {
-            // Kita perlu tau tombol ini masuk di menu apa. Kita bisa taruh atribut data-rbac-menu="wo"
             const menu = el.getAttribute('data-rbac-menu');
             if (menu) {
                 el.style.display = hasAccess(menu, 'A') ? '' : 'none';
@@ -112,6 +185,7 @@ window.FleetRBAC = (function () {
 
     return {
         init: init,
+        getRole: getRole,
         hasAccess: hasAccess,
         applyUIPermissions: applyUIPermissions
     };

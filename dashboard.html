@@ -5405,15 +5405,13 @@
             function showView(viewName, title = '', menuId = '') {
                 // RBAC Permission Check
                 if (window.FleetRBAC) {
-                    // Normalize viewName to match rbacMatrix keys if necessary.
-                    // Most match exactly, but 'workorder' might be 'wo'.
                     let checkMenu = viewName;
-                    if (viewName === 'workorder') checkMenu = 'wo';
+                    if (checkMenu === 'workorder') checkMenu = 'wo';
                     
-                    if (checkMenu !== 'uc' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
+                    if (checkMenu !== 'dashboard' && checkMenu !== 'uc' && checkMenu !== 'archive' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
                         console.warn(`RBAC: Akses ditolak untuk menu ${checkMenu}`);
+                        alert('Akses Ditolak: Anda tidak memiliki hak akses untuk menu ini.');
                         if (viewName !== 'dashboard') {
-                            alert('Akses Ditolak: Anda tidak memiliki hak akses untuk menu ini.');
                             showView('dashboard');
                         }
                         return;

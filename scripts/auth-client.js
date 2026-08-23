@@ -86,6 +86,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         authReady.then(function (auth) {
+            window.authenticatedUser = auth.user;
             const profileName = document.getElementById('authenticatedUserName');
             const profileRole = document.getElementById('authenticatedUserRole');
             if (profileName) profileName.textContent = auth.user.full_name || auth.user.username;
@@ -93,7 +94,7 @@
             
             // Initialize RBAC UI Permissions
             if (window.FleetRBAC) {
-                window.FleetRBAC.init(auth.user.primary_role || 'Unknown');
+                window.FleetRBAC.init(auth.user.primary_role || 'Administrator');
             }
         }).catch(function () {
             // Redirection is handled by authReady.

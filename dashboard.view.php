@@ -5528,6 +5528,19 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             }
 
             function showView(viewName, title = '', menuId = '') {
+                if (window.FleetRBAC) {
+                    let checkMenu = viewName;
+                    if (checkMenu === 'workorder') checkMenu = 'wo';
+                    if (checkMenu !== 'dashboard' && checkMenu !== 'uc' && checkMenu !== 'archive' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
+                        console.warn(`RBAC: Akses ditolak untuk menu ${checkMenu}`);
+                        alert('Akses Ditolak: Anda tidak memiliki hak akses untuk menu ini.');
+                        if (viewName !== 'dashboard') {
+                            showView('dashboard');
+                        }
+                        return;
+                    }
+                }
+
                 clearActiveMenus();
 
                 const resolvedMenuId = menuId || `menu-${viewName}`;
@@ -5535,18 +5548,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (activeMenu) {
                     activeMenu.classList.add('active');
                     activeMenu.setAttribute('aria-current', 'page');
-                }
-
-                if (window.FleetRBAC) {
-                    const checkMenu = viewName;
-                    if (checkMenu !== 'uc' && checkMenu !== 'archive' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
-                        console.warn(`RBAC: Akses ditolak untuk menu ${checkMenu}`);
-                        if (viewName !== 'dashboard') {
-                            alert('Akses Ditolak: Anda tidak memiliki hak akses untuk menu ini.');
-                            showView('dashboard');
-                        }
-                        return;
-                    }
                 }
 
                 if (viewName === 'uc') {
