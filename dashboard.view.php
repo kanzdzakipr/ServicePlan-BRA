@@ -4247,6 +4247,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     initFuelEngine(globalData);
                     initNewViews();
                     window.FleetInspectionModule?.refresh();
+                    window.ConditionMonitoring?.refresh();
+                    if (window.initExecutiveAnalyticsPanels) window.initExecutiveAnalyticsPanels();
                     initMonitoringView(initialData.assets);
 
                     if (window.renderHistoryTable) window.renderHistoryTable();
@@ -4254,6 +4256,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (window.renderCapaTable) window.renderCapaTable();
 
                     document.dispatchEvent(new CustomEvent('fleetdata:ready', { detail: initialData }));
+                    setTimeout(() => window.initExecutiveAnalyticsPanels?.(), 150);
 
                     const queryView = new URLSearchParams(window.location.search).get('view') || '';
                     const hashView = window.location.hash.replace(/^#/, '');

@@ -10308,6 +10308,50 @@ body.cm-modal-open {
     background: var(--bg-surface);
 }
 
+.executive-tire-table-scroll {
+    max-height: 430px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.executive-tire-table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg-surface);
+}
+
+.executive-tire-condition-filter {
+    min-width: 145px;
+    padding: 7px 9px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg-surface);
+    color: var(--text-main);
+    font-size: 0.78rem;
+}
+
+.executive-tire-loading td,
+.executive-tire-load-more-hint td {
+    padding: 14px 10px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.executive-tire-loading .attention-loading-bar {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.executive-tire-load-more-hint td {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
 @media (max-width: 760px) {
     .executive-service-filters {
         width: 100%;
@@ -10318,6 +10362,12 @@ body.cm-modal-open {
     .executive-service-filters select {
         min-width: 0;
         flex: 1;
+    }
+
+    .executive-tire-condition-filter {
+        width: 100%;
+        min-width: 0;
+        margin-top: 8px;
     }
 }
 

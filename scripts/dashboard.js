@@ -5795,19 +5795,38 @@
         getDashboardSnapshot() {
             const recentTire = state.history.find(item => item.domain === 'Ban');
             const recentGrease = state.history.find(item => item.domain === 'Grease');
+            const tireRows = allAssets()
+                .map(asset => getProfile(asset))
+                .filter(profile => profile && Array.isArray(profile.tires) && profile.tires.length > 0)
+                .flatMap(profile => profile.tires.map(item => {
+                    const status = tireStatus(item);
+                    const conditionKey = status === 'danger'
+                        ? (/rotasi/i.test(item.wearPattern || '') ? 'ROTASI' : 'GANTI')
+                        : status === 'warning' ? 'PERLU_PERIKSA'
+                            : status === 'muted' ? 'BELUM_DIPERIKSA' : 'BAIK';
+                    const conditionLabels = {
+                        GANTI: 'Ganti segera',
+                        ROTASI: 'Rotasi',
+                        PERLU_PERIKSA: 'Perlu periksa',
+                        BAIK: 'Baik',
+                        BELUM_DIPERIKSA: 'Belum diperiksa'
+                    };
+                    return {
+                        unit: shortCode(profile.assetId),
+                        pos: item.code,
+                        cond: conditionLabels[conditionKey],
+                        conditionKey,
+                        pressure: item.pressure ? `${item.pressure} PSI` : '-',
+                        badge: status === 'danger' ? 'badge-soft-danger' : status === 'warning' ? 'badge-soft-warning' : status === 'muted' ? 'badge-soft-secondary' : 'badge-soft-success'
+                    };
+                }));
             return {
                 tire: {
                     inspected: 240,
                     rotate: 17,
                     replace: 19,
                     coverage: '240 dari 550 posisi tercatat (213 angka + 19 DG + 8 CLOSE)',
-                    rows: [
-                        { unit: 'DT-04042', pos: 'P7–P10', cond: 'DG · Ganti', pressure: '-', badge: 'badge-soft-danger' },
-                        { unit: 'DT-04053', pos: 'P7–P10', cond: 'DG · Ganti', pressure: '-', badge: 'badge-soft-danger' },
-                        { unit: 'DT-00056', pos: 'P1 / P2', cond: 'Rotasi', pressure: '88 / 86 PSI', badge: 'badge-soft-warning' },
-                        { unit: 'DT-00049', pos: 'P2', cond: '3,77 mm', pressure: '84 PSI', badge: 'badge-soft-warning' },
-                        ...(recentTire ? [{ unit: shortCode(recentTire.assetId), pos: 'Terbaru', cond: statusLabel(recentTire.status), pressure: '-', badge: `badge-soft-${recentTire.status === 'danger' ? 'danger' : recentTire.status === 'warning' ? 'warning' : 'success'}` }] : [])
-                    ].slice(0, 5)
+                    rows: tireRows.length > 0 ? tireRows : (recentTire ? [{ unit: shortCode(recentTire.assetId), pos: 'Terbaru', cond: statusLabel(recentTire.status), pressure: '-', badge: `badge-soft-${recentTire.status === 'danger' ? 'danger' : recentTire.status === 'warning' ? 'warning' : 'success'}` }] : [])
                 },
                 grease: {
                     scheduled: 74,
@@ -16164,7 +16183,7 @@
                 hmAktual: hmAktualVal.toLocaleString('id-ID') + unitSuffix,
                 hmService: hmServiceVal.toLocaleString('id-ID') + unitSuffix,
                 diff: diffText,
-                date: targetDateStr,
+                date: targetDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
                 status: status,
                 priority: priority,
                 badge: badge,
@@ -16214,12 +16233,29 @@
             coverage: '240 dari 550 posisi tercatat (213 angka + 19 DG + 8 CLOSE)',
             rows: tireInspectionData
         };
+        if (!tireDashboard.rows.length && window.ConditionMonitoring?.getDashboardSnapshot) {
+            setTimeout(() => {
+                const refreshedRows = window.ConditionMonitoring.getDashboardSnapshot()?.tire?.rows || [];
+                if (refreshedRows.length && document.getElementById('executiveTireTableBody')) {
+                    initExecutiveAnalyticsPanels();
+                }
+            }, 500);
+        }
         const greaseDashboard = conditionSnapshot?.grease || {
             scheduled: 74,
             due: 12,
             overdue: 9,
             rows: greaseStatusData
         };
+        const tireConditionLabels = {
+            GANTI: 'Ganti segera',
+            ROTASI: 'Rotasi',
+            PERLU_PERIKSA: 'Perlu periksa',
+            BAIK: 'Baik',
+            BELUM_DIPERIKSA: 'Belum diperiksa'
+        };
+        const tireConditionOptions = ['GANTI', 'ROTASI', 'PERLU_PERIKSA', 'BAIK', 'BELUM_DIPERIKSA']
+            .map(key => `<option value="${escapeHtml(key)}">${escapeHtml(tireConditionLabels[key] || key)}</option>`).join('');
 
         targetContainer.innerHTML = `
             <!-- ROW 1: STATUS SERVICE BERKALA UNIT & DISTRIBUSI (GAMBAR 1) -->
@@ -16409,7 +16445,7 @@
 
                     <!-- Panel 2C: Status Pemesanan Barang Logistik -->
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-boxes-packing"></i> Status Pemesanan Logistik</span></div>
+                        <div class="panel-header"><a href="#logistics" class="dashboard-panel-link" onclick="event.preventDefault(); window.showView('logistics', '', 'menu-logistics');"><i class="fa-solid fa-boxes-packing"></i> Status Pemesanan Logistik</a></div>
                         <div class="panel-body" style="padding:15px;">
                             <table style="width:100%; font-size:0.83rem;">
                                 <thead>
@@ -16439,7 +16475,7 @@
                 <div class="dash-grid-3">
                     <!-- Panel 3A: Analisis Inspeksi Ban -->
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-circle-dot"></i> Analisis Inspeksi Ban</span></div>
+                        <div class="panel-header"><a href="#condition" class="dashboard-panel-link" onclick="event.preventDefault(); window.showView('condition', '', 'menu-condition');"><i class="fa-solid fa-circle-dot"></i> Analisis Inspeksi Ban</a><select id="executiveTireConditionFilter" class="executive-tire-condition-filter" aria-label="Filter kondisi ban"><option value="ALL">Semua kondisi</option>${tireConditionOptions}</select></div>
                         <div class="panel-body" style="padding:15px;">
                             <div class="tire-kpi-bar">
                                 <div class="tire-kpi-box">
@@ -16456,7 +16492,7 @@
                                 </div>
                             </div>
 
-                            <table style="width:100%; font-size:0.8rem;">
+                            <div class="executive-tire-table-scroll" id="executiveTireTableScroll"><table style="width:100%; font-size:0.8rem;">
                                 <thead>
                                     <tr>
                                         <th>Unit</th>
@@ -16465,17 +16501,9 @@
                                         <th>Tekanan</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    ${tireDashboard.rows.map(t => `
-                                        <tr>
-                                            <td><strong>${escapeHtml(t.unit)}</strong></td>
-                                            <td>${escapeHtml(t.pos)}</td>
-                                            <td><span class="p2h-badge ${t.badge}">${escapeHtml(t.cond)}</span></td>
-                                            <td>${t.pressure}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
+                                <tbody id="executiveTireTableBody"></tbody>
                             </table>
+                            </div>
 
                             <div class="dash-alert-banner pink">
                                 <i class="fa-solid fa-triangle-exclamation" style="margin-top:2px;"></i>
@@ -16602,6 +16630,55 @@
                 </div>
             </div>
         `;
+
+        const tireBatchSize = 10;
+        let tireRendered = 0;
+        let tireLoading = false;
+        const tireBody = document.getElementById('executiveTireTableBody');
+        const tireScroll = document.getElementById('executiveTireTableScroll');
+        const tireConditionFilter = document.getElementById('executiveTireConditionFilter');
+        let visibleTireRows = tireDashboard.rows;
+        const loadNextTireBatch = () => {
+            if (!tireBody || tireLoading || tireRendered >= visibleTireRows.length) return;
+            tireLoading = true;
+            const loadingRow = document.createElement('tr');
+            loadingRow.className = 'executive-tire-loading';
+            loadingRow.innerHTML = '<td colspan="4"><span class="attention-loading-bar"></span> Memuat 10 unit berikutnya...</td>';
+            tireBody.appendChild(loadingRow);
+            setTimeout(() => {
+                const batch = visibleTireRows.slice(tireRendered, tireRendered + tireBatchSize);
+                loadingRow.remove();
+                tireBody.insertAdjacentHTML('beforeend', batch.map(t => `<tr><td><strong>${escapeHtml(t.unit)}</strong></td><td>${escapeHtml(t.pos)}</td><td><span class="p2h-badge ${t.badge}">${escapeHtml(t.cond)}</span></td><td>${escapeHtml(t.pressure)}</td></tr>`).join(''));
+                tireRendered += batch.length;
+                tireLoading = false;
+                if (tireRendered < visibleTireRows.length) {
+                    const hint = document.createElement('tr');
+                    hint.className = 'executive-tire-load-more-hint';
+                    hint.innerHTML = `<td colspan="4"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i> ${(visibleTireRows.length - tireRendered).toLocaleString('id-ID')} item masih tersedia di bawah</td>`;
+                    tireBody.appendChild(hint);
+                }
+            }, 0);
+        };
+        tireConditionFilter?.addEventListener('change', () => {
+            const selectedCondition = tireConditionFilter.value;
+            visibleTireRows = selectedCondition === 'ALL'
+                ? tireDashboard.rows
+                : tireDashboard.rows.filter(row => row.conditionKey === selectedCondition);
+            tireRendered = 0;
+            tireLoading = false;
+            tireBody?.replaceChildren();
+            tireScroll?.scrollTo({ top: 0 });
+            loadNextTireBatch();
+        });
+        loadNextTireBatch();
+        if (tireScroll) {
+            tireScroll.addEventListener('scroll', () => {
+                if (tireScroll.scrollTop + tireScroll.clientHeight >= tireScroll.scrollHeight - 24) {
+                    tireBody?.querySelector('.executive-tire-load-more-hint')?.remove();
+                    loadNextTireBatch();
+                }
+            });
+        }
 
         setTimeout(() => {
             if (typeof ApexCharts !== 'undefined') {
