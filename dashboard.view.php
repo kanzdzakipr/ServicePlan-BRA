@@ -25,7 +25,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20260808-1"></script>
+    <script src="scripts/dashboard.js?v=20260823-2"></script>
 
 </head>
 
@@ -599,14 +599,50 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div class="panel-body">
                         <div class="table-responsive">
                             <table class="table">
-                                <thead>
+                                <thead id="assetTableHeader">
                                     <tr>
-                                        <th>Asset ID / Kode</th>
-                                        <th>SN / Plat Kendaraan</th>
-                                        <th>Kategori</th>
-                                        <th>Lokasi Aktif</th>
-                                        <th>Update Terakhir</th>
-                                        <th>Status Efektif</th>
+                                        <th onclick="window.sortMasterAsset('id')" style="cursor:pointer">Asset ID / Kode <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('sn')" style="cursor:pointer">SN / Plat Kendaraan <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('category')" style="cursor:pointer">Kategori <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('location')" style="cursor:pointer">Lokasi Aktif <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('lastUpdate')" style="cursor:pointer">Update Terakhir <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('status')" style="cursor:pointer">Status Efektif <i class="fa-solid fa-sort"></i></th>
+                                    </tr>
+                                    <tr class="asset-filter-row" style="background: #f8fafc;">
+                                        <th style="padding: 4px 8px;"><input type="text" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter ID..." onkeyup="window.filterMasterAsset('id', this.value)"></th>
+                                        <th style="padding: 4px 8px;"><input type="text" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter SN..." onkeyup="window.filterMasterAsset('sn', this.value)"></th>
+                                        <th style="padding: 4px 8px;">
+                                            <select class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('category', this.value)">
+                                                <option value="">Semua</option>
+                                                <option value="Excavator">Excavator</option>
+                                                <option value="Dump Truck">Dump Truck</option>
+                                                <option value="Compactor">Compactor</option>
+                                                <option value="Bulldozer">Bulldozer</option>
+                                                <option value="Motor Grader">Motor Grader</option>
+                                                <option value="Wheel Loader">Wheel Loader</option>
+                                                <option value="Light Vehicle">Light Vehicle</option>
+                                                <option value="Genset">Genset</option>
+                                            </select>
+                                        </th>
+                                        <th style="padding: 4px 8px;">
+                                            <select class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('location', this.value)">
+                                                <option value="">Semua</option>
+                                                <option value="Borrow Pit">Borrow Pit</option>
+                                                <option value="Site Celcin">Site Celcin</option>
+                                                <option value="Yard">Yard</option>
+                                                <option value="Workshop">Workshop</option>
+                                            </select>
+                                        </th>
+                                        <th></th>
+                                        <th style="padding: 4px 8px;">
+                                            <select class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('status', this.value)">
+                                                <option value="">Semua</option>
+                                                <option value="READY">READY</option>
+                                                <option value="STANDBY">STANDBY</option>
+                                                <option value="BREAKDOWN">BREAKDOWN</option>
+                                                <option value="INSPEKSI">INSPEKSI</option>
+                                            </select>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody id="assetTableBody">
@@ -4676,11 +4712,109 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 window.renderStatusDetailTable(filtered);
             };
 
+            window.masterAssetSort = { col: null, dir: 'asc' };
+            window.masterAssetFilters = { id: '', sn: '', category: '', location: '', status: '' };
+
+            window.sortMasterAsset = function(col) {
+                if (window.masterAssetSort.col === col) {
+                    window.masterAssetSort.dir = window.masterAssetSort.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    window.masterAssetSort.col = col;
+                    window.masterAssetSort.dir = 'asc';
+                }
+                
+                // Update icons
+                const ths = document.querySelectorAll('#assetTableHeader tr:first-child th');
+                ths.forEach(th => {
+                    const icon = th.querySelector('i');
+                    if(icon) {
+                        icon.className = 'fa-solid fa-sort';
+                        if(th.getAttribute('onclick').includes(`'${col}'`)) {
+                            icon.className = window.masterAssetSort.dir === 'asc' ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down';
+                        }
+                    }
+                });
+                
+                window.renderAssetTableBody();
+            };
+
+            window.filterMasterAsset = function(col, val) {
+                window.masterAssetFilters[col] = val;
+                window.renderAssetTableBody();
+            };
+
+            window.renderAssetTableBody = function() {
+                const tbody = document.getElementById('assetTableBody');
+                if (!tbody) return;
+                
+                let assets = window.currentAssetData || [];
+                
+                // Apply Filters
+                assets = assets.filter(a => {
+                    const f = window.masterAssetFilters;
+                    const parsed = window.parseAssetId ? window.parseAssetId(a.id) : { unitId: a.id, snPlat: '-' };
+                    
+                    if (f.id && !(parsed.unitId || '').toLowerCase().includes(f.id.toLowerCase())) return false;
+                    if (f.sn && !(parsed.snPlat || '').toLowerCase().includes(f.sn.toLowerCase())) return false;
+                    if (f.location && !(a.location || '').toLowerCase().includes(f.location.toLowerCase())) return false;
+                    if (f.category && f.category !== a.category) return false;
+                    if (f.status && f.status !== a.status) return false;
+                    return true;
+                });
+
+                // Apply Sorting
+                if (window.masterAssetSort.col) {
+                    assets.sort((a, b) => {
+                        let valA = a[window.masterAssetSort.col] || '';
+                        let valB = b[window.masterAssetSort.col] || '';
+                        
+                        if (window.masterAssetSort.col === 'id') {
+                            valA = (window.parseAssetId ? window.parseAssetId(a.id).unitId : a.id);
+                            valB = (window.parseAssetId ? window.parseAssetId(b.id).unitId : b.id);
+                        } else if (window.masterAssetSort.col === 'sn') {
+                            valA = (window.parseAssetId ? window.parseAssetId(a.id).snPlat : '');
+                            valB = (window.parseAssetId ? window.parseAssetId(b.id).snPlat : '');
+                        }
+
+                        if (valA < valB) return window.masterAssetSort.dir === 'asc' ? -1 : 1;
+                        if (valA > valB) return window.masterAssetSort.dir === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+                }
+
+                tbody.innerHTML = assets.slice(0, 100).map(asset => {
+                    const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
+                    const badge = window.getAssetStatusBadge(asset.status);
+
+                    return `
+                    <tr data-asset-id="${escapeHtml(asset.id)}"
+                        data-asset-status="${escapeHtml(asset.status)}"
+                        data-asset-category="${escapeHtml(asset.category)}"
+                        data-asset-location="${escapeHtml(asset.location)}"
+                        onclick="openAssetActionCalloutFromElement(event, this)" 
+                        style="cursor:pointer;" 
+                        title="Klik 1x untuk membuka Opsi Aksi Integrasi Unit ${escapeHtml(asset.id)}">
+                        <td>
+                            <strong style="color:var(--primary);">${escapeHtml(parsed.unitId)}</strong>
+                        </td>
+                        <td>
+                            ${escapeHtml(parsed.snPlat)}
+                        </td>
+                        <td>${escapeHtml(asset.category)}</td>
+                        <td><i class="fa-solid fa-location-dot" style="color:var(--text-muted);"></i> ${escapeHtml(asset.location)}</td>
+                        <td style="font-size:0.85rem; color:var(--text-muted);">${escapeHtml(asset.lastUpdate)}</td>
+                        <td>${badge}</td>
+                    </tr>
+                    `;
+                }).join('');
+            };
+
             function initAssetView(assets) {
                 const tbody = document.getElementById('assetTableBody');
                 if (!assets || !tbody) return;
 
-                assets = assets.filter(a => !a.isArchived);
+                window.currentAssetData = assets.filter(a => !a.isArchived);
+                assets = window.currentAssetData;
 
                 // 1. Calculate Master Asset KPI Stats
                 const totalCount = assets.length || 48;

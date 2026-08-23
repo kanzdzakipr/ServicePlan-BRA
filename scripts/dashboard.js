@@ -15546,7 +15546,7 @@
                         <span style="font-size:0.8rem; font-weight:normal; color:var(--text-muted);">${sec.items.length} Poin Pemeriksaan</span>
                     </div>
             `;
-
+            const secPrefix = sec.title.split('.')[0] || String.fromCharCode(65 + sIdx);
             sec.items.forEach((item, index) => {
                 const ans = currentFormData.answers[item.id] || 'PASS'; // Default PASS
                 currentFormData.answers[item.id] = ans;
@@ -15554,9 +15554,16 @@
                 html += `
                     <div class="p2h-item-row" id="row_${item.id}">
                         <div class="p2h-item-label">
-                            <strong>${index + 1}.</strong> ${escapeHtml(item.text)}
+                            <strong>${secPrefix}.${index + 1}.</strong> ${escapeHtml(item.text)}
                             ${item.critical ? '<span class="p2h-critical-tag"><i class="fa-solid fa-shield"></i> CRITICAL</span>' : ''}
-                            <input type="text" class="p2h-notes-input" id="note_${item.id}" placeholder="Tuliskan detail catatan temuan..." onchange="window.setP2HNote('${item.id}', this.value)" style="display:${ans !== 'PASS' ? 'block' : 'none'};">
+                            <div id="warn_fields_${item.id}" style="display:${ans !== 'PASS' ? 'flex' : 'none'}; gap: 8px; margin-top: 8px; align-items: center;">
+                                <input type="text" class="p2h-notes-input" id="note_${item.id}" placeholder="Tuliskan detail catatan temuan..." onchange="window.setP2HNote('${item.id}', this.value)" style="flex: 1; display: block; margin-top: 0; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem;">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('photo_${item.id}').click()" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px; color: #475569;">
+                                    <i class="fa-solid fa-camera"></i> Lampirkan Foto
+                                </button>
+                                <input type="file" id="photo_${item.id}" accept="image/*" style="display: none;" onchange="window.setP2HPhoto('${item.id}', this)">
+                                <span id="photo_name_${item.id}" style="font-size: 0.75rem; color: var(--text-muted); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                            </div>
                         </div>
                         <div class="p2h-item-options">
                             <button type="button" class="p2h-radio-btn pass ${ans === 'PASS' ? 'active' : ''}" onclick="window.setP2HAnswer('${item.id}', 'PASS')">
@@ -15590,9 +15597,9 @@
             else if (value === 'WARN') row.querySelector('.warn').classList.add('active');
             else if (value === 'FAIL') row.querySelector('.fail').classList.add('active');
 
-            const noteInput = document.getElementById(`note_${itemId}`);
-            if (noteInput) {
-                noteInput.style.display = value !== 'PASS' ? 'block' : 'none';
+            const noteContainer = document.getElementById(`warn_fields_${itemId}`);
+            if (noteContainer) {
+                noteContainer.style.display = value !== 'PASS' ? 'flex' : 'none';
             }
         }
         updateLiveCounters();
@@ -15600,6 +15607,21 @@
 
     window.setP2HNote = function (itemId, text) {
         currentFormData.notes[itemId] = text;
+    };
+
+    window.setP2HPhoto = function (itemId, inputEl) {
+        const file = inputEl.files[0];
+        const nameSpan = document.getElementById(`photo_name_${itemId}`);
+        if (file) {
+            nameSpan.innerText = file.name;
+            nameSpan.title = file.name;
+            // File data can be added to currentFormData if needed for upload
+            if (!currentFormData.photos) currentFormData.photos = {};
+            currentFormData.photos[itemId] = file;
+        } else {
+            nameSpan.innerText = '';
+            if (currentFormData.photos) delete currentFormData.photos[itemId];
+        }
     };
 
     function updateLiveCounters() {
