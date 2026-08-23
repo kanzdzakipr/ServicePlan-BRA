@@ -2891,6 +2891,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <option value="Normal">Normal (Terjadwal)</option>
                     <option value="High">High (Darurat / Breakdown)</option>
                 </select>
+                <label>Sifat Maintenance</label>
+                <select id="nwo-type" class="form-control">
+                    <option value="Corrective">Corrective (Perbaikan / Breakdown)</option>
+                    <option value="Preventive">Preventive (Perawatan Rutin / Terjadwal)</option>
+                </select>
                 <label>Keluhan / Diagnosis Awal</label>
                 <textarea id="nwo-issue" rows="3" class="form-control"
                     placeholder="Jelaskan secara detail kerusakan yang terjadi..."></textarea>
@@ -5428,6 +5433,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             async function submitNewWO() {
                 const id = document.getElementById('nwo-id').value;
                 const prio = document.getElementById('nwo-prio').value;
+                const type = document.getElementById('nwo-type') ? document.getElementById('nwo-type').value : 'Corrective';
                 const issue = document.getElementById('nwo-issue').value;
                 const down = document.getElementById('nwo-down').value;
 
@@ -5443,7 +5449,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             assetId: id,
                             status: 'Open',
                             priority: prio,
-                            issue: issue,
+                            issue: `[${type}] ${issue}`,
                             assignedTo: 'Belum ada',
                             downtime: down === 'Yes' ? '0' : '-'
                         }],
@@ -5484,10 +5490,16 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         }
 
                         globalData.work_orders.unshift({
-                            woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: issue, downtime: down === 'Yes' ? '0' : '-', status: 'Open', priority: prio, assignedTo: 'Belum ada'
+                            woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: `[${type}] ${issue}`, downtime: down === 'Yes' ? '0' : '-', status: 'Open', priority: prio, assignedTo: 'Belum ada'
                         });
 
                         closeModal('modalNewWO');
+                        
+                        if (type === 'Preventive') {
+                            showView('pm');
+                        } else {
+                            showView('wo');
+                        }
                         alert('Work Order berhasil dibuat dan tersimpan di database');
                         window.syncFleetState();
                     } else {
