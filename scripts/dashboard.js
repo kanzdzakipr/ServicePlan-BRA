@@ -16302,19 +16302,19 @@
 
                                 <div class="donut-legend">
                                     <div class="donut-legend-item">
-                                        <div class="donut-legend-left"><span class="donut-color-dot" style="background:#dc2626;"></span> Terlambat</div>
+                                        <button type="button" class="executive-service-legend-link" data-service-status-filter="OVERDUE"><span class="donut-color-dot" style="background:#dc2626;"></span> Terlambat</button>
                                         <strong>${valTerlambat} unit (${pctTerlambat}%)</strong>
                                     </div>
                                     <div class="donut-legend-item">
-                                        <div class="donut-legend-left"><span class="donut-color-dot" style="background:#f59e0b;"></span> Hari Ini</div>
+                                        <button type="button" class="executive-service-legend-link" data-service-status-filter="TODAY"><span class="donut-color-dot" style="background:#f59e0b;"></span> Hari Ini</button>
                                         <strong>${valJatuhTempo} unit (${pctJatuhTempo}%)</strong>
                                     </div>
                                     <div class="donut-legend-item">
-                                        <div class="donut-legend-left"><span class="donut-color-dot" style="background:#0284c7;"></span> &le; 7 Hari</div>
+                                        <button type="button" class="executive-service-legend-link" data-service-status-filter="WITHIN_7_DAYS"><span class="donut-color-dot" style="background:#0284c7;"></span> &le; 7 Hari</button>
                                         <strong>${val7Hari} unit (${pct7Hari}%)</strong>
                                     </div>
                                     <div class="donut-legend-item">
-                                        <div class="donut-legend-left"><span class="donut-color-dot" style="background:#16a34a;"></span> Selesai</div>
+                                        <button type="button" class="executive-service-legend-link" data-service-status-filter="COMPLETED"><span class="donut-color-dot" style="background:#16a34a;"></span> Selesai</button>
                                         <strong>${valSelesai} unit (${pctSelesai}%)</strong>
                                     </div>
                                 </div>
@@ -16612,7 +16612,18 @@
                     const chartService = new ApexCharts(elService, {
                         series: [valTerlambat, valJatuhTempo, val7Hari, valSelesai, Math.max(0, valBelumData)],
                         labels: ['Terlambat', 'Hari Ini / Due', '≤ 7 Hari', 'Selesai', 'Belum Ada Data'],
-                        chart: { type: 'donut', height: 200, fontFamily: 'Inter, sans-serif' },
+                        chart: {
+                            type: 'donut',
+                            height: 200,
+                            fontFamily: 'Inter, sans-serif',
+                            events: {
+                                dataPointSelection: (event, chartContext, config) => {
+                                    const filters = ['OVERDUE', 'TODAY', 'WITHIN_7_DAYS', 'COMPLETED', 'NO_DATA'];
+                                    activeServiceStatusFilter = filters[config.dataPointIndex] || 'ALL';
+                                    applyServiceFilters();
+                                }
+                            }
+                        },
                         colors: ['#dc2626', '#f59e0b', '#0284c7', '#16a34a', '#64748b'],
                         legend: { show: false },
                         dataLabels: { enabled: true, formatter: (val) => val.toFixed(0) + '%' },
@@ -16636,6 +16647,7 @@
                     const timeFilter = document.getElementById('executiveServiceTimeFilter');
                     const serviceRows = [...document.querySelectorAll('#executiveServiceTableBody tr[data-service-date]')];
                     const serviceStatuses = ['Terlambat', 'Jatuh Tempo', 'Akan Service', 'Terjadwal', 'Selesai', 'Belum Ada Data'];
+                    let activeServiceStatusFilter = 'ALL';
                     const isServiceDateInRange = (value, range) => {
                         const date = new Date(`${value}T00:00:00`);
                         const now = new Date();
@@ -16659,9 +16671,23 @@
                         const category = categoryFilter?.value || 'ALL';
                         const range = timeFilter?.value || 'ALL';
                         const counts = Object.fromEntries(serviceStatuses.map(status => [status, 0]));
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const nextSevenDays = new Date(today);
+                        nextSevenDays.setDate(today.getDate() + 7);
                         serviceRows.forEach(row => {
+                            const date = new Date(`${row.dataset.serviceDate}T00:00:00`);
+                            const status = row.dataset.serviceStatus;
+                            const isToday = date.getTime() === today.getTime();
+                            const statusMatches = activeServiceStatusFilter === 'ALL'
+                                || (activeServiceStatusFilter === 'OVERDUE' && status === 'Terlambat')
+                                || (activeServiceStatusFilter === 'TODAY' && status === 'Jatuh Tempo' && isToday)
+                                || (activeServiceStatusFilter === 'WITHIN_7_DAYS' && status === 'Terjadwal' && date >= today && date <= nextSevenDays)
+                                || (activeServiceStatusFilter === 'COMPLETED' && status === 'Selesai')
+                                || (activeServiceStatusFilter === 'NO_DATA' && status === 'Belum Ada Data');
                             const visible = (category === 'ALL' || row.dataset.serviceCategory === category)
-                                && isServiceDateInRange(row.dataset.serviceDate, range);
+                                && isServiceDateInRange(row.dataset.serviceDate, range)
+                                && statusMatches;
                             row.hidden = !visible;
                             if (visible) counts[row.dataset.serviceStatus] = (counts[row.dataset.serviceStatus] || 0) + 1;
                         });
@@ -16678,6 +16704,12 @@
                     };
                     categoryFilter?.addEventListener('change', applyServiceFilters);
                     timeFilter?.addEventListener('change', applyServiceFilters);
+                    document.querySelectorAll('[data-service-status-filter]').forEach(link => {
+                        link.addEventListener('click', () => {
+                            activeServiceStatusFilter = link.dataset.serviceStatusFilter || 'ALL';
+                            applyServiceFilters();
+                        });
+                    });
                 }
 
                 // 2. Asset Category Value Donut Chart

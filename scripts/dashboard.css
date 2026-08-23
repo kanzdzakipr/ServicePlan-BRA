@@ -14375,6 +14375,34 @@ body.sl-modal-open {
     display: inline-block;
 }
 
+.executive-service-legend-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #334155;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.executive-service-legend-link:hover,
+.executive-service-legend-link:focus-visible {
+    color: var(--primary);
+    text-decoration-color: currentColor;
+}
+
+.executive-service-legend-link:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
 /* Sub-Filter Button Select for OPERATING / READY Modal */
 .op-sub-btn {
     background: transparent;
