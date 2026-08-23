@@ -357,9 +357,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div class="panel">
                         <div class="panel-header"><span><i class="fa-solid fa-triangle-exclamation"></i> Panel Perhatian
                                 (WO Emergency)</span></div>
-                        <div class="panel-body" style="padding: 10px;">
-                            <ul class="attention-list" id="attentionList"
-                                style="height: 530px; max-height: 530px; overflow-y: auto; padding-right: 4px;"></ul>
+                        <div class="panel-body attention-panel-body">
+                            <ul class="attention-list" id="attentionList" aria-live="polite"></ul>
                         </div>
                     </div>
                 </div>
@@ -4267,6 +4266,98 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 return `<span class="badge bg-secondary" style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-circle-info" style="font-size:10px;"></i> ${escapeHtml(status)}</span>`;
             };
 
+            const EMERGENCY_WO_BATCH_SIZE = 10;
+            let emergencyWoState = { items: [], rendered: 0, loading: false, list: null };
+
+            function parseDowntimeMinutes(value) {
+                if (value === null || value === undefined || value === '') return 0;
+                if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, value);
+                const text = String(value).toLowerCase().trim();
+                if (!text || text === '-' || text === 'normal') return 0;
+                const dayMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(?:hari|day|h)\b/);
+                const hourMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(?:jam|hour|hours|j)\b/);
+                const minuteMatch = text.match(/(\d+(?:[.,]\d+)?)\s*(?:menit|minute|minutes|m)\b/);
+                if (dayMatch || hourMatch || minuteMatch) {
+                    const days = dayMatch ? Number(dayMatch[1].replace(',', '.')) : 0;
+                    const hours = hourMatch ? Number(hourMatch[1].replace(',', '.')) : 0;
+                    const minutes = minuteMatch ? Number(minuteMatch[1].replace(',', '.')) : 0;
+                    return Math.max(0, Math.round((days * 1440) + (hours * 60) + minutes));
+                }
+                const numeric = Number(text.replace(',', '.'));
+                return Number.isFinite(numeric) ? Math.max(0, Math.round(numeric * 60)) : 0;
+            }
+
+            function getWorkOrderDowntimeMinutes(wo) {
+                for (const key of ['downtime_minutes', 'downtimeMinutes']) {
+                    const minutes = Number(wo?.[key]);
+                    if (Number.isFinite(minutes)) return Math.max(0, minutes);
+                }
+                const hours = Number(wo?.downtime_hours);
+                if (Number.isFinite(hours)) return Math.max(0, Math.round(hours * 60));
+                return parseDowntimeMinutes(wo?.downtime);
+            }
+
+            function formatDowntime(valueOrWo) {
+                const minutes = typeof valueOrWo === 'object' ? getWorkOrderDowntimeMinutes(valueOrWo) : parseDowntimeMinutes(valueOrWo);
+                return `${Math.floor(minutes / 1440)} h ${String(Math.floor((minutes % 1440) / 60)).padStart(2, '0')} j ${String(minutes % 60).padStart(2, '0')} m`;
+            }
+
+            function getWorkOrderMechanic(wo) {
+                return wo?.assignedTo || wo?.assigned_mechanic || wo?.mechanic || 'Belum ada PIC';
+            }
+
+            function renderEmergencyWorkOrder(wo) {
+                const woIdEsc = escapeHtml(wo.woId);
+                const assetIdEsc = escapeHtml(wo.assetId || wo.unitId || '-');
+                const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
+                const issueShort = escapeHtml(issueText.length > 92 ? issueText.substring(0, 92) + '...' : issueText);
+                return `<li class="attention-item"><div class="attention-header"><div class="attention-title"><i class="fa-solid fa-fire attention-severity-icon" aria-hidden="true"></i><div class="attention-identity"><span class="attention-wo-badge">${woIdEsc}</span><span class="attention-asset-pill">${assetIdEsc}</span></div></div><div class="attention-downtime" title="Durasi terhenti"><i class="fa-regular fa-clock" aria-hidden="true"></i> Down ${formatDowntime(wo)}</div></div><div class="attention-meta"><span><i class="fa-solid fa-user-gear" aria-hidden="true"></i><strong>Mekanik</strong> ${escapeHtml(getWorkOrderMechanic(wo))}</span></div><div class="attention-desc" title="${escapeHtml(issueText)}">${issueShort}</div><div class="attention-actions"><button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${assetIdEsc}')" title="Buka detail Work Order"><i class="fa-solid fa-wrench" aria-hidden="true"></i> Detail WO</button><button class="attention-action-btn" onclick="openAssetModal('${assetIdEsc}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat detail aset 360 derajat"><i class="fa-solid fa-truck" aria-hidden="true"></i> Aset 360&deg;</button><button class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${assetIdEsc}')" title="Buat permintaan sparepart"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Minta Part</button></div></li>`;
+            }
+
+            function loadNextEmergencyWoBatch() {
+                const state = emergencyWoState;
+                if (!state.list || state.loading || state.rendered >= state.items.length) return;
+                state.loading = true;
+                const loadingItem = document.createElement('li');
+                loadingItem.className = 'attention-loading';
+                loadingItem.innerHTML = '<span class="attention-loading-bar"></span><span>Memuat 10 WO berikutnya...</span>';
+                state.list.appendChild(loadingItem);
+                requestAnimationFrame(() => {
+                    const nextItems = state.items.slice(state.rendered, state.rendered + EMERGENCY_WO_BATCH_SIZE);
+                    loadingItem.remove();
+                    state.list.insertAdjacentHTML('beforeend', nextItems.map(renderEmergencyWorkOrder).join(''));
+                    state.rendered += nextItems.length;
+                    state.loading = false;
+                    if (state.rendered < state.items.length) {
+                        const hint = document.createElement('li');
+                        hint.className = 'attention-load-more-hint';
+                        hint.innerHTML = `<i class="fa-solid fa-arrow-down" aria-hidden="true"></i> ${(state.items.length - state.rendered).toLocaleString('id-ID')} WO masih tersedia di bawah`;
+                        state.list.appendChild(hint);
+                    }
+                });
+            }
+
+            function setupEmergencyWoList(items) {
+                const attentionList = document.getElementById('attentionList');
+                if (!attentionList) return;
+                emergencyWoState = { items, rendered: 0, loading: false, list: attentionList };
+                attentionList.replaceChildren();
+                if (!items.length) {
+                    attentionList.innerHTML = '<li class="attention-item attention-empty"><div class="attention-title"><i class="fa-solid fa-circle-check"></i><strong>Semua Unit Beroperasi Normal</strong></div><div class="attention-desc">Tidak ada Work Order darurat (High Priority) yang aktif saat ini.</div></li>';
+                    return;
+                }
+                loadNextEmergencyWoBatch();
+                if (attentionList.dataset.emergencyScrollBound !== 'true') {
+                    attentionList.dataset.emergencyScrollBound = 'true';
+                    attentionList.addEventListener('scroll', () => {
+                        if (attentionList.scrollTop + attentionList.clientHeight >= attentionList.scrollHeight - 24) {
+                            attentionList.querySelector('.attention-load-more-hint')?.remove();
+                            loadNextEmergencyWoBatch();
+                        }
+                    });
+                }
+            }
+
             function initDashboard(data) {
                 const assets = (data.assets || []).filter(a => !a.isArchived);
                 const totalUnits = assets.length || data.summary?.total_units || 0;
@@ -4281,58 +4372,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 document.getElementById('kpiBreakdown').textContent = breakdownCount || data.summary?.status_counts?.BREAKDOWN || 0;
                 document.getElementById('kpiInspeksi').textContent = inspeksiCount || data.summary?.status_counts?.INSPEKSI || 0;
 
-                const attentionList = document.getElementById('attentionList');
                 // Show only high priority / breakdown WOs as emergency attention cards
-                const emergencyWOs = data.work_orders.filter(wo => wo.priority === 'High' && wo.status !== 'Closed');
-
-                if (emergencyWOs.length > 0) {
-                    attentionList.innerHTML = emergencyWOs.slice(0, 5).map(wo => {
-                        const cleanDown = (wo.downtime || '0 jam 00 menit').toString().trim();
-                        const woIdEsc = escapeHtml(wo.woId);
-                        const assetIdEsc = escapeHtml(wo.assetId);
-                        const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
-                        const issueShort = escapeHtml(issueText.length > 70 ? issueText.substring(0, 70) + '...' : issueText);
-
-                        return `
-                        <li class="attention-item">
-                            <div class="attention-header">
-                                <div class="attention-title">
-                                    <i class="fa-solid fa-fire" style="color: #ef4444; font-size: 0.95rem;"></i>
-                                    <span class="attention-wo-badge">${woIdEsc}</span>
-                                    <span class="attention-asset-pill">${assetIdEsc}</span>
-                                </div>
-                                <div class="attention-downtime" title="Durasi Terhenti (Downtime)">
-                                    <i class="fa-regular fa-clock"></i> Down: ${cleanDown}
-                                </div>
-                            </div>
-                            <div class="attention-desc" title="${escapeHtml(issueText)}">
-                                ${issueShort}
-                            </div>
-                            <div class="attention-actions">
-                                <button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${assetIdEsc}')" title="Buka Modul Work Order">
-                                    <i class="fa-solid fa-wrench"></i> Detail WO
-                                </button>
-                                <button class="attention-action-btn" onclick="openAssetModal('${assetIdEsc}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat Riwayat & Detail 360&deg; Unit">
-                                    <i class="fa-solid fa-truck"></i> Aset 360&deg;
-                                </button>
-                                <button class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${assetIdEsc}')" title="Buat Permintaan Sparepart (SPB)">
-                                    <i class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)
-                                </button>
-                            </div>
-                        </li>
-                    `;
-                    }).join('');
-                } else {
-                    attentionList.innerHTML = `
-                    <li class="attention-item" style="border-left-color: #28a745;">
-                        <div class="attention-title" style="color: #28a745;">
-                            <i class="fa-solid fa-circle-check"></i>
-                            <strong>Semua Unit Beroperasi Normal</strong>
-                        </div>
-                        <div class="attention-desc" style="margin-bottom: 0;">Tidak ada Work Order darurat (High Priority) yang aktif saat ini.</div>
-                    </li>
-                `;
-                }
+                const emergencyWOs = data.work_orders
+                    .filter(wo => wo.priority === 'High' && wo.status !== 'Closed')
+                    .sort((a, b) => getWorkOrderDowntimeMinutes(b) - getWorkOrderDowntimeMinutes(a));
+                setupEmergencyWoList(emergencyWOs);
 
                 // Populate Unit per Kategori
                 function getCategoryIcon(catName) {

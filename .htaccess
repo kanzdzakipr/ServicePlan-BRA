@@ -22,7 +22,7 @@ DirectoryIndex index.html dashboard.php index.php
     RewriteEngine On
 
     # Legacy dashboard URL must pass through the server-side session guard.
-    RewriteRule ^dashboard\.html$ dashboard.php [R=302,L,NE]
+    RewriteRule ^dashboard\.html$ /ServicePlan-BRA/dashboard.php [R=302,L,NE]
 
     # The full dashboard view may only be included by dashboard.php.
     RewriteRule ^dashboard\.view\.php$ - [F,L,NC]
