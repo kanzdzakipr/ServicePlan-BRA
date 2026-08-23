@@ -5945,13 +5945,39 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const cards = summaryEl.querySelectorAll('.mon-card-clickable');
                 cards.forEach(card => {
                     const cardStatus = card.getAttribute('data-status');
-                    if (cardStatus === selectedStatus) {
+                    card.classList.remove('active-filter');
+                    
+                    // Don't show indicator for ALL
+                    if (cardStatus === selectedStatus && selectedStatus !== 'ALL') {
                         card.classList.add('active-filter');
-                    } else {
-                        card.classList.remove('active-filter');
+                        
+                        // Fade out after 1 second
+                        setTimeout(() => {
+                            card.style.transition = 'all 1s ease';
+                            card.classList.remove('active-filter');
+                            setTimeout(() => { card.style.transition = ''; }, 1000);
+                        }, 1000);
                     }
                 });
             }
+
+            // Global click listener to reset filter when clicking outside Monitoring KPI cards
+            document.addEventListener('click', function(e) {
+                const view = document.getElementById('view-monitoring');
+                if (view && window.getComputedStyle(view).display !== 'none') {
+                    // Check if click is outside the cards, filter dropdown, search input, and table
+                    if (!e.target.closest('#monitoringSummary') && 
+                        !e.target.closest('.monitoring-controls') && 
+                        !e.target.closest('.apexcharts-canvas') && 
+                        !e.target.closest('table') && 
+                        !e.target.closest('.unit-link-button')) {
+                        const filterEl = document.getElementById('monitoringStatusFilter');
+                        if (filterEl && filterEl.value !== 'ALL') {
+                            setMonitoringStatusFilter('ALL');
+                        }
+                    }
+                }
+            });
 
             function renderMonitoringTable(assets) {
                 if (!assets) {
@@ -6106,7 +6132,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <strong style="color:#dc2626;">${breakdownCount}</strong>
                         <div class="mon-card-ftr" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Kerusakan Unit</div>
                     </div>
-                    <div class="purple mon-card-clickable" onclick="showView('workorder')" title="Buka modul Work Order">
+                    <div class="purple mon-card-clickable" onclick="showView('wo')" title="Buka modul Work Order">
                         <div class="mon-card-hdr">
                             <span class="mon-card-lbl">WO Aktif</span>
                             <div class="mon-card-icon purple"><i class="fa-solid fa-wrench"></i></div>
