@@ -90,6 +90,11 @@
             const profileRole = document.getElementById('authenticatedUserRole');
             if (profileName) profileName.textContent = auth.user.full_name || auth.user.username;
             if (profileRole) profileRole.textContent = auth.user.primary_role || '';
+            
+            // Initialize RBAC UI Permissions
+            if (window.FleetRBAC) {
+                window.FleetRBAC.init(auth.user.primary_role || 'Unknown');
+            }
         }).catch(function () {
             // Redirection is handled by authReady.
         });

@@ -1,11 +1,13 @@
 <?php
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
 
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
+        AuthMiddleware::checkAccess('wo', 'R');
         if (isset($_GET['id'])) {
             $scope = api_location_scope_clause('a', 'wo_list_location_id');
             $sql = "SELECT w.*, a.asset_code, a.category AS asset_category
@@ -33,6 +35,7 @@ switch ($method) {
         break;
 
     case 'POST':
+        AuthMiddleware::checkAccess('wo', 'C');
         $data = json_decode(file_get_contents("php://input"), true);
         if (!$data || !isset($data['wo_id']) || !isset($data['asset_id'])) {
             echo json_encode(["status" => "error", "message" => "Invalid data"]);
@@ -81,6 +84,10 @@ switch ($method) {
             echo json_encode(["status" => "error", "message" => "Invalid data or ID missing"]);
             exit;
         }
+
+        // If status is becoming 'Closed', it's an Approve action. Otherwise, just Update.
+        $isClosing = isset($data['status']) && $data['status'] === 'Closed';
+        AuthMiddleware::checkAccess('wo', $isClosing ? 'A' : 'U');
 
         $id = $_GET['id'] ?? $data['wo_id'];
         api_require_work_order_access($db, (string) $id);
