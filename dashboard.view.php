@@ -713,7 +713,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                     <th>Prioritas</th>
                                     <th>Status</th>
                                     <th>Mekanik</th>
-                                    <th>Downtime</th>
+                                    <th>Target Downtime</th>
+                                    <th>Downtime Aktual</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -4963,7 +4964,30 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <td><span class="wo-priority-pill ${priorityClass}">${escapeHtml(wo.priority || 'Normal')}</span></td>
                         <td><span class="wo-status-pill ${statusClass}">${escapeHtml(wo.status || 'Open')}</span></td>
                         <td>${escapeHtml(mechanic)}</td>
-                        <td>${escapeHtml(wo.downtime || '0 jam 00 menit')}</td>
+                        
+                        ${(() => {
+                            // Target Downtime SOP: High/Emergency = 2 Days (2880 mins), Normal = 7 Days (10080 mins)
+                            const isHigh = wo.priority === 'High' || wo.priority === 'Emergency';
+                            const targetMins = isHigh ? 2880 : 10080;
+                            const targetStr = isHigh ? '2 Hari' : '7 Hari';
+                            
+                            const actualMins = getWorkOrderDowntimeMinutes(wo);
+                            const isOverdue = actualMins > targetMins;
+                            
+                            const actualStr = escapeHtml(wo.downtime || '0 jam 00 menit');
+                            
+                            if (isOverdue) {
+                                return `
+                                    <td><span class="badge" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:2px 8px; border-radius:12px; font-size:0.85rem;"><i class="fa-solid fa-bullseye"></i> ${targetStr}</span></td>
+                                    <td style="color:#dc2626; font-weight:700;"><i class="fa-solid fa-triangle-exclamation" title="Melebihi target downtime"></i> ${actualStr}</td>
+                                `;
+                            } else {
+                                return `
+                                    <td><span class="badge" style="background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; padding:2px 8px; border-radius:12px; font-size:0.85rem;"><i class="fa-solid fa-bullseye"></i> ${targetStr}</span></td>
+                                    <td>${actualStr}</td>
+                                `;
+                            }
+                        })()}
                         <td><button type="button" class="wo-row-action" onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapeHtml(assetId)}')" aria-label="Buka detail ${escapeHtml(wo.woId)}"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></td>
                     </tr>`;
                 }).join('');
