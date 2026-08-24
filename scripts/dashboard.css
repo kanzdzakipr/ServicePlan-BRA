@@ -940,6 +940,92 @@ body.sidebar-collapsed .sidebar-menu li a i {
             border-radius: 2px;
         }
 
+        .monthly-cost-panel-header {
+            gap: 12px;
+        }
+
+        .monthly-cost-panel-header > span:first-child {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .cost-chart-switch {
+            display: inline-grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            padding: 2px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-subtle, #f8fafc);
+            flex-shrink: 0;
+        }
+
+        .cost-chart-switch button {
+            appearance: none;
+            border: 0;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            min-height: 28px;
+            padding: 4px 9px;
+            font: inherit;
+            font-size: 0.72rem;
+            font-weight: 700;
+            transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .cost-chart-switch button:hover {
+            color: var(--primary-dark, #075985);
+        }
+
+        .cost-chart-switch button.active {
+            background: var(--bg-surface, #ffffff);
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+        }
+
+        .cost-chart-switch button:active {
+            transform: translateY(1px);
+        }
+
+        .cost-chart-switch button:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .cost-chart-source {
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+            margin: 6px 2px 0;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            line-height: 1.45;
+            text-wrap: pretty;
+        }
+
+        .cost-chart-source i {
+            color: var(--primary);
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 640px) {
+            .monthly-cost-panel-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .cost-chart-switch {
+                width: 100%;
+            }
+        }
+
         .dashboard-wo-scroll {
             height: 530px;
             max-height: 530px;

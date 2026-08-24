@@ -16514,7 +16514,7 @@
 
                     <!-- Panel 3B: Status Grease Unit -->
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-oil-can"></i> Status Grease Unit</span></div>
+                        <div class="panel-header"><a href="#condition" class="dashboard-panel-link" aria-label="Buka Condition Monitoring untuk status grease" onclick="event.preventDefault(); window.showView('condition', '', 'menu-condition');"><i class="fa-solid fa-oil-can"></i> Status Grease Unit</a></div>
                         <div class="panel-body" style="padding:15px;">
                             <div class="grease-progress-list">
                                 <div class="grease-progress-item">
@@ -16598,9 +16598,20 @@
                 <div class="dash-grid-2">
                     <!-- Left: 12-Month Maintenance Cost Trend Bar Chart -->
                     <div class="panel">
-                        <div class="panel-header"><span><i class="fa-solid fa-chart-simple"></i> Tren Biaya Perbaikan Bulanan</span></div>
+                        <div class="panel-header monthly-cost-panel-header">
+                            <span><i class="fa-solid fa-chart-simple"></i> Tren Biaya Perbaikan Bulanan</span>
+                            <div class="cost-chart-switch" role="group" aria-label="Pilih tampilan grafik biaya">
+                                <button type="button" class="active" data-cost-chart-view="line" aria-pressed="true" title="Tampilkan smooth line chart">
+                                    <i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Garis</span>
+                                </button>
+                                <button type="button" data-cost-chart-view="bar" aria-pressed="false" title="Tampilkan bar chart">
+                                    <i class="fa-solid fa-chart-column" aria-hidden="true"></i><span>Batang</span>
+                                </button>
+                            </div>
+                        </div>
                         <div class="panel-body" style="padding:15px;">
-                            <div id="apexMonthlyCostTrendChart" style="min-height: 230px; width:100%;"></div>
+                            <div id="apexMonthlyCostTrendChart" style="min-height: 250px; width:100%;"></div>
+                            <p class="cost-chart-source"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>Baseline memakai <strong>Budget Planning</strong>; realisasi memakai <strong>Pembayaran cash</strong> pada laporan Equipment Expenses. Nilai dalam juta Rupiah.</span></p>
                         </div>
                     </div>
 
@@ -16882,32 +16893,89 @@
                     chartMechanic.render();
                 }
 
-                // 5. Monthly Maintenance Cost Trend Area Chart
+                // 5. Monthly Maintenance Cost Trend with source-based budget baseline
                 const elCost = document.getElementById('apexMonthlyCostTrendChart');
                 if (elCost) {
-                    elCost.innerHTML = '';
-                    const chartCost = new ApexCharts(elCost, {
-                        series: [{
-                            name: 'Biaya Perbaikan',
-                            data: [118, 145, 148, 125, 168, 175, 170, 172, 188, 162, 178, 195, 215]
-                        }],
-                        chart: { type: 'area', height: 230, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
-                        colors: ['#0284c7'],
-                        fill: {
-                            type: 'gradient',
-                            gradient: { shadeIntensity: 1, opacityFrom: 0.65, opacityTo: 0.1, stops: [0, 90, 100] }
-                        },
-                        stroke: { curve: 'smooth', width: 3 },
-                        dataLabels: { enabled: false },
-                        xaxis: {
-                            categories: ['Mei 23', 'Jun 23', 'Jul 23', 'Agu 23', 'Sep 23', 'Okt 23', 'Nov 23', 'Des 23', 'Jan 24', 'Feb 24', 'Mar 24', 'Apr 24', 'Mei 24']
-                        },
-                        yaxis: {
-                            labels: { formatter: (val) => 'Rp ' + val + ' Jt' }
-                        },
-                        tooltip: { y: { formatter: (val) => 'Rp ' + val.toLocaleString('id-ID') + ' Juta' } }
+                    const monthlyCostData = {
+                        categories: ['Mei 24', 'Jun 24', 'Jul 24', 'Agu 24', 'Sep 24', 'Okt 24', 'Nov 24', 'Des 24', 'Jan 25', 'Feb 25', 'Mar 25', 'Apr 25', 'Mei 25'],
+                        actual: [393.758107, 553.477901, 542.5098935, 439.682327, 264.006655, 321.656974, 429.7177288, 449.174956, 358.764378, 582.886025, 494.697508, 431.280671, 716.3759442],
+                        baseline: [330, 330, 430, 330, 330, 330, 330, 550, 550, 550, 550, 550, 550]
+                    };
+                    let chartCost = null;
+                    const viewButtons = [...document.querySelectorAll('[data-cost-chart-view]')];
+                    const formatMillions = (value) => `Rp ${Number(value).toLocaleString('id-ID', { maximumFractionDigits: 1 })} Jt`;
+                    const renderCostChart = (view = 'line') => {
+                        const isBar = view === 'bar';
+                        chartCost?.destroy();
+                        elCost.innerHTML = '';
+                        chartCost = new ApexCharts(elCost, {
+                            series: [
+                                { name: 'Realisasi biaya', type: isBar ? 'column' : 'line', data: monthlyCostData.actual },
+                                { name: 'Baseline anggaran', type: isBar ? 'column' : 'line', data: monthlyCostData.baseline }
+                            ],
+                            chart: {
+                                type: isBar ? 'bar' : 'line',
+                                height: 250,
+                                toolbar: { show: false },
+                                fontFamily: 'Inter, sans-serif',
+                                animations: { enabled: true, easing: 'easeinout', speed: 350 }
+                            },
+                            colors: ['#0284c7', '#d97706'],
+                            fill: { opacity: isBar ? [0.92, 0.62] : [1, 1] },
+                            stroke: {
+                                curve: 'smooth',
+                                width: isBar ? [0, 0] : [3, 2.5],
+                                dashArray: isBar ? [0, 0] : [0, 6]
+                            },
+                            plotOptions: {
+                                bar: { borderRadius: 4, columnWidth: '62%' }
+                            },
+                            dataLabels: { enabled: false },
+                            grid: { borderColor: '#e2e8f0', strokeDashArray: 3 },
+                            legend: {
+                                show: true,
+                                position: 'top',
+                                horizontalAlign: 'left',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                markers: { radius: 2 }
+                            },
+                            xaxis: {
+                                categories: monthlyCostData.categories,
+                                labels: { rotate: -35, trim: false, style: { fontSize: '11px' } },
+                                axisBorder: { color: '#cbd5e1' },
+                                axisTicks: { color: '#cbd5e1' }
+                            },
+                            yaxis: {
+                                min: 0,
+                                tickAmount: 5,
+                                labels: { formatter: (value) => `Rp ${Math.round(value)} Jt` }
+                            },
+                            tooltip: {
+                                shared: true,
+                                intersect: false,
+                                y: { formatter: formatMillions }
+                            },
+                            responsive: [{
+                                breakpoint: 640,
+                                options: {
+                                    chart: { height: 285 },
+                                    legend: { position: 'bottom', horizontalAlign: 'left' },
+                                    xaxis: { labels: { rotate: -55 } }
+                                }
+                            }]
+                        });
+                        chartCost.render();
+                        viewButtons.forEach((button) => {
+                            const isActive = button.dataset.costChartView === view;
+                            button.classList.toggle('active', isActive);
+                            button.setAttribute('aria-pressed', String(isActive));
+                        });
+                    };
+                    viewButtons.forEach((button) => {
+                        button.addEventListener('click', () => renderCostChart(button.dataset.costChartView || 'line'));
                     });
-                    chartCost.render();
+                    renderCostChart('line');
                 }
             }
         }, 50);
