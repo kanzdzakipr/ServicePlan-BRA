@@ -2856,12 +2856,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 <input type="hidden" id="us-id">
                 <label>Status Baru</label>
                 <select id="us-status" class="form-control">
-                    <option value="READY">READY (Siap Kerja)</option>
-                    <option value="OPERATING">OPERATING (Sedang Beroperasi)</option>
-                    <option value="STANDBY">STANDBY (Idle / Cadangan)</option>
-                    <option value="INSPEKSI">INSPECTION / PM</option>
-                    <option value="BREAKDOWN">BREAKDOWN</option>
-                    <option value="ACCIDENT HOLD">ACCIDENT HOLD</option>
+                    <option value="READY">READY - Unit Siap Operasi Full</option>
+                    <option value="OPERATING">OPERATING - Unit Langsung Beroperasi</option>
+                    <option value="STANDBY">STANDBY - Unit Siap Pakai Cadangan</option>
+                    <option value="INSPEKSI">INSPEKSI - Dalam Pengecekan / PM</option>
+                    <option value="BREAKDOWN">BREAKDOWN - Perbaikan Lanjutan Masih Dibutuhkan</option>
+                    <option value="ACCIDENT HOLD">ACCIDENT HOLD - Tahan Investigasi</option>
                 </select>
                 <label>Update Lokasi (Opsional)</label>
                 <input type="text" id="us-loc" placeholder="Biarkan kosong jika tidak pindah" class="form-control">
@@ -3042,7 +3042,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
                 <div class="modal-body form-group" style="padding: 20px;">
                     <input type="hidden" id="woConfirmId">
-                    <input type="hidden" id="woConfirmTargetStatus">
                     <input type="hidden" id="woConfirmAssetId">
 
                     <div
@@ -3054,8 +3053,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         </div>
                         <div style="font-size: 0.85rem; color: #3730a3; font-weight:600;">
                             Perubahan Status: <span class="badge bg-draft" id="woConfirmFromStatus"></span> <i
-                                class="fa-solid fa-arrow-right"></i> <span class="badge bg-progress"
-                                id="woConfirmToStatus"></span>
+                                class="fa-solid fa-arrow-right"></i> 
+                            <select id="woConfirmToStatus" class="form-control" style="display:inline-block; width:auto; padding: 2px 24px 2px 8px; font-size: 0.85rem; height: auto; border-radius: 12px; font-weight: bold; background-color: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe;" onchange="window.updateWoConfirmAutofill()">
+                                <option value="Open">Open</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Waiting Part">Waiting Part</option>
+                                <option value="Closed">Closed</option>
+                            </select>
                         </div>
                     </div>
 
@@ -3087,6 +3091,40 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <button class="btn btn-primary" onclick="submitWoStatusChange()"><i
                                 class="fa-solid fa-check"></i> Simpan & Update Status WO</button>
                     </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal PM Card Details -->
+        <div class="modal-overlay" id="modalPmCardDetails">
+            <div class="modal-content" style="max-width: 900px; width: 95%;">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+                    <h2 style="margin: 0; font-size: 1.2rem;" id="pmCardDetailsTitle">
+                        <i class="fa-solid fa-list" style="color: var(--primary);"></i>
+                        Detail Data
+                    </h2>
+                    <button onclick="closeModal('modalPmCardDetails')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 20px; overflow-x: auto; max-height: 70vh; overflow-y: auto;">
+                    <table class="pm-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Unit & Model</th>
+                                <th>Target PM</th>
+                                <th>HM/KM Terakhir</th>
+                                <th>Service Terakhir</th>
+                                <th>Selisih</th>
+                                <th>Status</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pmCardDetailsBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border); padding: 15px 20px; background: #fafafa; border-radius: 0 0 12px 12px;">
+                    <button class="btn btn-secondary" onclick="closeModal('modalPmCardDetails')">Tutup</button>
                 </div>
             </div>
         </div>
@@ -3370,43 +3408,34 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 return { bind };
             })();
 
-            window.openWoStatusConfirmModal = function (woId, fromStatus, toStatus, assetId, issue) {
-                const allowedStatuses = ['Open', 'In Progress', 'Closed'];
-                const wo = getWoById(woId);
-                if (!wo || !allowedStatuses.includes(toStatus) || wo.status === toStatus) return;
+            window.updateWoConfirmAutofill = function (passedWoId, passedAssetId, passedIssue, passedMechanic) {
+                const woId = passedWoId || document.getElementById('woConfirmId').value;
+                const assetId = passedAssetId || document.getElementById('woConfirmAssetId').value;
+                
+                let issue = passedIssue || '';
+                let assignedTo = passedMechanic;
+                
+                if (!issue || !assignedTo) {
+                    const wo = getWoById(woId);
+                    if (wo) {
+                        issue = String(wo.issue || wo.description || '');
+                        assignedTo = wo.assignedTo || 'Mekanik';
+                    }
+                }
 
-                fromStatus = wo.status;
-                assetId = wo.assetId || wo.unitId || assetId || '';
-                issue = String(wo.issue || wo.description || issue || '');
-
-                // Tidak boleh ada modal detail lain yang menutupi konfirmasi status.
-                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
-                    if (modal.id && modal.id !== 'modalWoStatusConfirm') closeModal(modal.id);
-                });
-
-                document.getElementById('woConfirmId').value = woId;
-                document.getElementById('woConfirmTargetStatus').value = toStatus;
-                document.getElementById('woConfirmAssetId').value = assetId;
-
-                document.getElementById('woConfirmIdLabel').textContent = woId;
-                document.getElementById('woConfirmAssetLabel').textContent = assetId;
-
-                const fromBadge = document.getElementById('woConfirmFromStatus');
-                const toBadge = document.getElementById('woConfirmToStatus');
-                if (fromBadge) fromBadge.textContent = fromStatus;
-                if (toBadge) toBadge.textContent = toStatus;
-
+                const toStatus = document.getElementById('woConfirmToStatus').value;
+                
                 // Autofill Mechanic
                 const mechanicSelect = document.getElementById('woConfirmMechanic');
-                if (mechanicSelect) mechanicSelect.selectedIndex = 0;
-                if (mechanicSelect && wo && wo.assignedTo && wo.assignedTo !== 'Pending') {
+                if (mechanicSelect && assignedTo && assignedTo !== 'Pending') {
                     for (let option of mechanicSelect.options) {
-                        if (option.value.includes(wo.assignedTo)) {
+                        if (option.value.includes(assignedTo)) {
                             option.selected = true;
                             break;
                         }
                     }
                 }
+                const currentMechanic = mechanicSelect ? mechanicSelect.value : 'Mekanik';
 
                 // Autofill Unit Effective Status based on WO transition
                 const unitStatusSelect = document.getElementById('woConfirmUnitStatus');
@@ -3420,23 +3449,55 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 // Autofill Action & Repair Log
                 const actionText = document.getElementById('woConfirmAction');
                 if (actionText) {
-                    const currentMechanic = mechanicSelect ? mechanicSelect.value : 'Mekanik';
                     const issueBrief = issue ? ` (${issue.substring(0, 40)})` : '';
                     if (toStatus === 'Closed') {
                         actionText.value = `[PERBAIKAN SELESAI] Penanganan WO ${woId} pada unit ${assetId}${issueBrief} oleh ${currentMechanic} telah selesai. Unit dinyatakan READY operasional.`;
                     } else if (toStatus === 'In Progress') {
                         actionText.value = `[SEDANG DIPERBAIKI] Pengerjaan WO ${woId} pada unit ${assetId}${issueBrief} sedang ditangani oleh ${currentMechanic}.`;
+                    } else if (toStatus === 'Waiting Part') {
+                        actionText.value = `[MENUNGGU PART] Pengerjaan WO ${woId} pada unit ${assetId}${issueBrief} ditunda sementara menunggu ketersediaan sparepart.`;
                     } else {
                         actionText.value = `[PENGAJUAN ULANG] WO ${woId} unit ${assetId} dikembalikan ke antrean Open.`;
                     }
                 }
+            };
+
+            window.openWoStatusConfirmModal = function (woId, fromStatus, toStatus, assetId, issue) {
+                const allowedStatuses = ['Open', 'In Progress', 'Waiting Part', 'Closed'];
+                const wo = getWoById(woId);
+                
+                if (!toStatus) toStatus = 'Closed';
+                
+                if (!wo || !allowedStatuses.includes(toStatus) || wo.status === toStatus) return;
+
+                fromStatus = wo.status;
+                assetId = wo.assetId || wo.unitId || assetId || '';
+                issue = String(wo.issue || wo.description || issue || '');
+
+                // Tidak boleh ada modal detail lain yang menutupi konfirmasi status.
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    if (modal.id && modal.id !== 'modalWoStatusConfirm') closeModal(modal.id);
+                });
+
+                document.getElementById('woConfirmId').value = woId;
+                document.getElementById('woConfirmAssetId').value = assetId;
+
+                document.getElementById('woConfirmIdLabel').textContent = woId;
+                document.getElementById('woConfirmAssetLabel').textContent = assetId;
+
+                const fromBadge = document.getElementById('woConfirmFromStatus');
+                const toSelect = document.getElementById('woConfirmToStatus');
+                if (fromBadge) fromBadge.textContent = fromStatus;
+                if (toSelect) toSelect.value = toStatus;
+
+                window.updateWoConfirmAutofill(woId, assetId, issue, wo.assignedTo);
 
                 openModal('modalWoStatusConfirm');
             };
 
             window.submitWoStatusChange = async function () {
                 const woId = document.getElementById('woConfirmId').value;
-                const targetStatus = document.getElementById('woConfirmTargetStatus').value;
+                const targetStatus = document.getElementById('woConfirmToStatus').value;
                 const assetId = document.getElementById('woConfirmAssetId').value;
                 const mechanic = document.getElementById('woConfirmMechanic').value;
                 const actionLog = document.getElementById('woConfirmAction').value;
@@ -4026,12 +4087,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
             };
 
-            window.openIntegratedStatusUpdate = function (assetId) {
+            window.openIntegratedStatusUpdate = function (assetId, defaultTargetStatus = null) {
                 const asset = globalData && globalData.assets.find(item => item.id === assetId);
                 if (!asset) return;
                 document.getElementById('us-id').value = asset.id;
                 document.getElementById('us-id-label').textContent = asset.id;
-                document.getElementById('us-status').value = asset.status;
+                document.getElementById('us-status').value = defaultTargetStatus || asset.status;
                 document.getElementById('us-loc').value = '';
                 document.getElementById('us-notes').value = '';
                 closeModal('assetModal');
@@ -4900,6 +4961,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div style="font-size:0.8rem; color:var(--text-main); line-height:1.35; margin-bottom:8px; font-weight:500;">
                         ${issueShort}
                     </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+                        <i class="fa-solid fa-user-gear"></i> <span style="font-weight:600;">${escapeHtml(getWorkOrderMechanic(wo))}</span>
+                    </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
                         <span style="color:var(--text-muted); font-family:var(--font-mono);">
                             ${wo.downtime ? `<i class="fa-regular fa-clock" style="color:var(--danger);"></i> <strong style="color:var(--danger);">${escapeHtml(wo.downtime)}</strong>` : '<i class="fa-regular fa-clock"></i> Normal'}
@@ -4988,7 +5052,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 `;
                             }
                         })()}
-                        <td><button type="button" class="wo-row-action" onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapeHtml(assetId)}')" aria-label="Buka detail ${escapeHtml(wo.woId)}"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></td>
+                        <td><button type="button" class="wo-row-action" onclick="window.openWoStatusConfirmModal('${escapeHtml(wo.woId)}', '${escapeHtml(wo.status)}', '${wo.status === 'Open' ? 'In Progress' : (wo.status === 'In Progress' ? 'Closed' : 'Open')}', '${escapeHtml(assetId)}')" aria-label="Konfirmasi perubahan status ${escapeHtml(wo.woId)}"><i class="fa-solid fa-pen-to-square"></i></button></td>
                     </tr>`;
                 }).join('');
             }
@@ -5088,7 +5152,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
             };
 
-            function openAssetModal(id, status, category, location, fromModal = null) {
+            function openAssetModal(id, status, category, location, fromModal = null, targetTab = 'ringkasan') {
                 previousModalId = fromModal;
                 const assetObj = globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null;
                 document.getElementById('modalAssetId').textContent = id;
@@ -5119,9 +5183,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     backBtn.style.display = previousModalId ? 'inline-flex' : 'none';
                 }
 
-                // Reset tab to Ringkasan
-                const firstTab = document.querySelector('#assetModalTabs .asset-tab');
-                if (firstTab) window.switchAssetModalTab('ringkasan', firstTab);
+                // Set Tab
+                const tabs = Array.from(document.querySelectorAll('#assetModalTabs .asset-tab'));
+                const targetEl = tabs.find(t => t.getAttribute('onclick') && t.getAttribute('onclick').includes(`'${targetTab}'`)) || tabs[0];
+                if (targetEl) window.switchAssetModalTab(targetTab, targetEl);
 
                 // Pre-render WO & P2H data for unit
                 renderModalUnitWo(id);
@@ -6046,7 +6111,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                     if (asset.status === 'READY') {
                         action = `
-                        <button class="integrated-action success" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-play"></i> Tugaskan</button>
+                        <button class="integrated-action success" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}', 'OPERATING')"><i class="fa-solid fa-play"></i> Tugaskan</button>
+                        <button class="integrated-action primary" onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}', null, 'lokasi')"><i class="fa-solid fa-gauge-high"></i> Telemetri</button>
                         <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
                     }
                     else if (asset.status === 'OPERATING') {

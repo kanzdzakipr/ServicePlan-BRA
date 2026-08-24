@@ -12489,11 +12489,11 @@
         const summary = metrics();
         panel.innerHTML = `
             <div class="pm-kpi-grid">
-                ${kpiCard('blue', 'Rencana Service', summary.total, 'unit periode Juli', 'fa-calendar-check')}
-                ${kpiCard('green', 'Realisasi', summary.completed, `${summary.achievement.toFixed(1).replace('.', ',')}% ketercapaian`, 'fa-circle-check', summary.achievement)}
-                ${kpiCard('red', 'Overdue Aktif', summary.overdue, 'belum direalisasikan', 'fa-triangle-exclamation')}
-                ${kpiCard('amber', 'Due / Due Soon', summary.dueSoon, `HM ≤ ${thresholds.HM} · KM ≤ ${thresholds.KM}`, 'fa-bell')}
-                ${kpiCard('purple', 'Isu Kualitas Data', summary.issues, 'butuh verifikasi planner', 'fa-shield-halved')}
+                ${kpiCard('blue', 'Rencana Service', summary.total, 'unit periode Juli', 'fa-calendar-check', null, 'RENCANA')}
+                ${kpiCard('green', 'Realisasi', summary.completed, `${summary.achievement.toFixed(1).replace('.', ',')}% ketercapaian`, 'fa-circle-check', summary.achievement, 'REALISASI')}
+                ${kpiCard('red', 'Overdue Aktif', summary.overdue, 'belum direalisasikan', 'fa-triangle-exclamation', null, 'OVERDUE')}
+                ${kpiCard('amber', 'Due / Due Soon', summary.dueSoon, `HM ≤ ${thresholds.HM} · KM ≤ ${thresholds.KM}`, 'fa-bell', null, 'DUE')}
+                ${kpiCard('purple', 'Isu Kualitas Data', summary.issues, 'butuh verifikasi planner', 'fa-shield-halved', null, 'ISSUES')}
             </div>
             <div class="pm-overview-grid">
                 <section class="pm-card">
@@ -12556,8 +12556,8 @@
         renderTrackerRows();
     }
 
-    function kpiCard(color, label, value, sub, icon, progress) {
-        return `<div class="pm-kpi ${color}">
+    function kpiCard(color, label, value, sub, icon, progress, type) {
+        return `<div class="pm-kpi ${color}" style="cursor:pointer;" onclick="window.openPmCardModal('${type}')" title="Klik untuk melihat tabulasi data">
             <i class="fa-solid ${icon} pm-kpi-icon"></i>
             <div class="pm-kpi-label">${label}</div>
             <div class="pm-kpi-value">${value}</div>
@@ -12565,6 +12565,74 @@
             ${progress == null ? '' : `<div class="pm-progress-track"><span style="width:${Math.min(100, progress)}%"></span></div>`}
         </div>`;
     }
+
+    window.openPmCardModal = function (type) {
+        const titleEl = document.getElementById('pmCardDetailsTitle');
+        const bodyEl = document.getElementById('pmCardDetailsBody');
+        if (!titleEl || !bodyEl) return;
+
+        let title = 'Detail Data';
+        let icon = 'fa-list';
+        
+        const plans = pmPlans.map(p => mergedPlan(p));
+        let filtered = [];
+
+        if (type === 'RENCANA') {
+            title = 'Detail Rencana Service';
+            icon = 'fa-calendar-check';
+            filtered = plans;
+        } else if (type === 'REALISASI') {
+            title = 'Detail Realisasi Service';
+            icon = 'fa-circle-check';
+            filtered = plans.filter(p => statusOf(p) === 'COMPLETED');
+        } else if (type === 'OVERDUE') {
+            title = 'Detail Overdue Aktif';
+            icon = 'fa-triangle-exclamation';
+            filtered = plans.filter(p => statusOf(p) === 'OVERDUE');
+        } else if (type === 'DUE') {
+            title = 'Detail Due / Due Soon';
+            icon = 'fa-bell';
+            filtered = plans.filter(p => {
+                const s = statusOf(p);
+                return s === 'DUE' || s === 'DUE SOON';
+            });
+        } else if (type === 'ISSUES') {
+            title = 'Detail Isu Kualitas Data';
+            icon = 'fa-shield-halved';
+            filtered = plans.filter(p => statusOf(p) === 'DATA ISSUE');
+        }
+
+        titleEl.innerHTML = `<i class="fa-solid ${icon}" style="color: var(--primary);"></i> ${title}`;
+
+        if (filtered.length === 0) {
+            bodyEl.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">Tidak ada data pada kategori ini.</td></tr>';
+        } else {
+            bodyEl.innerHTML = filtered.map(plan => {
+                const mType = meterType(plan);
+                const status = statusOf(plan);
+                const variance = varianceOf(plan) || 0;
+                const varianceStr = variance > 0 ? `+${variance.toLocaleString('id-ID')} ${mType}` : `${variance.toLocaleString('id-ID')} ${mType}`;
+                
+                let statusColor = 'var(--text-main)';
+                if (status === 'COMPLETED') statusColor = 'var(--pm-green)';
+                if (status === 'OVERDUE') statusColor = 'var(--pm-red)';
+                if (status === 'DUE' || status === 'DUE SOON') statusColor = 'var(--pm-amber)';
+                if (status === 'DATA ISSUE') statusColor = 'var(--pm-purple)';
+
+                return `<tr>
+                    <td class="pm-unit-cell"><strong>${escapeHtml(plan.code || plan.id)}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(plan.asset)}</span></td>
+                    <td>${plan.target ? plan.target.toLocaleString('id-ID') : '-'} ${mType}</td>
+                    <td>${plan.current ? plan.current.toLocaleString('id-ID') : '-'} ${mType}<br><span style="font-size:0.75rem; color:var(--text-muted);">(${escapeHtml(plan.tracking || '')})</span></td>
+                    <td>${plan.last ? plan.last.toLocaleString('id-ID') : '-'} ${mType}</td>
+                    <td style="color:${variance > 0 ? 'var(--pm-red)' : (variance < 0 ? 'var(--pm-green)' : 'inherit')}; font-weight:bold;">${varianceStr}</td>
+                    <td style="color:${statusColor}; font-weight:bold;">${status}</td>
+                    <td style="font-size:0.8rem; max-width: 200px; white-space: normal;">${escapeHtml(plan.note || '-')}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        if (typeof openModal === 'function') openModal('modalPmCardDetails');
+    };
 
     function priorityListMarkup() {
         const priority = pmPlans
@@ -12684,17 +12752,30 @@
                 </div>
                 <div class="pm-table-wrap">
                     <table class="pm-table">
-                        <thead><tr><th>Unit</th><th>Model</th><th>Total item</th><th>PN dapat digunakan</th><th>Perlu verifikasi</th><th>Kelengkapan PN</th><th>Status</th><th>Aksi</th></tr></thead>
+                        <thead><tr><th>Unit</th><th>Model</th><th>Total item</th><th>PN dapat digunakan</th><th>Perlu verifikasi</th><th>Kelengkapan PN</th><th>Status</th><th>Mekanik</th><th>Aksi</th></tr></thead>
                         <tbody>
                             ${kitReferences.map(kit => {
             const usableItems = kit.items - kit.issues;
             const readiness = Math.round(usableItems / kit.items * 100);
+            
+            let mechanicName = '-';
+            if (typeof globalData !== 'undefined' && globalData.work_orders) {
+                const activeWo = globalData.work_orders.find(w => 
+                    (w.assetId === kit.id || w.unitId === kit.id || w.assetId === kit.code || w.unitId === kit.code) && 
+                    w.status !== 'Closed' && w.status !== 'Resolved'
+                );
+                if (activeWo) {
+                    mechanicName = activeWo.assignedTo || activeWo.assigned_mechanic || activeWo.mechanic || '-';
+                }
+            }
+
             return `<tr>
                                     <td class="pm-unit-cell"><strong>${escapeHtml(kit.code)}</strong><span>${escapeHtml(kit.id)}</span></td>
                                     <td class="pm-asset-cell"><strong>${escapeHtml(kit.model)}</strong></td>
                                     <td>${kit.items}</td><td>${usableItems}</td><td>${kit.issues}</td>
                                     <td><div class="pm-kit-readiness"><div class="pm-meter-bar"><span class="${readiness < 70 ? 'danger' : readiness < 100 ? 'warning' : 'complete'}" style="width:${readiness}%"></span></div><strong>${readiness}%</strong></div></td>
                                     <td><span class="pm-status ${kit.issues ? 'due-soon' : 'completed'}">${kit.issues ? 'VERIFIKASI PN' : 'PN LENGKAP'}</span></td>
+                                    <td style="font-size: 0.8rem; font-weight: 500; color: var(--text-main);"><i class="fa-solid fa-user-gear" style="color: var(--text-muted); margin-right: 4px;"></i>${escapeHtml(mechanicName)}</td>
                                     <td><button class="pm-row-action" data-kit-detail="${kit.no}">Tinjau</button></td>
                                 </tr>`;
         }).join('')}
