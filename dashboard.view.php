@@ -713,7 +713,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                     <th>Prioritas</th>
                                     <th>Status</th>
                                     <th>Mekanik</th>
-                                    <th>Downtime</th>
+                                    <th>Target Downtime</th>
+                                    <th>Downtime Aktual</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -2891,6 +2892,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <option value="Normal">Normal (Terjadwal)</option>
                     <option value="High">High (Darurat / Breakdown)</option>
                 </select>
+                <label>Sifat Maintenance</label>
+                <select id="nwo-type" class="form-control">
+                    <option value="Corrective">Corrective (Perbaikan / Breakdown)</option>
+                    <option value="Preventive">Preventive (Perawatan Rutin / Terjadwal)</option>
+                </select>
                 <label>Keluhan / Diagnosis Awal</label>
                 <textarea id="nwo-issue" rows="3" class="form-control"
                     placeholder="Jelaskan secara detail kerusakan yang terjadi..."></textarea>
@@ -4958,7 +4964,30 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <td><span class="wo-priority-pill ${priorityClass}">${escapeHtml(wo.priority || 'Normal')}</span></td>
                         <td><span class="wo-status-pill ${statusClass}">${escapeHtml(wo.status || 'Open')}</span></td>
                         <td>${escapeHtml(mechanic)}</td>
-                        <td>${escapeHtml(wo.downtime || '0 jam 00 menit')}</td>
+                        
+                        ${(() => {
+                            // Target Downtime SOP: High/Emergency = 2 Days (2880 mins), Normal = 7 Days (10080 mins)
+                            const isHigh = wo.priority === 'High' || wo.priority === 'Emergency';
+                            const targetMins = isHigh ? 2880 : 10080;
+                            const targetStr = isHigh ? '2 Hari' : '7 Hari';
+                            
+                            const actualMins = getWorkOrderDowntimeMinutes(wo);
+                            const isOverdue = actualMins > targetMins;
+                            
+                            const actualStr = escapeHtml(wo.downtime || '0 jam 00 menit');
+                            
+                            if (isOverdue) {
+                                return `
+                                    <td><span class="badge" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:2px 8px; border-radius:12px; font-size:0.85rem;"><i class="fa-solid fa-bullseye"></i> ${targetStr}</span></td>
+                                    <td style="color:#dc2626; font-weight:700;"><i class="fa-solid fa-triangle-exclamation" title="Melebihi target downtime"></i> ${actualStr}</td>
+                                `;
+                            } else {
+                                return `
+                                    <td><span class="badge" style="background:#f8fafc; color:#64748b; border:1px solid #e2e8f0; padding:2px 8px; border-radius:12px; font-size:0.85rem;"><i class="fa-solid fa-bullseye"></i> ${targetStr}</span></td>
+                                    <td>${actualStr}</td>
+                                `;
+                            }
+                        })()}
                         <td><button type="button" class="wo-row-action" onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapeHtml(assetId)}')" aria-label="Buka detail ${escapeHtml(wo.woId)}"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></td>
                     </tr>`;
                 }).join('');
@@ -5428,6 +5457,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             async function submitNewWO() {
                 const id = document.getElementById('nwo-id').value;
                 const prio = document.getElementById('nwo-prio').value;
+                const type = document.getElementById('nwo-type') ? document.getElementById('nwo-type').value : 'Corrective';
                 const issue = document.getElementById('nwo-issue').value;
                 const down = document.getElementById('nwo-down').value;
 
@@ -5443,7 +5473,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             assetId: id,
                             status: 'Open',
                             priority: prio,
-                            issue: issue,
+                            issue: `[${type}] ${issue}`,
                             assignedTo: 'Belum ada',
                             downtime: down === 'Yes' ? '0' : '-'
                         }],
@@ -5484,10 +5514,16 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         }
 
                         globalData.work_orders.unshift({
-                            woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: issue, downtime: down === 'Yes' ? '0' : '-', status: 'Open', priority: prio, assignedTo: 'Belum ada'
+                            woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: `[${type}] ${issue}`, downtime: down === 'Yes' ? '0' : '-', status: 'Open', priority: prio, assignedTo: 'Belum ada'
                         });
 
                         closeModal('modalNewWO');
+                        
+                        if (type === 'Preventive') {
+                            showView('pm');
+                        } else {
+                            showView('wo');
+                        }
                         alert('Work Order berhasil dibuat dan tersimpan di database');
                         window.syncFleetState();
                     } else {
@@ -5945,13 +5981,39 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const cards = summaryEl.querySelectorAll('.mon-card-clickable');
                 cards.forEach(card => {
                     const cardStatus = card.getAttribute('data-status');
-                    if (cardStatus === selectedStatus) {
+                    card.classList.remove('active-filter');
+                    
+                    // Don't show indicator for ALL
+                    if (cardStatus === selectedStatus && selectedStatus !== 'ALL') {
                         card.classList.add('active-filter');
-                    } else {
-                        card.classList.remove('active-filter');
+                        
+                        // Fade out after 1 second
+                        setTimeout(() => {
+                            card.style.transition = 'all 1s ease';
+                            card.classList.remove('active-filter');
+                            setTimeout(() => { card.style.transition = ''; }, 1000);
+                        }, 1000);
                     }
                 });
             }
+
+            // Global click listener to reset filter when clicking outside Monitoring KPI cards
+            document.addEventListener('click', function(e) {
+                const view = document.getElementById('view-monitoring');
+                if (view && window.getComputedStyle(view).display !== 'none') {
+                    // Check if click is outside the cards, filter dropdown, search input, and table
+                    if (!e.target.closest('#monitoringSummary') && 
+                        !e.target.closest('.monitoring-controls') && 
+                        !e.target.closest('.apexcharts-canvas') && 
+                        !e.target.closest('table') && 
+                        !e.target.closest('.unit-link-button')) {
+                        const filterEl = document.getElementById('monitoringStatusFilter');
+                        if (filterEl && filterEl.value !== 'ALL') {
+                            setMonitoringStatusFilter('ALL');
+                        }
+                    }
+                }
+            });
 
             function renderMonitoringTable(assets) {
                 if (!assets) {
@@ -6106,7 +6168,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <strong style="color:#dc2626;">${breakdownCount}</strong>
                         <div class="mon-card-ftr" style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Kerusakan Unit</div>
                     </div>
-                    <div class="purple mon-card-clickable" onclick="showView('workorder')" title="Buka modul Work Order">
+                    <div class="purple mon-card-clickable" onclick="showView('wo')" title="Buka modul Work Order">
                         <div class="mon-card-hdr">
                             <span class="mon-card-lbl">WO Aktif</span>
                             <div class="mon-card-icon purple"><i class="fa-solid fa-wrench"></i></div>
