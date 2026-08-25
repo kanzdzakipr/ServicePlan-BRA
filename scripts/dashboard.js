@@ -13373,12 +13373,30 @@
     // Data 3: Maintenance Planner Qualification & Evaluation (from Evaluasi_P_Martin_dan_Standar_Planner.md)
     const plannerCompetencyMatrix = [
         { competency: 'Dasar Maintenance Alat Berat', standard: 'D3/S1 Teknik Mesin', actual: 'D3 Akuntansi', targetLvl: 4, actualLvl: 2, gap: -2, action: 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis' },
-        { competency: 'PM Scheduling & Meter Reading', standard: 'Update Real-Time Status KM/HM', actual: 'Jadwal terbuat, Update KM tertinggal', targetLvl: 4, actualLvl: 3, gap: -1, action: 'Standardisasi Audit Meter Reading Harian Operator' },
+        { competency: 'PM Scheduling & Meter Reading', standard: 'Kepatuhan servis berkala & PM lainnya ≥95%', actual: 'Jadwal terbuat; baseline compliance belum tervalidasi', targetLvl: 4, actualLvl: 3, gap: -1, action: 'Hitung PM on-time dari due schedule, realisasi, dan meter reading tervalidasi' },
         { competency: 'Estimasi Durasi Repair', standard: 'Akurat per Komponen', actual: 'Belum menguasai estimasi waktu', targetLvl: 4, actualLvl: 2, gap: -2, action: 'Praktik & Benchmark Standard Job Time per Kategori Breakdown' },
         { competency: 'Spare Parts Control & Kitting', standard: 'Parts Ready sebelum Job Start', actual: 'Memahami Logistik, Parts Kitting belum terikat JO', targetLvl: 4, actualLvl: 3, gap: -1, action: 'Integrasi Form SPB dengan Nomor WO/PM secara Wajib' },
         { competency: 'Komunikasi Teknis Mekanik', standard: 'Kondusif & Responsif', actual: 'Komunikasi kurang terkondusif', targetLvl: 4, actualLvl: 2, gap: -2, action: 'SOP Briefing Pagi & Penerbitan JO Awal sebelum Pekerjaan Dimulai' },
         { competency: 'Analisis Machine History (CMMS)', standard: 'Prediksi & Cegah Breakdown', actual: 'Input Data aktif, Analisis belum jalan', targetLvl: 4, actualLvl: 2, gap: -2, action: 'Review Mingguan Unit Kronis (>14 Hari) & Repeat Breakdown' },
         { competency: 'Administrasi & Keuangan (KESDMAN)', standard: 'Tertib Administrasi', actual: 'Menguasai Administrasi & Akuntansi', targetLvl: 4, actualLvl: 5, gap: 1, action: 'Dipertahankan sebagai keunggulan kontrol dokumen' }
+    ];
+
+    const PLANNER_PM_MIN_TARGET = 95;
+    const plannerPmKpis = [
+        {
+            name: 'Kepatuhan Servis Berkala',
+            scope: 'Servis interval 250, 500, dan 1.000 HM/KM sesuai jadwal dan rekomendasi manual unit.',
+            formula: 'Servis berkala selesai tepat waktu ÷ seluruh servis berkala jatuh tempo × 100%',
+            evidence: 'PM schedule, meter reading, service sheet, tanggal realisasi, dan next due',
+            period: 'Bulanan · per project/lokasi'
+        },
+        {
+            name: 'Kepatuhan Preventive Maintenance Lainnya',
+            scope: 'Pekerjaan PM terencana selain servis interval, termasuk inspeksi, pelumasan, consumable, dan tindakan berbasis rekomendasi manual.',
+            formula: 'PM lainnya selesai sesuai jadwal ÷ seluruh PM lainnya yang terjadwal × 100%',
+            evidence: 'Rencana PM, WO/JO, checklist, kesiapan material, bukti realisasi, dan verifikasi supervisor',
+            period: 'Bulanan · per project/lokasi'
+        }
     ];
 
     // Data 4: Attendance & Overtime Jan 2026 (from ABSEN_DAN_LEMBUR_JANUARI_2026_YARD_KM12.md)
@@ -13438,6 +13456,26 @@
             { role: 'Disetujui (Asset Manager)', name: 'Widya Apriani', status: 'Pending TTD' }
         ]
     };
+
+    const SPL_PLANNER_REVIEW_KEY = 'fleetmonitor-planner-spl-reviews-v1';
+    const officialSplRegister = [
+        {
+            id: 'SPL-23-JUL-2026-KM12',
+            ...splJulyData
+        }
+    ];
+
+    function loadPlannerSplReviews() {
+        try {
+            const stored = JSON.parse(localStorage.getItem(SPL_PLANNER_REVIEW_KEY) || '{}');
+            return stored && typeof stored === 'object' ? stored : {};
+        } catch (error) {
+            return {};
+        }
+    }
+
+    let selectedSplReviewId = '';
+    let plannerSplReviews = loadPlannerSplReviews();
 
     // State Variables for Dynamic Calculator
     let currentHeadKPI = JSON.parse(JSON.stringify(kpiHeadIndicators));
@@ -13673,6 +13711,84 @@
                         </div>
                     </div>
 
+                    <section class="pk-planner-pm-standard" aria-labelledby="pkPlannerPmTitle">
+                        <div class="pk-planner-pm-target">
+                            <span>Standar kinerja planner</span>
+                            <strong>≥ ${PLANNER_PM_MIN_TARGET}%</strong>
+                            <small>minimum kepatuhan setiap periode</small>
+                        </div>
+                        <div class="pk-planner-pm-copy">
+                            <span class="pk-planner-pm-eyebrow"><i class="fa-solid fa-calendar-check"></i> KPI servis berkala & preventive maintenance</span>
+                            <h3 id="pkPlannerPmTitle">Sedikitnya 95% pekerjaan PM harus selesai tepat waktu</h3>
+                            <p>Target berlaku terpisah untuk servis berkala dan preventive maintenance lainnya. Nilai dihitung dari transaksi jatuh tempo dan realisasi tervalidasi; pekerjaan yang belum memiliki bukti tidak dihitung sebagai selesai.</p>
+                            <div class="pk-planner-pm-rules">
+                                <span><i class="fa-solid fa-check"></i> Target per KPI, bukan nilai gabungan</span>
+                                <span><i class="fa-solid fa-check"></i> Overdue tetap masuk denominator</span>
+                                <span><i class="fa-solid fa-check"></i> Dilaporkan bulanan per lokasi</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="pk-panel pk-planner-pm-panel">
+                        <div class="pk-panel-header">
+                            <span><i class="fa-solid fa-gauge-high"></i> Matriks KPI preventive maintenance planner</span>
+                            <span class="pk-badge pk-badge-success">Target minimum ${PLANNER_PM_MIN_TARGET}%</span>
+                        </div>
+                        <div class="pk-panel-body no-padding">
+                            <div class="table-responsive">
+                                <table class="pk-planner-pm-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Indikator KPI</th>
+                                            <th>Ruang Lingkup</th>
+                                            <th>Target</th>
+                                            <th>Formula Pengukuran</th>
+                                            <th>Periode & Bukti Wajib</th>
+                                            <th>Status Realisasi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbPlannerPmKpiBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="pk-planner-pm-footnote"><i class="fa-solid fa-circle-info"></i><span>Baseline realisasi belum ditampilkan karena sumber evaluasi belum memuat jumlah due, selesai tepat waktu, dan overdue yang tervalidasi. Target 95% tetap menjadi standar penilaian.</span></div>
+                    </div>
+
+                    <section class="pk-panel pk-spl-register-panel" aria-labelledby="pkSplRegisterTitle">
+                        <div class="pk-panel-header">
+                            <div>
+                                <span id="pkSplRegisterTitle"><i class="fa-solid fa-inbox"></i> Daftar SPL masuk untuk review planner</span>
+                                <small>Planner meninjau rincian pekerjaan setelah Head of Equipment memberikan instruksi atau persetujuan.</small>
+                            </div>
+                            <span class="pk-spl-register-count"><strong>${officialSplRegister.length}</strong> dokumen masuk</span>
+                        </div>
+                        <div class="pk-panel-body no-padding">
+                            <div class="table-responsive">
+                                <table class="pk-spl-register-table">
+                                    <thead>
+                                        <tr>
+                                            <th>No. SPL / Tanggal</th>
+                                            <th>Lokasi & Jendela Lembur</th>
+                                            <th>Personel / Pekerjaan</th>
+                                            <th>Dibuat Oleh</th>
+                                            <th>Head of Equipment</th>
+                                            <th>Status Review Planner</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbPlannerSplRegister"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div id="pkPlannerSplReviewDetail" class="pk-spl-review-detail" aria-live="polite">
+                        <div class="pk-spl-review-empty">
+                            <i class="fa-solid fa-file-circle-check"></i>
+                            <div><strong>Pilih SPL yang akan ditinjau</strong><span>Rincian personel, item pekerjaan, dan matriks otorisasi akan ditampilkan di sini.</span></div>
+                        </div>
+                    </div>
+
                     <div class="pk-matrix-grid">
                         <div class="pk-matrix-card">
                             <h4><span><i class="fa-solid fa-circle-check text-success"></i> Area Keunggulan & Kekuatan</span> <span class="pk-badge pk-badge-success">Strong</span></h4>
@@ -13744,7 +13860,7 @@
                                     <h4><i class="fa-solid fa-calendar-day text-primary"></i> 30 Hari Pertama (Fondasi)</h4>
                                     <ul>
                                         <li>Pelatihan dasar sistem mekanikal & hidrolik alat berat.</li>
-                                        <li>Standardisasi update HM/KM harian via P2H.</li>
+                                        <li>Standardisasi update HM/KM harian dan baseline kepatuhan PM.</li>
                                         <li>Penerbitan JO Awal wajib sebelum mekanik start kerja.</li>
                                     </ul>
                                 </div>
@@ -13761,7 +13877,7 @@
                                     <ul>
                                         <li>Memimpin pembuatan Weekly Maintenance Plan.</li>
                                         <li>Menghitung indikator PA, UA, MTBF, dan MTTR mandiri.</li>
-                                        <li>Evaluasi ulang matriks kompetensi & sertifikasi POP.</li>
+                                        <li>Mencapai kepatuhan servis berkala dan PM lainnya minimum 95%.</li>
                                     </ul>
                                 </div>
                             </div>
@@ -13834,41 +13950,6 @@
                         </div>
                     </div>
 
-                    <!-- Official SPL Verification Widget -->
-                    <div class="pk-panel">
-                        <div class="pk-panel-header">
-                            <span><i class="fa-solid fa-file-signature"></i> Audit Verifikasi Surat Perintah Lembur Resmi (SPL 23 Juli 2026)</span>
-                            <span class="pk-badge pk-badge-warning">Jendela Lembur: 16:00 - 17:00 (Workshop KM12)</span>
-                        </div>
-                        <div class="pk-panel-body">
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                                <div>
-                                    <h4 style="font-size:0.95rem; margin-bottom:10px;"><i class="fa-solid fa-user-gear text-primary"></i> Personel 1: Suwardi (Mekanik Welding)</h4>
-                                    <ul style="padding-left:18px; font-size:0.85rem; line-height:1.6; color:var(--text-main);">
-                                        <li>Finishing safety Underround samping kiri</li>
-                                        <li>Fabrikasi Underround Protection</li>
-                                        <li>Ganti selang sirkulasi air out</li>
-                                        <li>Pasang Kotrek gantungan ban serep WTT BK 8115 EO</li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h4 style="font-size:0.95rem; margin-bottom:10px;"><i class="fa-solid fa-user-gear text-primary"></i> Personel 2: Hendrik (Mekanik Welding)</h4>
-                                    <ul style="padding-left:18px; font-size:0.85rem; line-height:1.6; color:var(--text-main);">
-                                        <li>Fabrikasi & Repair Pintu/kunci Ombeng (plate kropos DT Isuzu ex Prabu)</li>
-                                        <li>Fabrikasi & melengkapi pasang baru Underround Protection</li>
-                                        <li>Repair Safety Underround samping kanan dan kiri</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <hr style="margin:15px 0; border:none; border-top:1px solid var(--border);">
-
-                            <h4 style="font-size:0.9rem; color:var(--dark); margin-bottom:8px;">Matriks Otorisasi & Verifikasi Tanda Tangan SPL:</h4>
-                            <div class="pk-spl-signature-grid" id="pkSplSignatures">
-                                <!-- Populated via JS -->
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
             </div>
@@ -14154,6 +14235,20 @@
         const tbody = document.getElementById('tbPlannerMatrixBody');
         if (!tbody) return;
 
+        const pmKpiBody = document.getElementById('tbPlannerPmKpiBody');
+        if (pmKpiBody) {
+            pmKpiBody.innerHTML = plannerPmKpis.map(item => `
+                <tr>
+                    <td><strong>${escapeHtml(item.name)}</strong></td>
+                    <td>${escapeHtml(item.scope)}</td>
+                    <td><span class="pk-planner-pm-target-badge">≥ ${PLANNER_PM_MIN_TARGET}%</span></td>
+                    <td><span class="pk-planner-pm-formula">${escapeHtml(item.formula)}</span></td>
+                    <td><strong>${escapeHtml(item.period)}</strong><small>${escapeHtml(item.evidence)}</small></td>
+                    <td><span class="pk-badge pk-badge-secondary">Menunggu data tervalidasi</span></td>
+                </tr>
+            `).join('');
+        }
+
         tbody.innerHTML = plannerCompetencyMatrix.map(item => {
             let gapBadge = `<span class="pk-badge pk-badge-success">+${item.gap} Level</span>`;
             if (item.gap < 0) gapBadge = `<span class="pk-badge pk-badge-danger">${item.gap} Level</span>`;
@@ -14174,6 +14269,163 @@
                 </tr>
             `;
         }).join('');
+
+        renderPlannerSplRegister();
+    }
+
+    function plannerSplHeadApproval(record) {
+        return record.approvals.find(item => item.role.includes('Head of Equipment')) || null;
+    }
+
+    function plannerSplCreator(record) {
+        return record.approvals.find(item => item.role === 'Dibuat oleh') || null;
+    }
+
+    function plannerSplTaskCount(record) {
+        return record.personnel.reduce((total, person) => total + person.tasks.length, 0);
+    }
+
+    function formatPlannerReviewTime(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return new Intl.DateTimeFormat('id-ID', {
+            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }).format(date);
+    }
+
+    function persistPlannerSplReviews() {
+        try {
+            localStorage.setItem(SPL_PLANNER_REVIEW_KEY, JSON.stringify(plannerSplReviews));
+        } catch (error) {
+            // Review tetap tersedia selama sesi saat penyimpanan lokal tidak diizinkan.
+        }
+    }
+
+    function renderPlannerSplRegister() {
+        const tbody = document.getElementById('tbPlannerSplRegister');
+        if (!tbody) return;
+
+        tbody.innerHTML = officialSplRegister.map(record => {
+            const creator = plannerSplCreator(record);
+            const headApproval = plannerSplHeadApproval(record);
+            const headApproved = Boolean(headApproval?.status.includes('Approved'));
+            const review = plannerSplReviews[record.id];
+            return `
+                <tr class="${selectedSplReviewId === record.id ? 'active' : ''}">
+                    <td><strong class="pk-spl-code">${escapeHtml(record.id)}</strong><small>${escapeHtml(record.docDate)}</small></td>
+                    <td><strong>${escapeHtml(record.location)}</strong><small>${escapeHtml(record.window)}</small></td>
+                    <td><strong>${record.personnelCount} personel</strong><small>${plannerSplTaskCount(record)} item pekerjaan · ${escapeHtml(record.totalPersonHours)}</small></td>
+                    <td><strong>${escapeHtml(creator?.name || 'Belum dicatat')}</strong><small>${escapeHtml(creator?.status || 'Status belum tersedia')}</small></td>
+                    <td><span class="pk-badge ${headApproved ? 'pk-badge-success' : 'pk-badge-warning'}">${headApproved ? 'Diketahui / disetujui' : 'Menunggu Head'}</span><small>${escapeHtml(headApproval?.name || 'Belum ditentukan')}</small></td>
+                    <td>${review
+                        ? `<span class="pk-badge pk-badge-success">Sudah ditinjau</span><small>${escapeHtml(formatPlannerReviewTime(review.reviewedAt))}</small>`
+                        : '<span class="pk-badge pk-badge-warning">Perlu ditinjau</span><small>Belum ada catatan planner</small>'}</td>
+                    <td><button type="button" class="pk-spl-review-button" data-pk-spl-review="${escapeHtml(record.id)}"><i class="fa-solid fa-eye"></i>${review ? 'Lihat Review' : 'Tinjau'}</button></td>
+                </tr>`;
+        }).join('');
+
+        tbody.querySelectorAll('[data-pk-spl-review]').forEach(button => {
+            button.addEventListener('click', () => {
+                selectedSplReviewId = button.dataset.pkSplReview;
+                renderPlannerSplRegister();
+                document.getElementById('pkPlannerSplReviewDetail')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        });
+
+        renderPlannerSplDetail();
+    }
+
+    function renderPlannerSplDetail() {
+        const detail = document.getElementById('pkPlannerSplReviewDetail');
+        if (!detail) return;
+        const record = officialSplRegister.find(item => item.id === selectedSplReviewId);
+        if (!record) {
+            detail.innerHTML = `
+                <div class="pk-spl-review-empty">
+                    <i class="fa-solid fa-file-circle-check"></i>
+                    <div><strong>Pilih SPL yang akan ditinjau</strong><span>Rincian personel, item pekerjaan, dan matriks otorisasi akan ditampilkan di sini.</span></div>
+                </div>`;
+            return;
+        }
+
+        const review = plannerSplReviews[record.id];
+        const headApproval = plannerSplHeadApproval(record);
+        const headApproved = Boolean(headApproval?.status.includes('Approved'));
+        const approvalMatrix = [
+            ...record.approvals,
+            {
+                role: 'Ditinjau oleh (Maintenance Planner)',
+                name: review?.reviewer || 'Belum ditinjau',
+                status: review ? `Reviewed · ${formatPlannerReviewTime(review.reviewedAt)}` : 'Pending Review'
+            }
+        ];
+
+        detail.innerHTML = `
+            <section class="pk-panel pk-spl-audit-panel" aria-labelledby="pkSplAuditTitle">
+                <div class="pk-spl-audit-header">
+                    <div>
+                        <span class="pk-spl-audit-eyebrow">AUDIT VERIFIKASI SPL RESMI</span>
+                        <h3 id="pkSplAuditTitle">${escapeHtml(record.id)} · ${escapeHtml(record.docDate)}</h3>
+                        <p>${escapeHtml(record.location)} · ${escapeHtml(record.window)} · ${escapeHtml(record.totalPersonHours)}</p>
+                    </div>
+                    <button type="button" class="pk-spl-close-review" data-pk-spl-close aria-label="Tutup rincian review"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="pk-spl-review-flow">
+                    <span class="complete"><i class="fa-solid fa-file-arrow-up"></i><strong>SPL masuk</strong><small>${escapeHtml(plannerSplCreator(record)?.name || 'Pembuat belum dicatat')}</small></span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                    <span class="${headApproved ? 'complete' : 'pending'}"><i class="fa-solid fa-user-tie"></i><strong>Head of Equipment</strong><small>${headApproved ? 'Diketahui / disetujui' : 'Menunggu persetujuan'}</small></span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                    <span class="${review ? 'complete' : 'pending'}"><i class="fa-solid fa-clipboard-check"></i><strong>Review Planner</strong><small>${review ? 'Sudah ditinjau' : 'Perlu ditinjau'}</small></span>
+                </div>
+                <div class="pk-spl-audit-body">
+                    <div class="pk-spl-personnel-heading">
+                        <div><span>RINCIAN PELAKSANAAN</span><h4>Personel dan item pekerjaan</h4></div>
+                        <span class="pk-spl-register-count"><strong>${record.personnelCount}</strong> personel · ${plannerSplTaskCount(record)} pekerjaan</span>
+                    </div>
+                    <div class="pk-spl-personnel-grid">
+                        ${record.personnel.map((person, index) => `
+                            <article class="pk-spl-person-card">
+                                <header><span>${String(index + 1).padStart(2, '0')}</span><div><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.role)}</small></div></header>
+                                <ol>${person.tasks.map(task => `<li>${escapeHtml(task)}</li>`).join('')}</ol>
+                                <footer><span><i class="fa-solid fa-signature"></i> TTD mulai: ${person.startTTD ? 'Ada' : 'Belum ada'}</span><span>TTD selesai: ${person.endTTD ? 'Ada' : 'Belum ada'}</span></footer>
+                            </article>`).join('')}
+                    </div>
+                    <div class="pk-spl-authorization-heading"><span>Matriks otorisasi & verifikasi tanda tangan SPL</span><small>Urutan menunjukkan pihak yang membuat, mengetahui, menyetujui, dan meninjau dokumen.</small></div>
+                    <div class="pk-spl-signature-grid">
+                        ${approvalMatrix.map(item => {
+                            const complete = item.status.includes('Approved') || item.status.includes('Reviewed');
+                            return `
+                                <div class="pk-spl-sig-box ${complete ? 'complete' : 'pending'}">
+                                    <div class="pk-role">${escapeHtml(item.role)}</div>
+                                    <div class="pk-name">${escapeHtml(item.name)}</div>
+                                    <div class="pk-status"><span class="pk-badge ${complete ? 'pk-badge-success' : 'pk-badge-warning'}">${escapeHtml(item.status)}</span></div>
+                                </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+                <footer class="pk-spl-audit-footer">
+                    <div><i class="fa-solid ${headApproved ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i><span>${headApproved ? `Head of Equipment: ${escapeHtml(headApproval.name)} telah mengetahui dokumen ini.` : 'Review planner dikunci sampai Head of Equipment menyetujui dokumen.'}</span></div>
+                    ${review
+                        ? `<span class="pk-spl-reviewed-stamp"><i class="fa-solid fa-check-double"></i> Ditinjau ${escapeHtml(formatPlannerReviewTime(review.reviewedAt))}</span>`
+                        : `<button type="button" class="pk-spl-mark-reviewed" data-pk-spl-mark-reviewed="${escapeHtml(record.id)}" ${headApproved ? '' : 'disabled'}><i class="fa-solid fa-check-double"></i>Catat sudah ditinjau Planner</button>`}
+                </footer>
+            </section>`;
+
+        detail.querySelector('[data-pk-spl-close]')?.addEventListener('click', () => {
+            selectedSplReviewId = '';
+            renderPlannerSplRegister();
+        });
+        detail.querySelector('[data-pk-spl-mark-reviewed]')?.addEventListener('click', event => {
+            const recordId = event.currentTarget.dataset.pkSplMarkReviewed;
+            plannerSplReviews[recordId] = {
+                reviewer: 'Maintenance Planner',
+                reviewedAt: new Date().toISOString(),
+                headAcknowledgedBy: headApproval?.name || ''
+            };
+            persistPlannerSplReviews();
+            renderPlannerSplRegister();
+        });
     }
 
     // Section 4: Attendance & Overtime
@@ -14201,22 +14453,6 @@
             `;
         }).join('');
 
-        // SPL Verification Matrix
-        const splGrid = document.getElementById('pkSplSignatures');
-        if (splGrid) {
-            splGrid.innerHTML = splJulyData.approvals.map(app => {
-                let badgeCls = 'pk-badge-success';
-                if (app.status.indexOf('Pending') > -1) badgeCls = 'pk-badge-warning';
-
-                return `
-                    <div class="pk-spl-sig-box">
-                        <div class="pk-role">${escapeHtml(app.role)}</div>
-                        <div class="pk-name">${escapeHtml(app.name)}</div>
-                        <div class="pk-status"><span class="pk-badge ${badgeCls}">${escapeHtml(app.status)}</span></div>
-                    </div>
-                `;
-            }).join('');
-        }
     }
 
     // Global Export Function
@@ -14225,6 +14461,9 @@
         const rows = currentHeadKPI.map(item => [
             item.aspect, item.indicator, item.target, item.score, item.weight, ((item.score * item.weight) / 5).toFixed(1), item.notes
         ]);
+        plannerPmKpis.forEach(item => rows.push([
+            'KPI Maintenance Planner', item.name, `≥ ${PLANNER_PM_MIN_TARGET}%`, '', '', '', `${item.formula}; ${item.period}; bukti: ${item.evidence}`
+        ]));
 
         const csv = [headers, ...rows].map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')).join('\r\n');
         const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
