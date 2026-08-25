@@ -12521,18 +12521,40 @@ body.sl-modal-open {
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
     display: flex;
+    cursor: pointer;
+    font: inherit;
     justify-content: space-between;
     min-height: 94px;
     padding: 16px 18px;
     position: relative;
+    text-align: left;
     overflow: hidden;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 100%;
 }
 
 .sl-kpi-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
     border-color: #cbd5e1;
+}
+
+.sl-kpi-card:focus-visible {
+    box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.16), 0 10px 24px rgba(15, 23, 42, 0.08);
+    outline: 2px solid #0284c7;
+    outline-offset: 2px;
+}
+
+.sl-kpi-card.active {
+    background: #f8fbff;
+    border-color: #7dd3fc;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.1), 0 10px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+}
+
+.sl-kpi-card.active > i {
+    opacity: 1;
+    transform: scale(1.08);
 }
 
 .sl-kpi-card::before {
@@ -12594,6 +12616,82 @@ body.sl-modal-open {
 .sl-kpi-card.info > i { color: #0891b2; }
 .sl-kpi-card.success > i { color: #10b981; }
 .sl-kpi-card.danger > i { color: #ef4444; }
+
+.sl-kpi-detail {
+    background: #ffffff;
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    box-shadow: 0 10px 32px rgba(15, 23, 42, 0.07);
+    margin: -8px 0 22px;
+    overflow: hidden;
+}
+
+.sl-kpi-detail.ready {
+    border-color: #bbf7d0;
+}
+
+.sl-kpi-detail.rtw {
+    border-color: #fecaca;
+}
+
+.sl-kpi-detail-actions {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+    gap: 8px;
+}
+
+.sl-kpi-detail-actions > button {
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    color: #64748b;
+    cursor: pointer;
+    display: inline-flex;
+    height: 30px;
+    justify-content: center;
+    transition: all 0.15s ease;
+    width: 30px;
+}
+
+.sl-kpi-detail-actions > button:hover,
+.sl-kpi-detail-actions > button:focus-visible {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+    outline: none;
+}
+
+.sl-table-wrap.sl-kpi-table-wrap {
+    max-height: 430px !important;
+    min-height: 0 !important;
+}
+
+.sl-kpi-table {
+    min-width: 1320px;
+}
+
+.sl-kpi-table td > strong:not(.sl-wo-code):not(.sl-part-code) {
+    color: #0f172a;
+}
+
+.sl-part-code {
+    color: #0369a1;
+    display: block;
+    font-family: 'JetBrains Mono', monospace, sans-serif;
+    font-size: 0.75rem;
+    max-width: 190px;
+}
+
+.sl-rtw-inline {
+    color: #64748b;
+    font-weight: 700;
+}
+
+.sl-rtw-inline.danger {
+    color: #dc2626;
+}
 
 .sl-catalog-panel,
 .sl-table-panel {
@@ -13722,6 +13820,19 @@ body.sl-modal-open {
 
     .sl-kpi-card strong {
         font-size: 1.25rem;
+    }
+
+    .sl-kpi-card > i {
+        font-size: 1.35rem;
+    }
+
+    .sl-kpi-detail {
+        margin-top: -10px;
+    }
+
+    .sl-kpi-detail-actions {
+        justify-content: space-between;
+        width: 100%;
     }
 
     .sl-catalog-heading,

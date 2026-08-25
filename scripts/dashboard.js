@@ -3531,6 +3531,7 @@
         assetStatus: 'ALL',
         withPage: 1,
         withoutPage: 1,
+        activeKpi: '',
         modal: null
     };
     let records = [];
@@ -3912,19 +3913,182 @@
             </section>`;
     }
 
-    function renderKpis() {
+    function kpiSnapshot() {
         const assets = uniqueAssets();
-        const withParts = assets.filter(asset => recordsForAsset(asset.id).length).length;
-        const readyLines = records.filter(record => READY_STATUSES.has(record.status)).length;
-        const delayedLines = records.filter(record => record.status === 'Tertunda').length;
-        const rtwUnits = new Set(records.filter(record => record.rtwImpact && !READY_STATUSES.has(record.status)).map(record => record.assetId)).size;
+        const units = assets.filter(asset => recordsForAsset(asset.id).length);
+        const ready = records.filter(record => READY_STATUSES.has(record.status));
+        const pendingRtw = records.filter(record => record.rtwImpact && !READY_STATUSES.has(record.status));
+        const rtw = Array.from(new Set(pendingRtw.map(record => record.assetId)))
+            .map(assetId => ({
+                asset: assetById(assetId) || { id: assetId, category: 'Unit tidak ditemukan', location: '-', status: '-' },
+                items: pendingRtw.filter(record => record.assetId === assetId)
+            }))
+            .sort((left, right) => shortCode(left.asset.id).localeCompare(shortCode(right.asset.id), 'id', { numeric: true }));
+        return {
+            assets,
+            units,
+            items: [...records],
+            ready,
+            rtw,
+            delayedLines: records.filter(record => record.status === 'Tertunda').length
+        };
+    }
+
+    function kpiUnitCell(asset) {
+        return `
+            <div class="sl-unit-cell">
+                <span class="sl-unit-icon muted"><i class="fa-solid ${assetIcon(asset)}"></i></span>
+                <div><strong>${escapeHtml(shortCode(asset.id))}</strong><small title="${escapeHtml(asset.id)}">${escapeHtml(asset.category || 'Alat Berat')}</small></div>
+            </div>`;
+    }
+
+    function kpiLocationCell(asset) {
+        return `
+            <div class="sl-location-cell">
+                <span title="${escapeHtml(asset.location || '')}">${escapeHtml(asset.location || 'Lokasi belum ditetapkan')}</span>
+                <small class="sl-asset-status ${escapeHtml(String(asset.status || 'READY').toLowerCase())}">${escapeHtml(asset.status || 'READY')}</small>
+            </div>`;
+    }
+
+    function kpiAccessButton(assetId) {
+        return `<button class="sl-access-button" type="button" data-sl-action="open" data-asset-id="${escapeHtml(assetId)}"><i class="fa-solid fa-arrow-up-right-from-square"></i>Akses</button>`;
+    }
+
+    function procurementLabel(summary) {
+        if (summary.delayed) return `${summary.delayed} tertunda`;
+        if (summary.ready === summary.itemCount) return 'Siap / diserahkan';
+        if (summary.progress) return 'Dalam pengadaan';
+        return 'Menunggu proses';
+    }
+
+    function renderUnitsKpiRows(units) {
+        return units.map(asset => {
+            const summary = summaryForAsset(asset.id);
+            const workOrders = activeWorkOrders(asset.id);
+            const fulfilment = summary.requested ? Math.round((summary.available / summary.requested) * 100) : 0;
+            return `
+                <tr>
+                    <td>${kpiUnitCell(asset)}</td>
+                    <td>${kpiLocationCell(asset)}</td>
+                    <td>${workOrders.length ? `<strong class="sl-wo-code">${escapeHtml(workOrders[0].woId)}</strong><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(workOrders[0].priority || 'Normal')}</small>` : '<span class="sl-empty-value">Tidak ada WO aktif</span>'}</td>
+                    <td><div class="sl-item-counter ${summary.overall}"><strong>${summary.itemCount}</strong><span>item<small>${summary.requested} total qty</small></span></div></td>
+                    <td><div class="sl-fulfilment"><div><strong>${summary.available}/${summary.requested}</strong><span>${fulfilment}% tersedia</span></div><span class="sl-progress"><i style="width:${Math.min(fulfilment, 100)}%"></i></span></div></td>
+                    <td><span class="sl-procurement-badge ${summary.overall}">${procurementLabel(summary)}</span><small>${formatDate(summary.latest)}</small></td>
+                    <td><span class="sl-rtw-chip ${summary.rtwImpact ? 'danger' : 'neutral'}">${summary.rtwImpact ? 'RTW terdampak' : 'Tidak berdampak'}</span></td>
+                    <td>${kpiAccessButton(asset.id)}</td>
+                </tr>`;
+        }).join('');
+    }
+
+    function renderItemsKpiRows(items, readyOnly = false) {
+        return items.map(item => {
+            const asset = assetById(item.assetId) || { id: item.assetId, category: 'Unit tidak ditemukan', location: '-', status: '-' };
+            const available = Number(item.qtyAvailable) || 0;
+            const requested = Number(item.qtyRequested) || 0;
+            return `
+                <tr>
+                    <td><strong class="sl-part-code">${escapeHtml(item.partNumber || '-')}</strong><small>${escapeHtml(item.description || 'Deskripsi belum tersedia')}</small></td>
+                    <td>${kpiUnitCell(asset)}<small>${escapeHtml(asset.location || 'Lokasi belum ditetapkan')}</small></td>
+                    <td><strong>${escapeHtml(item.spbId || 'Draft SPB')}</strong><small>${escapeHtml(item.woId || 'Belum terkait WO')}</small></td>
+                    <td><strong>${readyOnly ? `${available} ${escapeHtml(item.uom || 'pcs')}` : `${requested} ${escapeHtml(item.uom || 'pcs')}`}</strong>${readyOnly ? `<small>dari ${requested} diminta</small>` : `<small>${available} tersedia</small>`}</td>
+                    <td><span class="sl-procurement-badge ${statusClass(item.status)}">${escapeHtml(item.status || 'Belum diproses')}</span><small>${readyOnly ? 'Tiba / serah' : 'ETA'}: ${escapeHtml(formatDate(item.eta))}</small></td>
+                    <td><strong>${escapeHtml(item.priority || 'Normal')}</strong>${readyOnly ? `<small>${escapeHtml(item.source || 'SPB')}</small>` : `<small><span class="sl-rtw-inline ${item.rtwImpact ? 'danger' : ''}">${item.rtwImpact ? 'RTW terdampak' : 'Tanpa dampak RTW'}</span></small>`}</td>
+                    ${readyOnly ? '' : `<td><span>${escapeHtml(item.source || 'SPB')}</span><small>${escapeHtml(formatDate(item.updatedAt))}</small></td>`}
+                    <td>${kpiAccessButton(asset.id)}</td>
+                </tr>`;
+        }).join('');
+    }
+
+    function renderRtwKpiRows(groups) {
+        return groups.map(group => {
+            const ranked = [...group.items].sort((left, right) => Number(right.status === 'Tertunda') - Number(left.status === 'Tertunda'));
+            const primary = ranked[0];
+            const requested = group.items.reduce((total, item) => total + (Number(item.qtyRequested) || 0), 0);
+            const available = group.items.reduce((total, item) => total + Math.min(Number(item.qtyAvailable) || 0, Number(item.qtyRequested) || 0), 0);
+            const refs = [...new Set(group.items.map(item => item.woId || item.spbId).filter(Boolean))];
+            const earliestEta = group.items.map(item => item.eta).filter(Boolean).sort()[0];
+            return `
+                <tr>
+                    <td>${kpiUnitCell(group.asset)}</td>
+                    <td>${kpiLocationCell(group.asset)}</td>
+                    <td><strong class="sl-wo-code">${escapeHtml(refs[0] || 'Belum ada referensi')}</strong><small>${refs.length > 1 ? `+${refs.length - 1} referensi lainnya` : escapeHtml(primary?.spbId || 'SPB belum dibuat')}</small></td>
+                    <td><strong>${escapeHtml(primary?.description || 'Part belum teridentifikasi')}</strong><small>${group.items.length > 1 ? `+${group.items.length - 1} item penghambat lainnya` : escapeHtml(primary?.partNumber || '-')}</small></td>
+                    <td><strong>${Math.max(0, requested - available)} qty</strong><small>${available}/${requested} tersedia</small></td>
+                    <td><span class="sl-procurement-badge ${statusClass(primary?.status)}">${escapeHtml(primary?.status || 'Belum diproses')}</span><small>ETA ${escapeHtml(formatDate(earliestEta))}</small></td>
+                    <td><strong>${escapeHtml(primary?.priority || 'Normal')}</strong><small>${escapeHtml(primary?.notes || 'Menunggu pemenuhan spare part')}</small></td>
+                    <td>${kpiAccessButton(group.asset.id)}</td>
+                </tr>`;
+        }).join('');
+    }
+
+    function renderKpiDrilldown(snapshot) {
+        if (!state.activeKpi) return '';
+        const definitions = {
+            units: {
+                eyebrow: 'REGISTRY UNIT BERTAUT SPARE PART',
+                title: 'Daftar Lengkap Unit Dengan Part',
+                description: 'Satu baris per unit, berikut Work Order, pemenuhan, proses pengadaan, dan dampak RTW.',
+                count: snapshot.units.length,
+                columns: ['Unit / Tipe', 'Lokasi & Status', 'Work Order', 'Jumlah Item / Qty', 'Ketersediaan', 'Status Pengadaan', 'Dampak RTW', 'Aksi'],
+                rows: renderUnitsKpiRows(snapshot.units)
+            },
+            items: {
+                eyebrow: 'SELURUH BARIS KEBUTUHAN & PENGADAAN',
+                title: 'Daftar Lengkap Item Terpantau',
+                description: 'Setiap part ditampilkan bersama unit, referensi SPB/WO, kuantitas, ETA, prioritas, dan sumbernya.',
+                count: snapshot.items.length,
+                columns: ['Part / Deskripsi', 'Unit / Lokasi', 'SPB / WO', 'Qty Minta / Tersedia', 'Status & ETA', 'Prioritas / RTW', 'Sumber / Update', 'Aksi'],
+                rows: renderItemsKpiRows(snapshot.items)
+            },
+            ready: {
+                eyebrow: 'PART TIBA & TELAH DISERAHKAN',
+                title: 'Daftar Lengkap Part Siap',
+                description: 'Baris part yang telah tiba atau diserahkan, lengkap dengan penerima unit dan sumber transaksinya.',
+                count: snapshot.ready.length,
+                columns: ['Part / Deskripsi', 'Unit / Lokasi', 'SPB / WO', 'Qty Siap', 'Status / Tanggal', 'Prioritas / Sumber', 'Aksi'],
+                rows: renderItemsKpiRows(snapshot.ready, true)
+            },
+            rtw: {
+                eyebrow: 'KENDALA KESIAPAN UNIT',
+                title: 'Daftar Lengkap Unit RTW Terdampak',
+                description: 'Satu baris per unit yang masih menunggu part, disertai kekurangan kuantitas dan kendala utamanya.',
+                count: snapshot.rtw.length,
+                columns: ['Unit / Tipe', 'Lokasi & Status', 'WO / SPB', 'Item Penghambat', 'Kekurangan', 'Tahap & ETA', 'Prioritas / Kendala', 'Aksi'],
+                rows: renderRtwKpiRows(snapshot.rtw)
+            }
+        };
+        const definition = definitions[state.activeKpi];
+        if (!definition) return '';
+        return `
+            <section class="sl-kpi-detail ${escapeHtml(state.activeKpi)}" id="slKpiDetail" aria-live="polite">
+                <header class="sl-table-heading">
+                    <div><span class="sl-eyebrow">${definition.eyebrow}</span><h2>${definition.title}</h2><p>${definition.description}</p></div>
+                    <div class="sl-kpi-detail-actions"><span class="sl-section-count primary"><strong>${definition.count}</strong> ${state.activeKpi === 'units' || state.activeKpi === 'rtw' ? 'unit' : 'item'}</span><button type="button" data-sl-action="kpi" data-kpi="${escapeHtml(state.activeKpi)}" aria-label="Tutup tabulasi KPI"><i class="fa-solid fa-xmark"></i></button></div>
+                </header>
+                <div class="table-responsive sl-table-wrap sl-kpi-table-wrap">
+                    <table class="sl-unit-table sl-kpi-table">
+                        <thead><tr>${definition.columns.map(column => `<th>${column}</th>`).join('')}</tr></thead>
+                        <tbody>${definition.rows || `<tr><td colspan="${definition.columns.length}" class="sl-empty-row">Belum ada data pada KPI ini.</td></tr>`}</tbody>
+                    </table>
+                </div>
+                <div class="sl-table-footer"><span>Menampilkan seluruh ${definition.count} ${state.activeKpi === 'units' || state.activeKpi === 'rtw' ? 'unit' : 'item'} tanpa pembatasan halaman.</span></div>
+            </section>`;
+    }
+
+    function renderKpis() {
+        const snapshot = kpiSnapshot();
+        const card = (key, tone, label, value, note, icon) => `
+            <button type="button" class="sl-kpi-card ${tone} ${state.activeKpi === key ? 'active' : ''}" data-sl-action="kpi" data-kpi="${key}" aria-expanded="${state.activeKpi === key}" aria-controls="slKpiDetail">
+                <div><span>${label}</span><strong>${value}</strong><small>${note}</small></div><i class="fa-solid ${icon}"></i>
+            </button>`;
         return `
             <section class="sl-kpi-grid">
-                <article class="sl-kpi-card primary"><div><span>Unit Dengan Part</span><strong>${withParts}</strong><small>dari ${assets.length} unit tertabulasi</small></div><i class="fa-solid fa-boxes-stacked"></i></article>
-                <article class="sl-kpi-card info"><div><span>Total Item Terpantau</span><strong>${records.length}</strong><small>baris kebutuhan / pengadaan</small></div><i class="fa-solid fa-list-ol"></i></article>
-                <article class="sl-kpi-card success"><div><span>Part Siap</span><strong>${readyLines}</strong><small>tiba atau telah diserahkan</small></div><i class="fa-solid fa-circle-check"></i></article>
-                <article class="sl-kpi-card danger"><div><span>RTW Terdampak</span><strong>${rtwUnits}</strong><small>${delayedLines} item berstatus tertunda</small></div><i class="fa-solid fa-triangle-exclamation"></i></article>
-            </section>`;
+                ${card('units', 'primary', 'Unit Dengan Part', snapshot.units.length, `dari ${snapshot.assets.length} unit tertabulasi`, 'fa-boxes-stacked')}
+                ${card('items', 'info', 'Total Item Terpantau', snapshot.items.length, 'baris kebutuhan / pengadaan', 'fa-list-ol')}
+                ${card('ready', 'success', 'Part Siap', snapshot.ready.length, 'tiba atau telah diserahkan', 'fa-circle-check')}
+                ${card('rtw', 'danger', 'RTW Terdampak', snapshot.rtw.length, `${snapshot.delayedLines} item berstatus tertunda`, 'fa-triangle-exclamation')}
+            </section>
+            ${renderKpiDrilldown(snapshot)}`;
     }
 
     function renderToolbar() {
@@ -4422,6 +4586,10 @@
         if (action === 'overlay' && event.target !== control) return;
         if (action === 'open') {
             openForAsset(control.dataset.assetId);
+        } else if (action === 'kpi') {
+            state.activeKpi = state.activeKpi === control.dataset.kpi ? '' : control.dataset.kpi;
+            render();
+            if (state.activeKpi) requestAnimationFrame(() => document.getElementById('slKpiDetail')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
         } else if (action === 'close' || action === 'overlay') {
             closeDetail();
         } else if (action === 'reset') {
