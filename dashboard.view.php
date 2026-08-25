@@ -1139,18 +1139,16 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             <!-- VIEW: CONDITION MONITORING -->
             <div id="view-condition" class="view-section">
                 <div class="cm-page-heading">
-                    <div>
+                    <div class="cm-page-heading-copy">
                         <h1 class="page-title"><i class="fa-solid fa-stethoscope"></i> Condition Monitoring</h1>
                         <p>Inspeksi komponen kritis per-unit dan tindak lanjut terintegrasi.</p>
-                        <div
-                            style="margin-top: 15px; display: flex; gap: 10px; align-items: center; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; width: fit-content;">
-                            <label for="cm-direct-input" style="font-weight: 600; color: #334155; margin: 0;">Cek
-                                Inspeksi Dumptruck:</label>
-                            <input type="text" id="cm-direct-input" class="form-control"
-                                placeholder="Input ID (misal: DT-00049)" style="width: 250px;">
-                            <button class="btn btn-primary" onclick="ConditionMonitoring.openDirectUnit()"><i
-                                    class="fa-solid fa-search"></i> Lihat Hasil Inspeksi</button>
-                        </div>
+                    </div>
+                    <div class="cm-direct-inspection" role="search" aria-label="Cek inspeksi Dump Truck">
+                        <label for="cm-direct-input"><i class="fa-solid fa-truck-moving" aria-hidden="true"></i><span>Cek inspeksi DT</span></label>
+                        <input type="text" id="cm-direct-input" class="form-control" placeholder="Contoh: DT-00049"
+                            onkeydown="if (event.key === 'Enter') ConditionMonitoring.openDirectUnit()">
+                        <button type="button" class="btn btn-primary" onclick="ConditionMonitoring.openDirectUnit()"><i
+                                class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Lihat hasil</span></button>
                     </div>
                 </div>
                 <div id="conditionMonitoringApp" class="cm-app" aria-live="polite">
