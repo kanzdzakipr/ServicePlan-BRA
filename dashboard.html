@@ -12,12 +12,14 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
     <link rel="stylesheet" href="scripts/dashboard.css?v=20260810-1">
+    <link rel="stylesheet" href="scripts/unit-properties.css?v=20260827-1">
     <script src="scripts/auth-client.js?v=20260810-1"></script>
     <script src="scripts/rbac.js?v=20260822-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=20260810-1"></script>
+    <script src="scripts/unit-properties.js?v=20260827-1"></script>
 </head>
 
 <body>
@@ -2285,6 +2287,347 @@
                 </div>
             </div>
 
+            <!-- VIEW: HEAVY EQUIPMENT PROPERTIES & DIAGNOSTICS INSPECTOR (UNIFIED SINGLE VIEW) -->
+            <div id="view-unit-properties" class="view-section">
+                <!-- Top Navigation & Action Bar -->
+                <div class="prop-top-bar">
+                    <div class="prop-breadcrumb-group">
+                        <button type="button" class="prop-btn-back" onclick="window.backFromUnitProperties()">
+                            <i class="fa-solid fa-arrow-left"></i> Kembali
+                        </button>
+                        <div class="prop-breadcrumbs">
+                            <span>Fleet Management</span>
+                            <i class="fa-solid fa-chevron-right" style="font-size:0.65rem; color:#94a3b8;"></i>
+                            <span>Properties Alat Berat</span>
+                            <i class="fa-solid fa-chevron-right" style="font-size:0.65rem; color:#94a3b8;"></i>
+                            <strong class="prop-render-unit-id">DT-00049</strong>
+                        </div>
+                    </div>
+                    <div class="prop-top-actions">
+                        <select id="propUnitSelector" class="prop-unit-selector" onchange="window.openUnitProperties(this.value)">
+                            <!-- Populated via JS -->
+                        </select>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.printUnitProperties()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+                            <i class="fa-solid fa-print"></i> Cetak Lembar Properties
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Industrial Equipment Identity Card & Vitals -->
+                <div class="prop-spec-header-card">
+                    <div class="prop-header-main-row">
+                        <div class="prop-unit-id-block">
+                            <div class="prop-category-icon-box" id="propCategoryIcon">
+                                <i class="fa-solid fa-truck-front"></i>
+                            </div>
+                            <div class="prop-unit-title">
+                                <h1>
+                                    <span class="prop-render-unit-id">DT-00049</span>
+                                    <span id="propUnitStatusPill" class="prop-status-pill operating">
+                                        <span class="prop-pulse-dot"></span> OPERATING
+                                    </span>
+                                </h1>
+                                <div class="unit-model-subtitle">
+                                    <span id="propUnitModel">Hino Ranger FM 280 JD</span> &bull; 
+                                    Plat: <strong id="propUnitPlate" style="color:#0f172a;">B 9104 ZYT</strong> &bull; 
+                                    SN: <code id="propUnitSerial" style="color:#475569;">HINO-49821A7C</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Core Vitals Grid -->
+                    <div class="prop-vitals-bento-grid">
+                        <div class="prop-vital-cell">
+                            <div class="vital-label"><i class="fa-solid fa-gauge-high"></i> Total Jam Kerja (HM)</div>
+                            <div class="vital-val" id="propVitalHm">34.500 HM</div>
+                            <div class="vital-sub">SMR Engine Terbaca</div>
+                        </div>
+                        <div class="prop-vital-cell">
+                            <div class="vital-label"><i class="fa-solid fa-location-dot"></i> Posisi Terkini</div>
+                            <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem;">Borrow Pit Harapan Baru</div>
+                            <div class="vital-sub">Mining Sector Area</div>
+                        </div>
+                        <div class="prop-vital-cell">
+                            <div class="vital-label"><i class="fa-solid fa-heart-pulse"></i> Health Score</div>
+                            <div class="vital-val" id="propVitalHealth" style="color:#16a34a;">94%</div>
+                            <div class="vital-sub">Kondisi Prima</div>
+                        </div>
+                        <div class="prop-vital-cell">
+                            <div class="vital-label"><i class="fa-solid fa-clock"></i> Servis PM Berikut</div>
+                            <div class="vital-val" id="propVitalNextService" style="color:#0284c7; font-size:0.95rem;">PS 500 (120 HM lagi)</div>
+                            <div class="vital-sub">Estimasi 6 Hari Kerja</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: LIVE MAP & TELEMETRICS (PLACED AT TOP) -->
+                <div class="prop-section-heading">
+                    <i class="fa-solid fa-map-location-dot"></i> 1. Peta Live Telematika &amp; Status Operasional Lapangan
+                </div>
+                <div class="prop-panel-grid-top-map">
+                    <!-- Leaflet Live Map -->
+                    <div class="prop-card">
+                        <div class="prop-card-header">
+                            <h3><i class="fa-solid fa-map" style="color:#0284c7;"></i> Peta Real-Time Geofence Tambang</h3>
+                        </div>
+                        <div class="prop-card-body" style="padding:10px;">
+                            <div id="propUnitMap"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: CANbus Gauges & GPS Breadcrumb -->
+                    <div>
+                        <!-- Live Telemetry CANbus Gauges -->
+                        <div class="prop-card">
+                            <div class="prop-card-header">
+                                <h3><i class="fa-solid fa-satellite-dish" style="color:#0284c7;"></i> Live Telemetri CANbus</h3>
+                            </div>
+                            <div class="prop-card-body" style="padding:10px;">
+                                <div class="prop-telemetry-grid">
+                                    <div class="prop-gauge-box">
+                                        <div class="prop-gauge-icon"><i class="fa-solid fa-gauge"></i></div>
+                                        <div class="prop-gauge-val"><span id="propGaugeRpm">1650</span><span class="prop-gauge-unit">RPM</span></div>
+                                        <div class="prop-gauge-title">Engine Speed</div>
+                                    </div>
+                                    <div class="prop-gauge-box">
+                                        <div class="prop-gauge-icon" style="color:#ef4444;"><i class="fa-solid fa-temperature-high"></i></div>
+                                        <div class="prop-gauge-val"><span id="propGaugeCoolant">84</span><span class="prop-gauge-unit">&deg;C</span></div>
+                                        <div class="prop-gauge-title">Coolant Temp</div>
+                                    </div>
+                                    <div class="prop-gauge-box">
+                                        <div class="prop-gauge-icon" style="color:#f59e0b;"><i class="fa-solid fa-oil-can"></i></div>
+                                        <div class="prop-gauge-val"><span id="propGaugeOilPress">4.2</span><span class="prop-gauge-unit">Bar</span></div>
+                                        <div class="prop-gauge-title">Oil Pressure</div>
+                                    </div>
+                                    <div class="prop-gauge-box">
+                                        <div class="prop-gauge-icon" style="color:#16a34a;"><i class="fa-solid fa-bolt"></i></div>
+                                        <div class="prop-gauge-val"><span id="propGaugeVolt">27.6</span><span class="prop-gauge-unit">V</span></div>
+                                        <div class="prop-gauge-title">Alternator</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GPS Logs & BAST Movements -->
+                        <div class="prop-card">
+                            <div class="prop-card-header">
+                                <h3><i class="fa-solid fa-route" style="color:#0284c7;"></i> Log Koordinat &amp; BAST Terkini</h3>
+                            </div>
+                            <div class="prop-card-body" style="padding:0;">
+                                <table class="prop-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Waktu Log</th>
+                                            <th>Koordinat (Lat, Lng)</th>
+                                            <th>Speed</th>
+                                            <th>Ignition</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="propGpsLogsTableBody">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: TECHNICAL SPECIFICATIONS (LISTING FORMAT - NON-CARD) -->
+                <div class="prop-section-heading">
+                    <i class="fa-solid fa-file-lines"></i> 2. Lembar Spesifikasi Teknis Powertrain &amp; Identitas Unit (Technical Data Listing)
+                </div>
+                <div class="prop-spec-listing-container">
+                    <div class="prop-spec-list-grid" id="propSpecListGrid">
+                        <!-- Populated via JS Listing Format -->
+                    </div>
+                </div>
+
+                <!-- SECTION 3: PREVENTIVE MAINTENANCE, WO & SPARE PARTS -->
+                <div class="prop-section-heading">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> 3. Pemeliharaan Berkala (PM), Work Orders &amp; Konsumsi Suku Cadang
+                </div>
+                <!-- PM Plans Table -->
+                <div class="prop-card">
+                    <div class="prop-card-header">
+                        <h3><i class="fa-solid fa-calendar-check" style="color:#0284c7;"></i> Matriks Rencana Service Berkala (Preventive Maintenance)</h3>
+                    </div>
+                    <div class="prop-card-body" style="padding:0;">
+                        <table class="prop-table">
+                            <thead>
+                                <tr>
+                                    <th>Program Servis</th>
+                                    <th>Interval</th>
+                                    <th>Servis Terakhir</th>
+                                    <th>Target Due HM</th>
+                                    <th>Selisih (Delta)</th>
+                                    <th>Status PM</th>
+                                    <th>Estimasi Biaya</th>
+                                </tr>
+                            </thead>
+                            <tbody id="propPmPlansTableBody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="prop-panel-grid-2">
+                    <!-- Work Orders & Repair History -->
+                    <div class="prop-card">
+                        <div class="prop-card-header">
+                            <h3><i class="fa-solid fa-wrench" style="color:#0284c7;"></i> Riwayat Work Order (WO) &amp; Perbaikan</h3>
+                        </div>
+                        <div class="prop-card-body" style="padding:0;">
+                            <table class="prop-table">
+                                <thead>
+                                    <tr>
+                                        <th>No. WO</th>
+                                        <th>Tipe</th>
+                                        <th>Keluhan / Tindakan</th>
+                                        <th>Mekanik PIC</th>
+                                        <th>Downtime</th>
+                                        <th>Total Biaya</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="propWoTableBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Spare Parts History -->
+                    <div class="prop-card">
+                        <div class="prop-card-header">
+                            <h3><i class="fa-solid fa-gears" style="color:#0284c7;"></i> Log Konsumsi Suku Cadang &amp; SPB</h3>
+                        </div>
+                        <div class="prop-card-body" style="padding:0;">
+                            <table class="prop-table">
+                                <thead>
+                                    <tr>
+                                        <th>Part Number</th>
+                                        <th>Nama Suku Cadang</th>
+                                        <th>Kategori</th>
+                                        <th>Qty</th>
+                                        <th>Total Nilai</th>
+                                        <th>No. SPB</th>
+                                        <th>Tgl Pasang</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="propPartsTableBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: DIAGNOSTICS, TIRES, PAP & P2H -->
+                <div class="prop-section-heading">
+                    <i class="fa-solid fa-clipboard-check"></i> 4. Diagnostic Kondisi, 10-Tire Blueprint, Oil PAP &amp; Keselamatan
+                </div>
+                <div class="prop-panel-grid-2">
+                    <!-- Tire Schematic Blueprint -->
+                    <div class="prop-card">
+                        <div class="prop-card-header">
+                            <h3><i class="fa-solid fa-circle-dot" style="color:#0284c7;"></i> Diagram 10 Posisi Roda &amp; Tekanan Ban (PSI / RTD)</h3>
+                        </div>
+                        <div class="prop-card-body">
+                            <div class="prop-tire-chassis-container" id="propTireBlueprint">
+                                <!-- Populated via JS -->
+                            </div>
+                            <div style="display:flex; justify-content:center; gap:16px; margin-top:12px; font-size:0.75rem;">
+                                <span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:10px; height:10px; border-radius:2px; background:#22c55e;"></span> Kondisi Baik (&gt;14mm)</span>
+                                <span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:10px; height:10px; border-radius:2px; background:#f59e0b;"></span> Perlu Rotasi / Pantau</span>
+                                <span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:10px; height:10px; border-radius:2px; background:#ef4444;"></span> Kritis / Ganti</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Oil PAP Lab Sampling -->
+                    <div class="prop-card">
+                        <div class="prop-card-header">
+                            <h3><i class="fa-solid fa-flask" style="color:#0284c7;"></i> Program Analisa Pelumas (PAP Oil Wear Metals)</h3>
+                        </div>
+                        <div class="prop-card-body" style="padding:0;">
+                            <table class="prop-table">
+                                <thead>
+                                    <tr>
+                                        <th>Kompartemen</th>
+                                        <th>Tgl Sampel</th>
+                                        <th>Besi (Fe)</th>
+                                        <th>Tembaga (Cu)</th>
+                                        <th>Aluminium (Al)</th>
+                                        <th>Silikon (Si)</th>
+                                        <th>Viskositas</th>
+                                        <th>Status</th>
+                                        <th>Diagnosa Lab</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="propOilPapTableBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="prop-panel-grid-2">
+                    <!-- Daily P2H Pre-Start Inspections -->
+                    <div class="prop-card">
+                        <div class="prop-card-header">
+                            <h3><i class="fa-solid fa-clipboard-check" style="color:#0284c7;"></i> Riwayat Inspeksi P2H Harian Operator</h3>
+                        </div>
+                        <div class="prop-card-body" style="padding:0;">
+                            <table class="prop-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Shift</th>
+                                        <th>Operator</th>
+                                        <th>Hasil P2H</th>
+                                        <th>Kondisi Ban</th>
+                                        <th>Kebocoran</th>
+                                        <th>Catatan Pemeriksaan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="propP2hTableBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Accidents & Incidents -->
+                    <div class="prop-card">
+                        <div class="prop-card-header">
+                            <h3><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;"></i> Log Insiden / Investigasi Keselamatan (TAR)</h3>
+                        </div>
+                        <div class="prop-card-body" style="padding:0;">
+                            <table class="prop-table">
+                                <thead>
+                                    <tr>
+                                        <th>No. Laporan</th>
+                                        <th>Tanggal</th>
+                                        <th>Lokasi Kejadian</th>
+                                        <th>Personel Terlibat</th>
+                                        <th>Severity</th>
+                                        <th>Kronologi Singkat</th>
+                                        <th>Kerugian</th>
+                                        <th>Status CAPA</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="propAccidentTableBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -2410,8 +2753,13 @@
                     </button>
                     <h2 style="margin: 0; font-size: 1.2rem;">Detail 360&deg; Unit: <span id="modalAssetId"></span></h2>
                 </div>
-                <button onclick="closeModal('assetModal')"
-                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="closeModal('assetModal'); window.openUnitProperties(document.getElementById('modalAssetId').textContent);" style="display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:600;">
+                        <i class="fa-solid fa-sliders"></i> Buka Properties Unit
+                    </button>
+                    <button onclick="closeModal('assetModal')"
+                        style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
             </div>
             <div class="modal-body">
                 <div class="asset-tabs" id="assetModalTabs">
@@ -5408,7 +5756,7 @@
                     let checkMenu = viewName;
                     if (checkMenu === 'workorder') checkMenu = 'wo';
                     
-                    if (checkMenu !== 'dashboard' && checkMenu !== 'uc' && checkMenu !== 'archive' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
+                    if (checkMenu !== 'dashboard' && checkMenu !== 'uc' && checkMenu !== 'archive' && checkMenu !== 'unit-properties' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
                         console.warn(`RBAC: Akses ditolak untuk menu ${checkMenu}`);
                         alert('Akses Ditolak: Anda tidak memiliki hak akses untuk menu ini.');
                         if (viewName !== 'dashboard') {
@@ -5892,7 +6240,10 @@
                     return `
                     <tr class="monitoring-unit-row">
                         <td>
-                            <button class="unit-link-button" onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')">${escapeHtml(asset.id)}</button>
+                            <div style="display:inline-flex; align-items:center; gap:6px;">
+                                <button class="unit-link-button" onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')">${escapeHtml(asset.id)}</button>
+                                <a href="javascript:void(0)" onclick="window.openUnitProperties('${escapeHtml(asset.id)}')" class="unit-prop-link" title="Buka Properties Lengkap Unit ${escapeHtml(asset.id)}" style="font-size:0.75rem;"><i class="fa-solid fa-sliders"></i></a>
+                            </div>
                             <small>${escapeHtml(asset.lastUpdate || 'Belum ada waktu update')}</small>
                         </td>
                         <td>${escapeHtml(asset.category)}</td>

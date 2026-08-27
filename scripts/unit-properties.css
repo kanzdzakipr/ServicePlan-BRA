@@ -1,0 +1,611 @@
+/* ==========================================================================
+   ServicePlan-BRA - Heavy Equipment Properties & Diagnostics Inspector View
+   Stylesheet: scripts/unit-properties.css (Unified Single-View Spec Layout)
+   ========================================================================== */
+
+#view-unit-properties {
+    display: none;
+    padding-bottom: 50px;
+    animation: propFadeIn 0.25s ease-out;
+}
+
+#view-unit-properties.active {
+    display: block;
+}
+
+@keyframes propFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Top Navigation & Breadcrumb Bar --- */
+.prop-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+.prop-breadcrumb-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prop-btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.prop-btn-back:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.prop-breadcrumbs {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.prop-breadcrumbs strong {
+    color: var(--primary, #0284c7);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.prop-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prop-unit-selector {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+    min-width: 220px;
+    outline: none;
+    cursor: pointer;
+}
+
+.prop-unit-selector:focus {
+    border-color: var(--primary, #0284c7);
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+/* --- Equipment Identity & Spec Header Card --- */
+.prop-spec-header-card {
+    background: #ffffff;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.prop-header-main-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.prop-unit-id-block {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.prop-category-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    flex-shrink: 0;
+}
+
+.prop-unit-title h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prop-unit-title .unit-model-subtitle {
+    margin: 3px 0 0 0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.prop-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.prop-status-pill.operating { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+.prop-status-pill.ready { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+.prop-status-pill.standby { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.prop-status-pill.breakdown { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+.prop-status-pill.accident { background: #ffedd5; color: #c2410c; border: 1px solid #fdba74; }
+
+.prop-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+    animation: propPulse 1.8s infinite;
+}
+
+@keyframes propPulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* Spec Vitals Bento Grid */
+.prop-vitals-bento-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.prop-vital-cell {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.prop-vital-cell .vital-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 2px;
+}
+
+.prop-vital-cell .vital-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    font-family: 'Inter', sans-serif;
+}
+
+.prop-vital-cell .vital-sub {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #94a3b8;
+    margin-top: 1px;
+}
+
+/* --- Section Dividers & Headings --- */
+.prop-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 22px 0 12px 0;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.prop-section-heading i {
+    color: var(--primary, #0284c7);
+}
+
+/* --- Layout Grids --- */
+.prop-panel-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.prop-panel-grid-top-map {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 992px) {
+    .prop-panel-grid-2,
+    .prop-panel-grid-top-map {
+        grid-template-columns: 1fr;
+    }
+}
+
+.prop-card {
+    background: #ffffff;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.prop-card-header {
+    padding: 12px 16px;
+    background: #fafafa;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.prop-card-header h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.prop-card-body {
+    padding: 14px 16px;
+}
+
+/* --- Live Map Top Section --- */
+#propUnitMap {
+    height: 340px;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    z-index: 10;
+}
+
+/* Telemetry Gauges */
+.prop-telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 600px) {
+    .prop-telemetry-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.prop-gauge-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 6px;
+    text-align: center;
+    transition: transform 0.15s ease;
+}
+
+.prop-gauge-box:hover {
+    transform: translateY(-2px);
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.prop-gauge-icon {
+    font-size: 1.1rem;
+    color: var(--primary, #0284c7);
+    margin-bottom: 4px;
+}
+
+.prop-gauge-val {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.1;
+}
+
+.prop-gauge-unit {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-left: 2px;
+}
+
+.prop-gauge-title {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+
+/* --- SPECIFICATION LISTING (Bukan Card, Clean Engineering Listing) --- */
+.prop-spec-listing-container {
+    background: #ffffff;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.prop-spec-list-grid {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.prop-spec-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.prop-spec-row:last-child {
+    border-bottom: none;
+}
+
+.prop-spec-row:nth-child(even) {
+    background: #f8fafc;
+}
+
+.prop-spec-row:nth-child(odd) {
+    background: #ffffff;
+}
+
+.prop-spec-cell {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 10px 18px;
+    gap: 12px;
+}
+
+.prop-spec-cell:first-child {
+    border-right: 1px solid #e2e8f0;
+}
+
+@media (max-width: 768px) {
+    .prop-spec-row {
+        grid-template-columns: 1fr;
+    }
+    .prop-spec-cell:first-child {
+        border-right: none;
+        border-bottom: 1px solid #f1f5f9;
+    }
+}
+
+.prop-spec-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 180px;
+    flex-shrink: 0;
+}
+
+.prop-spec-label i {
+    color: var(--primary, #0284c7);
+    font-size: 0.85rem;
+}
+
+.prop-spec-val {
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #334155;
+    text-align: right;
+    word-break: break-word;
+    font-family: 'Inter', sans-serif;
+}
+
+/* --- Tire Schematic Blueprint (10-Wheel Diagram) --- */
+.prop-tire-chassis-container {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 16px;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.prop-tire-axle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+}
+
+.prop-axle-line {
+    position: absolute;
+    top: 50%;
+    left: 40px;
+    right: 40px;
+    height: 3px;
+    background: #334155;
+    z-index: 1;
+}
+
+.prop-axle-label {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #1e293b;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    z-index: 2;
+    text-transform: uppercase;
+}
+
+.prop-wheel-group {
+    display: flex;
+    gap: 6px;
+    z-index: 3;
+}
+
+.prop-tire-badge {
+    width: 52px;
+    height: 64px;
+    background: #1e293b;
+    border: 2px solid #475569;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.prop-tire-badge:hover {
+    transform: scale(1.06);
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.prop-tire-badge.good { border-color: #22c55e; background: #064e3b; }
+.prop-tire-badge.warning { border-color: #f59e0b; background: #78350f; }
+.prop-tire-badge.danger { border-color: #ef4444; background: #7f1d1d; }
+
+.prop-tire-badge .tire-pos {
+    font-size: 0.68rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.prop-tire-badge .tire-psi {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.prop-tire-badge .tire-rtd {
+    font-size: 0.6rem;
+    color: #cbd5e1;
+}
+
+/* Compact Tables inside Cards */
+.prop-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.prop-table th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.prop-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+}
+
+.prop-table tr:hover td {
+    background: #f8fafc;
+}
+
+/* Hyperlinks in Main Tables */
+.unit-prop-link {
+    color: var(--primary, #0284c7) !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s ease;
+}
+
+.unit-prop-link:hover {
+    color: #0369a1 !important;
+    text-decoration: underline !important;
+}
+
+/* Print Stylesheet for Equipment Properties Spec Sheet */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #view-unit-properties,
+    #view-unit-properties * {
+        visibility: visible;
+    }
+    #view-unit-properties {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+    }
+    .prop-top-bar,
+    .btn,
+    button {
+        display: none !important;
+    }
+    .prop-card,
+    .prop-spec-listing-container {
+        page-break-inside: avoid;
+        margin-bottom: 16px;
+    }
+}

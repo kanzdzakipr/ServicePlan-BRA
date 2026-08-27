@@ -16939,7 +16939,12 @@
                     <!-- Left: Table & Counter Header -->
                     <div class="panel">
                         <div class="panel-header">
-                            <span><i class="fa-solid fa-clock-rotate-left"></i> Status Service Berkala Unit</span>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span><i class="fa-solid fa-clock-rotate-left"></i> Status Service Berkala Unit</span>
+                                <span id="executiveServiceFilterIndicator" style="display:none; cursor:pointer;" title="Klik untuk reset filter">
+                                    <i class="fa-solid fa-filter"></i> <span id="executiveServiceFilterIndicatorText"></span> <i class="fa-solid fa-xmark"></i>
+                                </span>
+                            </div>
                             <div class="executive-service-filters">
                                 <select id="executiveServiceCategoryFilter" aria-label="Filter jenis alat berat"><option value="ALL">Semua jenis alat</option>${serviceCategories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('')}</select>
                                 <select id="executiveServiceTimeFilter" aria-label="Filter rentang waktu"><option value="ALL">Semua waktu</option><option value="TODAY">Hari ini</option><option value="WEEK">Minggu ini</option><option value="MONTH">Bulan ini</option><option value="YTD">YTD</option><option value="YEAR">Tahun ini</option></select>
@@ -16948,25 +16953,25 @@
                         <div class="panel-body">
                             <!-- 5 Counter Cards -->
                             <div class="service-counter-bar">
-                                <div class="service-counter-card danger">
+                                <div class="service-counter-card danger" data-service-status-filter="OVERDUE" title="Klik untuk memfilter status Terlambat">
                                     <div class="lbl">Terlambat</div>
-                                    <div class="val">${valTerlambat}</div>
+                                    <div class="val" id="executiveServiceValTerlambat">${valTerlambat}</div>
                                 </div>
-                                <div class="service-counter-card warning">
+                                <div class="service-counter-card warning" data-service-status-filter="TODAY" title="Klik untuk memfilter status Jatuh Tempo">
                                     <div class="lbl">Jatuh Tempo</div>
-                                    <div class="val">${valJatuhTempo}</div>
+                                    <div class="val" id="executiveServiceValJatuhTempo">${valJatuhTempo}</div>
                                 </div>
-                                <div class="service-counter-card info">
+                                <div class="service-counter-card info" data-service-status-filter="WITHIN_7_DAYS" title="Klik untuk memfilter status Service ≤ 7 Hari">
                                     <div class="lbl">Service &le; 7 Hari</div>
-                                    <div class="val">${val7Hari}</div>
+                                    <div class="val" id="executiveServiceVal7Hari">${val7Hari}</div>
                                 </div>
-                                <div class="service-counter-card success">
+                                <div class="service-counter-card success" data-service-status-filter="COMPLETED" title="Klik untuk memfilter status Selesai Bulan Ini">
                                     <div class="lbl">Selesai Bulan Ini</div>
-                                    <div class="val">${valSelesai}</div>
+                                    <div class="val" id="executiveServiceValSelesai">${valSelesai}</div>
                                 </div>
-                                <div class="service-counter-card muted">
+                                <div class="service-counter-card muted" data-service-status-filter="NO_DATA" title="Klik untuk memfilter status Belum Ada Data">
                                     <div class="lbl">Belum Ada Data</div>
-                                    <div class="val">${valBelumData}</div>
+                                    <div class="val" id="executiveServiceValBelumData">${valBelumData}</div>
                                 </div>
                             </div>
 
@@ -16987,7 +16992,12 @@
                                     <tbody id="executiveServiceTableBody">
                                         ${displayServiceRows.map(s => `
                                             <tr data-service-category="${escapeHtml(s.category)}" data-service-date="${escapeHtml(s.dateValue)}" data-service-status="${escapeHtml(s.status)}">
-                                                <td><strong>${escapeHtml(s.unit)}</strong></td>
+                                                <td>
+                                                    <a href="javascript:void(0)" onclick="window.openUnitProperties('${escapeHtml(s.unit)}')" class="unit-prop-link" title="Buka Properties Unit ${escapeHtml(s.unit)}">
+                                                        <strong>${escapeHtml(s.unit)}</strong>
+                                                        <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px; opacity:0.65;"></i>
+                                                    </a>
+                                                </td>
                                                 <td>${s.hmAktual}</td>
                                                 <td>${s.hmService}</td>
                                                 <td style="font-weight:bold; ${s.diffColor}">${s.diff}</td>
@@ -17014,19 +17024,23 @@
                                 <div class="donut-legend">
                                     <div class="donut-legend-item">
                                         <button type="button" class="executive-service-legend-link" data-service-status-filter="OVERDUE"><span class="donut-color-dot" style="background:#dc2626;"></span> Terlambat</button>
-                                        <strong>${valTerlambat} unit (${pctTerlambat}%)</strong>
+                                        <strong id="executiveServiceLegendValTerlambat">${valTerlambat} unit (${pctTerlambat}%)</strong>
                                     </div>
                                     <div class="donut-legend-item">
                                         <button type="button" class="executive-service-legend-link" data-service-status-filter="TODAY"><span class="donut-color-dot" style="background:#f59e0b;"></span> Hari Ini</button>
-                                        <strong>${valJatuhTempo} unit (${pctJatuhTempo}%)</strong>
+                                        <strong id="executiveServiceLegendValJatuhTempo">${valJatuhTempo} unit (${pctJatuhTempo}%)</strong>
                                     </div>
                                     <div class="donut-legend-item">
                                         <button type="button" class="executive-service-legend-link" data-service-status-filter="WITHIN_7_DAYS"><span class="donut-color-dot" style="background:#0284c7;"></span> &le; 7 Hari</button>
-                                        <strong>${val7Hari} unit (${pct7Hari}%)</strong>
+                                        <strong id="executiveServiceLegendVal7Hari">${val7Hari} unit (${pct7Hari}%)</strong>
                                     </div>
                                     <div class="donut-legend-item">
                                         <button type="button" class="executive-service-legend-link" data-service-status-filter="COMPLETED"><span class="donut-color-dot" style="background:#16a34a;"></span> Selesai</button>
-                                        <strong>${valSelesai} unit (${pctSelesai}%)</strong>
+                                        <strong id="executiveServiceLegendValSelesai">${valSelesai} unit (${pctSelesai}%)</strong>
+                                    </div>
+                                    <div class="donut-legend-item">
+                                        <button type="button" class="executive-service-legend-link" data-service-status-filter="NO_DATA"><span class="donut-color-dot" style="background:#64748b;"></span> Belum Ada Data</button>
+                                        <strong id="executiveServiceLegendValBelumData">${valBelumData} unit (${pctBelumData}%)</strong>
                                     </div>
                                 </div>
                             </div>
@@ -17372,45 +17386,22 @@
                 const elService = document.getElementById('apexServiceDonutChart');
                 if (elService) {
                     elService.innerHTML = '';
-                    const chartService = new ApexCharts(elService, {
-                        series: [valTerlambat, valJatuhTempo, val7Hari, valSelesai, Math.max(0, valBelumData)],
-                        labels: ['Terlambat', 'Hari Ini / Due', '≤ 7 Hari', 'Selesai', 'Belum Ada Data'],
-                        chart: {
-                            type: 'donut',
-                            height: 200,
-                            fontFamily: 'Inter, sans-serif',
-                            events: {
-                                dataPointSelection: (event, chartContext, config) => {
-                                    const filters = ['OVERDUE', 'TODAY', 'WITHIN_7_DAYS', 'COMPLETED', 'NO_DATA'];
-                                    activeServiceStatusFilter = filters[config.dataPointIndex] || 'ALL';
-                                    applyServiceFilters();
-                                }
-                            }
-                        },
-                        colors: ['#dc2626', '#f59e0b', '#0284c7', '#16a34a', '#64748b'],
-                        legend: { show: false },
-                        dataLabels: { enabled: true, formatter: (val) => val.toFixed(0) + '%' },
-                        plotOptions: {
-                            pie: {
-                                donut: {
-                                    size: '68%',
-                                    labels: {
-                                        show: true,
-                                        total: { show: true, label: 'TOTAL UNIT', formatter: () => sumUnits }
-                                    }
-                                }
-                            }
-                        },
-                        stroke: { width: 2, colors: ['#ffffff'] },
-                        tooltip: { y: { formatter: (val) => val + ' Unit' } }
-                    });
-                    chartService.render();
-
                     const categoryFilter = document.getElementById('executiveServiceCategoryFilter');
                     const timeFilter = document.getElementById('executiveServiceTimeFilter');
                     const serviceRows = [...document.querySelectorAll('#executiveServiceTableBody tr[data-service-date]')];
                     const serviceStatuses = ['Terlambat', 'Jatuh Tempo', 'Akan Service', 'Terjadwal', 'Selesai', 'Belum Ada Data'];
                     let activeServiceStatusFilter = 'ALL';
+                    let lastSliceClickTime = 0;
+                    let chartService = null;
+
+                    const filterLabels = {
+                        'OVERDUE': 'Terlambat',
+                        'TODAY': 'Jatuh Tempo / Hari Ini',
+                        'WITHIN_7_DAYS': 'Service ≤ 7 Hari',
+                        'COMPLETED': 'Selesai',
+                        'NO_DATA': 'Belum Ada Data'
+                    };
+
                     const isServiceDateInRange = (value, range) => {
                         const date = new Date(`${value}T00:00:00`);
                         const now = new Date();
@@ -17430,49 +17421,267 @@
                         if (range === 'YEAR') return date.getFullYear() === today.getFullYear();
                         return true;
                     };
-                    const applyServiceFilters = () => {
+
+                    const applyServiceFilters = (updateChart = false) => {
                         const category = categoryFilter?.value || 'ALL';
                         const range = timeFilter?.value || 'ALL';
-                        const counts = Object.fromEntries(serviceStatuses.map(status => [status, 0]));
+                        
+                        // Calculate full distribution for selected category & time range (NOT reduced by activeServiceStatusFilter)
+                        const scopeCounts = Object.fromEntries(serviceStatuses.map(status => [status, 0]));
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
                         const nextSevenDays = new Date(today);
                         nextSevenDays.setDate(today.getDate() + 7);
+
+                        let visibleCount = 0;
                         serviceRows.forEach(row => {
                             const date = new Date(`${row.dataset.serviceDate}T00:00:00`);
                             const status = row.dataset.serviceStatus;
                             const isToday = date.getTime() === today.getTime();
+                            
+                            const inScope = (category === 'ALL' || row.dataset.serviceCategory === category)
+                                && isServiceDateInRange(row.dataset.serviceDate, range);
+
+                            if (inScope) {
+                                scopeCounts[status] = (scopeCounts[status] || 0) + 1;
+                            }
+
                             const statusMatches = activeServiceStatusFilter === 'ALL'
                                 || (activeServiceStatusFilter === 'OVERDUE' && status === 'Terlambat')
-                                || (activeServiceStatusFilter === 'TODAY' && status === 'Jatuh Tempo' && isToday)
-                                || (activeServiceStatusFilter === 'WITHIN_7_DAYS' && status === 'Terjadwal' && date >= today && date <= nextSevenDays)
+                                || (activeServiceStatusFilter === 'TODAY' && status === 'Jatuh Tempo')
+                                || (activeServiceStatusFilter === 'WITHIN_7_DAYS' && (status === 'Terjadwal' || status === 'Akan Service'))
                                 || (activeServiceStatusFilter === 'COMPLETED' && status === 'Selesai')
                                 || (activeServiceStatusFilter === 'NO_DATA' && status === 'Belum Ada Data');
-                            const visible = (category === 'ALL' || row.dataset.serviceCategory === category)
-                                && isServiceDateInRange(row.dataset.serviceDate, range)
-                                && statusMatches;
+
+                            const visible = inScope && statusMatches;
                             row.hidden = !visible;
-                            if (visible) counts[row.dataset.serviceStatus] = (counts[row.dataset.serviceStatus] || 0) + 1;
+                            if (visible) visibleCount++;
                         });
-                        const chartSeries = [
-                            counts['Terlambat'] || 0,
-                            counts['Jatuh Tempo'] || 0,
-                            (counts['Akan Service'] || 0) + (counts['Terjadwal'] || 0),
-                            counts['Selesai'] || 0,
-                            counts['Belum Ada Data'] || 0
-                        ];
-                        chartService.updateSeries(chartSeries);
-                        const total = chartSeries.reduce((sum, value) => sum + value, 0);
-                        chartService.updateOptions({ plotOptions: { pie: { donut: { labels: { total: { formatter: () => total } } } } } });
+
+                        const curTerlambat = scopeCounts['Terlambat'] || 0;
+                        const curJatuhTempo = scopeCounts['Jatuh Tempo'] || 0;
+                        const cur7Hari = (scopeCounts['Akan Service'] || 0) + (scopeCounts['Terjadwal'] || 0);
+                        const curSelesai = scopeCounts['Selesai'] || 0;
+                        const curBelumData = scopeCounts['Belum Ada Data'] || 0;
+
+                        const chartSeries = [curTerlambat, curJatuhTempo, cur7Hari, curSelesai, Math.max(0, curBelumData)];
+                        const totalScope = chartSeries.reduce((sum, value) => sum + value, 0);
+
+                        // Only update chart when category/time dropdowns change, avoiding re-render flickering on slice selection
+                        if (updateChart && chartService) {
+                            chartService.updateSeries(chartSeries);
+                            chartService.updateOptions({
+                                plotOptions: {
+                                    pie: {
+                                        donut: {
+                                            labels: {
+                                                total: {
+                                                    show: true,
+                                                    label: 'TOTAL UNIT',
+                                                    formatter: () => totalScope
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        // Update Counter Card numbers
+                        const elValT = document.getElementById('executiveServiceValTerlambat');
+                        if (elValT) elValT.textContent = curTerlambat;
+                        const elValJT = document.getElementById('executiveServiceValJatuhTempo');
+                        if (elValJT) elValJT.textContent = curJatuhTempo;
+                        const elVal7H = document.getElementById('executiveServiceVal7Hari');
+                        if (elVal7H) elVal7H.textContent = cur7Hari;
+                        const elValS = document.getElementById('executiveServiceValSelesai');
+                        if (elValS) elValS.textContent = curSelesai;
+                        const elValBD = document.getElementById('executiveServiceValBelumData');
+                        if (elValBD) elValBD.textContent = curBelumData;
+
+                        // Update Legend numbers & percentages
+                        const pctT = totalScope > 0 ? ((curTerlambat / totalScope) * 100).toFixed(0) : 0;
+                        const pctJT = totalScope > 0 ? ((curJatuhTempo / totalScope) * 100).toFixed(0) : 0;
+                        const pct7H = totalScope > 0 ? ((cur7Hari / totalScope) * 100).toFixed(0) : 0;
+                        const pctS = totalScope > 0 ? ((curSelesai / totalScope) * 100).toFixed(0) : 0;
+                        const pctBD = totalScope > 0 ? ((curBelumData / totalScope) * 100).toFixed(0) : 0;
+
+                        const legT = document.getElementById('executiveServiceLegendValTerlambat');
+                        if (legT) legT.textContent = `${curTerlambat} unit (${pctT}%)`;
+                        const legJT = document.getElementById('executiveServiceLegendValJatuhTempo');
+                        if (legJT) legJT.textContent = `${curJatuhTempo} unit (${pctJT}%)`;
+                        const leg7H = document.getElementById('executiveServiceLegendVal7Hari');
+                        if (leg7H) leg7H.textContent = `${cur7Hari} unit (${pct7H}%)`;
+                        const legS = document.getElementById('executiveServiceLegendValSelesai');
+                        if (legS) legS.textContent = `${curSelesai} unit (${pctS}%)`;
+                        const legBD = document.getElementById('executiveServiceLegendValBelumData');
+                        if (legBD) legBD.textContent = `${curBelumData} unit (${pctBD}%)`;
+
+                        // Filter indicator badge in header
+                        const filterBadge = document.getElementById('executiveServiceFilterIndicator');
+                        const filterText = document.getElementById('executiveServiceFilterIndicatorText');
+                        if (filterBadge && filterText) {
+                            if (activeServiceStatusFilter !== 'ALL') {
+                                filterText.textContent = `${filterLabels[activeServiceStatusFilter] || activeServiceStatusFilter} (${visibleCount} unit)`;
+                                filterBadge.style.display = 'inline-flex';
+                            } else {
+                                filterBadge.style.display = 'none';
+                            }
+                        }
+
+                        // Update active visual highlights on cards and legend buttons
+                        document.querySelectorAll('.service-counter-card').forEach(card => {
+                            if (card.dataset.serviceStatusFilter && card.dataset.serviceStatusFilter === activeServiceStatusFilter) {
+                                card.classList.add('active-filter');
+                            } else {
+                                card.classList.remove('active-filter');
+                            }
+                        });
+                        document.querySelectorAll('.executive-service-legend-link').forEach(link => {
+                            if (link.dataset.serviceStatusFilter && link.dataset.serviceStatusFilter === activeServiceStatusFilter) {
+                                link.classList.add('active-filter');
+                            } else {
+                                link.classList.remove('active-filter');
+                            }
+                        });
                     };
-                    categoryFilter?.addEventListener('change', applyServiceFilters);
-                    timeFilter?.addEventListener('change', applyServiceFilters);
+
+                    const setServiceStatusFilter = (filterKey) => {
+                        if (activeServiceStatusFilter === filterKey) {
+                            activeServiceStatusFilter = 'ALL'; // Toggle off if clicked again
+                        } else {
+                            activeServiceStatusFilter = filterKey || 'ALL';
+                        }
+                        applyServiceFilters(false);
+                    };
+
+                    const filters = ['OVERDUE', 'TODAY', 'WITHIN_7_DAYS', 'COMPLETED', 'NO_DATA'];
+                    chartService = new ApexCharts(elService, {
+                        series: [valTerlambat, valJatuhTempo, val7Hari, valSelesai, Math.max(0, valBelumData)],
+                        labels: ['Terlambat', 'Hari Ini / Due', '≤ 7 Hari', 'Selesai', 'Belum Ada Data'],
+                        chart: {
+                            type: 'donut',
+                            height: 200,
+                            fontFamily: 'Inter, sans-serif',
+                            animations: {
+                                enabled: true,
+                                dynamicAnimation: { enabled: false }
+                            },
+                            events: {
+                                dataPointSelection: (event, chartContext, config) => {
+                                    lastSliceClickTime = Date.now();
+                                    if (config && typeof config.dataPointIndex === 'number' && config.dataPointIndex >= 0) {
+                                        const targetFilter = filters[config.dataPointIndex] || 'ALL';
+                                        setServiceStatusFilter(targetFilter);
+                                    }
+                                },
+                                dataPointDeselection: (event, chartContext, config) => {
+                                    lastSliceClickTime = Date.now();
+                                    activeServiceStatusFilter = 'ALL';
+                                    applyServiceFilters(false);
+                                },
+                                click: (event, chartContext, config) => {
+                                    // If click just fired from slice selection, ignore
+                                    if (Date.now() - lastSliceClickTime < 300) return;
+                                    
+                                    const target = event?.target;
+                                    const isSlice = target && (target.classList?.contains('apexcharts-pie-area') || target.closest?.('.apexcharts-pie-area') || target.closest?.('.apexcharts-series'));
+                                    if (!isSlice && activeServiceStatusFilter !== 'ALL') {
+                                        activeServiceStatusFilter = 'ALL';
+                                        applyServiceFilters(false);
+                                    }
+                                }
+                            }
+                        },
+                        colors: ['#dc2626', '#f59e0b', '#0284c7', '#16a34a', '#64748b'],
+                        legend: { show: false },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: (val) => (val >= 4 ? val.toFixed(0) + '%' : ''),
+                            dropShadow: { enabled: false },
+                            style: {
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                colors: ['#ffffff']
+                            }
+                        },
+                        plotOptions: {
+                            pie: {
+                                expandOnClick: true,
+                                donut: {
+                                    size: '68%',
+                                    labels: {
+                                        show: true,
+                                        name: {
+                                            show: true,
+                                            fontSize: '11px',
+                                            fontWeight: 600,
+                                            color: '#64748b',
+                                            offsetY: -3
+                                        },
+                                        value: {
+                                            show: true,
+                                            fontSize: '18px',
+                                            fontWeight: 800,
+                                            color: '#0f172a',
+                                            offsetY: 3,
+                                            formatter: (val) => val
+                                        },
+                                        total: {
+                                            show: true,
+                                            label: 'TOTAL UNIT',
+                                            fontSize: '10px',
+                                            fontWeight: 700,
+                                            color: '#64748b',
+                                            formatter: () => sumUnits
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        stroke: { width: 2, colors: ['#ffffff'] },
+                        tooltip: { y: { formatter: (val) => val + ' Unit' } }
+                    });
+                    chartService.render();
+
+                    categoryFilter?.addEventListener('change', () => {
+                        activeServiceStatusFilter = 'ALL';
+                        applyServiceFilters(true);
+                    });
+                    timeFilter?.addEventListener('change', () => {
+                        activeServiceStatusFilter = 'ALL';
+                        applyServiceFilters(true);
+                    });
+
+                    // Click indicator badge to reset filter
+                    document.getElementById('executiveServiceFilterIndicator')?.addEventListener('click', () => {
+                        activeServiceStatusFilter = 'ALL';
+                        applyServiceFilters(false);
+                    });
+
+                    // Click on counter cards and legend buttons
                     document.querySelectorAll('[data-service-status-filter]').forEach(link => {
-                        link.addEventListener('click', () => {
-                            activeServiceStatusFilter = link.dataset.serviceStatusFilter || 'ALL';
-                            applyServiceFilters();
+                        link.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            lastSliceClickTime = Date.now();
+                            setServiceStatusFilter(link.dataset.serviceStatusFilter || 'ALL');
                         });
                     });
+
+                    // Fallback: Click on empty space in the service panel or table to reset to initial state
+                    const servicePanelSection = document.getElementById('executiveServiceTableScroll')?.closest('.dash-analytics-row');
+                    if (servicePanelSection) {
+                        servicePanelSection.addEventListener('click', (e) => {
+                            if (Date.now() - lastSliceClickTime < 300) return;
+                            if (e.target.closest('select, input, button, a, [data-service-status-filter], .apexcharts-canvas, tbody tr')) {
+                                return;
+                            }
+                            if (activeServiceStatusFilter !== 'ALL') {
+                                activeServiceStatusFilter = 'ALL';
+                                applyServiceFilters(false);
+                            }
+                        });
+                    }
                 }
 
                 // 2. Asset Category Value Donut Chart

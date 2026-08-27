@@ -11851,11 +11851,32 @@ body.cm-modal-open {
 }
 
 /* Table Text & Badges Helpers */
+.badge-soft-primary { background: #dbeafe; color: #1d4ed8; }
+.badge-soft-secondary { background: #f1f5f9; color: #475569; }
 .badge-soft-danger { background: #fee2e2; color: #dc2626; }
 .badge-soft-warning { background: #fef3c7; color: #d97706; }
 .badge-soft-info { background: #e0f2fe; color: #0284c7; }
 .badge-soft-success { background: #dcfce7; color: #16a34a; }
 .badge-soft-muted { background: #f1f5f9; color: #64748b; }
+
+#executiveServiceFilterIndicator {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+#executiveServiceFilterIndicator:hover {
+    background: #bfdbfe;
+    color: #1e40af;
+    transform: scale(1.03);
+}
 
 /* Responsive adjustments */
 @media (max-width: 1200px) {
@@ -15485,12 +15506,61 @@ body.sl-modal-open {
     border-radius: 8px;
     padding: 10px 12px;
     text-align: center;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
 .service-counter-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.service-counter-card.active-filter {
+    box-shadow: 0 0 0 2px var(--primary, #0284c7), 0 6px 16px rgba(2, 132, 199, 0.18);
+    transform: translateY(-2px);
+    background: #f8fafc;
+}
+
+.service-counter-card.active-filter.danger {
+    box-shadow: 0 0 0 2px #dc2626, 0 6px 16px rgba(220, 38, 38, 0.18);
+}
+
+.service-counter-card.active-filter.warning {
+    box-shadow: 0 0 0 2px #f59e0b, 0 6px 16px rgba(245, 158, 11, 0.18);
+}
+
+.service-counter-card.active-filter.info {
+    box-shadow: 0 0 0 2px #0284c7, 0 6px 16px rgba(2, 132, 199, 0.18);
+}
+
+.service-counter-card.active-filter.success {
+    box-shadow: 0 0 0 2px #16a34a, 0 6px 16px rgba(22, 163, 74, 0.18);
+}
+
+.service-counter-card.active-filter.muted {
+    box-shadow: 0 0 0 2px #64748b, 0 6px 16px rgba(100, 116, 139, 0.18);
+}
+
+.executive-service-legend-link {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    font-size: 0.85rem;
+    color: inherit;
+    border-radius: 4px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.executive-service-legend-link:hover {
+    background: #f1f5f9;
+}
+
+.executive-service-legend-link.active-filter {
+    background: #e0f2fe;
+    color: #0284c7;
+    font-weight: 700;
 }
 
 .service-counter-card .lbl {
