@@ -1,28 +1,31 @@
 # 📊 Laporan Bobot & Persentase Kontribusi Pengerjaan Tim ServicePlan-BRA
 
 > **Repositori**: `kanzdzakipr/ServicePlan-BRA`  
-> **Tanggal Audit**: 25 Agustus 2026  
-> **Basis Audit Git**: `fb9bd48` (`main`/`origin/main`, 25 Agustus 2026 07:50 WIB)  
+> **Tanggal Audit**: 28 Agustus 2026  
+> **Basis Audit Git**: `328f5c5` (`main`/`origin/main`, 28 Agustus 2026 10:18 WIB)  
 > **Metode Evaluasi**: Analisis Komparatif Multi-Faktor (jumlah commit, deliverable fitur, dampak arsitektur, risiko produksi yang ditutup, pengujian, data, dan dokumentasi). Angka `Git Numstat` dihitung dari commit non-merge dan dipakai sebagai bukti volume, bukan sebagai satu-satunya penentu bobot.  
-> **Skema Periode**: **Term 1** (Periode Awal s/d 27 Juli 2026) & **Term 2** (Periode Lanjutan 28 Juli – 25 Agustus 2026 per hari ini)  
+> **Skema Periode**: 
+> - **Term 1** (Periode Awal: s/d 27 Juli 2026) — `[CLOSED]`
+> - **Term 2** (Periode Lanjutan: 28 Juli – 28 Agustus 2026) — `[CLOSED FINAL]`
+> - **Term 3** (Periode Berjalan: 29 Agustus 2026 – Sekarang) — `[OPEN / ONGOING]`
 
 ---
 
 ## 🏆 Ringkasan Persentase Kontribusi Tim
 
-### 📌 1. Akumulasi Total / All-Time (Term 1 + Term 2 per 25 Agustus 2026)
+### 📌 1. Akumulasi Total / All-Time (Term 1 + Term 2 Final per 28 Agustus 2026)
 
 | Rank | Kontributor / Contributor | Total Commit | Git Numstat `+ / -` (non-merge) | Bobot Kontribusi Fitur & Arsitektur Utama | **Persentase Kontribusi Akumulasi** |
 | :---: | :--- | :---: | :---: | :--- | :---: |
-| 🥇 | **briannugraha** | 99 (36,8%) | +109.791 / -46.791 | Blueprint Implementation Plan 1 & 2, Hybrid DB Config, Asset Population, Live Map & GPS, Fuel Anomaly Engine, Cost Control, Asset 360°, Productivity & KPI, ApexCharts Engine & Chart Interactivity, Notification System, Monitoring Unit, RBAC Master Bypass, dan sinkronisasi Laragon/hosting | **38.5%** |
-| 🥈 | **seagrass489-cell** | 69 (25,7%) | +68.053 / -18.189 | Parser Engine 9.400+ baris, data completeness, backend laporan/form, arsitektur security server-side, authentication/session/CSRF/CORS/RBAC, object authorization lintas API, upload hardening, attack simulation, automated security tests, dan CI quality gate | **27.4%** |
-| 🥉 | **kanzdzakipr** | 65 (24,2%) | +10.944 / -6.420 | Inisialisasi repositori, implementasi RBAC 10 roles & navigation guards, WO target status & autofill workflow, downtime split target/actual & overdue styling, monitoring cards active filter & global reset, maintenance routing, sistem arsip DB-synced, migrasi Hostinger, anti-cache API, dan proteksi sinkronisasi Laragon | **17.7%** |
-| 4 | **bisamelihat** | 36 (13,4%) | +87.220 / -65.317 | Fondasi struktur proyek, Prisma/seeder architecture, dokumentasi model sistem, prototipe dashboard, integrasi skill UI anti-slop, sprint UI overhaul A1–A9 (interaktivitas chart drilldown, filter status service berkala), dan resolusi konflik UTF-8 | **16.4%** |
-| **TOTAL** | **4 Kontributor** | **269 Commit** | **+276.008 / -136.717** | **Skor dinormalisasi menjadi 100% berdasarkan bukti Git dan dampak deliverable** | **100.0%** |
+| 🥇 | **briannugraha** | 102 (37,1%) | +111.450 / -47.120 | Blueprint Implementation Plan 1 & 2, Hybrid DB Config, Asset Population, Live Map & GPS, Fuel Anomaly Engine, Cost Control, Asset 360°, Productivity & KPI, ApexCharts Engine, Notification System, Monitoring Unit Refurbishment, **Heavy Equipment Properties & Diagnostics Inspector**, CANbus Gauges, 10-Tire Diagram Blueprint, dan sinkronisasi Laragon/hosting | **38.7%** |
+| 🥈 | **seagrass489-cell** | 69 (25,1%) | +68.053 / -18.189 | Parser Engine 9.400+ baris, data completeness, backend laporan/form, arsitektur security server-side, authentication/session/CSRF/CORS/RBAC, object authorization lintas API, upload hardening, attack simulation, automated security tests, dan CI quality gate | **27.2%** |
+| 🥉 | **kanzdzakipr** | 65 (23,6%) | +10.944 / -6.420 | Inisialisasi repositori, implementasi RBAC 10 roles & navigation guards, WO target status & autofill workflow, downtime split target/actual & overdue styling, monitoring cards active filter & global reset, maintenance routing, sistem arsip DB-synced (`archived_items`), migrasi Hostinger, anti-cache API, dan proteksi sinkronisasi Laragon | **17.5%** |
+| 4 | **bisamelihat** | 39 (14,2%) | +89.650 / -66.120 | Fondasi struktur proyek, Prisma/seeder architecture, dokumentasi model sistem, prototipe dashboard, integrasi skill UI anti-slop, sprint UI overhaul A1–A9 (interaktivitas chart drilldown, filter status service), Condition Monitoring interactive modal per kategori, Spare Part Card, dan People & KPI Standar Kinerja / Daftar SPL | **16.6%** |
+| **TOTAL** | **4 Kontributor** | **275 Commit** | **+280.097 / -137.849** | **Skor dinormalisasi menjadi 100% berdasarkan bukti Git dan dampak deliverable komprehensif** | **100.0%** |
 
 ---
 
-### 📌 2. Evaluasi Term 1 (Periode Awal: s/d 27 Juli 2026)
+### 📌 2. Evaluasi Term 1 (Periode Awal: s/d 27 Juli 2026) — `[CLOSED]`
 
 | Rank | Kontributor / Contributor | Commit Term 1 | Git Numstat `+ / -` (non-merge) | Bobot Kontribusi Fitur & Arsitektur Term 1 | **Persentase Term 1** |
 | :---: | :--- | :---: | :---: | :--- | :---: |
@@ -34,15 +37,29 @@
 
 ---
 
-### 📌 3. Evaluasi Term 2 (Periode Lanjutan: 28 Juli – 25 Agustus 2026 per Hari Ini)
+### 📌 3. Evaluasi Term 2 (Periode Lanjutan: 28 Juli – 28 Agustus 2026) — `[CLOSED FINAL]`
 
 | Rank | Kontributor / Contributor | Commit Term 2 | Git Numstat `+ / -` (non-merge) | Bobot Kontribusi Fitur & Arsitektur Term 2 | **Persentase Term 2** |
 | :---: | :--- | :---: | :---: | :--- | :---: |
-| 🥇 | **briannugraha** | 54 (32,5%) | +54.671 / -36.502 | Hybrid DB, asset population, live maps, Condition Monitoring dual-layer, material Ban & Grease, ApexCharts engine & interactive filtering, People & KPI, notification system, Executive Dashboard, Monitoring Unit grid 3x2, RBAC master bypass, dan hosting/Laragon sync | **32.5%** |
-| 🥈 | **kanzdzakipr** | 56 (33,7%) | +8.453 / -4.723 | RBAC 10 roles & navigation guards, WO target status & autofill workflow, split downtime target vs actual & overdue styling, maintenance type routing, monitoring cards active filter & click reset, asset mapping schemas, sistem arsip MySQL `archived_items`, migrasi Hostinger, anti-cache API, dan Laragon DB protection | **31.5%** |
-| 🥉 | **seagrass489-cell** | 42 (25,3%) | +43.178 / -17.858 | Backend laporan/form, security audit & remediation, server-side authentication, secure session, CSRF/CORS, RBAC, object-level authorization pada API, secure upload/download, deployment hardening, automated security test suite, dan GitHub Actions quality gate | **28.0%** |
-| 4 | **bisamelihat** | 14 (8,4%) | +27.971 / -15.983 | Sprint UI overhaul A1–A9 (interaktivitas chart drilldown, filter status service berkala, refinement dashboard & monitoring), integrasi skill UI anti-slop, resolusi konflik UTF-8, serta sinkronisasi Laragon & maintenance seeder | **8.0%** |
-| **SUBTOTAL** | **4 Kontributor** | **166 Commit** | **+134.273 / -75.066** | **RBAC engine & navigation guards, WO workflow enhancement, UI overhaul A1-A9, security architecture & CI, sistem arsip DB, hybrid DB, ApexCharts interactivity, dan Hostinger/Laragon sync** | **100.0%** |
+| 🥇 | **briannugraha** | 57 (33,1%) | +56.330 / -36.831 | Hybrid DB, asset population, live maps, Condition Monitoring dual-layer, material Ban & Grease, ApexCharts engine & interactive filtering, People & KPI, notification system, Executive Dashboard, Monitoring Unit grid 3x2 & title cleanup, RBAC master bypass, **Heavy Equipment Properties & Diagnostics Inspector single-view (Top Live Map, CANbus Gauges, Data Listing row-by-row zebra, 10-Tire Diagram, PAP Oil & P2H)**, dan hosting/Laragon sync | **33.0%** |
+| 🥈 | **kanzdzakipr** | 56 (32,6%) | +8.453 / -4.723 | RBAC 10 roles & navigation guards, WO target status & autofill workflow, split downtime target vs actual & overdue styling, maintenance type routing, monitoring cards active filter & click reset, asset mapping schemas, sistem arsip MySQL `archived_items`, migrasi Hostinger, anti-cache API, dan Laragon DB protection | **31.0%** |
+| 🥉 | **seagrass489-cell** | 42 (24,4%) | +43.178 / -17.858 | Backend laporan/form, security audit & threat modeling, server-side authentication, secure session, CSRF/CORS, RBAC, object-level authorization pada API, secure upload/download, deployment hardening, automated security test suite, dan GitHub Actions quality gate | **27.5%** |
+| 4 | **bisamelihat** | 17 (9,9%) | +30.401 / -16.786 | Sprint UI overhaul A1–A9 (interaktivitas chart drilldown, filter status service berkala, refinement dashboard & monitoring), integrasi skill UI anti-slop, resolusi konflik UTF-8, Condition Monitoring interactive modal per kategori, Spare Part Card visual update, People & KPI Standar Kinerja & Daftar SPL, serta sinkronisasi Laragon & maintenance seeder | **8.5%** |
+| **SUBTOTAL** | **4 Kontributor** | **172 Commit** | **+138.362 / -76.198** | **RBAC engine, WO workflow enhancement, UI overhaul A1-A9, security architecture & CI, sistem arsip DB, hybrid DB, ApexCharts interactivity, Equipment Properties Inspector, Condition Monitoring category modals, dan Hostinger/Laragon sync** | **100.0%** |
+
+---
+
+### 📌 4. Evaluasi Term 3 (Periode Berjalan: 29 Agustus 2026 – Selesai) — `[OPEN / ONGOING]`
+
+> *Status: Periode Term 3 baru saja dibuka. Seluruh kontributor memulai dari baseline 0 commit & 0 numstat untuk pencatatan progres fitur, integrasi sistem, dan optimasi tahap berikutnya.*
+
+| Rank | Kontributor / Contributor | Commit Term 3 | Git Numstat `+ / -` (non-merge) | Fokus Rencana Kerja & Deliverable Term 3 | **Persentase Term 3** |
+| :---: | :--- | :---: | :---: | :--- | :---: |
+| - | **briannugraha** | 0 (0,0%) | +0 / -0 | *Fitur lanjutan, optimasi performa telematika, dan integrasi modul lanjutan* | **0.0%** |
+| - | **kanzdzakipr** | 0 (0,0%) | +0 / -0 | *Governance repositori, workflow approval lanjutan, dan deployment hosting* | **0.0%** |
+| - | **seagrass489-cell** | 0 (0,0%) | +0 / -0 | *Penetrasi testing berkala, audit kepatuhan ISO/SOP, dan optimasi query backend* | **0.0%** |
+| - | **bisamelihat** | 0 (0,0%) | +0 / -0 | *Sprint UI/UX polishing lanjutan, desain komponen forms, dan audit responsiveness* | **0.0%** |
+| **SUBTOTAL** | **4 Kontributor** | **0 Commit** | **+0 / -0** | **Tahap Pembukaan Periode Term 3 (Akan diperbarui berkala)** | **0.0%** |
 
 ---
 
@@ -53,18 +70,18 @@ Penilaian kontribusi menggunakan dua lapisan bukti:
 1. **Bukti kuantitatif Git**: jumlah commit, commit non-merge, serta `numstat` penambahan/penghapusan baris.
 2. **Dampak deliverable**: keluasan modul, kebaruan fitur, keputusan arsitektur, risiko produksi yang ditutup, pengujian otomatis, data, dan dokumentasi.
 
-Snapshot bukti kuantitatif Term 2 yang dipakai pada audit per 25 Agustus 2026:
+Snapshot bukti kuantitatif Term 2 (Final Closed per 28 Agustus 2026):
 
 | Kontributor | Porsi semua commit | Porsi commit non-merge | Porsi lines added | Skor Term 2 setelah audit deliverable |
 | :--- | ---: | ---: | ---: | ---: |
-| **briannugraha** | 32,5% | 36,9% | 40,7% | **32,5%** |
-| **kanzdzakipr** | 33,7% | 41,8% | 6,3% | **31,5%** |
-| **seagrass489-cell** | 25,3% | 28,7% | 32,2% | **28,0%** |
-| **bisamelihat** | 8,4% | 9,8% | 20,8% | **8,0%** |
+| **briannugraha** | 33,1% | 37,2% | 40,7% | **33,0%** |
+| **kanzdzakipr** | 32,6% | 41,2% | 6,1% | **31,0%** |
+| **seagrass489-cell** | 24,4% | 27,9% | 31,2% | **27,5%** |
+| **bisamelihat** | 9,9% | 11,2% | 22,0% | **8,5%** |
 
 `Lines added` tidak langsung disamakan dengan kontribusi karena dapat terdistorsi oleh impor data, pemindahan file, hasil generator, atau reformat besar. Skor akhir menormalkan bukti Git dengan dampak deliverable yang dapat diuji dan digunakan.
 
-Formula bobot periode akumulasi:
+Formula bobot periode akumulasi (Term 1 & Term 2):
 
 ```
 Total Skor Akumulasi = (Bobot Term 1 × 60%) + (Bobot Term 2 × 40%)
@@ -73,17 +90,17 @@ Total Skor Akumulasi = (Bobot Term 1 × 60%) + (Bobot Term 2 × 40%)
 ### Breakdown Distribusi Kontribusi:
 
 ```mermaid
-pie title Distribusi Persentase Kontribusi Akumulasi Total (All-Time per 25 Agustus 2026)
-    "briannugraha (38.5%)" : 38.5
-    "seagrass489-cell (27.4%)" : 27.4
-    "kanzdzakipr (17.7%)" : 17.7
-    "bisamelihat (16.4%)" : 16.4
+pie title Distribusi Persentase Kontribusi Akumulasi Total (All-Time per 28 Agustus 2026)
+    "briannugraha (38.7%)" : 38.7
+    "seagrass489-cell (27.2%)" : 27.2
+    "kanzdzakipr (17.5%)" : 17.5
+    "bisamelihat (16.6%)" : 16.6
 ```
 
 #### Perbandingan Distribusi per Term:
 
 ```mermaid
-pie title Distribusi Kontribusi Term 1 (s/d 27 Juli 2026)
+pie title Distribusi Kontribusi Term 1 (s/d 27 Juli 2026) - CLOSED
     "briannugraha (42.5%)" : 42.5
     "seagrass489-cell (27.0%)" : 27.0
     "bisamelihat (22.0%)" : 22.0
@@ -91,20 +108,20 @@ pie title Distribusi Kontribusi Term 1 (s/d 27 Juli 2026)
 ```
 
 ```mermaid
-pie title Distribusi Kontribusi Term 2 (28 Juli - 25 Agustus 2026)
-    "briannugraha (32.5%)" : 32.5
-    "kanzdzakipr (31.5%)" : 31.5
-    "seagrass489-cell (28.0%)" : 28.0
-    "bisamelihat (8.0%)" : 8.0
+pie title Distribusi Kontribusi Term 2 (28 Juli - 28 Agustus 2026) - CLOSED FINAL
+    "briannugraha (33.0%)" : 33.0
+    "kanzdzakipr (31.0)" : 31.0
+    "seagrass489-cell (27.5%)" : 27.5
+    "bisamelihat (8.5%)" : 8.5
 ```
 
 ---
 
 ## 🔍 Detail Rincian Kontribusi per Kontributor
 
-### 1. `briannugraha` — **38.5%** *(Lead Feature & Implementation Architect)*
-* **Total Commit**: 99 Commit (36,8% dari total 269 commit repositori).
-* **Breakdown Commit**: 45 Commit (Term 1) + 54 Commit (Term 2).
+### 1. `briannugraha` — **38.7%** *(Lead Feature & Implementation Architect)*
+* **Total Commit**: 102 Commit (37,1% dari total 275 commit repositori).
+* **Breakdown Commit**: 45 Commit (Term 1) + 57 Commit (Term 2) + 0 Commit (Term 3).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Implementation Plan 1 & 2**: Merancang arsitektur menyeluruh sistem monitoring alat berat ServicePlan-BRA (`implementation-plan-1.md`, `implementation-plan-2.md`).
@@ -116,23 +133,30 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 25 Agustus 2026)
   * **Term 2**:
     - **Database Normalization & Hybrid Config**: Menambahkan support konfigurasi database hybrid pada `api/db.php`, normalisasi skema SQL `ServicePlanBRA.sql`, dan sinkronisasi Laragon local environment (`7288c5d`, `8ed94b0`, `e703e3f`).
     - **Asset Population & Live Maps Update**: Penambahan populasi data aset tahap 1 & 2 (`bd0f1bc`, `260dcab`), perbaikan komponen Leaflet Live Maps dan tombol koordinat GPS (`63dcd5a`).
-    - **UI Micro-Fixes & Status Badge**: Perbaikan mojibake encoding teks, penyelarasan rendering status badge UI, dan integrasi logogram resmi BRA (`8f348cf`, `a2dbe85`).
-    - **Audit Data Completeness per 6-8 Agustus**: Melakukan peninjauan menyeluruh kesiapan 16 menu navigasi, update status dataset aktif, serta merumuskan 5 mekanisme teknis adaptasi API Controller.
+    - **UI Micro-Fixes & Status Badge**: Perbaikan encoding teks, penyelarasan rendering status badge UI, dan integrasi logogram resmi BRA (`8f348cf`, `a2dbe85`).
+    - **Audit Data Completeness**: Melakukan peninjauan menyeluruh kesiapan 16 menu navigasi, update status dataset aktif, serta merumuskan 5 mekanisme teknis adaptasi API Controller.
     - **Reform Condition Monitoring**: Implementasi Dual-Layer Modal Rendering (`#globalCmModalContainer` at `document.body` level) & Universal Asset ID Extractor Regex (`^([A-Z0-9]{1,6}-\d{2,5})`) untuk seluruh 400+ entri `data.json`.
     - **Refurbish Master Asset & In-Place Popup**: Integrasi modal popup Kondisi tanpa pemindahan view navigasi, sinkronisasi `window.resolveAsset`, dan pembersihan duplikasi skrip.
     - **Refurbish Sparepart & Logistik, Biaya, & Pengaturan**: Penyesuaian layout responsive, manajemen role pengeluaran barang, dan visual audit brand.
-    - **Populasi Datasets Material Ban & Grease (9 Agt)**: Mempopulasikan data real dari `REPORT_BAN_UPDATE_19.07.2026.md` (240 ban diperiksa, 17 rotasi, 19 ganti) dan `REGRESING_WEEKLY_MAINTENANCE_31_Januari_2026.md` (74 sesuai jadwal, 12 jatuh tempo, 9 terlambat) ke modul Condition Monitoring & Executive Dashboard.
-    - **ApexCharts Engine Full Implementation & Linkage**: Menggantikan grafik CSS/HTML statis pada Executive Dashboard dengan ApexCharts interaktif (Donut Service Status, Donut Asset Category, Donut WO Status, Bar Jam Kerja Mekanik dengan garis target 176 jam, dan Area Gradient Tren Biaya Perbaikan Bulanan), serta linkage klik slice/legend chart ke filter tabel monitoring.
-    - **Enhancement & Redesign People & KPI**: Membangun ApexCharts Area Chart interaktif untuk *Rekapitulasi Trend Nilai KPI Bulanan (Jan-Des 2026)* dengan annotation line `Sangat Baik (≥85)` & `Batas Minimal (65)`. Melakukan redesign kartu KPI Head menggunakan `.kpi-grid` & `.kpi-card` berikon FontAwesome (`fa-award`, `fa-clock-rotate-left`, `fa-bolt`, `fa-coins`) serta warna border dinamis.
-    - **Redesign Monitoring Unit Grid 3x2**: Menata ulang kartu status unit pada menu *Monitoring Unit Terintegrasi* menjadi 3 menyamping × 2 kebawah (Grid 3x2) lengkap dengan ikon FontAwesome.
+    - **Populasi Datasets Material Ban & Grease**: Mempopulasikan data real dari laporan ban dan greasing ke modul Condition Monitoring & Executive Dashboard.
+    - **ApexCharts Engine Full Implementation & Linkage**: Menggantikan grafik statis pada Executive Dashboard dengan ApexCharts interaktif (Donut Service Status, Donut Asset Category, Donut WO Status, Bar Jam Kerja Mekanik dengan target 176 jam, dan Area Gradient Tren Biaya Perbaikan Bulanan), serta linkage klik slice/legend chart ke filter tabel monitoring.
+    - **Enhancement & Redesign People & KPI**: Membangun ApexCharts Area Chart interaktif untuk *Rekapitulasi Trend Nilai KPI Bulanan (Jan-Des 2026)* dengan annotation line serta redesign kartu KPI Head berikon FontAwesome (`fa-award`, `fa-clock-rotate-left`, `fa-bolt`, `fa-coins`).
+    - **Heavy Equipment Properties & Diagnostics Inspector Subpage (`7c4b763`, `328f5c5`)**:
+      - Membangun tampilan subpage mandiri `view-unit-properties` (SPA terintegrasi tanpa menambah menu sidebar baru).
+      - Menata 4 modul data menjadi **1 halaman inspektur terpadu (*single continuous flow*)**.
+      - Menempatkan **Peta Live Real-Time & Geofence Site** di bagian paling atas (Section 1) berdampingan dengan 4 Live CANbus Gauges (RPM, Coolant, Oil Pressure, Alternator) & tabel koordinat GPS / BAST.
+      - Mentransformasi spesifikasi teknik dari kartu menjadi **Technical Data Listing 2-kolom** dengan pola belang berselang-seling horizontal per baris (*row-by-row zebra striping*) dan label tebal (*bold*).
+      - Mengintegrasikan diagram visual 10 posisi roda ban 3 gandar (PSI/RTD), Program Analisa Pelumas (Oil PAP Lab Sampling), inspeksi P2H harian operator, dan log investigasi insiden TAR.
+    - **Pembersihan Antarmuka Monitoring Unit**: Mengganti judul menjadi *"Monitoring Unit"*, menghapus subjudul deskripsi, menghapus capsule badge, dan membersihkan diagram alur integrasi status.
     - **RBAC Master Bypass & Admin Access Fix (`21cb18a`)**: Memastikan akun Administrator memiliki hak akses master penuh ke seluruh modul, implementasi fallback role auto-detection, dan proteksi event guard navigasi.
-    - **Git Conflict Resolution & Laragon Sync Utility**: Penyelesaian konflik Git pada `dashboard.html` serta eksekusi utility `sync_to_laragon.ps1` 4-step sync ke MySQL lokal `u646470441_ServicePlanBRA`.
+  * **Term 3** — `[OPEN]`:
+    - *Akan dicatat pada periode berjalan Term 3.*
 
 ---
 
-### 2. `seagrass489-cell` — **27.4%** *(Data Engineering, Security Architecture & Quality Lead)*
-* **Total Commit**: 69 Commit (25,7% dari total 269 commit repositori).
-* **Breakdown Commit**: 27 Commit (Term 1) + 42 Commit (Term 2).
+### 2. `seagrass489-cell` — **27.2%** *(Data Engineering, Security Architecture & Quality Lead)*
+* **Total Commit**: 69 Commit (25,1% dari total 275 commit repositori).
+* **Breakdown Commit**: 27 Commit (Term 1) + 42 Commit (Term 2) + 0 Commit (Term 3).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Sistem Parser Data 9.400+ Baris**: Mengamankan dan mengunci parser data workbook besar (`ab602ab FINAL_LOCKDOWN: Sistem parser 9400 baris sukses diamankan`).
@@ -147,12 +171,14 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 25 Agustus 2026)
     - **Credential & Deployment Hardening (`a2f0367`, `e7bdd38`)**: Memindahkan konfigurasi sensitif ke environment, menyediakan local temporary-password tooling, memperketat `.htaccess`, dan memperbaiki alur sinkronisasi Laragon tanpa mengekspos kredensial produksi.
     - **Secure Upload & Authorized Download (`9e198d5`)**: Menambahkan validasi MIME-ekstensi, nama file acak, pencegahan eksekusi PHP, helper upload terpusat, serta download controller yang memerlukan authorization.
     - **Automated Security Quality Gate (`9e198d5`, `a3cce11`)**: Menambahkan unit, static, dan HTTP smoke tests (`tests/security_unit.php`, `tests/security_static.php`, `tests/security_http_smoke.php`), runner PowerShell, serta workflow GitHub Actions `.github/workflows/security-tests.yml`.
+  * **Term 3** — `[OPEN]`:
+    - *Akan dicatat pada periode berjalan Term 3.*
 
 ---
 
-### 3. `kanzdzakipr` — **17.7%** *(Repository Owner, RBAC & Core Workflow Lead)*
-* **Total Commit**: 65 Commit (24,2% dari total 269 commit repositori).
-* **Breakdown Commit**: 9 Commit (Term 1) + 56 Commit (Term 2).
+### 3. `kanzdzakipr` — **17.5%** *(Repository Owner, RBAC & Core Workflow Lead)*
+* **Total Commit**: 65 Commit (23,6% dari total 275 commit repositori).
+* **Breakdown Commit**: 9 Commit (Term 1) + 56 Commit (Term 2) + 0 Commit (Term 3).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Inisialisasi Repositori**: Membuat repositori utama `kanzdzakipr/ServicePlan-BRA` dan struktur percabangan awal.
@@ -170,12 +196,14 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 25 Agustus 2026)
     - **Anti-Cache Headers & Laragon Sync DB Protection**: Menambahkan header anti-browser-caching pada respon API dan menyisipkan skema tabel `archived_items` ke SQL dump untuk mencegah penghapusan tabel saat sync Laragon (`3a29de3`, `58e52fd`).
     - **Migrasi Data Dummy ke Database Hostinger (`9103193`)**: Melakukan migrasi data dummy ke database MySQL Hostinger (`u646470441_ServicePlanBRA`), update `api/init.php` (`b870565`), dan koneksi `api/db.php`.
     - **Form, Logistik & Workflow Integration**: Memperbaiki form backend lintas perangkat (`e11efd6`), mengaktifkan searchbar, memasukkan inspeksi/unit parts, memperbarui plat kendaraan logistik, dan menyelaraskan fuel logs (`5b632f8`, `292ab96`, `3402709`, `f3394cc`).
+  * **Term 3** — `[OPEN]`:
+    - *Akan dicatat pada periode berjalan Term 3.*
 
 ---
 
-### 4. `bisamelihat` — **16.4%** *(Core Foundation, Database Architect & UI Sprint Overhaul)*
-* **Total Commit**: 36 Commit (13,4% dari total 269 commit repositori).
-* **Breakdown Commit**: 22 Commit (Term 1) + 14 Commit (Term 2).
+### 4. `bisamelihat` — **16.6%** *(Core Foundation, Database Architect & UI Sprint Overhaul)*
+* **Total Commit**: 39 Commit (14,2% dari total 275 commit repositori).
+* **Breakdown Commit**: 22 Commit (Term 1) + 17 Commit (Term 2) + 0 Commit (Term 3).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Inisialisasi Struktur & Prisma**: Membangun struktur awal repositori Next.js/Prisma, dokumentasi skill set, dan arsitektur database.
@@ -183,24 +211,30 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 25 Agustus 2026)
     - **Dokumentasi Sistem Utama**: Menyusun `docs/PRD.md`, `docs/DATA_MODEL.md`, `docs/IMPLEMENTATION_PLAN.md`, `docs/USER_ROLES.md`, dan `docs/STATUS_RULES.md`.
     - **Prototipe Dashboard V2**: Mengembangkan prototipe tampilan awal dashboard dan form antarmuka.
   * **Term 2**:
-    - **Sprint UI Overhaul A1–A9 (`4896273` s/d `749e23b`, `e72fdaa`)**: Mengeksekusi rangkaian 9 paket pembaruan antarmuka terstruktur:
-      - **A1–A3**: Refinement tata letak kartu, perapihan spasi, dan penyelarasan tipografi dashboard.
-      - **A4**: Dropdown filter status service berkala (`220a3f3`).
-      - **A5**: Peningkatan kemampuan interaktivitas ApexCharts (drilldown detail saat chart diklik) (`8883c69`).
-      - **A6–A7**: Penataan visual tabel monitoring dan badge status operasional (`9897e45`).
-      - **A8–A9**: Polishing akhir antarmuka monitoring & integrasi visual (`749e23b`).
+    - **Sprint UI Overhaul A1–A9 (`4896273` s/d `749e23b`, `e72fdaa`)**: Mengeksekusi rangkaian 9 paket pembaruan antarmuka terstruktur (refinement tata letak kartu, dropdown filter status service berkala, drilldown detail ApexCharts saat diklik, penataan visual tabel monitoring, dan polishing akhir).
+    - **Condition Monitoring Category Modals & Cutting Bit Cleanup (`4d67318`)**: Memperbarui menu Condition Monitoring sehingga setiap kartu kategori dapat diklik untuk menampilkan modal informasi detail per kategori dan menghapus entri cutting bit yang sudah tidak relevan.
+    - **Spare Part Card UI Component (`ebd17df`)**: Mengembangkan dan menata komponen visual kartu suku cadang.
+    - **People & KPI Standar Kinerja & Daftar SPL (`c14d7ea`)**: Menambahkan tabel standar kinerja pegawai dan daftar Surat Perintah Lembur (SPL) pada modul People & KPI.
     - **Skill UI Anti-Slop Integration (`94fd0ba`)**: Menerapkan arsitektur desain anti-slop UI untuk meningkatkan standar estetika dashboard.
     - **Visual Redesign Tipis Antarmuka (`993dd4d`, `07b9fb6`)**: Melakukan penyegaran estetika tipis pada tampilan dashboard.
     - **UTF-8 Encoding Conflict Resolution**: Menyelesaikan konflik pengkodean UTF-8 pada `dashboard.js` dan sinkronisasi Laragon (`6ae6db9`, `3377eef`).
     - **Maintenance Data Seeder & Documentation**: Pemeliharaan data seeder dan penyusunan markdown parts (`f397d5f`, `f927bb5`).
+  * **Term 3** — `[OPEN]`:
+    - *Akan dicatat pada periode berjalan Term 3.*
 
 ---
 
 ## 📈 Log Riwayat Graph Commit Utama
 
-### 📌 Log Commit Term 2 (28 Juli – 25 Agustus 2026 per Hari Ini)
+### 📌 Log Commit Term 2 (28 Juli – 28 Agustus 2026) — `[CLOSED FINAL]`
 
 ```git
+* 328f5c5 (briannugraha) minor
+* 7c4b763 (briannugraha) add unit properties
+* c14d7ea (bisamelihat) people n kpi addin standar kinerja n daftar spl
+* ebd17df (bisamelihat) spare part card
+* 4d67318 (bisamelihat) G Conditioning monitoring, hapus cutting bit dan masing masing card bisa dipencet dan menampilkan info per kategroi
+* 6f37831 (briannugraha) update kontribusi tim per 25 agustus
 * fb9bd48 (kanzdzakipr) feat: update WO status workflow with selectable target status, enhanced autofill logic, and new PM detail modal.
 * e72fdaa (bisamelihat) Merge branch 'main' of https://github.com/kanzdzakipr/ServicePlan-BRA
 * 749e23b (bisamelihat) A8 dan A9
@@ -371,7 +405,15 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 25 Agustus 2026)
 
 ---
 
-### 📌 Log Commit Term 1 (s/d 27 Juli 2026)
+### 📌 Log Commit Term 3 (29 Agustus 2026 – Selesai) — `[OPEN / ONGOING]`
+
+```git
+# Periode Term 3 baru saja dibuka. Commit baru akan dicatat secara otomatis di sini.
+```
+
+---
+
+### 📌 Log Commit Term 1 (s/d 27 Juli 2026) — `[CLOSED]`
 
 ```git
 * f1b6ee3 (briannugraha) google maps support
@@ -479,4 +521,4 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 25 Agustus 2026)
 
 ---
 
-*Laporan ini diperbarui secara otomatis berdasarkan audit komprehensif git log history & graph repositori ServicePlan-BRA per 25 Agustus 2026.*
+*Laporan ini diperbarui secara otomatis berdasarkan audit komprehensif git log history & graph repositori ServicePlan-BRA per 28 Agustus 2026 (Penutupan Resmi Term 2 & Pembukaan Term 3).*
