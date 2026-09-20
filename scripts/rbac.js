@@ -1,5 +1,5 @@
 window.FleetRBAC = (function () {
-    const rbacMatrix = {
+    const defaultRbacMatrix = {
         'Administrator': {
             'dashboard': 'RCUO', 'monitoring': 'RCUO', 'asset': 'RCUO', 'inspection': 'RCUO', 
             'wo': 'RCUO', 'pm': 'RCUO', 'logistics': 'RCUO', 'condition': 'RCUO', 
@@ -62,6 +62,13 @@ window.FleetRBAC = (function () {
         }
     };
 
+    const moduleKeysOrder = [
+        'dashboard', 'monitoring', 'asset', 'inspection',
+        'wo', 'pm', 'logistics', 'condition',
+        'fuel', 'productivity', 'biaya', 'people',
+        'hse', 'reports', 'approval', 'settings'
+    ];
+
     const menuAliases = {
         'workorder': 'wo',
         'cost': 'biaya',
@@ -69,6 +76,34 @@ window.FleetRBAC = (function () {
     };
 
     let currentUserRole = '';
+
+    function getEffectiveMatrix() {
+        const matrix = JSON.parse(JSON.stringify(defaultRbacMatrix));
+        try {
+            const saved = localStorage.getItem('fleetmonitor_rbac_custom_matrix');
+            if (saved) {
+                const customRolesData = JSON.parse(saved);
+                if (Array.isArray(customRolesData)) {
+                    customRolesData.forEach(customRole => {
+                        if (!customRole || !customRole.name) return;
+                        const cleanName = customRole.name.replace(/^\d+\.\s*/, '').trim().toLowerCase();
+                        const matchedKey = Object.keys(matrix).find(k => k.toLowerCase() === cleanName);
+                        if (matchedKey && Array.isArray(customRole.permissions)) {
+                            customRole.permissions.forEach((perm, idx) => {
+                                const modKey = moduleKeysOrder[idx];
+                                if (modKey) {
+                                    matrix[matchedKey][modKey] = perm;
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('FleetRBAC: Gagal membaca custom matrix dari localStorage', e);
+        }
+        return matrix;
+    }
 
     function getRole() {
         if (currentUserRole && currentUserRole !== 'Unknown') {
@@ -123,15 +158,14 @@ window.FleetRBAC = (function () {
             return true;
         }
 
-        // Normalize role key in matrix (case-insensitive)
-        const matchedRoleKey = Object.keys(rbacMatrix).find(k => k.toLowerCase() === role.toLowerCase());
-        if (!matchedRoleKey || !rbacMatrix[matchedRoleKey]) {
-            // Default allow if role is unrecognized to prevent complete lockout
+        const currentMatrix = getEffectiveMatrix();
+        const matchedRoleKey = Object.keys(currentMatrix).find(k => k.toLowerCase() === role.toLowerCase());
+        if (!matchedRoleKey || !currentMatrix[matchedRoleKey]) {
             console.warn(`FleetRBAC: Role '${role}' not defined in matrix, allowing read.`);
             return true;
         }
 
-        const rolePerms = rbacMatrix[matchedRoleKey];
+        const rolePerms = currentMatrix[matchedRoleKey];
         const perms = rolePerms[checkMenu];
         
         if (!perms || perms === '-') {
@@ -150,9 +184,10 @@ window.FleetRBAC = (function () {
             return;
         }
 
-        const matchedRoleKey = Object.keys(rbacMatrix).find(k => k.toLowerCase() === role.toLowerCase());
+        const currentMatrix = getEffectiveMatrix();
+        const matchedRoleKey = Object.keys(currentMatrix).find(k => k.toLowerCase() === role.toLowerCase());
         if (!matchedRoleKey) return;
-        const rolePerms = rbacMatrix[matchedRoleKey];
+        const rolePerms = currentMatrix[matchedRoleKey];
 
         // Hide menus in sidebar
         Object.keys(rolePerms).forEach(menu => {
