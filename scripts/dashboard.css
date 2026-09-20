@@ -16236,3 +16236,157 @@ body.sl-modal-open {
 
 
 
+
+/* ==========================================================================
+   Responsive Overrides for Mobile & Tablet
+   ========================================================================== */
+
+@media (max-width: 992px) {
+    .dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .panel-grid, .panel-grid-2, .panel-grid-3, .prop-panel-grid-2, .prop-panel-grid-top-map {
+        grid-template-columns: 1fr;
+    }
+    
+    .top-header {
+        padding: 0 16px;
+    }
+    
+    .search-bar input {
+        width: 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+    
+    /* Hide sidebar by default on mobile, make it a fixed drawer */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        height: 100vh;
+        width: 260px !important;
+        min-width: 260px !important;
+        max-width: 260px !important;
+        z-index: 1050;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 12px rgba(0,0,0,0.5);
+    }
+    
+    /* On mobile, sidebar-collapsed means OPEN */
+    body.sidebar-collapsed .sidebar {
+        left: 0;
+    }
+    
+    /* Undo the desktop shrink styles when opened on mobile */
+    body.sidebar-collapsed .brand-label,
+    body.sidebar-collapsed .sidebar-menu .nav-label,
+    body.sidebar-collapsed .sidebar-menu .nav-section-label {
+        display: block !important;
+    }
+    
+    body.sidebar-collapsed .sidebar-logo-full {
+        display: block !important;
+    }
+    
+    body.sidebar-collapsed .sidebar-logo-circle-container {
+        display: none !important;
+    }
+    
+    body.sidebar-collapsed .sidebar-menu li a {
+        justify-content: flex-start !important;
+        padding: 0 16px !important;
+    }
+    
+    body.sidebar-collapsed .sidebar-menu li a i {
+        margin-right: 12px !important;
+    }
+    
+    /* Overlay background when drawer is open */
+    body.sidebar-collapsed::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040;
+    }
+    
+    .main-wrapper {
+        width: 100%;
+        min-width: 0;
+    }
+    
+    /* Header tweaks */
+    .search-bar {
+        display: none; /* Hide search bar on mobile */
+    }
+    
+    .profile span {
+        display: none;
+    }
+    
+    /* KPIs and Grids */
+    .kpi-grid, .telemetry-status-grid, .form-row, .form-group-inline {
+        grid-template-columns: 1fr !important;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    /* Content Padding */
+    .content {
+        padding: 12px;
+    }
+    
+    /* Table responsiveness */
+    .panel-body, .table-container, .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 600px;
+    }
+    
+    /* Buttons */
+    .btn-action-mobile-full {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    /* Modals */
+    .modal-content {
+        width: 95%;
+        margin: 20px auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-header {
+        flex-wrap: wrap;
+        height: auto !important;
+        min-height: 60px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    .header-right {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .search-bar {
+        display: block !important;
+        width: 100%;
+        order: 10;
+        margin-top: 10px;
+    }
+    .search-bar input {
+        width: 100% !important;
+    }
+}
