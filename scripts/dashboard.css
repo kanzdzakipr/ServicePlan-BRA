@@ -16375,6 +16375,128 @@ body.sl-modal-open {
         font-size: 0.7rem !important;
     }
 
+    /* Mobile WO Emergency (Panel Perhatian) Card Layout Optimization */
+    .attention-list {
+        height: auto !important;
+        max-height: 480px !important;
+        overflow-y: auto !important;
+        padding-right: 4px !important;
+        gap: 10px !important;
+    }
+
+    .attention-item {
+        padding: 10px 12px !important;
+        border-radius: 8px !important;
+    }
+
+    .attention-header {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        margin-bottom: 6px !important;
+    }
+
+    .attention-title {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .attention-identity {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+
+    .attention-wo-badge {
+        font-weight: 700 !important;
+        font-size: 0.85rem !important;
+        color: #0f172a !important;
+    }
+
+    .attention-asset-pill {
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+        font-size: 0.7rem !important;
+        font-weight: 700 !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        font-family: var(--font-mono, monospace) !important;
+    }
+
+    .attention-downtime {
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        color: #dc2626 !important;
+        background: #fef2f2 !important;
+        border: 1px solid #fecaca !important;
+        padding: 2px 8px !important;
+        border-radius: 12px !important;
+        white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        margin-left: auto !important;
+    }
+
+    .attention-meta {
+        font-size: 0.76rem !important;
+        color: #475569 !important;
+        margin-bottom: 6px !important;
+    }
+
+    .attention-desc {
+        font-size: 0.78rem !important;
+        color: #64748b !important;
+        line-height: 1.35 !important;
+        margin-bottom: 10px !important;
+        display: -webkit-box !important;
+        line-clamp: 2 !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+
+    .attention-actions {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 4px !important;
+        padding-top: 8px !important;
+        border-top: 1px dashed #e2e8f0 !important;
+    }
+
+    .attention-action-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 5px 2px !important;
+        font-size: 0.68rem !important;
+        font-weight: 600 !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        gap: 3px !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    }
+
+    .attention-actions > .attention-action-btn:nth-child(3),
+    .attention-actions > .btn-spb {
+        grid-column: span 1 !important;
+        background: #fffbe6 !important;
+        border-color: #ffe58f !important;
+        color: #d48806 !important;
+        font-weight: 700 !important;
+    }
+
+    .attention-actions > .btn-spb:hover,
+    .attention-actions > .btn-spb:active {
+        background: #fff1b8 !important;
+        border-color: #d48806 !important;
+    }
+
     .form-row, .form-group-inline {
         flex-direction: column;
         align-items: stretch;
