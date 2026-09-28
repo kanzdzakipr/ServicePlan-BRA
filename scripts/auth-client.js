@@ -87,14 +87,28 @@
     document.addEventListener('DOMContentLoaded', function () {
         authReady.then(function (auth) {
             window.authenticatedUser = auth.user;
+            const displayName = auth.user.full_name || auth.user.username;
+            const displayRole = auth.user.primary_role || '';
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=0284c7&color=fff&font-weight=700`;
+
             const profileName = document.getElementById('authenticatedUserName');
             const profileRole = document.getElementById('authenticatedUserRole');
-            if (profileName) profileName.textContent = auth.user.full_name || auth.user.username;
-            if (profileRole) profileRole.textContent = auth.user.primary_role || '';
+            if (profileName) profileName.textContent = displayName;
+            if (profileRole) profileRole.textContent = displayRole;
+
+            const dropdownName = document.getElementById('profileDropdownName');
+            const dropdownRole = document.getElementById('profileDropdownRole');
+            if (dropdownName) dropdownName.textContent = displayName;
+            if (dropdownRole) dropdownRole.textContent = displayRole;
+
+            const headerAvatar = document.getElementById('headerProfileAvatarImg');
+            const dropdownAvatar = document.getElementById('profileDropdownAvatarImg');
+            if (headerAvatar) headerAvatar.src = avatarUrl;
+            if (dropdownAvatar) dropdownAvatar.src = avatarUrl;
             
             // Initialize RBAC UI Permissions
             if (window.FleetRBAC) {
-                window.FleetRBAC.init(auth.user.primary_role || 'Administrator');
+                window.FleetRBAC.init(displayRole || 'Administrator');
             }
         }).catch(function () {
             // Redirection is handled by authReady.

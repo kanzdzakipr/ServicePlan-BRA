@@ -119,11 +119,17 @@
                 <div class="dropdown">
                     <select id="globalProjectFilter" onchange="applyGlobalProjectFilter(this.value)"
                         aria-label="Filter global berdasarkan project atau lokasi">
-                        <option value="">Project/Lokasi: Semua</option>
+                        <option value="">Semua</option>
                     </select>
                 </div>
             </div>
             <div class="header-right">
+                <!-- Mobile Search Icon Toggle Button -->
+                <button type="button" class="btn-mobile-search-toggle" id="btnMobileSearchToggle"
+                    onclick="toggleMobileSearch(event)" title="Pencarian Unit & WO">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+
                 <!-- System Notifications Bell Wrapper -->
                 <div class="notification-wrapper" style="position: relative;">
                     <button type="button" class="btn-notification-bell" id="btnNotificationBell"
@@ -160,7 +166,7 @@
                     </div>
                 </div>
 
-                <div class="search-bar" style="position: relative;">
+                <div class="search-bar" id="globalSearchBarWrapper" style="position: relative;">
                     <input type="text" id="globalSearchInput" onkeyup="handleGlobalSearch()"
                         onfocus="if(this.value.length >= 2) document.getElementById('globalSearchResults').style.display='block';"
                         placeholder="Cari unit, WO, lambung..." autocomplete="off">
@@ -169,14 +175,30 @@
                         <!-- Results injected here -->
                     </div>
                 </div>
-                <div class="profile">
-                    <img src="https://ui-avatars.com/api/?name=Admin+Manager&background=007bff&color=fff" alt="User">
-                    <span><strong id="authenticatedUserName">Memuat pengguna...</strong><small
-                            id="authenticatedUserRole" style="display:block; color:var(--text-muted);"></small></span>
-                    <button type="button" id="logoutButton" title="Keluar dari sesi"
-                        style="border:1px solid var(--border); background:#fff; color:var(--danger); padding:6px 9px; cursor:pointer; border-radius:4px;">
-                        <i class="fa-solid fa-right-from-bracket"></i>
+                <div class="profile-wrapper" style="position: relative;">
+                    <button type="button" class="btn-profile-avatar" id="btnProfileAvatar"
+                        onclick="toggleProfileDropdown(event)" title="Profil Pengguna & Sesi Login">
+                        <img src="https://ui-avatars.com/api/?name=Admin+Manager&background=0284c7&color=fff&font-weight=700"
+                            alt="User" id="headerProfileAvatarImg">
                     </button>
+                    <!-- Floating Profile Popover Panel -->
+                    <div class="profile-dropdown-panel" id="profileDropdownPanel" style="display: none;"
+                        onclick="event.stopPropagation()">
+                        <div class="profile-dropdown-header">
+                            <img src="https://ui-avatars.com/api/?name=Admin+Manager&background=0284c7&color=fff&font-weight=700"
+                                alt="User" id="profileDropdownAvatarImg" class="profile-dropdown-avatar">
+                            <div class="profile-dropdown-info">
+                                <strong id="profileDropdownName">Memuat pengguna...</strong>
+                                <small id="profileDropdownRole">Administrator</small>
+                            </div>
+                        </div>
+                        <div class="profile-dropdown-divider"></div>
+                        <div class="profile-dropdown-actions">
+                            <button type="button" id="logoutButton" class="btn-profile-logout" title="Keluar dari sesi">
+                                <i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -4152,7 +4174,7 @@
                     counts.set(location, (counts.get(location) || 0) + 1);
                 });
                 const options = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
-                select.innerHTML = `<option value="">Project/Lokasi: Semua (${getAllAssets().length})</option>`
+                select.innerHTML = `<option value="">Semua (${getAllAssets().length})</option>`
                     + options.map(([location, count]) => `<option value="${escapeHtml(location)}">${escapeHtml(location)} (${count})</option>`).join('');
                 select.value = activeProjectLocation;
                 renderProjectMaster();

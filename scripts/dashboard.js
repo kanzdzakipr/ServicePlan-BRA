@@ -18602,8 +18602,59 @@ window.renderArchiveTables = function() {
             });
     }
 
+    window.toggleMobileSearch = function(event) {
+        if (event) event.stopPropagation();
+        const notifPanel = document.getElementById('notificationDropdownPanel');
+        if (notifPanel) notifPanel.style.display = 'none';
+        const profilePanel = document.getElementById('profileDropdownPanel');
+        if (profilePanel) profilePanel.style.display = 'none';
+
+        const searchWrapper = document.getElementById('globalSearchBarWrapper');
+        if (!searchWrapper) return;
+
+        const isActive = searchWrapper.classList.contains('active');
+        if (isActive) {
+            searchWrapper.classList.remove('active');
+            const results = document.getElementById('globalSearchResults');
+            if (results) results.style.display = 'none';
+        } else {
+            searchWrapper.classList.add('active');
+            const input = document.getElementById('globalSearchInput');
+            if (input) {
+                input.focus();
+                if (input.value.trim().length >= 2) {
+                    const results = document.getElementById('globalSearchResults');
+                    if (results) results.style.display = 'block';
+                }
+            }
+        }
+    };
+
+    window.toggleProfileDropdown = function(event) {
+        if (event) event.stopPropagation();
+        const searchWrapper = document.getElementById('globalSearchBarWrapper');
+        if (searchWrapper) searchWrapper.classList.remove('active');
+        const notifPanel = document.getElementById('notificationDropdownPanel');
+        if (notifPanel) notifPanel.style.display = 'none';
+
+        const profilePanel = document.getElementById('profileDropdownPanel');
+        if (!profilePanel) return;
+
+        const isVisible = profilePanel.style.display === 'block';
+        if (isVisible) {
+            profilePanel.style.display = 'none';
+        } else {
+            profilePanel.style.display = 'block';
+        }
+    };
+
     window.toggleNotificationDropdown = function(event) {
         if (event) event.stopPropagation();
+        const searchWrapper = document.getElementById('globalSearchBarWrapper');
+        if (searchWrapper) searchWrapper.classList.remove('active');
+        const profilePanel = document.getElementById('profileDropdownPanel');
+        if (profilePanel) profilePanel.style.display = 'none';
+
         const panel = document.getElementById('notificationDropdownPanel');
         if (!panel) return;
 
@@ -18792,13 +18843,31 @@ window.renderArchiveTables = function() {
         return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    // Close notification dropdown when clicking outside
+    // Close notification, profile & mobile search dropdowns when clicking outside
     document.addEventListener('click', function(event) {
-        const panel = document.getElementById('notificationDropdownPanel');
-        const btn = document.getElementById('btnNotificationBell');
-        if (panel && panel.style.display !== 'none') {
-            if (!panel.contains(event.target) && !btn.contains(event.target)) {
-                panel.style.display = 'none';
+        const notifPanel = document.getElementById('notificationDropdownPanel');
+        const notifBtn = document.getElementById('btnNotificationBell');
+        if (notifPanel && notifPanel.style.display !== 'none') {
+            if (!notifPanel.contains(event.target) && (!notifBtn || !notifBtn.contains(event.target))) {
+                notifPanel.style.display = 'none';
+            }
+        }
+
+        const profilePanel = document.getElementById('profileDropdownPanel');
+        const profileBtn = document.getElementById('btnProfileAvatar');
+        if (profilePanel && profilePanel.style.display !== 'none') {
+            if (!profilePanel.contains(event.target) && (!profileBtn || !profileBtn.contains(event.target))) {
+                profilePanel.style.display = 'none';
+            }
+        }
+
+        const searchWrapper = document.getElementById('globalSearchBarWrapper');
+        const searchBtn = document.getElementById('btnMobileSearchToggle');
+        if (searchWrapper && searchWrapper.classList.contains('active')) {
+            if (!searchWrapper.contains(event.target) && (!searchBtn || !searchBtn.contains(event.target))) {
+                searchWrapper.classList.remove('active');
+                const results = document.getElementById('globalSearchResults');
+                if (results) results.style.display = 'none';
             }
         }
     });
