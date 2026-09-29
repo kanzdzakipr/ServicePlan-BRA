@@ -12755,8 +12755,8 @@
                     <div>
                         <div class="pm-context-label">Warning window</div>
                         <div class="pm-context-value">
-                            HM <input class="pm-threshold-input" id="pmHmThreshold" type="number" min="1" value="${thresholds.HM}">
-                            &nbsp; KM <input class="pm-threshold-input" id="pmKmThreshold" type="number" min="1" value="${thresholds.KM}">
+                            HM <input class="pm-threshold-input" id="pmHmThreshold" type="number" min="1" value="${thresholds.HM}" aria-label="Batas peringatan HM">
+                            &nbsp; KM <input class="pm-threshold-input" id="pmKmThreshold" type="number" min="1" value="${thresholds.KM}" aria-label="Batas peringatan KM">
                         </div>
                     </div>
                 </div>
@@ -14013,7 +14013,7 @@
                     <td>${escapeHtml(item.indicator)}</td>
                     <td><span class="pk-badge pk-badge-info">${escapeHtml(item.target)}</span></td>
                     <td>
-                        <input type="number" min="1" max="5" class="pk-score-input" value="${item.score}" onchange="window.updateHeadKPIScore(${idx}, this.value)">
+                        <input type="number" min="1" max="5" class="pk-score-input" value="${item.score}" aria-label="Skor ${escapeHtml(item.aspect)}, 1 sampai 5" onchange="window.updateHeadKPIScore(${idx}, this.value)">
                     </td>
                     <td style="text-align:center;">${item.weight}%</td>
                     <td style="text-align:center; font-weight:700;" id="weighted-${idx}">${weighted.toFixed(1)}</td>
@@ -16072,7 +16072,7 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label style="font-size:0.85rem; font-weight:bold;">Kategori Checksheet</label>
+                                    <label for="p2hFormCategoryLabel" style="font-size:0.85rem; font-weight:bold;">Kategori Checksheet</label>
                                     <input type="text" id="p2hFormCategoryLabel" class="form-control" style="margin-bottom:0; background:#e9ecef;" readonly value="Hydraulic Excavator">
                                 </div>
                                 <div>

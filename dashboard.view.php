@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260929-1">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260929-2">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20260929-1">
     <script src="scripts/auth-client.js?v=20260809-1"></script>
     <script src="scripts/rbac.js?v=20260823-1"></script>
@@ -2332,7 +2332,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         </div>
                     </div>
                     <div class="prop-top-actions">
-                        <select id="propUnitSelector" class="prop-unit-selector" onchange="window.openUnitProperties(this.value)">
+                        <select id="propUnitSelector" class="prop-unit-selector" aria-label="Pilih unit untuk melihat properties" onchange="window.openUnitProperties(this.value)">
                             <!-- Populated via JS -->
                         </select>
                         <button type="button" class="btn btn-secondary btn-sm" onclick="window.printUnitProperties()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600;">
@@ -8768,7 +8768,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
             </div>
         </div>
-<script src="scripts/mobile-responsive.js?v=20260929-1"></script>
+<script src="scripts/mobile-responsive.js?v=20260929-2"></script>
 </body>
 
 </html>

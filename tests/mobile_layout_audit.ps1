@@ -107,13 +107,41 @@ $auditExpression = @'
     const bodyOverflow = Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - viewportWidth;
     const contentOverflow = content ? content.scrollWidth - content.clientWidth : 0;
     const activeOverflow = activeView ? activeView.scrollWidth - activeView.clientWidth : 0;
+    const controlSelector = 'button, input:not([type="hidden"]), select, textarea, [role="button"], [role="tab"]';
+    const accessibleName = element => {
+        const labelledBy = (element.getAttribute('aria-labelledby') || '').split(/\s+/).filter(Boolean)
+            .map(id => document.getElementById(id)?.textContent || '').join(' ');
+        const explicitLabel = element.id ? document.querySelector(`label[for="${CSS.escape(element.id)}"]`) : null;
+        return [
+            element.getAttribute('aria-label'), labelledBy, element.getAttribute('title'),
+            explicitLabel?.textContent, element.closest('label')?.textContent,
+            element.textContent, element.getAttribute('placeholder'), element.getAttribute('alt')
+        ].find(value => String(value || '').replace(/[×✕✖\s]/g, '').length > 0) || '';
+    };
+    const unnamedControls = [];
+    const tinyTargets = [];
+    document.querySelectorAll(controlSelector).forEach(control => {
+        if (!isVisible(control) || control.disabled || control.getAttribute('aria-hidden') === 'true') return;
+        const rect = control.getBoundingClientRect();
+        if (!accessibleName(control)) unnamedControls.push(selectorFor(control));
+        const isNativeChoice = control.matches('input[type="checkbox"], input[type="radio"]');
+        const labelRect = isNativeChoice && control.closest('label') ? control.closest('label').getBoundingClientRect() : null;
+        const hasLabelTarget = labelRect && labelRect.width >= 24 && labelRect.height >= 24;
+        if (!hasLabelTarget && (rect.width < 24 || rect.height < 24)) {
+            tinyTargets.push({ selector: selectorFor(control), width: Math.round(rect.width), height: Math.round(rect.height) });
+        }
+    });
     return {
         viewportWidth,
         view: activeView ? activeView.id : null,
         bodyOverflow,
         contentOverflow,
         activeOverflow,
-        offenders: offenders.slice(0, 15)
+        offenders: offenders.slice(0, 15),
+        unnamedControls: unnamedControls.slice(0, 15),
+        tinyTargets: tinyTargets.slice(0, 15),
+        unnamedControlCount: unnamedControls.length,
+        tinyTargetCount: tinyTargets.length
     };
 })()
 '@
@@ -232,8 +260,8 @@ try {
     $null = Invoke-JavaScript -Expression "document.querySelectorAll('.modal-overlay, .hse-modal-overlay, .sl-modal-overlay, .guide-modal').forEach(el => { el.classList.remove('active'); el.style.removeProperty('display'); }); true"
 
     $allPageResults = @($loginResults | ForEach-Object { $_ }) + @($results | ForEach-Object { $_ })
-    $failures = @($allPageResults | Where-Object { $_.audit.bodyOverflow -gt 1 -or $_.audit.contentOverflow -gt 1 -or $_.audit.activeOverflow -gt 1 -or $_.audit.offenders.Count -gt 0 })
-    $modalFailures = @($modalResults | Where-Object { $_.audit.bodyOverflow -gt 1 -or $_.audit.contentOverflow -gt 1 -or $_.audit.offenders.Count -gt 0 })
+    $failures = @($allPageResults | Where-Object { $_.audit.bodyOverflow -gt 1 -or $_.audit.contentOverflow -gt 1 -or $_.audit.activeOverflow -gt 1 -or $_.audit.offenders.Count -gt 0 -or $_.audit.unnamedControlCount -gt 0 -or $_.audit.tinyTargetCount -gt 0 })
+    $modalFailures = @($modalResults | Where-Object { $_.audit.bodyOverflow -gt 1 -or $_.audit.contentOverflow -gt 1 -or $_.audit.offenders.Count -gt 0 -or $_.audit.unnamedControlCount -gt 0 -or $_.audit.tinyTargetCount -gt 0 })
     [pscustomobject]@{
         summary = [pscustomobject]@{
             checkedStates = $allPageResults.Count
@@ -250,6 +278,10 @@ try {
                 contentOverflow = $_.audit.contentOverflow
                 activeOverflow = $_.audit.activeOverflow
                 offenders = @($_.audit.offenders | ForEach-Object { $_.selector } | Select-Object -Unique)
+                unnamedControlCount = $_.audit.unnamedControlCount
+                unnamedControls = @($_.audit.unnamedControls | Select-Object -Unique)
+                tinyTargetCount = $_.audit.tinyTargetCount
+                tinyTargets = @($_.audit.tinyTargets | ForEach-Object { "$($_.selector) [$($_.width)x$($_.height)]" } | Select-Object -Unique)
             }
         })
         modalFailures = @($modalFailures | ForEach-Object {
@@ -260,6 +292,10 @@ try {
                 contentOverflow = $_.audit.contentOverflow
                 activeOverflow = $_.audit.activeOverflow
                 offenders = @($_.audit.offenders | ForEach-Object { $_.selector } | Select-Object -Unique)
+                unnamedControlCount = $_.audit.unnamedControlCount
+                unnamedControls = @($_.audit.unnamedControls | Select-Object -Unique)
+                tinyTargetCount = $_.audit.tinyTargetCount
+                tinyTargets = @($_.audit.tinyTargets | ForEach-Object { "$($_.selector) [$($_.width)x$($_.height)]" } | Select-Object -Unique)
             }
         })
     } | ConvertTo-Json -Depth 12

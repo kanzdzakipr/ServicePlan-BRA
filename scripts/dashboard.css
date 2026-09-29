@@ -17911,4 +17911,60 @@ body.sl-modal-open {
     }
 }
 
+/* Interaction clarity and keyboard/touch usability */
+:where(button, a[href], [role="button"], [role="tab"], input, select, textarea, [tabindex]):focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--primary) 38%, transparent);
+    outline-offset: 2px;
+}
+
+:where(button, .btn, [role="button"]):disabled,
+:where(button, .btn, [role="button"])[aria-disabled="true"] {
+    cursor: not-allowed !important;
+    opacity: 0.55;
+}
+
+:where(button, .btn, [role="button"]):not(:disabled):active {
+    transform: translateY(1px);
+}
+
+.icon-only-control {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 34px;
+    min-width: 34px;
+}
+
+.mobile-scroll-hint {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .icon-only-control {
+        min-height: 40px;
+        min-width: 40px;
+    }
+
+    .mobile-scroll-hint.is-visible {
+        align-items: center;
+        color: var(--text-secondary);
+        display: flex;
+        font-size: 0.72rem;
+        font-weight: 600;
+        gap: 6px;
+        justify-content: flex-end;
+        margin: 0 0 5px;
+        max-width: 100%;
+    }
+
+    .mobile-scroll-hint i {
+        color: var(--primary);
+        flex: 0 0 auto;
+    }
+
+    :where(.view-section, .modal-content) :where(button, .btn, [role="button"]):not(.icon-only-control) {
+        min-height: 38px;
+    }
+}
+
 
