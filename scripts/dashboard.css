@@ -16923,4 +16923,992 @@ body.sl-modal-open {
     }
 }
 
+/* ========================================================================== */
+/* Mobile layout system — shared by every dashboard view and dynamic module.  */
+/* Tables, tabs, and other naturally wide controls scroll in their own region. */
+/* ========================================================================== */
+
+.mobile-nav-backdrop {
+    display: none;
+}
+
+.mobile-table-scroll,
+.responsive-scroll-region {
+    max-width: 100%;
+}
+
+.responsive-scroll-region:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.responsive-visual,
+.apexcharts-canvas,
+.apexcharts-svg {
+    max-width: 100% !important;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --mobile-page-gutter: 10px;
+        --mobile-panel-padding: 12px;
+        --mobile-control-height: 38px;
+    }
+
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    body {
+        height: 100dvh;
+        min-height: 100dvh;
+    }
+
+    .main-wrapper,
+    .content,
+    .view-section,
+    .view-section > *,
+    .dashboard-layout,
+    .dashboard-layout > *,
+    .panel,
+    .panel-header,
+    .panel-body,
+    .card-container,
+    .settings-layout,
+    .settings-content-area,
+    .settings-panel,
+    .pk-container,
+    .hse-container,
+    .prod-container,
+    .p2h-container,
+    .pm-container,
+    .cm-app,
+    .sl-app,
+    .report-module {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .main-wrapper {
+        flex: 1 1 auto;
+        height: 100dvh;
+    }
+
+    .content {
+        padding: 10px var(--mobile-page-gutter) 18px !important;
+        overscroll-behavior: contain;
+    }
+
+    .view-section {
+        margin: 0;
+    }
+
+    .page-title,
+    #view-fuel .page-title,
+    #view-settings .page-title {
+        font-size: clamp(1.15rem, 5.5vw, 1.45rem) !important;
+        line-height: 1.18;
+        margin: 2px 0 10px !important;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        text-wrap: balance;
+    }
+
+    .panel,
+    .pk-panel,
+    .prop-card,
+    .settings-panel {
+        margin-bottom: 12px;
+        border-radius: 8px;
+    }
+
+    .panel-header,
+    #view-fuel .panel-header,
+    .pk-panel-header,
+    .prop-card-header {
+        gap: 8px;
+        min-height: 0;
+        padding: 10px var(--mobile-panel-padding) !important;
+        flex-wrap: wrap;
+    }
+
+    .panel-header > span,
+    .panel-header > strong,
+    .panel-header h2,
+    .panel-header h3,
+    .pk-panel-header > *,
+    .prop-card-header > * {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .panel-body,
+    .pk-panel-body,
+    .prop-card-body,
+    .settings-panel {
+        padding: var(--mobile-panel-padding) !important;
+    }
+
+    /* Do not turn whole content panels into sideways scrollers. */
+    .panel-body {
+        overflow-x: visible !important;
+    }
+
+    .mobile-table-scroll,
+    .table-responsive,
+    .table-container,
+    .logistics-data-table-wrap,
+    .cm-kpi-table-wrap,
+    .cm-table-wrap,
+    .pm-table-wrap,
+    .pk-table-wrap,
+    .hse-table-wrap,
+    .prod-table-wrap,
+    .p2h-table-wrap,
+    .sl-table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-inline: contain;
+        scrollbar-width: thin;
+    }
+
+    .view-section table {
+        width: 100%;
+        max-width: none;
+    }
+
+    .view-section table.mobile-compact-table {
+        min-width: 0 !important;
+        table-layout: auto;
+    }
+
+    .view-section table.mobile-wide-table {
+        min-width: max(620px, 100%) !important;
+    }
+
+    .view-section th,
+    .view-section td {
+        padding: 8px 9px;
+    }
+
+    .view-section table.mobile-compact-table th,
+    .view-section table.mobile-compact-table td {
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+
+    .responsive-scroll-region::after {
+        content: none;
+    }
+
+    /* Inputs shrink with their grid/flex parent instead of widening the page. */
+    .view-section input:not([type="checkbox"]):not([type="radio"]),
+    .view-section select,
+    .view-section textarea,
+    .modal-content input:not([type="checkbox"]):not([type="radio"]),
+    .modal-content select,
+    .modal-content textarea,
+    .hse-modal-card input:not([type="checkbox"]):not([type="radio"]),
+    .hse-modal-card select,
+    .hse-modal-card textarea {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .view-section input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    .view-section select,
+    .form-control {
+        min-height: var(--mobile-control-height);
+    }
+
+    textarea {
+        resize: vertical;
+    }
+
+    .form-group {
+        min-width: 0;
+        margin-bottom: 10px;
+    }
+
+    .form-group label,
+    .hse-form-group label,
+    .cm-form-grid label > span {
+        line-height: 1.25;
+        margin-bottom: 4px;
+        overflow-wrap: anywhere;
+    }
+
+    .adaptive-field-grid,
+    .hse-form-grid,
+    .cm-form-grid,
+    .p2h-form-header,
+    .pm-detail-form,
+    .import-manual-field-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 9px !important;
+    }
+
+    .adaptive-field-grid > *,
+    .hse-form-grid > *,
+    .cm-form-grid > *,
+    .p2h-form-header > *,
+    .pm-detail-form > *,
+    .import-manual-field-grid > * {
+        min-width: 0;
+    }
+
+    .adaptive-field-grid > .mobile-field-wide,
+    .adaptive-field-grid > .full-width,
+    .hse-form-grid > .full-width,
+    .cm-form-grid > .full-width,
+    .p2h-form-header > .full-width,
+    .pm-detail-form > .full-width,
+    .import-manual-field-grid > .full-width {
+        grid-column: 1 / -1 !important;
+    }
+
+    .form-row,
+    .form-group-inline {
+        flex-flow: row wrap !important;
+        align-items: flex-end !important;
+        gap: 9px !important;
+    }
+
+    .form-row > *,
+    .form-group-inline > * {
+        flex: 1 1 min(140px, 100%);
+        min-width: 0;
+    }
+
+    /* Dense KPI layouts preserve useful side-by-side information on phones. */
+    .telemetry-status-grid,
+    #view-fuel .telemetry-status-grid,
+    .kpi-grid,
+    .pm-kpi-grid,
+    .pk-cards-grid,
+    .hse-cards-grid,
+    .prod-cards-grid,
+    .p2h-kpi-grid,
+    .sl-kpi-grid,
+    .cm-catalog-kpis,
+    .import-summary-strip,
+    .logistics-summary-grid,
+    .service-counter-bar,
+    .monitoring-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+    }
+
+    #view-dashboard .telemetry-status-grid > .telemetry-metric-item:first-child,
+    .monitoring-summary > .total,
+    .kpi-grid > :last-child:nth-child(odd) {
+        grid-column: 1 / -1 !important;
+    }
+
+    #view-fuel .telemetry-status-grid > .telemetry-metric-item:first-child,
+    #view-asset .telemetry-status-grid > .telemetry-metric-item:first-child,
+    #view-biaya .telemetry-status-grid > .telemetry-metric-item:first-child {
+        grid-column: auto !important;
+    }
+
+    .telemetry-metric-item,
+    #view-fuel .telemetry-metric-item,
+    .kpi-card,
+    .pm-kpi-card,
+    .pk-card,
+    .hse-card,
+    .prod-card,
+    .p2h-kpi-card,
+    .sl-kpi-card,
+    .cm-catalog-kpi,
+    .service-counter-card,
+    .monitoring-summary > div {
+        min-width: 0 !important;
+        min-height: 0 !important;
+        padding: 10px !important;
+    }
+
+    .telemetry-metric-label,
+    #view-fuel .telemetry-metric-label,
+    .kpi-title,
+    .pk-card-info h4,
+    .hse-card-info span,
+    .prod-card-info span {
+        font-size: 0.64rem !important;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .telemetry-metric-value,
+    #view-fuel .telemetry-metric-value,
+    .kpi-value,
+    .pk-card-info .pk-val,
+    .hse-card-info .hse-val,
+    .prod-card-info .prod-val {
+        font-size: clamp(1.15rem, 5.6vw, 1.45rem) !important;
+    }
+
+    .telemetry-metric-footer {
+        align-items: flex-start !important;
+        gap: 4px 6px !important;
+        margin-top: 7px;
+        padding-top: 5px;
+    }
+
+    .telemetry-metric-footer .badge {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+
+    .dashboard-layout,
+    .monitoring-dashboard-layout,
+    .pm-overview-grid,
+    .pm-calendar-layout,
+    .cm-inspection-grid,
+    .cm-history-layout,
+    .dash-grid-2,
+    .dash-grid-3,
+    .dash-grid-4,
+    .dash-grid-2-equal,
+    .pk-planner-pm-standard,
+    .prod-formula-grid,
+    .prod-standby-grid,
+    .pk-matrix-grid,
+    .pk-roadmap-grid,
+    .import-workbench {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .asset-360-grid,
+    .asset-view-gallery {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    .asset-360-grid > *,
+    .asset-view-gallery > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .tire-kpi-bar,
+    .prop-telemetry-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+    }
+
+    /* Toolbars keep paired compact filters while searches/actions span a row. */
+    .wo-workspace-toolbar,
+    .pm-filter-bar,
+    .sl-toolbar,
+    .cm-catalog-toolbar,
+    .report-filter,
+    .official-template-toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+    }
+
+    .wo-workspace-search,
+    .pm-filter-bar > :first-child,
+    .sl-toolbar > :first-child,
+    .cm-catalog-toolbar > :first-child,
+    .report-filter > :first-child,
+    .official-template-toolbar > :first-child {
+        grid-column: 1 / -1;
+    }
+
+    .monitoring-toolbar,
+    .logistics-data-toolbar,
+    .asset-filter-row,
+    .pk-header,
+    .hse-header,
+    .prod-header,
+    .p2h-header,
+    .pm-header,
+    .cm-page-heading,
+    .wo-workspace-header,
+    .wo-workspace-actions,
+    .table-toolbar,
+    .preview-toolbar,
+    .import-content-toolbar,
+    .import-table-toolbar,
+    .official-template-actions {
+        align-items: stretch !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    .monitoring-toolbar > *,
+    .asset-filter-row > *,
+    .table-toolbar > * {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        flex: 1 1 140px;
+    }
+
+    .wo-workspace-actions .btn,
+    .pk-header .btn,
+    .hse-header .btn,
+    .prod-header .btn,
+    .p2h-header .btn,
+    .pm-header .btn {
+        flex: 1 1 140px;
+        justify-content: center;
+    }
+
+    /* Tabs are intentionally local horizontal scrollers, never page overflow. */
+    .asset-tabs,
+    .report-view-tabs,
+    .logistics-ledger-tabs,
+    .cm-tabs,
+    .pm-tabs,
+    .pk-nav-tabs,
+    .hse-nav-tabs,
+    .prod-nav-tabs,
+    .p2h-nav-tabs,
+    .notification-panel-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        width: 100%;
+        max-width: 100%;
+        gap: 4px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        padding: 7px 8px 0 !important;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .asset-tabs > *,
+    .report-view-tabs > *,
+    .logistics-ledger-tabs > *,
+    .cm-tabs > *,
+    .pm-tabs > *,
+    .pk-nav-tabs > *,
+    .hse-nav-tabs > *,
+    .prod-nav-tabs > *,
+    .p2h-nav-tabs > *,
+    .notification-panel-tabs > * {
+        flex: 0 0 auto !important;
+        white-space: nowrap;
+    }
+
+    /* Fixed overlays use the visual viewport and keep scrolling inside. */
+    .modal-overlay,
+    .hse-modal-overlay,
+    .sl-modal-overlay,
+    .guide-modal {
+        inset: 0 !important;
+        width: auto !important;
+        max-width: none !important;
+        padding: 10px !important;
+        align-items: center;
+    }
+
+    .modal-overlay .modal-content,
+    #modalWoStatusConfirm .modal-content,
+    .hse-modal-card,
+    .sl-modal-dialog,
+    .guide-modal-panel {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: min(100%, 680px) !important;
+        max-height: calc(100dvh - 20px) !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        overflow: hidden;
+    }
+
+    .modal-header,
+    .hse-modal-header,
+    .sl-modal-header,
+    .guide-modal-panel > header {
+        gap: 8px;
+        padding: 11px 12px !important;
+        min-width: 0;
+    }
+
+    .modal-header h2,
+    .modal-header h3,
+    .hse-modal-header h2,
+    .sl-modal-title,
+    .sl-modal-title h2,
+    .guide-modal-panel > header h2 {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .modal-header > div,
+    #assetModal .modal-header > div {
+        min-width: 0;
+        max-width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .modal-body,
+    .hse-modal-body,
+    .sl-modal-scroll,
+    .guide-modal-body {
+        max-height: calc(100dvh - 126px) !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        padding: 12px !important;
+        overscroll-behavior: contain;
+    }
+
+    .modal-footer,
+    .hse-modal-footer,
+    .guide-modal-footer,
+    .sl-modal-actions {
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 7px;
+        padding: 10px 12px !important;
+    }
+
+    .modal-footer .btn,
+    .hse-modal-footer .btn,
+    .guide-modal-footer button {
+        flex: 1 1 120px;
+        justify-content: center;
+    }
+
+    .notification-dropdown-panel {
+        top: 60px !important;
+        right: 8px !important;
+        left: 8px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: calc(100dvh - 70px);
+    }
+
+    .notification-panel-header,
+    .notification-title-group {
+        min-width: 0;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .profile-dropdown-panel {
+        right: 8px !important;
+        width: min(270px, calc(100vw - 16px)) !important;
+        max-width: calc(100vw - 16px) !important;
+    }
+
+    #globalSearchResults {
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .asset-action-callout {
+        right: 8px !important;
+        left: 8px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        max-height: calc(100dvh - 20px);
+        overflow-y: auto;
+    }
+
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-content {
+        max-width: calc(100vw - 48px) !important;
+    }
+
+    .leaflet-popup-content {
+        width: auto !important;
+        min-width: 0 !important;
+        margin: 10px 12px !important;
+    }
+
+    .apexcharts-canvas,
+    .apexcharts-svg,
+    canvas,
+    img,
+    video {
+        max-width: 100% !important;
+    }
+
+    .apexcharts-legend {
+        max-width: 100% !important;
+        overflow-wrap: anywhere;
+    }
+
+    #leaflet-map,
+    .leaflet-container {
+        width: 100% !important;
+        height: clamp(260px, 58dvh, 340px) !important;
+        min-height: 260px !important;
+    }
+
+    /* Mobile drawer: closed by default, explicit backdrop, no persisted-open state. */
+    .sidebar {
+        top: 0;
+        bottom: 0;
+        left: 0 !important;
+        width: min(86vw, 292px) !important;
+        min-width: 0 !important;
+        max-width: 292px !important;
+        height: 100dvh !important;
+        transform: translateX(-105%);
+        transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 8px 0 28px rgba(15, 23, 42, 0.3);
+    }
+
+    body.sidebar-collapsed .sidebar {
+        left: 0 !important;
+        transform: translateX(0);
+    }
+
+    body.sidebar-collapsed::after {
+        content: none !important;
+    }
+
+    .mobile-nav-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1040;
+        display: block;
+        border: 0;
+        background: rgba(15, 23, 42, 0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    body.sidebar-collapsed .mobile-nav-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .sidebar-menu li a {
+        min-height: 42px;
+        height: 42px;
+    }
+
+    .sidebar-menu .nav-section-label {
+        padding-top: 9px;
+    }
+
+    .top-header {
+        flex: 0 0 54px !important;
+        height: 54px !important;
+        min-height: 54px !important;
+        padding: 0 8px !important;
+    }
+
+    .header-left {
+        max-width: calc(100% - 118px) !important;
+    }
+
+    .header-right {
+        max-width: none !important;
+        gap: 5px !important;
+    }
+
+    .btn-mobile-search-toggle {
+        display: flex !important;
+    }
+
+    .btn-sidebar-toggle,
+    .btn-mobile-search-toggle,
+    .btn-notification-bell,
+    .btn-profile-avatar {
+        min-width: 36px;
+        min-height: 36px;
+        flex: 0 0 36px;
+    }
+
+    #globalProjectFilter {
+        height: 36px;
+        padding-inline: 7px !important;
+    }
+
+    .settings-sidebar-nav {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        flex-flow: row nowrap !important;
+        gap: 5px !important;
+        width: 100% !important;
+        padding: 7px !important;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .settings-sidebar-nav > div:first-child {
+        display: none !important;
+    }
+
+    .settings-nav-item {
+        flex: 0 0 auto !important;
+        gap: 6px !important;
+        min-height: 38px;
+        margin: 0 !important;
+        padding: 5px 8px !important;
+        white-space: nowrap;
+    }
+
+    .settings-nav-item i {
+        width: 27px;
+        height: 27px;
+        font-size: 0.8rem;
+    }
+
+    .settings-nav-item small {
+        display: none !important;
+    }
+
+    .settings-content-area {
+        padding: 0 !important;
+    }
+
+    .prop-top-bar,
+    .prop-header-main-row,
+    .prop-top-actions {
+        align-items: stretch;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .prop-unit-selector {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .prop-tire-chassis-container {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        padding: 10px;
+    }
+
+    .prop-panel-grid-2,
+    .prop-panel-grid-top-map,
+    .prop-panel-grid-2 > *,
+    .prop-panel-grid-top-map > *,
+    .prop-panel-grid-top-map .prop-card,
+    .prop-panel-grid-top-map .prop-card-body,
+    #propUnitMap {
+        width: 100%;
+        min-width: 0 !important;
+        max-width: 100%;
+    }
+
+    .prop-card .mobile-table-scroll {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .prop-tire-axle-row {
+        min-width: 300px;
+    }
+
+    .prop-spec-row {
+        grid-template-columns: minmax(100px, 0.8fr) minmax(0, 1.2fr) !important;
+    }
+
+    .prop-spec-cell,
+    .prop-spec-label,
+    .prop-spec-val {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .attention-actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    .attention-action-btn {
+        min-width: 0;
+        white-space: normal !important;
+        line-height: 1.15;
+    }
+
+    .callout-actions-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .callout-action-btn,
+    .project-master-card,
+    .report-card,
+    .official-template-card {
+        min-width: 0;
+    }
+
+    .kanban-board {
+        width: 100%;
+        max-width: 100%;
+        overscroll-behavior-inline: contain;
+        scrollbar-width: thin;
+    }
+
+    .pm-calendar {
+        width: 100%;
+        min-width: 0;
+        grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    }
+
+    .pm-calendar-head,
+    .pm-calendar-day {
+        min-width: 0;
+        padding: 5px 3px;
+    }
+
+    .pm-calendar-day {
+        min-height: 82px;
+    }
+
+    .pm-calendar-event {
+        padding: 3px;
+    }
+
+    #p2hSectionSop > div[style*="grid-template-columns"] {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    #p2hSectionSop > div[style*="grid-template-columns"] > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    #costChartContainer,
+    #costChartContainer > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    #costChartContainer .cost-chart-bar-group {
+        min-width: 0;
+    }
+
+    #costChartContainer .cost-chart-tooltip {
+        position: fixed;
+        right: 12px;
+        bottom: 16px;
+        left: 12px;
+        width: auto;
+        max-width: 360px;
+        margin-inline: auto;
+        transform: translateY(6px);
+    }
+
+    #costChartContainer .cost-chart-bar-group:hover .cost-chart-tooltip,
+    #costChartContainer .cost-chart-bar-group:focus-within .cost-chart-tooltip {
+        transform: translateY(0);
+    }
+
+    #costChartContainer .cost-chart-tooltip::after {
+        content: none;
+    }
+}
+
+@media (max-width: 430px) {
+    .telemetry-metric-header i,
+    .kpi-icon,
+    .pk-card-icon,
+    .hse-card-icon,
+    .prod-card-icon {
+        transform: scale(0.9);
+        transform-origin: right center;
+    }
+
+    .badge,
+    .telemetry-action-link,
+    .kpi-subtitle {
+        font-size: 0.66rem !important;
+    }
+
+    .btn {
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .report-card,
+    .official-template-card,
+    .project-master-card {
+        grid-template-columns: 38px minmax(0, 1fr) !important;
+    }
+
+    .report-card > :last-child,
+    .official-template-card > :last-child,
+    .project-master-card > :last-child {
+        grid-column: 1 / -1;
+    }
+
+    .notification-panel-header .btn-mark-all-read span,
+    .sl-modal-actions button span {
+        display: none;
+    }
+}
+
+@media (max-width: 360px) {
+    :root {
+        --mobile-page-gutter: 8px;
+        --mobile-panel-padding: 10px;
+    }
+
+    .top-header {
+        padding-inline: 6px !important;
+    }
+
+    .header-left,
+    .header-right {
+        gap: 4px !important;
+    }
+
+    .btn-sidebar-toggle,
+    .btn-mobile-search-toggle,
+    .btn-notification-bell,
+    .btn-profile-avatar {
+        min-width: 34px;
+        min-height: 34px;
+        flex-basis: 34px;
+    }
+
+    .telemetry-metric-item,
+    #view-fuel .telemetry-metric-item,
+    .kpi-card,
+    .pm-kpi-card,
+    .pk-card,
+    .hse-card,
+    .prod-card,
+    .p2h-kpi-card,
+    .sl-kpi-card,
+    .cm-catalog-kpi,
+    .service-counter-card,
+    .monitoring-summary > div {
+        padding: 8px !important;
+    }
+
+    .telemetry-metric-footer {
+        flex-direction: column;
+    }
+
+    .adaptive-field-grid,
+    .hse-form-grid,
+    .cm-form-grid,
+    .p2h-form-header,
+    .pm-detail-form,
+    .import-manual-field-grid {
+        gap: 7px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    .mobile-nav-backdrop {
+        transition: none !important;
+    }
+}
+
 

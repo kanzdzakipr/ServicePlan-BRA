@@ -609,3 +609,82 @@
         margin-bottom: 16px;
     }
 }
+
+@media (max-width: 768px) {
+    #view-unit-properties {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .prop-top-bar {
+        align-items: stretch;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .prop-breadcrumb-group,
+    .prop-top-actions,
+    .prop-header-main-row,
+    .prop-unit-id-block,
+    .prop-unit-title {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .prop-breadcrumbs,
+    .prop-unit-title h1,
+    .unit-model-subtitle {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .prop-spec-header-card,
+    .prop-card-body {
+        padding: 12px;
+    }
+
+    .prop-vitals-bento-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .prop-vital-cell,
+    .prop-gauge-box {
+        min-width: 0;
+        padding: 9px;
+    }
+
+    .prop-vital-cell .vital-val,
+    .prop-gauge-val {
+        font-size: 1.15rem;
+        overflow-wrap: anywhere;
+    }
+
+    .prop-panel-grid-2,
+    .prop-panel-grid-top-map {
+        gap: 12px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .prop-panel-grid-2 > *,
+    .prop-panel-grid-top-map > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .prop-telemetry-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .prop-table th,
+    .prop-table td {
+        padding: 7px 8px;
+    }
+
+    #propTireBlueprint + div {
+        flex-wrap: wrap;
+        gap: 7px 12px !important;
+    }
+}

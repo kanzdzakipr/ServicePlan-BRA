@@ -19,8 +19,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20260823-3">
-    <link rel="stylesheet" href="scripts/unit-properties.css?v=20260827-1">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20260929-1">
+    <link rel="stylesheet" href="scripts/unit-properties.css?v=20260929-1">
     <script src="scripts/auth-client.js?v=20260809-1"></script>
     <script src="scripts/rbac.js?v=20260823-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
@@ -8768,25 +8768,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
             </div>
         </div>
-<script>
-    // Handle mobile sidebar overlay and item clicks
-    document.addEventListener('click', function(e) {
-        if (window.innerWidth <= 768 && document.body.classList.contains('sidebar-collapsed')) {
-            const sidebar = document.querySelector('.sidebar');
-            const toggleBtn = document.getElementById('sidebarToggle');
-            
-            // If click is outside sidebar and not on the toggle button itself
-            if (sidebar && !sidebar.contains(e.target) && toggleBtn && !toggleBtn.contains(e.target)) {
-                document.body.classList.remove('sidebar-collapsed');
-            }
-            
-            // If click is on a sidebar menu link
-            if (e.target.closest('.sidebar-menu a')) {
-                document.body.classList.remove('sidebar-collapsed');
-            }
-        }
-    });
-</script>
+<script src="scripts/mobile-responsive.js?v=20260929-1"></script>
 </body>
 
 </html>
