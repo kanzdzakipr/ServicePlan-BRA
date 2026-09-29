@@ -16278,33 +16278,67 @@ body.sl-modal-open {
         box-shadow: 2px 0 12px rgba(0,0,0,0.5);
     }
     
+    /* Hide floating hover tooltip badge on mobile view */
+    .sidebar-hover-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+    
     /* On mobile, sidebar-collapsed means OPEN */
     body.sidebar-collapsed .sidebar {
         left: 0;
     }
     
-    /* Undo the desktop shrink styles when opened on mobile */
+    /* Undo desktop/tablet shrink styles when sidebar is opened on mobile */
+    .sidebar .brand-label,
+    .sidebar .sidebar-menu .nav-label,
+    .sidebar .sidebar-menu .nav-section-label,
     body.sidebar-collapsed .brand-label,
     body.sidebar-collapsed .sidebar-menu .nav-label,
     body.sidebar-collapsed .sidebar-menu .nav-section-label {
-        display: block !important;
+        display: inline-block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        width: auto !important;
+        max-width: none !important;
+        color: inherit !important;
     }
     
+    .sidebar .sidebar-logo-full,
     body.sidebar-collapsed .sidebar-logo-full {
         display: block !important;
     }
     
+    .sidebar .sidebar-logo-circle-container,
     body.sidebar-collapsed .sidebar-logo-circle-container {
         display: none !important;
     }
     
+    .sidebar .sidebar-menu li a,
     body.sidebar-collapsed .sidebar-menu li a {
+        display: flex !important;
+        align-items: center !important;
         justify-content: flex-start !important;
         padding: 0 16px !important;
+        width: 100% !important;
     }
     
+    .sidebar .sidebar-menu li a i,
     body.sidebar-collapsed .sidebar-menu li a i {
         margin-right: 12px !important;
+        flex: 0 0 24px !important;
+        width: 24px !important;
+        text-align: center !important;
+    }
+
+    .sidebar .sidebar-menu .nav-label,
+    body.sidebar-collapsed .sidebar-menu .nav-label {
+        display: inline-block !important;
+        white-space: nowrap !important;
+        font-size: 0.88rem !important;
+        line-height: 1.2 !important;
     }
     
     /* Overlay background when drawer is open */

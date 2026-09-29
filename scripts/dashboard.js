@@ -18892,6 +18892,7 @@ window.renderArchiveTables = function() {
         document.querySelectorAll('.sidebar-menu li a').forEach(a => {
             a.addEventListener('mouseenter', function() {
                 if (!document.body.classList.contains('sidebar-collapsed')) return;
+                if (window.innerWidth <= 768) return;
 
                 const labelSpan = a.querySelector('.nav-label');
                 const text = (labelSpan ? labelSpan.innerText : '') || a.getAttribute('data-title') || a.getAttribute('title') || '';
