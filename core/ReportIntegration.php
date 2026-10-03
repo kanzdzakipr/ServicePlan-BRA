@@ -81,6 +81,22 @@ final class ReportIntegration
             CONSTRAINT fk_operation_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
             CONSTRAINT fk_operation_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS report_fuel_integrations (
+            fuel_integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            report_item_position INT UNSIGNED NOT NULL,
+            fuel_log_id INT NOT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_report_fuel_line (report_id, report_item_position),
+            UNIQUE KEY uq_report_fuel_log (fuel_log_id),
+            KEY idx_report_fuel_active (reversed_at, report_id),
+            CONSTRAINT fk_report_fuel_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_report_fuel_log FOREIGN KEY (fuel_log_id) REFERENCES fuel_logs (fuel_log_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     public static function applyFinal(
@@ -235,7 +251,18 @@ final class ReportIntegration
             $operationReversed += $reverseOperation->rowCount();
         }
 
-        $totalReversed = $reversed + $inspectionReversed + $operationReversed;
+        $reverseFuel = $db->prepare(
+            'UPDATE report_fuel_integrations
+             SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor_id
+             WHERE report_id = :report_id AND reversed_at IS NULL'
+        );
+        $reverseFuel->execute([
+            ':actor_id' => $actorId,
+            ':report_id' => $reportId,
+        ]);
+        $fuelReversed = $reverseFuel->rowCount();
+
+        $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($inspectionReversed > 0) {
@@ -243,7 +270,7 @@ final class ReportIntegration
             $reversalMessage = 'Laporan berhasil dibatalkan dan riwayat inspeksi dinonaktifkan.';
         } elseif ($operationReversed > 0) {
             $reversalType = 'operation-reversal';
-            $reversalMessage = 'Laporan berhasil dibatalkan, riwayat operasi dinonaktifkan, dan HM dipulihkan jika belum ada pembaruan lanjutan.';
+            $reversalMessage = 'Laporan berhasil dibatalkan, riwayat operasi dan transaksi BBM terkait dinonaktifkan, serta HM dipulihkan jika belum ada pembaruan lanjutan.';
         }
         return [
             'type' => $reversalType,
@@ -252,6 +279,7 @@ final class ReportIntegration
             'inventoryItemCount' => $reversed,
             'inspectionItemCount' => $inspectionReversed,
             'operationItemCount' => $operationReversed,
+            'fuelItemCount' => $fuelReversed,
             'message' => $reversalMessage,
         ];
     }
@@ -272,6 +300,7 @@ final class ReportIntegration
                 'totalWorkHours' => 0,
                 'totalHmOperation' => 0,
                 'totalFuelLiters' => 0,
+                'fuelItemCount' => 0,
             ];
         }
 
@@ -314,6 +343,7 @@ final class ReportIntegration
         $totalWorkHours = 0.0;
         $totalHmOperation = 0.0;
         $totalFuelLiters = 0.0;
+        $fuelItemCount = 0;
 
         foreach ($populatedRows as $entry) {
             $position = (int) $entry['position'];
@@ -389,6 +419,38 @@ final class ReportIntegration
                 ':created_by' => $actorId,
             ]);
 
+            if ($fuelLiters > 0) {
+                $fuelRate = $hmOperation > 0 ? round($fuelLiters / $hmOperation, 2) : 0.0;
+                $insertFuel = $db->prepare(
+                    'INSERT INTO fuel_logs
+                     (asset_id, refuel_date, flowmeter_start, flowmeter_end, liters_issued,
+                      current_hm_km, calculated_lph, baseline_lph, is_anomaly, driver_name)
+                     VALUES (:asset_id, :refuel_date, 0, 0, :liters_issued,
+                      :current_hm_km, :calculated_lph, 0, 0, :driver_name)'
+                );
+                $insertFuel->execute([
+                    ':asset_id' => $asset['asset_id'],
+                    ':refuel_date' => $operationDate . ' ' . $endTime . ':00',
+                    ':liters_issued' => $fuelLiters,
+                    ':current_hm_km' => $hmEnd,
+                    ':calculated_lph' => $fuelRate,
+                    ':driver_name' => $operator,
+                ]);
+
+                $insertFuelLink = $db->prepare(
+                    'INSERT INTO report_fuel_integrations
+                     (report_id, report_item_position, fuel_log_id, created_by)
+                     VALUES (:report_id, :position, :fuel_log_id, :created_by)'
+                );
+                $insertFuelLink->execute([
+                    ':report_id' => $reportId,
+                    ':position' => $position,
+                    ':fuel_log_id' => (int) $db->lastInsertId(),
+                    ':created_by' => $actorId,
+                ]);
+                $fuelItemCount++;
+            }
+
             $expectedHmStart = $hmEnd;
             $itemCount++;
             $totalWorkHours += $workHours;
@@ -408,7 +470,8 @@ final class ReportIntegration
             'totalWorkHours' => round($totalWorkHours, 2),
             'totalHmOperation' => round($totalHmOperation, 2),
             'totalFuelLiters' => round($totalFuelLiters, 2),
-            'message' => "LHO berhasil difinalkan, {$itemCount} baris operasi masuk ke Produktivitas, dan HM unit diperbarui.",
+            'fuelItemCount' => $fuelItemCount,
+            'message' => "LHO berhasil difinalkan, {$itemCount} baris operasi masuk ke Produktivitas, {$fuelItemCount} transaksi BBM masuk ke Fuel, dan HM unit diperbarui.",
         ];
     }
 

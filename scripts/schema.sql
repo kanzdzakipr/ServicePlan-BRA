@@ -459,6 +459,7 @@ CREATE TABLE `approvals` (
 -- 18. REPORT TEMPLATES (Versioned definitions for Laporan & Form)
 -- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `inventory_transactions`;
+DROP TABLE IF EXISTS `report_fuel_integrations`;
 DROP TABLE IF EXISTS `report_inspection_integrations`;
 DROP TABLE IF EXISTS `report_operation_logs`;
 DROP TABLE IF EXISTS `report_audit_logs`;
@@ -619,6 +620,25 @@ CREATE TABLE `report_operation_logs` (
     KEY `idx_operation_active` (`reversed_at`, `operation_date`),
     CONSTRAINT `fk_operation_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_operation_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 25. LHO TO FUEL INTEGRATION (Reversible fuel linkage)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `report_fuel_integrations` (
+    `fuel_integration_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `report_item_position` INT UNSIGNED NOT NULL,
+    `fuel_log_id` INT NOT NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    UNIQUE KEY `uq_report_fuel_line` (`report_id`, `report_item_position`),
+    UNIQUE KEY `uq_report_fuel_log` (`fuel_log_id`),
+    KEY `idx_report_fuel_active` (`reversed_at`, `report_id`),
+    CONSTRAINT `fk_report_fuel_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_report_fuel_log` FOREIGN KEY (`fuel_log_id`) REFERENCES `fuel_logs` (`fuel_log_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

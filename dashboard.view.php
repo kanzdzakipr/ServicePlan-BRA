@@ -71,7 +71,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             <li><a onclick="showView('logistics', '', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0"
                     data-title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare
                         Part & Logistik</span></a></li>
-            <li><a onclick="showView('fuel', '', 'menu-fuel')" id="menu-fuel" role="button" tabindex="0"
+            <li><a onclick="showView('fuel', '', 'menu-fuel'); window.refreshFuelLogsFromServer?.()" id="menu-fuel" role="button" tabindex="0"
                     data-title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a>
             </li>
             <li><a onclick="showView('productivity', '', 'menu-productivity')" id="menu-productivity" role="button"
@@ -4501,6 +4501,42 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
             }
 
+            function mapFuelApiRecord(f) {
+                const rateActual = parseFloat(f.calculated_lph) || 0;
+                const targetRate = parseFloat(f.baseline_lph) || 0;
+                let deviationPct = 0;
+                if (targetRate > 0) deviationPct = ((rateActual - targetRate) / targetRate) * 100;
+
+                let anomalyStatus = 'GREEN';
+                if (deviationPct > 20) anomalyStatus = 'RED';
+                else if (deviationPct > 10) anomalyStatus = 'ORANGE';
+                else if (deviationPct > 5) anomalyStatus = 'YELLOW';
+
+                const fromLho = Boolean(f.source_report_id);
+                return {
+                    trxId: String(f.fuel_log_id ?? ''),
+                    timeStr: String(f.refuel_date || ''),
+                    unitId: String(f.asset_id || ''),
+                    category: String(f.asset_category || 'Unknown'),
+                    location: String(f.source_site || 'Auto'),
+                    fuelman: fromLho ? 'Laporan LHO' : 'System',
+                    sourceReportNumber: String(f.source_report_number || ''),
+                    operator: String(f.driver_name || 'Unknown'),
+                    meterType: fromLho ? 'HM' : 'HM/KM',
+                    meterPrev: parseFloat(fromLho ? f.source_hm_start : f.flowmeter_start) || 0,
+                    meterCurr: parseFloat(fromLho ? f.source_hm_end : f.flowmeter_end) || 0,
+                    meterDiff: parseFloat(fromLho ? f.source_hm_operation : f.current_hm_km) || 0,
+                    liter: parseFloat(f.liters_issued) || 0,
+                    rateActual,
+                    targetRate,
+                    deviationPct: parseFloat(deviationPct.toFixed(1)),
+                    costRp: (parseFloat(f.liters_issued) || 0) * 12000,
+                    anomalyStatus: (f.is_anomaly == 1) ? 'RED' : anomalyStatus,
+                    status: String(f.source_status || 'Terverifikasi'),
+                    notes: f.source_notes || f.notes || ''
+                };
+            }
+
             document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     if (window.loadAssetMapping) {
@@ -4561,39 +4597,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                     // Assign Fuel Logs
                     if (fuelData?.status === 'success' && Array.isArray(fuelData.data)) {
-                        globalFuelLogs = fuelData.data.map(f => {
-                            const rateActual = parseFloat(f.calculated_lph) || 0;
-                            const targetRate = parseFloat(f.baseline_lph) || 0;
-                            let devPct = 0;
-                            if (targetRate > 0) devPct = ((rateActual - targetRate) / targetRate) * 100;
-                            
-                            let anomaly = 'GREEN';
-                            if (devPct > 20) anomaly = 'RED';
-                            else if (devPct > 10) anomaly = 'ORANGE';
-                            else if (devPct > 5) anomaly = 'YELLOW';
-
-                            return {
-                                trxId: f.fuel_log_id,
-                                timeStr: f.refuel_date,
-                                unitId: f.asset_id,
-                                category: f.asset_category || 'Unknown',
-                                location: 'Auto',
-                                fuelman: 'System',
-                                operator: f.driver_name || 'Unknown',
-                                meterType: 'HM/KM',
-                                meterPrev: parseFloat(f.flowmeter_start) || 0,
-                                meterCurr: parseFloat(f.flowmeter_end) || 0,
-                                meterDiff: parseFloat(f.current_hm_km) || 0,
-                                liter: parseFloat(f.liters_issued) || 0,
-                                rateActual: rateActual,
-                                targetRate: targetRate,
-                                deviationPct: parseFloat(devPct.toFixed(1)),
-                                costRp: (parseFloat(f.liters_issued) || 0) * 12000,
-                                anomalyStatus: (f.is_anomaly == 1) ? 'RED' : anomaly,
-                                status: 'Terverifikasi',
-                                notes: f.notes
-                            };
-                        });
+                        globalFuelLogs = fuelData.data.map(mapFuelApiRecord);
                     }
 
                     // Assign PM Plans
@@ -7029,6 +7033,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             // ==========================================
             let globalFuelLogs = [];
 
+            window.refreshFuelLogsFromServer = async function () {
+                const fuelData = await fetchJsonSafely('api/fuel_logs.php');
+                if (fuelData?.status !== 'success' || !Array.isArray(fuelData.data)) return;
+                globalFuelLogs = fuelData.data.map(mapFuelApiRecord);
+                renderFuelDashboard(globalFuelLogs);
+            };
+
             let globalTanks = [];
 
             window.initFuelEngine = function (data) {
@@ -7302,7 +7313,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             </a>
                         </td>
                         <td>${escapeHtml(l.category)}<br><small class="text-muted">${escapeHtml(l.location)}</small></td>
-                        <td>${escapeHtml(l.fuelman)}<br><small class="text-muted">Op: ${escapeHtml(l.operator)}</small></td>
+                        <td>${escapeHtml(l.fuelman)}<br><small class="text-muted">Op: ${escapeHtml(l.operator)}</small>${l.sourceReportNumber ? `<br><small class="text-muted">Ref: ${escapeHtml(l.sourceReportNumber)}</small>` : ''}</td>
                         <td>${l.meterPrev} &rarr; ${l.meterCurr} <small>(${l.meterDiff} ${l.meterType})</small></td>
                         <td><strong>${l.liter} L</strong></td>
                         <td>${l.rateActual} ${l.meterType === 'HM' ? 'L/HM' : 'Km/L'} <br><small class="text-muted">Std: ${l.targetRate}</small></td>
@@ -7402,10 +7413,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     return;
                 }
                 const filtered = globalFuelLogs.filter(l =>
-                    l.trxId.toLowerCase().includes(q) ||
-                    l.unitId.toLowerCase().includes(q) ||
-                    l.operator.toLowerCase().includes(q) ||
-                    l.location.toLowerCase().includes(q)
+                    String(l.trxId).toLowerCase().includes(q) ||
+                    String(l.unitId).toLowerCase().includes(q) ||
+                    String(l.operator).toLowerCase().includes(q) ||
+                    String(l.location).toLowerCase().includes(q) ||
+                    String(l.sourceReportNumber || '').toLowerCase().includes(q)
                 );
                 renderFuelTable(filtered);
             };

@@ -1066,3 +1066,124 @@ LIMIT 10;
 - [ ] Void menonaktifkan ledger dan memulihkan HM secara aman.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 4 sebelum implementasi Batch 5 dimulai.
+
+### Batch 5 — LHO ke Fuel Management
+
+Status implementasi: **SIAP UJI**.
+
+Ruang lingkup batch ini:
+
+- setiap baris LHO final dengan `BBM > 0` membuat satu transaksi pada `fuel_logs`;
+- transaksi tampil di menu **Fuel** dengan sumber `Laporan LHO`, nomor laporan, site, operator, HM, liter, dan konsumsi L/HM;
+- konsumsi dihitung dengan rumus `BBM / HM operasi`;
+- baris dengan BBM `0` tidak membuat transaksi Fuel;
+- retry finalisasi tidak membuat transaksi ganda;
+- transaksi BBM manual tetap tampil dan tidak diubah;
+- void menonaktifkan tautan transaksi LHO sehingga tidak lagi tampil di Fuel, tanpa menghapus histori `fuel_logs`.
+
+#### Persiapan data uji
+
+Gunakan LHO yang baru dan ambil HM aktual unit terlebih dahulu:
+
+```sql
+SELECT asset_id, asset_code, category, status, last_hm_km
+FROM u646470441_ServicePlanBRA.assets
+WHERE asset_id = 'CS-41001';
+```
+
+Catat `last_hm_km` sebagai **HM_MASTER**, lalu isi satu baris LHO:
+
+| Kolom | Nilai |
+|---|---|
+| Operator | `QA Operator Batch 5` |
+| ID alat | `CS-41001` atau unit uji aktif |
+| Jam awal / akhir | `08:00` / `16:00` |
+| HM awal | **HM_MASTER** |
+| HM akhir | **HM_MASTER + 6.5** |
+| HM operasi | `6.5` |
+| Site area | `QA Site Batch 5` |
+| BBM | `65` |
+| Verifikasi | `Terverifikasi` |
+
+Hasil konsumsi yang diharapkan adalah `65 / 6.5 = 10 L/HM`.
+
+#### Pengujian draft
+
+1. [ ] Isi laporan dan tunggu autosave tanpa menekan **Simpan Laporan**.
+2. [ ] Pastikan laporan masih `DRAFT`.
+3. [ ] Pastikan belum ada record untuk laporan tersebut di `report_fuel_integrations`.
+4. [ ] Pastikan jumlah transaksi pada menu Fuel belum berubah.
+
+#### Pengujian finalisasi dan menu Fuel
+
+1. [ ] Tekan **Simpan Laporan**.
+2. [ ] Pesan sukses harus menyebut satu transaksi BBM masuk ke Fuel.
+3. [ ] Buka menu **Fuel**; data akan dimuat ulang otomatis.
+4. [ ] Cari nomor laporan atau ID unit pada kotak pencarian.
+5. [ ] Pastikan sumber tampil sebagai `Laporan LHO` dan referensi berisi nomor laporan.
+6. [ ] Pastikan site, operator, HM awal, HM akhir, HM operasi, dan liter sesuai LHO.
+7. [ ] Pastikan konsumsi aktual tampil `10 L/HM`.
+8. [ ] Pastikan transaksi BBM manual yang sudah ada tetap tampil.
+9. [ ] Verifikasi database:
+
+```sql
+SELECT
+    r.report_number,
+    r.status AS report_status,
+    rfi.fuel_integration_id,
+    rfi.report_item_position,
+    f.fuel_log_id,
+    f.asset_id,
+    f.refuel_date,
+    f.liters_issued,
+    f.current_hm_km,
+    f.calculated_lph,
+    o.site,
+    o.hm_start,
+    o.hm_end,
+    o.hm_operation,
+    o.operator_name,
+    rfi.reversed_at
+FROM u646470441_ServicePlanBRA.report_fuel_integrations rfi
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = rfi.report_id
+JOIN u646470441_ServicePlanBRA.fuel_logs f
+    ON f.fuel_log_id = rfi.fuel_log_id
+JOIN u646470441_ServicePlanBRA.report_operation_logs o
+    ON o.report_id = rfi.report_id
+   AND o.report_item_position = rfi.report_item_position
+WHERE f.asset_id = 'CS-41001'
+ORDER BY rfi.fuel_integration_id DESC
+LIMIT 10;
+```
+
+#### Pengujian BBM nol dan duplikasi
+
+1. [ ] Buat LHO baru dengan `BBM = 0` dan HM yang berurutan dari HM Master Asset terbaru.
+2. [ ] Finalkan laporan; ledger Produktivitas harus dibuat, tetapi transaksi Fuel tidak bertambah.
+3. [ ] Muat ulang atau kirim ulang permintaan finalisasi laporan yang sama.
+4. [ ] Pastikan jumlah `report_fuel_integrations` untuk laporan tersebut tidak bertambah.
+
+#### Pengujian void
+
+1. [ ] Buka **Laporan & Form → Riwayat Laporan**.
+2. [ ] Klik **Void** pada laporan LHO Batch 5.
+3. [ ] Pastikan pesan menyebut transaksi BBM terkait dinonaktifkan.
+4. [ ] Buka kembali menu **Fuel** dan cari nomor laporan.
+5. [ ] Pastikan transaksi tersebut tidak lagi tampil sebagai transaksi aktif.
+6. [ ] Pastikan `report_fuel_integrations.reversed_at` dan `reversed_by` terisi.
+7. [ ] Pastikan baris historis di `fuel_logs` tetap ada untuk audit.
+8. [ ] Pastikan transaksi BBM manual lain tidak berubah.
+
+#### Kriteria lulus Batch 5
+
+- [ ] Draft tidak membuat transaksi Fuel.
+- [ ] Setiap baris final dengan BBM positif membuat tepat satu transaksi Fuel.
+- [ ] BBM nol tidak membuat transaksi Fuel.
+- [ ] Nilai liter dan L/HM sesuai data LHO.
+- [ ] Sumber, nomor laporan, site, operator, dan HM tampil benar.
+- [ ] Retry tidak membuat duplikasi.
+- [ ] Void menghilangkan transaksi LHO dari data Fuel aktif tetapi mempertahankan histori audit.
+- [ ] Transaksi manual tidak berubah.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 5 sebelum implementasi Batch 6 dimulai.

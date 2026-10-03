@@ -120,6 +120,7 @@ try {
         && abs((float) $result['totalFuelLiters'] - 85.0) < 0.005,
         'LHO integration totals are correct'
     );
+    lhoAssert((int) $result['fuelItemCount'] === 2, 'LHO creates one Fuel transaction for each row with BBM');
 
     $logs = $db->prepare(
         'SELECT COUNT(*) AS row_count, SUM(work_hours) AS work_hours, SUM(hm_operation) AS hm_operation
@@ -134,12 +135,33 @@ try {
         'operation ledger stores calculated hours'
     );
 
+    $fuelLogs = $db->prepare(
+        'SELECT COUNT(*) AS row_count, SUM(f.liters_issued) AS liters,
+                MIN(f.calculated_lph) AS min_rate, MAX(f.calculated_lph) AS max_rate
+         FROM report_fuel_integrations rfi
+         INNER JOIN fuel_logs f ON f.fuel_log_id = rfi.fuel_log_id
+         WHERE rfi.report_id = :report_id AND rfi.reversed_at IS NULL'
+    );
+    $fuelLogs->execute([':report_id' => $reportId]);
+    $fuelSummary = $fuelLogs->fetch(PDO::FETCH_ASSOC);
+    lhoAssert(
+        (int) $fuelSummary['row_count'] === 2 && abs((float) $fuelSummary['liters'] - 85.0) < 0.005,
+        'Fuel ledger receives both LHO BBM rows without changing manual logs'
+    );
+    lhoAssert(
+        abs((float) $fuelSummary['min_rate'] - 8.57) < 0.005
+        && abs((float) $fuelSummary['max_rate'] - 10.0) < 0.005,
+        'Fuel efficiency is calculated from BBM divided by HM operation'
+    );
+
     $assetHm = $db->prepare('SELECT last_hm_km FROM assets WHERE asset_id = :asset_id');
     $assetHm->execute([':asset_id' => $asset['asset_id']]);
     lhoAssert(abs((float) $assetHm->fetchColumn() - $rowTwoEnd) < 0.005, 'LHO updates Master Asset HM to the final row');
 
     $duplicate = ReportIntegration::applyFinal($db, 'lho', $reportId, $fields, $rows, 1);
     lhoAssert(!empty($duplicate['alreadyApplied']), 'LHO retry is idempotent');
+    $fuelLogs->execute([':report_id' => $reportId]);
+    lhoAssert((int) $fuelLogs->fetch(PDO::FETCH_ASSOC)['row_count'] === 2, 'LHO retry does not duplicate Fuel transactions');
 
     try {
         ReportIntegration::applyFinal(
@@ -172,10 +194,13 @@ try {
     $reversal = ReportIntegration::reverseFinal($db, $reportId, 1);
     $assetHm->execute([':asset_id' => $asset['asset_id']]);
     lhoAssert($reversal['operationItemCount'] === 2, 'void deactivates both LHO rows');
+    lhoAssert($reversal['fuelItemCount'] === 2, 'void deactivates both linked Fuel transactions');
     lhoAssert(abs((float) $assetHm->fetchColumn() - $startingHm) < 0.005, 'void restores Master Asset HM');
 
     $logs->execute([':report_id' => $reportId]);
     lhoAssert((int) $logs->fetch(PDO::FETCH_ASSOC)['row_count'] === 0, 'void removes LHO rows from the active ledger');
+    $fuelLogs->execute([':report_id' => $reportId]);
+    lhoAssert((int) $fuelLogs->fetch(PDO::FETCH_ASSOC)['row_count'] === 0, 'void removes linked LHO transactions from active Fuel data');
 
     $secondReversal = ReportIntegration::reverseFinal($db, $reportId, 1);
     lhoAssert($secondReversal['applied'] === false, 'repeated LHO void is idempotent');

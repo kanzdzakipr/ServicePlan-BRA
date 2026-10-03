@@ -764,6 +764,40 @@ LOCK TABLES `inventory_transactions` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `report_fuel_integrations`
+--
+
+DROP TABLE IF EXISTS `report_fuel_integrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `report_fuel_integrations` (
+  `fuel_integration_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `report_item_position` int unsigned NOT NULL,
+  `fuel_log_id` int NOT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`fuel_integration_id`),
+  UNIQUE KEY `uq_report_fuel_line` (`report_id`,`report_item_position`),
+  UNIQUE KEY `uq_report_fuel_log` (`fuel_log_id`),
+  KEY `idx_report_fuel_active` (`reversed_at`,`report_id`),
+  CONSTRAINT `fk_report_fuel_log` FOREIGN KEY (`fuel_log_id`) REFERENCES `fuel_logs` (`fuel_log_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_report_fuel_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `report_fuel_integrations`
+--
+
+LOCK TABLES `report_fuel_integrations` WRITE;
+/*!40000 ALTER TABLE `report_fuel_integrations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_fuel_integrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `report_inspection_integrations`
 --
 

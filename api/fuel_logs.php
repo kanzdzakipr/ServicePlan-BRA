@@ -1,7 +1,9 @@
 <?php
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 
 $db = Database::getInstance();
+ReportIntegration::ensureTables($db);
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
@@ -9,11 +11,26 @@ switch ($method) {
         // Retrieve fuel logs
         $scope = api_location_scope_clause('a', 'fuel_location_id');
         $sql = "
-            SELECT f.*, a.category AS asset_category 
-            FROM fuel_logs f 
+            SELECT f.*, a.category AS asset_category,
+                   rfi.fuel_integration_id,
+                   rfi.report_id AS source_report_id,
+                   rr.report_number AS source_report_number,
+                   rol.site AS source_site,
+                   rol.hm_start AS source_hm_start,
+                   rol.hm_end AS source_hm_end,
+                   rol.hm_operation AS source_hm_operation,
+                   rol.verification_status AS source_status,
+                   rol.notes AS source_notes
+            FROM fuel_logs f
             INNER JOIN assets a ON f.asset_id = a.asset_id
+            LEFT JOIN report_fuel_integrations rfi ON rfi.fuel_log_id = f.fuel_log_id
+            LEFT JOIN report_records rr ON rr.report_id = rfi.report_id
+            LEFT JOIN report_operation_logs rol
+                   ON rol.report_id = rfi.report_id
+                  AND rol.report_item_position = rfi.report_item_position
+            WHERE (rfi.fuel_integration_id IS NULL OR rfi.reversed_at IS NULL)
         ";
-        if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
+        if ($scope['sql'] !== '') $sql .= " AND " . $scope['sql'];
         $sql .= " ORDER BY f.refuel_date DESC LIMIT 100";
         $stmt = $db->prepare($sql);
         $stmt->execute($scope['params']);
