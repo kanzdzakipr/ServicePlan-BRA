@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
@@ -226,6 +227,7 @@ function getReportById($db, $reportId) {
 
 try {
     ensureReportTables($db);
+    ReportIntegration::ensureTables($db);
 
     if ($method === 'GET') {
         $id = trim((string)($_GET['id'] ?? ''));
@@ -359,9 +361,31 @@ try {
             }
             $stmt->execute($params);
             replaceReportItems($db, $reportId, $rows);
-            writeReportAudit($db, $reportId, $clientKey, strtoupper($action), ['reportNumber' => $reportNumber]);
+            $integration = $action === 'finalize'
+                ? ReportIntegration::applyFinal(
+                    $db,
+                    trim((string) ($template['id'] ?? '')),
+                    $reportId,
+                    $fields,
+                    $rows,
+                    (int) api_current_user()['id']
+                )
+                : ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
+            writeReportAudit($db, $reportId, $clientKey, strtoupper($action), [
+                'reportNumber' => $reportNumber,
+                'integration' => $integration,
+            ]);
             $db->commit();
-            reportReply('success', getReportById($db, $reportId), $status === 'FINAL' ? 'Laporan berhasil difinalkan.' : 'Draft tersimpan di server.');
+            $responseData = getReportById($db, $reportId);
+            if (is_array($responseData)) {
+                $responseData['integration'] = $integration;
+            }
+            $successMessage = $status === 'FINAL'
+                ? ($integration['applied']
+                    ? "Laporan berhasil difinalkan dan {$integration['itemCount']} baris stok diperbarui."
+                    : 'Laporan berhasil difinalkan.')
+                : 'Draft tersimpan di server.';
+            reportReply('success', $responseData, $successMessage);
         } catch (PDOException $e) {
             if ($db->inTransaction()) $db->rollBack();
             if ($e->getCode() === '23000') reportReply('error', null, 'Nomor laporan final sudah digunakan.', 409);
@@ -420,15 +444,31 @@ try {
         api_require_permission('reports.approve');
         $reportId = trim((string)($input['reportId'] ?? ''));
         $reason = trim((string)($input['reason'] ?? ''));
-        $ownerScope = api_report_owner_scope_clause('report_records', 'void_owner_id');
-        $sql = "UPDATE report_records SET status = 'VOID', voided_at = CURRENT_TIMESTAMP,
-                final_number_key = NULL WHERE report_id = :report_id AND status = 'FINAL'";
-        if ($ownerScope['sql'] !== '') $sql .= " AND " . $ownerScope['sql'];
-        $stmt = $db->prepare($sql);
-        $stmt->execute(array_merge([':report_id' => $reportId], $ownerScope['params']));
-        if ($stmt->rowCount() < 1) reportReply('error', null, 'Laporan final tidak ditemukan atau sudah void.', 404);
-        writeReportAudit($db, $reportId, $clientKey, 'VOID', ['reason' => $reason]);
-        reportReply('success', getReportById($db, $reportId), 'Laporan berhasil dibatalkan (void).');
+        $db->beginTransaction();
+        try {
+            $ownerScope = api_report_owner_scope_clause('report_records', 'void_owner_id');
+            $sql = "UPDATE report_records SET status = 'VOID', voided_at = CURRENT_TIMESTAMP,
+                    final_number_key = NULL WHERE report_id = :report_id AND status = 'FINAL'";
+            if ($ownerScope['sql'] !== '') $sql .= " AND " . $ownerScope['sql'];
+            $stmt = $db->prepare($sql);
+            $stmt->execute(array_merge([':report_id' => $reportId], $ownerScope['params']));
+            if ($stmt->rowCount() < 1) {
+                throw new DomainException('Laporan final tidak ditemukan atau sudah void.');
+            }
+            $reversal = ReportIntegration::reverseFinal($db, $reportId, (int) api_current_user()['id']);
+            writeReportAudit($db, $reportId, $clientKey, 'VOID', [
+                'reason' => $reason,
+                'integration' => $reversal,
+            ]);
+            $db->commit();
+            $message = $reversal['applied']
+                ? "Laporan berhasil dibatalkan dan {$reversal['itemCount']} perubahan stok dibalik."
+                : 'Laporan berhasil dibatalkan (void).';
+            reportReply('success', getReportById($db, $reportId), $message);
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            reportReply('error', null, $e->getMessage(), 409);
+        }
     }
 
     reportReply('error', null, 'Aksi laporan tidak dikenal.', 422);

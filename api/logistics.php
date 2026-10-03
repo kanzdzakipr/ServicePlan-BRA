@@ -1,8 +1,10 @@
 <?php
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
+ReportIntegration::ensureTables($db);
 
 // Ensure purchase_request_items table exists for line items
 $db->exec("CREATE TABLE IF NOT EXISTS `purchase_request_items` (
@@ -17,7 +19,72 @@ $db->exec("CREATE TABLE IF NOT EXISTS `purchase_request_items` (
 switch ($method) {
     case 'GET':
         if (isset($_GET['type'])) {
-            if ($_GET['type'] == 'parts') {
+            if ($_GET['type'] == 'inventory') {
+                $stockStatement = $db->query(
+                    "SELECT p.part_id, p.part_number, p.part_name, p.unit_measure, p.stock_qty,
+                            p.min_stock_qty, p.location_warehouse,
+                            COALESCE(SUM(CASE
+                                WHEN it.movement_type = 'IN' AND it.reversed_at IS NULL THEN it.quantity
+                                ELSE 0
+                            END), 0) AS received_total
+                     FROM parts p
+                     LEFT JOIN inventory_transactions it ON it.part_id = p.part_id
+                     GROUP BY p.part_id, p.part_number, p.part_name, p.unit_measure, p.stock_qty,
+                              p.min_stock_qty, p.location_warehouse
+                     ORDER BY p.part_name, p.part_number"
+                );
+                $stock = array_map(static function (array $row): array {
+                    return [
+                        'partId' => (int) $row['part_id'],
+                        'partNumber' => (string) $row['part_number'],
+                        'namaParts' => (string) $row['part_name'],
+                        'satuan' => (string) $row['unit_measure'],
+                        'penerimaanTotal' => (int) $row['received_total'],
+                        'pemakaianTotal' => 0,
+                        'saldo' => (int) $row['stock_qty'],
+                        'minimumStock' => (int) $row['min_stock_qty'],
+                        'gudang' => (string) $row['location_warehouse'],
+                        'source' => 'Database parts / integrasi laporan',
+                    ];
+                }, $stockStatement->fetchAll(PDO::FETCH_ASSOC));
+
+                $incomingStatement = $db->query(
+                    "SELECT it.transaction_id, it.transaction_date, it.reference_number, it.counterparty,
+                            it.quantity, it.unit_measure, it.stock_before, it.stock_after, it.notes,
+                            p.part_number, p.part_name, r.report_number
+                     FROM inventory_transactions it
+                     INNER JOIN parts p ON p.part_id = it.part_id
+                     INNER JOIN report_records r ON r.report_id = it.report_id
+                     WHERE it.movement_type = 'IN' AND it.reversed_at IS NULL
+                     ORDER BY it.transaction_date DESC, it.transaction_id DESC
+                     LIMIT 500"
+                );
+                $incoming = array_map(static function (array $row): array {
+                    return [
+                        'transactionId' => (int) $row['transaction_id'],
+                        'tanggal' => (string) $row['transaction_date'],
+                        'noBukti' => (string) $row['reference_number'],
+                        'terimaDari' => (string) ($row['counterparty'] ?? ''),
+                        'namaParts' => (string) $row['part_name'],
+                        'partNumber' => (string) $row['part_number'],
+                        'merk' => '',
+                        'satuan' => (string) $row['unit_measure'],
+                        'jml' => (int) $row['quantity'],
+                        'unit' => '',
+                        'noSpb' => (string) ($row['report_number'] ?? ''),
+                        'saldoLalu' => (int) $row['stock_before'],
+                        'saldoSekarang' => (int) $row['stock_after'],
+                        'keterangan' => (string) ($row['notes'] ?? ''),
+                        'source' => 'Laporan BHW-IN',
+                    ];
+                }, $incomingStatement->fetchAll(PDO::FETCH_ASSOC));
+
+                echo json_encode([
+                    'status' => 'success',
+                    'data' => ['stock' => $stock, 'masuk' => $incoming],
+                ]);
+                break;
+            } elseif ($_GET['type'] == 'parts') {
                 $stmt = $db->query("SELECT * FROM parts");
                 echo json_encode(["status" => "success", "data" => $stmt->fetchAll()]);
                 break;

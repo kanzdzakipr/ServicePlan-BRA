@@ -721,6 +721,49 @@ LOCK TABLES `report_templates` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `inventory_transactions`
+--
+
+DROP TABLE IF EXISTS `inventory_transactions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `inventory_transactions` (
+  `transaction_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `report_item_position` int unsigned NOT NULL,
+  `movement_type` enum('IN','OUT') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `transaction_date` date NOT NULL,
+  `reference_number` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `counterparty` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `part_id` int NOT NULL,
+  `quantity` int unsigned NOT NULL,
+  `unit_measure` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `stock_before` int NOT NULL,
+  `stock_after` int NOT NULL,
+  `notes` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`transaction_id`),
+  UNIQUE KEY `uq_inventory_report_line` (`report_id`,`report_item_position`,`movement_type`),
+  KEY `idx_inventory_part_date` (`part_id`,`transaction_date`),
+  KEY `idx_inventory_active` (`movement_type`,`reversed_at`,`transaction_date`),
+  CONSTRAINT `fk_inventory_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_inventory_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `inventory_transactions`
+--
+
+LOCK TABLES `inventory_transactions` WRITE;
+/*!40000 ALTER TABLE `inventory_transactions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `inventory_transactions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `role_permissions`
 --
 

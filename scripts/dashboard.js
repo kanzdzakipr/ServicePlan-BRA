@@ -192,6 +192,7 @@
                 column('tanggal', 'Tanggal', 'date'),
                 column('bapb', 'No. BAPB'),
                 column('dari', 'Terima dari'),
+                column('part_number', 'Part number'),
                 column('nama', 'Nama parts'),
                 column('satuan', 'Satuan'),
                 column('jumlah', 'Jumlah', 'number'),
@@ -1545,6 +1546,9 @@
         );
         if (!confirmed) return;
         try {
+            let successMessage = record.backend
+                ? 'Laporan berhasil dibatalkan (void).'
+                : 'Laporan lokal berhasil dihapus dari riwayat.';
             if (record.backend) {
                 const result = await reportApiRequest('', {
                     method: 'POST',
@@ -1558,6 +1562,7 @@
                     showToast('Server tidak aktif. Laporan backend tidak diubah agar riwayat tetap konsisten.', true);
                     return;
                 }
+                successMessage = result.message || successMessage;
             }
             writeHistory(records.filter(item => item.id !== recordId));
             const preview = document.getElementById('historyPrintArea');
@@ -1566,7 +1571,7 @@
                 preview.innerHTML = '';
             }
             renderHistory();
-            showToast(record.backend ? 'Laporan berhasil dibatalkan (void).' : 'Laporan lokal berhasil dihapus dari riwayat.');
+            showToast(successMessage);
         } catch (error) {
             showToast('Laporan gagal dihapus. Silakan coba kembali.', true);
         }
@@ -2942,7 +2947,7 @@
             openForm(schemaId);
             renderHistory();
             showToast(result.ok
-                ? 'Laporan final berhasil disimpan ke server. Form sudah dikosongkan.'
+                ? `${result.message || 'Laporan final berhasil disimpan ke server.'} Form sudah dikosongkan.`
                 : 'API belum aktif. Laporan disimpan lokal dan form sudah dikosongkan.');
         } catch (error) {
             showToast('Laporan gagal disimpan. Kapasitas penyimpanan browser mungkin penuh.', true);
@@ -17969,7 +17974,38 @@ window.loadLogisticsData = async function (specificTab = null) {
 
     try {
         if (!window.logisticsData) throw new Error("Data logistik lokal tidak ditemukan (pastikan logistics_data.js ter-load).");
-        const data = window.logisticsData;
+        const baseData = window.logisticsData;
+        let databaseData = { masuk: [], stock: [] };
+        try {
+            const response = await fetch('api/logistics.php?type=inventory', {
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { Accept: 'application/json' }
+            });
+            const payload = await response.json();
+            if (response.ok && payload.status === 'success' && payload.data) {
+                databaseData = {
+                    masuk: Array.isArray(payload.data.masuk) ? payload.data.masuk : [],
+                    stock: Array.isArray(payload.data.stock) ? payload.data.stock : []
+                };
+            }
+        } catch (databaseError) {
+            console.warn('Data stok database tidak dapat dimuat; memakai dataset logistik lokal.', databaseError);
+        }
+
+        const databasePartNumbers = new Set(
+            databaseData.stock.map(item => String(item.partNumber || '').trim().toUpperCase()).filter(Boolean)
+        );
+        const data = {
+            ...baseData,
+            masuk: [...databaseData.masuk, ...(baseData.masuk || [])],
+            stock: [
+                ...databaseData.stock,
+                ...(baseData.stock || []).filter(item => (
+                    !databasePartNumbers.has(String(item.partNumber || '').trim().toUpperCase())
+                ))
+            ]
+        };
 
         if (loadMasuk) {
             dataPartsMasuk = data.masuk || [];

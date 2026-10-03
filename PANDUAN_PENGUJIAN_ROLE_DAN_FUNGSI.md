@@ -591,3 +591,113 @@ Pengujian dinyatakan lulus jika:
 | Equipment Manager |  |  |  |  |
 | Administrator |  |  |  |  |
 | Project Owner |  |  |  |  |
+
+## 19. Batch integrasi antar-menu
+
+### Batch 1 — BHW-IN ke Spare Part & Logistik
+
+Status implementasi: **SIAP UJI**.
+
+Ruang lingkup batch ini:
+
+- finalisasi laporan `BHW-IN` menambah stok pada tabel `parts`;
+- setiap baris barang masuk dicatat di `inventory_transactions`;
+- transaksi tampil pada tab Barang Masuk di menu Spare Part & Logistik;
+- saldo terbaru tampil pada tab Stok;
+- finalisasi ulang/retry tidak menggandakan stok;
+- void laporan membalik penambahan stok;
+- draft dan autosave tidak mengubah stok.
+
+#### Persiapan
+
+1. [ ] Login sebagai Administrator.
+2. [ ] Lakukan hard refresh dengan `Ctrl+F5`.
+3. [ ] Jalankan query berikut di HeidiSQL untuk memperoleh saldo awal:
+
+```sql
+SELECT part_number, part_name, unit_measure, stock_qty
+FROM u646470441_ServicePlanBRA.parts
+WHERE part_number = 'P-001-OIL';
+```
+
+#### Data uji yang disarankan
+
+| Field | Nilai |
+|---|---|
+| Nomor log | `QA-BHWIN-001` |
+| Project | `QA Laragon` |
+| Tanggal laporan | Tanggal pengujian |
+| Tanggal baris | Tanggal pengujian |
+| No. BAPB | `QA-BAPB-001` |
+| Terima dari | `QA Supplier` |
+| Part number | `P-001-OIL` |
+| Nama parts | `Filter Oli Engine Komatsu PC200-10M0` |
+| Satuan | `Pcs` |
+| Jumlah | `1` |
+| Saldo lalu | Hasil `stock_qty` dari query persiapan |
+| Saldo sekarang | Terhitung otomatis: saldo lalu + 1 |
+| Keterangan | `Pengujian Batch 1` |
+
+#### Pengujian draft
+
+1. [ ] Isi form, tetapi jangan tekan **Simpan Laporan**.
+2. [ ] Tunggu badge autosave selesai.
+3. [ ] Pastikan laporan berstatus `DRAFT` di `report_records`.
+4. [ ] Pastikan `stock_qty` belum berubah.
+5. [ ] Pastikan belum ada transaksi aktif pada `inventory_transactions`.
+
+#### Pengujian finalisasi
+
+1. [ ] Tekan **Simpan Laporan**.
+2. [ ] Pesan sukses menyebut jumlah baris stok yang diperbarui.
+3. [ ] Pastikan status laporan menjadi `FINAL`.
+4. [ ] Pastikan `parts.stock_qty` bertambah tepat sebesar `jumlah`.
+5. [ ] Pastikan satu ledger aktif tercipta:
+
+```sql
+SELECT
+    r.report_number,
+    it.movement_type,
+    p.part_number,
+    p.part_name,
+    it.quantity,
+    it.stock_before,
+    it.stock_after,
+    it.reversed_at
+FROM u646470441_ServicePlanBRA.inventory_transactions it
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = it.report_id
+JOIN u646470441_ServicePlanBRA.parts p
+    ON p.part_id = it.part_id
+WHERE r.report_number = 'QA-BHWIN-001';
+```
+
+6. [ ] Buka **Spare Part & Logistik → Barang Masuk**.
+7. [ ] Cari `P-001-OIL` atau `QA-BAPB-001` dan pastikan transaksi tampil.
+8. [ ] Buka tab **Stok** dan pastikan saldo baru tampil.
+
+#### Pengujian validasi saldo
+
+1. [ ] Buat laporan kedua dengan `saldo_lalu` yang sengaja berbeda dari `parts.stock_qty`.
+2. [ ] Tekan **Simpan Laporan**.
+3. [ ] Sistem harus menolak finalisasi dan menampilkan stok database yang benar.
+4. [ ] Pastikan stok dan ledger tidak berubah.
+
+#### Pengujian void
+
+1. [ ] Buka **Riwayat Laporan**.
+2. [ ] Klik **Void** pada `QA-BHWIN-001`.
+3. [ ] Konfirmasi pembatalan.
+4. [ ] Pastikan stok kembali ke saldo sebelum finalisasi.
+5. [ ] Pastikan `inventory_transactions.reversed_at` terisi.
+6. [ ] Pastikan transaksi tidak lagi muncul sebagai Barang Masuk aktif.
+
+#### Kriteria lulus Batch 1
+
+- [ ] Draft tidak mengubah stok.
+- [ ] Finalisasi menambah stok tepat satu kali.
+- [ ] Menu Logistik menampilkan transaksi dan saldo database.
+- [ ] Saldo lama yang tidak cocok ditolak.
+- [ ] Void mengembalikan stok.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 1 sebelum implementasi Batch 2 dimulai.

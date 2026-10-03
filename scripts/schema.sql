@@ -458,6 +458,7 @@ CREATE TABLE `approvals` (
 -- ----------------------------------------------------------------------------
 -- 18. REPORT TEMPLATES (Versioned definitions for Laporan & Form)
 -- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `inventory_transactions`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -530,6 +531,34 @@ CREATE TABLE `report_audit_logs` (
     KEY `idx_report_audit_record` (`report_id`, `occurred_at`),
     CONSTRAINT `fk_report_audit_record` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE CASCADE,
     CONSTRAINT `fk_report_audit_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 22. INVENTORY TRANSACTIONS (Report integration ledger)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `inventory_transactions` (
+    `transaction_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `report_item_position` INT UNSIGNED NOT NULL,
+    `movement_type` ENUM('IN', 'OUT') NOT NULL,
+    `transaction_date` DATE NOT NULL,
+    `reference_number` VARCHAR(190) NOT NULL,
+    `counterparty` VARCHAR(190) NULL,
+    `part_id` INT NOT NULL,
+    `quantity` INT UNSIGNED NOT NULL,
+    `unit_measure` VARCHAR(20) NOT NULL,
+    `stock_before` INT NOT NULL,
+    `stock_after` INT NOT NULL,
+    `notes` VARCHAR(500) NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    UNIQUE KEY `uq_inventory_report_line` (`report_id`, `report_item_position`, `movement_type`),
+    KEY `idx_inventory_part_date` (`part_id`, `transaction_date`),
+    KEY `idx_inventory_active` (`movement_type`, `reversed_at`, `transaction_date`),
+    CONSTRAINT `fk_inventory_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_inventory_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks
