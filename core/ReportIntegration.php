@@ -196,16 +196,219 @@ final class ReportIntegration
             $inspectionReversed += $reverseInspection->rowCount();
         }
 
-        $totalReversed = $reversed + $inspectionReversed;
+        $operationStatement = $db->prepare(
+            "SELECT operation_log_id, asset_id, previous_asset_hm, applied_asset_hm
+             FROM report_operation_logs
+             WHERE report_id = :report_id AND reversed_at IS NULL
+             ORDER BY operation_log_id DESC
+             FOR UPDATE"
+        );
+        $operationStatement->execute([':report_id' => $reportId]);
+        $operationLogs = $operationStatement->fetchAll(PDO::FETCH_ASSOC);
+        $operationReversed = 0;
+
+        foreach ($operationLogs as $operation) {
+            $assetStatement = $db->prepare('SELECT last_hm_km FROM assets WHERE asset_id = :asset_id FOR UPDATE');
+            $assetStatement->execute([':asset_id' => $operation['asset_id']]);
+            $currentHm = $assetStatement->fetchColumn();
+            if ($currentHm === false) {
+                throw new DomainException('Unit operasi LHO tidak ditemukan saat proses void.');
+            }
+
+            if (abs((float) $currentHm - (float) $operation['applied_asset_hm']) < 0.005) {
+                $restoreHm = $db->prepare('UPDATE assets SET last_hm_km = :last_hm WHERE asset_id = :asset_id');
+                $restoreHm->execute([
+                    ':last_hm' => $operation['previous_asset_hm'],
+                    ':asset_id' => $operation['asset_id'],
+                ]);
+            }
+
+            $reverseOperation = $db->prepare(
+                'UPDATE report_operation_logs
+                 SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor_id
+                 WHERE operation_log_id = :operation_log_id AND reversed_at IS NULL'
+            );
+            $reverseOperation->execute([
+                ':actor_id' => $actorId,
+                ':operation_log_id' => (int) $operation['operation_log_id'],
+            ]);
+            $operationReversed += $reverseOperation->rowCount();
+        }
+
+        $totalReversed = $reversed + $inspectionReversed + $operationReversed;
+        $reversalType = 'inventory-reversal';
+        $reversalMessage = null;
+        if ($inspectionReversed > 0) {
+            $reversalType = 'inspection-reversal';
+            $reversalMessage = 'Laporan berhasil dibatalkan dan riwayat inspeksi dinonaktifkan.';
+        } elseif ($operationReversed > 0) {
+            $reversalType = 'operation-reversal';
+            $reversalMessage = 'Laporan berhasil dibatalkan, riwayat operasi dinonaktifkan, dan HM dipulihkan jika belum ada pembaruan lanjutan.';
+        }
         return [
-            'type' => $inspectionReversed > 0 ? 'inspection-reversal' : 'inventory-reversal',
+            'type' => $reversalType,
             'applied' => $totalReversed > 0,
             'itemCount' => $totalReversed,
             'inventoryItemCount' => $reversed,
             'inspectionItemCount' => $inspectionReversed,
-            'message' => $inspectionReversed > 0
-                ? 'Laporan berhasil dibatalkan dan riwayat inspeksi dinonaktifkan.'
-                : null,
+            'operationItemCount' => $operationReversed,
+            'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applyLho(PDO $db, string $reportId, array $fields, array $rows, int $actorId): array
+    {
+        $existingStatement = $db->prepare(
+            'SELECT COUNT(*) FROM report_operation_logs WHERE report_id = :report_id'
+        );
+        $existingStatement->execute([':report_id' => $reportId]);
+        $existingCount = (int) $existingStatement->fetchColumn();
+        if ($existingCount > 0) {
+            return [
+                'type' => 'lho-operation',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => $existingCount,
+                'totalWorkHours' => 0,
+                'totalHmOperation' => 0,
+                'totalFuelLiters' => 0,
+            ];
+        }
+
+        $period = self::requiredMonth($fields['periode'] ?? null, 'Bulan / tahun');
+        $assetLookup = self::requiredText($fields['id_alat'] ?? null, 'ID alat', 100);
+        $operator = self::requiredText($fields['operator'] ?? null, 'Operator', 150);
+        $defaultSite = self::requiredText($fields['lokasi'] ?? null, 'Lokasi alat', 190);
+
+        $assetStatement = $db->prepare(
+            'SELECT asset_id, asset_code, status, last_hm_km
+             FROM assets WHERE asset_id = :asset_id OR asset_code = :asset_code LIMIT 1 FOR UPDATE'
+        );
+        $assetStatement->execute([':asset_id' => $assetLookup, ':asset_code' => $assetLookup]);
+        $asset = $assetStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$asset) {
+            throw new DomainException("Unit {$assetLookup} tidak ditemukan pada Master Asset.");
+        }
+        if (in_array((string) $asset['status'], ['ACCIDENT_HOLD', 'ACCIDENT HOLD', 'INACTIVE'], true)) {
+            throw new DomainException("Unit {$asset['asset_id']} berstatus {$asset['status']} dan tidak dapat menerima LHO.");
+        }
+
+        $populatedRows = [];
+        foreach (array_values($rows) as $position => $row) {
+            if (is_array($row) && self::rowHasContent($row)) {
+                $populatedRows[] = ['position' => $position, 'row' => $row];
+            }
+        }
+        if ($populatedRows === []) {
+            throw new DomainException('LHO tidak memiliki baris operasi yang dapat diintegrasikan.');
+        }
+
+        usort($populatedRows, static function (array $left, array $right): int {
+            $dateCompare = strcmp((string) ($left['row']['tanggal'] ?? ''), (string) ($right['row']['tanggal'] ?? ''));
+            return $dateCompare !== 0 ? $dateCompare : $left['position'] <=> $right['position'];
+        });
+
+        $currentMasterHm = (float) $asset['last_hm_km'];
+        $expectedHmStart = $currentMasterHm;
+        $itemCount = 0;
+        $totalWorkHours = 0.0;
+        $totalHmOperation = 0.0;
+        $totalFuelLiters = 0.0;
+
+        foreach ($populatedRows as $entry) {
+            $position = (int) $entry['position'];
+            $row = $entry['row'];
+            $rowNumber = $position + 1;
+            $operationDate = self::requiredDate($row['tanggal'] ?? null, "Tanggal baris {$rowNumber}");
+            if (substr($operationDate, 0, 7) !== $period) {
+                throw new DomainException("Baris {$rowNumber}: tanggal operasi harus berada pada periode {$period}.");
+            }
+
+            $startTime = self::requiredTime($row['jam_awal'] ?? null, "Jam awal baris {$rowNumber}");
+            $endTime = self::requiredTime($row['jam_akhir'] ?? null, "Jam akhir baris {$rowNumber}");
+            $workHours = self::timeDifferenceHours($startTime, $endTime);
+            $reportedWorkHours = self::requiredNonNegativeDecimal($row['jam_kerja'] ?? null, "Jam kerja baris {$rowNumber}");
+            if (abs($reportedWorkHours - $workHours) > 0.01) {
+                throw new DomainException("Baris {$rowNumber}: jam kerja harus sama dengan selisih jam awal dan akhir ({$workHours}).");
+            }
+
+            $hmStart = self::requiredNonNegativeDecimal($row['hm_awal'] ?? null, "HM awal baris {$rowNumber}");
+            $hmEnd = self::requiredNonNegativeDecimal($row['hm_akhir'] ?? null, "HM akhir baris {$rowNumber}");
+            if ($hmEnd < $hmStart) {
+                throw new DomainException("Baris {$rowNumber}: HM akhir tidak boleh lebih kecil dari HM awal.");
+            }
+            $hmOperation = round($hmEnd - $hmStart, 2);
+            $reportedHmOperation = self::requiredNonNegativeDecimal($row['hm_operasi'] ?? null, "HM operasi baris {$rowNumber}");
+            if (abs($reportedHmOperation - $hmOperation) > 0.01) {
+                throw new DomainException("Baris {$rowNumber}: HM operasi harus sama dengan HM akhir - HM awal ({$hmOperation}).");
+            }
+            if (abs($hmStart - $expectedHmStart) > 0.01) {
+                $source = $itemCount === 0 ? 'HM Master Asset' : 'HM akhir baris sebelumnya';
+                throw new DomainException(
+                    "Baris {$rowNumber}: HM awal {$hmStart} tidak sama dengan {$source} {$expectedHmStart}."
+                );
+            }
+
+            $verificationStatus = self::requiredText($row['status'] ?? null, "Verifikasi baris {$rowNumber}", 40);
+            if (strcasecmp($verificationStatus, 'Terverifikasi') !== 0) {
+                throw new DomainException("Baris {$rowNumber}: status harus Terverifikasi sebelum LHO difinalkan.");
+            }
+            $fuelLiters = self::nonNegativeDecimal($row['bbm'] ?? 0, "BBM baris {$rowNumber}");
+            $site = self::optionalText($row['site'] ?? null, 190) ?? $defaultSite;
+            $weather = self::optionalText($row['cuaca'] ?? null, 40);
+            $notes = self::optionalText($row['keterangan'] ?? null, 500);
+
+            $insert = $db->prepare(
+                'INSERT INTO report_operation_logs
+                 (report_id, report_item_position, asset_id, operation_date, operator_name, site,
+                  start_time, end_time, work_hours, hm_start, hm_end, hm_operation, fuel_liters,
+                  weather, verification_status, notes, previous_asset_hm, applied_asset_hm, created_by)
+                 VALUES (:report_id, :position, :asset_id, :operation_date, :operator_name, :site,
+                  :start_time, :end_time, :work_hours, :hm_start, :hm_end, :hm_operation, :fuel_liters,
+                  :weather, :verification_status, :notes, :previous_asset_hm, :applied_asset_hm, :created_by)'
+            );
+            $insert->execute([
+                ':report_id' => $reportId,
+                ':position' => $position,
+                ':asset_id' => $asset['asset_id'],
+                ':operation_date' => $operationDate,
+                ':operator_name' => $operator,
+                ':site' => $site,
+                ':start_time' => $startTime . ':00',
+                ':end_time' => $endTime . ':00',
+                ':work_hours' => $workHours,
+                ':hm_start' => $hmStart,
+                ':hm_end' => $hmEnd,
+                ':hm_operation' => $hmOperation,
+                ':fuel_liters' => $fuelLiters,
+                ':weather' => $weather,
+                ':verification_status' => $verificationStatus,
+                ':notes' => $notes,
+                ':previous_asset_hm' => $expectedHmStart,
+                ':applied_asset_hm' => $hmEnd,
+                ':created_by' => $actorId,
+            ]);
+
+            $expectedHmStart = $hmEnd;
+            $itemCount++;
+            $totalWorkHours += $workHours;
+            $totalHmOperation += $hmOperation;
+            $totalFuelLiters += $fuelLiters;
+        }
+
+        $updateAsset = $db->prepare('UPDATE assets SET last_hm_km = :last_hm WHERE asset_id = :asset_id');
+        $updateAsset->execute([':last_hm' => $expectedHmStart, ':asset_id' => $asset['asset_id']]);
+
+        return [
+            'type' => 'lho-operation',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => $itemCount,
+            'assetId' => (string) $asset['asset_id'],
+            'totalWorkHours' => round($totalWorkHours, 2),
+            'totalHmOperation' => round($totalHmOperation, 2),
+            'totalFuelLiters' => round($totalFuelLiters, 2),
+            'message' => "LHO berhasil difinalkan, {$itemCount} baris operasi masuk ke Produktivitas, dan HM unit diperbarui.",
         ];
     }
 
@@ -724,6 +927,14 @@ final class ReportIntegration
         return round($number, 2);
     }
 
+    private static function requiredNonNegativeDecimal($value, string $label): float
+    {
+        if (trim((string) $value) === '') {
+            throw new DomainException("{$label} wajib diisi.");
+        }
+        return self::nonNegativeDecimal($value, $label);
+    }
+
     private static function classifyP2hCondition(string $condition, int $rowNumber): string
     {
         $normalized = mb_strtolower(trim($condition));
@@ -763,6 +974,37 @@ final class ReportIntegration
             throw new DomainException("{$label} wajib berupa tanggal yang valid.");
         }
         return $date;
+    }
+
+    private static function requiredMonth($value, string $label): string
+    {
+        $raw = trim((string) $value);
+        $month = DateTimeImmutable::createFromFormat('!Y-m', $raw);
+        if (!$month || $month->format('Y-m') !== $raw) {
+            throw new DomainException("{$label} wajib berupa periode bulan yang valid.");
+        }
+        return $raw;
+    }
+
+    private static function requiredTime($value, string $label): string
+    {
+        $raw = trim((string) $value);
+        $time = DateTimeImmutable::createFromFormat('!H:i', $raw);
+        if (!$time || $time->format('H:i') !== $raw) {
+            throw new DomainException("{$label} wajib berupa waktu HH:MM yang valid.");
+        }
+        return $raw;
+    }
+
+    private static function timeDifferenceHours(string $start, string $end): float
+    {
+        [$startHour, $startMinute] = array_map('intval', explode(':', $start));
+        [$endHour, $endMinute] = array_map('intval', explode(':', $end));
+        $minutes = ($endHour * 60 + $endMinute) - ($startHour * 60 + $startMinute);
+        if ($minutes < 0) {
+            $minutes += 24 * 60;
+        }
+        return round($minutes / 60, 2);
     }
 
     private static function optionalDate($value): ?string

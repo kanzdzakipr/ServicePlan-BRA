@@ -460,6 +460,7 @@ CREATE TABLE `approvals` (
 -- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `inventory_transactions`;
 DROP TABLE IF EXISTS `report_inspection_integrations`;
+DROP TABLE IF EXISTS `report_operation_logs`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -584,6 +585,40 @@ CREATE TABLE `report_inspection_integrations` (
     CONSTRAINT `fk_report_inspection_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_report_inspection_record` FOREIGN KEY (`inspection_id`) REFERENCES `inspections` (`inspection_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_report_inspection_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 24. LHO OPERATION LOGS (Report integration ledger)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `report_operation_logs` (
+    `operation_log_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `report_item_position` INT UNSIGNED NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `operation_date` DATE NOT NULL,
+    `operator_name` VARCHAR(150) NOT NULL,
+    `site` VARCHAR(190) NOT NULL,
+    `start_time` TIME NOT NULL,
+    `end_time` TIME NOT NULL,
+    `work_hours` DECIMAL(8,2) NOT NULL,
+    `hm_start` DECIMAL(10,2) NOT NULL,
+    `hm_end` DECIMAL(10,2) NOT NULL,
+    `hm_operation` DECIMAL(8,2) NOT NULL,
+    `fuel_liters` DECIMAL(10,2) NOT NULL DEFAULT 0,
+    `weather` VARCHAR(40) NULL,
+    `verification_status` VARCHAR(40) NOT NULL,
+    `notes` VARCHAR(500) NULL,
+    `previous_asset_hm` DECIMAL(10,2) NOT NULL,
+    `applied_asset_hm` DECIMAL(10,2) NOT NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    UNIQUE KEY `uq_operation_report_line` (`report_id`, `report_item_position`),
+    KEY `idx_operation_asset_date` (`asset_id`, `operation_date`),
+    KEY `idx_operation_active` (`reversed_at`, `operation_date`),
+    CONSTRAINT `fk_operation_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_operation_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

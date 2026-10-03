@@ -933,3 +933,136 @@ LIMIT 5;
 - [ ] Void menonaktifkan inspeksi dan memulihkan keadaan unit secara aman.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 3 sebelum implementasi Batch 4 dimulai.
+
+### Batch 4 — LHO ke Produktivitas dan Master Asset
+
+Status implementasi: **SIAP UJI**.
+
+Ruang lingkup batch ini:
+
+- finalisasi `Laporan Harian Operasi Alat (LHO)` membuat ledger pada `report_operation_logs`;
+- data final tampil di **Produktivitas → LHO Operasional**;
+- HM terakhir pada Master Asset diperbarui ke `HM akhir` baris terakhir;
+- jam kerja divalidasi dari selisih `Jam awal` dan `Jam akhir`, termasuk shift lintas tengah malam;
+- HM operasi divalidasi dari `HM akhir − HM awal`;
+- HM awal baris pertama harus sama dengan HM Master Asset;
+- HM awal baris berikutnya harus sama dengan HM akhir baris sebelumnya;
+- tanggal setiap baris harus berada pada periode laporan;
+- hanya baris berstatus `Terverifikasi` yang dapat difinalkan;
+- retry tidak membuat ledger operasi ganda;
+- void menonaktifkan ledger dan memulihkan HM bila belum ada pembaruan lanjutan.
+
+#### Persiapan data uji
+
+Ambil HM aktual unit yang akan digunakan:
+
+```sql
+SELECT asset_id, asset_code, category, status, last_hm_km, raw_location_notes
+FROM u646470441_ServicePlanBRA.assets
+WHERE asset_id = 'CS-41001';
+```
+
+Catat nilai `last_hm_km` sebagai **HM_MASTER**. Jika unit tersebut sedang digunakan pengujian lain, pilih unit aktif lain dan gunakan ID serta HM aktualnya.
+
+| Field laporan | Nilai |
+|---|---|
+| Template | `Laporan Harian Operasi Alat` |
+| Bulan / tahun | Bulan pengujian |
+| Jenis alat | `Excavator` |
+| Tipe / merk | `PC 200-8 MO` |
+| Lokasi alat | `QA Laragon` |
+| Operator | `QA Operator Batch 4` |
+| ID alat | `CS-41001` atau unit dari query |
+
+Isi satu baris operasi:
+
+| Kolom | Nilai |
+|---|---|
+| Tanggal | Tanggal dalam bulan pengujian |
+| Jam awal | `08:00` |
+| Jam akhir | `16:00` |
+| Jam kerja | Otomatis `8` |
+| HM awal | **HM_MASTER** |
+| HM akhir | **HM_MASTER + 6.5** |
+| HM operasi | Otomatis `6.5` |
+| Site area | `QA Site Batch 4` |
+| BBM | `65` |
+| Cuaca | `Cerah` |
+| Keterangan | `Pengujian integrasi LHO Batch 4` |
+| Verifikasi | `Terverifikasi` |
+
+#### Pengujian draft
+
+1. [ ] Isi identitas dan baris operasi, lalu tunggu autosave tanpa finalisasi.
+2. [ ] Pastikan laporan masih `DRAFT`.
+3. [ ] Pastikan `report_operation_logs` belum memiliki record laporan tersebut.
+4. [ ] Pastikan HM Master Asset belum berubah.
+
+#### Pengujian finalisasi
+
+1. [ ] Tekan **Simpan Laporan**.
+2. [ ] Pesan sukses harus menyebut baris operasi masuk ke Produktivitas dan HM diperbarui.
+3. [ ] Buka **Produktivitas → LHO Operasional**.
+4. [ ] Jika diperlukan, klik **Muat ulang**.
+5. [ ] Pastikan unit, operator, tanggal, jam kerja, HM, BBM, dan nomor laporan tampil.
+6. [ ] Pastikan ringkasan record aktif, total jam, total HM, dan BBM/HM berubah.
+7. [ ] Buka Master Asset dan pastikan HM menjadi **HM_MASTER + 6.5**.
+8. [ ] Verifikasi database:
+
+```sql
+SELECT
+    r.report_number,
+    r.status AS report_status,
+    o.operation_date,
+    o.asset_id,
+    o.operator_name,
+    o.start_time,
+    o.end_time,
+    o.work_hours,
+    o.hm_start,
+    o.hm_end,
+    o.hm_operation,
+    o.fuel_liters,
+    o.verification_status,
+    o.previous_asset_hm,
+    o.applied_asset_hm,
+    o.reversed_at
+FROM u646470441_ServicePlanBRA.report_operation_logs o
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = o.report_id
+WHERE o.asset_id = 'CS-41001'
+ORDER BY o.operation_log_id DESC
+LIMIT 10;
+```
+
+#### Pengujian validasi
+
+1. [ ] Ubah `Jam kerja` agar tidak sama dengan selisih waktu; finalisasi harus ditolak.
+2. [ ] Isi `HM operasi` berbeda dari `HM akhir − HM awal`; finalisasi harus ditolak.
+3. [ ] Isi HM awal berbeda dari HM Master Asset; finalisasi harus ditolak.
+4. [ ] Tambahkan baris kedua dengan HM awal berbeda dari HM akhir baris pertama; finalisasi harus ditolak.
+5. [ ] Gunakan tanggal di luar bulan laporan; finalisasi harus ditolak.
+6. [ ] Pilih status `Draft` atau `Perlu koreksi`; finalisasi harus ditolak.
+7. [ ] Pastikan semua kegagalan tidak membuat ledger atau mengubah HM unit.
+
+#### Pengujian void
+
+1. [ ] Buka **Laporan & Form → Riwayat Laporan**.
+2. [ ] Klik **Void** pada laporan LHO uji.
+3. [ ] Pastikan pesan menyebut riwayat operasi dinonaktifkan dan HM dipulihkan.
+4. [ ] Buka **Produktivitas → LHO Operasional**, kemudian klik **Muat ulang**.
+5. [ ] Pastikan record void tidak lagi tampil sebagai record aktif.
+6. [ ] Pastikan `report_operation_logs.reversed_at` terisi.
+7. [ ] Jika belum ada pembaruan unit setelah LHO, pastikan HM kembali ke **HM_MASTER**.
+
+#### Kriteria lulus Batch 4
+
+- [ ] Draft tidak mengubah ledger atau HM.
+- [ ] Finalisasi membuat tepat satu ledger untuk setiap baris operasi.
+- [ ] Menu Produktivitas membaca data LHO aktif dari database.
+- [ ] Perhitungan jam kerja dan HM divalidasi.
+- [ ] Urutan HM antarbaris dan terhadap Master Asset konsisten.
+- [ ] Record yang belum terverifikasi ditolak.
+- [ ] Void menonaktifkan ledger dan memulihkan HM secara aman.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 4 sebelum implementasi Batch 5 dimulai.

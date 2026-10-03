@@ -803,6 +803,55 @@ LOCK TABLES `report_inspection_integrations` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `report_operation_logs`
+--
+
+DROP TABLE IF EXISTS `report_operation_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `report_operation_logs` (
+  `operation_log_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `report_item_position` int unsigned NOT NULL,
+  `asset_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `operation_date` date NOT NULL,
+  `operator_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `site` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `work_hours` decimal(8,2) NOT NULL,
+  `hm_start` decimal(10,2) NOT NULL,
+  `hm_end` decimal(10,2) NOT NULL,
+  `hm_operation` decimal(8,2) NOT NULL,
+  `fuel_liters` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `weather` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `verification_status` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notes` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `previous_asset_hm` decimal(10,2) NOT NULL,
+  `applied_asset_hm` decimal(10,2) NOT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`operation_log_id`),
+  UNIQUE KEY `uq_operation_report_line` (`report_id`,`report_item_position`),
+  KEY `idx_operation_asset_date` (`asset_id`,`operation_date`),
+  KEY `idx_operation_active` (`reversed_at`,`operation_date`),
+  CONSTRAINT `fk_operation_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_operation_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `report_operation_logs`
+--
+
+LOCK TABLES `report_operation_logs` WRITE;
+/*!40000 ALTER TABLE `report_operation_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_operation_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `role_permissions`
 --
 

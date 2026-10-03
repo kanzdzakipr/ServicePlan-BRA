@@ -15269,6 +15269,15 @@
         { no: 18, model: 'PC210-10M0', sn: 'C07076', branch: 'PLB PALEMBANG', smr: 1570.8, lastComm: '02/01/2026 11:03', days: 29, hours: 142.2, actualHours: 73.1, actualRatio: 51.4, eModeRatio: 49.0, travelRatio: 14.3, diggingRatio: 4.6, hoistRatio: 4.9, fuelLiters: 1325.1, fuelLPH: 9.3, idlingRatio: 48.6, status: 'Active' }
     ];
 
+    let lhoOperationData = [];
+    let lhoOperationSummary = {
+        recordCount: 0,
+        totalWorkHours: 0,
+        totalHmOperation: 0,
+        totalFuelLiters: 0,
+        averageFuelLph: 0
+    };
+
     // Data 2: Standby Fleet Audit Rekap (from REKAP_UNIT_STANDBY.md)
     const standbySummary = {
         totalUnits: 48,
@@ -15340,6 +15349,7 @@
                     <button class="prod-tab-btn" data-prod-tab="tab-komtrax-table"><i class="fa-solid fa-satellite-dish"></i> Rekonsiliasi Telematika KOMTRAX</button>
                     <button class="prod-tab-btn" data-prod-tab="tab-idling-anomaly"><i class="fa-solid fa-triangle-exclamation"></i> Idling Anomaly & Fuel Loss</button>
                     <button class="prod-tab-btn" data-prod-tab="tab-standby-fleet"><i class="fa-solid fa-boxes-stacked"></i> Audit Fleet Standby (48 Unit)</button>
+                    <button class="prod-tab-btn" data-prod-tab="tab-lho-operation"><i class="fa-solid fa-clipboard-list"></i> LHO Operasional</button>
                 </div>
 
                 <!-- TAB 1: AVAILABILITY & KPI DASHBOARD -->
@@ -15611,6 +15621,46 @@
                     </div>
                 </div>
 
+                <!-- TAB 5: LHO OPERATION LOGS -->
+                <div class="prod-tab-content" id="tab-lho-operation">
+                    <div class="pk-alert pk-alert-info">
+                        <i class="fa-solid fa-link"></i>
+                        <div>
+                            <strong>Integrasi Laporan Harian Operasi:</strong> Data pada tab ini berasal dari laporan LHO yang sudah difinalkan. Record void tidak ditampilkan.
+                        </div>
+                    </div>
+                    <div class="telemetry-status-grid kpi-grid-4" id="lhoOperationSummary"></div>
+                    <div class="pk-panel">
+                        <div class="pk-panel-header">
+                            <span><i class="fa-solid fa-table-list"></i> Riwayat LHO Terverifikasi</span>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="window.refreshLhoOperations()"><i class="fa-solid fa-rotate"></i> Muat ulang</button>
+                        </div>
+                        <div class="pk-panel-body no-padding">
+                            <div class="table-responsive">
+                                <table id="tbLhoOperations">
+                                    <thead>
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>Unit</th>
+                                            <th>Operator / Site</th>
+                                            <th>Jam kerja</th>
+                                            <th>HM awal</th>
+                                            <th>HM akhir</th>
+                                            <th>HM operasi</th>
+                                            <th>BBM</th>
+                                            <th>Liter/HM</th>
+                                            <th>Nomor laporan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbLhoOperationsBody">
+                                        <tr><td colspan="10" style="text-align:center; padding:24px;">Buka tab ini untuk memuat data LHO.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         `;
 
@@ -15634,6 +15684,7 @@
                 btn.classList.add('active');
                 const targetContent = document.getElementById(targetId);
                 if (targetContent) targetContent.classList.add('active');
+                if (targetId === 'tab-lho-operation') loadLhoOperations();
             });
         });
     }
@@ -15643,6 +15694,62 @@
         renderIdlingAnomalyTable();
         renderStandbyCategoryTable();
     }
+
+    async function loadLhoOperations() {
+        const tbody = document.getElementById('tbLhoOperationsBody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:24px;"><i class="fa-solid fa-rotate fa-spin"></i> Memuat data LHO...</td></tr>';
+        try {
+            const response = await fetch('api/productivity.php', { credentials: 'same-origin', cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'success') {
+                throw new Error(payload.message || 'Data produktivitas tidak tersedia.');
+            }
+            lhoOperationData = Array.isArray(payload.data?.operations) ? payload.data.operations : [];
+            lhoOperationSummary = payload.data?.summary || lhoOperationSummary;
+            renderLhoOperations();
+        } catch (error) {
+            if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:24px; color:var(--danger);">${escapeHtml(error.message || 'Gagal memuat data LHO.')}</td></tr>`;
+        }
+    }
+
+    function renderLhoOperations() {
+        const summary = document.getElementById('lhoOperationSummary');
+        if (summary) {
+            const cards = [
+                ['Record aktif', lhoOperationSummary.recordCount || 0, 'baris'],
+                ['Total jam kerja', Number(lhoOperationSummary.totalWorkHours || 0).toFixed(2), 'jam'],
+                ['Total HM operasi', Number(lhoOperationSummary.totalHmOperation || 0).toFixed(2), 'HM'],
+                ['BBM / HM', Number(lhoOperationSummary.averageFuelLph || 0).toFixed(2), 'L/HM']
+            ];
+            summary.innerHTML = cards.map(([label, value, unit]) => `
+                <div class="telemetry-metric-item">
+                    <div class="telemetry-metric-header"><span class="telemetry-metric-label">${escapeHtml(label)}</span></div>
+                    <div class="telemetry-metric-value font-mono" style="color:var(--primary);">${escapeHtml(value)} <small>${escapeHtml(unit)}</small></div>
+                </div>`).join('');
+        }
+
+        const tbody = document.getElementById('tbLhoOperationsBody');
+        if (!tbody) return;
+        if (!lhoOperationData.length) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:24px; color:var(--text-muted);">Belum ada LHO final yang aktif.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = lhoOperationData.map(row => `
+            <tr>
+                <td><strong>${escapeHtml(row.date)}</strong><br><small>${escapeHtml(row.startTime)}–${escapeHtml(row.endTime)}</small></td>
+                <td><strong class="text-primary">${escapeHtml(row.assetId)}</strong><br><small>${escapeHtml(row.category || '')}</small></td>
+                <td>${escapeHtml(row.operator)}<br><small>${escapeHtml(row.site)}</small></td>
+                <td>${Number(row.workHours || 0).toFixed(2)} jam</td>
+                <td>${Number(row.hmStart || 0).toFixed(2)}</td>
+                <td>${Number(row.hmEnd || 0).toFixed(2)}</td>
+                <td><strong>${Number(row.hmOperation || 0).toFixed(2)}</strong></td>
+                <td>${Number(row.fuelLiters || 0).toFixed(2)} L</td>
+                <td>${Number(row.fuelLph || 0).toFixed(2)} L/HM</td>
+                <td><span class="prod-badge prod-badge-success">${escapeHtml(row.status)}</span><br><small>${escapeHtml(row.reportNumber)}</small></td>
+            </tr>`).join('');
+    }
+
+    window.refreshLhoOperations = loadLhoOperations;
 
     function renderKomtraxTable() {
         const tbody = document.getElementById('tbKomtraxBody');
