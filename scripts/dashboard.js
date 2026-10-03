@@ -219,6 +219,7 @@
                 column('tanggal', 'Tanggal', 'date'),
                 column('nomor_bukti', 'No. bukti kirim'),
                 column('tujuan', 'Dikirim ke'),
+                column('part_number', 'Part number'),
                 column('nama', 'Nama parts'),
                 column('satuan', 'Satuan'),
                 column('persediaan', 'Persediaan', 'number'),
@@ -17975,7 +17976,7 @@ window.loadLogisticsData = async function (specificTab = null) {
     try {
         if (!window.logisticsData) throw new Error("Data logistik lokal tidak ditemukan (pastikan logistics_data.js ter-load).");
         const baseData = window.logisticsData;
-        let databaseData = { masuk: [], stock: [] };
+        let databaseData = { masuk: [], keluar: [], stock: [] };
         try {
             const response = await fetch('api/logistics.php?type=inventory', {
                 credentials: 'same-origin',
@@ -17986,6 +17987,7 @@ window.loadLogisticsData = async function (specificTab = null) {
             if (response.ok && payload.status === 'success' && payload.data) {
                 databaseData = {
                     masuk: Array.isArray(payload.data.masuk) ? payload.data.masuk : [],
+                    keluar: Array.isArray(payload.data.keluar) ? payload.data.keluar : [],
                     stock: Array.isArray(payload.data.stock) ? payload.data.stock : []
                 };
             }
@@ -17999,6 +18001,7 @@ window.loadLogisticsData = async function (specificTab = null) {
         const data = {
             ...baseData,
             masuk: [...databaseData.masuk, ...(baseData.masuk || [])],
+            keluar: [...databaseData.keluar, ...(baseData.keluar || [])],
             stock: [
                 ...databaseData.stock,
                 ...(baseData.stock || []).filter(item => (

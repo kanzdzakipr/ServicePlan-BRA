@@ -39,6 +39,7 @@ $reportId = sprintf('%s-%s-4%s-8%s-%s',
     substr($suffix . '000', 0, 3),
     substr($suffix . '000000000000', 0, 12)
 );
+$outReportId = '11111111-1111-4111-8111-' . substr($suffix . '000000000000', 0, 12);
 
 $db->beginTransaction();
 try {
@@ -99,6 +100,64 @@ try {
     $stock->execute([':part_number' => $partNumber]);
     integrationAssert(!empty($duplicate['alreadyApplied']) && (int) $stock->fetchColumn() === 13, 'retry is idempotent');
 
+    $outTemplate = $db->prepare(
+        "INSERT INTO report_templates (template_key, code, title, version, schema_json, is_active)
+         VALUES (:template_key, 'BHW-OUT', 'QA BHW-OUT', 1, '{}', 1)"
+    );
+    $outTemplate->execute([':template_key' => $templateKey . '-out']);
+    $outTemplateId = (int) $db->lastInsertId();
+
+    $report->execute([
+        ':report_id' => $outReportId,
+        ':template_id' => $outTemplateId,
+        ':client_key' => 'qa-client-out-' . strtolower($suffix),
+        ':report_number' => 'QA-OUT/' . $suffix,
+        ':final_number_key' => $templateKey . '-out|qa-out/' . strtolower($suffix),
+    ]);
+
+    $outFields = ['tanggal' => date('Y-m-d'), 'nomor_log' => 'QA-OUT/' . $suffix];
+    $outRows = [[
+        'tanggal' => date('Y-m-d'),
+        'nomor_bukti' => 'QA-BK-' . $suffix,
+        'tujuan' => 'QA Workshop',
+        'part_number' => $partNumber,
+        'nama' => 'QA Integration Part',
+        'satuan' => 'Pcs',
+        'persediaan' => '13',
+        'diberikan' => '2',
+        'sisa' => '11',
+        'keterangan' => 'Transactional outbound integration test',
+    ]];
+
+    $outResult = ReportIntegration::applyFinal($db, 'bhw-out', $outReportId, $outFields, $outRows, 1);
+    integrationAssert($outResult['applied'] === true, 'BHW-OUT integration is applied');
+    integrationAssert($outResult['itemCount'] === 1 && $outResult['totalQuantity'] === 2, 'outbound summary is correct');
+    $stock->execute([':part_number' => $partNumber]);
+    integrationAssert((int) $stock->fetchColumn() === 11, 'BHW-OUT decreases stock exactly once');
+
+    $outDuplicate = ReportIntegration::applyFinal($db, 'bhw-out', $outReportId, $outFields, $outRows, 1);
+    $stock->execute([':part_number' => $partNumber]);
+    integrationAssert(!empty($outDuplicate['alreadyApplied']) && (int) $stock->fetchColumn() === 11, 'outbound retry is idempotent');
+
+    try {
+        ReportIntegration::applyFinal($db, 'bhw-out', $outReportId . 'x', $outFields, [[
+            ...$outRows[0],
+            'persediaan' => '12',
+            'sisa' => '10',
+        ]], 1);
+        integrationAssert(false, 'stale outbound balance must be rejected');
+    } catch (DomainException $error) {
+        integrationAssert(str_contains($error->getMessage(), 'stok database'), 'stale outbound balance is rejected');
+    }
+
+    $outReversal = ReportIntegration::reverseFinal($db, $outReportId, 1);
+    $stock->execute([':part_number' => $partNumber]);
+    integrationAssert($outReversal['applied'] === true && (int) $stock->fetchColumn() === 13, 'void restores outbound stock');
+
+    $secondOutReversal = ReportIntegration::reverseFinal($db, $outReportId, 1);
+    $stock->execute([':part_number' => $partNumber]);
+    integrationAssert($secondOutReversal['applied'] === false && (int) $stock->fetchColumn() === 13, 'repeated outbound void is idempotent');
+
     $reversal = ReportIntegration::reverseFinal($db, $reportId, 1);
     $stock->execute([':part_number' => $partNumber]);
     integrationAssert($reversal['applied'] === true && (int) $stock->fetchColumn() === 10, 'void reverses stock');
@@ -118,7 +177,7 @@ try {
         integrationAssert(str_contains($error->getMessage(), 'stok database'), 'stale balance is rejected');
     }
 
-    echo "\nBHW-IN integration tests: {$passed} passed.\n";
+    echo "\nBHW-IN/BHW-OUT integration tests: {$passed} passed.\n";
 } finally {
     if ($db->inTransaction()) {
         $db->rollBack();

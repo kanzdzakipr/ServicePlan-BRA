@@ -40,6 +40,9 @@ final class ReportIntegration
         int $actorId
     ): array {
         if ($templateKey !== 'bhw-in') {
+            if ($templateKey === 'bhw-out') {
+                return self::applyBhwOut($db, $reportId, $fields, $rows, $actorId);
+            }
             return ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
         }
 
@@ -218,6 +221,133 @@ final class ReportIntegration
 
         return [
             'type' => 'bhw-in',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => $itemCount,
+            'totalQuantity' => $totalQuantity,
+        ];
+    }
+
+    private static function applyBhwOut(PDO $db, string $reportId, array $fields, array $rows, int $actorId): array
+    {
+        $existingStatement = $db->prepare(
+            "SELECT COUNT(*) FROM inventory_transactions
+             WHERE report_id = :report_id AND movement_type = 'OUT'"
+        );
+        $existingStatement->execute([':report_id' => $reportId]);
+        $existingCount = (int) $existingStatement->fetchColumn();
+        if ($existingCount > 0) {
+            return [
+                'type' => 'bhw-out',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => $existingCount,
+                'totalQuantity' => 0,
+            ];
+        }
+
+        $reportDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal laporan');
+        $itemCount = 0;
+        $totalQuantity = 0;
+
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) {
+                continue;
+            }
+
+            $partNumber = self::requiredText($row['part_number'] ?? null, 'Part number', 100);
+            $partName = self::requiredText($row['nama'] ?? null, 'Nama parts', 150);
+            $unitMeasure = self::requiredText($row['satuan'] ?? null, 'Satuan', 20);
+            $quantity = self::requiredNonNegativeInteger($row['diberikan'] ?? null, 'Jumlah diberikan', false);
+            $reportedBefore = self::requiredNonNegativeInteger($row['persediaan'] ?? null, 'Persediaan', true);
+            $reportedAfter = self::requiredNonNegativeInteger($row['sisa'] ?? null, 'Sisa', true);
+            if ($quantity > $reportedBefore) {
+                throw new DomainException(
+                    "Baris " . ($position + 1) . ': jumlah diberikan tidak boleh melebihi persediaan.'
+                );
+            }
+            $expectedAfter = $reportedBefore - $quantity;
+            if ($reportedAfter !== $expectedAfter) {
+                throw new DomainException(
+                    "Baris " . ($position + 1) . ": sisa harus sama dengan persediaan - jumlah diberikan ({$expectedAfter})."
+                );
+            }
+
+            $transactionDate = self::optionalDate($row['tanggal'] ?? null) ?? $reportDate;
+            $referenceNumber = self::requiredText(
+                $row['nomor_bukti'] ?? ($fields['nomor_log'] ?? null),
+                'No. bukti/Nomor log',
+                190
+            );
+            $counterparty = self::optionalText($row['tujuan'] ?? null, 190);
+            $notes = self::optionalText($row['keterangan'] ?? null, 500);
+
+            $partStatement = $db->prepare(
+                'SELECT part_id, part_name, unit_measure, stock_qty
+                 FROM parts WHERE part_number = :part_number LIMIT 1 FOR UPDATE'
+            );
+            $partStatement->execute([':part_number' => $partNumber]);
+            $part = $partStatement->fetch(PDO::FETCH_ASSOC);
+            if (!$part) {
+                throw new DomainException(
+                    "Baris " . ($position + 1) . ": part number {$partNumber} belum ada pada master stok."
+                );
+            }
+
+            if (strcasecmp(trim((string) $part['unit_measure']), $unitMeasure) !== 0) {
+                throw new DomainException(
+                    "Baris " . ($position + 1) . ": satuan {$unitMeasure} tidak cocok dengan master part {$partNumber} ({$part['unit_measure']})."
+                );
+            }
+
+            $currentStock = (int) $part['stock_qty'];
+            if ($currentStock !== $reportedBefore) {
+                throw new DomainException(
+                    "Baris " . ($position + 1) . ": persediaan {$reportedBefore} tidak sama dengan stok database {$currentStock} untuk {$partNumber}. Muat ulang data stok sebelum finalisasi."
+                );
+            }
+            if ($quantity > $currentStock) {
+                throw new DomainException(
+                    "Baris " . ($position + 1) . ": stok {$partNumber} tidak cukup untuk pengeluaran {$quantity} {$unitMeasure}."
+                );
+            }
+
+            $stockAfter = $currentStock - $quantity;
+            $updatePart = $db->prepare('UPDATE parts SET stock_qty = :stock_qty WHERE part_id = :part_id');
+            $updatePart->execute([':stock_qty' => $stockAfter, ':part_id' => (int) $part['part_id']]);
+
+            $insertTransaction = $db->prepare(
+                "INSERT INTO inventory_transactions
+                 (report_id, report_item_position, movement_type, transaction_date, reference_number,
+                  counterparty, part_id, quantity, unit_measure, stock_before, stock_after, notes, created_by)
+                 VALUES (:report_id, :position, 'OUT', :transaction_date, :reference_number,
+                  :counterparty, :part_id, :quantity, :unit_measure, :stock_before, :stock_after, :notes, :created_by)"
+            );
+            $insertTransaction->execute([
+                ':report_id' => $reportId,
+                ':position' => $position,
+                ':transaction_date' => $transactionDate,
+                ':reference_number' => $referenceNumber,
+                ':counterparty' => $counterparty,
+                ':part_id' => (int) $part['part_id'],
+                ':quantity' => $quantity,
+                ':unit_measure' => $unitMeasure,
+                ':stock_before' => $currentStock,
+                ':stock_after' => $stockAfter,
+                ':notes' => $notes,
+                ':created_by' => $actorId,
+            ]);
+
+            $itemCount++;
+            $totalQuantity += $quantity;
+        }
+
+        if ($itemCount === 0) {
+            throw new DomainException('BHW-OUT tidak memiliki baris barang yang dapat diintegrasikan.');
+        }
+
+        return [
+            'type' => 'bhw-out',
             'applied' => true,
             'alreadyApplied' => false,
             'itemCount' => $itemCount,

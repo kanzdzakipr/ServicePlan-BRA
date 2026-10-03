@@ -701,3 +701,104 @@ WHERE r.report_number = 'QA-BHWIN-001';
 - [ ] Void mengembalikan stok.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 1 sebelum implementasi Batch 2 dimulai.
+
+### Batch 2 — BHW-OUT ke Spare Part & Logistik
+
+Status implementasi: **SIAP UJI**.
+
+Ruang lingkup batch ini:
+
+- finalisasi laporan `BHW-OUT` mengurangi stok pada tabel `parts`;
+- setiap pengeluaran dicatat sebagai movement `OUT` pada `inventory_transactions`;
+- transaksi tampil pada tab Barang Keluar;
+- total pemakaian dan saldo terbaru tampil pada tab Stok;
+- stok tidak boleh negatif;
+- saldo form harus sama dengan stok database saat finalisasi;
+- retry tidak menggandakan pengeluaran;
+- void mengembalikan stok.
+
+#### Data uji yang disarankan
+
+Sebelum mengisi form, ambil saldo aktual:
+
+```sql
+SELECT part_number, part_name, unit_measure, stock_qty
+FROM u646470441_ServicePlanBRA.parts
+WHERE part_number = 'P-001-OIL';
+```
+
+| Field | Nilai |
+|---|---|
+| Nomor log | `QA-BHWOUT-USER-001` |
+| Project | `QA Laragon` |
+| Tanggal laporan | Tanggal pengujian |
+| Tanggal baris | Tanggal pengujian |
+| No. bukti kirim | `QA-BK-USER-001` |
+| Dikirim ke | `QA Workshop` |
+| Part number | `P-001-OIL` |
+| Nama parts | `Filter Oli Engine Komatsu PC200-10M0` |
+| Satuan | `Pcs` |
+| Persediaan | Hasil `stock_qty` dari query persiapan |
+| Diberikan | `1` |
+| Sisa | Terhitung otomatis: persediaan − 1 |
+| Keterangan | `Pengujian Batch 2` |
+
+#### Pengujian draft
+
+1. [ ] Isi form dan tunggu autosave tanpa menekan **Simpan Laporan**.
+2. [ ] Pastikan laporan berstatus `DRAFT`.
+3. [ ] Pastikan stok belum berkurang.
+4. [ ] Pastikan belum ada movement `OUT` aktif.
+
+#### Pengujian finalisasi
+
+1. [ ] Tekan **Simpan Laporan**.
+2. [ ] Pesan sukses menyebut satu baris stok diperbarui.
+3. [ ] Pastikan stok berkurang tepat sebesar `diberikan`.
+4. [ ] Verifikasi ledger:
+
+```sql
+SELECT
+    r.report_number,
+    it.movement_type,
+    p.part_number,
+    it.quantity,
+    it.stock_before,
+    it.stock_after,
+    it.reversed_at
+FROM u646470441_ServicePlanBRA.inventory_transactions it
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = it.report_id
+JOIN u646470441_ServicePlanBRA.parts p
+    ON p.part_id = it.part_id
+WHERE r.report_number = 'QA-BHWOUT-USER-001';
+```
+
+5. [ ] Buka **Spare Part & Logistik → Barang Keluar**.
+6. [ ] Cari `QA-BK-USER-001` atau `P-001-OIL` dan pastikan transaksi tampil.
+7. [ ] Buka tab **Stok** dan pastikan saldo serta total pemakaian berubah.
+
+#### Pengujian penolakan
+
+1. [ ] Coba jumlah `diberikan` lebih besar daripada persediaan; finalisasi harus ditolak.
+2. [ ] Coba part number yang tidak ada; finalisasi harus ditolak.
+3. [ ] Coba `persediaan` berbeda dari stok database; finalisasi harus ditolak.
+4. [ ] Pastikan semua kegagalan tidak mengubah stok maupun ledger.
+
+#### Pengujian void
+
+1. [ ] Buka **Riwayat Laporan**.
+2. [ ] Klik **Void** pada `QA-BHWOUT-USER-001`.
+3. [ ] Pastikan stok kembali ke saldo sebelum pengeluaran.
+4. [ ] Pastikan `inventory_transactions.reversed_at` terisi.
+5. [ ] Pastikan transaksi tidak lagi tampil sebagai Barang Keluar aktif.
+
+#### Kriteria lulus Batch 2
+
+- [ ] Draft tidak mengurangi stok.
+- [ ] Finalisasi mengurangi stok tepat satu kali.
+- [ ] Stok negatif tidak mungkin terjadi.
+- [ ] Menu Barang Keluar dan Stok membaca data database terbaru.
+- [ ] Void mengembalikan stok.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 2 sebelum implementasi Batch 3 dimulai.

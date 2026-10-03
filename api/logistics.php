@@ -26,7 +26,11 @@ switch ($method) {
                             COALESCE(SUM(CASE
                                 WHEN it.movement_type = 'IN' AND it.reversed_at IS NULL THEN it.quantity
                                 ELSE 0
-                            END), 0) AS received_total
+                            END), 0) AS received_total,
+                            COALESCE(SUM(CASE
+                                WHEN it.movement_type = 'OUT' AND it.reversed_at IS NULL THEN it.quantity
+                                ELSE 0
+                            END), 0) AS issued_total
                      FROM parts p
                      LEFT JOIN inventory_transactions it ON it.part_id = p.part_id
                      GROUP BY p.part_id, p.part_number, p.part_name, p.unit_measure, p.stock_qty,
@@ -40,7 +44,7 @@ switch ($method) {
                         'namaParts' => (string) $row['part_name'],
                         'satuan' => (string) $row['unit_measure'],
                         'penerimaanTotal' => (int) $row['received_total'],
-                        'pemakaianTotal' => 0,
+                        'pemakaianTotal' => (int) $row['issued_total'],
                         'saldo' => (int) $row['stock_qty'],
                         'minimumStock' => (int) $row['min_stock_qty'],
                         'gudang' => (string) $row['location_warehouse'],
@@ -79,9 +83,43 @@ switch ($method) {
                     ];
                 }, $incomingStatement->fetchAll(PDO::FETCH_ASSOC));
 
+                $outgoingStatement = $db->query(
+                    "SELECT it.transaction_id, it.transaction_date, it.reference_number, it.counterparty,
+                            it.quantity, it.unit_measure, it.stock_before, it.stock_after, it.notes,
+                            p.part_number, p.part_name, r.report_number
+                     FROM inventory_transactions it
+                     INNER JOIN parts p ON p.part_id = it.part_id
+                     INNER JOIN report_records r ON r.report_id = it.report_id
+                     WHERE it.movement_type = 'OUT' AND it.reversed_at IS NULL
+                     ORDER BY it.transaction_date DESC, it.transaction_id DESC
+                     LIMIT 500"
+                );
+                $outgoing = array_map(static function (array $row): array {
+                    return [
+                        'transactionId' => (int) $row['transaction_id'],
+                        'no' => (int) $row['transaction_id'],
+                        'noSpb' => (string) ($row['report_number'] ?? ''),
+                        'noBukti' => (string) $row['reference_number'],
+                        'tglSpb' => (string) $row['transaction_date'],
+                        'noJo' => '',
+                        'idUnit' => (string) ($row['counterparty'] ?? ''),
+                        'namaSparepart' => (string) $row['part_name'],
+                        'partNumber' => (string) $row['part_number'],
+                        'spesifikasi' => (string) $row['part_number'],
+                        'qty' => (int) $row['quantity'],
+                        'satuan' => (string) $row['unit_measure'],
+                        'status' => 'Dikeluarkan',
+                        'kesimpulan' => 'TERCATAT',
+                        'saldoLalu' => (int) $row['stock_before'],
+                        'saldoSekarang' => (int) $row['stock_after'],
+                        'keterangan' => (string) ($row['notes'] ?? ''),
+                        'source' => 'Laporan BHW-OUT',
+                    ];
+                }, $outgoingStatement->fetchAll(PDO::FETCH_ASSOC));
+
                 echo json_encode([
                     'status' => 'success',
-                    'data' => ['stock' => $stock, 'masuk' => $incoming],
+                    'data' => ['stock' => $stock, 'masuk' => $incoming, 'keluar' => $outgoing],
                 ]);
                 break;
             } elseif ($_GET['type'] == 'parts') {
