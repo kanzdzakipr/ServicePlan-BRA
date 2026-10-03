@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -9,13 +10,16 @@ try {
 } catch (PDOException $e) {
     // Ignore error if column already exists
 }
+ReportIntegration::ensureTables($db);
 
 switch ($method) {
     case 'GET':
         $scope = api_location_scope_clause('a', 'inspection_location_id');
         $sql = "SELECT i.payload_json FROM inspections i
                 INNER JOIN assets a ON a.asset_id = i.asset_id
-                WHERE i.payload_json IS NOT NULL";
+                LEFT JOIN report_inspection_integrations rii ON rii.inspection_id = i.inspection_id
+                WHERE i.payload_json IS NOT NULL
+                  AND (rii.integration_id IS NULL OR rii.reversed_at IS NULL)";
         if ($scope['sql'] !== '') $sql .= " AND " . $scope['sql'];
         $sql .= " ORDER BY i.inspection_date DESC LIMIT 300";
         $stmt = $db->prepare($sql);

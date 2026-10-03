@@ -802,3 +802,134 @@ WHERE r.report_number = 'QA-BHWOUT-USER-001';
 - [ ] Void mengembalikan stok.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 2 sebelum implementasi Batch 3 dimulai.
+
+### Batch 3 — P2H ke Inspeksi & P2H dan Master Asset
+
+Status implementasi: **SIAP UJI**.
+
+Ruang lingkup batch ini:
+
+- finalisasi `P2H (Hydraulic Excavator)` dan `P2H (Single Drum Rollers)` membuat record pada tabel `inspections`;
+- hasil final langsung tampil pada menu **Inspeksi & P2H → Riwayat & Tabulasi P2H**;
+- `Code number` harus cocok dengan `asset_id` atau `asset_code` pada Master Asset;
+- kategori unit harus cocok dengan template: `Excavator` atau `Vibro Compactor`;
+- HM selesai tidak boleh lebih kecil daripada HM awal maupun HM terakhir pada Master Asset;
+- hasil normal berstatus `PASS`, item `OK — Sudah diperbaiki` berstatus `WARNING`, dan item `X — Tidak normal` berstatus `FAIL`;
+- `WARNING` mengubah status unit menjadi `INSPEKSI`;
+- `FAIL` mengubah status unit menjadi `BREAKDOWN`;
+- retry finalisasi tidak membuat inspeksi ganda;
+- void menonaktifkan riwayat hasil integrasi dan memulihkan status serta HM jika unit belum mengalami perubahan lanjutan.
+
+#### Persiapan data uji
+
+Cari unit Excavator yang aman untuk pengujian dan catat status serta HM awalnya:
+
+```sql
+SELECT asset_id, asset_code, category, status, last_hm_km, raw_location_notes
+FROM u646470441_ServicePlanBRA.assets
+WHERE category = 'Excavator'
+  AND status NOT IN ('ACCIDENT_HOLD', 'INACTIVE')
+ORDER BY asset_id;
+```
+
+Contoh yang dapat digunakan bila hasil query masih sesuai:
+
+| Field | Nilai |
+|---|---|
+| Template | `P2H (Hydraulic Excavator)` |
+| Bulan pemeriksaan | Bulan pengujian |
+| Model / unit | `PC 200-8 MO` |
+| Nama operator | `QA Inspector Batch 3` |
+| NRP | `QA-P2H-003` |
+| Code number | `CS-41001` atau unit Excavator dari query |
+| Job site | `QA Laragon` |
+| Tanggal pelaksanaan | Tanggal pengujian |
+| HM sebelum operasi | HM master + `1` |
+| HM selesai operasi | HM master + `2` |
+
+Isi tiga baris seed sebagai berikut:
+
+| Item | Kondisi | Tindakan |
+|---|---|---|
+| Baris 1 | `V — Normal` | Kosong |
+| Baris 2 | `OK — Sudah diperbaiki` | `Dikencangkan saat pemeriksaan` |
+| Baris 3 | `V — Normal` | Kosong |
+
+#### Pengujian draft
+
+1. [ ] Isi identitas dan checklist, lalu tunggu autosave tanpa menekan **Simpan Laporan**.
+2. [ ] Pastikan laporan masih berstatus `DRAFT`.
+3. [ ] Pastikan belum ada record integrasi pada `inspections`.
+4. [ ] Pastikan status dan HM Master Asset belum berubah.
+
+#### Pengujian finalisasi WARNING
+
+1. [ ] Tekan **Simpan Laporan**.
+2. [ ] Pesan sukses harus menyatakan laporan masuk ke Riwayat Inspeksi & P2H.
+3. [ ] Buka **Inspeksi & P2H → Riwayat & Tabulasi P2H**.
+4. [ ] Cari Code number/unit dan operator `QA Inspector Batch 3`.
+5. [ ] Pastikan hasilnya `LULUS DENGAN CATATAN`.
+6. [ ] Buka Master Asset dan pastikan status unit menjadi `INSPEKSI` serta HM berubah ke HM selesai.
+7. [ ] Verifikasi database:
+
+```sql
+SELECT
+    r.report_number,
+    r.status AS report_status,
+    i.inspection_id,
+    i.asset_id,
+    i.inspection_date,
+    i.current_hm_km,
+    i.overall_result,
+    i.findings_summary,
+    rii.previous_asset_status,
+    rii.applied_asset_status,
+    rii.previous_hm,
+    rii.applied_hm,
+    rii.reversed_at
+FROM u646470441_ServicePlanBRA.report_inspection_integrations rii
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = rii.report_id
+JOIN u646470441_ServicePlanBRA.inspections i
+    ON i.inspection_id = rii.inspection_id
+WHERE i.asset_id = 'CS-41001'
+ORDER BY rii.integration_id DESC
+LIMIT 5;
+```
+
+#### Pengujian penolakan
+
+1. [ ] Gunakan Code number yang tidak ada; finalisasi harus ditolak dengan pesan Master Asset tidak ditemukan.
+2. [ ] Gunakan template Excavator untuk unit `Vibro Compactor`; finalisasi harus ditolak karena kategori tidak cocok.
+3. [ ] Isi HM selesai lebih kecil dari HM awal; finalisasi harus ditolak.
+4. [ ] Kosongkan kondisi salah satu baris yang berisi item; finalisasi harus ditolak.
+5. [ ] Pastikan seluruh kegagalan tidak membuat record inspeksi atau mengubah Master Asset.
+
+#### Pengujian FAIL
+
+1. [ ] Buat P2H lain pada unit uji yang aman.
+2. [ ] Pilih `X — Tidak normal` pada salah satu item.
+3. [ ] Isi tindakan, misalnya `Unit ditahan untuk pemeriksaan hydraulic`.
+4. [ ] Finalkan laporan dan pastikan hasil riwayat `GAGAL (CRITICAL FAIL)`.
+5. [ ] Pastikan status Master Asset berubah menjadi `BREAKDOWN`.
+
+#### Pengujian void
+
+1. [ ] Buka **Laporan & Form → Riwayat Laporan**.
+2. [ ] Klik **Void** pada laporan P2H uji.
+3. [ ] Pastikan pesan menyebut riwayat inspeksi dinonaktifkan.
+4. [ ] Pastikan record tidak lagi tampil pada Riwayat & Tabulasi P2H aktif.
+5. [ ] Pastikan `report_inspection_integrations.reversed_at` terisi.
+6. [ ] Jika belum ada perubahan lanjutan pada unit, pastikan status dan HM kembali ke nilai sebelum finalisasi.
+
+#### Kriteria lulus Batch 3
+
+- [ ] Draft tidak mengubah inspeksi atau Master Asset.
+- [ ] Finalisasi membuat tepat satu record inspeksi.
+- [ ] Riwayat P2H membaca hasil integrasi dari database.
+- [ ] WARNING mengubah status menjadi `INSPEKSI`.
+- [ ] FAIL mengubah status menjadi `BREAKDOWN`.
+- [ ] Validasi unit, kategori, kondisi, dan HM bekerja.
+- [ ] Void menonaktifkan inspeksi dan memulihkan keadaan unit secara aman.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 3 sebelum implementasi Batch 4 dimulai.

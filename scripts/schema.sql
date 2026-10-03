@@ -459,6 +459,7 @@ CREATE TABLE `approvals` (
 -- 18. REPORT TEMPLATES (Versioned definitions for Laporan & Form)
 -- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `inventory_transactions`;
+DROP TABLE IF EXISTS `report_inspection_integrations`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -559,6 +560,30 @@ CREATE TABLE `inventory_transactions` (
     KEY `idx_inventory_active` (`movement_type`, `reversed_at`, `transaction_date`),
     CONSTRAINT `fk_inventory_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_inventory_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 23. REPORT TO P2H INTEGRATION (Reversible inspection linkage)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `report_inspection_integrations` (
+    `integration_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `inspection_id` INT NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `previous_asset_status` VARCHAR(40) NOT NULL,
+    `applied_asset_status` VARCHAR(40) NOT NULL,
+    `previous_hm` DECIMAL(10,2) NOT NULL DEFAULT 0,
+    `applied_hm` DECIMAL(10,2) NOT NULL DEFAULT 0,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    UNIQUE KEY `uq_report_inspection_report` (`report_id`),
+    UNIQUE KEY `uq_report_inspection_record` (`inspection_id`),
+    KEY `idx_report_inspection_asset` (`asset_id`, `reversed_at`),
+    CONSTRAINT `fk_report_inspection_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_report_inspection_record` FOREIGN KEY (`inspection_id`) REFERENCES `inspections` (`inspection_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_report_inspection_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

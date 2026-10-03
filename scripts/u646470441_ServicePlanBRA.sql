@@ -764,6 +764,45 @@ LOCK TABLES `inventory_transactions` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `report_inspection_integrations`
+--
+
+DROP TABLE IF EXISTS `report_inspection_integrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `report_inspection_integrations` (
+  `integration_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `inspection_id` int NOT NULL,
+  `asset_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `previous_asset_status` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `applied_asset_status` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `previous_hm` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `applied_hm` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`integration_id`),
+  UNIQUE KEY `uq_report_inspection_report` (`report_id`),
+  UNIQUE KEY `uq_report_inspection_record` (`inspection_id`),
+  KEY `idx_report_inspection_asset` (`asset_id`,`reversed_at`),
+  CONSTRAINT `fk_report_inspection_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_report_inspection_record` FOREIGN KEY (`inspection_id`) REFERENCES `inspections` (`inspection_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_report_inspection_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `report_inspection_integrations`
+--
+
+LOCK TABLES `report_inspection_integrations` WRITE;
+/*!40000 ALTER TABLE `report_inspection_integrations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_inspection_integrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `role_permissions`
 --
 

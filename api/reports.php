@@ -380,11 +380,14 @@ try {
             if (is_array($responseData)) {
                 $responseData['integration'] = $integration;
             }
-            $successMessage = $status === 'FINAL'
-                ? ($integration['applied']
-                    ? "Laporan berhasil difinalkan dan {$integration['itemCount']} baris stok diperbarui."
-                    : 'Laporan berhasil difinalkan.')
-                : 'Draft tersimpan di server.';
+            $successMessage = 'Draft tersimpan di server.';
+            if ($status === 'FINAL') {
+                $successMessage = !empty($integration['message'])
+                    ? (string) $integration['message']
+                    : ($integration['applied']
+                        ? "Laporan berhasil difinalkan dan {$integration['itemCount']} baris stok diperbarui."
+                        : 'Laporan berhasil difinalkan.');
+            }
             reportReply('success', $responseData, $successMessage);
         } catch (PDOException $e) {
             if ($db->inTransaction()) $db->rollBack();
@@ -461,9 +464,11 @@ try {
                 'integration' => $reversal,
             ]);
             $db->commit();
-            $message = $reversal['applied']
-                ? "Laporan berhasil dibatalkan dan {$reversal['itemCount']} perubahan stok dibalik."
-                : 'Laporan berhasil dibatalkan (void).';
+            $message = !empty($reversal['message'])
+                ? (string) $reversal['message']
+                : ($reversal['applied']
+                    ? "Laporan berhasil dibatalkan dan {$reversal['itemCount']} perubahan stok dibalik."
+                    : 'Laporan berhasil dibatalkan (void).');
             reportReply('success', getReportById($db, $reportId), $message);
         } catch (Throwable $e) {
             if ($db->inTransaction()) $db->rollBack();
