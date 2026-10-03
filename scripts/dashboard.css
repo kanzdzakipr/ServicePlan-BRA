@@ -14710,6 +14710,41 @@ body.sl-modal-open {
 }
 
 /* Laporan & Form — standardized templates, live validation, manual mapping */
+.report-reference-status {
+    align-items: center;
+    background: #eef7f2;
+    border: 1px solid #b9ddc8;
+    border-radius: 8px;
+    color: #17603a;
+    display: flex;
+    font-size: .76rem;
+    font-weight: 700;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 9px 11px;
+}
+
+.report-reference-status.is-loading {
+    background: #f5f7fb;
+    border-color: #d8deea;
+    color: #58657a;
+}
+
+.report-reference-status.is-error {
+    background: #fff8e8;
+    border-color: #eed18c;
+    color: #805d0b;
+}
+
+.report-reference-hint {
+    align-items: center;
+    color: #397255;
+    display: flex;
+    font-size: .66rem;
+    gap: 5px;
+    margin-top: 5px;
+}
+
 #reportModule .builder-input.is-invalid,
 #reportModule .table-cell-input.is-invalid {
     background: #fff8f8;

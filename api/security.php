@@ -571,6 +571,7 @@ function api_route_permission(): ?string
         'tire_inspections.php' => $readWrite('tires.read', 'tires.write'),
         'productivity.php' => 'dashboard.read',
         'reports.php' => $readWrite('reports.read', 'reports.write'),
+        'report_references.php' => 'reports.read',
         'archive.php' => $readWrite('archive.read', 'archive.write'),
         'sync.php' => 'sync.write',
         'seed_dummy.php' => 'admin.seed',

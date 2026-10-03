@@ -805,6 +805,13 @@
     const historyStorageKey = 'fleetmonitor-report-history-v1';
     const reportClientKeyStorage = 'fleetmonitor-report-client-id-v1';
     const reportApiUrl = 'api/reports.php';
+    const reportReferenceApiUrl = 'api/report_references.php';
+    const emptyReportReferences = Object.freeze({
+        assets: [], locations: [], projects: [], sites: [], parts: [], people: [], categories: [], models: []
+    });
+    let reportReferences = { ...emptyReportReferences };
+    let reportReferencesLoaded = false;
+    let reportReferencePromise = null;
     const backendDraftTimers = new Map();
     const backendDraftSyncChains = new Map();
     let reportClientKeyCache = '';
@@ -1039,6 +1046,177 @@
             .replace(/'/g, '&#039;');
     }
 
+    function reportReferenceKind(item, isTableColumn = false) {
+        const key = String(item?.key || '').toLowerCase();
+        if (/^(id_alat|kode_alat|code_number|id_unit|unit_id|kode_unit)$/.test(key)) return 'assets';
+        if (/^(part_number|pn|no_part|nomor_part)$/.test(key)) return 'partNumbers';
+        if (
+            /^(nama_parts|nama_spare_part|jenis_parts)$/.test(key)
+            || (isTableColumn && key === 'nama' && /logistik|warehouse/i.test(activeSchema?.category || ''))
+        ) return 'partNames';
+        if (/^(satuan|unit_measure)$/.test(key) && /logistik|warehouse/i.test(activeSchema?.category || '')) return 'partUnits';
+        if (/^(project|project_asal|project_tujuan|project_kebutuhan)$/.test(key)) return 'projects';
+        if (/^(site|job_site|site_area|yard)$/.test(key)) return 'sites';
+        if (/^(lokasi|lokasi_alat|lokasi_pengesahan|area_lokasi)$/.test(key)) return 'locations';
+        if (/^(jenis_alat|kategori_alat)$/.test(key)) return 'categories';
+        if (/^(tipe_merk|merek_model|tipe_alat)$/.test(key)) return 'models';
+        if (/operator|mekanik|dibuat_oleh|diperiksa_oleh|disetujui_oleh|diajukan_oleh|penerima|pengirim/.test(key)) return 'people';
+        return '';
+    }
+
+    function reportReferenceListId(kind) {
+        return kind ? `report-reference-${kind}` : '';
+    }
+
+    function referenceOptionsMarkup(kind) {
+        if (kind === 'assets') {
+            return reportReferences.assets.map(asset => (
+                `<option value="${escapeHtml(asset.id)}">${escapeHtml([asset.category, asset.makeModel, asset.location, asset.status].filter(Boolean).join(' · '))}</option>`
+            )).join('');
+        }
+        if (kind === 'locations') {
+            return reportReferences.locations.map(location => (
+                `<option value="${escapeHtml(location.name)}">${escapeHtml([location.type, location.region].filter(Boolean).join(' · '))}</option>`
+            )).join('');
+        }
+        if (kind === 'projects' || kind === 'sites') {
+            return (reportReferences[kind] || []).map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
+        }
+        if (kind === 'people') {
+            return reportReferences.people.map(person => `<option value="${escapeHtml(person.name)}"></option>`).join('');
+        }
+        if (kind === 'categories' || kind === 'models') {
+            return (reportReferences[kind] || []).map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
+        }
+        if (kind === 'partNumbers') {
+            return reportReferences.parts.map(part => (
+                `<option value="${escapeHtml(part.number)}">${escapeHtml(`${part.name} · stok ${part.stock} ${part.unit}`)}</option>`
+            )).join('');
+        }
+        if (kind === 'partNames') {
+            return reportReferences.parts.map(part => (
+                `<option value="${escapeHtml(part.name)}">${escapeHtml(`${part.number} · stok ${part.stock} ${part.unit}`)}</option>`
+            )).join('');
+        }
+        if (kind === 'partUnits') {
+            const values = [...new Set(reportReferences.parts.map(part => part.unit).filter(Boolean))];
+            return values.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
+        }
+        return '';
+    }
+
+    function renderReferenceDatalists() {
+        const kinds = ['assets', 'locations', 'projects', 'sites', 'people', 'categories', 'models', 'partNumbers', 'partNames', 'partUnits'];
+        return `<div class="report-reference-lists">${kinds.map(kind => (
+            `<datalist id="${reportReferenceListId(kind)}">${referenceOptionsMarkup(kind)}</datalist>`
+        )).join('')}</div>`;
+    }
+
+    function refreshReferenceDatalists() {
+        document.querySelectorAll('#dynamicReportForm .report-reference-lists datalist').forEach(list => {
+            const kind = list.id.replace(/^report-reference-/, '');
+            list.innerHTML = referenceOptionsMarkup(kind);
+        });
+        const status = document.getElementById('reportReferenceStatus');
+        if (status) {
+            status.classList.toggle('is-error', !reportReferencesLoaded);
+            status.innerHTML = reportReferencesLoaded
+                ? `<i class="fa-solid fa-database"></i><span>Pilihan terhubung ke database: ${reportReferences.assets.length} unit, ${reportReferences.locations.length} lokasi, ${reportReferences.parts.length} part, dan ${reportReferences.people.length} personel.</span>`
+                : '<i class="fa-solid fa-triangle-exclamation"></i><span>Referensi database belum tersedia. Field tetap dapat diisi manual.</span>';
+        }
+    }
+
+    function loadReportReferences() {
+        if (reportReferencePromise) return reportReferencePromise;
+        reportReferencePromise = fetch(reportReferenceApiUrl, {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store'
+        }).then(async response => {
+            const payload = await response.json();
+            if (!response.ok || payload?.status !== 'success' || !payload?.data) {
+                throw new Error(payload?.message || 'Referensi database tidak tersedia.');
+            }
+            reportReferences = { ...emptyReportReferences, ...payload.data };
+            reportReferencesLoaded = true;
+            refreshReferenceDatalists();
+            return reportReferences;
+        }).catch(error => {
+            console.warn('Referensi pilihan laporan gagal dimuat:', error);
+            reportReferencesLoaded = false;
+            refreshReferenceDatalists();
+            return reportReferences;
+        });
+        return reportReferencePromise;
+    }
+
+    function findReferenceAsset(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return reportReferences.assets.find(asset => (
+            String(asset.id || '').toLowerCase() === normalized
+            || String(asset.code || '').toLowerCase() === normalized
+        )) || null;
+    }
+
+    function setAutomatedField(key, value) {
+        if (value == null || value === '' || !activeSchema?.fields.some(field => field.key === key)) return;
+        const control = document.querySelector(`[data-field="${key}"]`);
+        if (control?.tagName === 'SELECT' && ![...control.options].some(option => option.value === String(value))) return;
+        activeDraft.fields[key] = String(value);
+        if (control) control.value = String(value);
+    }
+
+    function applyAssetReference(asset) {
+        if (!asset) return;
+        ['jenis_alat', 'kategori_alat'].forEach(key => setAutomatedField(key, asset.category));
+        ['tipe_merk', 'merek_model', 'model', 'tipe_alat'].forEach(key => setAutomatedField(key, asset.makeModel));
+        ['lokasi', 'lokasi_alat', 'job_site', 'site'].forEach(key => setAutomatedField(key, asset.location));
+        ['serial_number', 'nomor_seri'].forEach(key => setAutomatedField(key, asset.serialNumber));
+        setAutomatedField('nomor_polisi', asset.licensePlate);
+        setAutomatedField('hm_sebelum', asset.lastHmKm);
+
+        if (activeSchema?.calculation === 'lho' && activeDraft.rows[0]) {
+            activeDraft.rows[0].hm_awal = String(asset.lastHmKm ?? 0);
+            calculateRow(activeDraft.rows[0]);
+            renderRows();
+        }
+    }
+
+    function findReferencePart(value, kind) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return reportReferences.parts.find(part => String(
+            kind === 'partNames' ? part.name : part.number
+        ).toLowerCase() === normalized) || null;
+    }
+
+    function applyPartReference(part, rowIndex) {
+        const row = activeDraft?.rows?.[rowIndex];
+        if (!part || !row) return;
+        const availableKeys = new Set(activeSchema.columns.map(column => column.key));
+        if (availableKeys.has('part_number')) row.part_number = part.number;
+        if (availableKeys.has('pn')) row.pn = part.number;
+        ['nama', 'nama_parts', 'nama_spare_part'].forEach(key => {
+            if (availableKeys.has(key)) row[key] = part.name;
+        });
+        if (availableKeys.has('satuan')) row.satuan = part.unit;
+        if (availableKeys.has('unit_measure')) row.unit_measure = part.unit;
+        if (availableKeys.has('saldo_lalu')) row.saldo_lalu = part.stock;
+        if (availableKeys.has('persediaan')) row.persediaan = part.stock;
+        if (availableKeys.has('harga') && !row.harga) row.harga = part.unitCost;
+        calculateRow(row);
+        renderRows();
+    }
+
+    function applyReportReferenceSelection(control) {
+        const kind = control?.dataset?.referenceKind || '';
+        if (kind === 'assets') {
+            applyAssetReference(findReferenceAsset(control.value));
+            return;
+        }
+        if ((kind === 'partNumbers' || kind === 'partNames') && control.dataset.row != null) {
+            applyPartReference(findReferencePart(control.value, kind), Number(control.dataset.row));
+        }
+    }
+
     function formatRupiah(value) {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency', currency: 'IDR', maximumFractionDigits: 0
@@ -1235,6 +1413,7 @@
     function createModuleMarkup() {
         const module = document.getElementById('reportModule');
         if (!module) return;
+        loadReportReferences();
         module.innerHTML = `
             <nav class="report-view-tabs" aria-label="Navigasi laporan">
                 <button class="report-view-tab active" type="button" role="tab" aria-selected="true" data-report-panel="templates">
@@ -1857,6 +2036,10 @@
         const placeholder = `placeholder="${escapeHtml(fieldPlaceholder(item))}"`;
         const constraints = validationAttributes(item);
         const instruction = `title="${escapeHtml(fieldInstruction(item))}" aria-label="${escapeHtml(`${item.label}. ${fieldInstruction(item)}`)}"`;
+        const referenceKind = reportReferenceKind(item, false);
+        const referenceAttributes = referenceKind
+            ? `list="${reportReferenceListId(referenceKind)}" data-reference-kind="${referenceKind}" autocomplete="off"`
+            : '';
         const numberTemplate = getNumberTemplate(activeSchema, item);
         if (numberTemplate) return templateNumberControl(item, value, numberTemplate);
         if (item.type === 'textarea') {
@@ -1873,12 +2056,16 @@
                 ${['Ya', 'Tidak'].map(option => `<label><input type="radio" name="report-field-${escapeHtml(item.key)}" data-field="${escapeHtml(item.key)}" value="${option}" ${value === option ? 'checked' : ''} ${required}> ${option}</label>`).join('')}
             </div>`;
         }
-        return `<input id="report-field-${escapeHtml(item.key)}" class="builder-input" data-field="${escapeHtml(item.key)}" type="${escapeHtml(item.type)}" value="${item.type === 'file' ? '' : escapeHtml(value)}" ${required} ${placeholder} ${constraints} ${instruction} aria-describedby="report-field-${escapeHtml(item.key)}-error">`;
+        return `<input id="report-field-${escapeHtml(item.key)}" class="builder-input" data-field="${escapeHtml(item.key)}" type="${escapeHtml(item.type)}" value="${item.type === 'file' ? '' : escapeHtml(value)}" ${required} ${placeholder} ${constraints} ${referenceAttributes} ${instruction} aria-describedby="report-field-${escapeHtml(item.key)}-error">`;
     }
 
     function tableControl(item, value, rowIndex) {
         const errorId = `report-row-${rowIndex}-${escapeHtml(item.key)}-error`;
-        const common = `class="table-cell-input" data-row="${rowIndex}" data-key="${escapeHtml(item.key)}" title="${escapeHtml(columnInstruction(item))}" aria-label="${escapeHtml(`${item.label} baris ${rowIndex + 1}. ${columnInstruction(item)}`)}" aria-describedby="${errorId}"`;
+        const referenceKind = reportReferenceKind(item, true);
+        const referenceAttributes = referenceKind
+            ? `list="${reportReferenceListId(referenceKind)}" data-reference-kind="${referenceKind}" autocomplete="off"`
+            : '';
+        const common = `class="table-cell-input" data-row="${rowIndex}" data-key="${escapeHtml(item.key)}" ${referenceAttributes} title="${escapeHtml(columnInstruction(item))}" aria-label="${escapeHtml(`${item.label} baris ${rowIndex + 1}. ${columnInstruction(item)}`)}" aria-describedby="${errorId}"`;
         const required = item.required ? 'required' : '';
         if (item.type === 'select') {
             return `<select ${common} ${required}>
@@ -1990,6 +2177,7 @@
                     ${escapeHtml(item.label)}${item.required ? '<span class="required-mark">*</span>' : ''}
                 </label>
                 ${formControl(item, activeDraft.fields[item.key] || '')}
+                ${reportReferenceKind(item, false) ? '<small class="report-reference-hint"><i class="fa-solid fa-database"></i> Pilih dari database atau ketik untuk mencari</small>' : ''}
                 <small class="field-validation-message" id="report-field-${escapeHtml(item.key)}-error" aria-live="polite"></small>
             </div>
         `).join('');
@@ -2368,6 +2556,21 @@
                 <div class="summary-line total"><span>Kuantitas terbesar</span><strong>${escapeHtml(largestLabel)}</strong></div>
             `;
         }
+        if (schema.calculation === 'procurementProgress') {
+            const populated = draft.rows.filter(row => row.nomor_spb || row.id_unit || row.nama_spare_part);
+            const arrived = populated.filter(row => ['Tiba', 'Diserahkan'].includes(row.status_pengadaan)).length;
+            const delayed = populated.filter(row => row.status_pengadaan === 'Tertunda').length;
+            const rtwImpacted = populated.filter(row => row.rtw_terdampak === 'Ya').length;
+            const measured = populated.filter(row => Number(row.total_waktu_aktual) >= 0 && String(row.total_waktu_aktual ?? '') !== '');
+            const averageHours = measured.length
+                ? measured.reduce((sum, row) => sum + numberValue(row.total_waktu_aktual), 0) / measured.length
+                : 0;
+            return `
+                <div class="summary-line"><span>Total item dimonitor</span><strong>${populated.length.toLocaleString('id-ID')} item</strong></div>
+                <div class="summary-line"><span>Barang tiba / diserahkan</span><strong>${arrived.toLocaleString('id-ID')} item</strong></div>
+                <div class="summary-line"><span>Tertunda / dampak RTW</span><strong>${delayed.toLocaleString('id-ID')} / ${rtwImpacted.toLocaleString('id-ID')} item</strong></div>
+                <div class="summary-line total"><span>Rata-rata waktu aktual</span><strong>${averageHours.toLocaleString('id-ID', { maximumFractionDigits: 2 })} jam</strong></div>`;
+        }
         return '';
     }
 
@@ -2424,11 +2627,16 @@
                     </div>
                 ` : ''}
                 <form id="dynamicReportForm" novalidate>
+                    ${renderReferenceDatalists()}
                     <div class="form-builder-body">
                         <section class="builder-section">
                             <div class="builder-section-title">
                                 <i class="fa-solid fa-id-card"></i><h3>Identitas & informasi dokumen</h3>
                                 <span><span class="required-mark">*</span> wajib diisi</span>
+                            </div>
+                            <div class="report-reference-status ${reportReferencesLoaded ? '' : 'is-loading'}" id="reportReferenceStatus">
+                                <i class="fa-solid ${reportReferencesLoaded ? 'fa-database' : 'fa-spinner fa-spin'}"></i>
+                                <span>${reportReferencesLoaded ? 'Pilihan master database siap digunakan.' : 'Memuat pilihan unit, lokasi, part, dan personel dari database...'}</span>
                             </div>
                             <div class="builder-fields">${renderFields()}</div>
                         </section>
@@ -2496,6 +2704,8 @@
 
         updateAdditionalAttachmentsGrid();
         renderRows();
+        refreshReferenceDatalists();
+        loadReportReferences();
         if (!options.skipBackendHydration) hydrateDraftFromBackend(activeSchema, openedUpdatedAt);
         document.getElementById('reportModule').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -2525,20 +2735,8 @@
             });
             renderSummary();
         }
-        if (schema.calculation === 'procurementProgress') {
-            const populated = draft.rows.filter(row => row.nomor_spb || row.id_unit || row.nama_spare_part);
-            const arrived = populated.filter(row => ['Tiba', 'Diserahkan'].includes(row.status_pengadaan)).length;
-            const delayed = populated.filter(row => row.status_pengadaan === 'Tertunda').length;
-            const rtwImpacted = populated.filter(row => row.rtw_terdampak === 'Ya').length;
-            const measured = populated.filter(row => Number(row.total_waktu_aktual) >= 0 && String(row.total_waktu_aktual ?? '') !== '');
-            const averageHours = measured.length
-                ? measured.reduce((sum, row) => sum + numberValue(row.total_waktu_aktual), 0) / measured.length
-                : 0;
-            return `
-                <div class="summary-line"><span>Total item dimonitor</span><strong>${populated.length.toLocaleString('id-ID')} item</strong></div>
-                <div class="summary-line"><span>Barang tiba / diserahkan</span><strong>${arrived.toLocaleString('id-ID')} item</strong></div>
-                <div class="summary-line"><span>Tertunda / dampak RTW</span><strong>${delayed.toLocaleString('id-ID')} / ${rtwImpacted.toLocaleString('id-ID')} item</strong></div>
-                <div class="summary-line total"><span>Rata-rata waktu aktual</span><strong>${averageHours.toLocaleString('id-ID', { maximumFractionDigits: 2 })} jam</strong></div>`;
+        if (event.type === 'change' && target.dataset.referenceKind) {
+            applyReportReferenceSelection(target);
         }
         updateControlValidation(target, true);
         saveDraft();
@@ -3465,8 +3663,9 @@
     }
 
     window.FleetReportForms = Object.freeze({
-        version: '1.4.0',
+        version: '1.5.0',
         getSchemas: () => cloneData(formSchemas),
+        getReferences: () => cloneData(reportReferences),
         getDraftState(schemaId) {
             const schema = formSchemas.find(item => item.id === schemaId);
             if (!schema) return null;

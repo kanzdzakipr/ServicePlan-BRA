@@ -1187,3 +1187,57 @@ LIMIT 10;
 - [ ] Transaksi manual tidak berubah.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 5 sebelum implementasi Batch 6 dimulai.
+
+### Revisi Batch 1–5 — Pilihan dan pengisian otomatis dari database
+
+Status implementasi: **SIAP UJI**.
+
+Seluruh template laporan sekarang menyediakan autocomplete dari database untuk field yang sesuai:
+
+| Jenis field | Sumber database | Otomatisasi setelah dipilih |
+|---|---|---|
+| Project, site, job site, lokasi | `locations` dan site LHO aktif | Menggunakan nama lokasi resmi |
+| ID/kode unit | `assets` | Jenis alat, model, lokasi, serial, HM awal/sebelum |
+| Jenis alat | Kategori aktif pada `assets` | Pilihan kategori konsisten dengan Master Asset |
+| Tipe/merk | `assets.make_model` | Menggunakan model yang sudah terdaftar |
+| Operator/personel | `users.full_name` | Menggunakan nama personel aktif |
+| Part number/nama part | `parts` | Nama/nomor part, satuan, stok, dan harga bila tersedia |
+| Satuan part | `parts.unit_measure` | Pilihan satuan dari Master Part |
+
+Autocomplete tetap mengizinkan pengetikan manual agar laporan lama atau referensi baru yang belum dimasukkan ke master tidak terblokir.
+
+#### Pengujian koneksi referensi
+
+1. [ ] Buka salah satu template pada **Laporan & Form**.
+2. [ ] Pastikan indikator hijau menyebut jumlah unit, lokasi, part, dan personel dari database.
+3. [ ] Klik field `Project`, `Site`, `Jenis alat`, `Lokasi`, atau `Operator`.
+4. [ ] Ketik sebagian nama dan pastikan pilihan database muncul.
+5. [ ] Login dengan role yang memiliki `reports.read` dan pastikan referensi mengikuti kebijakan akses aplikasi untuk role tersebut.
+
+#### Pengujian otomatisasi unit
+
+1. [ ] Buka LHO atau P2H.
+2. [ ] Pada `ID alat` atau `Code number`, pilih unit dari daftar database.
+3. [ ] Pastikan jenis alat, model, lokasi/job site, dan serial terisi bila field tersedia.
+4. [ ] Pada LHO, pastikan HM awal baris pertama mengikuti `assets.last_hm_km`.
+5. [ ] Pada P2H, pastikan HM sebelum operasi mengikuti `assets.last_hm_km`.
+6. [ ] Ganti pilihan unit dan pastikan field terkait ikut diperbarui.
+
+#### Pengujian otomatisasi part Batch 1–2
+
+1. [ ] Buka BHW-IN atau BHW-OUT.
+2. [ ] Pilih `Part number` dari daftar database.
+3. [ ] Pastikan nama part dan satuan terisi otomatis.
+4. [ ] Pada BHW-IN, pastikan `Saldo lalu` mengikuti stok Master Part.
+5. [ ] Pada BHW-OUT, pastikan `Persediaan` mengikuti stok Master Part.
+6. [ ] Isi jumlah masuk/keluar dan pastikan saldo akhir tetap dihitung otomatis.
+
+#### Kriteria lulus revisi
+
+- [ ] Pilihan referensi berasal dari database Laragon, bukan daftar statis browser.
+- [ ] Field tetap dapat diketik manual saat data belum terdaftar.
+- [ ] Pemilihan unit mengisi atribut unit yang relevan.
+- [ ] Pemilihan part mengisi identitas part dan stok yang relevan.
+- [ ] Endpoint referensi mengikuti izin `reports.read` dan kebijakan akses lokasi aplikasi.
+- [ ] Draft, finalisasi, integrasi Batch 1–5, dan void tetap berjalan.
+- [ ] Tidak ada error JavaScript atau HTTP `500`.
