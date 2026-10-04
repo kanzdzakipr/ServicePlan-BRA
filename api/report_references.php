@@ -57,6 +57,26 @@ try {
         'issue' => (string) ($row['issue_description'] ?? ''),
     ], $workOrderStatement->fetchAll(PDO::FETCH_ASSOC));
 
+    $purchaseRequestSql = "SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.urgency, pr.status,
+                                  a.asset_code, l.location_name
+                           FROM purchase_requests pr
+                           INNER JOIN assets a ON a.asset_id = pr.asset_id
+                           LEFT JOIN locations l ON l.location_id = a.current_location_id
+                           WHERE pr.status <> 'Closed'";
+    if ($workOrderScope['sql'] !== '') $purchaseRequestSql .= ' AND ' . $workOrderScope['sql'];
+    $purchaseRequestSql .= ' ORDER BY pr.requested_at DESC, pr.spb_id';
+    $purchaseRequestStatement = $db->prepare($purchaseRequestSql);
+    $purchaseRequestStatement->execute($workOrderScope['params']);
+    $purchaseRequests = array_map(static fn(array $row): array => [
+        'id' => (string) $row['spb_id'],
+        'workOrderId' => (string) $row['wo_id'],
+        'assetId' => (string) $row['asset_id'],
+        'assetCode' => (string) ($row['asset_code'] ?? ''),
+        'location' => (string) ($row['location_name'] ?? ''),
+        'urgency' => (string) $row['urgency'],
+        'status' => (string) $row['status'],
+    ], $purchaseRequestStatement->fetchAll(PDO::FETCH_ASSOC));
+
     $locationSql = 'SELECT location_id, location_name, location_type, region FROM locations WHERE is_active = 1';
     $locationParams = [];
     if (!api_has_global_location_scope()) {
@@ -163,6 +183,7 @@ try {
             'parts' => $parts,
             'people' => $people,
             'workOrders' => $workOrders,
+            'purchaseRequests' => $purchaseRequests,
             'categories' => $categories,
             'models' => $models,
         ],

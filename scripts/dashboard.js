@@ -423,7 +423,7 @@
                 field('kepada', 'Kepada Yth.', 'text', true),
                 field('nomor_kontrak', 'Nomor kontrak'),
                 field('project', 'Project', 'text', true),
-                field('nomor_spb', 'Nomor SPB'),
+                field('nomor_spb', 'Nomor SPB', 'text', true),
                 field('nomor_penawaran', 'Nomor surat penawaran'),
                 field('tanggal_penawaran', 'Tanggal surat penawaran', 'date'),
                 field('batas_penyerahan', 'Penyerahan paling lambat', 'date', true),
@@ -811,7 +811,7 @@
     const reportApiUrl = 'api/reports.php';
     const reportReferenceApiUrl = 'api/report_references.php';
     const emptyReportReferences = Object.freeze({
-        assets: [], locations: [], projects: [], sites: [], parts: [], people: [], workOrders: [], categories: [], models: []
+        assets: [], locations: [], projects: [], sites: [], parts: [], people: [], workOrders: [], purchaseRequests: [], categories: [], models: []
     });
     let reportReferences = { ...emptyReportReferences };
     let reportReferencesLoaded = false;
@@ -1055,6 +1055,8 @@
         if (isTableColumn && activeSchema?.id === 'maintenance-board' && key === 'kode') return 'assets';
         if (/^(id_alat|kode_alat|code_number|id_unit|unit_id|kode_unit)$/.test(key)) return 'assets';
         if (/^(nomor_wo|wo_id|nomor_jo)$/.test(key)) return 'workOrders';
+        if (activeSchema?.id === 'ppb' && key === 'nomor_spb') return 'purchaseRequests';
+        if (isTableColumn && activeSchema?.id === 'ppb' && key === 'sc') return 'partNumbers';
         if (isTableColumn && activeSchema?.id === 'spb' && key === 'spesifikasi') return 'partNumbers';
         if (/^(part_number|pn|no_part|nomor_part)$/.test(key)) return 'partNumbers';
         if (
@@ -1099,6 +1101,11 @@
                 `<option value="${escapeHtml(workOrder.id)}">${escapeHtml([workOrder.assetId, workOrder.asset, workOrder.status, workOrder.priority].filter(Boolean).join(' Â· '))}</option>`
             )).join('');
         }
+        if (kind === 'purchaseRequests') {
+            return reportReferences.purchaseRequests.map(request => (
+                `<option value="${escapeHtml(request.id)}">${escapeHtml([request.workOrderId, request.assetId, request.location, request.status].filter(Boolean).join(' Â· '))}</option>`
+            )).join('');
+        }
         if (kind === 'categories' || kind === 'models') {
             return (reportReferences[kind] || []).map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
         }
@@ -1120,7 +1127,7 @@
     }
 
     function renderReferenceDatalists() {
-        const kinds = ['assets', 'locations', 'projects', 'sites', 'people', 'workOrders', 'categories', 'models', 'partNumbers', 'partNames', 'partUnits'];
+        const kinds = ['assets', 'locations', 'projects', 'sites', 'people', 'workOrders', 'purchaseRequests', 'categories', 'models', 'partNumbers', 'partNames', 'partUnits'];
         return `<div class="report-reference-lists">${kinds.map(kind => (
             `<datalist id="${reportReferenceListId(kind)}">${referenceOptionsMarkup(kind)}</datalist>`
         )).join('')}</div>`;
@@ -1135,7 +1142,7 @@
         if (status) {
             status.classList.toggle('is-error', !reportReferencesLoaded);
             status.innerHTML = reportReferencesLoaded
-                ? `<i class="fa-solid fa-database"></i><span>Pilihan terhubung ke database: ${reportReferences.assets.length} unit, ${reportReferences.workOrders.length} Work Order aktif, ${reportReferences.locations.length} lokasi, ${reportReferences.parts.length} part, dan ${reportReferences.people.length} personel.</span>`
+                ? `<i class="fa-solid fa-database"></i><span>Pilihan database: ${reportReferences.assets.length} unit, ${reportReferences.workOrders.length} Work Order, ${reportReferences.purchaseRequests.length} SPB aktif, ${reportReferences.parts.length} part, dan ${reportReferences.people.length} personel.</span>`
                 : '<i class="fa-solid fa-triangle-exclamation"></i><span>Referensi database belum tersedia. Field tetap dapat diisi manual.</span>';
         }
     }
@@ -1177,6 +1184,11 @@
         return reportReferences.workOrders.find(workOrder => (
             String(workOrder.id || '').toLowerCase() === normalized
         )) || null;
+    }
+
+    function findReferencePurchaseRequest(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return reportReferences.purchaseRequests.find(request => String(request.id || '').toLowerCase() === normalized) || null;
     }
 
     function setAutomatedField(key, value) {
@@ -1269,6 +1281,7 @@
         if (availableKeys.has('part_number')) row.part_number = part.number;
         if (availableKeys.has('pn')) row.pn = part.number;
         if (availableKeys.has('spesifikasi')) row.spesifikasi = part.number;
+        if (availableKeys.has('sc')) row.sc = part.number;
         ['nama', 'nama_parts', 'nama_spare_part'].forEach(key => {
             if (availableKeys.has(key)) row[key] = part.name;
         });
@@ -1301,6 +1314,15 @@
             const asset = findReferenceAsset(workOrder.assetId);
             applyAssetReference(asset);
             if (asset?.location) setAutomatedField('project', asset.location);
+            return;
+        }
+        if (kind === 'purchaseRequests') {
+            const request = findReferencePurchaseRequest(control.value);
+            if (!request) return;
+            if (request.location) {
+                setAutomatedField('project', request.location);
+                setAutomatedField('tempat_penyerahan', request.location);
+            }
             return;
         }
         if (kind === 'assets') {
@@ -4085,6 +4107,7 @@
                 merged.set(String(row.item_id), {
                     id: String(row.item_id),
                     spbId: String(row.spb_id || ''),
+                    ppbId: String(row.ppb_id || ''),
                     assetId: String(row.asset_id || ''),
                     woId: String(row.wo_id || ''),
                     partNumber: String(row.part_number || ''),
@@ -4097,7 +4120,7 @@
                     priority: row.urgency === 'Emergency' ? 'Critical' : 'Normal',
                     rtwImpact: row.urgency === 'Emergency',
                     source: row.source_report_number
-                        ? `Laporan SPB ${row.source_report_number}`
+                        ? `${row.ppb_id ? `PPB ${row.ppb_id} · ` : ''}Laporan ${row.source_report_number}`
                         : 'SPB Database',
                     sourceReportId: String(row.source_report_id || ''),
                     sourceReportNumber: String(row.source_report_number || ''),
@@ -5093,10 +5116,10 @@
     window.SpareLogistics = api;
 
     document.addEventListener('fleetreport:finalized', event => {
-        if (event.detail?.schemaId === 'spb') loadDatabaseRecords();
+        if (['spb', 'ppb'].includes(event.detail?.schemaId)) loadDatabaseRecords();
     });
     document.addEventListener('fleetreport:voided', event => {
-        if (event.detail?.schemaId === 'spb') loadDatabaseRecords();
+        if (['spb', 'ppb'].includes(event.detail?.schemaId)) loadDatabaseRecords();
     });
 
     if (document.readyState === 'loading') {

@@ -151,7 +151,36 @@ switch ($method) {
                 $sql .= ' ORDER BY pr.requested_at DESC, pr.spb_id, pri.id';
                 $stmt = $db->prepare($sql);
                 $stmt->execute($scope['params']);
-                echo json_encode(["status" => "success", "data" => $stmt->fetchAll()]);
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                $procurementSql = "SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.requested_by, pr.urgency,
+                                          po.status, po.created_at AS requested_at, po.ppb_id,
+                                          COALESCE(pri.id, poi.id) AS item_id,
+                                          poi.part_number, poi.description, poi.quantity AS qty_requested,
+                                          CASE po.status
+                                              WHEN 'Received' THEN 'Tiba'
+                                              WHEN 'Ordered' THEN 'Dipesan'
+                                              WHEN 'Approved' THEN 'Disetujui'
+                                              WHEN 'Cancelled' THEN 'Tertunda'
+                                              ELSE 'Menunggu Approval'
+                                          END AS item_status,
+                                          rpoi.report_id AS source_report_id,
+                                          rr.report_number AS source_report_number
+                                   FROM purchase_orders po
+                                   INNER JOIN purchase_requests pr ON pr.spb_id = po.spb_id
+                                   INNER JOIN purchase_order_items poi ON poi.ppb_id = po.ppb_id
+                                   INNER JOIN assets a ON a.asset_id = po.asset_id
+                                   LEFT JOIN purchase_request_items pri
+                                     ON pri.spb_id = po.spb_id AND pri.part_number = poi.part_number
+                                   LEFT JOIN report_purchase_order_integrations rpoi
+                                     ON rpoi.ppb_id = po.ppb_id AND rpoi.reversed_at IS NULL
+                                   LEFT JOIN report_records rr ON rr.report_id = rpoi.report_id";
+                if ($scope['sql'] !== '') $procurementSql .= ' WHERE ' . $scope['sql'];
+                $procurementSql .= ' ORDER BY po.created_at DESC, po.ppb_id, poi.id';
+                $procurement = $db->prepare($procurementSql);
+                $procurement->execute($scope['params']);
+                $rows = array_merge($rows, $procurement->fetchAll(PDO::FETCH_ASSOC));
+                echo json_encode(["status" => "success", "data" => $rows]);
                 break;
             }
         }

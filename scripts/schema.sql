@@ -239,6 +239,8 @@ CREATE TABLE `parts` (
     `location_warehouse` VARCHAR(100) DEFAULT 'Gudang Yard KM 12'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `purchase_order_items`;
+DROP TABLE IF EXISTS `purchase_orders`;
 DROP TABLE IF EXISTS `purchase_request_items`;
 DROP TABLE IF EXISTS `purchase_requests`;
 CREATE TABLE `purchase_requests` (
@@ -261,6 +263,30 @@ CREATE TABLE `purchase_request_items` (
     `qty_requested` INT NOT NULL DEFAULT 1,
     `status` VARCHAR(50) NOT NULL DEFAULT 'Menunggu Approval',
     KEY `idx_purchase_request_items_spb` (`spb_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `purchase_orders` (
+    `ppb_id` VARCHAR(50) PRIMARY KEY, `spb_id` VARCHAR(50) NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL, `wo_id` VARCHAR(50) NOT NULL,
+    `vendor` VARCHAR(190) NOT NULL, `project` VARCHAR(190) NOT NULL,
+    `quote_number` VARCHAR(100) NULL, `quote_date` DATE NULL,
+    `delivery_due` DATE NOT NULL, `delivery_location` VARCHAR(255) NOT NULL,
+    `subtotal` DECIMAL(15,2) NOT NULL DEFAULT 0, `tax_amount` DECIMAL(15,2) NOT NULL DEFAULT 0,
+    `total_amount` DECIMAL(15,2) NOT NULL DEFAULT 0,
+    `status` ENUM('Submitted','Approved','Ordered','Received','Cancelled') NOT NULL DEFAULT 'Submitted',
+    `created_by` INT NOT NULL, `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_purchase_orders_spb` (`spb_id`), KEY `idx_purchase_orders_asset` (`asset_id`,`status`),
+    CONSTRAINT `fk_purchase_orders_spb` FOREIGN KEY (`spb_id`) REFERENCES `purchase_requests` (`spb_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_purchase_orders_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `purchase_order_items` (
+    `id` VARCHAR(100) PRIMARY KEY, `ppb_id` VARCHAR(50) NOT NULL,
+    `part_number` VARCHAR(100) NOT NULL, `description` VARCHAR(255) NOT NULL,
+    `unit_measure` VARCHAR(20) NOT NULL, `quantity` INT NOT NULL,
+    `unit_price` DECIMAL(15,2) NOT NULL, `total_price` DECIMAL(15,2) NOT NULL,
+    `notes` VARCHAR(255) NULL, KEY `idx_purchase_order_items_ppb` (`ppb_id`),
+    CONSTRAINT `fk_purchase_order_items_header` FOREIGN KEY (`ppb_id`) REFERENCES `purchase_orders` (`ppb_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -476,6 +502,7 @@ DROP TABLE IF EXISTS `report_operation_logs`;
 DROP TABLE IF EXISTS `report_pm_integrations`;
 DROP TABLE IF EXISTS `report_work_order_integrations`;
 DROP TABLE IF EXISTS `report_purchase_request_integrations`;
+DROP TABLE IF EXISTS `report_purchase_order_integrations`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -717,6 +744,23 @@ CREATE TABLE `report_purchase_request_integrations` (
     KEY `idx_report_purchase_request_asset` (`asset_id`, `reversed_at`),
     CONSTRAINT `fk_report_purchase_request_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_report_purchase_request_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 29. PPB TO PURCHASE ORDER (Reversible linkage)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `report_purchase_order_integrations` (
+    `integration_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL, `ppb_id` VARCHAR(50) NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL, `owns_purchase_order` BOOLEAN NOT NULL DEFAULT TRUE,
+    `applied_payload` LONGTEXT NOT NULL, `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL, `reversed_by` INT NULL,
+    UNIQUE KEY `uq_report_purchase_order_report` (`report_id`),
+    KEY `idx_report_purchase_order_ppb` (`ppb_id`),
+    KEY `idx_report_purchase_order_asset` (`asset_id`,`reversed_at`),
+    CONSTRAINT `fk_report_purchase_order_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_report_purchase_order_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

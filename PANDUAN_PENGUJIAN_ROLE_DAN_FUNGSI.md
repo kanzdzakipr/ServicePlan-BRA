@@ -1651,3 +1651,70 @@ LIMIT 50;
 - [ ] Void mempertahankan SPB yang telah diproses atau memiliki approval.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 8 sebelum Batch 9 dimulai.
+
+### Batch 9 — PPB ke Pengadaan / Spare Part & Logistik
+
+Status implementasi: **SIAP UJI**.
+
+Integrasi Batch 9 menghubungkan laporan PPB dengan SPB aktif. Nomor SPB dipilih dari database; lokasi SPB mengisi project dan tempat penyerahan. Nama atau nomor part dipilih dari Master Part. Finalisasi membuat `purchase_orders`, `purchase_order_items`, dan ledger `report_purchase_order_integrations`. Subtotal, PPN 11%, dan total divalidasi ulang oleh backend.
+
+#### Pengujian otomatisasi dan finalisasi
+
+1. [ ] Pastikan minimal satu laporan SPB Batch 8 sudah difinalkan dan belum berstatus `Closed`.
+2. [ ] Buka **Laporan & Form → PPB**.
+3. [ ] Gunakan nomor unik, misalnya `PPB-UJI-001`.
+4. [ ] Pilih nomor SPB dari daftar database.
+5. [ ] Pastikan project dan tempat penyerahan mengikuti lokasi unit SPB jika tersedia.
+6. [ ] Isi vendor, nomor/tanggal penawaran, dan batas penyerahan.
+7. [ ] Pilih nama barang atau No. SC/part number dari Master Part.
+8. [ ] Pastikan nama, part number, satuan, dan harga terisi bila tersedia; isi jumlah dan periksa jumlah harga otomatis.
+9. [ ] Unggah bukti gambar dan keterangannya, lalu tekan **Simpan Laporan**.
+10. [ ] Buka **Spare Part & Logistik**, cari unit SPB, dan pastikan status pengadaan serta sumber PPB tampil.
+
+#### Verifikasi database
+
+```sql
+SELECT
+    r.report_number,
+    rpoi.owns_purchase_order,
+    rpoi.reversed_at,
+    po.ppb_id,
+    po.spb_id,
+    po.wo_id,
+    po.asset_id,
+    po.vendor,
+    po.subtotal,
+    po.tax_amount,
+    po.total_amount,
+    po.status,
+    poi.part_number,
+    poi.quantity,
+    poi.unit_price,
+    poi.total_price
+FROM u646470441_ServicePlanBRA.report_purchase_order_integrations rpoi
+JOIN u646470441_ServicePlanBRA.report_records r ON r.report_id = rpoi.report_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_orders po ON po.ppb_id = rpoi.ppb_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_order_items poi ON poi.ppb_id = po.ppb_id
+ORDER BY rpoi.integration_id DESC, poi.id
+LIMIT 50;
+```
+
+#### Pengujian idempotensi dan void
+
+1. [ ] Muat ulang halaman; pastikan PPB dan item tidak bertambah.
+2. [ ] Coba ubah jumlah harga agar tidak sama dengan `jumlah × harga`; finalisasi harus ditolak.
+3. [ ] Void PPB baru yang belum diproses; header dan item harus terhapus dan ledger memiliki `reversed_at`.
+4. [ ] Buat PPB lain, ubah statusnya menjadi `Approved` atau `Ordered`, lalu void laporannya.
+5. [ ] Pastikan PPB yang sudah diproses tetap dipertahankan.
+
+#### Kriteria lulus Batch 9
+
+- [ ] SPB dan part dipilih dari database Laragon.
+- [ ] PPB selalu terhubung ke SPB, Work Order, dan unit asal.
+- [ ] Draft tidak membuat transaksi pengadaan.
+- [ ] PPN 11% dan total sesuai perhitungan.
+- [ ] PPB tampil pada menu Spare Part & Logistik.
+- [ ] Retry tidak membuat duplikasi.
+- [ ] Void aman membedakan PPB baru dan PPB yang sudah diproses.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 9 sebelum Batch 10 dimulai.

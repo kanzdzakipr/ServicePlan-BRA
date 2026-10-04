@@ -616,6 +616,39 @@ LOCK TABLES `purchase_request_items` WRITE;
 /*!40000 ALTER TABLE `purchase_request_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- Table structure for table `purchase_orders`
+DROP TABLE IF EXISTS `purchase_orders`;
+CREATE TABLE `purchase_orders` (
+  `ppb_id` varchar(50) NOT NULL, `spb_id` varchar(50) NOT NULL, `asset_id` varchar(100) NOT NULL,
+  `wo_id` varchar(50) NOT NULL, `vendor` varchar(190) NOT NULL, `project` varchar(190) NOT NULL,
+  `quote_number` varchar(100) DEFAULT NULL, `quote_date` date DEFAULT NULL, `delivery_due` date NOT NULL,
+  `delivery_location` varchar(255) NOT NULL, `subtotal` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `tax_amount` decimal(15,2) NOT NULL DEFAULT '0.00', `total_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `status` enum('Submitted','Approved','Ordered','Received','Cancelled') NOT NULL DEFAULT 'Submitted',
+  `created_by` int NOT NULL, `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`ppb_id`), KEY `idx_purchase_orders_spb` (`spb_id`), KEY `idx_purchase_orders_asset` (`asset_id`,`status`),
+  CONSTRAINT `fk_purchase_orders_spb` FOREIGN KEY (`spb_id`) REFERENCES `purchase_requests` (`spb_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_purchase_orders_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+LOCK TABLES `purchase_orders` WRITE;
+/*!40000 ALTER TABLE `purchase_orders` DISABLE KEYS */;
+/*!40000 ALTER TABLE `purchase_orders` ENABLE KEYS */;
+UNLOCK TABLES;
+
+-- Table structure for table `purchase_order_items`
+DROP TABLE IF EXISTS `purchase_order_items`;
+CREATE TABLE `purchase_order_items` (
+  `id` varchar(100) NOT NULL, `ppb_id` varchar(50) NOT NULL, `part_number` varchar(100) NOT NULL,
+  `description` varchar(255) NOT NULL, `unit_measure` varchar(20) NOT NULL, `quantity` int NOT NULL,
+  `unit_price` decimal(15,2) NOT NULL, `total_price` decimal(15,2) NOT NULL, `notes` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`), KEY `idx_purchase_order_items_ppb` (`ppb_id`),
+  CONSTRAINT `fk_purchase_order_items_header` FOREIGN KEY (`ppb_id`) REFERENCES `purchase_orders` (`ppb_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+LOCK TABLES `purchase_order_items` WRITE;
+/*!40000 ALTER TABLE `purchase_order_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `purchase_order_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
 --
 -- Table structure for table `report_audit_logs`
 --
@@ -1020,6 +1053,24 @@ CREATE TABLE `report_purchase_request_integrations` (
 LOCK TABLES `report_purchase_request_integrations` WRITE;
 /*!40000 ALTER TABLE `report_purchase_request_integrations` DISABLE KEYS */;
 /*!40000 ALTER TABLE `report_purchase_request_integrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+-- Table structure for table `report_purchase_order_integrations`
+DROP TABLE IF EXISTS `report_purchase_order_integrations`;
+CREATE TABLE `report_purchase_order_integrations` (
+  `integration_id` bigint unsigned NOT NULL AUTO_INCREMENT, `report_id` char(36) NOT NULL,
+  `ppb_id` varchar(50) NOT NULL, `asset_id` varchar(100) NOT NULL,
+  `owns_purchase_order` tinyint(1) NOT NULL DEFAULT '1', `applied_payload` longtext NOT NULL,
+  `created_by` int DEFAULT NULL, `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL, `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`integration_id`), UNIQUE KEY `uq_report_purchase_order_report` (`report_id`),
+  KEY `idx_report_purchase_order_ppb` (`ppb_id`), KEY `idx_report_purchase_order_asset` (`asset_id`,`reversed_at`),
+  CONSTRAINT `fk_report_purchase_order_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_report_purchase_order_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+LOCK TABLES `report_purchase_order_integrations` WRITE;
+/*!40000 ALTER TABLE `report_purchase_order_integrations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_purchase_order_integrations` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --

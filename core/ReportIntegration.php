@@ -162,6 +162,61 @@ final class ReportIntegration
             CONSTRAINT fk_report_purchase_request_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
             CONSTRAINT fk_report_purchase_request_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS purchase_orders (
+            ppb_id VARCHAR(50) PRIMARY KEY,
+            spb_id VARCHAR(50) NOT NULL,
+            asset_id VARCHAR(100) NOT NULL,
+            wo_id VARCHAR(50) NOT NULL,
+            vendor VARCHAR(190) NOT NULL,
+            project VARCHAR(190) NOT NULL,
+            quote_number VARCHAR(100) NULL,
+            quote_date DATE NULL,
+            delivery_due DATE NOT NULL,
+            delivery_location VARCHAR(255) NOT NULL,
+            subtotal DECIMAL(15,2) NOT NULL DEFAULT 0,
+            tax_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+            total_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+            status ENUM('Submitted', 'Approved', 'Ordered', 'Received', 'Cancelled') NOT NULL DEFAULT 'Submitted',
+            created_by INT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_purchase_orders_spb (spb_id),
+            KEY idx_purchase_orders_asset (asset_id, status),
+            CONSTRAINT fk_purchase_orders_spb FOREIGN KEY (spb_id) REFERENCES purchase_requests (spb_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_purchase_orders_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS purchase_order_items (
+            id VARCHAR(100) PRIMARY KEY,
+            ppb_id VARCHAR(50) NOT NULL,
+            part_number VARCHAR(100) NOT NULL,
+            description VARCHAR(255) NOT NULL,
+            unit_measure VARCHAR(20) NOT NULL,
+            quantity INT NOT NULL,
+            unit_price DECIMAL(15,2) NOT NULL,
+            total_price DECIMAL(15,2) NOT NULL,
+            notes VARCHAR(255) NULL,
+            KEY idx_purchase_order_items_ppb (ppb_id),
+            CONSTRAINT fk_purchase_order_items_header FOREIGN KEY (ppb_id) REFERENCES purchase_orders (ppb_id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS report_purchase_order_integrations (
+            integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            ppb_id VARCHAR(50) NOT NULL,
+            asset_id VARCHAR(100) NOT NULL,
+            owns_purchase_order TINYINT(1) NOT NULL DEFAULT 1,
+            applied_payload LONGTEXT NOT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_report_purchase_order_report (report_id),
+            KEY idx_report_purchase_order_ppb (ppb_id),
+            KEY idx_report_purchase_order_asset (asset_id, reversed_at),
+            CONSTRAINT fk_report_purchase_order_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_report_purchase_order_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     public static function applyFinal(
@@ -192,6 +247,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'spb') {
             return self::applySpb($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'ppb') {
+            return self::applyPpb($db, $reportId, $fields, $rows, $actorId);
         }
         return ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
     }
@@ -513,8 +571,31 @@ final class ReportIntegration
             $purchaseRequestReversed += $reversePurchaseRequest->rowCount();
         }
 
+        $purchaseOrderStatement = $db->prepare('SELECT integration_id, ppb_id, owns_purchase_order, applied_payload FROM report_purchase_order_integrations WHERE report_id = :report_id AND reversed_at IS NULL FOR UPDATE');
+        $purchaseOrderStatement->execute([':report_id' => $reportId]);
+        $purchaseOrderReversed = 0; $purchaseOrderDeleted = 0; $purchaseOrderPreserved = 0;
+        foreach ($purchaseOrderStatement->fetchAll(PDO::FETCH_ASSOC) as $integration) {
+            $orderStatement = $db->prepare('SELECT ppb_id, spb_id, asset_id, wo_id, vendor, project, quote_number, quote_date, delivery_due, delivery_location, subtotal, tax_amount, total_amount, status, created_by FROM purchase_orders WHERE ppb_id = :ppb_id FOR UPDATE');
+            $orderStatement->execute([':ppb_id' => $integration['ppb_id']]);
+            $order = $orderStatement->fetch(PDO::FETCH_ASSOC);
+            $items = $db->prepare('SELECT id, ppb_id, part_number, description, unit_measure, quantity, unit_price, total_price, notes FROM purchase_order_items WHERE ppb_id = :ppb_id ORDER BY id FOR UPDATE');
+            $items->execute([':ppb_id' => $integration['ppb_id']]);
+            $snapshot = json_decode((string) $integration['applied_payload'], true);
+            $owns = (int) $integration['owns_purchase_order'] === 1;
+            if ($owns && $order && is_array($snapshot) && self::purchaseOrderMatchesSnapshot($order, $items->fetchAll(PDO::FETCH_ASSOC), $snapshot)) {
+                $delete = $db->prepare('DELETE FROM purchase_orders WHERE ppb_id = :ppb_id');
+                $delete->execute([':ppb_id' => $integration['ppb_id']]);
+                $purchaseOrderDeleted += $delete->rowCount();
+            } elseif ($owns && $order) {
+                $purchaseOrderPreserved++;
+            }
+            $reverse = $db->prepare('UPDATE report_purchase_order_integrations SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor_id WHERE integration_id = :id AND reversed_at IS NULL');
+            $reverse->execute([':actor_id'=>$actorId, ':id'=>(int)$integration['integration_id']]);
+            $purchaseOrderReversed += $reverse->rowCount();
+        }
+
         $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
-            + $pmReversed + $workOrderReversed + $purchaseRequestReversed;
+            + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($inspectionReversed > 0) {
@@ -538,6 +619,11 @@ final class ReportIntegration
             $reversalMessage = $purchaseRequestPreserved > 0
                 ? "Laporan berhasil dibatalkan. {$purchaseRequestPreserved} SPB tetap dipertahankan karena sudah diproses logistik atau approval."
                 : "Laporan berhasil dibatalkan dan {$purchaseRequestDeleted} SPB buatan laporan dihapus.";
+        } elseif ($purchaseOrderReversed > 0) {
+            $reversalType = 'purchase-order-reversal';
+            $reversalMessage = $purchaseOrderPreserved > 0
+                ? "Laporan berhasil dibatalkan. {$purchaseOrderPreserved} PPB tetap dipertahankan karena sudah diproses pengadaan."
+                : "Laporan berhasil dibatalkan dan {$purchaseOrderDeleted} PPB buatan laporan dihapus.";
         }
         return [
             'type' => $reversalType,
@@ -556,8 +642,115 @@ final class ReportIntegration
             'purchaseRequestItemCount' => $purchaseRequestReversed,
             'purchaseRequestDeletedCount' => $purchaseRequestDeleted,
             'purchaseRequestPreservedCount' => $purchaseRequestPreserved,
+            'purchaseOrderItemCount' => $purchaseOrderReversed,
+            'purchaseOrderDeletedCount' => $purchaseOrderDeleted,
+            'purchaseOrderPreservedCount' => $purchaseOrderPreserved,
             'message' => $reversalMessage,
         ];
+    }
+
+    private static function applyPpb(PDO $db, string $reportId, array $fields, array $rows, int $actorId): array
+    {
+        $existing = $db->prepare('SELECT ppb_id FROM report_purchase_order_integrations WHERE report_id = :report_id LIMIT 1');
+        $existing->execute([':report_id' => $reportId]);
+        $existingId = $existing->fetchColumn();
+        if ($existingId !== false) {
+            return ['type' => 'ppb', 'applied' => false, 'alreadyApplied' => true, 'itemCount' => 1, 'ppbId' => (string) $existingId];
+        }
+
+        $ppbId = self::requiredText($fields['nomor_ppb'] ?? null, 'Nomor PPB', 50);
+        $spbId = self::requiredText($fields['nomor_spb'] ?? null, 'Nomor SPB', 50);
+        $vendor = self::requiredText($fields['kepada'] ?? null, 'Vendor / Kepada Yth.', 190);
+        $project = self::requiredText($fields['project'] ?? null, 'Project', 190);
+        $deliveryDue = self::requiredDate($fields['batas_penyerahan'] ?? null, 'Batas penyerahan');
+        $deliveryLocation = self::requiredText($fields['tempat_penyerahan'] ?? null, 'Tempat penyerahan', 255);
+        $quoteNumber = self::optionalText($fields['nomor_penawaran'] ?? null, 100);
+        $quoteDate = self::optionalDate($fields['tanggal_penawaran'] ?? null);
+
+        $requestStatement = $db->prepare(
+            "SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.status, w.status AS wo_status
+             FROM purchase_requests pr
+             INNER JOIN work_orders w ON w.wo_id = pr.wo_id
+             WHERE pr.spb_id = :spb_id LIMIT 1 FOR UPDATE"
+        );
+        $requestStatement->execute([':spb_id' => $spbId]);
+        $request = $requestStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$request) throw new DomainException("SPB {$spbId} belum tersedia pada menu Logistik.");
+        if ($request['status'] === 'Closed' || in_array($request['wo_status'], ['Closed', 'Cancelled'], true)) {
+            throw new DomainException("SPB {$spbId} atau Work Order terkait sudah ditutup.");
+        }
+
+        $items = [];
+        $subtotal = 0.0;
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) continue;
+            $line = $position + 1;
+            $name = self::requiredText($row['nama'] ?? null, "Nama barang baris {$line}", 200);
+            $partNumber = self::requiredText($row['sc'] ?? ($row['part_number'] ?? null), "No. SC / part number baris {$line}", 100);
+            $unit = self::requiredText($row['satuan'] ?? null, "Satuan baris {$line}", 20);
+            $quantity = self::requiredNonNegativeInteger($row['jumlah'] ?? null, "Jumlah baris {$line}", false);
+            $unitPrice = self::requiredNonNegativeDecimal($row['harga'] ?? null, "Harga satuan baris {$line}");
+            $reportedTotal = self::requiredNonNegativeDecimal($row['total'] ?? null, "Jumlah harga baris {$line}");
+            $expectedTotal = round($quantity * $unitPrice, 2);
+            if (abs($reportedTotal - $expectedTotal) >= 0.01) {
+                throw new DomainException("Baris {$line}: jumlah harga harus sama dengan jumlah × harga satuan ({$expectedTotal}).");
+            }
+            $part = $db->prepare('SELECT part_number, part_name, unit_measure FROM parts WHERE part_number = :number OR part_name = :name ORDER BY CASE WHEN part_number = :exact THEN 0 ELSE 1 END LIMIT 1');
+            $part->execute([':number' => $partNumber, ':name' => $name, ':exact' => $partNumber]);
+            $master = $part->fetch(PDO::FETCH_ASSOC);
+            if ($master) {
+                if (strcasecmp((string) $master['unit_measure'], $unit) !== 0) {
+                    throw new DomainException("Baris {$line}: satuan tidak cocok dengan Master Part {$master['part_number']}.");
+                }
+                $partNumber = (string) $master['part_number'];
+                $name = (string) $master['part_name'];
+            }
+            $items[] = [
+                'id' => 'RPPB-' . strtoupper(substr(hash('sha256', $reportId . '|' . $position), 0, 24)),
+                'ppb_id' => $ppbId,
+                'part_number' => $partNumber,
+                'description' => $name,
+                'unit_measure' => $unit,
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'total_price' => $expectedTotal,
+                'notes' => self::optionalText($row['keterangan'] ?? null, 255),
+            ];
+            $subtotal += $expectedTotal;
+        }
+        if ($items === []) throw new DomainException('PPB harus memiliki sedikitnya satu barang yang dipesan.');
+        usort($items, static fn(array $a, array $b): int => strcmp($a['id'], $b['id']));
+        $subtotal = round($subtotal, 2);
+        $tax = round($subtotal * 0.11, 2);
+        $snapshot = ['header' => [
+            'ppb_id' => $ppbId, 'spb_id' => $spbId, 'asset_id' => (string) $request['asset_id'],
+            'wo_id' => (string) $request['wo_id'], 'vendor' => $vendor, 'project' => $project,
+            'quote_number' => $quoteNumber, 'quote_date' => $quoteDate, 'delivery_due' => $deliveryDue,
+            'delivery_location' => $deliveryLocation, 'subtotal' => $subtotal, 'tax_amount' => $tax,
+            'total_amount' => round($subtotal + $tax, 2), 'status' => 'Submitted', 'created_by' => $actorId,
+        ], 'items' => $items];
+
+        $orderStatement = $db->prepare('SELECT ppb_id, spb_id, asset_id, wo_id, vendor, project, quote_number, quote_date, delivery_due, delivery_location, subtotal, tax_amount, total_amount, status, created_by FROM purchase_orders WHERE ppb_id = :ppb_id FOR UPDATE');
+        $orderStatement->execute([':ppb_id' => $ppbId]);
+        $order = $orderStatement->fetch(PDO::FETCH_ASSOC);
+        $ownsOrder = !$order;
+        if ($order) {
+            $orderItems = $db->prepare('SELECT id, ppb_id, part_number, description, unit_measure, quantity, unit_price, total_price, notes FROM purchase_order_items WHERE ppb_id = :ppb_id ORDER BY id FOR UPDATE');
+            $orderItems->execute([':ppb_id' => $ppbId]);
+            if (!self::purchaseOrderMatchesSnapshot($order, $orderItems->fetchAll(PDO::FETCH_ASSOC), $snapshot)) {
+                throw new DomainException("Nomor {$ppbId} sudah digunakan oleh PPB lain dengan data berbeda.");
+            }
+        }
+        if ($ownsOrder) {
+            $header = $snapshot['header'];
+            $insert = $db->prepare('INSERT INTO purchase_orders (ppb_id, spb_id, asset_id, wo_id, vendor, project, quote_number, quote_date, delivery_due, delivery_location, subtotal, tax_amount, total_amount, status, created_by) VALUES (:ppb_id,:spb_id,:asset_id,:wo_id,:vendor,:project,:quote_number,:quote_date,:delivery_due,:delivery_location,:subtotal,:tax_amount,:total_amount,:status,:created_by)');
+            $params = []; foreach ($header as $key => $value) $params[':' . $key] = $value; $insert->execute($params);
+            $insertItem = $db->prepare('INSERT INTO purchase_order_items (id, ppb_id, part_number, description, unit_measure, quantity, unit_price, total_price, notes) VALUES (:id,:ppb_id,:part_number,:description,:unit_measure,:quantity,:unit_price,:total_price,:notes)');
+            foreach ($items as $item) { $params = []; foreach ($item as $key => $value) $params[':' . $key] = $value; $insertItem->execute($params); }
+        }
+        $ledger = $db->prepare('INSERT INTO report_purchase_order_integrations (report_id, ppb_id, asset_id, owns_purchase_order, applied_payload, created_by) VALUES (:report_id,:ppb_id,:asset_id,:owns,:payload,:created_by)');
+        $ledger->execute([':report_id'=>$reportId, ':ppb_id'=>$ppbId, ':asset_id'=>$request['asset_id'], ':owns'=>$ownsOrder ? 1 : 0, ':payload'=>json_encode($snapshot, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR), ':created_by'=>$actorId]);
+        return ['type'=>'ppb','applied'=>true,'alreadyApplied'=>false,'itemCount'=>count($items),'ppbId'=>$ppbId,'spbId'=>$spbId,'createdItemCount'=>$ownsOrder?count($items):0,'linkedItemCount'=>$ownsOrder?0:count($items),'message'=>$ownsOrder ? "Laporan berhasil difinalkan dan PPB {$ppbId} dengan ".count($items).' item dibuat.' : "Laporan berhasil ditautkan ke PPB {$ppbId} tanpa duplikasi."];
     }
 
     private static function applySpb(
@@ -1964,6 +2157,33 @@ final class ReportIntegration
             if ((int) ($item['qty_requested'] ?? 0) !== (int) ($expected['qty_requested'] ?? 0)) {
                 return false;
             }
+        }
+        return true;
+    }
+
+    private static function purchaseOrderMatchesSnapshot(array $order, array $items, array $snapshot): bool
+    {
+        $header = is_array($snapshot['header'] ?? null) ? $snapshot['header'] : [];
+        foreach (['ppb_id','spb_id','asset_id','wo_id','vendor','project','quote_number','quote_date','delivery_due','delivery_location','status'] as $key) {
+            $actual = $order[$key] ?? null; $expected = $header[$key] ?? null;
+            if (($actual === null ? null : (string)$actual) !== ($expected === null ? null : (string)$expected)) return false;
+        }
+        if ((int)($order['created_by'] ?? 0) !== (int)($header['created_by'] ?? 0)) return false;
+        foreach (['subtotal','tax_amount','total_amount'] as $key) {
+            if (abs((float)($order[$key] ?? 0) - (float)($header[$key] ?? 0)) >= 0.01) return false;
+        }
+        $expectedItems = is_array($snapshot['items'] ?? null) ? array_values($snapshot['items']) : [];
+        usort($items, static fn(array $a,array $b):int => strcmp((string)$a['id'],(string)$b['id']));
+        usort($expectedItems, static fn(array $a,array $b):int => strcmp((string)$a['id'],(string)$b['id']));
+        if (count($items) !== count($expectedItems)) return false;
+        foreach ($items as $index => $item) {
+            $expected = $expectedItems[$index];
+            foreach (['id','ppb_id','part_number','description','unit_measure','notes'] as $key) {
+                $actual = $item[$key] ?? null; $wanted = $expected[$key] ?? null;
+                if (($actual === null ? null : (string)$actual) !== ($wanted === null ? null : (string)$wanted)) return false;
+            }
+            if ((int)$item['quantity'] !== (int)$expected['quantity']) return false;
+            foreach (['unit_price','total_price'] as $key) if (abs((float)$item[$key] - (float)$expected[$key]) >= 0.01) return false;
         }
         return true;
     }
