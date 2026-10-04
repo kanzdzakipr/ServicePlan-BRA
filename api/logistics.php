@@ -133,12 +133,22 @@ switch ($method) {
             } elseif ($_GET['type'] == 'spb') {
                 $scope = api_location_scope_clause('a', 'spb_location_id');
                 $sql = "
-                    SELECT pr.*, pri.id as item_id, pri.part_number, pri.description, pri.qty_requested, pri.status as item_status
+                    SELECT pr.*, pri.id as item_id, pri.part_number, pri.description, pri.qty_requested, pri.status as item_status,
+                           (SELECT rpri.report_id
+                            FROM report_purchase_request_integrations rpri
+                            WHERE rpri.spb_id = pr.spb_id AND rpri.reversed_at IS NULL
+                            ORDER BY rpri.integration_id DESC LIMIT 1) AS source_report_id,
+                           (SELECT rr.report_number
+                            FROM report_purchase_request_integrations rpri
+                            INNER JOIN report_records rr ON rr.report_id = rpri.report_id
+                            WHERE rpri.spb_id = pr.spb_id AND rpri.reversed_at IS NULL
+                            ORDER BY rpri.integration_id DESC LIMIT 1) AS source_report_number
                     FROM purchase_requests pr 
                     LEFT JOIN purchase_request_items pri ON pr.spb_id = pri.spb_id
                     INNER JOIN assets a ON a.asset_id = pr.asset_id
                 ";
                 if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
+                $sql .= ' ORDER BY pr.requested_at DESC, pr.spb_id, pri.id';
                 $stmt = $db->prepare($sql);
                 $stmt->execute($scope['params']);
                 echo json_encode(["status" => "success", "data" => $stmt->fetchAll()]);

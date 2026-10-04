@@ -239,6 +239,7 @@ CREATE TABLE `parts` (
     `location_warehouse` VARCHAR(100) DEFAULT 'Gudang Yard KM 12'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `purchase_request_items`;
 DROP TABLE IF EXISTS `purchase_requests`;
 CREATE TABLE `purchase_requests` (
     `spb_id` VARCHAR(50) PRIMARY KEY,
@@ -250,6 +251,16 @@ CREATE TABLE `purchase_requests` (
     `requested_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`wo_id`) REFERENCES `work_orders`(`wo_id`) ON DELETE CASCADE,
     FOREIGN KEY (`requested_by`) REFERENCES `users`(`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `purchase_request_items` (
+    `id` VARCHAR(100) PRIMARY KEY,
+    `spb_id` VARCHAR(50) NOT NULL,
+    `part_number` VARCHAR(100) NOT NULL,
+    `description` VARCHAR(255) NULL,
+    `qty_requested` INT NOT NULL DEFAULT 1,
+    `status` VARCHAR(50) NOT NULL DEFAULT 'Menunggu Approval',
+    KEY `idx_purchase_request_items_spb` (`spb_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -464,6 +475,7 @@ DROP TABLE IF EXISTS `report_inspection_integrations`;
 DROP TABLE IF EXISTS `report_operation_logs`;
 DROP TABLE IF EXISTS `report_pm_integrations`;
 DROP TABLE IF EXISTS `report_work_order_integrations`;
+DROP TABLE IF EXISTS `report_purchase_request_integrations`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -684,6 +696,27 @@ CREATE TABLE `report_work_order_integrations` (
     KEY `idx_report_work_order_asset` (`asset_id`, `reversed_at`),
     CONSTRAINT `fk_report_work_order_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_report_work_order_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 28. SPB TO PURCHASE REQUEST (Reversible linkage)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `report_purchase_request_integrations` (
+    `integration_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `spb_id` VARCHAR(50) NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `owns_purchase_request` BOOLEAN NOT NULL DEFAULT TRUE,
+    `applied_payload` LONGTEXT NOT NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    UNIQUE KEY `uq_report_purchase_request_report` (`report_id`),
+    KEY `idx_report_purchase_request_spb` (`spb_id`),
+    KEY `idx_report_purchase_request_asset` (`asset_id`, `reversed_at`),
+    CONSTRAINT `fk_report_purchase_request_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_report_purchase_request_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

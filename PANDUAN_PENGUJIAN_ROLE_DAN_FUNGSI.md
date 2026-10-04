@@ -1512,3 +1512,142 @@ LIMIT 20;
 - [ ] Void mempertahankan Work Order yang sudah diubah atau memiliki aktivitas lanjutan.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 7 sebelum Batch 8 dimulai.
+
+### Batch 8 — SPB ke Spare Part & Logistik
+
+Status implementasi: **SIAP UJI**.
+
+Ruang lingkup batch ini:
+
+- Work Order/JO dipilih dari Work Order aktif pada database Laragon;
+- pilihan Work Order otomatis mengisi unit, lokasi/project, dan urgensi;
+- kode unit tetap dapat dipilih dari Master Asset tetapi harus sesuai dengan Work Order;
+- nama atau spesifikasi/part number dipilih dari Master Part dan saling mengisi otomatis;
+- laporan `DRAFT` tidak membuat Purchase Request;
+- laporan `FINAL` membuat satu header `purchase_requests` dan satu item `purchase_request_items` untuk setiap baris;
+- nomor SPB menjadi ID Purchase Request;
+- data hasil laporan tampil pada menu **Spare Part & Logistik** dengan sumber nomor laporan;
+- finalisasi ulang tidak membuat SPB atau item ganda;
+- void menghapus SPB milik laporan yang belum diproses;
+- SPB yang sudah disetujui, diubah statusnya, diubah itemnya, atau memiliki aktivitas approval tetap dipertahankan.
+
+#### Persiapan data uji
+
+1. [ ] Pilih satu Work Order aktif beserta unitnya:
+
+```sql
+SELECT w.wo_id, w.asset_id, w.status, w.priority, a.asset_code, a.category
+FROM u646470441_ServicePlanBRA.work_orders w
+JOIN u646470441_ServicePlanBRA.assets a ON a.asset_id = w.asset_id
+WHERE a.is_active = 1
+  AND w.status NOT IN ('Closed', 'Cancelled')
+ORDER BY w.reported_at DESC
+LIMIT 20;
+```
+
+2. [ ] Pilih satu part dari Master Part:
+
+```sql
+SELECT part_number, part_name, unit_measure, stock_qty
+FROM u646470441_ServicePlanBRA.parts
+ORDER BY part_name
+LIMIT 20;
+```
+
+3. [ ] Catat jumlah awal Purchase Request:
+
+```sql
+SELECT COUNT(*) AS jumlah_awal
+FROM u646470441_ServicePlanBRA.purchase_requests;
+```
+
+#### Pengujian otomatisasi form
+
+1. [ ] Buka **Laporan & Form → SPB (Surat Permintaan Barang)**.
+2. [ ] Ganti nomor SPB dengan nomor unik, misalnya `SPB-UJI-001`.
+3. [ ] Pada `Work Order / JO`, pilih Work Order aktif dari daftar database.
+4. [ ] Pastikan `Kode unit` sesuai asset Work Order.
+5. [ ] Pastikan lokasi/project terisi dari lokasi unit bila datanya tersedia.
+6. [ ] Pastikan urgensi menjadi `Emergency` untuk Work Order prioritas `High` atau `Emergency`, selain itu `Normal`.
+7. [ ] Pada tabel barang, pilih nama barang atau spesifikasi/part number dari database.
+8. [ ] Pastikan nama, part number, dan satuan terisi sesuai Master Part.
+9. [ ] Isi jumlah, status `Diajukan`, keterangan bila perlu, dan unggah bukti gambar beserta keterangannya.
+
+#### Pengujian draft
+
+1. [ ] Tunggu autosave tanpa menekan **Simpan Laporan**.
+2. [ ] Pastikan laporan masih berstatus `DRAFT`.
+3. [ ] Pastikan jumlah `purchase_requests` dan `purchase_request_items` tidak berubah.
+4. [ ] Pastikan belum ada ledger aktif pada `report_purchase_request_integrations`.
+
+#### Pengujian finalisasi dan menu Logistik
+
+1. [ ] Tekan **Simpan Laporan**.
+2. [ ] Pastikan pesan sukses menyebut nomor SPB dan jumlah item yang dibuat.
+3. [ ] Buka menu **Spare Part & Logistik**.
+4. [ ] Cari unit yang dipakai pada laporan.
+5. [ ] Buka detail unit dan pastikan nomor SPB, Work Order, part, kuantitas, prioritas, serta sumber laporan tampil.
+6. [ ] Verifikasi database:
+
+```sql
+SELECT
+    r.report_number,
+    r.status AS report_status,
+    rpri.integration_id,
+    rpri.owns_purchase_request,
+    rpri.reversed_at,
+    pr.spb_id,
+    pr.wo_id,
+    pr.asset_id,
+    pr.urgency,
+    pr.status AS request_status,
+    pri.id AS item_id,
+    pri.part_number,
+    pri.description,
+    pri.qty_requested,
+    pri.status AS item_status
+FROM u646470441_ServicePlanBRA.report_purchase_request_integrations rpri
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = rpri.report_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_requests pr
+    ON pr.spb_id = rpri.spb_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_request_items pri
+    ON pri.spb_id = pr.spb_id
+ORDER BY rpri.integration_id DESC, pri.id
+LIMIT 50;
+```
+
+7. [ ] Pastikan satu laporan mempunyai satu ledger dan jumlah item sama dengan jumlah baris laporan.
+
+#### Pengujian validasi dan tanpa duplikasi
+
+1. [ ] Muat ulang halaman setelah finalisasi.
+2. [ ] Pastikan jumlah SPB dan item laporan yang sama tidak bertambah.
+3. [ ] Coba pilih Work Order lalu ganti kode unit menjadi unit berbeda.
+4. [ ] Pastikan finalisasi ditolak karena unit tidak sesuai dengan Work Order.
+5. [ ] Pastikan nomor SPB yang sudah digunakan objek lain dengan data berbeda ditolak dan tidak menimpa data lama.
+
+#### Pengujian void aman
+
+1. [ ] Buat dan finalkan satu laporan SPB baru.
+2. [ ] Tanpa mengubah status atau item SPB, lakukan void dari **Riwayat Laporan**.
+3. [ ] Pastikan header dan item SPB buatan laporan dihapus serta `reversed_at` terisi.
+4. [ ] Buat dan finalkan laporan SPB lain.
+5. [ ] Ubah status Purchase Request menjadi `Approved`, atau proses melalui alur logistik/approval.
+6. [ ] Void laporan tersebut.
+7. [ ] Pastikan SPB yang sudah diproses tetap ada dan ledger ditandai telah dibalik.
+8. [ ] Pastikan SPB manual lain tidak berubah.
+
+#### Kriteria lulus Batch 8
+
+- [ ] Work Order, unit, lokasi, urgensi, dan part berasal dari database Laragon.
+- [ ] Pemilihan Work Order dan part mengisi field terkait secara otomatis.
+- [ ] Work Order dan unit yang tidak cocok ditolak backend.
+- [ ] Draft tidak membuat Purchase Request.
+- [ ] Finalisasi membuat tepat satu SPB, item sesuai baris, dan ledger sumber.
+- [ ] SPB tampil pada menu Spare Part & Logistik.
+- [ ] Retry atau reload tidak membuat duplikasi.
+- [ ] Void menghapus SPB milik laporan yang belum diproses.
+- [ ] Void mempertahankan SPB yang telah diproses atau memiliki approval.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 8 sebelum Batch 9 dimulai.

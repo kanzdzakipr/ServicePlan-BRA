@@ -589,6 +589,34 @@ LOCK TABLES `purchase_requests` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `purchase_request_items`
+--
+
+DROP TABLE IF EXISTS `purchase_request_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `purchase_request_items` (
+  `id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `spb_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `part_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `qty_requested` int NOT NULL DEFAULT '1',
+  `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Menunggu Approval',
+  PRIMARY KEY (`id`),
+  KEY `idx_purchase_request_items_spb` (`spb_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `purchase_request_items`
+--
+
+LOCK TABLES `purchase_request_items` WRITE;
+/*!40000 ALTER TABLE `purchase_request_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `purchase_request_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `report_audit_logs`
 --
 
@@ -956,6 +984,42 @@ CREATE TABLE `report_work_order_integrations` (
 LOCK TABLES `report_work_order_integrations` WRITE;
 /*!40000 ALTER TABLE `report_work_order_integrations` DISABLE KEYS */;
 /*!40000 ALTER TABLE `report_work_order_integrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `report_purchase_request_integrations`
+--
+
+DROP TABLE IF EXISTS `report_purchase_request_integrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `report_purchase_request_integrations` (
+  `integration_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `spb_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `asset_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `owns_purchase_request` tinyint(1) NOT NULL DEFAULT '1',
+  `applied_payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`integration_id`),
+  UNIQUE KEY `uq_report_purchase_request_report` (`report_id`),
+  KEY `idx_report_purchase_request_spb` (`spb_id`),
+  KEY `idx_report_purchase_request_asset` (`asset_id`,`reversed_at`),
+  CONSTRAINT `fk_report_purchase_request_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_report_purchase_request_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `report_purchase_request_integrations`
+--
+
+LOCK TABLES `report_purchase_request_integrations` WRITE;
+/*!40000 ALTER TABLE `report_purchase_request_integrations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_purchase_request_integrations` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --

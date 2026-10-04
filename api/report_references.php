@@ -35,6 +35,28 @@ try {
         'status' => (string) $row['status'],
     ], $assetStatement->fetchAll(PDO::FETCH_ASSOC));
 
+    $workOrderScope = api_location_scope_clause('a', 'report_reference_work_order_location_id');
+    $workOrderSql = "SELECT w.wo_id, w.asset_id, w.status, w.priority, w.issue_description,
+                            a.asset_code, a.category, a.make_model
+                     FROM work_orders w
+                     INNER JOIN assets a ON a.asset_id = w.asset_id
+                     WHERE a.is_active = 1 AND w.status NOT IN ('Closed', 'Cancelled')";
+    if ($workOrderScope['sql'] !== '') {
+        $workOrderSql .= ' AND ' . $workOrderScope['sql'];
+    }
+    $workOrderSql .= ' ORDER BY w.reported_at DESC, w.wo_id';
+    $workOrderStatement = $db->prepare($workOrderSql);
+    $workOrderStatement->execute($workOrderScope['params']);
+    $workOrders = array_map(static fn(array $row): array => [
+        'id' => (string) $row['wo_id'],
+        'assetId' => (string) $row['asset_id'],
+        'assetCode' => (string) ($row['asset_code'] ?? ''),
+        'asset' => trim((string) ($row['category'] ?? '') . ' ' . (string) ($row['make_model'] ?? '')),
+        'status' => (string) $row['status'],
+        'priority' => (string) $row['priority'],
+        'issue' => (string) ($row['issue_description'] ?? ''),
+    ], $workOrderStatement->fetchAll(PDO::FETCH_ASSOC));
+
     $locationSql = 'SELECT location_id, location_name, location_type, region FROM locations WHERE is_active = 1';
     $locationParams = [];
     if (!api_has_global_location_scope()) {
@@ -140,6 +162,7 @@ try {
             'sites' => $sites,
             'parts' => $parts,
             'people' => $people,
+            'workOrders' => $workOrders,
             'categories' => $categories,
             'models' => $models,
         ],

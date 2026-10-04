@@ -134,6 +134,34 @@ final class ReportIntegration
             CONSTRAINT fk_report_work_order_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
             CONSTRAINT fk_report_work_order_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS purchase_request_items (
+            id VARCHAR(100) PRIMARY KEY,
+            spb_id VARCHAR(50) NOT NULL,
+            part_number VARCHAR(100) NOT NULL,
+            description VARCHAR(255) NULL,
+            qty_requested INT NOT NULL DEFAULT 1,
+            status VARCHAR(50) NOT NULL DEFAULT 'Menunggu Approval',
+            KEY idx_purchase_request_items_spb (spb_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS report_purchase_request_integrations (
+            integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            spb_id VARCHAR(50) NOT NULL,
+            asset_id VARCHAR(100) NOT NULL,
+            owns_purchase_request TINYINT(1) NOT NULL DEFAULT 1,
+            applied_payload LONGTEXT NOT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_report_purchase_request_report (report_id),
+            KEY idx_report_purchase_request_spb (spb_id),
+            KEY idx_report_purchase_request_asset (asset_id, reversed_at),
+            CONSTRAINT fk_report_purchase_request_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_report_purchase_request_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     public static function applyFinal(
@@ -161,6 +189,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'repair-overhaul') {
             return self::applyRepairOverhaul($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'spb') {
+            return self::applySpb($db, $reportId, $fields, $rows, $actorId);
         }
         return ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
     }
@@ -418,8 +449,72 @@ final class ReportIntegration
             $workOrderReversed += $reverseWorkOrder->rowCount();
         }
 
+        $purchaseRequestStatement = $db->prepare(
+            "SELECT integration_id, spb_id, owns_purchase_request, applied_payload
+             FROM report_purchase_request_integrations
+             WHERE report_id = :report_id AND reversed_at IS NULL
+             FOR UPDATE"
+        );
+        $purchaseRequestStatement->execute([':report_id' => $reportId]);
+        $purchaseRequestIntegrations = $purchaseRequestStatement->fetchAll(PDO::FETCH_ASSOC);
+        $purchaseRequestReversed = 0;
+        $purchaseRequestDeleted = 0;
+        $purchaseRequestPreserved = 0;
+
+        foreach ($purchaseRequestIntegrations as $integration) {
+            $requestStatement = $db->prepare(
+                'SELECT spb_id, wo_id, asset_id, requested_by, urgency, status, requested_at
+                 FROM purchase_requests WHERE spb_id = :spb_id FOR UPDATE'
+            );
+            $requestStatement->execute([':spb_id' => $integration['spb_id']]);
+            $request = $requestStatement->fetch(PDO::FETCH_ASSOC);
+            $ownsRequest = (int) $integration['owns_purchase_request'] === 1;
+            $snapshot = json_decode((string) $integration['applied_payload'], true);
+
+            $itemStatement = $db->prepare(
+                'SELECT id, spb_id, part_number, description, qty_requested, status
+                 FROM purchase_request_items WHERE spb_id = :spb_id ORDER BY id FOR UPDATE'
+            );
+            $itemStatement->execute([':spb_id' => $integration['spb_id']]);
+            $items = $itemStatement->fetchAll(PDO::FETCH_ASSOC);
+
+            $approvalStatement = $db->prepare(
+                "SELECT COUNT(*) FROM approvals WHERE document_type = 'SPB' AND document_id = :spb_id"
+            );
+            $approvalStatement->execute([':spb_id' => $integration['spb_id']]);
+            $hasApprovalActivity = (int) $approvalStatement->fetchColumn() > 0;
+
+            if (
+                $ownsRequest
+                && $request
+                && !$hasApprovalActivity
+                && is_array($snapshot)
+                && self::purchaseRequestMatchesSnapshot($request, $items, $snapshot)
+            ) {
+                $deleteItems = $db->prepare('DELETE FROM purchase_request_items WHERE spb_id = :spb_id');
+                $deleteItems->execute([':spb_id' => $integration['spb_id']]);
+                $deleteRequest = $db->prepare('DELETE FROM purchase_requests WHERE spb_id = :spb_id');
+                $deleteRequest->execute([':spb_id' => $integration['spb_id']]);
+                $purchaseRequestDeleted += $deleteRequest->rowCount();
+            } elseif ($ownsRequest && $request) {
+                // SPB yang sudah diproses logistik atau approval wajib dipertahankan.
+                $purchaseRequestPreserved++;
+            }
+
+            $reversePurchaseRequest = $db->prepare(
+                'UPDATE report_purchase_request_integrations
+                 SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor_id
+                 WHERE integration_id = :integration_id AND reversed_at IS NULL'
+            );
+            $reversePurchaseRequest->execute([
+                ':actor_id' => $actorId,
+                ':integration_id' => (int) $integration['integration_id'],
+            ]);
+            $purchaseRequestReversed += $reversePurchaseRequest->rowCount();
+        }
+
         $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
-            + $pmReversed + $workOrderReversed;
+            + $pmReversed + $workOrderReversed + $purchaseRequestReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($inspectionReversed > 0) {
@@ -438,6 +533,11 @@ final class ReportIntegration
             $reversalMessage = $workOrderPreserved > 0
                 ? "Laporan berhasil dibatalkan. {$workOrderPreserved} Work Order tetap dipertahankan karena sudah diubah atau memiliki aktivitas lanjutan."
                 : "Laporan berhasil dibatalkan dan {$workOrderDeleted} Work Order buatan laporan dihapus.";
+        } elseif ($purchaseRequestReversed > 0) {
+            $reversalType = 'purchase-request-reversal';
+            $reversalMessage = $purchaseRequestPreserved > 0
+                ? "Laporan berhasil dibatalkan. {$purchaseRequestPreserved} SPB tetap dipertahankan karena sudah diproses logistik atau approval."
+                : "Laporan berhasil dibatalkan dan {$purchaseRequestDeleted} SPB buatan laporan dihapus.";
         }
         return [
             'type' => $reversalType,
@@ -453,7 +553,232 @@ final class ReportIntegration
             'workOrderItemCount' => $workOrderReversed,
             'workOrderDeletedCount' => $workOrderDeleted,
             'workOrderPreservedCount' => $workOrderPreserved,
+            'purchaseRequestItemCount' => $purchaseRequestReversed,
+            'purchaseRequestDeletedCount' => $purchaseRequestDeleted,
+            'purchaseRequestPreservedCount' => $purchaseRequestPreserved,
             'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applySpb(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existingStatement = $db->prepare(
+            'SELECT spb_id FROM report_purchase_request_integrations WHERE report_id = :report_id LIMIT 1'
+        );
+        $existingStatement->execute([':report_id' => $reportId]);
+        $existingSpbId = $existingStatement->fetchColumn();
+        if ($existingSpbId !== false) {
+            return [
+                'type' => 'spb',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => 1,
+                'spbId' => (string) $existingSpbId,
+            ];
+        }
+
+        $spbId = self::requiredText($fields['nomor_spb'] ?? null, 'Nomor SPB', 50);
+        $workOrderId = self::requiredText(
+            $fields['nomor_wo'] ?? ($fields['wo_id'] ?? null),
+            'Work Order / JO',
+            50
+        );
+        $reportedAsset = self::requiredText($fields['kode_unit'] ?? null, 'Kode unit', 100);
+        $requestDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal permintaan');
+        $urgencyInput = self::requiredText($fields['urgensi'] ?? 'Normal', 'Urgensi', 20);
+        $urgency = match ($urgencyInput) {
+            'Normal' => 'Normal',
+            'Emergency', 'Mendesak' => 'Emergency',
+            default => throw new DomainException('Urgensi SPB tidak dikenali.'),
+        };
+
+        $workOrderStatement = $db->prepare(
+            'SELECT w.wo_id, w.asset_id, w.status, a.asset_code, a.is_active
+             FROM work_orders w
+             INNER JOIN assets a ON a.asset_id = w.asset_id
+             WHERE w.wo_id = :wo_id
+             LIMIT 1 FOR UPDATE'
+        );
+        $workOrderStatement->execute([':wo_id' => $workOrderId]);
+        $workOrder = $workOrderStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$workOrder) {
+            throw new DomainException("Work Order {$workOrderId} tidak ditemukan.");
+        }
+        if ((int) $workOrder['is_active'] !== 1) {
+            throw new DomainException("Unit pada Work Order {$workOrderId} sudah tidak aktif.");
+        }
+        if (in_array((string) $workOrder['status'], ['Closed', 'Cancelled'], true)) {
+            throw new DomainException("Work Order {$workOrderId} sudah ditutup atau dibatalkan.");
+        }
+        if (
+            !hash_equals((string) $workOrder['asset_id'], $reportedAsset)
+            && !hash_equals((string) ($workOrder['asset_code'] ?? ''), $reportedAsset)
+        ) {
+            throw new DomainException(
+                "Kode unit {$reportedAsset} tidak sesuai dengan unit Work Order {$workOrderId} ({$workOrder['asset_id']})."
+            );
+        }
+
+        $itemStatusMap = [
+            'Diajukan' => 'Menunggu Approval',
+            'Diproses' => 'Disetujui',
+            'Tersedia' => 'Tiba',
+            'Parsial' => 'Dalam Pengiriman',
+            'Tidak tersedia' => 'Tertunda',
+        ];
+        $items = [];
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) {
+                continue;
+            }
+            $rowNumber = $position + 1;
+            $partName = self::requiredText($row['nama'] ?? null, "Nama barang baris {$rowNumber}", 180);
+            $partNumber = self::requiredText(
+                $row['spesifikasi'] ?? ($row['part_number'] ?? null),
+                "Spesifikasi / part number baris {$rowNumber}",
+                100
+            );
+            $unitMeasure = self::requiredText($row['satuan'] ?? null, "Satuan baris {$rowNumber}", 20);
+            $quantity = self::requiredNonNegativeInteger($row['jumlah'] ?? null, "Jumlah baris {$rowNumber}", false);
+            $notes = self::optionalText($row['keterangan'] ?? null, 70);
+            $requestedStatus = self::requiredText($row['status'] ?? 'Diajukan', "Status baris {$rowNumber}", 40);
+            if (!isset($itemStatusMap[$requestedStatus])) {
+                throw new DomainException("Status pemenuhan baris {$rowNumber} tidak dikenali.");
+            }
+
+            $partStatement = $db->prepare(
+                'SELECT part_number, part_name, unit_measure
+                 FROM parts
+                 WHERE part_number = :part_number OR part_name = :part_name
+                 ORDER BY CASE WHEN part_number = :exact_part_number THEN 0 ELSE 1 END
+                 LIMIT 1'
+            );
+            $partStatement->execute([
+                ':part_number' => $partNumber,
+                ':part_name' => $partName,
+                ':exact_part_number' => $partNumber,
+            ]);
+            $masterPart = $partStatement->fetch(PDO::FETCH_ASSOC);
+            if ($masterPart) {
+                if (strcasecmp(trim((string) $masterPart['unit_measure']), $unitMeasure) !== 0) {
+                    throw new DomainException(
+                        "Baris {$rowNumber}: satuan {$unitMeasure} tidak cocok dengan Master Part {$masterPart['part_number']} ({$masterPart['unit_measure']})."
+                    );
+                }
+                $partNumber = (string) $masterPart['part_number'];
+                $partName = (string) $masterPart['part_name'];
+            }
+
+            $description = $partName . ($notes ? " | {$notes}" : '');
+            $items[] = [
+                'id' => 'RSPB-' . strtoupper(substr(hash('sha256', $reportId . '|' . $position), 0, 24)),
+                'spb_id' => $spbId,
+                'part_number' => $partNumber,
+                'description' => mb_substr($description, 0, 255),
+                'qty_requested' => $quantity,
+                'status' => $itemStatusMap[$requestedStatus],
+            ];
+        }
+        if ($items === []) {
+            throw new DomainException('SPB harus memiliki sedikitnya satu barang yang diminta.');
+        }
+        usort($items, static fn(array $left, array $right): int => strcmp($left['id'], $right['id']));
+
+        $snapshot = [
+            'header' => [
+                'spb_id' => $spbId,
+                'wo_id' => $workOrderId,
+                'asset_id' => (string) $workOrder['asset_id'],
+                'requested_by' => $actorId,
+                'urgency' => $urgency,
+                'status' => 'Submitted',
+                'requested_at' => $requestDate . ' 00:00:00',
+            ],
+            'items' => $items,
+        ];
+
+        $requestStatement = $db->prepare(
+            'SELECT spb_id, wo_id, asset_id, requested_by, urgency, status, requested_at
+             FROM purchase_requests WHERE spb_id = :spb_id FOR UPDATE'
+        );
+        $requestStatement->execute([':spb_id' => $spbId]);
+        $existingRequest = $requestStatement->fetch(PDO::FETCH_ASSOC);
+        $ownsRequest = !$existingRequest;
+        if ($existingRequest) {
+            $existingItemsStatement = $db->prepare(
+                'SELECT id, spb_id, part_number, description, qty_requested, status
+                 FROM purchase_request_items WHERE spb_id = :spb_id ORDER BY id FOR UPDATE'
+            );
+            $existingItemsStatement->execute([':spb_id' => $spbId]);
+            $existingItems = $existingItemsStatement->fetchAll(PDO::FETCH_ASSOC);
+            if (!self::purchaseRequestMatchesSnapshot($existingRequest, $existingItems, $snapshot)) {
+                throw new DomainException("Nomor {$spbId} sudah digunakan oleh SPB lain dengan data berbeda.");
+            }
+        }
+
+        if ($ownsRequest) {
+            $insertRequest = $db->prepare(
+                'INSERT INTO purchase_requests
+                 (spb_id, wo_id, asset_id, requested_by, urgency, status, requested_at)
+                 VALUES (:spb_id, :wo_id, :asset_id, :requested_by, :urgency, :status, :requested_at)'
+            );
+            $insertRequest->execute([
+                ':spb_id' => $snapshot['header']['spb_id'],
+                ':wo_id' => $snapshot['header']['wo_id'],
+                ':asset_id' => $snapshot['header']['asset_id'],
+                ':requested_by' => $snapshot['header']['requested_by'],
+                ':urgency' => $snapshot['header']['urgency'],
+                ':status' => $snapshot['header']['status'],
+                ':requested_at' => $snapshot['header']['requested_at'],
+            ]);
+            $insertItem = $db->prepare(
+                'INSERT INTO purchase_request_items
+                 (id, spb_id, part_number, description, qty_requested, status)
+                 VALUES (:id, :spb_id, :part_number, :description, :qty_requested, :status)'
+            );
+            foreach ($items as $item) {
+                $insertItem->execute([
+                    ':id' => $item['id'],
+                    ':spb_id' => $item['spb_id'],
+                    ':part_number' => $item['part_number'],
+                    ':description' => $item['description'],
+                    ':qty_requested' => $item['qty_requested'],
+                    ':status' => $item['status'],
+                ]);
+            }
+        }
+
+        $insertIntegration = $db->prepare(
+            'INSERT INTO report_purchase_request_integrations
+             (report_id, spb_id, asset_id, owns_purchase_request, applied_payload, created_by)
+             VALUES (:report_id, :spb_id, :asset_id, :owns_purchase_request, :applied_payload, :created_by)'
+        );
+        $insertIntegration->execute([
+            ':report_id' => $reportId,
+            ':spb_id' => $spbId,
+            ':asset_id' => $workOrder['asset_id'],
+            ':owns_purchase_request' => $ownsRequest ? 1 : 0,
+            ':applied_payload' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+            ':created_by' => $actorId,
+        ]);
+
+        return [
+            'type' => 'spb',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => count($items),
+            'spbId' => $spbId,
+            'workOrderId' => $workOrderId,
+            'createdItemCount' => $ownsRequest ? count($items) : 0,
+            'linkedItemCount' => $ownsRequest ? 0 : count($items),
+            'message' => $ownsRequest
+                ? "Laporan berhasil difinalkan dan SPB {$spbId} dengan " . count($items) . ' item dibuat.'
+                : "Laporan berhasil difinalkan dan ditautkan ke SPB {$spbId} tanpa duplikasi.",
         ];
     }
 
@@ -1603,6 +1928,40 @@ final class ReportIntegration
             $actual = $workOrder[$key] ?? null;
             $expected = $snapshot[$key] ?? null;
             if (($actual === null ? null : (int) $actual) !== ($expected === null ? null : (int) $expected)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static function purchaseRequestMatchesSnapshot(array $request, array $items, array $snapshot): bool
+    {
+        $expectedHeader = is_array($snapshot['header'] ?? null) ? $snapshot['header'] : [];
+        foreach (['spb_id', 'wo_id', 'asset_id', 'urgency', 'status', 'requested_at'] as $key) {
+            $actual = $request[$key] ?? null;
+            $expected = $expectedHeader[$key] ?? null;
+            if (($actual === null ? null : (string) $actual) !== ($expected === null ? null : (string) $expected)) {
+                return false;
+            }
+        }
+        if ((int) ($request['requested_by'] ?? 0) !== (int) ($expectedHeader['requested_by'] ?? 0)) {
+            return false;
+        }
+
+        $expectedItems = is_array($snapshot['items'] ?? null) ? array_values($snapshot['items']) : [];
+        usort($items, static fn(array $left, array $right): int => strcmp((string) $left['id'], (string) $right['id']));
+        usort($expectedItems, static fn(array $left, array $right): int => strcmp((string) $left['id'], (string) $right['id']));
+        if (count($items) !== count($expectedItems)) {
+            return false;
+        }
+        foreach ($items as $index => $item) {
+            $expected = $expectedItems[$index];
+            foreach (['id', 'spb_id', 'part_number', 'description', 'status'] as $key) {
+                if ((string) ($item[$key] ?? '') !== (string) ($expected[$key] ?? '')) {
+                    return false;
+                }
+            }
+            if ((int) ($item['qty_requested'] ?? 0) !== (int) ($expected['qty_requested'] ?? 0)) {
                 return false;
             }
         }
