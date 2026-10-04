@@ -1067,6 +1067,7 @@
         if (/^(satuan|unit_measure)$/.test(key) && /logistik|warehouse/i.test(activeSchema?.category || '')) return 'partUnits';
         if (/^(project|project_asal|project_tujuan|project_kebutuhan)$/.test(key)) return 'projects';
         if (/^(site|job_site|site_area|yard)$/.test(key)) return 'sites';
+        if (activeSchema?.id === 'bukti-kirim' && /^(dari|ke)$/.test(key)) return 'locations';
         if (/^(lokasi|lokasi_alat|lokasi_pengesahan|area_lokasi)$/.test(key)) return 'locations';
         if (/^(jenis_alat|kategori_alat)$/.test(key)) return 'categories';
         if (/^(tipe_merk|merek_model|tipe_alat)$/.test(key)) return 'models';
@@ -5184,12 +5185,12 @@
 
     document.addEventListener('fleetreport:finalized', event => {
         if (['spb', 'ppb', 'procurement-monitoring'].includes(event.detail?.schemaId)) loadDatabaseRecords();
-        if (['parts-weekly', 'bapp'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
+        if (['parts-weekly', 'bapp', 'bukti-kirim'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
         if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
     });
     document.addEventListener('fleetreport:voided', event => {
         if (['spb', 'ppb', 'procurement-monitoring'].includes(event.detail?.schemaId)) loadDatabaseRecords();
-        if (['parts-weekly', 'bapp'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
+        if (['parts-weekly', 'bapp', 'bukti-kirim'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
         if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
     });
 

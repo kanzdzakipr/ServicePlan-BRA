@@ -2008,3 +2008,99 @@ ORDER BY it.transaction_id DESC;
 - [ ] Void memulihkan stok dan status secara aman.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 11 sebelum Batch 12 dimulai.
+
+### Batch 12 — Bukti Kirim/Terima Barang Intern ke Stok Logistik
+
+Status implementasi: **SIAP UJI**.
+
+Integrasi Batch 12 menghubungkan form **Bukti Kirim/Terima Barang Intern** dengan Master Part dan menu **Spare Part & Logistik**.
+
+- Transaksi `Terima` menambah stok dan tampil pada tab Barang Masuk.
+- Transaksi `Kirim` mengurangi stok dan tampil pada tab Barang Keluar.
+- Nama barang dan satuan dipilih dari Master Part.
+- Field `Dari` dan `Ke` dapat dipilih dari lokasi yang tersedia di database.
+- Pengiriman yang melebihi stok aktual ditolak.
+- Draft tidak mengubah stok.
+- Retry tidak membuat transaksi atau perubahan stok ganda.
+- Void membalik transaksi dan mengembalikan stok.
+
+#### A. Pengujian transaksi Terima
+
+1. [ ] Catat stok awal satu part dari Master Part.
+2. [ ] Buka **Laporan & Form → Bukti Kirim/Terima Barang Intern**.
+3. [ ] Pilih jenis transaksi `Terima`.
+4. [ ] Isi nomor bukti unik, misalnya `BT-UJI-001`.
+5. [ ] Pilih lokasi `Dari` dan `Ke` dari daftar database.
+6. [ ] Isi tanggal transaksi.
+7. [ ] Pilih nama barang dari Master Part.
+8. [ ] Pastikan satuan terisi otomatis, lalu isi jumlah penerimaan.
+9. [ ] Tunggu autosave dan pastikan stok belum berubah selama laporan masih `DRAFT`.
+10. [ ] Tekan **Simpan Laporan**.
+11. [ ] Pastikan stok bertambah tepat sebesar jumlah penerimaan.
+12. [ ] Buka **Spare Part & Logistik → Barang Masuk** dan pastikan sumbernya `Bukti Terima Barang Intern`.
+
+#### B. Pengujian transaksi Kirim
+
+1. [ ] Buat laporan Bukti Kirim/Terima baru.
+2. [ ] Pilih jenis transaksi `Kirim`.
+3. [ ] Isi nomor bukti unik, misalnya `BK-UJI-001`.
+4. [ ] Pilih lokasi asal dan tujuan.
+5. [ ] Pilih part yang mempunyai stok mencukupi.
+6. [ ] Isi jumlah pengiriman lebih kecil atau sama dengan stok.
+7. [ ] Finalkan laporan.
+8. [ ] Pastikan stok berkurang tepat sebesar jumlah pengiriman.
+9. [ ] Buka **Spare Part & Logistik → Barang Keluar** dan pastikan sumbernya `Bukti Kirim Barang Intern`.
+10. [ ] Pastikan kolom tujuan/counterparty sesuai field `Ke` pada laporan.
+
+#### C. Pengujian validasi, retry, dan void
+
+1. [ ] Coba transaksi `Kirim` dengan jumlah melebihi stok; finalisasi harus ditolak.
+2. [ ] Coba mengetik barang yang tidak ada pada Master Part; finalisasi harus ditolak.
+3. [ ] Coba mengganti satuan agar tidak sesuai Master Part; finalisasi harus ditolak.
+4. [ ] Muat ulang laporan yang sudah final; stok dan transaksi tidak boleh berubah lagi.
+5. [ ] Void laporan `Kirim`; stok harus bertambah kembali.
+6. [ ] Void laporan `Terima`; stok harus berkurang kembali ke saldo sebelum penerimaan.
+7. [ ] Jika stok hasil transaksi `Terima` sudah dipakai dan void akan membuat stok negatif, void harus ditolak.
+
+#### Verifikasi database
+
+```sql
+SELECT
+    r.report_number,
+    rt.template_key,
+    it.movement_type,
+    it.transaction_date,
+    it.reference_number,
+    it.counterparty,
+    p.part_number,
+    p.part_name,
+    it.quantity,
+    it.unit_measure,
+    it.stock_before,
+    it.stock_after,
+    it.notes,
+    it.reversed_at
+FROM u646470441_ServicePlanBRA.inventory_transactions it
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = it.report_id
+JOIN u646470441_ServicePlanBRA.report_templates rt
+    ON rt.template_id = r.template_id
+JOIN u646470441_ServicePlanBRA.parts p
+    ON p.part_id = it.part_id
+WHERE rt.template_key = 'bukti-kirim'
+ORDER BY it.transaction_id DESC;
+```
+
+#### Kriteria lulus Batch 12
+
+- [ ] Barang, satuan, dan lokasi dipilih dari database Laragon.
+- [ ] Draft tidak mengubah stok.
+- [ ] `Terima` menambah stok dan muncul pada Barang Masuk.
+- [ ] `Kirim` mengurangi stok dan muncul pada Barang Keluar.
+- [ ] Asal dan tujuan transaksi tersimpan dengan benar.
+- [ ] Pengiriman melebihi stok ditolak.
+- [ ] Part atau satuan yang tidak sesuai Master Part ditolak.
+- [ ] Retry tidak menggandakan transaksi atau stok.
+- [ ] Void memulihkan stok dengan aman.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 12 sebelum Batch 13 dimulai.

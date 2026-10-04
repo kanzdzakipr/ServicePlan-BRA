@@ -323,6 +323,9 @@ final class ReportIntegration
         if ($templateKey === 'bapp') {
             return self::applyGoodsReceipt($db, $reportId, $fields, $rows, $actorId);
         }
+        if ($templateKey === 'bukti-kirim') {
+            return self::applyInternalDelivery($db, $reportId, $fields, $rows, $actorId);
+        }
         return ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
     }
 
@@ -2210,6 +2213,126 @@ final class ReportIntegration
             'result' => $overallResult,
             'assetId' => (string) $asset['asset_id'],
             'message' => "Laporan berhasil difinalkan dan masuk ke Riwayat Inspeksi & P2H ({$statusLabel}).",
+        ];
+    }
+
+    private static function applyInternalDelivery(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existingStatement = $db->prepare(
+            'SELECT COUNT(*) FROM inventory_transactions WHERE report_id = :report_id'
+        );
+        $existingStatement->execute([':report_id' => $reportId]);
+        $existingCount = (int) $existingStatement->fetchColumn();
+        if ($existingCount > 0) {
+            return [
+                'type' => 'internal-delivery',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => $existingCount,
+                'totalQuantity' => 0,
+            ];
+        }
+
+        $transactionType = self::requiredText($fields['transaksi'] ?? null, 'Jenis transaksi', 20);
+        if (!in_array($transactionType, ['Kirim', 'Terima'], true)) {
+            throw new DomainException('Jenis transaksi harus Kirim atau Terima.');
+        }
+        $movementType = $transactionType === 'Kirim' ? 'OUT' : 'IN';
+        $referenceNumber = self::requiredText($fields['nomor'] ?? null, 'Nomor bukti', 190);
+        $transactionDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal transaksi');
+        $sender = self::requiredText($fields['dari'] ?? null, 'Asal barang', 190);
+        $recipient = self::requiredText($fields['ke'] ?? null, 'Tujuan barang', 190);
+        $counterparty = $movementType === 'OUT' ? $recipient : $sender;
+        $itemCount = 0;
+        $totalQuantity = 0;
+
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) {
+                continue;
+            }
+            $line = $position + 1;
+            $partName = self::requiredText($row['nama'] ?? null, "Nama barang baris {$line}", 150);
+            $unitMeasure = self::requiredText($row['satuan'] ?? null, "Satuan baris {$line}", 20);
+            $quantity = self::requiredNonNegativeInteger($row['jumlah'] ?? null, "Jumlah baris {$line}", false);
+
+            $partStatement = $db->prepare(
+                'SELECT part_id, part_number, part_name, unit_measure, stock_qty
+                 FROM parts WHERE part_name = :part_name LIMIT 1 FOR UPDATE'
+            );
+            $partStatement->execute([':part_name' => $partName]);
+            $part = $partStatement->fetch(PDO::FETCH_ASSOC);
+            if (!$part) {
+                throw new DomainException("Barang {$partName} pada baris {$line} belum ada pada Master Part.");
+            }
+            if (strcasecmp(trim((string) $part['unit_measure']), $unitMeasure) !== 0) {
+                throw new DomainException(
+                    "Satuan {$unitMeasure} pada baris {$line} tidak cocok dengan Master Part {$part['part_number']} ({$part['unit_measure']})."
+                );
+            }
+
+            $stockBefore = (int) $part['stock_qty'];
+            if ($movementType === 'OUT' && $quantity > $stockBefore) {
+                throw new DomainException(
+                    "Stok {$part['part_number']} tidak cukup untuk pengiriman {$quantity} {$unitMeasure} pada baris {$line}."
+                );
+            }
+            $stockAfter = $movementType === 'IN'
+                ? $stockBefore + $quantity
+                : $stockBefore - $quantity;
+            $db->prepare('UPDATE parts SET stock_qty = :stock WHERE part_id = :part_id')->execute([
+                ':stock' => $stockAfter,
+                ':part_id' => (int) $part['part_id'],
+            ]);
+
+            $rowNotes = self::optionalText($row['keterangan'] ?? null, 350);
+            $notes = "Bukti intern {$transactionType}; dari {$sender}; ke {$recipient}";
+            if ($rowNotes !== null) $notes .= "; {$rowNotes}";
+            $db->prepare(
+                'INSERT INTO inventory_transactions
+                 (report_id, report_item_position, movement_type, transaction_date,
+                  reference_number, counterparty, part_id, quantity, unit_measure,
+                  stock_before, stock_after, notes, created_by)
+                 VALUES
+                 (:report_id, :position, :movement_type, :transaction_date,
+                  :reference_number, :counterparty, :part_id, :quantity, :unit_measure,
+                  :stock_before, :stock_after, :notes, :created_by)'
+            )->execute([
+                ':report_id' => $reportId,
+                ':position' => $position,
+                ':movement_type' => $movementType,
+                ':transaction_date' => $transactionDate,
+                ':reference_number' => $referenceNumber,
+                ':counterparty' => $counterparty,
+                ':part_id' => (int) $part['part_id'],
+                ':quantity' => $quantity,
+                ':unit_measure' => $unitMeasure,
+                ':stock_before' => $stockBefore,
+                ':stock_after' => $stockAfter,
+                ':notes' => $notes,
+                ':created_by' => $actorId,
+            ]);
+
+            $itemCount++;
+            $totalQuantity += $quantity;
+        }
+
+        if ($itemCount === 0) {
+            throw new DomainException('Bukti Kirim/Terima tidak memiliki baris barang yang dapat diintegrasikan.');
+        }
+
+        return [
+            'type' => 'internal-delivery',
+            'movementType' => $movementType,
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => $itemCount,
+            'totalQuantity' => $totalQuantity,
+            'message' => "Bukti {$transactionType} berhasil difinalkan. {$totalQuantity} unit dicatat sebagai transaksi stok {$movementType}.",
         ];
     }
 
