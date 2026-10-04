@@ -923,6 +923,42 @@ LOCK TABLES `report_pm_integrations` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `report_work_order_integrations`
+--
+
+DROP TABLE IF EXISTS `report_work_order_integrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `report_work_order_integrations` (
+  `integration_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `work_order_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `asset_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `owns_work_order` tinyint(1) NOT NULL DEFAULT '1',
+  `applied_payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`integration_id`),
+  UNIQUE KEY `uq_report_work_order_report` (`report_id`),
+  KEY `idx_report_work_order_id` (`work_order_id`),
+  KEY `idx_report_work_order_asset` (`asset_id`,`reversed_at`),
+  CONSTRAINT `fk_report_work_order_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_report_work_order_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `report_work_order_integrations`
+--
+
+LOCK TABLES `report_work_order_integrations` WRITE;
+/*!40000 ALTER TABLE `report_work_order_integrations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_work_order_integrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `role_permissions`
 --
 

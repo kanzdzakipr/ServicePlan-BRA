@@ -116,6 +116,24 @@ final class ReportIntegration
             CONSTRAINT fk_report_pm_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
             CONSTRAINT fk_report_pm_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS report_work_order_integrations (
+            integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            work_order_id VARCHAR(50) NOT NULL,
+            asset_id VARCHAR(100) NOT NULL,
+            owns_work_order TINYINT(1) NOT NULL DEFAULT 1,
+            applied_payload LONGTEXT NOT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_report_work_order_report (report_id),
+            KEY idx_report_work_order_id (work_order_id),
+            KEY idx_report_work_order_asset (asset_id, reversed_at),
+            CONSTRAINT fk_report_work_order_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_report_work_order_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     public static function applyFinal(
@@ -140,6 +158,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'maintenance-board') {
             return self::applyMaintenanceBoard($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'repair-overhaul') {
+            return self::applyRepairOverhaul($db, $reportId, $fields, $rows, $actorId);
         }
         return ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
     }
@@ -330,7 +351,75 @@ final class ReportIntegration
             $pmReversed += $reversePm->rowCount();
         }
 
-        $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed + $pmReversed;
+        $workOrderStatement = $db->prepare(
+            "SELECT integration_id, work_order_id, owns_work_order, applied_payload
+             FROM report_work_order_integrations
+             WHERE report_id = :report_id AND reversed_at IS NULL
+             FOR UPDATE"
+        );
+        $workOrderStatement->execute([':report_id' => $reportId]);
+        $workOrderIntegrations = $workOrderStatement->fetchAll(PDO::FETCH_ASSOC);
+        $workOrderReversed = 0;
+        $workOrderDeleted = 0;
+        $workOrderPreserved = 0;
+
+        foreach ($workOrderIntegrations as $integration) {
+            $workOrderRecord = $db->prepare(
+                'SELECT wo_id, asset_id, location_id, raw_location, issue_description,
+                        downtime_minutes, is_downtime, status, priority, assigned_mechanic,
+                        reported_at, repair_started_at, closed_at
+                 FROM work_orders WHERE wo_id = :work_order_id FOR UPDATE'
+            );
+            $workOrderRecord->execute([':work_order_id' => $integration['work_order_id']]);
+            $workOrder = $workOrderRecord->fetch(PDO::FETCH_ASSOC);
+            $ownsWorkOrder = (int) $integration['owns_work_order'] === 1;
+            $snapshot = json_decode((string) $integration['applied_payload'], true);
+            $hasDownstreamActivity = false;
+
+            if ($ownsWorkOrder && $workOrder) {
+                $dependencyStatement = $db->prepare(
+                    'SELECT
+                        (SELECT COUNT(*) FROM wo_time_logs WHERE wo_id = :time_wo_id)
+                      + (SELECT COUNT(*) FROM purchase_requests WHERE wo_id = :request_wo_id)
+                      + (SELECT COUNT(*) FROM inspections WHERE created_wo_id = :inspection_wo_id)'
+                );
+                $dependencyStatement->execute([
+                    ':time_wo_id' => $integration['work_order_id'],
+                    ':request_wo_id' => $integration['work_order_id'],
+                    ':inspection_wo_id' => $integration['work_order_id'],
+                ]);
+                $hasDownstreamActivity = (int) $dependencyStatement->fetchColumn() > 0;
+            }
+
+            if (
+                $ownsWorkOrder
+                && $workOrder
+                && !$hasDownstreamActivity
+                && is_array($snapshot)
+                && self::workOrderMatchesSnapshot($workOrder, $snapshot)
+            ) {
+                $deleteWorkOrder = $db->prepare('DELETE FROM work_orders WHERE wo_id = :work_order_id');
+                $deleteWorkOrder->execute([':work_order_id' => $integration['work_order_id']]);
+                $workOrderDeleted += $deleteWorkOrder->rowCount();
+            } elseif ($ownsWorkOrder && $workOrder) {
+                // WO yang sudah dikerjakan, diubah, atau memiliki transaksi turunan wajib dipertahankan.
+                $workOrderPreserved++;
+            }
+
+            $reverseWorkOrder = $db->prepare(
+                'UPDATE report_work_order_integrations
+                 SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor_id
+                 WHERE integration_id = :integration_id AND reversed_at IS NULL'
+            );
+            $reverseWorkOrder->execute([
+                ':actor_id' => $actorId,
+                ':integration_id' => (int) $integration['integration_id'],
+            ]);
+            $workOrderReversed += $reverseWorkOrder->rowCount();
+        }
+
+        $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
+            + $pmReversed + $workOrderReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($inspectionReversed > 0) {
@@ -344,6 +433,11 @@ final class ReportIntegration
             $reversalMessage = $pmPreserved > 0
                 ? "Laporan berhasil dibatalkan. {$pmDeleted} rencana PM dihapus dan {$pmPreserved} rencana yang sudah diubah planner tetap dipertahankan."
                 : "Laporan berhasil dibatalkan dan {$pmDeleted} rencana PM buatan laporan dihapus.";
+        } elseif ($workOrderReversed > 0) {
+            $reversalType = 'work-order-reversal';
+            $reversalMessage = $workOrderPreserved > 0
+                ? "Laporan berhasil dibatalkan. {$workOrderPreserved} Work Order tetap dipertahankan karena sudah diubah atau memiliki aktivitas lanjutan."
+                : "Laporan berhasil dibatalkan dan {$workOrderDeleted} Work Order buatan laporan dihapus.";
         }
         return [
             'type' => $reversalType,
@@ -356,7 +450,201 @@ final class ReportIntegration
             'pmItemCount' => $pmReversed,
             'pmDeletedCount' => $pmDeleted,
             'pmPreservedCount' => $pmPreserved,
+            'workOrderItemCount' => $workOrderReversed,
+            'workOrderDeletedCount' => $workOrderDeleted,
+            'workOrderPreservedCount' => $workOrderPreserved,
             'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applyRepairOverhaul(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existingStatement = $db->prepare(
+            'SELECT work_order_id FROM report_work_order_integrations WHERE report_id = :report_id LIMIT 1'
+        );
+        $existingStatement->execute([':report_id' => $reportId]);
+        $existingWorkOrderId = $existingStatement->fetchColumn();
+        if ($existingWorkOrderId !== false) {
+            return [
+                'type' => 'repair-overhaul',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => 1,
+                'workOrderId' => (string) $existingWorkOrderId,
+            ];
+        }
+
+        $workOrderId = self::requiredText($fields['nomor'] ?? null, 'Nomor surat', 50);
+        $reportDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal laporan');
+        $assetReference = self::requiredText($fields['kode_unit'] ?? null, 'Kode unit', 100);
+        $reportedAsset = self::requiredText($fields['asset'] ?? null, 'Heavy equipment asset', 190);
+        $finding = self::requiredText($fields['temuan'] ?? null, 'Temuan / analisa kerusakan', 4000);
+        $urgency = self::requiredText($fields['urgensi'] ?? null, 'Tingkat urgensi', 20);
+        $priority = match ($urgency) {
+            'Normal' => 'Normal',
+            'Mendesak' => 'High',
+            'Emergency' => 'Emergency',
+            default => throw new DomainException('Tingkat urgensi Repair & Overhaul tidak dikenali.'),
+        };
+
+        $assetStatement = $db->prepare(
+            'SELECT a.asset_id, a.asset_code, a.category, a.make_model, a.serial_number,
+                    a.last_hm_km, a.current_location_id, a.raw_location_notes, l.location_name
+             FROM assets a
+             LEFT JOIN locations l ON l.location_id = a.current_location_id
+             WHERE a.is_active = 1 AND (a.asset_id = :asset_id OR a.asset_code = :asset_code)
+             ORDER BY CASE WHEN a.asset_id = :exact_asset_id THEN 0 ELSE 1 END
+             LIMIT 2 FOR UPDATE'
+        );
+        $assetStatement->execute([
+            ':asset_id' => $assetReference,
+            ':asset_code' => $assetReference,
+            ':exact_asset_id' => $assetReference,
+        ]);
+        $matchedAssets = $assetStatement->fetchAll(PDO::FETCH_ASSOC);
+        if ($matchedAssets === []) {
+            throw new DomainException("Unit {$assetReference} belum ada atau tidak aktif pada Master Asset.");
+        }
+        if (count($matchedAssets) > 1 && (string) $matchedAssets[0]['asset_id'] !== $assetReference) {
+            throw new DomainException("Kode unit {$assetReference} cocok ke lebih dari satu aset. Pilih ID aset lengkap dari database.");
+        }
+        $asset = $matchedAssets[0];
+
+        $solutions = [];
+        $assignedMechanic = null;
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) {
+                continue;
+            }
+            $rowNumber = $position + 1;
+            $solution = self::requiredText($row['solusi'] ?? null, "Solusi baris {$rowNumber}", 1000);
+            $pic = self::requiredText($row['pic'] ?? null, "PIC baris {$rowNumber}", 100);
+            $targetDate = self::requiredDate($row['target'] ?? null, "Target baris {$rowNumber}");
+            $notes = self::optionalText($row['keterangan'] ?? null, 500);
+            if ($assignedMechanic === null) {
+                $assignedMechanic = $pic;
+            }
+            $line = "{$rowNumber}. {$solution} | PIC: {$pic} | Target: {$targetDate}";
+            if ($notes) $line .= " | Catatan: {$notes}";
+            $solutions[] = $line;
+        }
+        if ($solutions === []) {
+            throw new DomainException('Repair & Overhaul harus memiliki sedikitnya satu solusi yang diusulkan.');
+        }
+
+        $hourMeter = self::nonNegativeDecimal($fields['hm'] ?? null, 'Hour meter');
+        $partName = self::requiredText($fields['nama_parts'] ?? null, 'Nama parts', 150);
+        $partNumber = self::optionalText($fields['part_number'] ?? null, 100);
+        $history = self::optionalText($fields['riwayat'] ?? null, 2000);
+        $attachment = self::optionalText($fields['lampiran'] ?? null, 1000);
+        $estimateMin = self::nonNegativeDecimal($fields['estimasi_min'] ?? null, 'Estimasi biaya minimum');
+        $estimateMax = self::nonNegativeDecimal($fields['estimasi_max'] ?? null, 'Estimasi biaya maksimum');
+        if ($estimateMin > 0 && $estimateMax > 0 && $estimateMin > $estimateMax) {
+            throw new DomainException('Estimasi biaya minimum tidak boleh melebihi estimasi biaya maksimum.');
+        }
+
+        $descriptionParts = [
+            "[Laporan R&O {$workOrderId}]",
+            "Asset: {$reportedAsset}",
+            "Temuan: {$finding}",
+            "Parts: {$partName}" . ($partNumber ? " ({$partNumber})" : ''),
+            "HM/KM laporan: {$hourMeter}",
+        ];
+        if ($history) $descriptionParts[] = "Riwayat: {$history}";
+        if ($estimateMin > 0 || $estimateMax > 0) {
+            $descriptionParts[] = "Estimasi biaya: {$estimateMin} - {$estimateMax}";
+        }
+        $descriptionParts[] = "Solusi:\n" . implode("\n", $solutions);
+        if ($attachment) $descriptionParts[] = "Lampiran: {$attachment}";
+        $issueDescription = implode("\n", $descriptionParts);
+        $rawLocation = trim((string) ($asset['location_name'] ?? ''));
+        if ($rawLocation === '') {
+            $rawLocation = self::optionalText($asset['raw_location_notes'] ?? null, 255) ?? '';
+        }
+
+        $snapshot = [
+            'wo_id' => $workOrderId,
+            'asset_id' => (string) $asset['asset_id'],
+            'location_id' => $asset['current_location_id'] !== null ? (int) $asset['current_location_id'] : null,
+            'raw_location' => $rawLocation !== '' ? $rawLocation : null,
+            'issue_description' => $issueDescription,
+            'downtime_minutes' => 0,
+            'is_downtime' => 0,
+            'status' => 'Open',
+            'priority' => $priority,
+            'assigned_mechanic' => $assignedMechanic ?? 'Belum ada PIC',
+            'reported_at' => $reportDate . ' 00:00:00',
+            'repair_started_at' => null,
+            'closed_at' => null,
+        ];
+
+        $workOrderStatement = $db->prepare(
+            'SELECT wo_id, asset_id, location_id, raw_location, issue_description,
+                    downtime_minutes, is_downtime, status, priority, assigned_mechanic,
+                    reported_at, repair_started_at, closed_at
+             FROM work_orders WHERE wo_id = :work_order_id FOR UPDATE'
+        );
+        $workOrderStatement->execute([':work_order_id' => $workOrderId]);
+        $existingWorkOrder = $workOrderStatement->fetch(PDO::FETCH_ASSOC);
+        $ownsWorkOrder = !$existingWorkOrder;
+
+        if ($existingWorkOrder && !self::workOrderMatchesSnapshot($existingWorkOrder, $snapshot)) {
+            throw new DomainException("Nomor {$workOrderId} sudah digunakan oleh Work Order lain dengan data berbeda.");
+        }
+
+        if ($ownsWorkOrder) {
+            $insertWorkOrder = $db->prepare(
+                'INSERT INTO work_orders
+                 (wo_id, asset_id, location_id, raw_location, issue_description,
+                  downtime_minutes, is_downtime, status, priority, assigned_mechanic, reported_at)
+                 VALUES (:wo_id, :asset_id, :location_id, :raw_location, :issue_description,
+                  :downtime_minutes, :is_downtime, :status, :priority, :assigned_mechanic, :reported_at)'
+            );
+            $insertWorkOrder->execute([
+                ':wo_id' => $snapshot['wo_id'],
+                ':asset_id' => $snapshot['asset_id'],
+                ':location_id' => $snapshot['location_id'],
+                ':raw_location' => $snapshot['raw_location'],
+                ':issue_description' => $snapshot['issue_description'],
+                ':downtime_minutes' => $snapshot['downtime_minutes'],
+                ':is_downtime' => $snapshot['is_downtime'],
+                ':status' => $snapshot['status'],
+                ':priority' => $snapshot['priority'],
+                ':assigned_mechanic' => $snapshot['assigned_mechanic'],
+                ':reported_at' => $snapshot['reported_at'],
+            ]);
+        }
+
+        $insertIntegration = $db->prepare(
+            'INSERT INTO report_work_order_integrations
+             (report_id, work_order_id, asset_id, owns_work_order, applied_payload, created_by)
+             VALUES (:report_id, :work_order_id, :asset_id, :owns_work_order, :applied_payload, :created_by)'
+        );
+        $insertIntegration->execute([
+            ':report_id' => $reportId,
+            ':work_order_id' => $workOrderId,
+            ':asset_id' => $asset['asset_id'],
+            ':owns_work_order' => $ownsWorkOrder ? 1 : 0,
+            ':applied_payload' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+            ':created_by' => $actorId,
+        ]);
+
+        return [
+            'type' => 'repair-overhaul',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => 1,
+            'workOrderId' => $workOrderId,
+            'createdItemCount' => $ownsWorkOrder ? 1 : 0,
+            'linkedItemCount' => $ownsWorkOrder ? 0 : 1,
+            'message' => $ownsWorkOrder
+                ? "Laporan berhasil difinalkan dan Work Order {$workOrderId} dibuat."
+                : "Laporan berhasil difinalkan dan ditautkan ke Work Order {$workOrderId} tanpa duplikasi.",
         ];
     }
 
@@ -1291,6 +1579,30 @@ final class ReportIntegration
         }
         foreach (['current_smr', 'last_service_hm', 'target_due_hm', 'variance_hm'] as $key) {
             if (abs((float) ($plan[$key] ?? 0) - (float) ($snapshot[$key] ?? 0)) >= 0.005) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static function workOrderMatchesSnapshot(array $workOrder, array $snapshot): bool
+    {
+        foreach (
+            [
+                'wo_id', 'asset_id', 'raw_location', 'issue_description', 'status', 'priority',
+                'assigned_mechanic', 'reported_at', 'repair_started_at', 'closed_at',
+            ] as $key
+        ) {
+            $actual = $workOrder[$key] ?? null;
+            $expected = $snapshot[$key] ?? null;
+            if (($actual === null ? null : (string) $actual) !== ($expected === null ? null : (string) $expected)) {
+                return false;
+            }
+        }
+        foreach (['location_id', 'downtime_minutes', 'is_downtime'] as $key) {
+            $actual = $workOrder[$key] ?? null;
+            $expected = $snapshot[$key] ?? null;
+            if (($actual === null ? null : (int) $actual) !== ($expected === null ? null : (int) $expected)) {
                 return false;
             }
         }

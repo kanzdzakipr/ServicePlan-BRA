@@ -1377,3 +1377,138 @@ Untuk seluruh batch berikutnya, field yang memiliki master data wajib menggunaka
 - data operasional hanya berubah pada status `FINAL`, bukan saat autosave draft;
 - setiap integrasi harus idempoten, memiliki ledger sumber, dapat ditelusuri, dan aman saat void;
 - data manual yang tidak dibuat oleh laporan tidak boleh dihapus atau ditimpa.
+
+### Batch 7 — Repair & Overhaul ke Work Order
+
+Status implementasi: **SIAP UJI**.
+
+Ruang lingkup batch ini:
+
+- `Kode unit` dipilih dari Master Asset Laragon;
+- pilihan unit otomatis mengisi nama/kategori asset, serial number, dan HM/KM terakhir;
+- nama atau nomor part dipilih dari Master Part dan mengisi pasangannya secara otomatis;
+- PIC pada tabel solusi dipilih dari personel aktif;
+- laporan `DRAFT` tidak membuat Work Order;
+- laporan `FINAL` membuat satu Work Order berstatus `Open`;
+- urgensi dipetakan menjadi prioritas: `Normal → Normal`, `Mendesak → High`, dan `Emergency → Emergency`;
+- nomor laporan digunakan sebagai ID Work Order agar sumbernya mudah ditelusuri;
+- Work Order hasil integrasi tampil di menu **Work Order** dan dapat dicari memakai nomor laporan;
+- finalisasi ulang tidak membuat Work Order ganda;
+- void menghapus Work Order milik laporan hanya jika belum diubah dan belum memiliki aktivitas lanjutan.
+
+#### Persiapan data uji
+
+1. [ ] Pilih satu unit aktif:
+
+```sql
+SELECT asset_id, asset_code, category, make_model, serial_number, last_hm_km
+FROM u646470441_ServicePlanBRA.assets
+WHERE is_active = 1
+ORDER BY asset_code
+LIMIT 20;
+```
+
+2. [ ] Pilih satu part dan satu personel aktif:
+
+```sql
+SELECT part_number, part_name, unit_measure
+FROM u646470441_ServicePlanBRA.parts
+ORDER BY part_name
+LIMIT 20;
+
+SELECT user_id, full_name
+FROM u646470441_ServicePlanBRA.users
+WHERE is_active = 1
+ORDER BY full_name
+LIMIT 20;
+```
+
+3. [ ] Catat jumlah Work Order awal:
+
+```sql
+SELECT COUNT(*) AS jumlah_awal
+FROM u646470441_ServicePlanBRA.work_orders;
+```
+
+#### Pengujian otomatisasi form
+
+1. [ ] Buka **Laporan & Form → Repair & Overhaul**.
+2. [ ] Isi nomor laporan yang unik, misalnya `RO-UJI-001`, dan pilih tanggal laporan.
+3. [ ] Pada `Kode unit`, pilih unit dari daftar database.
+4. [ ] Pastikan asset, serial number, dan HM/KM terisi sesuai Master Asset.
+5. [ ] Pilih nama atau nomor part dari daftar database.
+6. [ ] Pastikan nama dan nomor part saling terisi sesuai Master Part.
+7. [ ] Isi temuan, riwayat, urgensi, serta estimasi biaya. Nilai minimum tidak boleh melebihi maksimum.
+8. [ ] Pada tabel solusi, isi solusi, pilih PIC, pilih target, lalu isi keterangan bila perlu.
+
+#### Pengujian draft
+
+1. [ ] Tunggu autosave tanpa menekan **Simpan Laporan**.
+2. [ ] Pastikan laporan masih berstatus `DRAFT`.
+3. [ ] Pastikan jumlah `work_orders` tidak bertambah.
+4. [ ] Pastikan belum ada ledger aktif pada `report_work_order_integrations`.
+
+#### Pengujian finalisasi dan menu Work Order
+
+1. [ ] Tekan **Simpan Laporan**.
+2. [ ] Pastikan pesan sukses menyebut Work Order yang dibuat.
+3. [ ] Buka menu **Work Order**.
+4. [ ] Cari menggunakan nomor laporan, kode unit, atau nama PIC.
+5. [ ] Pastikan Work Order berstatus `Open`, asset benar, prioritas sesuai urgensi, dan PIC memakai PIC baris solusi pertama.
+6. [ ] Pastikan kartu atau tabel Work Order menampilkan label sumber laporan.
+7. [ ] Verifikasi database:
+
+```sql
+SELECT
+    r.report_number,
+    r.status AS report_status,
+    rwi.integration_id,
+    rwi.owns_work_order,
+    rwi.reversed_at,
+    w.wo_id,
+    w.asset_id,
+    w.status AS wo_status,
+    w.priority,
+    w.assigned_mechanic,
+    w.reported_at,
+    w.issue_description
+FROM u646470441_ServicePlanBRA.report_work_order_integrations rwi
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = rwi.report_id
+LEFT JOIN u646470441_ServicePlanBRA.work_orders w
+    ON w.wo_id = rwi.work_order_id
+ORDER BY rwi.integration_id DESC
+LIMIT 20;
+```
+
+8. [ ] Pastikan `wo_id` sama dengan nomor laporan dan hanya ada satu ledger untuk laporan tersebut.
+
+#### Pengujian tanpa duplikasi
+
+1. [ ] Muat ulang halaman setelah finalisasi.
+2. [ ] Pastikan jumlah Work Order dan ledger laporan yang sama tidak bertambah.
+3. [ ] Pastikan nomor yang sudah digunakan Work Order lain dengan data berbeda ditolak, bukan ditimpa.
+
+#### Pengujian void aman
+
+1. [ ] Buat dan finalkan laporan Repair & Overhaul baru.
+2. [ ] Tanpa mengubah Work Order, lakukan void dari **Riwayat Laporan**.
+3. [ ] Pastikan Work Order buatan laporan dihapus dan `reversed_at` pada ledger terisi.
+4. [ ] Buat dan finalkan laporan lain, lalu ubah status Work Order menjadi `In Progress` atau tambahkan aktivitas lanjutan.
+5. [ ] Void laporan tersebut.
+6. [ ] Pastikan Work Order yang sudah diproses tetap ada, sedangkan tautan laporan ditandai telah dibalik.
+7. [ ] Pastikan Work Order manual lain tidak berubah.
+
+#### Kriteria lulus Batch 7
+
+- [ ] Referensi unit, part, dan PIC berasal dari database Laragon.
+- [ ] Atribut unit dan part terisi otomatis dengan benar.
+- [ ] Draft tidak membuat Work Order.
+- [ ] Finalisasi membuat tepat satu Work Order dan ledger sumber.
+- [ ] Prioritas, PIC, tanggal, dan deskripsi Work Order sesuai isi laporan.
+- [ ] Work Order tampil serta dapat dicari pada menu Work Order.
+- [ ] Retry atau reload tidak membuat duplikasi.
+- [ ] Void menghapus Work Order milik laporan yang belum diproses.
+- [ ] Void mempertahankan Work Order yang sudah diubah atau memiliki aktivitas lanjutan.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 7 sebelum Batch 8 dimulai.

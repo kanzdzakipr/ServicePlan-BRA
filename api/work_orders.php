@@ -1,8 +1,10 @@
 <?php
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
+require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 
 $db = Database::getInstance();
+ReportIntegration::ensureTables($db);
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
@@ -10,7 +12,15 @@ switch ($method) {
         AuthMiddleware::checkAccess('wo', 'R');
         if (isset($_GET['id'])) {
             $scope = api_location_scope_clause('a', 'wo_list_location_id');
-            $sql = "SELECT w.*, a.asset_code, a.category AS asset_category
+            $sql = "SELECT w.*, a.asset_code, a.category AS asset_category,
+                    (SELECT rwi.report_id FROM report_work_order_integrations rwi
+                     WHERE rwi.work_order_id = w.wo_id AND rwi.reversed_at IS NULL
+                     ORDER BY rwi.integration_id DESC LIMIT 1) AS source_report_id,
+                    (SELECT rr.report_number
+                     FROM report_work_order_integrations rwi
+                     INNER JOIN report_records rr ON rr.report_id = rwi.report_id
+                     WHERE rwi.work_order_id = w.wo_id AND rwi.reversed_at IS NULL
+                     ORDER BY rwi.integration_id DESC LIMIT 1) AS source_report_number
                     FROM work_orders w
                     INNER JOIN assets a ON w.asset_id = a.asset_id
                     WHERE w.wo_id = :id";
@@ -21,7 +31,15 @@ switch ($method) {
         } else {
             $scope = api_location_scope_clause('a', 'wo_list_location_id');
             $sql = "
-                SELECT w.*, a.asset_code, a.category as asset_category
+                SELECT w.*, a.asset_code, a.category as asset_category,
+                       (SELECT rwi.report_id FROM report_work_order_integrations rwi
+                        WHERE rwi.work_order_id = w.wo_id AND rwi.reversed_at IS NULL
+                        ORDER BY rwi.integration_id DESC LIMIT 1) AS source_report_id,
+                       (SELECT rr.report_number
+                        FROM report_work_order_integrations rwi
+                        INNER JOIN report_records rr ON rr.report_id = rwi.report_id
+                        WHERE rwi.work_order_id = w.wo_id AND rwi.reversed_at IS NULL
+                        ORDER BY rwi.integration_id DESC LIMIT 1) AS source_report_number
                 FROM work_orders w
                 INNER JOIN assets a ON w.asset_id = a.asset_id
             ";

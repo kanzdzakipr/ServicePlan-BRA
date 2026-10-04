@@ -26,7 +26,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261004-7"></script>
+    <script src="scripts/dashboard.js?v=20261004-8"></script>
     <script src="scripts/unit-properties.js?v=20260827-1"></script>
 </head>
 
@@ -5298,7 +5298,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             }
 
             function renderKanbanCardHtml(wo, statusKey) {
-                const isEmergency = wo.priority === 'High';
+                const isEmergency = ['High', 'Emergency'].includes(wo.priority);
                 const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
                 const issueShort = escapeHtml(issueText.length > 55 ? issueText.substring(0, 55) + '...' : issueText);
                 const escapedIssue = escapeHtml(issueText).replace(/'/g, "&#039;");
@@ -5319,6 +5319,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <span class="font-mono" style="font-weight:700; color:var(--primary); font-size:0.85rem;">${escapeHtml(wo.woId)}</span>
                         <span class="font-mono" style="font-weight:700; color:var(--text-main); font-size:0.82rem;">${escapedAsset}</span>
                     </div>
+                    ${wo.sourceReportNumber ? `<div style="font-size:0.7rem; color:var(--success); margin-bottom:6px;"><i class="fa-solid fa-file-circle-check"></i> ${escapeHtml(wo.sourceReportNumber)}</div>` : ''}
                     <div style="font-size:0.8rem; color:var(--text-main); line-height:1.35; margin-bottom:8px; font-weight:500;">
                         ${issueShort}
                     </div>
@@ -5362,7 +5363,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (priority && wo.priority !== priority) return false;
                     if (!query) return true;
                     const asset = getAllAssets().find(item => item.id === extractCleanAssetId(wo.assetId || wo.unitId || ''));
-                    return [wo.woId, wo.assetId, wo.unitId, wo.issue, wo.description, wo.assignedTo, wo.mechanic, asset?.location]
+                    return [wo.woId, wo.sourceReportNumber, wo.assetId, wo.unitId, wo.issue, wo.description, wo.assignedTo, wo.mechanic, asset?.location]
                         .some(value => String(value || '').toLowerCase().includes(query));
                 });
             }
@@ -5380,9 +5381,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const issue = wo.issue || wo.description || 'Belum ada uraian keluhan';
                     const mechanic = wo.assignedTo || wo.mechanic || 'Belum ditugaskan';
                     const statusClass = wo.status === 'Closed' ? 'closed' : wo.status === 'In Progress' ? 'progress' : 'open';
-                    const priorityClass = wo.priority === 'High' ? 'high' : 'normal';
+                    const priorityClass = ['High', 'Emergency'].includes(wo.priority) ? 'high' : 'normal';
                     return `<tr>
-                        <td><button type="button" class="wo-id-link" onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapeHtml(assetId)}')">${escapeHtml(wo.woId)}</button></td>
+                        <td><button type="button" class="wo-id-link" onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapeHtml(assetId)}')">${escapeHtml(wo.woId)}</button>${wo.sourceReportNumber ? `<small style="display:block; color:var(--success); margin-top:4px;"><i class="fa-solid fa-file-circle-check"></i> ${escapeHtml(wo.sourceReportNumber)}</small>` : ''}</td>
                         <td><strong>${escapeHtml(assetId || '-')}</strong></td>
                         <td>${escapeHtml(asset?.location || 'Belum terpetakan')}</td>
                         <td class="wo-issue-cell" title="${escapeHtml(issue)}">${escapeHtml(issue)}</td>
@@ -5502,6 +5503,44 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 kanbanBoard.innerHTML = openCol + progressCol + closedCol;
                 window.switchWorkOrderMode(workOrderViewMode);
             }
+
+            window.refreshWorkOrdersFromDatabase = async function () {
+                try {
+                    const response = await fetch('api/work_orders.php', {
+                        headers: { Accept: 'application/json' },
+                        cache: 'no-store'
+                    });
+                    const payload = await response.json();
+                    if (!response.ok || payload?.status !== 'success' || !Array.isArray(payload.data)) {
+                        throw new Error(payload?.message || 'Data Work Order tidak tersedia.');
+                    }
+                    const workOrders = payload.data.map(wo => ({
+                        woId: String(wo.wo_id || ''),
+                        assetId: String(wo.asset_id || ''),
+                        issue: String(wo.issue_description || ''),
+                        downtime: String(wo.downtime_formatted || ''),
+                        status: String(wo.status || 'Open'),
+                        priority: String(wo.priority || 'Normal'),
+                        assignedTo: String(wo.assigned_mechanic || 'Belum ada PIC'),
+                        sourceReportId: String(wo.source_report_id || ''),
+                        sourceReportNumber: String(wo.source_report_number || '')
+                    }));
+                    globalData.work_orders = workOrders;
+                    window.globalData = globalData;
+                    initWorkOrderView(workOrders);
+                    return workOrders;
+                } catch (error) {
+                    console.error('Work Order database gagal dimuat ulang:', error);
+                    return null;
+                }
+            };
+
+            document.addEventListener('fleetreport:finalized', event => {
+                if (event.detail?.schemaId === 'repair-overhaul') window.refreshWorkOrdersFromDatabase();
+            });
+            document.addEventListener('fleetreport:voided', event => {
+                if (event.detail?.schemaId === 'repair-overhaul') window.refreshWorkOrdersFromDatabase();
+            });
 
             let previousModalId = null;
             let modalUnitMapInstance = null;

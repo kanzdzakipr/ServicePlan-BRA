@@ -1,6 +1,8 @@
 <?php
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 $db = Database::getInstance();
+ReportIntegration::ensureTables($db);
 
 try {
     // Ambil data dasar dari data.json (sebagai fallback untuk struktur kompleks seperti costs dll)
@@ -23,7 +25,12 @@ try {
     // Override Work Orders dari Database
     $workOrderScope = api_location_scope_clause('a', 'init_wo_location_id');
     $workOrderSql = "SELECT w.wo_id as woId, w.asset_id as assetId, w.issue_description as issue,
-                            w.downtime_formatted as downtime, w.status, w.priority, w.assigned_mechanic as assignedTo
+                            w.downtime_formatted as downtime, w.status, w.priority, w.assigned_mechanic as assignedTo,
+                            (SELECT rr.report_number
+                             FROM report_work_order_integrations rwi
+                             INNER JOIN report_records rr ON rr.report_id = rwi.report_id
+                             WHERE rwi.work_order_id = w.wo_id AND rwi.reversed_at IS NULL
+                             ORDER BY rwi.integration_id DESC LIMIT 1) AS sourceReportNumber
                      FROM work_orders w INNER JOIN assets a ON a.asset_id = w.asset_id";
     if ($workOrderScope['sql'] !== '') $workOrderSql .= " WHERE " . $workOrderScope['sql'];
     $stmtWO = $db->prepare($workOrderSql);

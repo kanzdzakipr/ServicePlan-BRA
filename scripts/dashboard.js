@@ -1062,7 +1062,7 @@
         if (/^(lokasi|lokasi_alat|lokasi_pengesahan|area_lokasi)$/.test(key)) return 'locations';
         if (/^(jenis_alat|kategori_alat)$/.test(key)) return 'categories';
         if (/^(tipe_merk|merek_model|tipe_alat)$/.test(key)) return 'models';
-        if (/operator|mekanik|dibuat_oleh|diperiksa_oleh|disetujui_oleh|diajukan_oleh|penerima|pengirim/.test(key)) return 'people';
+        if (/^(pic)$|operator|mekanik|dibuat_oleh|diperiksa_oleh|disetujui_oleh|diajukan_oleh|penerima|pengirim/.test(key)) return 'people';
         return '';
     }
 
@@ -1206,6 +1206,9 @@
         ['serial_number', 'nomor_seri'].forEach(key => setAutomatedField(key, asset.serialNumber));
         setAutomatedField('nomor_polisi', asset.licensePlate);
         setAutomatedField('hm_sebelum', asset.lastHmKm);
+        setAutomatedField('hm', asset.lastHmKm);
+        setAutomatedField('hour_meter', asset.lastHmKm);
+        setAutomatedField('asset', [asset.category, asset.makeModel].filter(Boolean).join(' '));
 
         if (activeSchema?.calculation === 'lho' && activeDraft.rows[0]) {
             activeDraft.rows[0].hm_awal = String(asset.lastHmKm ?? 0);
@@ -1259,6 +1262,16 @@
         renderRows();
     }
 
+    function applyFormPartReference(part) {
+        if (!part) return;
+        setAutomatedField('part_number', part.number);
+        setAutomatedField('pn', part.number);
+        ['nama_parts', 'nama_spare_part', 'jenis_parts'].forEach(key => setAutomatedField(key, part.name));
+        setAutomatedField('satuan', part.unit);
+        setAutomatedField('unit_measure', part.unit);
+        setAutomatedField('harga', part.unitCost);
+    }
+
     function applyReportReferenceSelection(control) {
         const kind = control?.dataset?.referenceKind || '';
         if (kind === 'assets') {
@@ -1268,8 +1281,10 @@
             );
             return;
         }
-        if ((kind === 'partNumbers' || kind === 'partNames') && control.dataset.row != null) {
-            applyPartReference(findReferencePart(control.value, kind), Number(control.dataset.row));
+        if (kind === 'partNumbers' || kind === 'partNames') {
+            const part = findReferencePart(control.value, kind);
+            if (control.dataset.row != null) applyPartReference(part, Number(control.dataset.row));
+            else applyFormPartReference(part);
             return;
         }
         if (kind === 'people') {
@@ -1803,6 +1818,9 @@
                     return;
                 }
                 successMessage = result.message || successMessage;
+                document.dispatchEvent(new CustomEvent('fleetreport:voided', {
+                    detail: { schemaId: record.schemaId, reportId: record.id }
+                }));
             }
             writeHistory(records.filter(item => item.id !== recordId));
             const preview = document.getElementById('historyPrintArea');
