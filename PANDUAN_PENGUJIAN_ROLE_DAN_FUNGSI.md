@@ -1846,3 +1846,165 @@ LIMIT 50;
 - [ ] Snapshot aktif terlihat sebagai sumber pembanding pada menu stok.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 10 sebelum Batch 11 dimulai.
+
+### Batch 11 — BAPP ke Penerimaan Stok dan Status Pengadaan
+
+Status implementasi: **SIAP UJI**.
+
+Integrasi Batch 11 menghubungkan **Berita Acara Penerimaan/Penyerahan Barang (BAPP)** dengan PPB, SPB, Master Part, dan menu **Spare Part & Logistik**.
+
+- Nomor PPB/PO dipilih dari PPB aktif pada database Laragon.
+- Vendor, tanggal referensi PO, dan seluruh item PPB diisikan otomatis saat draft BAPP masih kosong.
+- Nama part, satuan, serta jumlah pesanan berasal dari database.
+- Hanya kuantitas `Baik` yang menambah stok aktual.
+- Kuantitas `Rusak` dan `Kurang` dicatat pada ledger tetapi tidak menambah stok.
+- PPB/SPB tetap terbuka apabila penerimaan masih parsial.
+- PPB menjadi `Received`, SPB menjadi `Issued`, dan item menjadi `Tiba` setelah seluruh kuantitas baik diterima.
+- Retry tidak menggandakan stok atau ledger.
+- Void membalik stok dan memulihkan status sebelumnya apabila status belum diubah proses lain.
+
+#### Persiapan
+
+1. [ ] Pastikan sudah ada SPB dan PPB aktif dari Batch 8–9.
+2. [ ] Pilih PPB yang belum berstatus `Received` atau `Cancelled`:
+
+```sql
+SELECT
+    po.ppb_id,
+    po.spb_id,
+    po.vendor,
+    po.status,
+    poi.part_number,
+    poi.description,
+    poi.unit_measure,
+    poi.quantity,
+    p.stock_qty
+FROM u646470441_ServicePlanBRA.purchase_orders po
+JOIN u646470441_ServicePlanBRA.purchase_order_items poi
+    ON poi.ppb_id = po.ppb_id
+JOIN u646470441_ServicePlanBRA.parts p
+    ON p.part_number = poi.part_number
+WHERE po.status NOT IN ('Received', 'Cancelled')
+ORDER BY po.created_at DESC, poi.id;
+```
+
+3. [ ] Catat stok awal part yang akan diterima.
+
+#### Pengujian otomatisasi form
+
+1. [ ] Buka **Laporan & Form → Berita Acara Penerimaan/Penyerahan Barang**.
+2. [ ] Isi nomor BAPP dan tanggal penerimaan.
+3. [ ] Pada `Order pembelian nomor`, pilih PPB dari daftar database.
+4. [ ] Pastikan pengirim/vendor dan tanggal PO terisi otomatis bila tersedia.
+5. [ ] Jika tabel masih kosong, pastikan seluruh item PPB muncul otomatis beserta nama, satuan, dan jumlah pesanan.
+6. [ ] Jika menambah baris manual, pilih nama part dari Master Part dan pastikan satuan serta jumlah pesanan terisi.
+7. [ ] Isi kuantitas `Baik`, `Rusak`, dan `Kurang` sehingga totalnya sama dengan `Jumlah`.
+
+#### Pengujian draft
+
+1. [ ] Tunggu autosave tanpa menekan **Simpan Laporan**.
+2. [ ] Pastikan stok, status PPB, status SPB, dan status item belum berubah.
+3. [ ] Pastikan belum ada ledger aktif untuk draft tersebut pada `report_goods_receipt_integrations`.
+
+#### Pengujian penerimaan parsial
+
+1. [ ] Contoh jumlah pesanan: `5`.
+2. [ ] Isi `Baik = 4`, `Rusak = 0`, dan `Kurang = 1`.
+3. [ ] Tekan **Simpan Laporan**.
+4. [ ] Pastikan stok hanya bertambah `4`.
+5. [ ] Pastikan status item SPB menjadi `Parsial` dan PPB/SPB masih berstatus `Ordered`.
+6. [ ] Buka **Spare Part & Logistik → Barang Masuk** dan pastikan transaksi bersumber dari `Laporan BAPP`.
+
+#### Pengujian penerimaan lanjutan sampai lengkap
+
+1. [ ] Buat BAPP baru untuk PPB yang sama.
+2. [ ] Isi sisa penerimaan, misalnya `Jumlah = 1`, `Baik = 1`, `Rusak = 0`, `Kurang = 0`.
+3. [ ] Finalkan laporan.
+4. [ ] Pastikan stok bertambah satu kali sesuai barang baik.
+5. [ ] Pastikan PPB menjadi `Received`, SPB menjadi `Issued`, dan item SPB menjadi `Tiba`.
+6. [ ] Pastikan PPB tersebut tidak lagi muncul pada pilihan PPB aktif untuk BAPP berikutnya.
+
+#### Verifikasi database
+
+```sql
+SELECT
+    r.report_number,
+    gri.report_item_position,
+    gri.ppb_id,
+    gri.spb_id,
+    p.part_number,
+    p.part_name,
+    gri.accepted_quantity,
+    gri.damaged_quantity,
+    gri.missing_quantity,
+    gri.previous_order_status,
+    gri.applied_order_status,
+    gri.previous_request_status,
+    gri.applied_request_status,
+    gri.previous_item_status,
+    gri.applied_item_status,
+    gri.reversed_at,
+    po.status AS current_order_status,
+    pr.status AS current_request_status,
+    pri.status AS current_item_status
+FROM u646470441_ServicePlanBRA.report_goods_receipt_integrations gri
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = gri.report_id
+JOIN u646470441_ServicePlanBRA.parts p
+    ON p.part_id = gri.part_id
+JOIN u646470441_ServicePlanBRA.purchase_orders po
+    ON po.ppb_id = gri.ppb_id
+JOIN u646470441_ServicePlanBRA.purchase_requests pr
+    ON pr.spb_id = gri.spb_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_request_items pri
+    ON pri.id = gri.purchase_request_item_id
+ORDER BY gri.receipt_integration_id DESC
+LIMIT 50;
+```
+
+Verifikasi transaksi stok:
+
+```sql
+SELECT
+    r.report_number,
+    it.transaction_date,
+    it.reference_number,
+    p.part_number,
+    it.quantity,
+    it.stock_before,
+    it.stock_after,
+    it.notes,
+    it.reversed_at
+FROM u646470441_ServicePlanBRA.inventory_transactions it
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = it.report_id
+JOIN u646470441_ServicePlanBRA.parts p
+    ON p.part_id = it.part_id
+WHERE r.report_number LIKE '%BAPP%'
+ORDER BY it.transaction_id DESC;
+```
+
+#### Pengujian validasi, retry, dan void
+
+1. [ ] Coba isi `Jumlah` yang tidak sama dengan `Baik + Rusak + Kurang`; finalisasi harus ditolak.
+2. [ ] Coba memilih part yang tidak ada pada PPB; finalisasi harus ditolak.
+3. [ ] Coba menerima barang fisik melebihi jumlah pesanan; finalisasi harus ditolak.
+4. [ ] Muat ulang setelah finalisasi; stok dan ledger tidak boleh bertambah lagi.
+5. [ ] Void BAPP penerimaan terakhir; stok dan status harus kembali ke kondisi parsial sebelumnya.
+6. [ ] Void BAPP parsial; stok dan status harus kembali ke kondisi sebelum penerimaan.
+7. [ ] Jika stok hasil BAPP sudah terpakai sehingga void membuat stok negatif, void harus ditolak.
+
+#### Kriteria lulus Batch 11
+
+- [ ] PPB, vendor, part, satuan, dan jumlah pesanan berasal dari database Laragon.
+- [ ] Pemilihan PPB mengisi item penerimaan secara otomatis pada tabel kosong.
+- [ ] Draft tidak mengubah stok atau status pengadaan.
+- [ ] Hanya barang baik yang menambah stok.
+- [ ] Barang rusak dan kurang tetap tercatat tanpa menambah stok.
+- [ ] Penerimaan parsial tidak menutup PPB/SPB.
+- [ ] Penerimaan lengkap memperbarui PPB, SPB, dan item secara konsisten.
+- [ ] Transaksi masuk tampil di menu Spare Part & Logistik dengan sumber BAPP.
+- [ ] Retry tidak membuat stok atau ledger ganda.
+- [ ] Void memulihkan stok dan status secara aman.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 11 sebelum Batch 12 dimulai.

@@ -503,6 +503,7 @@ DROP TABLE IF EXISTS `report_pm_integrations`;
 DROP TABLE IF EXISTS `report_work_order_integrations`;
 DROP TABLE IF EXISTS `report_purchase_request_integrations`;
 DROP TABLE IF EXISTS `report_purchase_order_integrations`;
+DROP TABLE IF EXISTS `report_goods_receipt_integrations`;
 DROP TABLE IF EXISTS `procurement_monitoring_logs`;
 DROP TABLE IF EXISTS `parts_weekly_snapshots`;
 DROP TABLE IF EXISTS `report_audit_logs`;
@@ -763,6 +764,28 @@ CREATE TABLE `report_purchase_order_integrations` (
     KEY `idx_report_purchase_order_asset` (`asset_id`,`reversed_at`),
     CONSTRAINT `fk_report_purchase_order_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_report_purchase_order_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `report_goods_receipt_integrations` (
+    `receipt_integration_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL, `report_item_position` INT UNSIGNED NOT NULL,
+    `ppb_id` VARCHAR(50) NOT NULL, `spb_id` VARCHAR(50) NOT NULL,
+    `purchase_order_item_id` VARCHAR(100) NOT NULL, `purchase_request_item_id` VARCHAR(100) NULL,
+    `part_id` INT NOT NULL,
+    `accepted_quantity` INT UNSIGNED NOT NULL DEFAULT 0,
+    `damaged_quantity` INT UNSIGNED NOT NULL DEFAULT 0,
+    `missing_quantity` INT UNSIGNED NOT NULL DEFAULT 0,
+    `previous_order_status` VARCHAR(40) NOT NULL, `applied_order_status` VARCHAR(40) NOT NULL,
+    `previous_request_status` VARCHAR(40) NOT NULL, `applied_request_status` VARCHAR(40) NOT NULL,
+    `previous_item_status` VARCHAR(50) NULL, `applied_item_status` VARCHAR(50) NULL,
+    `receipt_payload` LONGTEXT NOT NULL, `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL, `reversed_by` INT NULL,
+    UNIQUE KEY `uq_goods_receipt_line` (`report_id`,`report_item_position`),
+    KEY `idx_goods_receipt_order_item` (`ppb_id`,`purchase_order_item_id`,`reversed_at`),
+    KEY `idx_goods_receipt_part` (`part_id`,`reversed_at`),
+    CONSTRAINT `fk_goods_receipt_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_goods_receipt_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

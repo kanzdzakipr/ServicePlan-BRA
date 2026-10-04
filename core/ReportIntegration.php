@@ -218,6 +218,36 @@ final class ReportIntegration
             CONSTRAINT fk_report_purchase_order_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+        $db->exec("CREATE TABLE IF NOT EXISTS report_goods_receipt_integrations (
+            receipt_integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            report_item_position INT UNSIGNED NOT NULL,
+            ppb_id VARCHAR(50) NOT NULL,
+            spb_id VARCHAR(50) NOT NULL,
+            purchase_order_item_id VARCHAR(100) NOT NULL,
+            purchase_request_item_id VARCHAR(100) NULL,
+            part_id INT NOT NULL,
+            accepted_quantity INT UNSIGNED NOT NULL DEFAULT 0,
+            damaged_quantity INT UNSIGNED NOT NULL DEFAULT 0,
+            missing_quantity INT UNSIGNED NOT NULL DEFAULT 0,
+            previous_order_status VARCHAR(40) NOT NULL,
+            applied_order_status VARCHAR(40) NOT NULL,
+            previous_request_status VARCHAR(40) NOT NULL,
+            applied_request_status VARCHAR(40) NOT NULL,
+            previous_item_status VARCHAR(50) NULL,
+            applied_item_status VARCHAR(50) NULL,
+            receipt_payload LONGTEXT NOT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_goods_receipt_line (report_id, report_item_position),
+            KEY idx_goods_receipt_order_item (ppb_id, purchase_order_item_id, reversed_at),
+            KEY idx_goods_receipt_part (part_id, reversed_at),
+            CONSTRAINT fk_goods_receipt_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_goods_receipt_part FOREIGN KEY (part_id) REFERENCES parts (part_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
         $db->exec("CREATE TABLE IF NOT EXISTS procurement_monitoring_logs (
             monitoring_log_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             report_id CHAR(36) NOT NULL, report_item_position INT UNSIGNED NOT NULL,
@@ -289,6 +319,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'parts-weekly') {
             return self::applyPartsWeekly($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'bapp') {
+            return self::applyGoodsReceipt($db, $reportId, $fields, $rows, $actorId);
         }
         return ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
     }
@@ -633,6 +666,55 @@ final class ReportIntegration
             $purchaseOrderReversed += $reverse->rowCount();
         }
 
+        $goodsReceiptStatement = $db->prepare(
+            'SELECT * FROM report_goods_receipt_integrations
+             WHERE report_id = :report_id AND reversed_at IS NULL
+             ORDER BY receipt_integration_id DESC FOR UPDATE'
+        );
+        $goodsReceiptStatement->execute([':report_id' => $reportId]);
+        $goodsReceiptReversed = 0;
+        foreach ($goodsReceiptStatement->fetchAll(PDO::FETCH_ASSOC) as $receipt) {
+            if ($receipt['purchase_request_item_id'] !== null && $receipt['applied_item_status'] !== null) {
+                $itemStatus = $db->prepare('SELECT status FROM purchase_request_items WHERE id = :id FOR UPDATE');
+                $itemStatus->execute([':id' => $receipt['purchase_request_item_id']]);
+                if ($itemStatus->fetchColumn() === $receipt['applied_item_status']) {
+                    $db->prepare('UPDATE purchase_request_items SET status = :status WHERE id = :id')->execute([
+                        ':status' => $receipt['previous_item_status'],
+                        ':id' => $receipt['purchase_request_item_id'],
+                    ]);
+                }
+            }
+
+            $orderStatus = $db->prepare('SELECT status FROM purchase_orders WHERE ppb_id = :id FOR UPDATE');
+            $orderStatus->execute([':id' => $receipt['ppb_id']]);
+            if ($orderStatus->fetchColumn() === $receipt['applied_order_status']) {
+                $db->prepare('UPDATE purchase_orders SET status = :status WHERE ppb_id = :id')->execute([
+                    ':status' => $receipt['previous_order_status'],
+                    ':id' => $receipt['ppb_id'],
+                ]);
+            }
+
+            $requestStatus = $db->prepare('SELECT status FROM purchase_requests WHERE spb_id = :id FOR UPDATE');
+            $requestStatus->execute([':id' => $receipt['spb_id']]);
+            if ($requestStatus->fetchColumn() === $receipt['applied_request_status']) {
+                $db->prepare('UPDATE purchase_requests SET status = :status WHERE spb_id = :id')->execute([
+                    ':status' => $receipt['previous_request_status'],
+                    ':id' => $receipt['spb_id'],
+                ]);
+            }
+
+            $reverseReceipt = $db->prepare(
+                'UPDATE report_goods_receipt_integrations
+                 SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor_id
+                 WHERE receipt_integration_id = :id AND reversed_at IS NULL'
+            );
+            $reverseReceipt->execute([
+                ':actor_id' => $actorId,
+                ':id' => (int) $receipt['receipt_integration_id'],
+            ]);
+            $goodsReceiptReversed += $reverseReceipt->rowCount();
+        }
+
         $monitoringStatement=$db->prepare('SELECT * FROM procurement_monitoring_logs WHERE report_id=:report_id AND reversed_at IS NULL ORDER BY monitoring_log_id DESC FOR UPDATE');$monitoringStatement->execute([':report_id'=>$reportId]);$monitoringReversed=0;
         foreach($monitoringStatement->fetchAll(PDO::FETCH_ASSOC) as $log){
             $request=$db->prepare('SELECT status FROM purchase_requests WHERE spb_id=:id FOR UPDATE');$request->execute([':id'=>$log['spb_id']]);if($request->fetchColumn()===$log['applied_request_status'])$db->prepare('UPDATE purchase_requests SET status=:status WHERE spb_id=:id')->execute([':status'=>$log['previous_request_status'],':id'=>$log['spb_id']]);
@@ -643,10 +725,14 @@ final class ReportIntegration
         $weekly=$db->prepare('UPDATE parts_weekly_snapshots SET reversed_at=CURRENT_TIMESTAMP,reversed_by=:actor WHERE report_id=:report_id AND reversed_at IS NULL');$weekly->execute([':actor'=>$actorId,':report_id'=>$reportId]);$weeklyReversed=$weekly->rowCount();
 
         $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
-            + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed + $monitoringReversed + $weeklyReversed;
+            + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed
+            + $goodsReceiptReversed + $monitoringReversed + $weeklyReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
-        if ($inspectionReversed > 0) {
+        if ($goodsReceiptReversed > 0) {
+            $reversalType = 'goods-receipt-reversal';
+            $reversalMessage = "Laporan BAPP berhasil dibatalkan. {$goodsReceiptReversed} baris penerimaan dan stok terkait dibalik, lalu status PPB/SPB dipulihkan jika belum diubah lagi.";
+        } elseif ($inspectionReversed > 0) {
             $reversalType = 'inspection-reversal';
             $reversalMessage = 'Laporan berhasil dibatalkan dan riwayat inspeksi dinonaktifkan.';
         } elseif ($operationReversed > 0) {
@@ -699,9 +785,283 @@ final class ReportIntegration
             'purchaseOrderItemCount' => $purchaseOrderReversed,
             'purchaseOrderDeletedCount' => $purchaseOrderDeleted,
             'purchaseOrderPreservedCount' => $purchaseOrderPreserved,
+            'goodsReceiptItemCount' => $goodsReceiptReversed,
             'procurementMonitoringItemCount' => $monitoringReversed,
             'partsWeeklyItemCount' => $weeklyReversed,
             'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applyGoodsReceipt(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existing = $db->prepare(
+            'SELECT COUNT(*) FROM report_goods_receipt_integrations WHERE report_id = :report_id'
+        );
+        $existing->execute([':report_id' => $reportId]);
+        $existingCount = (int) $existing->fetchColumn();
+        if ($existingCount > 0) {
+            return [
+                'type' => 'goods-receipt',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => $existingCount,
+            ];
+        }
+
+        $receiptNumber = self::requiredText($fields['nomor'] ?? null, 'Nomor BAPP', 190);
+        $receiptDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal penerimaan');
+        $sender = self::requiredText($fields['pengirim'] ?? null, 'Pengirim', 190);
+        $ppbId = self::requiredText($fields['nomor_po'] ?? null, 'Nomor PPB/PO', 50);
+
+        $orderStatement = $db->prepare(
+            'SELECT po.ppb_id, po.spb_id, po.status, pr.status AS request_status
+             FROM purchase_orders po
+             INNER JOIN purchase_requests pr ON pr.spb_id = po.spb_id
+             WHERE po.ppb_id = :ppb_id FOR UPDATE'
+        );
+        $orderStatement->execute([':ppb_id' => $ppbId]);
+        $order = $orderStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$order) {
+            throw new DomainException("PPB/PO {$ppbId} tidak ditemukan.");
+        }
+        if (in_array($order['status'], ['Received', 'Cancelled'], true)) {
+            throw new DomainException("PPB/PO {$ppbId} berstatus {$order['status']} dan tidak dapat menerima BAPP baru.");
+        }
+
+        $orderItemsStatement = $db->prepare(
+            'SELECT id, part_number, description, unit_measure, quantity
+             FROM purchase_order_items WHERE ppb_id = :ppb_id ORDER BY id FOR UPDATE'
+        );
+        $orderItemsStatement->execute([':ppb_id' => $ppbId]);
+        $orderItems = [];
+        foreach ($orderItemsStatement->fetchAll(PDO::FETCH_ASSOC) as $item) {
+            $orderItems[strtolower((string) $item['part_number'])] = $item;
+        }
+        if (!$orderItems) {
+            throw new DomainException("PPB/PO {$ppbId} tidak memiliki item barang.");
+        }
+
+        $previousOrderStatus = (string) $order['status'];
+        $previousRequestStatus = (string) $order['request_status'];
+        $count = 0;
+        $acceptedTotal = 0;
+
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) {
+                continue;
+            }
+            $line = $position + 1;
+            $partName = self::requiredText($row['nama'] ?? null, "Nama barang baris {$line}", 150);
+            $unit = self::requiredText($row['satuan'] ?? null, "Satuan baris {$line}", 20);
+            $reportedQuantity = self::requiredNonNegativeInteger($row['jumlah'] ?? null, "Jumlah baris {$line}", false);
+            $accepted = self::requiredNonNegativeInteger($row['baik'] ?? null, "Jumlah baik baris {$line}", true);
+            $damaged = self::requiredNonNegativeInteger($row['rusak'] ?? null, "Jumlah rusak baris {$line}", true);
+            $missing = self::requiredNonNegativeInteger($row['kurang'] ?? null, "Jumlah kurang baris {$line}", true);
+            if ($reportedQuantity !== $accepted + $damaged + $missing) {
+                throw new DomainException("Jumlah baris {$line} harus sama dengan baik + rusak + kurang.");
+            }
+
+            $partStatement = $db->prepare(
+                'SELECT part_id, part_number, part_name, unit_measure, stock_qty
+                 FROM parts WHERE part_name = :part_name LIMIT 1 FOR UPDATE'
+            );
+            $partStatement->execute([':part_name' => $partName]);
+            $part = $partStatement->fetch(PDO::FETCH_ASSOC);
+            if (!$part) {
+                throw new DomainException("Barang {$partName} pada baris {$line} belum ada pada Master Part.");
+            }
+            if (strcasecmp((string) $part['unit_measure'], $unit) !== 0) {
+                throw new DomainException("Satuan barang baris {$line} tidak sesuai Master Part.");
+            }
+
+            $orderItem = $orderItems[strtolower((string) $part['part_number'])] ?? null;
+            if (!$orderItem) {
+                throw new DomainException("Part {$part['part_number']} pada baris {$line} tidak tercatat di PPB/PO {$ppbId}.");
+            }
+            if (strcasecmp((string) $orderItem['unit_measure'], $unit) !== 0) {
+                throw new DomainException("Satuan barang baris {$line} tidak sesuai item PPB/PO {$ppbId}.");
+            }
+
+            $receivedStatement = $db->prepare(
+                'SELECT COALESCE(SUM(accepted_quantity + damaged_quantity), 0)
+                 FROM report_goods_receipt_integrations
+                 WHERE ppb_id = :ppb_id AND purchase_order_item_id = :item_id AND reversed_at IS NULL'
+            );
+            $receivedStatement->execute([
+                ':ppb_id' => $ppbId,
+                ':item_id' => $orderItem['id'],
+            ]);
+            $previousPhysicalReceipt = (int) $receivedStatement->fetchColumn();
+            if ($previousPhysicalReceipt + $accepted + $damaged > (int) $orderItem['quantity']) {
+                throw new DomainException("Penerimaan part {$part['part_number']} melebihi jumlah pesanan PPB/PO {$ppbId}.");
+            }
+
+            $requestItemStatement = $db->prepare(
+                'SELECT id, status FROM purchase_request_items
+                 WHERE spb_id = :spb_id AND part_number = :part_number LIMIT 1 FOR UPDATE'
+            );
+            $requestItemStatement->execute([
+                ':spb_id' => $order['spb_id'],
+                ':part_number' => $part['part_number'],
+            ]);
+            $requestItem = $requestItemStatement->fetch(PDO::FETCH_ASSOC) ?: null;
+
+            $insertReceipt = $db->prepare(
+                'INSERT INTO report_goods_receipt_integrations
+                 (report_id, report_item_position, ppb_id, spb_id, purchase_order_item_id,
+                  purchase_request_item_id, part_id, accepted_quantity, damaged_quantity,
+                  missing_quantity, previous_order_status, applied_order_status,
+                  previous_request_status, applied_request_status, previous_item_status,
+                  applied_item_status, receipt_payload, created_by)
+                 VALUES
+                 (:report_id, :position, :ppb_id, :spb_id, :order_item_id,
+                  :request_item_id, :part_id, :accepted, :damaged, :missing,
+                  :previous_order, :applied_order, :previous_request, :applied_request,
+                  :previous_item, :applied_item, :payload, :created_by)'
+            );
+            $insertReceipt->execute([
+                ':report_id' => $reportId,
+                ':position' => $position,
+                ':ppb_id' => $ppbId,
+                ':spb_id' => $order['spb_id'],
+                ':order_item_id' => $orderItem['id'],
+                ':request_item_id' => $requestItem['id'] ?? null,
+                ':part_id' => (int) $part['part_id'],
+                ':accepted' => $accepted,
+                ':damaged' => $damaged,
+                ':missing' => $missing,
+                ':previous_order' => $previousOrderStatus,
+                ':applied_order' => $previousOrderStatus,
+                ':previous_request' => $previousRequestStatus,
+                ':applied_request' => $previousRequestStatus,
+                ':previous_item' => $requestItem['status'] ?? null,
+                ':applied_item' => $requestItem['status'] ?? null,
+                ':payload' => json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+                ':created_by' => $actorId,
+            ]);
+
+            if ($accepted > 0) {
+                $stockBefore = (int) $part['stock_qty'];
+                $stockAfter = $stockBefore + $accepted;
+                $db->prepare('UPDATE parts SET stock_qty = :stock WHERE part_id = :part_id')->execute([
+                    ':stock' => $stockAfter,
+                    ':part_id' => (int) $part['part_id'],
+                ]);
+                $db->prepare(
+                    'INSERT INTO inventory_transactions
+                     (report_id, report_item_position, movement_type, transaction_date,
+                      reference_number, counterparty, part_id, quantity, unit_measure,
+                      stock_before, stock_after, notes, created_by)
+                     VALUES
+                     (:report_id, :position, \'IN\', :transaction_date, :reference_number,
+                      :counterparty, :part_id, :quantity, :unit_measure, :stock_before,
+                      :stock_after, :notes, :created_by)'
+                )->execute([
+                    ':report_id' => $reportId,
+                    ':position' => $position,
+                    ':transaction_date' => $receiptDate,
+                    ':reference_number' => $receiptNumber,
+                    ':counterparty' => $sender,
+                    ':part_id' => (int) $part['part_id'],
+                    ':quantity' => $accepted,
+                    ':unit_measure' => $unit,
+                    ':stock_before' => $stockBefore,
+                    ':stock_after' => $stockAfter,
+                    ':notes' => "BAPP {$receiptNumber}; PPB {$ppbId}; rusak {$damaged}; kurang {$missing}",
+                    ':created_by' => $actorId,
+                ]);
+            }
+
+            $acceptedTotal += $accepted;
+            $count++;
+        }
+
+        if ($count === 0) {
+            throw new DomainException('BAPP tidak memiliki baris barang yang dapat diterima.');
+        }
+
+        $fulfilmentStatement = $db->prepare(
+            'SELECT poi.id, poi.quantity,
+                    COALESCE(SUM(CASE WHEN gri.reversed_at IS NULL THEN gri.accepted_quantity ELSE 0 END), 0) AS accepted_total
+             FROM purchase_order_items poi
+             LEFT JOIN report_goods_receipt_integrations gri
+               ON gri.ppb_id = poi.ppb_id AND gri.purchase_order_item_id = poi.id
+             WHERE poi.ppb_id = :ppb_id
+             GROUP BY poi.id, poi.quantity'
+        );
+        $fulfilmentStatement->execute([':ppb_id' => $ppbId]);
+        $allFulfilled = true;
+        foreach ($fulfilmentStatement->fetchAll(PDO::FETCH_ASSOC) as $fulfilment) {
+            if ((int) $fulfilment['accepted_total'] < (int) $fulfilment['quantity']) {
+                $allFulfilled = false;
+                break;
+            }
+        }
+        $appliedOrderStatus = $allFulfilled ? 'Received' : 'Ordered';
+        $appliedRequestStatus = $allFulfilled ? 'Issued' : 'Ordered';
+
+        $db->prepare('UPDATE purchase_orders SET status = :status WHERE ppb_id = :ppb_id')->execute([
+            ':status' => $appliedOrderStatus,
+            ':ppb_id' => $ppbId,
+        ]);
+        $db->prepare('UPDATE purchase_requests SET status = :status WHERE spb_id = :spb_id')->execute([
+            ':status' => $appliedRequestStatus,
+            ':spb_id' => $order['spb_id'],
+        ]);
+
+        $currentReceipts = $db->prepare(
+            'SELECT receipt_integration_id, purchase_order_item_id, purchase_request_item_id
+             FROM report_goods_receipt_integrations WHERE report_id = :report_id'
+        );
+        $currentReceipts->execute([':report_id' => $reportId]);
+        foreach ($currentReceipts->fetchAll(PDO::FETCH_ASSOC) as $receipt) {
+            $itemFulfilment = $db->prepare(
+                'SELECT poi.quantity,
+                        COALESCE(SUM(CASE WHEN gri.reversed_at IS NULL THEN gri.accepted_quantity ELSE 0 END), 0) AS accepted_total,
+                        COALESCE(SUM(CASE WHEN gri.reversed_at IS NULL THEN gri.accepted_quantity + gri.damaged_quantity ELSE 0 END), 0) AS physical_total
+                 FROM purchase_order_items poi
+                 LEFT JOIN report_goods_receipt_integrations gri
+                   ON gri.ppb_id = poi.ppb_id AND gri.purchase_order_item_id = poi.id
+                 WHERE poi.id = :item_id GROUP BY poi.id, poi.quantity'
+            );
+            $itemFulfilment->execute([':item_id' => $receipt['purchase_order_item_id']]);
+            $itemState = $itemFulfilment->fetch(PDO::FETCH_ASSOC);
+            $appliedItemStatus = null;
+            if ($receipt['purchase_request_item_id'] !== null && $itemState) {
+                $appliedItemStatus = (int) $itemState['accepted_total'] >= (int) $itemState['quantity']
+                    ? 'Tiba'
+                    : ((int) $itemState['physical_total'] > 0 ? 'Parsial' : 'Tertunda');
+                $db->prepare('UPDATE purchase_request_items SET status = :status WHERE id = :id')->execute([
+                    ':status' => $appliedItemStatus,
+                    ':id' => $receipt['purchase_request_item_id'],
+                ]);
+            }
+            $db->prepare(
+                'UPDATE report_goods_receipt_integrations
+                 SET applied_order_status = :order_status,
+                     applied_request_status = :request_status,
+                     applied_item_status = :item_status
+                 WHERE receipt_integration_id = :id'
+            )->execute([
+                ':order_status' => $appliedOrderStatus,
+                ':request_status' => $appliedRequestStatus,
+                ':item_status' => $appliedItemStatus,
+                ':id' => (int) $receipt['receipt_integration_id'],
+            ]);
+        }
+
+        return [
+            'type' => 'goods-receipt',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => $count,
+            'totalQuantity' => $acceptedTotal,
+            'message' => "BAPP berhasil difinalkan. {$acceptedTotal} barang baik masuk ke stok dan status PPB/SPB diperbarui.",
         ];
     }
 

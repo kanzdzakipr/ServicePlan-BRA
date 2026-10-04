@@ -77,6 +77,47 @@ try {
         'status' => (string) $row['status'],
     ], $purchaseRequestStatement->fetchAll(PDO::FETCH_ASSOC));
 
+    $purchaseOrderSql = "SELECT po.ppb_id, po.spb_id, po.wo_id, po.asset_id, po.vendor,
+                                po.project, po.quote_date, po.delivery_due, po.delivery_location,
+                                po.status, poi.id AS item_id, poi.part_number, poi.description,
+                                poi.unit_measure, poi.quantity
+                         FROM purchase_orders po
+                         INNER JOIN purchase_requests pr ON pr.spb_id = po.spb_id
+                         INNER JOIN assets a ON a.asset_id = po.asset_id
+                         INNER JOIN purchase_order_items poi ON poi.ppb_id = po.ppb_id
+                         WHERE po.status NOT IN ('Received', 'Cancelled')";
+    if ($workOrderScope['sql'] !== '') $purchaseOrderSql .= ' AND ' . $workOrderScope['sql'];
+    $purchaseOrderSql .= ' ORDER BY po.created_at DESC, po.ppb_id, poi.id';
+    $purchaseOrderStatement = $db->prepare($purchaseOrderSql);
+    $purchaseOrderStatement->execute($workOrderScope['params']);
+    $purchaseOrdersById = [];
+    foreach ($purchaseOrderStatement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $id = (string) $row['ppb_id'];
+        if (!isset($purchaseOrdersById[$id])) {
+            $purchaseOrdersById[$id] = [
+                'id' => $id,
+                'spbId' => (string) $row['spb_id'],
+                'workOrderId' => (string) $row['wo_id'],
+                'assetId' => (string) $row['asset_id'],
+                'vendor' => (string) $row['vendor'],
+                'project' => (string) $row['project'],
+                'quoteDate' => (string) ($row['quote_date'] ?? ''),
+                'deliveryDue' => (string) $row['delivery_due'],
+                'deliveryLocation' => (string) $row['delivery_location'],
+                'status' => (string) $row['status'],
+                'items' => [],
+            ];
+        }
+        $purchaseOrdersById[$id]['items'][] = [
+            'id' => (string) $row['item_id'],
+            'partNumber' => (string) $row['part_number'],
+            'name' => (string) $row['description'],
+            'unit' => (string) $row['unit_measure'],
+            'quantity' => (int) $row['quantity'],
+        ];
+    }
+    $purchaseOrders = array_values($purchaseOrdersById);
+
     $locationSql = 'SELECT location_id, location_name, location_type, region FROM locations WHERE is_active = 1';
     $locationParams = [];
     if (!api_has_global_location_scope()) {
@@ -184,6 +225,7 @@ try {
             'people' => $people,
             'workOrders' => $workOrders,
             'purchaseRequests' => $purchaseRequests,
+            'purchaseOrders' => $purchaseOrders,
             'categories' => $categories,
             'models' => $models,
         ],

@@ -1073,6 +1073,32 @@ LOCK TABLES `report_purchase_order_integrations` WRITE;
 /*!40000 ALTER TABLE `report_purchase_order_integrations` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- Table structure for table `report_goods_receipt_integrations`
+DROP TABLE IF EXISTS `report_goods_receipt_integrations`;
+CREATE TABLE `report_goods_receipt_integrations` (
+  `receipt_integration_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) NOT NULL, `report_item_position` int unsigned NOT NULL,
+  `ppb_id` varchar(50) NOT NULL, `spb_id` varchar(50) NOT NULL,
+  `purchase_order_item_id` varchar(100) NOT NULL, `purchase_request_item_id` varchar(100) DEFAULT NULL,
+  `part_id` int NOT NULL, `accepted_quantity` int unsigned NOT NULL DEFAULT '0',
+  `damaged_quantity` int unsigned NOT NULL DEFAULT '0', `missing_quantity` int unsigned NOT NULL DEFAULT '0',
+  `previous_order_status` varchar(40) NOT NULL, `applied_order_status` varchar(40) NOT NULL,
+  `previous_request_status` varchar(40) NOT NULL, `applied_request_status` varchar(40) NOT NULL,
+  `previous_item_status` varchar(50) DEFAULT NULL, `applied_item_status` varchar(50) DEFAULT NULL,
+  `receipt_payload` longtext NOT NULL, `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL, `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`receipt_integration_id`), UNIQUE KEY `uq_goods_receipt_line` (`report_id`,`report_item_position`),
+  KEY `idx_goods_receipt_order_item` (`ppb_id`,`purchase_order_item_id`,`reversed_at`),
+  KEY `idx_goods_receipt_part` (`part_id`,`reversed_at`),
+  CONSTRAINT `fk_goods_receipt_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_goods_receipt_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+LOCK TABLES `report_goods_receipt_integrations` WRITE;
+/*!40000 ALTER TABLE `report_goods_receipt_integrations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_goods_receipt_integrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
 -- Table structure for table `procurement_monitoring_logs`
 DROP TABLE IF EXISTS `procurement_monitoring_logs`;
 CREATE TABLE `procurement_monitoring_logs` (

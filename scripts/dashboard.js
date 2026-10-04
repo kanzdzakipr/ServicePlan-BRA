@@ -811,7 +811,7 @@
     const reportApiUrl = 'api/reports.php';
     const reportReferenceApiUrl = 'api/report_references.php';
     const emptyReportReferences = Object.freeze({
-        assets: [], locations: [], projects: [], sites: [], parts: [], people: [], workOrders: [], purchaseRequests: [], categories: [], models: []
+        assets: [], locations: [], projects: [], sites: [], parts: [], people: [], workOrders: [], purchaseRequests: [], purchaseOrders: [], categories: [], models: []
     });
     let reportReferences = { ...emptyReportReferences };
     let reportReferencesLoaded = false;
@@ -1056,6 +1056,7 @@
         if (/^(id_alat|kode_alat|code_number|id_unit|unit_id|kode_unit)$/.test(key)) return 'assets';
         if (/^(nomor_wo|wo_id|nomor_jo)$/.test(key)) return 'workOrders';
         if (['ppb', 'procurement-monitoring'].includes(activeSchema?.id) && key === 'nomor_spb') return 'purchaseRequests';
+        if (activeSchema?.id === 'bapp' && key === 'nomor_po') return 'purchaseOrders';
         if (isTableColumn && activeSchema?.id === 'ppb' && key === 'sc') return 'partNumbers';
         if (isTableColumn && activeSchema?.id === 'spb' && key === 'spesifikasi') return 'partNumbers';
         if (/^(part_number|pn|no_part|nomor_part)$/.test(key)) return 'partNumbers';
@@ -1106,6 +1107,11 @@
                 `<option value="${escapeHtml(request.id)}">${escapeHtml([request.workOrderId, request.assetId, request.location, request.status].filter(Boolean).join(' Â· '))}</option>`
             )).join('');
         }
+        if (kind === 'purchaseOrders') {
+            return reportReferences.purchaseOrders.map(order => (
+                `<option value="${escapeHtml(order.id)}">${escapeHtml([order.vendor, order.spbId, order.assetId, order.status].filter(Boolean).join(' · '))}</option>`
+            )).join('');
+        }
         if (kind === 'categories' || kind === 'models') {
             return (reportReferences[kind] || []).map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
         }
@@ -1127,7 +1133,7 @@
     }
 
     function renderReferenceDatalists() {
-        const kinds = ['assets', 'locations', 'projects', 'sites', 'people', 'workOrders', 'purchaseRequests', 'categories', 'models', 'partNumbers', 'partNames', 'partUnits'];
+        const kinds = ['assets', 'locations', 'projects', 'sites', 'people', 'workOrders', 'purchaseRequests', 'purchaseOrders', 'categories', 'models', 'partNumbers', 'partNames', 'partUnits'];
         return `<div class="report-reference-lists">${kinds.map(kind => (
             `<datalist id="${reportReferenceListId(kind)}">${referenceOptionsMarkup(kind)}</datalist>`
         )).join('')}</div>`;
@@ -1189,6 +1195,11 @@
     function findReferencePurchaseRequest(value) {
         const normalized = String(value || '').trim().toLowerCase();
         return reportReferences.purchaseRequests.find(request => String(request.id || '').toLowerCase() === normalized) || null;
+    }
+
+    function findReferencePurchaseOrder(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return reportReferences.purchaseOrders.find(order => String(order.id || '').toLowerCase() === normalized) || null;
     }
 
     function setAutomatedField(key, value) {
@@ -1290,6 +1301,13 @@
         if (availableKeys.has('saldo_lalu')) row.saldo_lalu = part.stock;
         if (availableKeys.has('persediaan')) row.persediaan = part.stock;
         if (availableKeys.has('harga') && !row.harga) row.harga = part.unitCost;
+        if (activeSchema?.id === 'bapp' && !row.jumlah) {
+            const order = findReferencePurchaseOrder(activeDraft?.fields?.nomor_po);
+            const orderItem = order?.items?.find(item => (
+                String(item.partNumber || '').toLowerCase() === String(part.number || '').toLowerCase()
+            ));
+            if (orderItem) row.jumlah = String(orderItem.quantity);
+        }
         calculateRow(row);
         renderRows();
     }
@@ -1341,6 +1359,35 @@
             if (request.location) {
                 setAutomatedField('project', request.location);
                 setAutomatedField('tempat_penyerahan', request.location);
+            }
+            return;
+        }
+        if (kind === 'purchaseOrders') {
+            const order = findReferencePurchaseOrder(control.value);
+            if (!order) return;
+            setAutomatedField('pengirim', order.vendor);
+            if (order.quoteDate) setAutomatedField('tanggal_po', order.quoteDate);
+            const rowsAreEmpty = (activeDraft?.rows || []).every(row => (
+                !Object.entries(row || {}).some(([key, value]) => (
+                    key !== '_evidence' && String(value ?? '').trim() !== ''
+                ))
+            ));
+            if (activeSchema?.id === 'bapp' && rowsAreEmpty && order.items?.length) {
+                activeDraft.rows = order.items.map(item => {
+                    const part = reportReferences.parts.find(candidate => (
+                        String(candidate.number || '').toLowerCase() === String(item.partNumber || '').toLowerCase()
+                    ));
+                    return {
+                        nama: part?.name || item.name,
+                        satuan: part?.unit || item.unit,
+                        jumlah: String(item.quantity),
+                        baik: '',
+                        rusak: '0',
+                        kurang: '0',
+                        keterangan: `PPB ${order.id} · ${item.partNumber}`
+                    };
+                });
+                renderRows();
             }
             return;
         }
@@ -3817,6 +3864,7 @@
         version: '1.5.0',
         getSchemas: () => cloneData(formSchemas),
         getReferences: () => cloneData(reportReferences),
+        refreshReferences: () => loadReportReferences(true),
         getDraftState(schemaId) {
             const schema = formSchemas.find(item => item.id === schemaId);
             if (!schema) return null;
@@ -5136,11 +5184,13 @@
 
     document.addEventListener('fleetreport:finalized', event => {
         if (['spb', 'ppb', 'procurement-monitoring'].includes(event.detail?.schemaId)) loadDatabaseRecords();
-        if (event.detail?.schemaId === 'parts-weekly') window.loadLogisticsData?.('stock');
+        if (['parts-weekly', 'bapp'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
+        if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
     });
     document.addEventListener('fleetreport:voided', event => {
         if (['spb', 'ppb', 'procurement-monitoring'].includes(event.detail?.schemaId)) loadDatabaseRecords();
-        if (event.detail?.schemaId === 'parts-weekly') window.loadLogisticsData?.('stock');
+        if (['parts-weekly', 'bapp'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
+        if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
     });
 
     if (document.readyState === 'loading') {

@@ -69,10 +69,11 @@ switch ($method) {
                 $incomingStatement = $db->query(
                     "SELECT it.transaction_id, it.transaction_date, it.reference_number, it.counterparty,
                             it.quantity, it.unit_measure, it.stock_before, it.stock_after, it.notes,
-                            p.part_number, p.part_name, r.report_number
+                            p.part_number, p.part_name, r.report_number, rt.template_key
                      FROM inventory_transactions it
                      INNER JOIN parts p ON p.part_id = it.part_id
                      INNER JOIN report_records r ON r.report_id = it.report_id
+                     INNER JOIN report_templates rt ON rt.template_id = r.template_id
                      WHERE it.movement_type = 'IN' AND it.reversed_at IS NULL
                      ORDER BY it.transaction_date DESC, it.transaction_id DESC
                      LIMIT 500"
@@ -93,7 +94,7 @@ switch ($method) {
                         'saldoLalu' => (int) $row['stock_before'],
                         'saldoSekarang' => (int) $row['stock_after'],
                         'keterangan' => (string) ($row['notes'] ?? ''),
-                        'source' => 'Laporan BHW-IN',
+                        'source' => $row['template_key'] === 'bapp' ? 'Laporan BAPP' : 'Laporan BHW-IN',
                     ];
                 }, $incomingStatement->fetchAll(PDO::FETCH_ASSOC));
 
