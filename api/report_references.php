@@ -99,23 +99,29 @@ try {
         'warehouse' => (string) $row['location_warehouse'],
     ], $parts);
 
-    $peopleSql = 'SELECT user_id, full_name FROM users WHERE is_active = 1';
+    $peopleSql = 'SELECT u.user_id, u.full_name, r.role_name, l.location_name
+                  FROM users u
+                  LEFT JOIN roles r ON r.role_id = u.role_id
+                  LEFT JOIN locations l ON l.location_id = u.assigned_location_id
+                  WHERE u.is_active = 1';
     $peopleParams = [];
     if (!api_has_global_location_scope()) {
         $locationId = api_current_location_id();
         if ($locationId === null) {
             $peopleSql .= ' AND 1 = 0';
         } else {
-            $peopleSql .= ' AND assigned_location_id = :people_location_id';
+            $peopleSql .= ' AND u.assigned_location_id = :people_location_id';
             $peopleParams[':people_location_id'] = $locationId;
         }
     }
-    $peopleSql .= ' ORDER BY full_name';
+    $peopleSql .= ' ORDER BY u.full_name';
     $peopleStatement = $db->prepare($peopleSql);
     $peopleStatement->execute($peopleParams);
     $people = array_map(static fn(array $row): array => [
         'id' => (int) $row['user_id'],
         'name' => (string) $row['full_name'],
+        'role' => (string) ($row['role_name'] ?? ''),
+        'location' => (string) ($row['location_name'] ?? ''),
     ], $peopleStatement->fetchAll(PDO::FETCH_ASSOC));
 
     $categories = array_values(array_unique(array_filter(array_column($assets, 'category'))));

@@ -1,16 +1,29 @@
 <?php
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 
 $db = Database::getInstance();
+ReportIntegration::ensureTables($db);
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
         $scope = api_location_scope_clause('a', 'pm_location_id');
         $sql = "
-            SELECT p.*, a.asset_code 
+            SELECT p.*, a.asset_code, a.category AS asset_category, a.make_model,
+                   a.year_manufacture, l.location_name,
+                   (SELECT rpi.report_id
+                    FROM report_pm_integrations rpi
+                    WHERE rpi.pm_plan_id = p.pm_plan_id AND rpi.reversed_at IS NULL
+                    ORDER BY rpi.integration_id DESC LIMIT 1) AS source_report_id,
+                   (SELECT rr.report_number
+                    FROM report_pm_integrations rpi
+                    INNER JOIN report_records rr ON rr.report_id = rpi.report_id
+                    WHERE rpi.pm_plan_id = p.pm_plan_id AND rpi.reversed_at IS NULL
+                    ORDER BY rpi.integration_id DESC LIMIT 1) AS source_report_number
             FROM pm_plans p 
             INNER JOIN assets a ON p.asset_id = a.asset_id
+            LEFT JOIN locations l ON l.location_id = a.current_location_id
         ";
         if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
         $sql .= " ORDER BY p.target_due_hm ASC";

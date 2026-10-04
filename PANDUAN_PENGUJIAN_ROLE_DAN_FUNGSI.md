@@ -44,7 +44,8 @@ Pengujian ini memastikan bahwa:
 - Jangan mengubah atau menghapus data produksi yang sudah tersedia pada dump.
 - Gunakan satu aset di lokasi akun dan satu aset dari lokasi lain untuk menguji pembatasan lokasi.
 - Simpan screenshot sebelum dan sesudah perubahan status.
-- Jangan menjalankan `scripts/sync_to_laragon.ps1` di tengah pengujian karena script mengimpor ulang database dan mereset password lokal.
+- Jangan menjalankan `scripts/sync_to_laragon.ps1` tanpa opsi di tengah pengujian karena mode standar mengimpor ulang database dan mereset password lokal.
+- Untuk memasang perubahan kode tanpa mengubah data uji, gunakan `powershell -ExecutionPolicy Bypass -File scripts/sync_to_laragon.ps1 -PreserveDatabase`.
 
 ## 4. Akun pengujian lokal
 
@@ -1241,3 +1242,138 @@ Autocomplete tetap mengizinkan pengetikan manual agar laporan lama atau referens
 - [ ] Endpoint referensi mengikuti izin `reports.read` dan kebijakan akses lokasi aplikasi.
 - [ ] Draft, finalisasi, integrasi Batch 1–5, dan void tetap berjalan.
 - [ ] Tidak ada error JavaScript atau HTTP `500`.
+
+### Batch 6 — Maintenance Board ke Preventive Maintenance
+
+Status implementasi: **SIAP UJI**.
+
+Ruang lingkup batch ini:
+
+- pilihan `Kode unit` berasal dari Master Asset Laragon;
+- setelah unit dipilih, `Jenis A2B`, `HM awal`, dan `Tgl HM` diisi otomatis;
+- laporan berstatus `DRAFT` tidak mengubah `pm_plans`;
+- setiap baris laporan final membuat atau menautkan satu rencana pada `pm_plans`;
+- target HM dihitung dari `HM awal + interval`;
+- status awal dihitung menjadi `PLANNED`, `DUE_SOON`, `OVERDUE`, atau `COMPLETED`;
+- rencana yang identik ditautkan tanpa dibuat ulang;
+- menu **Preventive Maintenance** memuat rencana yang berasal dari laporan;
+- void hanya menghapus rencana yang dibuat laporan dan belum diubah planner;
+- rencana manual atau rencana yang telah diubah planner tidak dihapus saat laporan di-void.
+
+#### Persiapan data uji
+
+1. [ ] Jalankan query berikut dan pilih satu unit aktif:
+
+```sql
+SELECT asset_id, asset_code, category, make_model, last_hm_km
+FROM u646470441_ServicePlanBRA.assets
+WHERE is_active = 1
+ORDER BY asset_code
+LIMIT 20;
+```
+
+2. [ ] Catat `asset_id`, `category`, dan `last_hm_km` unit tersebut.
+3. [ ] Catat jumlah rencana awal:
+
+```sql
+SELECT COUNT(*) AS jumlah_awal
+FROM u646470441_ServicePlanBRA.pm_plans;
+```
+
+#### Pengujian otomatisasi form
+
+1. [ ] Buka **Laporan & Form → Maintenance Board A2B**.
+2. [ ] Isi lokasi, tanggal pembaruan, dan pembuat menggunakan pilihan database.
+3. [ ] Pada kolom `Kode unit`, ketik sebagian ID/kode lalu pilih unit dari daftar.
+4. [ ] Pastikan `Jenis A2B` terisi dari `assets.category`.
+5. [ ] Pastikan `HM awal` terisi dari `assets.last_hm_km`.
+6. [ ] Pastikan `Tgl HM` mengikuti tanggal pembaruan jika sebelumnya kosong.
+7. [ ] Pilih interval `500 HM`, `1000 HM`, `1500 HM`, atau `2000 HM`.
+8. [ ] Pastikan tanggal realisasi, parts dipesan, dan parts tiba boleh dikosongkan untuk rencana yang belum selesai.
+
+#### Pengujian draft
+
+1. [ ] Isi form dan tunggu autosave tanpa menekan **Simpan Laporan**.
+2. [ ] Pastikan status laporan masih `DRAFT`.
+3. [ ] Pastikan jumlah `pm_plans` belum bertambah.
+4. [ ] Pastikan belum ada ledger aktif pada `report_pm_integrations` untuk draft tersebut.
+
+#### Pengujian finalisasi dan menu PM
+
+1. [ ] Tekan **Simpan Laporan**.
+2. [ ] Pesan sukses harus menyebut jumlah rencana PM yang dibuat atau ditautkan.
+3. [ ] Buka menu **Preventive Maintenance → Forecast & Due Tracker**.
+4. [ ] Cari kode/ID unit yang baru difinalkan.
+5. [ ] Pastikan unit, interval, HM awal, target HM, status, dan catatan sumber laporan tampil.
+6. [ ] Verifikasi database:
+
+```sql
+SELECT
+    r.report_number,
+    r.status AS report_status,
+    rpi.integration_id,
+    rpi.report_item_position,
+    rpi.owns_pm_plan,
+    rpi.reversed_at,
+    p.pm_plan_id,
+    p.asset_id,
+    p.interval_hm,
+    p.current_smr,
+    p.last_service_hm,
+    p.last_service_date,
+    p.target_due_hm,
+    p.variance_hm,
+    p.status AS pm_status,
+    p.planner_note
+FROM u646470441_ServicePlanBRA.report_pm_integrations rpi
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = rpi.report_id
+LEFT JOIN u646470441_ServicePlanBRA.pm_plans p
+    ON p.pm_plan_id = rpi.pm_plan_id
+ORDER BY rpi.integration_id DESC
+LIMIT 20;
+```
+
+7. [ ] Pastikan `target_due_hm = last_service_hm + interval_hm`.
+8. [ ] Pastikan satu baris laporan hanya memiliki satu ledger integrasi.
+
+#### Pengujian tanpa duplikasi
+
+1. [ ] Muat ulang halaman setelah finalisasi.
+2. [ ] Pastikan jumlah rencana dan ledger untuk laporan yang sama tidak bertambah.
+3. [ ] Bila sudah ada rencana manual dengan unit, tanggal HM, HM awal, interval, dan target yang sama, pastikan laporan menautkannya dengan `owns_pm_plan = 0`.
+
+#### Pengujian void aman
+
+1. [ ] Buat dan finalkan satu laporan Maintenance Board baru.
+2. [ ] Tanpa mengubah rencana PM, lakukan void dari **Riwayat Laporan**.
+3. [ ] Pastikan rencana buatan laporan tersebut dihapus dan `reversed_at` terisi.
+4. [ ] Ulangi dengan laporan baru, lalu ubah `planner_note` rencana melalui database atau fungsi planner sebelum void.
+5. [ ] Lakukan void dan pastikan rencana yang telah diubah tetap ada.
+6. [ ] Pastikan rencana manual lain tidak berubah.
+
+#### Kriteria lulus Batch 6
+
+- [ ] Pilihan unit dan atribut otomatis berasal dari database Laragon.
+- [ ] Draft tidak membuat rencana PM.
+- [ ] Finalisasi membuat atau menautkan tepat satu rencana per baris.
+- [ ] Target HM dan status dihitung benar.
+- [ ] Rencana muncul pada menu Preventive Maintenance.
+- [ ] Retry atau reload tidak membuat duplikasi.
+- [ ] Void menghapus rencana milik laporan yang belum diubah.
+- [ ] Void mempertahankan rencana manual dan rencana yang telah diubah planner.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 6 sebelum Batch 7 dimulai.
+
+### Standar otomatisasi untuk Batch 6 dan batch berikutnya
+
+Untuk seluruh batch berikutnya, field yang memiliki master data wajib menggunakan pola yang sama:
+
+- unit dipilih dari `assets`, lalu kategori, model, lokasi, serial/plat, dan HM diisi otomatis jika field tersedia;
+- lokasi, site, dan project dipilih dari `locations` atau histori site aktif;
+- personel dipilih dari `users` aktif;
+- part dipilih dari `parts`, lalu nomor/nama, satuan, stok, dan harga diisi otomatis;
+- nilai otomatis tetap divalidasi ulang oleh backend saat finalisasi;
+- data operasional hanya berubah pada status `FINAL`, bukan saat autosave draft;
+- setiap integrasi harus idempoten, memiliki ledger sumber, dapat ditelusuri, dan aman saat void;
+- data manual yang tidak dibuat oleh laporan tidak boleh dihapus atau ditimpa.

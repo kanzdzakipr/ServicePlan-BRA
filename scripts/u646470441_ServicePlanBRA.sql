@@ -886,6 +886,43 @@ LOCK TABLES `report_operation_logs` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `report_pm_integrations`
+--
+
+DROP TABLE IF EXISTS `report_pm_integrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `report_pm_integrations` (
+  `integration_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `report_item_position` int unsigned NOT NULL,
+  `pm_plan_id` int NOT NULL,
+  `asset_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `owns_pm_plan` tinyint(1) NOT NULL DEFAULT '1',
+  `applied_payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`integration_id`),
+  UNIQUE KEY `uq_report_pm_line` (`report_id`,`report_item_position`),
+  KEY `idx_report_pm_plan` (`pm_plan_id`),
+  KEY `idx_report_pm_asset` (`asset_id`,`reversed_at`),
+  CONSTRAINT `fk_report_pm_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_report_pm_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `report_pm_integrations`
+--
+
+LOCK TABLES `report_pm_integrations` WRITE;
+/*!40000 ALTER TABLE `report_pm_integrations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `report_pm_integrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `role_permissions`
 --
 

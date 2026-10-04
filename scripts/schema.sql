@@ -462,6 +462,7 @@ DROP TABLE IF EXISTS `inventory_transactions`;
 DROP TABLE IF EXISTS `report_fuel_integrations`;
 DROP TABLE IF EXISTS `report_inspection_integrations`;
 DROP TABLE IF EXISTS `report_operation_logs`;
+DROP TABLE IF EXISTS `report_pm_integrations`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -639,6 +640,28 @@ CREATE TABLE `report_fuel_integrations` (
     KEY `idx_report_fuel_active` (`reversed_at`, `report_id`),
     CONSTRAINT `fk_report_fuel_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_report_fuel_log` FOREIGN KEY (`fuel_log_id`) REFERENCES `fuel_logs` (`fuel_log_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 26. MAINTENANCE BOARD TO PM PLAN (Reversible plan linkage)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `report_pm_integrations` (
+    `integration_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `report_item_position` INT UNSIGNED NOT NULL,
+    `pm_plan_id` INT NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `owns_pm_plan` BOOLEAN NOT NULL DEFAULT TRUE,
+    `applied_payload` LONGTEXT NOT NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    UNIQUE KEY `uq_report_pm_line` (`report_id`, `report_item_position`),
+    KEY `idx_report_pm_plan` (`pm_plan_id`),
+    KEY `idx_report_pm_asset` (`asset_id`, `reversed_at`),
+    CONSTRAINT `fk_report_pm_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_report_pm_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

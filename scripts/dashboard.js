@@ -612,6 +612,7 @@
                 field('departemen', 'Departemen', 'text', false, [], false, 'A2B Departement Equipment')
             ],
             tableTitle: 'Jadwal maintenance unit',
+            optionalColumns: ['realisasi', 'parts_pesan', 'parts_tiba', 'keterangan'],
             columns: [
                 column('kode', 'Kode unit'),
                 column('jenis', 'Jenis A2B'),
@@ -1048,6 +1049,7 @@
 
     function reportReferenceKind(item, isTableColumn = false) {
         const key = String(item?.key || '').toLowerCase();
+        if (isTableColumn && activeSchema?.id === 'maintenance-board' && key === 'kode') return 'assets';
         if (/^(id_alat|kode_alat|code_number|id_unit|unit_id|kode_unit)$/.test(key)) return 'assets';
         if (/^(part_number|pn|no_part|nomor_part)$/.test(key)) return 'partNumbers';
         if (
@@ -1083,7 +1085,9 @@
             return (reportReferences[kind] || []).map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
         }
         if (kind === 'people') {
-            return reportReferences.people.map(person => `<option value="${escapeHtml(person.name)}"></option>`).join('');
+            return reportReferences.people.map(person => (
+                `<option value="${escapeHtml(person.name)}">${escapeHtml([person.role, person.location].filter(Boolean).join(' · '))}</option>`
+            )).join('');
         }
         if (kind === 'categories' || kind === 'models') {
             return (reportReferences[kind] || []).map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
@@ -1165,8 +1169,37 @@
         if (control) control.value = String(value);
     }
 
-    function applyAssetReference(asset) {
+    function applyAssetReference(asset, rowIndex = null) {
         if (!asset) return;
+        if (rowIndex != null) {
+            const row = activeDraft?.rows?.[rowIndex];
+            if (!row) return;
+            const availableKeys = new Set(activeSchema.columns.map(column => column.key));
+            ['kode', 'kode_unit', 'id_unit', 'unit_id', 'id_alat', 'kode_alat'].forEach(key => {
+                if (availableKeys.has(key)) row[key] = asset.id;
+            });
+            ['jenis', 'jenis_alat', 'kategori_alat'].forEach(key => {
+                if (availableKeys.has(key)) row[key] = asset.category;
+            });
+            ['tipe_merk', 'merek_model', 'model', 'tipe_alat'].forEach(key => {
+                if (availableKeys.has(key)) row[key] = asset.makeModel;
+            });
+            ['lokasi', 'lokasi_alat', 'job_site', 'site'].forEach(key => {
+                if (availableKeys.has(key)) row[key] = asset.location;
+            });
+            ['serial_number', 'nomor_seri'].forEach(key => {
+                if (availableKeys.has(key)) row[key] = asset.serialNumber;
+            });
+            if (availableKeys.has('nomor_polisi')) row.nomor_polisi = asset.licensePlate;
+            if (availableKeys.has('hm_awal')) row.hm_awal = String(asset.lastHmKm ?? 0);
+            if (availableKeys.has('hour_meter')) row.hour_meter = String(asset.lastHmKm ?? 0);
+            if (availableKeys.has('tanggal_hm') && !row.tanggal_hm && activeDraft.fields.tanggal) {
+                row.tanggal_hm = activeDraft.fields.tanggal;
+            }
+            calculateRow(row);
+            renderRows();
+            return;
+        }
         ['jenis_alat', 'kategori_alat'].forEach(key => setAutomatedField(key, asset.category));
         ['tipe_merk', 'merek_model', 'model', 'tipe_alat'].forEach(key => setAutomatedField(key, asset.makeModel));
         ['lokasi', 'lokasi_alat', 'job_site', 'site'].forEach(key => setAutomatedField(key, asset.location));
@@ -1186,6 +1219,26 @@
         return reportReferences.parts.find(part => String(
             kind === 'partNames' ? part.name : part.number
         ).toLowerCase() === normalized) || null;
+    }
+
+    function findReferencePerson(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return reportReferences.people.find(person => String(person.name || '').toLowerCase() === normalized) || null;
+    }
+
+    function applyPersonReference(person, control) {
+        if (!person || !control || control.dataset.row != null) return;
+        const key = String(control.dataset.field || '');
+        const roleFieldByPersonField = {
+            dibuat_oleh: 'jabatan',
+            diajukan_oleh: 'jabatan_pengaju',
+            diadakan_oleh: 'jabatan_pengadaan',
+            disetujui_oleh: 'jabatan_penyetuju',
+            diperiksa_oleh: 'jabatan_pemeriksa',
+            diterima_oleh: 'jabatan_penerima'
+        };
+        const roleField = roleFieldByPersonField[key];
+        if (roleField && person.role) setAutomatedField(roleField, person.role);
     }
 
     function applyPartReference(part, rowIndex) {
@@ -1209,11 +1262,18 @@
     function applyReportReferenceSelection(control) {
         const kind = control?.dataset?.referenceKind || '';
         if (kind === 'assets') {
-            applyAssetReference(findReferenceAsset(control.value));
+            applyAssetReference(
+                findReferenceAsset(control.value),
+                control.dataset.row == null ? null : Number(control.dataset.row)
+            );
             return;
         }
         if ((kind === 'partNumbers' || kind === 'partNames') && control.dataset.row != null) {
             applyPartReference(findReferencePart(control.value, kind), Number(control.dataset.row));
+            return;
+        }
+        if (kind === 'people') {
+            applyPersonReference(findReferencePerson(control.value), control);
         }
     }
 
@@ -3137,6 +3197,9 @@
                 record.finalizedAt = result.data.finalizedAt || createdAt;
                 record.updatedAt = result.data.updatedAt || createdAt;
                 record.hasPendingAttachments = safe.hasPendingAttachments;
+                document.dispatchEvent(new CustomEvent('fleetreport:finalized', {
+                    detail: { schemaId: activeSchema.id, reportId: result.data.id }
+                }));
             }
             const records = readHistory();
             records.unshift(record);
@@ -12801,6 +12864,11 @@
     let overrides = {};
     const storageKey = 'fleetmonitor-pm-overrides-v1';
     const thresholdKey = 'fleetmonitor-pm-thresholds-v1';
+    let pmDatabaseState = { status: 'idle', count: 0, message: '' };
+
+    function planKey(plan) {
+        return String(plan?.key || plan?.id || '');
+    }
 
     function escapeHtml(value) {
         return String(value == null ? '' : value)
@@ -12839,7 +12907,7 @@
     }
 
     function mergedPlan(plan) {
-        const override = overrides[plan.id] || {};
+        const override = overrides[planKey(plan)] || {};
         return {
             ...plan,
             ...override,
@@ -12848,7 +12916,7 @@
     }
 
     function linkedAssetForPlan(plan) {
-        const planId = String(plan?.id || '').trim().toUpperCase();
+        const planId = String(plan?.assetId || plan?.id || '').trim().toUpperCase();
         if (!planId || planId.includes('/') || planId === 'BELUM TERPETAKAN') return null;
         const assets = Array.isArray(window.globalData?.assets) ? window.globalData.assets : [];
         return assets.find(asset => String(asset.id || '').trim().toUpperCase() === planId) || null;
@@ -12921,6 +12989,87 @@
         } catch (error) {
             showToast('Browser tidak mengizinkan penyimpanan lokal.', true);
         }
+    }
+
+    async function hydrateReportPmPlans() {
+        pmDatabaseState = { status: 'loading', count: 0, message: 'Memuat rencana dari database...' };
+        const statusElement = document.getElementById('pmDatabaseStatus');
+        if (statusElement) {
+            statusElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat database...';
+            statusElement.disabled = true;
+        }
+        try {
+            const response = await fetch('api/pm_plans.php', {
+                headers: { Accept: 'application/json' },
+                cache: 'no-store'
+            });
+            const payload = await response.json();
+            if (!response.ok || payload?.status !== 'success' || !Array.isArray(payload.data)) {
+                throw new Error(payload?.message || 'Data PM tidak tersedia.');
+            }
+            const reportPlans = payload.data.filter(plan => plan.source_report_id).map(plan => {
+                const realizationMatch = String(plan.planner_note || '').match(/Realisasi:\s*(\d{4}-\d{2}-\d{2})/i);
+                const assetDescription = [plan.asset_category, plan.make_model].filter(Boolean).join(' ')
+                    || plan.asset_code
+                    || plan.asset_id;
+                return {
+                    key: `db-pm-${plan.pm_plan_id}`,
+                    pmPlanId: Number(plan.pm_plan_id),
+                    assetId: String(plan.asset_id || ''),
+                    code: String(plan.asset_code || plan.asset_id || ''),
+                    id: String(plan.asset_id || ''),
+                    asset: assetDescription,
+                    year: Number(plan.year_manufacture) || '—',
+                    warranty: String(plan.warranty_status || 'No Warranty'),
+                    current: Number(plan.current_smr) || 0,
+                    tracking: String(plan.last_service_date || ''),
+                    interval: Number(plan.interval_hm) || 0,
+                    last: Number(plan.last_service_hm) || 0,
+                    lastDate: String(plan.last_service_date || ''),
+                    target: Number(plan.target_due_hm) || 0,
+                    completed: String(plan.status || '').toUpperCase() === 'COMPLETED',
+                    actual: null,
+                    actualDate: realizationMatch?.[1] || null,
+                    location: String(plan.location_name || ''),
+                    plannerNote: String(plan.planner_note || ''),
+                    sourceReportNumber: String(plan.source_report_number || ''),
+                    note: `Terintegrasi dari laporan ${plan.source_report_number || plan.source_report_id}`,
+                    source: 'database-report'
+                };
+            });
+            for (let index = pmPlans.length - 1; index >= 0; index -= 1) {
+                if (pmPlans[index].source === 'database-report') pmPlans.splice(index, 1);
+            }
+            pmPlans.push(...reportPlans);
+            pmDatabaseState = {
+                status: 'success',
+                count: reportPlans.length,
+                message: `${reportPlans.length} rencana dari laporan dimuat`
+            };
+            renderAll();
+        } catch (error) {
+            console.warn('Rencana PM dari laporan belum dapat dimuat:', error);
+            pmDatabaseState = {
+                status: 'error',
+                count: 0,
+                message: error.message || 'Database PM gagal dimuat'
+            };
+            renderAll();
+            showToast(`Data PM database gagal dimuat: ${pmDatabaseState.message}`, true);
+        }
+    }
+
+    function pmDatabaseStatusMarkup() {
+        if (pmDatabaseState.status === 'loading') {
+            return '<i class="fa-solid fa-spinner fa-spin"></i> Memuat database...';
+        }
+        if (pmDatabaseState.status === 'error') {
+            return '<i class="fa-solid fa-triangle-exclamation"></i> Muat ulang database';
+        }
+        if (pmDatabaseState.status === 'success') {
+            return `<i class="fa-solid fa-database"></i> Database: ${pmDatabaseState.count} laporan`;
+        }
+        return '<i class="fa-solid fa-rotate"></i> Muat database';
     }
 
     function createModule() {
@@ -13000,6 +13149,7 @@
             if (event.target.id === 'pmDetailOverlay') closeDetail();
         });
         renderAll();
+        hydrateReportPmPlans();
     }
 
     function updateThresholds() {
@@ -13079,7 +13229,10 @@
             <section class="pm-card">
                 <div class="pm-card-header">
                     <div><div class="pm-card-title"><i class="fa-solid fa-list-check"></i> PM Forecast Tracker</div><div class="pm-card-caption">Target = service terakhir + interval &middot; selisih positif berarti overdue</div></div>
-                    <span class="pm-card-caption" id="pmTableCount"></span>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end">
+                        <span class="pm-card-caption" id="pmTableCount"></span>
+                        <button type="button" class="pm-row-action" id="pmDatabaseStatus" title="Muat ulang rencana PM dari database">${pmDatabaseStatusMarkup()}</button>
+                    </div>
                 </div>
                 <div class="pm-filter-bar">
                     <div class="pm-field"><label>Pencarian unit</label><input id="pmSearch" class="pm-input" type="search" placeholder="Kode, lambung, atau nama asset..."></div>
@@ -13107,6 +13260,7 @@
         document.getElementById('pmSearch').addEventListener('input', renderFiltered);
         document.getElementById('pmStatusFilter').addEventListener('change', renderFiltered);
         document.getElementById('pmCategoryFilter').addEventListener('change', renderFiltered);
+        document.getElementById('pmDatabaseStatus')?.addEventListener('click', hydrateReportPmPlans);
         document.getElementById('pmResetFilter').addEventListener('click', () => {
             document.getElementById('pmSearch').value = '';
             document.getElementById('pmStatusFilter').value = '';
@@ -13205,7 +13359,7 @@
             return `<li class="pm-priority-item">
                 <div class="pm-priority-meter">${meterType(plan)}</div>
                 <div class="pm-priority-copy"><strong>${escapeHtml(plan.code || plan.id)} &middot; <span style="font-family:monospace; color:#0284c7;">${escapeHtml(plan.id)}</span></strong><span>${escapeHtml(plan.asset)}</span></div>
-                <div class="pm-priority-variance"><span>${status === 'OVERDUE' ? '+' : ''}${formatNumber(variance)} ${meterType(plan)}</span><br><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}"><i class="fa-solid fa-arrow-right-to-bracket"></i> Tindak lanjut</button></div>
+                <div class="pm-priority-variance"><span>${status === 'OVERDUE' ? '+' : ''}${formatNumber(variance)} ${meterType(plan)}</span><br><button class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}"><i class="fa-solid fa-arrow-right-to-bracket"></i> Tindak lanjut</button></div>
             </li>`;
         }).join('');
     }
@@ -13218,7 +13372,7 @@
         const categoryFilter = document.getElementById('pmCategoryFilter').value;
         const filtered = pmPlans.filter(rawPlan => {
             const plan = mergedPlan(rawPlan);
-            const haystack = `${plan.code} ${plan.id} ${plan.asset}`.toLowerCase();
+            const haystack = `${plan.code} ${plan.id} ${plan.asset} ${plan.sourceReportNumber || ''}`.toLowerCase();
             return (!query || haystack.includes(query))
                 && (!statusFilter || statusOf(plan) === statusFilter)
                 && (!categoryFilter || categoryOf(plan) === categoryFilter);
@@ -13232,7 +13386,7 @@
             const usage = intervalUsage(plan);
             const barClass = status === 'COMPLETED' ? 'complete' : status === 'OVERDUE' ? 'danger' : ['DUE', 'DUE SOON'].includes(status) ? 'warning' : '';
             return `<tr>
-                <td class="pm-unit-cell"><strong>${escapeHtml(plan.code || 'Kode belum ada')}</strong><span>${escapeHtml(plan.id)} · ${meterType(plan)}</span><span class="pm-link-state ${linkedAsset ? 'linked' : 'unlinked'}"><i class="fa-solid ${linkedAsset ? 'fa-link' : 'fa-link-slash'}"></i> ${linkedAsset ? 'Master Asset' : 'Belum terpetakan'}</span></td>
+                <td class="pm-unit-cell"><strong>${escapeHtml(plan.code || 'Kode belum ada')}</strong><span>${escapeHtml(plan.id)} · ${meterType(plan)}</span><span class="pm-link-state ${linkedAsset ? 'linked' : 'unlinked'}"><i class="fa-solid ${linkedAsset ? 'fa-link' : 'fa-link-slash'}"></i> ${linkedAsset ? 'Master Asset' : 'Belum terpetakan'}</span>${plan.sourceReportNumber ? `<span class="pm-link-state linked" title="Rencana dibuat dari laporan final"><i class="fa-solid fa-file-circle-check"></i> ${escapeHtml(plan.sourceReportNumber)}</span>` : ''}</td>
                 <td class="pm-asset-cell"><strong title="${escapeHtml(plan.asset)}">${escapeHtml(plan.asset)}</strong><span>${plan.year} · ${escapeHtml(plan.warranty)}</span></td>
                 <td><strong>${formatNumber(plan.current)} ${meterType(plan)}</strong><br><span class="pm-card-caption">${formatDate(plan.tracking)}</span></td>
                 <td><strong>${formatNumber(plan.last)}</strong><br><span class="pm-card-caption">${formatDate(plan.lastDate)}</span></td>
@@ -13240,7 +13394,7 @@
                 <td><div class="pm-meter-progress"><div class="pm-meter-progress-head"><span>${Math.min(usage, 999)}%</span><span>${formatNumber(plan.current - plan.last)} / ${formatNumber(plan.interval)}</span></div><div class="pm-meter-bar"><span class="${barClass}" style="width:${Math.min(100, usage)}%"></span></div></div></td>
                 <td><strong style="color:${variance > 0 ? 'var(--pm-red)' : '#4c586c'}">${variance > 0 ? '+' : ''}${formatNumber(variance)}</strong><br><span class="pm-card-caption">${meterType(plan)}</span></td>
                 <td><span class="pm-status ${statusClass(status)}">${statusLabel(status)}</span></td>
-                <td><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}"><i class="fa-regular fa-eye"></i> Detail</button></td>
+                <td><button class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}"><i class="fa-regular fa-eye"></i> Detail</button></td>
             </tr>`;
         }).join('');
         bindDetailButtons(body);
@@ -13262,7 +13416,7 @@
         const firstDayOffset = (new Date(2026, 6, 1).getDay() + 6) % 7;
         const cells = Array.from({ length: firstDayOffset }, () => '<div class="pm-calendar-day empty"></div>');
         for (let day = 1; day <= 31; day++) {
-            cells.push(`<div class="pm-calendar-day"><div class="pm-calendar-number">${day}</div>${(events[day] || []).map(plan => `<button class="pm-calendar-event ${plan.actual == null ? 'incomplete' : ''}" data-pm-detail="${escapeHtml(plan.id)}" title="${escapeHtml(plan.code || plan.id)}">${escapeHtml(plan.code || plan.id)}</button>`).join('')}</div>`);
+            cells.push(`<div class="pm-calendar-day"><div class="pm-calendar-number">${day}</div>${(events[day] || []).map(plan => `<button class="pm-calendar-event ${plan.actual == null ? 'incomplete' : ''}" data-pm-detail="${escapeHtml(planKey(plan))}" title="${escapeHtml(plan.code || plan.id)}">${escapeHtml(plan.code || plan.id)}</button>`).join('')}</div>`);
         }
         const attention = pmPlans.filter(plan => ['OVERDUE', 'DUE', 'DUE SOON'].includes(statusOf(plan)) || (mergedPlan(plan).completed && !mergedPlan(plan).actualDate));
         panel.innerHTML = `
@@ -13280,7 +13434,7 @@
                         ${attention.map(rawPlan => {
             const plan = mergedPlan(rawPlan);
             const status = statusOf(plan);
-            return `<li><div><strong>${escapeHtml(plan.code || plan.id)}</strong><span>${status === 'COMPLETED' ? 'Detail realisasi belum lengkap' : `${status} · ${varianceOf(plan) > 0 ? '+' : ''}${formatNumber(varianceOf(plan))} ${meterType(plan)}`}</span></div><button class="pm-row-action" data-pm-detail="${escapeHtml(plan.id)}">Buka</button></li>`;
+            return `<li><div><strong>${escapeHtml(plan.code || plan.id)}</strong><span>${status === 'COMPLETED' ? 'Detail realisasi belum lengkap' : `${status} · ${varianceOf(plan) > 0 ? '+' : ''}${formatNumber(varianceOf(plan))} ${meterType(plan)}`}</span></div><button class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}">Buka</button></li>`;
         }).join('')}
                     </ul>
                 </section>
@@ -13363,7 +13517,7 @@
     }
 
     function openPlanDetail(planId) {
-        const original = pmPlans.find(plan => plan.id === planId);
+        const original = pmPlans.find(plan => planKey(plan) === planId);
         if (!original) return;
         const plan = mergedPlan(original);
         const status = statusOf(plan);
@@ -13415,7 +13569,7 @@
         `;
         overlay.classList.add('active');
         overlay.querySelectorAll('[data-close-pm]').forEach(button => button.addEventListener('click', closeDetail));
-        document.getElementById('pmSaveExecution').addEventListener('click', () => saveExecution(plan.id));
+        document.getElementById('pmSaveExecution').addEventListener('click', () => saveExecution(planKey(plan)));
     }
 
     function detailStat(label, value) {
@@ -13511,6 +13665,9 @@
     }
     document.addEventListener('fleetdata:ready', renderAll);
     document.addEventListener('fleetproject:change', renderAll);
+    document.addEventListener('fleetreport:finalized', event => {
+        if (event.detail?.schemaId === 'maintenance-board') hydrateReportPmPlans();
+    });
 })();
 (function () {
     'use strict';

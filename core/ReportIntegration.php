@@ -97,6 +97,25 @@ final class ReportIntegration
             CONSTRAINT fk_report_fuel_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
             CONSTRAINT fk_report_fuel_log FOREIGN KEY (fuel_log_id) REFERENCES fuel_logs (fuel_log_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS report_pm_integrations (
+            integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            report_item_position INT UNSIGNED NOT NULL,
+            pm_plan_id INT NOT NULL,
+            asset_id VARCHAR(100) NOT NULL,
+            owns_pm_plan TINYINT(1) NOT NULL DEFAULT 1,
+            applied_payload LONGTEXT NOT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_report_pm_line (report_id, report_item_position),
+            KEY idx_report_pm_plan (pm_plan_id),
+            KEY idx_report_pm_asset (asset_id, reversed_at),
+            CONSTRAINT fk_report_pm_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_report_pm_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     public static function applyFinal(
@@ -118,6 +137,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'lho') {
             return self::applyLho($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'maintenance-board') {
+            return self::applyMaintenanceBoard($db, $reportId, $fields, $rows, $actorId);
         }
         return ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
     }
@@ -262,7 +284,53 @@ final class ReportIntegration
         ]);
         $fuelReversed = $reverseFuel->rowCount();
 
-        $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed;
+        $pmStatement = $db->prepare(
+            "SELECT integration_id, pm_plan_id, owns_pm_plan, applied_payload
+             FROM report_pm_integrations
+             WHERE report_id = :report_id AND reversed_at IS NULL
+             ORDER BY integration_id DESC
+             FOR UPDATE"
+        );
+        $pmStatement->execute([':report_id' => $reportId]);
+        $pmIntegrations = $pmStatement->fetchAll(PDO::FETCH_ASSOC);
+        $pmReversed = 0;
+        $pmDeleted = 0;
+        $pmPreserved = 0;
+
+        foreach ($pmIntegrations as $integration) {
+            $planStatement = $db->prepare(
+                'SELECT pm_plan_id, asset_id, interval_hm, current_smr, last_service_hm,
+                        last_service_date, target_due_hm, variance_hm, status,
+                        warranty_status, planner_note
+                 FROM pm_plans WHERE pm_plan_id = :pm_plan_id FOR UPDATE'
+            );
+            $planStatement->execute([':pm_plan_id' => (int) $integration['pm_plan_id']]);
+            $plan = $planStatement->fetch(PDO::FETCH_ASSOC);
+            $ownsPlan = (int) $integration['owns_pm_plan'] === 1;
+            $snapshot = json_decode((string) $integration['applied_payload'], true);
+
+            if ($ownsPlan && $plan && is_array($snapshot) && self::pmPlanMatchesSnapshot($plan, $snapshot)) {
+                $deletePlan = $db->prepare('DELETE FROM pm_plans WHERE pm_plan_id = :pm_plan_id');
+                $deletePlan->execute([':pm_plan_id' => (int) $integration['pm_plan_id']]);
+                $pmDeleted += $deletePlan->rowCount();
+            } elseif ($ownsPlan && $plan) {
+                // Perubahan planner setelah finalisasi tidak boleh ikut terhapus saat laporan di-void.
+                $pmPreserved++;
+            }
+
+            $reversePm = $db->prepare(
+                'UPDATE report_pm_integrations
+                 SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor_id
+                 WHERE integration_id = :integration_id AND reversed_at IS NULL'
+            );
+            $reversePm->execute([
+                ':actor_id' => $actorId,
+                ':integration_id' => (int) $integration['integration_id'],
+            ]);
+            $pmReversed += $reversePm->rowCount();
+        }
+
+        $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed + $pmReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($inspectionReversed > 0) {
@@ -271,6 +339,11 @@ final class ReportIntegration
         } elseif ($operationReversed > 0) {
             $reversalType = 'operation-reversal';
             $reversalMessage = 'Laporan berhasil dibatalkan, riwayat operasi dan transaksi BBM terkait dinonaktifkan, serta HM dipulihkan jika belum ada pembaruan lanjutan.';
+        } elseif ($pmReversed > 0) {
+            $reversalType = 'pm-plan-reversal';
+            $reversalMessage = $pmPreserved > 0
+                ? "Laporan berhasil dibatalkan. {$pmDeleted} rencana PM dihapus dan {$pmPreserved} rencana yang sudah diubah planner tetap dipertahankan."
+                : "Laporan berhasil dibatalkan dan {$pmDeleted} rencana PM buatan laporan dihapus.";
         }
         return [
             'type' => $reversalType,
@@ -280,7 +353,204 @@ final class ReportIntegration
             'inspectionItemCount' => $inspectionReversed,
             'operationItemCount' => $operationReversed,
             'fuelItemCount' => $fuelReversed,
+            'pmItemCount' => $pmReversed,
+            'pmDeletedCount' => $pmDeleted,
+            'pmPreservedCount' => $pmPreserved,
             'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applyMaintenanceBoard(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existingStatement = $db->prepare(
+            'SELECT COUNT(*) FROM report_pm_integrations WHERE report_id = :report_id'
+        );
+        $existingStatement->execute([':report_id' => $reportId]);
+        $existingCount = (int) $existingStatement->fetchColumn();
+        if ($existingCount > 0) {
+            return [
+                'type' => 'maintenance-board',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => $existingCount,
+                'createdItemCount' => 0,
+                'linkedItemCount' => $existingCount,
+            ];
+        }
+
+        $reportDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal pembaruan');
+        $location = self::requiredText($fields['lokasi'] ?? null, 'Lokasi', 190);
+        $preparedBy = self::requiredText($fields['dibuat_oleh'] ?? null, 'Dibuat oleh', 150);
+        $positionName = self::optionalText($fields['jabatan'] ?? null, 150);
+        $department = self::optionalText($fields['departemen'] ?? null, 150);
+        $itemCount = 0;
+        $createdCount = 0;
+        $linkedCount = 0;
+
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) {
+                continue;
+            }
+
+            $rowNumber = $position + 1;
+            $assetReference = self::requiredText(
+                $row['kode'] ?? ($row['kode_unit'] ?? null),
+                "Kode unit baris {$rowNumber}",
+                100
+            );
+            $assetStatement = $db->prepare(
+                'SELECT asset_id, asset_code, category, make_model, last_hm_km
+                 FROM assets
+                 WHERE is_active = 1 AND (asset_id = :asset_id OR asset_code = :asset_code)
+                 ORDER BY CASE WHEN asset_id = :exact_asset_id THEN 0 ELSE 1 END
+                 LIMIT 2 FOR UPDATE'
+            );
+            $assetStatement->execute([
+                ':asset_id' => $assetReference,
+                ':asset_code' => $assetReference,
+                ':exact_asset_id' => $assetReference,
+            ]);
+            $matchedAssets = $assetStatement->fetchAll(PDO::FETCH_ASSOC);
+            if ($matchedAssets === []) {
+                throw new DomainException("Baris {$rowNumber}: unit {$assetReference} belum ada atau tidak aktif pada Master Asset.");
+            }
+            if (count($matchedAssets) > 1 && (string) $matchedAssets[0]['asset_id'] !== $assetReference) {
+                throw new DomainException("Baris {$rowNumber}: kode unit {$assetReference} cocok ke lebih dari satu aset. Pilih ID aset lengkap dari database.");
+            }
+            $asset = $matchedAssets[0];
+
+            $interval = self::requiredPmInterval($row['interval'] ?? null, $rowNumber);
+            $lastServiceHm = self::requiredNonNegativeDecimal($row['hm_awal'] ?? null, "HM awal baris {$rowNumber}");
+            $lastServiceDate = self::requiredDate($row['tanggal_hm'] ?? null, "Tanggal HM baris {$rowNumber}");
+            $realizationDate = self::optionalDate($row['realisasi'] ?? null);
+            $partsOrderedDate = self::optionalDate($row['parts_pesan'] ?? null);
+            $partsArrivedDate = self::optionalDate($row['parts_tiba'] ?? null);
+            $currentSmr = round((float) $asset['last_hm_km'], 2);
+            $targetDueHm = round($lastServiceHm + $interval, 2);
+            $varianceHm = round($currentSmr - $targetDueHm, 2);
+            $status = $realizationDate !== null
+                ? 'COMPLETED'
+                : ($varianceHm > 0 ? 'OVERDUE' : ($varianceHm >= -50 ? 'DUE_SOON' : 'PLANNED'));
+
+            $latestWarrantyStatement = $db->prepare(
+                'SELECT warranty_status FROM pm_plans
+                 WHERE asset_id = :asset_id AND warranty_status IS NOT NULL AND warranty_status <> \'\'
+                 ORDER BY pm_plan_id DESC LIMIT 1'
+            );
+            $latestWarrantyStatement->execute([':asset_id' => $asset['asset_id']]);
+            $warranty = trim((string) $latestWarrantyStatement->fetchColumn());
+            if ($warranty === '') {
+                $warranty = 'No Warranty';
+            }
+
+            $noteParts = [
+                'Sumber: Maintenance Board',
+                "Lokasi: {$location}",
+                "Dibuat oleh: {$preparedBy}" . ($positionName ? " ({$positionName})" : ''),
+            ];
+            if ($department) $noteParts[] = "Departemen: {$department}";
+            $reportedType = self::optionalText($row['jenis'] ?? null, 150);
+            if ($reportedType) $noteParts[] = "Jenis: {$reportedType}";
+            if ($partsOrderedDate) $noteParts[] = "Parts dipesan: {$partsOrderedDate}";
+            if ($partsArrivedDate) $noteParts[] = "Parts tiba: {$partsArrivedDate}";
+            if ($realizationDate) $noteParts[] = "Realisasi: {$realizationDate} (HM aktual tidak tersedia pada form)";
+            $rowNote = self::optionalText($row['keterangan'] ?? null, 1000);
+            if ($rowNote) $noteParts[] = $rowNote;
+            $plannerNote = implode('; ', $noteParts);
+
+            $snapshot = [
+                'asset_id' => (string) $asset['asset_id'],
+                'interval_hm' => $interval,
+                'current_smr' => $currentSmr,
+                'last_service_hm' => $lastServiceHm,
+                'last_service_date' => $lastServiceDate,
+                'target_due_hm' => $targetDueHm,
+                'variance_hm' => $varianceHm,
+                'status' => $status,
+                'warranty_status' => $warranty,
+                'planner_note' => $plannerNote,
+            ];
+
+            $duplicatePlan = $db->prepare(
+                'SELECT pm_plan_id FROM pm_plans
+                 WHERE asset_id = :asset_id AND interval_hm = :interval_hm
+                   AND ABS(last_service_hm - :last_service_hm) < 0.005
+                   AND last_service_date = :last_service_date
+                   AND ABS(target_due_hm - :target_due_hm) < 0.005
+                 ORDER BY pm_plan_id DESC LIMIT 1 FOR UPDATE'
+            );
+            $duplicatePlan->execute([
+                ':asset_id' => $snapshot['asset_id'],
+                ':interval_hm' => $snapshot['interval_hm'],
+                ':last_service_hm' => $snapshot['last_service_hm'],
+                ':last_service_date' => $snapshot['last_service_date'],
+                ':target_due_hm' => $snapshot['target_due_hm'],
+            ]);
+            $pmPlanId = (int) $duplicatePlan->fetchColumn();
+            $ownsPlan = $pmPlanId < 1;
+
+            if ($ownsPlan) {
+                $insertPlan = $db->prepare(
+                    'INSERT INTO pm_plans
+                     (asset_id, interval_hm, current_smr, last_service_hm, last_service_date,
+                      target_due_hm, variance_hm, status, warranty_status, planner_note)
+                     VALUES (:asset_id, :interval_hm, :current_smr, :last_service_hm, :last_service_date,
+                      :target_due_hm, :variance_hm, :status, :warranty_status, :planner_note)'
+                );
+                $insertPlan->execute([
+                    ':asset_id' => $snapshot['asset_id'],
+                    ':interval_hm' => $snapshot['interval_hm'],
+                    ':current_smr' => $snapshot['current_smr'],
+                    ':last_service_hm' => $snapshot['last_service_hm'],
+                    ':last_service_date' => $snapshot['last_service_date'],
+                    ':target_due_hm' => $snapshot['target_due_hm'],
+                    ':variance_hm' => $snapshot['variance_hm'],
+                    ':status' => $snapshot['status'],
+                    ':warranty_status' => $snapshot['warranty_status'],
+                    ':planner_note' => $snapshot['planner_note'],
+                ]);
+                $pmPlanId = (int) $db->lastInsertId();
+                $createdCount++;
+            } else {
+                $linkedCount++;
+            }
+
+            $insertIntegration = $db->prepare(
+                'INSERT INTO report_pm_integrations
+                 (report_id, report_item_position, pm_plan_id, asset_id, owns_pm_plan,
+                  applied_payload, created_by)
+                 VALUES (:report_id, :position, :pm_plan_id, :asset_id, :owns_pm_plan,
+                  :applied_payload, :created_by)'
+            );
+            $insertIntegration->execute([
+                ':report_id' => $reportId,
+                ':position' => $position,
+                ':pm_plan_id' => $pmPlanId,
+                ':asset_id' => $asset['asset_id'],
+                ':owns_pm_plan' => $ownsPlan ? 1 : 0,
+                ':applied_payload' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+                ':created_by' => $actorId,
+            ]);
+            $itemCount++;
+        }
+
+        if ($itemCount === 0) {
+            throw new DomainException('Maintenance Board tidak memiliki baris unit yang dapat diintegrasikan.');
+        }
+
+        return [
+            'type' => 'maintenance-board',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => $itemCount,
+            'createdItemCount' => $createdCount,
+            'linkedItemCount' => $linkedCount,
+            'message' => "Laporan berhasil difinalkan: {$createdCount} rencana PM dibuat dan {$linkedCount} rencana yang sudah ada ditautkan tanpa duplikasi.",
         ];
     }
 
@@ -996,6 +1266,35 @@ final class ReportIntegration
             throw new DomainException("{$label} wajib diisi.");
         }
         return self::nonNegativeDecimal($value, $label);
+    }
+
+    private static function requiredPmInterval($value, int $rowNumber): int
+    {
+        $raw = trim((string) $value);
+        if (!preg_match('/^(500|1000|1500|2000)(?:\s*HM)?$/i', $raw, $matches)) {
+            throw new DomainException(
+                "Baris {$rowNumber}: interval PM harus dipilih dari 500 HM, 1000 HM, 1500 HM, atau 2000 HM."
+            );
+        }
+        return (int) $matches[1];
+    }
+
+    private static function pmPlanMatchesSnapshot(array $plan, array $snapshot): bool
+    {
+        foreach (['asset_id', 'last_service_date', 'status', 'warranty_status', 'planner_note'] as $key) {
+            if ((string) ($plan[$key] ?? '') !== (string) ($snapshot[$key] ?? '')) {
+                return false;
+            }
+        }
+        if ((int) ($plan['interval_hm'] ?? 0) !== (int) ($snapshot['interval_hm'] ?? 0)) {
+            return false;
+        }
+        foreach (['current_smr', 'last_service_hm', 'target_due_hm', 'variance_hm'] as $key) {
+            if (abs((float) ($plan[$key] ?? 0) - (float) ($snapshot[$key] ?? 0)) >= 0.005) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static function classifyP2hCondition(string $condition, int $rowNumber): string

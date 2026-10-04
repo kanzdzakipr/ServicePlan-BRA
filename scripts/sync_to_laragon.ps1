@@ -2,7 +2,8 @@ param(
     [string]$TargetDir = "C:\laragon\www\ServicePlan-BRA",
     [string]$DbName = "u646470441_ServicePlanBRA",
     [string]$DbUser = "root",
-    [string]$DbPassword = ""
+    [string]$DbPassword = "",
+    [switch]$PreserveDatabase
 )
 
 # ============================================================================
@@ -107,7 +108,10 @@ if ($mysqlExe -and (Test-Path $mysqlExe)) {
         throw "Gagal membuat atau mengakses database '$DbName'."
     }
     
-    if (Test-Path $sqlPath) {
+    if ($PreserveDatabase) {
+        Write-Host "`n[3/4] Database import skipped (-PreserveDatabase); existing Laragon test data is retained." -ForegroundColor Yellow
+        Write-Host "[4/4] Local passwords were not reset." -ForegroundColor Yellow
+    } elseif (Test-Path $sqlPath) {
         Write-Host "`n[3/4] Importing SQL schema & data into local MySQL..." -ForegroundColor Cyan
         $mysqlSourcePath = $sqlPath.Replace('\', '/')
         & $mysqlExe @mysqlArgs --default-character-set=utf8mb4 $DbName -e "source $mysqlSourcePath"
