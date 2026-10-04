@@ -217,6 +217,39 @@ final class ReportIntegration
             CONSTRAINT fk_report_purchase_order_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
             CONSTRAINT fk_report_purchase_order_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS procurement_monitoring_logs (
+            monitoring_log_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL, report_item_position INT UNSIGNED NOT NULL,
+            spb_id VARCHAR(50) NOT NULL, purchase_request_item_id VARCHAR(100) NOT NULL,
+            ppb_id VARCHAR(50) NULL,
+            previous_request_status VARCHAR(40) NOT NULL, applied_request_status VARCHAR(40) NOT NULL,
+            previous_item_status VARCHAR(50) NOT NULL, applied_item_status VARCHAR(50) NOT NULL,
+            previous_order_status VARCHAR(40) NULL, applied_order_status VARCHAR(40) NULL,
+            monitoring_payload LONGTEXT NOT NULL, created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL, reversed_by INT NULL,
+            UNIQUE KEY uq_procurement_monitoring_line (report_id, report_item_position),
+            KEY idx_procurement_monitoring_spb (spb_id, reversed_at),
+            CONSTRAINT fk_procurement_monitoring_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS parts_weekly_snapshots (
+            snapshot_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL, report_item_position INT UNSIGNED NOT NULL,
+            part_id INT NOT NULL, report_date DATE NOT NULL, yard VARCHAR(190) NOT NULL,
+            week_number INT NOT NULL, report_year INT NOT NULL,
+            incoming_total INT NOT NULL, outgoing_total INT NOT NULL,
+            reported_balance INT NOT NULL, actual_balance INT NOT NULL, balance_variance INT NOT NULL,
+            unit_price DECIMAL(15,2) NOT NULL, reported_value DECIMAL(15,2) NOT NULL,
+            notes VARCHAR(500) NULL, created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL, reversed_by INT NULL,
+            UNIQUE KEY uq_parts_weekly_line (report_id, report_item_position),
+            KEY idx_parts_weekly_part (part_id, report_date, reversed_at),
+            CONSTRAINT fk_parts_weekly_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_parts_weekly_part FOREIGN KEY (part_id) REFERENCES parts (part_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     public static function applyFinal(
@@ -250,6 +283,12 @@ final class ReportIntegration
         }
         if ($templateKey === 'ppb') {
             return self::applyPpb($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'procurement-monitoring') {
+            return self::applyProcurementMonitoring($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'parts-weekly') {
+            return self::applyPartsWeekly($db, $reportId, $fields, $rows, $actorId);
         }
         return ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
     }
@@ -594,8 +633,17 @@ final class ReportIntegration
             $purchaseOrderReversed += $reverse->rowCount();
         }
 
+        $monitoringStatement=$db->prepare('SELECT * FROM procurement_monitoring_logs WHERE report_id=:report_id AND reversed_at IS NULL ORDER BY monitoring_log_id DESC FOR UPDATE');$monitoringStatement->execute([':report_id'=>$reportId]);$monitoringReversed=0;
+        foreach($monitoringStatement->fetchAll(PDO::FETCH_ASSOC) as $log){
+            $request=$db->prepare('SELECT status FROM purchase_requests WHERE spb_id=:id FOR UPDATE');$request->execute([':id'=>$log['spb_id']]);if($request->fetchColumn()===$log['applied_request_status'])$db->prepare('UPDATE purchase_requests SET status=:status WHERE spb_id=:id')->execute([':status'=>$log['previous_request_status'],':id'=>$log['spb_id']]);
+            $item=$db->prepare('SELECT status FROM purchase_request_items WHERE id=:id FOR UPDATE');$item->execute([':id'=>$log['purchase_request_item_id']]);if($item->fetchColumn()===$log['applied_item_status'])$db->prepare('UPDATE purchase_request_items SET status=:status WHERE id=:id')->execute([':status'=>$log['previous_item_status'],':id'=>$log['purchase_request_item_id']]);
+            if($log['ppb_id']!==null){$order=$db->prepare('SELECT status FROM purchase_orders WHERE ppb_id=:id FOR UPDATE');$order->execute([':id'=>$log['ppb_id']]);if($order->fetchColumn()===$log['applied_order_status'])$db->prepare('UPDATE purchase_orders SET status=:status WHERE ppb_id=:id')->execute([':status'=>$log['previous_order_status'],':id'=>$log['ppb_id']]);}
+            $reverse=$db->prepare('UPDATE procurement_monitoring_logs SET reversed_at=CURRENT_TIMESTAMP,reversed_by=:actor WHERE monitoring_log_id=:id AND reversed_at IS NULL');$reverse->execute([':actor'=>$actorId,':id'=>$log['monitoring_log_id']]);$monitoringReversed+=$reverse->rowCount();
+        }
+        $weekly=$db->prepare('UPDATE parts_weekly_snapshots SET reversed_at=CURRENT_TIMESTAMP,reversed_by=:actor WHERE report_id=:report_id AND reversed_at IS NULL');$weekly->execute([':actor'=>$actorId,':report_id'=>$reportId]);$weeklyReversed=$weekly->rowCount();
+
         $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
-            + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed;
+            + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed + $monitoringReversed + $weeklyReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($inspectionReversed > 0) {
@@ -624,6 +672,12 @@ final class ReportIntegration
             $reversalMessage = $purchaseOrderPreserved > 0
                 ? "Laporan berhasil dibatalkan. {$purchaseOrderPreserved} PPB tetap dipertahankan karena sudah diproses pengadaan."
                 : "Laporan berhasil dibatalkan dan {$purchaseOrderDeleted} PPB buatan laporan dihapus.";
+        } elseif ($monitoringReversed > 0) {
+            $reversalType='procurement-monitoring-reversal';
+            $reversalMessage="Laporan berhasil dibatalkan dan {$monitoringReversed} pembaruan status pengadaan dipulihkan jika belum diubah lagi.";
+        } elseif ($weeklyReversed > 0) {
+            $reversalType='parts-weekly-reversal';
+            $reversalMessage="Laporan berhasil dibatalkan dan {$weeklyReversed} snapshot stok mingguan dinonaktifkan tanpa mengubah stok aktual.";
         }
         return [
             'type' => $reversalType,
@@ -645,8 +699,64 @@ final class ReportIntegration
             'purchaseOrderItemCount' => $purchaseOrderReversed,
             'purchaseOrderDeletedCount' => $purchaseOrderDeleted,
             'purchaseOrderPreservedCount' => $purchaseOrderPreserved,
+            'procurementMonitoringItemCount' => $monitoringReversed,
+            'partsWeeklyItemCount' => $weeklyReversed,
             'message' => $reversalMessage,
         ];
+    }
+
+    private static function applyProcurementMonitoring(PDO $db, string $reportId, array $fields, array $rows, int $actorId): array
+    {
+        $existing = $db->prepare('SELECT COUNT(*) FROM procurement_monitoring_logs WHERE report_id = :report_id');
+        $existing->execute([':report_id' => $reportId]);
+        $existingCount = (int)$existing->fetchColumn();
+        if ($existingCount > 0) return ['type'=>'procurement-monitoring','applied'=>false,'alreadyApplied'=>true,'itemCount'=>$existingCount];
+        $requestStatusMap=['Menunggu Approval'=>'Submitted','Disetujui'=>'Approved','Dipesan'=>'Ordered','Dalam Pengiriman'=>'Ordered','Tiba'=>'Issued','Diserahkan'=>'Issued','Tertunda'=>'Submitted','Dibatalkan'=>'Draft'];
+        $orderStatusMap=['Menunggu Approval'=>'Submitted','Disetujui'=>'Approved','Dipesan'=>'Ordered','Dalam Pengiriman'=>'Ordered','Tiba'=>'Received','Diserahkan'=>'Received','Tertunda'=>'Submitted','Dibatalkan'=>'Cancelled'];
+        $count=0;
+        foreach(array_values($rows) as $position=>$row){
+            if(!is_array($row)||!self::rowHasContent($row))continue;$line=$position+1;
+            $spbId=self::requiredText($row['nomor_spb']??null,"Nomor SPB baris {$line}",50);
+            $woId=self::requiredText($row['nomor_jo']??null,"Nomor JO baris {$line}",50);
+            $assetId=self::requiredText($row['id_unit']??null,"ID unit baris {$line}",100);
+            $partNumber=self::requiredText($row['part_number']??null,"Part number baris {$line}",100);
+            $quantity=self::requiredNonNegativeInteger($row['qty']??null,"Qty baris {$line}",false);
+            $status=self::requiredText($row['status_pengadaan']??null,"Status pengadaan baris {$line}",40);
+            if(!isset($requestStatusMap[$status]))throw new DomainException("Status pengadaan baris {$line} tidak dikenali.");
+            $request=$db->prepare('SELECT spb_id,wo_id,asset_id,status FROM purchase_requests WHERE spb_id=:spb_id FOR UPDATE');$request->execute([':spb_id'=>$spbId]);$requestRow=$request->fetch(PDO::FETCH_ASSOC);
+            if(!$requestRow)throw new DomainException("SPB {$spbId} pada baris {$line} tidak ditemukan.");
+            if($requestRow['wo_id']!==$woId||$requestRow['asset_id']!==$assetId)throw new DomainException("Referensi SPB, JO, dan unit pada baris {$line} tidak konsisten.");
+            $item=$db->prepare('SELECT id,status,qty_requested FROM purchase_request_items WHERE spb_id=:spb_id AND part_number=:part_number LIMIT 1 FOR UPDATE');$item->execute([':spb_id'=>$spbId,':part_number'=>$partNumber]);$itemRow=$item->fetch(PDO::FETCH_ASSOC);
+            if(!$itemRow)throw new DomainException("Part {$partNumber} belum tercatat pada SPB {$spbId}.");
+            if((int)$itemRow['qty_requested']!==$quantity)throw new DomainException("Qty part {$partNumber} pada baris {$line} tidak sesuai dengan SPB {$spbId}.");
+            $order=$db->prepare('SELECT po.ppb_id,po.status FROM purchase_orders po INNER JOIN purchase_order_items poi ON poi.ppb_id=po.ppb_id WHERE po.spb_id=:spb_id AND poi.part_number=:part_number ORDER BY po.created_at DESC LIMIT 1 FOR UPDATE');$order->execute([':spb_id'=>$spbId,':part_number'=>$partNumber]);$orderRow=$order->fetch(PDO::FETCH_ASSOC)?:null;
+            $appliedRequest=$requestStatusMap[$status];$appliedOrder=$orderRow?$orderStatusMap[$status]:null;
+            $db->prepare('UPDATE purchase_requests SET status=:status WHERE spb_id=:spb_id')->execute([':status'=>$appliedRequest,':spb_id'=>$spbId]);
+            $db->prepare('UPDATE purchase_request_items SET status=:status WHERE id=:id')->execute([':status'=>$status,':id'=>$itemRow['id']]);
+            if($orderRow)$db->prepare('UPDATE purchase_orders SET status=:status WHERE ppb_id=:ppb_id')->execute([':status'=>$appliedOrder,':ppb_id'=>$orderRow['ppb_id']]);
+            $insert=$db->prepare('INSERT INTO procurement_monitoring_logs(report_id,report_item_position,spb_id,purchase_request_item_id,ppb_id,previous_request_status,applied_request_status,previous_item_status,applied_item_status,previous_order_status,applied_order_status,monitoring_payload,created_by) VALUES(:report_id,:position,:spb_id,:item_id,:ppb_id,:previous_request,:applied_request,:previous_item,:applied_item,:previous_order,:applied_order,:payload,:created_by)');
+            $insert->execute([':report_id'=>$reportId,':position'=>$position,':spb_id'=>$spbId,':item_id'=>$itemRow['id'],':ppb_id'=>$orderRow['ppb_id']??null,':previous_request'=>$requestRow['status'],':applied_request'=>$appliedRequest,':previous_item'=>$itemRow['status'],':applied_item'=>$status,':previous_order'=>$orderRow['status']??null,':applied_order'=>$appliedOrder,':payload'=>json_encode($row,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),':created_by'=>$actorId]);$count++;
+        }
+        if($count===0)throw new DomainException('Monitoring procurement tidak memiliki baris yang dapat diintegrasikan.');
+        return ['type'=>'procurement-monitoring','applied'=>true,'alreadyApplied'=>false,'itemCount'=>$count,'message'=>"Laporan berhasil difinalkan dan {$count} status pengadaan diperbarui."];
+    }
+
+    private static function applyPartsWeekly(PDO $db,string $reportId,array $fields,array $rows,int $actorId):array
+    {
+        $existing=$db->prepare('SELECT COUNT(*) FROM parts_weekly_snapshots WHERE report_id=:report_id');$existing->execute([':report_id'=>$reportId]);$existingCount=(int)$existing->fetchColumn();
+        if($existingCount>0)return ['type'=>'parts-weekly','applied'=>false,'alreadyApplied'=>true,'itemCount'=>$existingCount];
+        $yard=self::requiredText($fields['yard']??null,'Yard',190);$week=self::requiredNonNegativeInteger($fields['pekan']??null,'Pekan',false);$year=self::requiredNonNegativeInteger($fields['tahun']??null,'Tahun',false);$date=self::requiredDate($fields['tanggal']??null,'Tanggal laporan');
+        if($week>53||$year<2000||$year>2100)throw new DomainException('Pekan atau tahun laporan mingguan tidak valid.');$count=0;
+        foreach(array_values($rows) as $position=>$row){if(!is_array($row)||!self::rowHasContent($row))continue;$line=$position+1;
+            $name=self::requiredText($row['nama']??null,"Nama part baris {$line}",150);$unit=self::requiredText($row['satuan']??null,"Satuan baris {$line}",20);$price=self::requiredNonNegativeDecimal($row['harga']??null,"Harga baris {$line}");
+            $inPast=self::requiredNonNegativeInteger($row['in_lalu']??null,"In lalu baris {$line}",true);$inNow=self::requiredNonNegativeInteger($row['in_ini']??null,"In pekan ini baris {$line}",true);$outPast=self::requiredNonNegativeInteger($row['out_lalu']??null,"Out lalu baris {$line}",true);$outNow=self::requiredNonNegativeInteger($row['out_ini']??null,"Out pekan ini baris {$line}",true);
+            $inTotal=self::requiredNonNegativeInteger($row['in_total']??null,"In total baris {$line}",true);$outTotal=self::requiredNonNegativeInteger($row['out_total']??null,"Out total baris {$line}",true);$balance=self::requiredNonNegativeInteger($row['saldo']??null,"Saldo baris {$line}",true);$value=self::requiredNonNegativeDecimal($row['nilai_saldo']??null,"Nilai saldo baris {$line}");
+            if($inTotal!==$inPast+$inNow||$outTotal!==$outPast+$outNow||$balance!==$inTotal-$outTotal||abs($value-$balance*$price)>=0.01)throw new DomainException("Perhitungan rekap parts baris {$line} tidak konsisten.");
+            $part=$db->prepare('SELECT part_id,unit_measure,stock_qty FROM parts WHERE part_name=:name LIMIT 1 FOR UPDATE');$part->execute([':name'=>$name]);$master=$part->fetch(PDO::FETCH_ASSOC);if(!$master)throw new DomainException("Part {$name} belum ada pada Master Part.");if(strcasecmp($master['unit_measure'],$unit)!==0)throw new DomainException("Satuan part baris {$line} tidak cocok dengan Master Part.");
+            $insert=$db->prepare('INSERT INTO parts_weekly_snapshots(report_id,report_item_position,part_id,report_date,yard,week_number,report_year,incoming_total,outgoing_total,reported_balance,actual_balance,balance_variance,unit_price,reported_value,notes,created_by) VALUES(:report_id,:position,:part_id,:date,:yard,:week,:year,:incoming,:outgoing,:reported,:actual,:variance,:price,:value,:notes,:created_by)');
+            $actual=(int)$master['stock_qty'];$insert->execute([':report_id'=>$reportId,':position'=>$position,':part_id'=>$master['part_id'],':date'=>$date,':yard'=>$yard,':week'=>$week,':year'=>$year,':incoming'=>$inTotal,':outgoing'=>$outTotal,':reported'=>$balance,':actual'=>$actual,':variance'=>$balance-$actual,':price'=>$price,':value'=>$value,':notes'=>self::optionalText($row['keterangan']??null,500),':created_by'=>$actorId]);$count++;}
+        if($count===0)throw new DomainException('Report Parts Weekly tidak memiliki baris yang dapat dicatat.');
+        return ['type'=>'parts-weekly','applied'=>true,'alreadyApplied'=>false,'itemCount'=>$count,'message'=>"Laporan berhasil difinalkan dan {$count} snapshot stok mingguan dicatat tanpa mengubah stok aktual."];
     }
 
     private static function applyPpb(PDO $db, string $reportId, array $fields, array $rows, int $actorId): array

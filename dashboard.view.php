@@ -26,7 +26,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261004-10"></script>
+    <script src="scripts/dashboard.js?v=20261004-11"></script>
     <script src="scripts/unit-properties.js?v=20260827-1"></script>
 </head>
 

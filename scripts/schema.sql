@@ -503,6 +503,8 @@ DROP TABLE IF EXISTS `report_pm_integrations`;
 DROP TABLE IF EXISTS `report_work_order_integrations`;
 DROP TABLE IF EXISTS `report_purchase_request_integrations`;
 DROP TABLE IF EXISTS `report_purchase_order_integrations`;
+DROP TABLE IF EXISTS `procurement_monitoring_logs`;
+DROP TABLE IF EXISTS `parts_weekly_snapshots`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -761,6 +763,42 @@ CREATE TABLE `report_purchase_order_integrations` (
     KEY `idx_report_purchase_order_asset` (`asset_id`,`reversed_at`),
     CONSTRAINT `fk_report_purchase_order_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_report_purchase_order_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 30. PROCUREMENT MONITORING & WEEKLY PARTS SNAPSHOTS
+-- ----------------------------------------------------------------------------
+CREATE TABLE `procurement_monitoring_logs` (
+    `monitoring_log_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL, `report_item_position` INT UNSIGNED NOT NULL,
+    `spb_id` VARCHAR(50) NOT NULL, `purchase_request_item_id` VARCHAR(100) NOT NULL,
+    `ppb_id` VARCHAR(50) NULL,
+    `previous_request_status` VARCHAR(40) NOT NULL, `applied_request_status` VARCHAR(40) NOT NULL,
+    `previous_item_status` VARCHAR(50) NOT NULL, `applied_item_status` VARCHAR(50) NOT NULL,
+    `previous_order_status` VARCHAR(40) NULL, `applied_order_status` VARCHAR(40) NULL,
+    `monitoring_payload` LONGTEXT NOT NULL, `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL, `reversed_by` INT NULL,
+    UNIQUE KEY `uq_procurement_monitoring_line` (`report_id`,`report_item_position`),
+    KEY `idx_procurement_monitoring_spb` (`spb_id`,`reversed_at`),
+    CONSTRAINT `fk_procurement_monitoring_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `parts_weekly_snapshots` (
+    `snapshot_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL, `report_item_position` INT UNSIGNED NOT NULL,
+    `part_id` INT NOT NULL, `report_date` DATE NOT NULL, `yard` VARCHAR(190) NOT NULL,
+    `week_number` INT NOT NULL, `report_year` INT NOT NULL,
+    `incoming_total` INT NOT NULL, `outgoing_total` INT NOT NULL,
+    `reported_balance` INT NOT NULL, `actual_balance` INT NOT NULL, `balance_variance` INT NOT NULL,
+    `unit_price` DECIMAL(15,2) NOT NULL, `reported_value` DECIMAL(15,2) NOT NULL,
+    `notes` VARCHAR(500) NULL, `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL, `reversed_by` INT NULL,
+    UNIQUE KEY `uq_parts_weekly_line` (`report_id`,`report_item_position`),
+    KEY `idx_parts_weekly_part` (`part_id`,`report_date`,`reversed_at`),
+    CONSTRAINT `fk_parts_weekly_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_parts_weekly_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

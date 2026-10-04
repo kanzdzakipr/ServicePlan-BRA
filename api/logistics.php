@@ -23,6 +23,16 @@ switch ($method) {
                 $stockStatement = $db->query(
                     "SELECT p.part_id, p.part_number, p.part_name, p.unit_measure, p.stock_qty,
                             p.min_stock_qty, p.location_warehouse,
+                            (SELECT pws.reported_balance FROM parts_weekly_snapshots pws
+                             WHERE pws.part_id=p.part_id AND pws.reversed_at IS NULL
+                             ORDER BY pws.report_date DESC,pws.snapshot_id DESC LIMIT 1) AS weekly_reported_balance,
+                            (SELECT pws.balance_variance FROM parts_weekly_snapshots pws
+                             WHERE pws.part_id=p.part_id AND pws.reversed_at IS NULL
+                             ORDER BY pws.report_date DESC,pws.snapshot_id DESC LIMIT 1) AS weekly_balance_variance,
+                            (SELECT rr.report_number FROM parts_weekly_snapshots pws
+                             INNER JOIN report_records rr ON rr.report_id=pws.report_id
+                             WHERE pws.part_id=p.part_id AND pws.reversed_at IS NULL
+                             ORDER BY pws.report_date DESC,pws.snapshot_id DESC LIMIT 1) AS weekly_report_number,
                             COALESCE(SUM(CASE
                                 WHEN it.movement_type = 'IN' AND it.reversed_at IS NULL THEN it.quantity
                                 ELSE 0
@@ -48,7 +58,11 @@ switch ($method) {
                         'saldo' => (int) $row['stock_qty'],
                         'minimumStock' => (int) $row['min_stock_qty'],
                         'gudang' => (string) $row['location_warehouse'],
-                        'source' => 'Database parts / integrasi laporan',
+                        'weeklyReportedBalance' => $row['weekly_reported_balance'] !== null ? (int)$row['weekly_reported_balance'] : null,
+                        'weeklyBalanceVariance' => $row['weekly_balance_variance'] !== null ? (int)$row['weekly_balance_variance'] : null,
+                        'source' => $row['weekly_report_number']
+                            ? 'Database parts / ' . $row['weekly_report_number'] . ' (selisih mingguan ' . (int)$row['weekly_balance_variance'] . ')'
+                            : 'Database parts / integrasi laporan',
                     ];
                 }, $stockStatement->fetchAll(PDO::FETCH_ASSOC));
 

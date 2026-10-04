@@ -1718,3 +1718,131 @@ LIMIT 50;
 - [ ] Void aman membedakan PPB baru dan PPB yang sudah diproses.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 9 sebelum Batch 10 dimulai.
+
+### Batch 10 — Procurement Monitoring dan Parts Weekly
+
+Status implementasi: **SIAP UJI**.
+
+Batch ini terdiri dari dua integrasi:
+
+- **Procurement Monitoring** memakai SPB, Work Order, unit, dan part yang sudah ada di database. Finalisasi memperbarui status item SPB, status Purchase Request, dan status PPB/Purchase Order terkait bila tersedia.
+- **Parts Weekly** memakai Master Part. Finalisasi menyimpan snapshot saldo mingguan dan selisih terhadap stok aktual, tetapi tidak mengubah stok aktual pada tabel `parts`.
+
+#### A. Pengujian Procurement Monitoring
+
+1. [ ] Pastikan tersedia SPB aktif yang mempunyai item dan, bila ingin menguji status PPB, sudah mempunyai PPB dari Batch 9.
+2. [ ] Buka **Laporan & Form → Procurement Monitoring**.
+3. [ ] Pilih `Nomor SPB` dari daftar database.
+4. [ ] Pastikan `Nomor JO` dan `ID Unit` terisi otomatis dari SPB terpilih.
+5. [ ] Pada tabel monitoring, pilih SPB dan part yang benar dari data Master Part/SPB.
+6. [ ] Isi kuantitas, target kedatangan, estimasi tiba, lead time, PIC, dan status pengadaan.
+7. [ ] Tunggu autosave dan pastikan laporan masih `DRAFT`; status SPB, item, dan PPB belum berubah.
+8. [ ] Tekan **Simpan Laporan** untuk finalisasi.
+9. [ ] Buka **Spare Part & Logistik**, cari unit/SPB tersebut, lalu pastikan status pengadaan mengikuti laporan.
+
+Pemetaan status utama:
+
+| Status laporan | Purchase Request | Item SPB | Purchase Order/PPB |
+|---|---|---|---|
+| Menunggu Approval | Submitted | Menunggu Approval | Submitted |
+| Disetujui | Approved | Disetujui | Approved |
+| Dipesan | Ordered | Dipesan | Ordered |
+| Dalam Pengiriman | Ordered | Dalam Pengiriman | Ordered |
+| Tiba | Issued | Tiba | Received |
+| Diserahkan | Issued | Diserahkan | Received |
+| Tertunda | Submitted | Tertunda | Submitted |
+| Dibatalkan | Draft | Dibatalkan | Cancelled |
+
+Verifikasi database:
+
+```sql
+SELECT
+    r.report_number,
+    pml.position,
+    pml.spb_id,
+    pml.purchase_request_item_id,
+    pml.ppb_id,
+    pml.previous_request_status,
+    pml.applied_request_status,
+    pml.previous_item_status,
+    pml.applied_item_status,
+    pml.previous_order_status,
+    pml.applied_order_status,
+    pml.reversed_at,
+    pr.status AS current_request_status,
+    pri.status AS current_item_status,
+    po.status AS current_order_status
+FROM u646470441_ServicePlanBRA.procurement_monitoring_logs pml
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = pml.report_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_requests pr
+    ON pr.spb_id = pml.spb_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_request_items pri
+    ON pri.id = pml.purchase_request_item_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_orders po
+    ON po.ppb_id = pml.ppb_id
+ORDER BY pml.monitoring_log_id DESC
+LIMIT 50;
+```
+
+#### B. Pengujian Parts Weekly
+
+1. [ ] Buka **Laporan & Form → Parts Weekly**.
+2. [ ] Isi yard, minggu, tahun, dan tanggal laporan.
+3. [ ] Pilih nama part dari Master Part.
+4. [ ] Pastikan satuan dan harga satuan terisi otomatis bila tersedia.
+5. [ ] Isi penerimaan lalu/minggu ini serta pengeluaran lalu/minggu ini.
+6. [ ] Pastikan total penerimaan, total pengeluaran, saldo, dan nilai dihitung otomatis.
+7. [ ] Catat `stock_qty` part sebelum finalisasi.
+8. [ ] Tekan **Simpan Laporan**.
+9. [ ] Buka **Spare Part & Logistik → Stok** dan cari part tersebut.
+10. [ ] Pastikan sumber stok menampilkan nomor laporan mingguan dan selisih antara saldo laporan dengan stok aktual.
+11. [ ] Pastikan `stock_qty` tetap sama; laporan mingguan bukan transaksi masuk/keluar stok.
+
+Verifikasi database:
+
+```sql
+SELECT
+    r.report_number,
+    pws.position,
+    p.part_number,
+    p.part_name,
+    p.stock_qty AS actual_stock_now,
+    pws.reported_balance,
+    pws.actual_balance,
+    pws.variance,
+    pws.unit_price,
+    pws.reported_value,
+    pws.report_date,
+    pws.week_number,
+    pws.report_year,
+    pws.reversed_at
+FROM u646470441_ServicePlanBRA.parts_weekly_snapshots pws
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = pws.report_id
+JOIN u646470441_ServicePlanBRA.parts p
+    ON p.part_id = pws.part_id
+ORDER BY pws.snapshot_id DESC
+LIMIT 50;
+```
+
+#### C. Pengujian idempotensi dan void
+
+1. [ ] Muat ulang setelah finalisasi; pastikan jumlah log/snapshot laporan yang sama tidak bertambah.
+2. [ ] Void laporan Procurement Monitoring yang status targetnya belum diubah lagi oleh proses lain.
+3. [ ] Pastikan status SPB, item, dan PPB kembali ke status sebelumnya.
+4. [ ] Uji lagi setelah status target diubah manual/proses lain; void tidak boleh menimpa status yang lebih baru.
+5. [ ] Void laporan Parts Weekly; snapshot ditandai `reversed_at`, sedangkan stok aktual tetap tidak berubah.
+
+#### Kriteria lulus Batch 10
+
+- [ ] SPB, Work Order, unit, dan part dipilih dari database Laragon serta terisi otomatis.
+- [ ] Draft Procurement Monitoring tidak mengubah status transaksi.
+- [ ] Finalisasi memperbarui status SPB, item, dan PPB terkait secara konsisten.
+- [ ] Retry tidak membuat log monitoring atau snapshot mingguan ganda.
+- [ ] Void monitoring hanya memulihkan status yang belum berubah setelah integrasi.
+- [ ] Parts Weekly menyimpan snapshot, saldo, nilai, dan selisih stok dengan benar.
+- [ ] Parts Weekly tidak pernah mengubah stok aktual.
+- [ ] Snapshot aktif terlihat sebagai sumber pembanding pada menu stok.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 10 sebelum Batch 11 dimulai.

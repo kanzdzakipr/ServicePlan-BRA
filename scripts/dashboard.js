@@ -1055,7 +1055,7 @@
         if (isTableColumn && activeSchema?.id === 'maintenance-board' && key === 'kode') return 'assets';
         if (/^(id_alat|kode_alat|code_number|id_unit|unit_id|kode_unit)$/.test(key)) return 'assets';
         if (/^(nomor_wo|wo_id|nomor_jo)$/.test(key)) return 'workOrders';
-        if (activeSchema?.id === 'ppb' && key === 'nomor_spb') return 'purchaseRequests';
+        if (['ppb', 'procurement-monitoring'].includes(activeSchema?.id) && key === 'nomor_spb') return 'purchaseRequests';
         if (isTableColumn && activeSchema?.id === 'ppb' && key === 'sc') return 'partNumbers';
         if (isTableColumn && activeSchema?.id === 'spb' && key === 'spesifikasi') return 'partNumbers';
         if (/^(part_number|pn|no_part|nomor_part)$/.test(key)) return 'partNumbers';
@@ -1309,6 +1309,15 @@
         if (kind === 'workOrders') {
             const workOrder = findReferenceWorkOrder(control.value);
             if (!workOrder) return;
+            if (control.dataset.row != null) {
+                const row = activeDraft?.rows?.[Number(control.dataset.row)];
+                if (row) {
+                    row.nomor_jo = workOrder.id;
+                    row.id_unit = workOrder.assetId;
+                    renderRows();
+                }
+                return;
+            }
             setAutomatedField('kode_unit', workOrder.assetId);
             setAutomatedField('urgensi', ['High', 'Emergency'].includes(workOrder.priority) ? 'Emergency' : 'Normal');
             const asset = findReferenceAsset(workOrder.assetId);
@@ -1319,6 +1328,16 @@
         if (kind === 'purchaseRequests') {
             const request = findReferencePurchaseRequest(control.value);
             if (!request) return;
+            if (control.dataset.row != null) {
+                const row = activeDraft?.rows?.[Number(control.dataset.row)];
+                if (row) {
+                    row.nomor_spb = request.id;
+                    row.nomor_jo = request.workOrderId;
+                    row.id_unit = request.assetId;
+                    renderRows();
+                }
+                return;
+            }
             if (request.location) {
                 setAutomatedField('project', request.location);
                 setAutomatedField('tempat_penyerahan', request.location);
@@ -5116,10 +5135,12 @@
     window.SpareLogistics = api;
 
     document.addEventListener('fleetreport:finalized', event => {
-        if (['spb', 'ppb'].includes(event.detail?.schemaId)) loadDatabaseRecords();
+        if (['spb', 'ppb', 'procurement-monitoring'].includes(event.detail?.schemaId)) loadDatabaseRecords();
+        if (event.detail?.schemaId === 'parts-weekly') window.loadLogisticsData?.('stock');
     });
     document.addEventListener('fleetreport:voided', event => {
-        if (['spb', 'ppb'].includes(event.detail?.schemaId)) loadDatabaseRecords();
+        if (['spb', 'ppb', 'procurement-monitoring'].includes(event.detail?.schemaId)) loadDatabaseRecords();
+        if (event.detail?.schemaId === 'parts-weekly') window.loadLogisticsData?.('stock');
     });
 
     if (document.readyState === 'loading') {

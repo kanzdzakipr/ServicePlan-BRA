@@ -1073,6 +1073,48 @@ LOCK TABLES `report_purchase_order_integrations` WRITE;
 /*!40000 ALTER TABLE `report_purchase_order_integrations` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- Table structure for table `procurement_monitoring_logs`
+DROP TABLE IF EXISTS `procurement_monitoring_logs`;
+CREATE TABLE `procurement_monitoring_logs` (
+  `monitoring_log_id` bigint unsigned NOT NULL AUTO_INCREMENT, `report_id` char(36) NOT NULL,
+  `report_item_position` int unsigned NOT NULL, `spb_id` varchar(50) NOT NULL,
+  `purchase_request_item_id` varchar(100) NOT NULL, `ppb_id` varchar(50) DEFAULT NULL,
+  `previous_request_status` varchar(40) NOT NULL, `applied_request_status` varchar(40) NOT NULL,
+  `previous_item_status` varchar(50) NOT NULL, `applied_item_status` varchar(50) NOT NULL,
+  `previous_order_status` varchar(40) DEFAULT NULL, `applied_order_status` varchar(40) DEFAULT NULL,
+  `monitoring_payload` longtext NOT NULL, `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL, PRIMARY KEY (`monitoring_log_id`),
+  UNIQUE KEY `uq_procurement_monitoring_line` (`report_id`,`report_item_position`),
+  KEY `idx_procurement_monitoring_spb` (`spb_id`,`reversed_at`),
+  CONSTRAINT `fk_procurement_monitoring_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+LOCK TABLES `procurement_monitoring_logs` WRITE;
+/*!40000 ALTER TABLE `procurement_monitoring_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `procurement_monitoring_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+-- Table structure for table `parts_weekly_snapshots`
+DROP TABLE IF EXISTS `parts_weekly_snapshots`;
+CREATE TABLE `parts_weekly_snapshots` (
+  `snapshot_id` bigint unsigned NOT NULL AUTO_INCREMENT, `report_id` char(36) NOT NULL,
+  `report_item_position` int unsigned NOT NULL, `part_id` int NOT NULL, `report_date` date NOT NULL,
+  `yard` varchar(190) NOT NULL, `week_number` int NOT NULL, `report_year` int NOT NULL,
+  `incoming_total` int NOT NULL, `outgoing_total` int NOT NULL, `reported_balance` int NOT NULL,
+  `actual_balance` int NOT NULL, `balance_variance` int NOT NULL, `unit_price` decimal(15,2) NOT NULL,
+  `reported_value` decimal(15,2) NOT NULL, `notes` varchar(500) DEFAULT NULL, `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL, PRIMARY KEY (`snapshot_id`),
+  UNIQUE KEY `uq_parts_weekly_line` (`report_id`,`report_item_position`),
+  KEY `idx_parts_weekly_part` (`part_id`,`report_date`,`reversed_at`),
+  CONSTRAINT `fk_parts_weekly_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_parts_weekly_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+LOCK TABLES `parts_weekly_snapshots` WRITE;
+/*!40000 ALTER TABLE `parts_weekly_snapshots` DISABLE KEYS */;
+/*!40000 ALTER TABLE `parts_weekly_snapshots` ENABLE KEYS */;
+UNLOCK TABLES;
+
 --
 -- Table structure for table `role_permissions`
 --
