@@ -252,7 +252,7 @@
             fields: [
                 field('project', 'Project', 'text', true),
                 field('tanggal', 'Tanggal pemeriksaan', 'date', true),
-                field('nomor_urut', 'Nomor urut'),
+                field('nomor_urut', 'Nomor pemeriksaan / urut', 'text', true),
                 field('kode_alat', 'Nomor kode alat', 'text', true),
                 field('merek_alat', 'Merek alat'),
                 field('jenis_alat', 'Jenis alat', 'text', true),
@@ -261,7 +261,10 @@
                 field('nomor_seri', 'Nomor seri'),
                 field('kapasitas', 'Kapasitas'),
                 field('merek_mesin', 'Merek mesin / motor'),
-                field('tipe_mesin', 'Tipe mesin / motor')
+                field('tipe_mesin', 'Tipe mesin / motor'),
+                field('hm_om', 'HM/OM saat pemeriksaan', 'number', true),
+                field('diperiksa_oleh', 'Diperiksa oleh', 'text', true),
+                field('disetujui_oleh', 'Disetujui / diketahui oleh', 'text', true)
             ],
             tableTitle: 'Item pemeriksaan unit',
             columns: [column('kelompok', 'Kelompok', 'select', false, ['Attachment', 'Perlengkapan / tools', 'Engine Group', 'Electrical Group', 'Transmission Group', 'Undercarriage', 'Safety']), column('item', 'Uraian pemeriksaan'), column('kondisi', 'Kondisi', 'select', false, ['Baik', 'Normal', 'Perlu perbaikan', 'Tidak ada']), column('keterangan', 'Keterangan')]
@@ -1287,6 +1290,11 @@
         setAutomatedField('nomor_polisi', asset.licensePlate);
         if (activeSchema?.id === 'bast-mde1') {
             setAutomatedField('project_asal', asset.location);
+            setAutomatedField('hm_om', asset.lastHmKm);
+        }
+        if (activeSchema?.id === 'mde-02') {
+            setAutomatedField('merek_alat', asset.makeModel);
+            setAutomatedField('tahun', asset.yearManufacture);
             setAutomatedField('hm_om', asset.lastHmKm);
         }
         setAutomatedField('hm_sebelum', asset.lastHmKm);
@@ -17453,6 +17461,64 @@
             }
         }
     };
+
+    async function refreshIntegratedInspectionData() {
+        if (!window.globalData) return null;
+
+        try {
+            const [initResponse, inspectionsResponse] = await Promise.all([
+                fetch('api/init.php', {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                    cache: 'no-store'
+                }),
+                fetch('api/inspections.php', {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                    cache: 'no-store'
+                })
+            ]);
+            const [initPayload, inspectionsPayload] = await Promise.all([
+                initResponse.json(),
+                inspectionsResponse.json()
+            ]);
+
+            if (!initResponse.ok || !Array.isArray(initPayload?.assets)) {
+                throw new Error(initPayload?.error || 'Data aset tidak dapat dimuat ulang.');
+            }
+            if (!inspectionsResponse.ok
+                || inspectionsPayload?.status !== 'success'
+                || !Array.isArray(inspectionsPayload.data)) {
+                throw new Error(inspectionsPayload?.message || 'Data inspeksi tidak dapat dimuat ulang.');
+            }
+
+            const latestAssets = new Map(initPayload.assets.map(asset => [String(asset.id || '').toLowerCase(), asset]));
+            window.globalData.assets = (window.globalData.assets || []).map(asset => {
+                const latest = latestAssets.get(String(asset.id || '').toLowerCase());
+                return latest ? { ...asset, ...latest } : asset;
+            });
+            window.globalData.inspections = inspectionsPayload.data;
+
+            if (typeof window.syncFleetState === 'function') {
+                window.syncFleetState();
+            } else {
+                window.FleetInspectionModule.refresh();
+            }
+            return inspectionsPayload.data;
+        } catch (error) {
+            console.error('Data integrasi pemeriksaan gagal dimuat ulang:', error);
+            return null;
+        }
+    }
+
+    window.refreshIntegratedInspectionData = refreshIntegratedInspectionData;
+    const integratedInspectionSchemas = ['p2h-excavator', 'p2h-roller', 'mde-02'];
+    document.addEventListener('fleetreport:finalized', event => {
+        if (integratedInspectionSchemas.includes(event.detail?.schemaId)) refreshIntegratedInspectionData();
+    });
+    document.addEventListener('fleetreport:voided', event => {
+        if (integratedInspectionSchemas.includes(event.detail?.schemaId)) refreshIntegratedInspectionData();
+    });
 
     function escapeHtml(unsafe) {
         return (unsafe || '').toString()

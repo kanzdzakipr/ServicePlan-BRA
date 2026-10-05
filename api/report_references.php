@@ -8,6 +8,7 @@ $db = Database::getInstance();
 try {
     $assetScope = api_location_scope_clause('a', 'report_reference_asset_location_id');
     $assetSql = "SELECT a.asset_id, a.asset_code, a.category, a.make_model, a.serial_number,
+                        a.year_manufacture,
                         a.license_plate, a.last_hm_km, a.status, a.current_location_id,
                         a.raw_location_notes,
                         l.location_name
@@ -26,6 +27,7 @@ try {
         'category' => (string) $row['category'],
         'makeModel' => (string) ($row['make_model'] ?? ''),
         'serialNumber' => (string) ($row['serial_number'] ?? ''),
+        'yearManufacture' => $row['year_manufacture'] !== null ? (int) $row['year_manufacture'] : '',
         'licensePlate' => (string) ($row['license_plate'] ?? ''),
         'locationId' => $row['current_location_id'] !== null ? (int) $row['current_location_id'] : null,
         'location' => trim((string) ($row['location_name'] ?? '')) !== ''

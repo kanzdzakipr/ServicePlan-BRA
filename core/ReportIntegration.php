@@ -321,6 +321,9 @@ final class ReportIntegration
         if (in_array($templateKey, ['p2h-excavator', 'p2h-roller'], true)) {
             return self::applyP2h($db, $templateKey, $reportId, $fields, $rows, $actorId);
         }
+        if ($templateKey === 'mde-02') {
+            return self::applyMde02($db, $reportId, $fields, $rows, $actorId);
+        }
         if ($templateKey === 'lho') {
             return self::applyLho($db, $reportId, $fields, $rows, $actorId);
         }
@@ -2586,6 +2589,214 @@ final class ReportIntegration
             'result' => $overallResult,
             'assetId' => (string) $asset['asset_id'],
             'message' => "Laporan berhasil difinalkan dan masuk ke Riwayat Inspeksi & P2H ({$statusLabel}).",
+        ];
+    }
+
+    private static function applyMde02(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existingStatement = $db->prepare(
+            'SELECT inspection_id FROM report_inspection_integrations WHERE report_id = :report_id LIMIT 1'
+        );
+        $existingStatement->execute([':report_id' => $reportId]);
+        $existingInspectionId = $existingStatement->fetchColumn();
+        if ($existingInspectionId !== false) {
+            return [
+                'type' => 'mde-02-inspection',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => 1,
+                'inspectionId' => (int) $existingInspectionId,
+            ];
+        }
+
+        $inspectionNumber = self::requiredText($fields['nomor_urut'] ?? null, 'Nomor pemeriksaan', 100);
+        $inspectionDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal pemeriksaan');
+        $assetReference = self::requiredText($fields['kode_alat'] ?? null, 'Nomor kode alat', 100);
+        $project = self::requiredText($fields['project'] ?? null, 'Project', 190);
+        $reportedCategory = self::requiredText($fields['jenis_alat'] ?? null, 'Jenis alat', 100);
+        $reportedHm = self::requiredNonNegativeDecimal($fields['hm_om'] ?? null, 'HM/OM saat pemeriksaan');
+        $inspectorName = self::requiredText($fields['diperiksa_oleh'] ?? null, 'Pemeriksa', 150);
+        $approverName = self::requiredText($fields['disetujui_oleh'] ?? null, 'Pihak yang menyetujui', 150);
+
+        $assetStatement = $db->prepare(
+            'SELECT asset_id, asset_code, category, make_model, serial_number, year_manufacture,
+                    status, current_location_id, raw_location_notes, last_hm_km
+             FROM assets
+             WHERE is_active = 1 AND (asset_id = :asset_id OR asset_code = :asset_code)
+             ORDER BY CASE WHEN asset_id = :exact_asset_id THEN 0 ELSE 1 END
+             LIMIT 2 FOR UPDATE'
+        );
+        $assetStatement->execute([
+            ':asset_id' => $assetReference,
+            ':asset_code' => $assetReference,
+            ':exact_asset_id' => $assetReference,
+        ]);
+        $matchedAssets = $assetStatement->fetchAll(PDO::FETCH_ASSOC);
+        if ($matchedAssets === []) {
+            throw new DomainException("Unit {$assetReference} belum ada atau tidak aktif pada Master Asset.");
+        }
+        if (count($matchedAssets) > 1 && (string) $matchedAssets[0]['asset_id'] !== $assetReference) {
+            throw new DomainException("Kode unit {$assetReference} cocok ke lebih dari satu aset. Pilih ID aset lengkap dari database.");
+        }
+        $asset = $matchedAssets[0];
+        if (strcasecmp((string) $asset['category'], $reportedCategory) !== 0) {
+            throw new DomainException('Jenis alat MDE-02 tidak sesuai dengan Master Asset.');
+        }
+        if (in_array((string) $asset['status'], ['ACCIDENT_HOLD', 'ACCIDENT HOLD', 'INACTIVE'], true)) {
+            throw new DomainException("Unit {$asset['asset_id']} berstatus {$asset['status']} dan tidak dapat diproses melalui MDE-02.");
+        }
+        $currentHm = (float) $asset['last_hm_km'];
+        if ($reportedHm + 0.005 < $currentHm) {
+            throw new DomainException('HM/OM MDE-02 tidak boleh lebih kecil dari HM/KM Master Asset.');
+        }
+
+        $reportedModel = self::optionalText($fields['tipe_alat'] ?? null, 100);
+        if ($reportedModel !== null && trim((string) $asset['make_model']) !== ''
+            && strcasecmp($reportedModel, trim((string) $asset['make_model'])) !== 0) {
+            throw new DomainException('Tipe alat MDE-02 tidak sesuai dengan Master Asset.');
+        }
+        $reportedSerial = self::optionalText($fields['nomor_seri'] ?? null, 100);
+        if ($reportedSerial !== null && trim((string) $asset['serial_number']) !== ''
+            && strcasecmp($reportedSerial, trim((string) $asset['serial_number'])) !== 0) {
+            throw new DomainException('Nomor seri MDE-02 tidak sesuai dengan Master Asset.');
+        }
+        $reportedYear = trim((string) ($fields['tahun'] ?? ''));
+        if ($reportedYear !== '' && $asset['year_manufacture'] !== null
+            && (int) $reportedYear !== (int) $asset['year_manufacture']) {
+            throw new DomainException('Tahun pembuatan MDE-02 tidak sesuai dengan Master Asset.');
+        }
+
+        $inspectorStatement = $db->prepare(
+            'SELECT user_id, full_name FROM users WHERE is_active = 1 AND full_name = :full_name ORDER BY user_id LIMIT 1'
+        );
+        $inspectorStatement->execute([':full_name' => $inspectorName]);
+        $inspector = $inspectorStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$inspector) {
+            throw new DomainException("Pemeriksa {$inspectorName} tidak ditemukan pada Master Personel.");
+        }
+        $inspectorStatement->execute([':full_name' => $approverName]);
+        if (!$inspectorStatement->fetch(PDO::FETCH_ASSOC)) {
+            throw new DomainException("Pihak yang menyetujui {$approverName} tidak ditemukan pada Master Personel.");
+        }
+
+        $failures = [];
+        $warnings = [];
+        $details = [];
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) continue;
+            $line = $position + 1;
+            $group = self::requiredText($row['kelompok'] ?? null, "Kelompok baris {$line}", 150);
+            $item = self::requiredText($row['item'] ?? null, "Uraian pemeriksaan baris {$line}", 255);
+            $condition = self::requiredText($row['kondisi'] ?? null, "Kondisi baris {$line}", 100);
+            $classification = self::classifyP2hCondition($condition, $line);
+            $notes = self::optionalText($row['keterangan'] ?? null, 500) ?? '';
+            $details[] = [
+                'group' => $group,
+                'item' => $item,
+                'condition' => $condition,
+                'action' => $notes,
+                'classification' => $classification,
+            ];
+            $finding = "{$group} - {$item}" . ($notes !== '' ? ": {$notes}" : '');
+            if ($classification === 'FAIL') $failures[] = $finding;
+            elseif ($classification === 'WARNING') $warnings[] = $finding;
+        }
+        if ($details === []) {
+            throw new DomainException('MDE-02 harus memiliki sedikitnya satu item pemeriksaan.');
+        }
+
+        $overallResult = $failures !== [] ? 'FAIL' : ($warnings !== [] ? 'WARNING' : 'PASS');
+        $statusLabel = $overallResult === 'FAIL'
+            ? 'GAGAL (PERLU PEMERIKSAAN)'
+            : ($overallResult === 'WARNING' ? 'LULUS DENGAN CATATAN' : 'LULUS (PASS)');
+        $findings = array_merge($failures, $warnings);
+        $summary = $findings !== []
+            ? implode('; ', $findings)
+            : 'Seluruh item MDE-02 dalam kondisi baik/normal.';
+
+        $previousStatus = (string) $asset['status'];
+        $appliedStatus = $previousStatus;
+        if ($overallResult !== 'PASS' && $previousStatus !== 'BREAKDOWN') {
+            $appliedStatus = 'INSPEKSI';
+        }
+        $appliedHm = max($reportedHm, $currentHm);
+
+        $payload = [
+            'id' => $inspectionNumber,
+            'date' => $inspectionDate . ' 00:00',
+            'unitId' => (string) $asset['asset_id'],
+            'category' => (string) $asset['category'],
+            'operator' => (string) $inspector['full_name'],
+            'nrp' => '',
+            'site' => $project,
+            'hmStart' => $reportedHm,
+            'hmEnd' => $reportedHm,
+            'status' => $statusLabel,
+            'criticalFails' => count($failures),
+            'warnings' => count($warnings),
+            'notes' => $summary,
+            'details' => $details,
+            'approvedBy' => $approverName,
+            'source' => 'Laporan & Form',
+            'sourceReportId' => $reportId,
+            'schemaId' => 'mde-02',
+        ];
+
+        $insertInspection = $db->prepare(
+            'INSERT INTO inspections
+             (asset_id, inspector_id, inspection_date, current_hm_km, overall_result, findings_summary, payload_json)
+             VALUES (:asset_id, :inspector_id, :inspection_date, :current_hm, :result, :summary, :payload)'
+        );
+        $insertInspection->execute([
+            ':asset_id' => $asset['asset_id'],
+            ':inspector_id' => (int) $inspector['user_id'],
+            ':inspection_date' => $inspectionDate . ' 00:00:00',
+            ':current_hm' => $reportedHm,
+            ':result' => $overallResult,
+            ':summary' => $summary,
+            ':payload' => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+        ]);
+        $inspectionId = (int) $db->lastInsertId();
+
+        $db->prepare(
+            'UPDATE assets SET status = :status, last_hm_km = :last_hm WHERE asset_id = :asset_id'
+        )->execute([
+            ':status' => $appliedStatus,
+            ':last_hm' => $appliedHm,
+            ':asset_id' => $asset['asset_id'],
+        ]);
+
+        $db->prepare(
+            'INSERT INTO report_inspection_integrations
+             (report_id, inspection_id, asset_id, previous_asset_status, applied_asset_status,
+              previous_hm, applied_hm, created_by)
+             VALUES (:report_id, :inspection_id, :asset_id, :previous_status, :applied_status,
+              :previous_hm, :applied_hm, :created_by)'
+        )->execute([
+            ':report_id' => $reportId,
+            ':inspection_id' => $inspectionId,
+            ':asset_id' => $asset['asset_id'],
+            ':previous_status' => $previousStatus,
+            ':applied_status' => $appliedStatus,
+            ':previous_hm' => $currentHm,
+            ':applied_hm' => $appliedHm,
+            ':created_by' => $actorId,
+        ]);
+
+        return [
+            'type' => 'mde-02-inspection',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => 1,
+            'inspectionId' => $inspectionId,
+            'result' => $overallResult,
+            'assetId' => (string) $asset['asset_id'],
+            'message' => "MDE-02 {$inspectionNumber} berhasil difinalkan dan masuk ke Riwayat Inspeksi & P2H ({$statusLabel}).",
         ];
     }
 

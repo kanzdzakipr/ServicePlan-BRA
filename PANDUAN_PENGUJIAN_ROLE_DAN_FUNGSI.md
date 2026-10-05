@@ -2244,3 +2244,35 @@ Panduan langkah demi langkah dan query verifikasi tersedia pada `PANDUAN_PENGUJI
 - [ ] Void tidak menimpa perubahan lanjutan.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 14 sebelum Batch 15 dimulai.
+
+### Batch 15 — MDE-02 ke Inspeksi & P2H
+
+Integrasi Batch 15 menghubungkan form **Kartu Pemeriksaan Alat Berat (MDE-02)** dengan tabel `inspections`, menu **Condition Monitoring → Inspeksi & P2H**, serta status dan HM/KM Master Asset.
+
+Hasil yang wajib diverifikasi:
+
+- unit, kategori, model, nomor seri, tahun, HM/OM, pemeriksa, dan penyetuju mengambil referensi database Laragon;
+- draft tidak mengubah inspeksi maupun Master Asset;
+- finalisasi membuat satu inspeksi dan langsung memuat ulang Riwayat Inspeksi & P2H;
+- hasil PASS mempertahankan status unit, sedangkan hasil bermasalah mengubah status menjadi `INSPEKSI` kecuali unit sudah `BREAKDOWN`;
+- HM yang menurun serta data unit/personel yang tidak sesuai ditolak;
+- retry tidak membuat inspeksi ganda;
+- void memulihkan status/HM secara aman dan tidak menimpa perubahan lanjutan.
+
+Panduan langkah demi langkah dan query verifikasi tersedia pada `PANDUAN_PENGUJIAN_BATCH_15.md`.
+
+#### Kriteria lulus Batch 15
+
+- [ ] Pilihan unit dan personel berasal dari database Laragon.
+- [ ] Spesifikasi unit dan HM/OM terisi otomatis.
+- [ ] Draft tidak membuat inspeksi atau mengubah Master Asset.
+- [ ] Finalisasi membuat tepat satu record `inspections`.
+- [ ] Hasil langsung tampil pada menu Inspeksi & P2H.
+- [ ] PASS mempertahankan status unit dan memperbarui HM.
+- [ ] FAIL mengubah status unit menjadi `INSPEKSI` secara aman.
+- [ ] Semua validasi HM, unit, personel, dan checklist bekerja.
+- [ ] Retry tidak membuat duplikasi.
+- [ ] Void memulihkan data sebelum pemeriksaan bila aman.
+- [ ] Void tidak menimpa perubahan lanjutan.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 15 sebelum batch berikutnya dimulai.
