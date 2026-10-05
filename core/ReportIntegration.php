@@ -311,6 +311,9 @@ final class ReportIntegration
         if ($templateKey === 'spb') {
             return self::applySpb($db, $reportId, $fields, $rows, $actorId);
         }
+        if (in_array($templateKey, ['sppu', 'sppu-006-pf04-cs10'], true)) {
+            return self::applyUrgentPartsRequest($db, $templateKey, $reportId, $fields, $rows, $actorId);
+        }
         if ($templateKey === 'ppb') {
             return self::applyPpb($db, $reportId, $fields, $rows, $actorId);
         }
@@ -1224,6 +1227,91 @@ final class ReportIntegration
         $ledger = $db->prepare('INSERT INTO report_purchase_order_integrations (report_id, ppb_id, asset_id, owns_purchase_order, applied_payload, created_by) VALUES (:report_id,:ppb_id,:asset_id,:owns,:payload,:created_by)');
         $ledger->execute([':report_id'=>$reportId, ':ppb_id'=>$ppbId, ':asset_id'=>$request['asset_id'], ':owns'=>$ownsOrder ? 1 : 0, ':payload'=>json_encode($snapshot, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR), ':created_by'=>$actorId]);
         return ['type'=>'ppb','applied'=>true,'alreadyApplied'=>false,'itemCount'=>count($items),'ppbId'=>$ppbId,'spbId'=>$spbId,'createdItemCount'=>$ownsOrder?count($items):0,'linkedItemCount'=>$ownsOrder?0:count($items),'message'=>$ownsOrder ? "Laporan berhasil difinalkan dan PPB {$ppbId} dengan ".count($items).' item dibuat.' : "Laporan berhasil ditautkan ke PPB {$ppbId} tanpa duplikasi."];
+    }
+
+    private static function applyUrgentPartsRequest(
+        PDO $db,
+        string $templateKey,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $mappedRows = [];
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) {
+                continue;
+            }
+            $line = $position + 1;
+            $partName = self::requiredText($row['nama'] ?? null, "Nama part baris {$line}", 180);
+            $partNumber = self::requiredText($row['pn'] ?? null, "Part number baris {$line}", 100);
+            $unitMeasure = self::requiredText($row['satuan'] ?? null, "Satuan baris {$line}", 20);
+            $quantity = self::requiredNonNegativeInteger($row['jumlah'] ?? null, "Jumlah baris {$line}", false);
+
+            $partStatement = $db->prepare(
+                'SELECT part_number, part_name, unit_measure
+                 FROM parts
+                 WHERE part_number = :part_number OR part_name = :part_name
+                 ORDER BY CASE WHEN part_number = :exact_part_number THEN 0 ELSE 1 END
+                 LIMIT 1'
+            );
+            $partStatement->execute([
+                ':part_number' => $partNumber,
+                ':part_name' => $partName,
+                ':exact_part_number' => $partNumber,
+            ]);
+            $masterPart = $partStatement->fetch(PDO::FETCH_ASSOC);
+            if (!$masterPart) {
+                throw new DomainException("Part {$partNumber} pada baris {$line} belum ada pada Master Part.");
+            }
+            if (strcasecmp(trim((string) $masterPart['unit_measure']), $unitMeasure) !== 0) {
+                throw new DomainException(
+                    "Satuan {$unitMeasure} pada baris {$line} tidak cocok dengan Master Part {$masterPart['part_number']} ({$masterPart['unit_measure']})."
+                );
+            }
+
+            $detailParts = [];
+            foreach (['analisa', 'solusi', 'kelompok'] as $detailKey) {
+                $detail = self::optionalText($row[$detailKey] ?? null, 120);
+                if ($detail !== null) $detailParts[] = $detail;
+            }
+            if ($templateKey === 'sppu-006-pf04-cs10') {
+                foreach (['analisa', 'dampak', 'tindak_lanjut'] as $fieldKey) {
+                    $detail = self::optionalText($fields[$fieldKey] ?? null, 120);
+                    if ($detail !== null) $detailParts[] = $detail;
+                }
+            }
+
+            $mappedRows[] = [
+                'nama' => (string) $masterPart['part_name'],
+                'spesifikasi' => (string) $masterPart['part_number'],
+                'satuan' => (string) $masterPart['unit_measure'],
+                'jumlah' => $quantity,
+                'keterangan' => mb_substr(implode(' | ', $detailParts), 0, 70),
+                'status' => 'Diajukan',
+            ];
+        }
+        if ($mappedRows === []) {
+            throw new DomainException('SPPU harus memiliki sedikitnya satu part urgent.');
+        }
+
+        $priority = (string) ($fields['prioritas'] ?? 'Urgent');
+        $urgency = $priority === 'Prioritas normal' ? 'Normal' : 'Emergency';
+        $spbFields = [
+            'nomor_spb' => self::requiredText($fields['nomor'] ?? null, 'Nomor SPPU', 50),
+            'nomor_wo' => $fields['nomor_wo'] ?? null,
+            'kode_unit' => $fields['kode_unit'] ?? null,
+            'tanggal' => $fields['tanggal'] ?? null,
+            'urgensi' => $urgency,
+        ];
+        $result = self::applySpb($db, $reportId, $spbFields, $mappedRows, $actorId);
+        $result['type'] = 'urgent-parts-request';
+        if (!($result['alreadyApplied'] ?? false)) {
+            $result['message'] = "SPPU {$result['spbId']} berhasil dibuat sebagai permintaan part "
+                . ($urgency === 'Emergency' ? 'darurat' : 'prioritas normal')
+                . ' dengan ' . count($mappedRows) . ' item.';
+        }
+        return $result;
     }
 
     private static function applySpb(

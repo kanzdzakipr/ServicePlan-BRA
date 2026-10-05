@@ -2104,3 +2104,111 @@ ORDER BY it.transaction_id DESC;
 - [ ] Void memulihkan stok dengan aman.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 12 sebelum Batch 13 dimulai.
+
+### Batch 13 — SPPU Parts Urgent ke Spare Part & Logistik
+
+Status implementasi: **SIAP UJI**.
+
+Batch 13 mengintegrasikan dua template berikut:
+
+- **Surat Permintaan Parts Urgent (Yard)** (`sppu`);
+- **Template SPPU 006 PF-04/CS-10** (`sppu-006-pf04-cs10`).
+
+Kedua form sekarang mempunyai field Work Order/JO dan kode unit. Work Order, unit, lokasi, jenis unit, serial number, HM, part, satuan, operator, dan personel dapat mengambil referensi database Laragon.
+
+Saat difinalkan:
+
+- nomor SPPU menjadi nomor Purchase Request/SPB;
+- permintaan ditautkan ke Work Order dan unit terpilih;
+- SPPU urgent menggunakan urgensi `Emergency`;
+- pilihan `Prioritas normal` pada SPPU 006 menggunakan urgensi `Normal`;
+- setiap part menjadi item `purchase_request_items` berstatus `Menunggu Approval`;
+- analisa, solusi, kelompok part, dampak, dan tindak lanjut disimpan pada deskripsi item;
+- data langsung tampil pada menu **Spare Part & Logistik**;
+- retry tidak membuat SPB atau item ganda;
+- void menghapus permintaan yang belum diproses, tetapi mempertahankan permintaan yang sudah diproses Logistik.
+
+#### A. Pengujian SPPU Yard
+
+1. [ ] Pastikan tersedia Work Order aktif dan Master Part.
+2. [ ] Buka **Laporan & Form → Surat Permintaan Parts Urgent (Yard)**.
+3. [ ] Isi nomor SPPU unik, misalnya `SPPU-UJI-001`.
+4. [ ] Pilih Work Order/JO dari daftar database.
+5. [ ] Pastikan kode unit dan lokasi mengikuti Work Order terpilih.
+6. [ ] Pilih mekanik/pengaju dari daftar personel.
+7. [ ] Pada tabel, pilih nama atau part number dari Master Part.
+8. [ ] Pastikan nama, part number, satuan, dan HM terisi sesuai database.
+9. [ ] Isi jumlah, operator, analisa kerusakan, dan solusi.
+10. [ ] Tambahkan bukti gambar beserta keterangannya.
+11. [ ] Tunggu autosave; selama status masih `DRAFT`, Purchase Request belum boleh terbentuk.
+12. [ ] Tekan **Simpan Laporan**.
+13. [ ] Buka **Spare Part & Logistik**, cari unit tersebut, dan pastikan SPPU tampil sebagai permintaan berurgensi `Emergency`.
+
+#### B. Pengujian SPPU 006
+
+1. [ ] Buka **Laporan & Form → Template SPPU 006**.
+2. [ ] Isi nomor SPPU unik, misalnya `SPPU-006-UJI-001`.
+3. [ ] Pilih Work Order/JO.
+4. [ ] Pastikan kode unit, lokasi, jenis unit, serial number, HM, dan project terisi otomatis jika datanya tersedia.
+5. [ ] Pilih prioritas `Urgent dan diprioritaskan`.
+6. [ ] Isi analisa, dampak operasional, tindak lanjut, dan pihak pengesahan.
+7. [ ] Pilih part dari Master Part pada baris yang digunakan; baris kosong lainnya boleh dibiarkan kosong.
+8. [ ] Pastikan HM baris terisi setelah part dipilih.
+9. [ ] Unggah bukti gambar dan finalkan laporan.
+10. [ ] Pastikan Purchase Request terbentuk dan tampil pada menu Logistik.
+
+#### C. Verifikasi database
+
+```sql
+SELECT
+    r.report_number,
+    rt.template_key,
+    rpri.owns_purchase_request,
+    rpri.reversed_at,
+    pr.spb_id,
+    pr.wo_id,
+    pr.asset_id,
+    pr.urgency,
+    pr.status AS request_status,
+    pri.part_number,
+    pri.description,
+    pri.qty_requested,
+    pri.status AS item_status
+FROM u646470441_ServicePlanBRA.report_purchase_request_integrations rpri
+JOIN u646470441_ServicePlanBRA.report_records r
+    ON r.report_id = rpri.report_id
+JOIN u646470441_ServicePlanBRA.report_templates rt
+    ON rt.template_id = r.template_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_requests pr
+    ON pr.spb_id = rpri.spb_id
+LEFT JOIN u646470441_ServicePlanBRA.purchase_request_items pri
+    ON pri.spb_id = pr.spb_id
+WHERE rt.template_key IN ('sppu', 'sppu-006-pf04-cs10')
+ORDER BY rpri.integration_id DESC, pri.id;
+```
+
+#### D. Pengujian validasi, retry, dan void
+
+1. [ ] Pilih Work Order lalu ubah kode unit menjadi unit berbeda; finalisasi harus ditolak.
+2. [ ] Ketik part yang tidak ada pada Master Part; finalisasi harus ditolak.
+3. [ ] Ubah satuan agar tidak sesuai Master Part; finalisasi harus ditolak.
+4. [ ] Muat ulang setelah finalisasi; jumlah Purchase Request dan item tidak boleh bertambah.
+5. [ ] Buat SPPU baru dan void sebelum diproses Logistik; header dan item harus terhapus.
+6. [ ] Buat SPPU lain, lalu ubah status Purchase Request menjadi `Approved` atau proses melalui Logistik.
+7. [ ] Void laporan tersebut; Purchase Request yang sudah diproses harus tetap dipertahankan.
+
+#### Kriteria lulus Batch 13
+
+- [ ] Work Order, unit, lokasi, asset, part, satuan, HM, dan personel mengambil data database Laragon.
+- [ ] Work Order dan unit yang tidak cocok ditolak backend.
+- [ ] Part yang tidak terdaftar atau satuannya salah ditolak.
+- [ ] Draft tidak membuat Purchase Request.
+- [ ] Finalisasi membuat tepat satu Purchase Request dengan item sesuai baris terisi.
+- [ ] SPPU urgent mempunyai urgensi `Emergency`.
+- [ ] Analisa dan tindak lanjut tersimpan pada deskripsi permintaan.
+- [ ] Permintaan tampil pada menu Spare Part & Logistik.
+- [ ] Retry tidak membuat duplikasi.
+- [ ] Void menghapus permintaan yang belum diproses.
+- [ ] Void mempertahankan permintaan yang sudah diproses Logistik.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 13 sebelum Batch 14 dimulai.

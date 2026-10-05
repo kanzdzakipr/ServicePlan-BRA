@@ -535,6 +535,8 @@
             fields: [
                 field('nomor', 'Nomor SPPU', 'text', true, [], false, '___ / SPPU / YARD / BRA / ___ / 20__'),
                 field('tanggal', 'Tanggal pengajuan', 'date', true),
+                field('nomor_wo', 'Work Order / JO', 'text', true),
+                field('kode_unit', 'Kode unit', 'text', true),
                 field('lokasi', 'Lokasi', 'text', true),
                 field('diajukan_oleh', 'Diajukan oleh / mekanik', 'text', true),
                 field('verifikator', 'Verifikator Head Equipment'),
@@ -563,6 +565,8 @@
             fields: [
                 field('nomor', 'Nomor SPPU', 'text', true, [], false, '___/SPPU/PF-04/WS/__/20__'),
                 field('tanggal', 'Tanggal pengajuan', 'date', true),
+                field('nomor_wo', 'Work Order / JO', 'text', true),
+                field('kode_unit', 'Kode unit', 'text', true),
                 field('lokasi', 'Lokasi', 'text', true, [], false, 'Contoh: Duri'),
                 field('prioritas', 'Tingkat kebutuhan', 'select', true, ['Urgent dan diprioritaskan', 'Urgent', 'Prioritas normal']),
                 field('jenis_unit', 'Jenis unit', 'text', true, [], false, 'Contoh: Soil Compactor CS-10'),
@@ -1069,9 +1073,9 @@
         if (/^(site|job_site|site_area|yard)$/.test(key)) return 'sites';
         if (activeSchema?.id === 'bukti-kirim' && /^(dari|ke)$/.test(key)) return 'locations';
         if (/^(lokasi|lokasi_alat|lokasi_pengesahan|area_lokasi)$/.test(key)) return 'locations';
-        if (/^(jenis_alat|kategori_alat)$/.test(key)) return 'categories';
+        if (/^(jenis_alat|jenis_unit|kategori_alat)$/.test(key)) return 'categories';
         if (/^(tipe_merk|merek_model|tipe_alat)$/.test(key)) return 'models';
-        if (/^(pic)$|operator|mekanik|dibuat_oleh|diperiksa_oleh|disetujui_oleh|diajukan_oleh|penerima|pengirim/.test(key)) return 'people';
+        if (/^(pic)$|operator|mekanik|verifikator|approver|dibuat_oleh|diperiksa_oleh|disetujui_oleh|diajukan_oleh|penerima|pengirim/.test(key)) return 'people';
         return '';
     }
 
@@ -1242,7 +1246,7 @@
             renderRows();
             return;
         }
-        ['jenis_alat', 'kategori_alat'].forEach(key => setAutomatedField(key, asset.category));
+        ['jenis_alat', 'jenis_unit', 'kategori_alat'].forEach(key => setAutomatedField(key, asset.category));
         ['tipe_merk', 'merek_model', 'model', 'tipe_alat'].forEach(key => setAutomatedField(key, asset.makeModel));
         ['lokasi', 'lokasi_alat', 'job_site', 'site'].forEach(key => setAutomatedField(key, asset.location));
         ['serial_number', 'nomor_seri'].forEach(key => setAutomatedField(key, asset.serialNumber));
@@ -1308,6 +1312,10 @@
                 String(item.partNumber || '').toLowerCase() === String(part.number || '').toLowerCase()
             ));
             if (orderItem) row.jumlah = String(orderItem.quantity);
+        }
+        if (['sppu', 'sppu-006-pf04-cs10'].includes(activeSchema?.id) && !row.hm) {
+            const asset = findReferenceAsset(activeDraft?.fields?.kode_unit);
+            if (asset) row.hm = String(asset.lastHmKm ?? 0);
         }
         calculateRow(row);
         renderRows();
@@ -5184,14 +5192,16 @@
     window.SpareLogistics = api;
 
     document.addEventListener('fleetreport:finalized', event => {
-        if (['spb', 'ppb', 'procurement-monitoring'].includes(event.detail?.schemaId)) loadDatabaseRecords();
+        if (['spb', 'ppb', 'procurement-monitoring', 'sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) loadDatabaseRecords();
         if (['parts-weekly', 'bapp', 'bukti-kirim'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
         if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
+        if (['sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) window.FleetReportForms?.refreshReferences?.();
     });
     document.addEventListener('fleetreport:voided', event => {
-        if (['spb', 'ppb', 'procurement-monitoring'].includes(event.detail?.schemaId)) loadDatabaseRecords();
+        if (['spb', 'ppb', 'procurement-monitoring', 'sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) loadDatabaseRecords();
         if (['parts-weekly', 'bapp', 'bukti-kirim'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
         if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
+        if (['sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) window.FleetReportForms?.refreshReferences?.();
     });
 
     if (document.readyState === 'loading') {
