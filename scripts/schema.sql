@@ -506,6 +506,7 @@ DROP TABLE IF EXISTS `report_purchase_order_integrations`;
 DROP TABLE IF EXISTS `report_goods_receipt_integrations`;
 DROP TABLE IF EXISTS `procurement_monitoring_logs`;
 DROP TABLE IF EXISTS `parts_weekly_snapshots`;
+DROP TABLE IF EXISTS `calibration_records`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -822,6 +823,38 @@ CREATE TABLE `parts_weekly_snapshots` (
     KEY `idx_parts_weekly_part` (`part_id`,`report_date`,`reversed_at`),
     CONSTRAINT `fk_parts_weekly_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_parts_weekly_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `calibration_records` (
+    `calibration_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `report_item_position` INT UNSIGNED NOT NULL,
+    `period_month` CHAR(7) NOT NULL,
+    `location_id` INT NOT NULL,
+    `report_date` DATE NOT NULL,
+    `instrument_name` VARCHAR(190) NOT NULL,
+    `identification_no` VARCHAR(100) NOT NULL,
+    `brand_type` VARCHAR(190) NOT NULL,
+    `planned_date` DATE NOT NULL,
+    `performed_date` DATE NOT NULL,
+    `execution_type` VARCHAR(20) NOT NULL,
+    `calibration_result` VARCHAR(40) NOT NULL,
+    `follow_up_status` VARCHAR(40) NOT NULL,
+    `notes` VARCHAR(500) NULL,
+    `prepared_by` INT NOT NULL,
+    `checked_by` INT NOT NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    UNIQUE KEY `uq_calibration_report_line` (`report_id`,`report_item_position`),
+    KEY `idx_calibration_instrument` (`identification_no`,`performed_date`,`reversed_at`),
+    KEY `idx_calibration_schedule` (`planned_date`,`follow_up_status`,`reversed_at`),
+    KEY `idx_calibration_location` (`location_id`,`reversed_at`),
+    CONSTRAINT `fk_calibration_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_calibration_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_calibration_prepared_by` FOREIGN KEY (`prepared_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_calibration_checked_by` FOREIGN KEY (`checked_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

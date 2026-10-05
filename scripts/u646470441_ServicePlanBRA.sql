@@ -1181,6 +1181,45 @@ LOCK TABLES `parts_weekly_snapshots` WRITE;
 /*!40000 ALTER TABLE `parts_weekly_snapshots` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- Table structure for table `calibration_records`
+DROP TABLE IF EXISTS `calibration_records`;
+CREATE TABLE `calibration_records` (
+  `calibration_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) NOT NULL,
+  `report_item_position` int unsigned NOT NULL,
+  `period_month` char(7) NOT NULL,
+  `location_id` int NOT NULL,
+  `report_date` date NOT NULL,
+  `instrument_name` varchar(190) NOT NULL,
+  `identification_no` varchar(100) NOT NULL,
+  `brand_type` varchar(190) NOT NULL,
+  `planned_date` date NOT NULL,
+  `performed_date` date NOT NULL,
+  `execution_type` varchar(20) NOT NULL,
+  `calibration_result` varchar(40) NOT NULL,
+  `follow_up_status` varchar(40) NOT NULL,
+  `notes` varchar(500) DEFAULT NULL,
+  `prepared_by` int NOT NULL,
+  `checked_by` int NOT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`calibration_id`),
+  UNIQUE KEY `uq_calibration_report_line` (`report_id`,`report_item_position`),
+  KEY `idx_calibration_instrument` (`identification_no`,`performed_date`,`reversed_at`),
+  KEY `idx_calibration_schedule` (`planned_date`,`follow_up_status`,`reversed_at`),
+  KEY `idx_calibration_location` (`location_id`,`reversed_at`),
+  CONSTRAINT `fk_calibration_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_calibration_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_calibration_prepared_by` FOREIGN KEY (`prepared_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_calibration_checked_by` FOREIGN KEY (`checked_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+LOCK TABLES `calibration_records` WRITE;
+/*!40000 ALTER TABLE `calibration_records` DISABLE KEYS */;
+/*!40000 ALTER TABLE `calibration_records` ENABLE KEYS */;
+UNLOCK TABLES;
+
 --
 -- Table structure for table `role_permissions`
 --

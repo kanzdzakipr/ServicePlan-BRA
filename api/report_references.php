@@ -2,8 +2,10 @@
 declare(strict_types=1);
 
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 
 $db = Database::getInstance();
+ReportIntegration::ensureTables($db);
 
 try {
     $assetScope = api_location_scope_clause('a', 'report_reference_asset_location_id');
@@ -216,6 +218,41 @@ try {
     natcasesort($models);
     $models = array_values($models);
 
+    $calibrationSql = 'SELECT cr.instrument_name, cr.identification_no, cr.brand_type,
+                              cr.planned_date, cr.performed_date, cr.calibration_result,
+                              cr.follow_up_status, cr.location_id
+                       FROM calibration_records cr
+                       WHERE cr.reversed_at IS NULL';
+    $calibrationParams = [];
+    if (!api_has_global_location_scope()) {
+        $locationId = api_current_location_id();
+        if ($locationId === null) {
+            $calibrationSql .= ' AND 1 = 0';
+        } else {
+            $calibrationSql .= ' AND cr.location_id = :calibration_location_id';
+            $calibrationParams[':calibration_location_id'] = $locationId;
+        }
+    }
+    $calibrationSql .= ' ORDER BY cr.performed_date DESC, cr.calibration_id DESC';
+    $calibrationStatement = $db->prepare($calibrationSql);
+    $calibrationStatement->execute($calibrationParams);
+    $calibrationInstruments = [];
+    $seenCalibrationInstruments = [];
+    foreach ($calibrationStatement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $key = mb_strtolower(trim((string) $row['identification_no']));
+        if ($key === '' || isset($seenCalibrationInstruments[$key])) continue;
+        $seenCalibrationInstruments[$key] = true;
+        $calibrationInstruments[] = [
+            'name' => (string) $row['instrument_name'],
+            'identification' => (string) $row['identification_no'],
+            'brandType' => (string) $row['brand_type'],
+            'plannedDate' => (string) $row['planned_date'],
+            'performedDate' => (string) $row['performed_date'],
+            'result' => (string) $row['calibration_result'],
+            'followUp' => (string) $row['follow_up_status'],
+        ];
+    }
+
     echo json_encode([
         'status' => 'success',
         'data' => [
@@ -230,6 +267,7 @@ try {
             'purchaseOrders' => $purchaseOrders,
             'categories' => $categories,
             'models' => $models,
+            'calibrationInstruments' => $calibrationInstruments,
         ],
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $error) {

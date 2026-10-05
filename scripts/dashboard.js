@@ -113,8 +113,8 @@
     const field = (key, label, type = 'text', required = false, options = [], full = false, placeholder = '') => ({
         key, label, type, required, options, full, placeholder
     });
-    const column = (key, label, type = 'text', readonly = false, options = [], allowNegative = false) => ({
-        key, label, type, readonly, options, allowNegative
+    const column = (key, label, type = 'text', readonly = false, options = [], allowNegative = false, required = false) => ({
+        key, label, type, readonly, options, allowNegative, required
     });
 
     const formSchemas = [
@@ -275,22 +275,23 @@
             description: 'Rencana, realisasi, hasil kalibrasi, dan tindak lanjut alat ukur.',
             source: 'FORM_Laporan_Pelaksanaan_Kalibrasi_Tabulasi.md',
             fields: [
+                field('nomor_laporan', 'Nomor laporan kalibrasi', 'text', true),
                 field('periode', 'Periode laporan', 'month', true),
                 field('lokasi', 'Lokasi pengesahan', 'text', true),
                 field('tanggal', 'Tanggal pengesahan', 'date', true),
-                field('dibuat_oleh', 'Dibuat oleh'),
-                field('diperiksa_oleh', 'Diperiksa oleh')
+                field('dibuat_oleh', 'Dibuat oleh', 'text', true),
+                field('diperiksa_oleh', 'Diperiksa oleh', 'text', true)
             ],
             tableTitle: 'Pelaksanaan kalibrasi',
             columns: [
-                column('nama', 'Nama alat survey / ukur'),
-                column('identifikasi', 'Nomor identifikasi'),
-                column('merk', 'Merk / type'),
-                column('rencana', 'Rencana kalibrasi', 'date'),
-                column('pelaksanaan', 'Tanggal pelaksanaan', 'date'),
-                column('jenis', 'Pelaksanaan', 'select', false, ['Intern', 'Ekstern']),
-                column('hasil', 'Hasil', 'select', false, ['Memenuhi', 'Tidak memenuhi']),
-                column('tindak_lanjut', 'Tindak lanjut', 'select', false, ['Selesai', 'Perlu perbaikan', 'Kalibrasi ulang', 'Menunggu sertifikat']),
+                column('nama', 'Nama alat survey / ukur', 'text', false, [], false, true),
+                column('identifikasi', 'Nomor identifikasi', 'text', false, [], false, true),
+                column('merk', 'Merk / type', 'text', false, [], false, true),
+                column('rencana', 'Rencana kalibrasi', 'date', false, [], false, true),
+                column('pelaksanaan', 'Tanggal pelaksanaan', 'date', false, [], false, true),
+                column('jenis', 'Pelaksanaan', 'select', false, ['Intern', 'Ekstern'], false, true),
+                column('hasil', 'Hasil', 'select', false, ['Memenuhi', 'Tidak memenuhi'], false, true),
+                column('tindak_lanjut', 'Tindak lanjut', 'select', false, ['Selesai', 'Perlu perbaikan', 'Kalibrasi ulang', 'Menunggu sertifikat'], false, true),
                 column('keterangan', 'Keterangan')
             ]
         },
@@ -818,7 +819,7 @@
     const reportApiUrl = 'api/reports.php';
     const reportReferenceApiUrl = 'api/report_references.php';
     const emptyReportReferences = Object.freeze({
-        assets: [], locations: [], projects: [], sites: [], parts: [], people: [], workOrders: [], purchaseRequests: [], purchaseOrders: [], categories: [], models: []
+        assets: [], locations: [], projects: [], sites: [], parts: [], people: [], workOrders: [], purchaseRequests: [], purchaseOrders: [], categories: [], models: [], calibrationInstruments: []
     });
     let reportReferences = { ...emptyReportReferences };
     let reportReferencesLoaded = false;
@@ -1092,6 +1093,11 @@
 
     function reportReferenceKind(item, isTableColumn = false) {
         const key = String(item?.key || '').toLowerCase();
+        if (isTableColumn && activeSchema?.id === 'kalibrasi') {
+            if (key === 'nama') return 'calibrationInstrumentNames';
+            if (key === 'identifikasi') return 'calibrationInstrumentIds';
+            if (key === 'merk') return 'calibrationInstrumentBrands';
+        }
         if (isTableColumn && activeSchema?.id === 'maintenance-board' && key === 'kode') return 'assets';
         if (activeSchema?.id === 'bast-mde1' && /^(project_asal|project_tujuan)$/.test(key)) return 'locations';
         if (/^(id_alat|kode_alat|code_number|id_unit|unit_id|kode_unit)$/.test(key)) return 'assets';
@@ -1171,11 +1177,25 @@
             const values = [...new Set(reportReferences.parts.map(part => part.unit).filter(Boolean))];
             return values.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
         }
+        if (kind === 'calibrationInstrumentNames') {
+            return reportReferences.calibrationInstruments.map(item => (
+                `<option value="${escapeHtml(item.name)}">${escapeHtml(`${item.identification} · ${item.brandType}`)}</option>`
+            )).join('');
+        }
+        if (kind === 'calibrationInstrumentIds') {
+            return reportReferences.calibrationInstruments.map(item => (
+                `<option value="${escapeHtml(item.identification)}">${escapeHtml(`${item.name} · ${item.brandType}`)}</option>`
+            )).join('');
+        }
+        if (kind === 'calibrationInstrumentBrands') {
+            const values = [...new Set(reportReferences.calibrationInstruments.map(item => item.brandType).filter(Boolean))];
+            return values.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
+        }
         return '';
     }
 
     function renderReferenceDatalists() {
-        const kinds = ['assets', 'locations', 'projects', 'sites', 'people', 'workOrders', 'purchaseRequests', 'purchaseOrders', 'categories', 'models', 'partNumbers', 'partNames', 'partUnits'];
+        const kinds = ['assets', 'locations', 'projects', 'sites', 'people', 'workOrders', 'purchaseRequests', 'purchaseOrders', 'categories', 'models', 'partNumbers', 'partNames', 'partUnits', 'calibrationInstrumentNames', 'calibrationInstrumentIds', 'calibrationInstrumentBrands'];
         return `<div class="report-reference-lists">${kinds.map(kind => (
             `<datalist id="${reportReferenceListId(kind)}">${referenceOptionsMarkup(kind)}</datalist>`
         )).join('')}</div>`;
@@ -1377,8 +1397,28 @@
         setAutomatedField('harga', part.unitCost);
     }
 
+    function applyCalibrationInstrumentReference(control, kind) {
+        if (control?.dataset?.row == null) return;
+        const value = String(control.value || '').trim().toLowerCase();
+        const instrument = reportReferences.calibrationInstruments.find(item => {
+            if (kind === 'calibrationInstrumentIds') return String(item.identification || '').toLowerCase() === value;
+            if (kind === 'calibrationInstrumentNames') return String(item.name || '').toLowerCase() === value;
+            return String(item.brandType || '').toLowerCase() === value;
+        });
+        const row = activeDraft?.rows?.[Number(control.dataset.row)];
+        if (!instrument || !row) return;
+        row.nama = instrument.name;
+        row.identifikasi = instrument.identification;
+        row.merk = instrument.brandType;
+        renderRows();
+    }
+
     function applyReportReferenceSelection(control) {
         const kind = control?.dataset?.referenceKind || '';
+        if (kind.startsWith('calibrationInstrument')) {
+            applyCalibrationInstrumentReference(control, kind);
+            return;
+        }
         if (kind === 'workOrders') {
             const workOrder = findReferenceWorkOrder(control.value);
             if (!workOrder) return;
@@ -13166,6 +13206,8 @@
     const storageKey = 'fleetmonitor-pm-overrides-v1';
     const thresholdKey = 'fleetmonitor-pm-thresholds-v1';
     let pmDatabaseState = { status: 'idle', count: 0, message: '' };
+    let calibrationRecords = [];
+    let calibrationDatabaseState = { status: 'idle', count: 0, message: '' };
 
     function planKey(plan) {
         return String(plan?.key || plan?.id || '');
@@ -13360,6 +13402,38 @@
         }
     }
 
+    async function hydrateCalibrationRecords() {
+        calibrationDatabaseState = { status: 'loading', count: 0, message: 'Memuat register kalibrasi...' };
+        renderCalibration();
+        try {
+            const response = await fetch('api/calibrations.php', {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                cache: 'no-store'
+            });
+            const payload = await response.json();
+            if (!response.ok || payload?.status !== 'success' || !Array.isArray(payload.data)) {
+                throw new Error(payload?.message || 'Register kalibrasi tidak tersedia.');
+            }
+            calibrationRecords = payload.data;
+            calibrationDatabaseState = {
+                status: 'success',
+                count: calibrationRecords.length,
+                message: `${calibrationRecords.length} record kalibrasi dimuat`
+            };
+            renderCalibration();
+        } catch (error) {
+            console.warn('Register kalibrasi belum dapat dimuat:', error);
+            calibrationDatabaseState = {
+                status: 'error',
+                count: 0,
+                message: error.message || 'Register kalibrasi gagal dimuat'
+            };
+            renderCalibration();
+            showToast(`Register kalibrasi gagal dimuat: ${calibrationDatabaseState.message}`, true);
+        }
+    }
+
     function pmDatabaseStatusMarkup() {
         if (pmDatabaseState.status === 'loading') {
             return '<i class="fa-solid fa-spinner fa-spin"></i> Memuat database...';
@@ -13420,10 +13494,12 @@
                 <button class="pm-tab active" data-pm-tab="forecast"><i class="fa-solid fa-gauge-high"></i> Forecast & Due Tracker</button>
                 <button class="pm-tab" data-pm-tab="calendar"><i class="fa-regular fa-calendar-days"></i> Kalender Eksekusi</button>
                 <button class="pm-tab" data-pm-tab="kitting"><i class="fa-solid fa-box-open"></i> Kitting & Validasi Part</button>
+                <button class="pm-tab" data-pm-tab="calibration"><i class="fa-solid fa-ruler-combined"></i> Kalibrasi Alat Ukur</button>
             </nav>
             <div id="pmPanelForecast" class="pm-tab-panel active"></div>
             <div id="pmPanelCalendar" class="pm-tab-panel"></div>
             <div id="pmPanelKitting" class="pm-tab-panel"></div>
+            <div id="pmPanelCalibration" class="pm-tab-panel"></div>
             <div class="pm-detail-overlay" id="pmDetailOverlay" role="dialog" aria-modal="true"></div>
             <div class="pm-toast" id="pmToast"><i class="fa-solid fa-circle-check"></i><span></span></div>
         `;
@@ -13451,6 +13527,7 @@
         });
         renderAll();
         hydrateReportPmPlans();
+        hydrateCalibrationRecords();
     }
 
     function updateThresholds() {
@@ -13486,6 +13563,7 @@
         renderForecast();
         renderCalendar();
         renderKitting();
+        renderCalibration();
         switchTab(activeTab);
         const linkSummary = document.getElementById('pmAssetLinkSummary');
         if (linkSummary) {
@@ -13811,6 +13889,61 @@
         });
     }
 
+    function renderCalibration() {
+        const panel = document.getElementById('pmPanelCalibration');
+        if (!panel) return;
+        if (calibrationDatabaseState.status === 'loading' && calibrationRecords.length === 0) {
+            panel.innerHTML = '<section class="pm-card"><div class="pm-card-header"><div class="pm-card-title"><i class="fa-solid fa-spinner fa-spin"></i> Memuat register kalibrasi dari Laragon...</div></div></section>';
+            return;
+        }
+        const compliant = calibrationRecords.filter(record => record.result === 'Memenuhi').length;
+        const actionRequired = calibrationRecords.filter(record => record.result === 'Tidak memenuhi').length;
+        const pendingCertificate = calibrationRecords.filter(record => record.followUp === 'Menunggu sertifikat').length;
+        const instruments = new Set(calibrationRecords.map(record => String(record.identification || '').toLowerCase()).filter(Boolean)).size;
+        const errorMarkup = calibrationDatabaseState.status === 'error'
+            ? `<div class="pm-kit-warning"><i class="fa-solid fa-triangle-exclamation"></i><span>${escapeHtml(calibrationDatabaseState.message)}</span></div>`
+            : '';
+        panel.innerHTML = `
+            <div class="pm-kitting-summary">
+                <div class="pm-kit-metric"><span>Alat terdaftar</span><strong>${instruments}</strong></div>
+                <div class="pm-kit-metric"><span>Hasil memenuhi</span><strong style="color:var(--pm-green)">${compliant}</strong></div>
+                <div class="pm-kit-metric"><span>Perlu tindak lanjut</span><strong style="color:var(--pm-red)">${actionRequired}</strong></div>
+                <div class="pm-kit-metric"><span>Menunggu sertifikat</span><strong>${pendingCertificate}</strong></div>
+            </div>
+            ${errorMarkup}
+            <section class="pm-card">
+                <div class="pm-card-header">
+                    <div><div class="pm-card-title"><i class="fa-solid fa-ruler-combined"></i> Register Kalibrasi Alat Survey / Ukur</div><div class="pm-card-caption">Sumber: laporan LPK yang sudah difinalkan</div></div>
+                    <button type="button" class="pm-row-action" id="pmRefreshCalibration"><i class="fa-solid fa-rotate"></i> Muat ulang</button>
+                </div>
+                <div class="pm-table-wrap">
+                    <table class="pm-table">
+                        <thead><tr><th>Identifikasi</th><th>Alat</th><th>Lokasi</th><th>Rencana</th><th>Pelaksanaan</th><th>Metode</th><th>Hasil</th><th>Tindak lanjut</th><th>Laporan</th></tr></thead>
+                        <tbody>
+                            ${calibrationRecords.length ? calibrationRecords.map(record => {
+                                const resultClass = record.result === 'Memenuhi' ? 'completed' : 'overdue';
+                                const followUpClass = record.followUp === 'Selesai' ? 'completed' : 'due-soon';
+                                return `<tr>
+                                    <td class="pm-unit-cell"><strong>${escapeHtml(record.identification)}</strong><span>${escapeHtml(record.brandType)}</span></td>
+                                    <td class="pm-asset-cell"><strong>${escapeHtml(record.instrumentName)}</strong><span>${escapeHtml(record.notes || '')}</span></td>
+                                    <td>${escapeHtml(record.location)}</td>
+                                    <td>${formatDate(record.plannedDate)}</td>
+                                    <td>${formatDate(record.performedDate)}</td>
+                                    <td>${escapeHtml(record.executionType)}</td>
+                                    <td><span class="pm-status ${resultClass}">${escapeHtml(record.result)}</span></td>
+                                    <td><span class="pm-status ${followUpClass}">${escapeHtml(record.followUp)}</span></td>
+                                    <td><strong>${escapeHtml(record.reportNumber)}</strong><br><span class="pm-card-caption">${escapeHtml(record.checkedBy)}</span></td>
+                                </tr>`;
+                            }).join('') : '<tr><td colspan="9" style="text-align:center; padding:28px">Belum ada laporan kalibrasi final.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pm-table-footer"><span>${calibrationDatabaseState.count} record aktif dari database Laragon.</span><span>Record void otomatis disembunyikan.</span></div>
+            </section>
+        `;
+        document.getElementById('pmRefreshCalibration')?.addEventListener('click', hydrateCalibrationRecords);
+    }
+
     function bindDetailButtons(container) {
         container.querySelectorAll('[data-pm-detail]').forEach(button => {
             button.addEventListener('click', () => openPlanDetail(button.dataset.pmDetail));
@@ -13968,6 +14101,10 @@
     document.addEventListener('fleetproject:change', renderAll);
     document.addEventListener('fleetreport:finalized', event => {
         if (event.detail?.schemaId === 'maintenance-board') hydrateReportPmPlans();
+        if (event.detail?.schemaId === 'kalibrasi') hydrateCalibrationRecords();
+    });
+    document.addEventListener('fleetreport:voided', event => {
+        if (event.detail?.schemaId === 'kalibrasi') hydrateCalibrationRecords();
     });
 })();
 (function () {

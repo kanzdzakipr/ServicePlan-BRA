@@ -302,6 +302,38 @@ final class ReportIntegration
             CONSTRAINT fk_parts_weekly_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
             CONSTRAINT fk_parts_weekly_part FOREIGN KEY (part_id) REFERENCES parts (part_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS calibration_records (
+            calibration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            report_item_position INT UNSIGNED NOT NULL,
+            period_month CHAR(7) NOT NULL,
+            location_id INT NOT NULL,
+            report_date DATE NOT NULL,
+            instrument_name VARCHAR(190) NOT NULL,
+            identification_no VARCHAR(100) NOT NULL,
+            brand_type VARCHAR(190) NOT NULL,
+            planned_date DATE NOT NULL,
+            performed_date DATE NOT NULL,
+            execution_type VARCHAR(20) NOT NULL,
+            calibration_result VARCHAR(40) NOT NULL,
+            follow_up_status VARCHAR(40) NOT NULL,
+            notes VARCHAR(500) NULL,
+            prepared_by INT NOT NULL,
+            checked_by INT NOT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_calibration_report_line (report_id, report_item_position),
+            KEY idx_calibration_instrument (identification_no, performed_date, reversed_at),
+            KEY idx_calibration_schedule (planned_date, follow_up_status, reversed_at),
+            KEY idx_calibration_location (location_id, reversed_at),
+            CONSTRAINT fk_calibration_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_calibration_location FOREIGN KEY (location_id) REFERENCES locations (location_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_calibration_prepared_by FOREIGN KEY (prepared_by) REFERENCES users (user_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_calibration_checked_by FOREIGN KEY (checked_by) REFERENCES users (user_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     public static function applyFinal(
@@ -323,6 +355,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'mde-02') {
             return self::applyMde02($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'kalibrasi') {
+            return self::applyCalibration($db, $reportId, $fields, $rows, $actorId);
         }
         if ($templateKey === 'lho') {
             return self::applyLho($db, $reportId, $fields, $rows, $actorId);
@@ -758,6 +793,14 @@ final class ReportIntegration
         }
         $weekly=$db->prepare('UPDATE parts_weekly_snapshots SET reversed_at=CURRENT_TIMESTAMP,reversed_by=:actor WHERE report_id=:report_id AND reversed_at IS NULL');$weekly->execute([':actor'=>$actorId,':report_id'=>$reportId]);$weeklyReversed=$weekly->rowCount();
 
+        $calibration = $db->prepare(
+            'UPDATE calibration_records
+             SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor
+             WHERE report_id = :report_id AND reversed_at IS NULL'
+        );
+        $calibration->execute([':actor' => $actorId, ':report_id' => $reportId]);
+        $calibrationReversed = $calibration->rowCount();
+
         $assetMovementStatement = $db->prepare(
             'SELECT integration_id, movement_id, asset_id, previous_location_id, applied_location_id,
                     previous_hm, applied_hm
@@ -832,7 +875,8 @@ final class ReportIntegration
 
         $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
             + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed
-            + $goodsReceiptReversed + $monitoringReversed + $weeklyReversed + $assetMovementReversed;
+            + $goodsReceiptReversed + $monitoringReversed + $weeklyReversed + $assetMovementReversed
+            + $calibrationReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($assetMovementReversed > 0) {
@@ -840,6 +884,9 @@ final class ReportIntegration
             $reversalMessage = $assetMovementPreserved > 0
                 ? "Laporan BAST dibatalkan. {$assetMovementPreserved} perpindahan dipertahankan karena unit sudah mengalami perubahan lanjutan."
                 : 'Laporan BAST dibatalkan, riwayat perpindahan dihapus, serta lokasi dan HM unit dipulihkan.';
+        } elseif ($calibrationReversed > 0) {
+            $reversalType = 'calibration-reversal';
+            $reversalMessage = "Laporan kalibrasi dibatalkan dan {$calibrationReversed} record dinonaktifkan dari register Preventive Maintenance.";
         } elseif ($goodsReceiptReversed > 0) {
             $reversalType = 'goods-receipt-reversal';
             $reversalMessage = "Laporan BAPP berhasil dibatalkan. {$goodsReceiptReversed} baris penerimaan dan stok terkait dibalik, lalu status PPB/SPB dipulihkan jika belum diubah lagi.";
@@ -899,10 +946,160 @@ final class ReportIntegration
             'goodsReceiptItemCount' => $goodsReceiptReversed,
             'procurementMonitoringItemCount' => $monitoringReversed,
             'partsWeeklyItemCount' => $weeklyReversed,
+            'calibrationItemCount' => $calibrationReversed,
             'assetMovementItemCount' => $assetMovementReversed,
             'assetMovementDeletedCount' => $assetMovementDeleted,
             'assetMovementPreservedCount' => $assetMovementPreserved,
             'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applyCalibration(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existing = $db->prepare(
+            'SELECT calibration_id FROM calibration_records WHERE report_id = :report_id ORDER BY calibration_id LIMIT 1'
+        );
+        $existing->execute([':report_id' => $reportId]);
+        if ($existing->fetchColumn() !== false) {
+            return [
+                'type' => 'calibration-register',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => 0,
+            ];
+        }
+
+        $reportNumber = self::requiredText($fields['nomor_laporan'] ?? null, 'Nomor laporan kalibrasi', 190);
+        $period = trim((string) ($fields['periode'] ?? ''));
+        if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $period)) {
+            throw new DomainException('Periode laporan kalibrasi harus berformat bulan dan tahun yang valid.');
+        }
+        $reportDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal pengesahan');
+        $locationName = self::requiredText($fields['lokasi'] ?? null, 'Lokasi pengesahan', 190);
+        $preparedName = self::requiredText($fields['dibuat_oleh'] ?? null, 'Dibuat oleh', 150);
+        $checkedName = self::requiredText($fields['diperiksa_oleh'] ?? null, 'Diperiksa oleh', 150);
+
+        $locationStatement = $db->prepare(
+            'SELECT location_id FROM locations WHERE is_active = 1 AND location_name = :name ORDER BY location_id LIMIT 2'
+        );
+        $locationStatement->execute([':name' => $locationName]);
+        $locationIds = $locationStatement->fetchAll(PDO::FETCH_COLUMN);
+        if ($locationIds === []) {
+            throw new DomainException("Lokasi {$locationName} tidak ditemukan pada Master Lokasi.");
+        }
+        if (count($locationIds) > 1) {
+            throw new DomainException("Nama lokasi {$locationName} tidak unik pada Master Lokasi.");
+        }
+        $locationId = (int) $locationIds[0];
+
+        $personStatement = $db->prepare(
+            'SELECT user_id FROM users WHERE is_active = 1 AND full_name = :name ORDER BY user_id LIMIT 2'
+        );
+        $personStatement->execute([':name' => $preparedName]);
+        $preparedIds = $personStatement->fetchAll(PDO::FETCH_COLUMN);
+        if ($preparedIds === []) {
+            throw new DomainException("Pembuat laporan {$preparedName} tidak ditemukan pada Master Personel.");
+        }
+        $personStatement->execute([':name' => $checkedName]);
+        $checkedIds = $personStatement->fetchAll(PDO::FETCH_COLUMN);
+        if ($checkedIds === []) {
+            throw new DomainException("Pemeriksa {$checkedName} tidak ditemukan pada Master Personel.");
+        }
+
+        $allowedExecutionTypes = ['Intern', 'Ekstern'];
+        $allowedResults = ['Memenuhi', 'Tidak memenuhi'];
+        $allowedFollowUps = ['Selesai', 'Perlu perbaikan', 'Kalibrasi ulang', 'Menunggu sertifikat'];
+        $preparedRows = [];
+        $identifications = [];
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) continue;
+            $line = $position + 1;
+            $instrumentName = self::requiredText($row['nama'] ?? null, "Nama alat baris {$line}", 190);
+            $identification = self::requiredText($row['identifikasi'] ?? null, "Nomor identifikasi baris {$line}", 100);
+            $brandType = self::requiredText($row['merk'] ?? null, "Merk/type baris {$line}", 190);
+            $plannedDate = self::requiredDate($row['rencana'] ?? null, "Rencana kalibrasi baris {$line}");
+            $performedDate = self::requiredDate($row['pelaksanaan'] ?? null, "Tanggal pelaksanaan baris {$line}");
+            $executionType = self::requiredText($row['jenis'] ?? null, "Pelaksanaan kalibrasi baris {$line}", 20);
+            $result = self::requiredText($row['hasil'] ?? null, "Hasil kalibrasi baris {$line}", 40);
+            $followUp = self::requiredText($row['tindak_lanjut'] ?? null, "Tindak lanjut baris {$line}", 40);
+            if (!in_array($executionType, $allowedExecutionTypes, true)) {
+                throw new DomainException("Baris {$line}: jenis pelaksanaan kalibrasi tidak dikenali.");
+            }
+            if (!in_array($result, $allowedResults, true)) {
+                throw new DomainException("Baris {$line}: hasil kalibrasi tidak dikenali.");
+            }
+            if (!in_array($followUp, $allowedFollowUps, true)) {
+                throw new DomainException("Baris {$line}: tindak lanjut kalibrasi tidak dikenali.");
+            }
+            $identityKey = mb_strtolower($identification);
+            if (isset($identifications[$identityKey])) {
+                throw new DomainException("Nomor identifikasi {$identification} dicatat lebih dari sekali dalam laporan yang sama.");
+            }
+            $identifications[$identityKey] = true;
+            $preparedRows[] = [
+                'position' => $position,
+                'instrumentName' => $instrumentName,
+                'identification' => $identification,
+                'brandType' => $brandType,
+                'plannedDate' => $plannedDate,
+                'performedDate' => $performedDate,
+                'executionType' => $executionType,
+                'result' => $result,
+                'followUp' => $followUp,
+                'notes' => self::optionalText($row['keterangan'] ?? null, 500),
+            ];
+        }
+        if ($preparedRows === []) {
+            throw new DomainException('Laporan kalibrasi harus memiliki sedikitnya satu alat ukur.');
+        }
+
+        $insert = $db->prepare(
+            'INSERT INTO calibration_records
+             (report_id, report_item_position, period_month, location_id, report_date,
+              instrument_name, identification_no, brand_type, planned_date, performed_date,
+              execution_type, calibration_result, follow_up_status, notes,
+              prepared_by, checked_by, created_by)
+             VALUES
+             (:report_id, :position, :period, :location_id, :report_date,
+              :instrument_name, :identification_no, :brand_type, :planned_date, :performed_date,
+              :execution_type, :result, :follow_up, :notes,
+              :prepared_by, :checked_by, :created_by)'
+        );
+        foreach ($preparedRows as $row) {
+            $insert->execute([
+                ':report_id' => $reportId,
+                ':position' => $row['position'],
+                ':period' => $period,
+                ':location_id' => $locationId,
+                ':report_date' => $reportDate,
+                ':instrument_name' => $row['instrumentName'],
+                ':identification_no' => $row['identification'],
+                ':brand_type' => $row['brandType'],
+                ':planned_date' => $row['plannedDate'],
+                ':performed_date' => $row['performedDate'],
+                ':execution_type' => $row['executionType'],
+                ':result' => $row['result'],
+                ':follow_up' => $row['followUp'],
+                ':notes' => $row['notes'],
+                ':prepared_by' => (int) $preparedIds[0],
+                ':checked_by' => (int) $checkedIds[0],
+                ':created_by' => $actorId,
+            ]);
+        }
+
+        return [
+            'type' => 'calibration-register',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => count($preparedRows),
+            'reportNumber' => $reportNumber,
+            'message' => "Laporan {$reportNumber} berhasil difinalkan dan " . count($preparedRows)
+                . ' alat masuk ke Register Kalibrasi Preventive Maintenance.',
         ];
     }
 

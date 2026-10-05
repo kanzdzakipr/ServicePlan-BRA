@@ -2276,3 +2276,35 @@ Panduan langkah demi langkah dan query verifikasi tersedia pada `PANDUAN_PENGUJI
 - [ ] Void tidak menimpa perubahan lanjutan.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 15 sebelum batch berikutnya dimulai.
+
+### Batch 16 — LPK ke Register Kalibrasi Preventive Maintenance
+
+Integrasi Batch 16 menghubungkan **Laporan Pelaksanaan Kalibrasi (LPK)** dengan tabel `calibration_records` dan tab **Preventive Maintenance → Kalibrasi Alat Ukur**.
+
+Hasil yang wajib diverifikasi:
+
+- lokasi serta personel mengambil referensi database Laragon;
+- alat yang pernah dicatat dapat dipilih lagi dan mengisi nama, identifikasi, serta merk/type secara otomatis;
+- draft tidak membuat register kalibrasi;
+- finalisasi membuat satu record per baris dan langsung memperbarui tab Kalibrasi;
+- hasil dan tindak lanjut tampil pada register dan KPI;
+- validasi menolak referensi, pilihan, atau identifikasi ganda yang tidak valid;
+- retry tidak membuat duplikasi;
+- void menonaktifkan record dari register aktif dengan tetap mempertahankan jejak audit.
+
+Panduan lengkap dan query verifikasi tersedia pada `PANDUAN_PENGUJIAN_BATCH_16.md`.
+
+#### Kriteria lulus Batch 16
+
+- [ ] Lokasi dan personel berasal dari database Laragon.
+- [ ] Alat lama dapat dipilih dan melengkapi data otomatis.
+- [ ] Draft tidak membuat `calibration_records`.
+- [ ] Finalisasi membuat tepat satu record per baris terisi.
+- [ ] Data langsung tampil pada tab Kalibrasi Alat Ukur.
+- [ ] KPI hasil dan tindak lanjut sesuai register.
+- [ ] Semua validasi lokasi, personel, identifikasi, tanggal, dan pilihan bekerja.
+- [ ] Retry tidak membuat duplikasi.
+- [ ] Void menonaktifkan seluruh record laporan.
+- [ ] Hak akses dan cakupan lokasi diterapkan.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 16 sebelum batch berikutnya dimulai.
