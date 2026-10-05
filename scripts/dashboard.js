@@ -405,12 +405,12 @@
             ],
             tableTitle: 'Alat berat yang diserahkan',
             columns: [
-                column('nama', 'Nama / identitas alat berat'),
-                column('satuan', 'Satuan'),
-                column('jumlah', 'Jumlah', 'number'),
-                column('baik', 'Baik', 'number'),
-                column('rusak', 'Rusak', 'number'),
-                column('kurang', 'Kurang', 'number'),
+                column('nama', 'Nama / identitas alat berat', 'text', false, [], false, true),
+                column('satuan', 'Satuan', 'text', false, [], false, true),
+                column('jumlah', 'Jumlah', 'number', false, [], false, true),
+                column('baik', 'Baik', 'number', false, [], false, true),
+                column('rusak', 'Rusak', 'number', false, [], false, true),
+                column('kurang', 'Kurang', 'number', false, [], false, true),
                 column('keterangan', 'Keterangan')
             ]
         },
@@ -819,7 +819,7 @@
     const reportApiUrl = 'api/reports.php';
     const reportReferenceApiUrl = 'api/report_references.php';
     const emptyReportReferences = Object.freeze({
-        assets: [], locations: [], projects: [], sites: [], parts: [], people: [], workOrders: [], purchaseRequests: [], purchaseOrders: [], categories: [], models: [], calibrationInstruments: []
+        assets: [], locations: [], projects: [], sites: [], parts: [], people: [], workOrders: [], purchaseRequests: [], purchaseOrders: [], categories: [], models: [], calibrationInstruments: [], shippingPartners: []
     });
     let reportReferences = { ...emptyReportReferences };
     let reportReferencesLoaded = false;
@@ -1098,6 +1098,10 @@
             if (key === 'identifikasi') return 'calibrationInstrumentIds';
             if (key === 'merk') return 'calibrationInstrumentBrands';
         }
+        if (activeSchema?.id === 'penyerahan-ekspedisi') {
+            if (isTableColumn && key === 'nama') return 'assets';
+            if (!isTableColumn && key === 'penerima') return 'shippingPartners';
+        }
         if (isTableColumn && activeSchema?.id === 'maintenance-board' && key === 'kode') return 'assets';
         if (activeSchema?.id === 'bast-mde1' && /^(project_asal|project_tujuan)$/.test(key)) return 'locations';
         if (/^(id_alat|kode_alat|code_number|id_unit|unit_id|kode_unit)$/.test(key)) return 'assets';
@@ -1191,11 +1195,16 @@
             const values = [...new Set(reportReferences.calibrationInstruments.map(item => item.brandType).filter(Boolean))];
             return values.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
         }
+        if (kind === 'shippingPartners') {
+            return reportReferences.shippingPartners.map(partner => (
+                `<option value="${escapeHtml(partner.name)}">${escapeHtml([partner.address, partner.contact].filter(Boolean).join(' · '))}</option>`
+            )).join('');
+        }
         return '';
     }
 
     function renderReferenceDatalists() {
-        const kinds = ['assets', 'locations', 'projects', 'sites', 'people', 'workOrders', 'purchaseRequests', 'purchaseOrders', 'categories', 'models', 'partNumbers', 'partNames', 'partUnits', 'calibrationInstrumentNames', 'calibrationInstrumentIds', 'calibrationInstrumentBrands'];
+        const kinds = ['assets', 'locations', 'projects', 'sites', 'people', 'workOrders', 'purchaseRequests', 'purchaseOrders', 'categories', 'models', 'partNumbers', 'partNames', 'partUnits', 'calibrationInstrumentNames', 'calibrationInstrumentIds', 'calibrationInstrumentBrands', 'shippingPartners'];
         return `<div class="report-reference-lists">${kinds.map(kind => (
             `<datalist id="${reportReferenceListId(kind)}">${referenceOptionsMarkup(kind)}</datalist>`
         )).join('')}</div>`;
@@ -1277,6 +1286,16 @@
         if (rowIndex != null) {
             const row = activeDraft?.rows?.[rowIndex];
             if (!row) return;
+            if (activeSchema?.id === 'penyerahan-ekspedisi') {
+                row.nama = asset.id;
+                row.satuan = row.satuan || 'Unit';
+                row.jumlah = row.jumlah || '1';
+                row.baik = row.baik || '0';
+                row.rusak = row.rusak || '0';
+                row.kurang = row.kurang || '0';
+                renderRows();
+                return;
+            }
             const availableKeys = new Set(activeSchema.columns.map(column => column.key));
             ['kode', 'kode_unit', 'id_unit', 'unit_id', 'id_alat', 'kode_alat'].forEach(key => {
                 if (availableKeys.has(key)) row[key] = asset.id;
@@ -1413,10 +1432,22 @@
         renderRows();
     }
 
+    function applyShippingPartnerReference(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        const partner = reportReferences.shippingPartners.find(item => String(item.name || '').toLowerCase() === normalized);
+        if (!partner) return;
+        setAutomatedField('alamat', partner.address);
+        setAutomatedField('konfirmasi', partner.contact);
+    }
+
     function applyReportReferenceSelection(control) {
         const kind = control?.dataset?.referenceKind || '';
         if (kind.startsWith('calibrationInstrument')) {
             applyCalibrationInstrumentReference(control, kind);
+            return;
+        }
+        if (kind === 'shippingPartners') {
+            applyShippingPartnerReference(control.value);
             return;
         }
         if (kind === 'workOrders') {
@@ -17655,6 +17686,36 @@
     });
     document.addEventListener('fleetreport:voided', event => {
         if (integratedInspectionSchemas.includes(event.detail?.schemaId)) refreshIntegratedInspectionData();
+    });
+
+    async function refreshIntegratedShipmentData() {
+        if (!window.globalData) return null;
+        try {
+            const response = await fetch('api/init.php', {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                cache: 'no-store'
+            });
+            const payload = await response.json();
+            if (!response.ok || payload?.error || !Array.isArray(payload?.asset_shipments)) {
+                throw new Error(payload?.error || 'Riwayat pengiriman unit tidak dapat dimuat ulang.');
+            }
+            window.globalData.asset_shipments = payload.asset_shipments;
+            if (typeof window.refreshAllViews === 'function') window.refreshAllViews();
+            window.FleetReportForms?.refreshReferences?.();
+            return payload.asset_shipments;
+        } catch (error) {
+            console.error('Data integrasi BAPE gagal dimuat ulang:', error);
+            return null;
+        }
+    }
+
+    window.refreshIntegratedShipmentData = refreshIntegratedShipmentData;
+    document.addEventListener('fleetreport:finalized', event => {
+        if (event.detail?.schemaId === 'penyerahan-ekspedisi') refreshIntegratedShipmentData();
+    });
+    document.addEventListener('fleetreport:voided', event => {
+        if (event.detail?.schemaId === 'penyerahan-ekspedisi') refreshIntegratedShipmentData();
     });
 
     function escapeHtml(unsafe) {

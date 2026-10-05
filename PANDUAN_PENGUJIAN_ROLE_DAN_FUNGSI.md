@@ -2308,3 +2308,37 @@ Panduan lengkap dan query verifikasi tersedia pada `PANDUAN_PENGUJIAN_BATCH_16.m
 - [ ] Hak akses dan cakupan lokasi diterapkan.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 16 sebelum batch berikutnya dimulai.
+
+### Batch 17 — BAPE ke Riwayat Pengiriman Master Asset
+
+Integrasi Batch 17 menghubungkan form **Penyerahan A2B kepada Ekspedisi (BAPE)** dengan tabel `asset_shipments`, Master Asset, Master Personel, dan tab **Lokasi & GPS** pada detail unit.
+
+Hasil yang wajib diverifikasi:
+
+- setiap unit dipilih dari Master Asset dan pengirim dipilih dari Master Personel;
+- satuan serta jumlah unit terisi otomatis;
+- ekspedisi lama dapat dipilih kembali serta mengisi alamat dan kontak otomatis;
+- draft tidak membuat riwayat pengiriman;
+- finalisasi membuat satu record per unit dan langsung tampil di detail unit;
+- BAPE tidak mengubah lokasi aktif, status, atau HM/KM karena perpindahan resmi dilakukan melalui BAST;
+- kondisi Baik/Rusak/Kurang divalidasi terhadap jumlah unit;
+- retry tidak membuat duplikasi;
+- void menonaktifkan riwayat BAPE tanpa mengubah Master Asset.
+
+Panduan lengkap dan query verifikasi tersedia pada `PANDUAN_PENGUJIAN_BATCH_17.md`.
+
+#### Kriteria lulus Batch 17
+
+- [ ] Unit dan pengirim berasal dari database Laragon.
+- [ ] Satuan `Unit`, jumlah `1`, dan nilai awal kondisi terisi otomatis.
+- [ ] Ekspedisi yang pernah dipakai dapat dipilih kembali.
+- [ ] Draft tidak membuat `asset_shipments`.
+- [ ] Finalisasi membuat tepat satu record per unit terisi.
+- [ ] Riwayat BAPE tampil pada tab Lokasi & GPS unit.
+- [ ] Lokasi aktif, status, dan HM/KM Master Asset tidak berubah.
+- [ ] Semua validasi unit, personel, satuan, jumlah, dan kondisi bekerja.
+- [ ] Retry tidak membuat duplikasi.
+- [ ] Void menonaktifkan seluruh riwayat aktif laporan.
+- [ ] Hak akses dan cakupan lokasi diterapkan.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 17 sebelum batch berikutnya dimulai.

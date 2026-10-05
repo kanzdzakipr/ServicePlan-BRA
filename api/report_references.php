@@ -253,6 +253,33 @@ try {
         ];
     }
 
+    $shippingSql = 'SELECT s.carrier_name, s.carrier_address, s.carrier_contact,
+                           s.transport_plate, s.transport_contract
+                    FROM asset_shipments s
+                    LEFT JOIN assets a ON a.asset_id = s.asset_id
+                    WHERE s.reversed_at IS NULL';
+    if ($assetScope['sql'] !== '') {
+        $shippingSql .= ' AND ' . $assetScope['sql'];
+    }
+    $shippingSql .= ' ORDER BY s.shipment_date DESC, s.shipment_id DESC';
+    $shippingStatement = $db->prepare($shippingSql);
+    $shippingStatement->execute($assetScope['params']);
+    $shippingPartners = [];
+    $seenShippingPartners = [];
+    foreach ($shippingStatement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $name = trim((string) $row['carrier_name']);
+        $key = mb_strtolower($name);
+        if ($name === '' || isset($seenShippingPartners[$key])) continue;
+        $seenShippingPartners[$key] = true;
+        $shippingPartners[] = [
+            'name' => $name,
+            'address' => (string) ($row['carrier_address'] ?? ''),
+            'contact' => (string) ($row['carrier_contact'] ?? ''),
+            'lastPlate' => (string) ($row['transport_plate'] ?? ''),
+            'lastContract' => (string) ($row['transport_contract'] ?? ''),
+        ];
+    }
+
     echo json_encode([
         'status' => 'success',
         'data' => [
@@ -268,6 +295,7 @@ try {
             'categories' => $categories,
             'models' => $models,
             'calibrationInstruments' => $calibrationInstruments,
+            'shippingPartners' => $shippingPartners,
         ],
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $error) {

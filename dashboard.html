@@ -18,7 +18,7 @@
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261005-5"></script>
+    <script src="scripts/dashboard.js?v=20261005-6"></script>
     <script src="scripts/unit-properties.js?v=20260827-1"></script>
 </head>
 
@@ -5488,24 +5488,57 @@
                 const movements = Array.isArray(globalData?.asset_movements)
                     ? globalData.asset_movements.filter(item => String(item.assetId || '') === String(unitId))
                     : [];
-                if (!movements.length) {
-                    timeline.innerHTML = `
-                        <div class="movement-timeline-item latest">
-                            <div class="movement-timeline-title">${escapeHtml(currentLoc || 'Lokasi belum ditentukan')} (Lokasi Aktif)</div>
-                            <div class="movement-timeline-meta">Belum ada riwayat BAST atau perpindahan pada database.</div>
-                        </div>`;
+                const shipments = Array.isArray(globalData?.asset_shipments)
+                    ? globalData.asset_shipments.filter(item => String(item.assetId || '') === String(unitId))
+                    : [];
+                const latestMovementId = movements[0]?.movementId;
+                const events = [
+                    ...movements.map(item => ({ type: 'movement', date: item.movementDate, item })),
+                    ...shipments.map(item => ({ type: 'shipment', date: item.shipmentDate, item }))
+                ].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+
+                const activeLocation = movements.length ? '' : `
+                    <div class="movement-timeline-item latest">
+                        <div class="movement-timeline-title">${escapeHtml(currentLoc || 'Lokasi belum ditentukan')} (Lokasi Aktif)</div>
+                        <div class="movement-timeline-meta">Lokasi aktif tidak berubah saat unit hanya diserahkan kepada ekspedisi.</div>
+                    </div>`;
+                if (!events.length) {
+                    timeline.innerHTML = activeLocation.replace(
+                        'Lokasi aktif tidak berubah saat unit hanya diserahkan kepada ekspedisi.',
+                        'Belum ada riwayat BAST, BAPE, atau perpindahan pada database.'
+                    );
                     return;
                 }
-                timeline.innerHTML = movements.map((movement, index) => {
-                    const date = movement.movementDate
-                        ? new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date(movement.movementDate))
+
+                timeline.innerHTML = activeLocation + events.map(event => {
+                    const item = event.item;
+                    const date = event.date
+                        ? new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date(event.date))
                         : '-';
-                    const route = `${movement.fromLocation || 'Lokasi awal tidak tercatat'} → ${movement.toLocation || '-'}`;
-                    const person = movement.requestedBy ? ` · Oleh ${movement.requestedBy}` : '';
+                    if (event.type === 'shipment') {
+                        const status = item.shipmentStatus === 'DISCREPANCY' ? 'Selisih' : 'Dalam perjalanan';
+                        const condition = ({ GOOD: 'Baik', DAMAGED: 'Rusak', MISSING: 'Kurang' })[item.unitCondition] || item.unitCondition || '-';
+                        const details = [
+                            item.bapeNumber || 'Tanpa nomor BAPE', date,
+                            `Dari ${item.originLocation || 'lokasi belum tercatat'}`,
+                            `Status ${status}`, `Kondisi ${condition}`,
+                            item.transportPlate ? `Kendaraan ${item.transportPlate}` : '',
+                            item.senderName ? `Oleh ${item.senderName}` : ''
+                        ].filter(Boolean).join(' · ');
+                        return `
+                            <div class="movement-timeline-item">
+                                <div class="movement-timeline-title">Diserahkan ke ekspedisi: ${escapeHtml(item.carrierName || '-')}</div>
+                                <div class="movement-timeline-meta">${escapeHtml(details)}</div>
+                            </div>`;
+                    }
+                    const isActive = String(item.movementId) === String(latestMovementId);
+                    const route = `${item.fromLocation || 'Lokasi awal tidak tercatat'} → ${item.toLocation || '-'}`;
+                    const details = [item.bastNumber || 'Tanpa nomor BAST', date, route, item.requestedBy ? `Oleh ${item.requestedBy}` : '']
+                        .filter(Boolean).join(' · ');
                     return `
-                        <div class="movement-timeline-item ${index === 0 ? 'latest' : ''}">
-                            <div class="movement-timeline-title">${escapeHtml(movement.toLocation || currentLoc || '-')} ${index === 0 ? '(Lokasi Aktif)' : ''}</div>
-                            <div class="movement-timeline-meta">${escapeHtml(movement.bastNumber || 'Tanpa nomor BAST')} · ${escapeHtml(date)} · ${escapeHtml(route)}${escapeHtml(person)}</div>
+                        <div class="movement-timeline-item ${isActive ? 'latest' : ''}">
+                            <div class="movement-timeline-title">${escapeHtml(item.toLocation || currentLoc || '-')} ${isActive ? '(Lokasi Aktif)' : ''}</div>
+                            <div class="movement-timeline-meta">${escapeHtml(details)}</div>
                         </div>`;
                 }).join('');
             }

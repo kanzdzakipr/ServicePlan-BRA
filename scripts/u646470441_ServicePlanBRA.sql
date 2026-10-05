@@ -1220,6 +1220,44 @@ LOCK TABLES `calibration_records` WRITE;
 /*!40000 ALTER TABLE `calibration_records` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- Table structure for table `asset_shipments`
+DROP TABLE IF EXISTS `asset_shipments`;
+CREATE TABLE `asset_shipments` (
+  `shipment_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) NOT NULL,
+  `report_item_position` int unsigned NOT NULL,
+  `asset_id` varchar(100) NOT NULL,
+  `origin_location_id` int DEFAULT NULL,
+  `bape_number` varchar(190) NOT NULL,
+  `shipment_date` date NOT NULL,
+  `sender_user_id` int NOT NULL,
+  `carrier_name` varchar(190) NOT NULL,
+  `carrier_address` varchar(500) DEFAULT NULL,
+  `carrier_contact` varchar(190) DEFAULT NULL,
+  `transport_plate` varchar(50) DEFAULT NULL,
+  `transport_contract` varchar(100) DEFAULT NULL,
+  `unit_condition` varchar(20) NOT NULL,
+  `shipment_status` varchar(30) NOT NULL DEFAULT 'IN_TRANSIT',
+  `notes` varchar(500) DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`shipment_id`),
+  UNIQUE KEY `uq_asset_shipment_report_line` (`report_id`,`report_item_position`),
+  KEY `idx_asset_shipment_asset` (`asset_id`,`shipment_date`,`reversed_at`),
+  KEY `idx_asset_shipment_carrier` (`carrier_name`,`reversed_at`),
+  KEY `idx_asset_shipment_location` (`origin_location_id`,`reversed_at`),
+  CONSTRAINT `fk_asset_shipment_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_asset_shipment_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_asset_shipment_origin` FOREIGN KEY (`origin_location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_asset_shipment_sender` FOREIGN KEY (`sender_user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+LOCK TABLES `asset_shipments` WRITE;
+/*!40000 ALTER TABLE `asset_shipments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `asset_shipments` ENABLE KEYS */;
+UNLOCK TABLES;
+
 --
 -- Table structure for table `role_permissions`
 --

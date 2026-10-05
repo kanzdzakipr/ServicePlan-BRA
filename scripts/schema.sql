@@ -507,6 +507,7 @@ DROP TABLE IF EXISTS `report_goods_receipt_integrations`;
 DROP TABLE IF EXISTS `procurement_monitoring_logs`;
 DROP TABLE IF EXISTS `parts_weekly_snapshots`;
 DROP TABLE IF EXISTS `calibration_records`;
+DROP TABLE IF EXISTS `asset_shipments`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -855,6 +856,37 @@ CREATE TABLE `calibration_records` (
     CONSTRAINT `fk_calibration_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_calibration_prepared_by` FOREIGN KEY (`prepared_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_calibration_checked_by` FOREIGN KEY (`checked_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `asset_shipments` (
+    `shipment_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `report_item_position` INT UNSIGNED NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `origin_location_id` INT NULL,
+    `bape_number` VARCHAR(190) NOT NULL,
+    `shipment_date` DATE NOT NULL,
+    `sender_user_id` INT NOT NULL,
+    `carrier_name` VARCHAR(190) NOT NULL,
+    `carrier_address` VARCHAR(500) NULL,
+    `carrier_contact` VARCHAR(190) NULL,
+    `transport_plate` VARCHAR(50) NULL,
+    `transport_contract` VARCHAR(100) NULL,
+    `unit_condition` VARCHAR(20) NOT NULL,
+    `shipment_status` VARCHAR(30) NOT NULL DEFAULT 'IN_TRANSIT',
+    `notes` VARCHAR(500) NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    UNIQUE KEY `uq_asset_shipment_report_line` (`report_id`,`report_item_position`),
+    KEY `idx_asset_shipment_asset` (`asset_id`,`shipment_date`,`reversed_at`),
+    KEY `idx_asset_shipment_carrier` (`carrier_name`,`reversed_at`),
+    KEY `idx_asset_shipment_location` (`origin_location_id`,`reversed_at`),
+    CONSTRAINT `fk_asset_shipment_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_asset_shipment_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_asset_shipment_origin` FOREIGN KEY (`origin_location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_asset_shipment_sender` FOREIGN KEY (`sender_user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

@@ -334,6 +334,37 @@ final class ReportIntegration
             CONSTRAINT fk_calibration_prepared_by FOREIGN KEY (prepared_by) REFERENCES users (user_id) ON DELETE RESTRICT,
             CONSTRAINT fk_calibration_checked_by FOREIGN KEY (checked_by) REFERENCES users (user_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS asset_shipments (
+            shipment_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            report_item_position INT UNSIGNED NOT NULL,
+            asset_id VARCHAR(100) NOT NULL,
+            origin_location_id INT NULL,
+            bape_number VARCHAR(190) NOT NULL,
+            shipment_date DATE NOT NULL,
+            sender_user_id INT NOT NULL,
+            carrier_name VARCHAR(190) NOT NULL,
+            carrier_address VARCHAR(500) NULL,
+            carrier_contact VARCHAR(190) NULL,
+            transport_plate VARCHAR(50) NULL,
+            transport_contract VARCHAR(100) NULL,
+            unit_condition VARCHAR(20) NOT NULL,
+            shipment_status VARCHAR(30) NOT NULL DEFAULT 'IN_TRANSIT',
+            notes VARCHAR(500) NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_asset_shipment_report_line (report_id, report_item_position),
+            KEY idx_asset_shipment_asset (asset_id, shipment_date, reversed_at),
+            KEY idx_asset_shipment_carrier (carrier_name, reversed_at),
+            KEY idx_asset_shipment_location (origin_location_id, reversed_at),
+            CONSTRAINT fk_asset_shipment_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_asset_shipment_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_asset_shipment_origin FOREIGN KEY (origin_location_id) REFERENCES locations (location_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_asset_shipment_sender FOREIGN KEY (sender_user_id) REFERENCES users (user_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     public static function applyFinal(
@@ -358,6 +389,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'kalibrasi') {
             return self::applyCalibration($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'penyerahan-ekspedisi') {
+            return self::applyAssetShipment($db, $reportId, $fields, $rows, $actorId);
         }
         if ($templateKey === 'lho') {
             return self::applyLho($db, $reportId, $fields, $rows, $actorId);
@@ -801,6 +835,14 @@ final class ReportIntegration
         $calibration->execute([':actor' => $actorId, ':report_id' => $reportId]);
         $calibrationReversed = $calibration->rowCount();
 
+        $shipment = $db->prepare(
+            'UPDATE asset_shipments
+             SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor
+             WHERE report_id = :report_id AND reversed_at IS NULL'
+        );
+        $shipment->execute([':actor' => $actorId, ':report_id' => $reportId]);
+        $shipmentReversed = $shipment->rowCount();
+
         $assetMovementStatement = $db->prepare(
             'SELECT integration_id, movement_id, asset_id, previous_location_id, applied_location_id,
                     previous_hm, applied_hm
@@ -876,7 +918,7 @@ final class ReportIntegration
         $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
             + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed
             + $goodsReceiptReversed + $monitoringReversed + $weeklyReversed + $assetMovementReversed
-            + $calibrationReversed;
+            + $calibrationReversed + $shipmentReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($assetMovementReversed > 0) {
@@ -884,6 +926,9 @@ final class ReportIntegration
             $reversalMessage = $assetMovementPreserved > 0
                 ? "Laporan BAST dibatalkan. {$assetMovementPreserved} perpindahan dipertahankan karena unit sudah mengalami perubahan lanjutan."
                 : 'Laporan BAST dibatalkan, riwayat perpindahan dihapus, serta lokasi dan HM unit dipulihkan.';
+        } elseif ($shipmentReversed > 0) {
+            $reversalType = 'asset-shipment-reversal';
+            $reversalMessage = "BAPE dibatalkan dan {$shipmentReversed} catatan pengiriman dinonaktifkan dari riwayat unit.";
         } elseif ($calibrationReversed > 0) {
             $reversalType = 'calibration-reversal';
             $reversalMessage = "Laporan kalibrasi dibatalkan dan {$calibrationReversed} record dinonaktifkan dari register Preventive Maintenance.";
@@ -947,10 +992,152 @@ final class ReportIntegration
             'procurementMonitoringItemCount' => $monitoringReversed,
             'partsWeeklyItemCount' => $weeklyReversed,
             'calibrationItemCount' => $calibrationReversed,
+            'assetShipmentItemCount' => $shipmentReversed,
             'assetMovementItemCount' => $assetMovementReversed,
             'assetMovementDeletedCount' => $assetMovementDeleted,
             'assetMovementPreservedCount' => $assetMovementPreserved,
             'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applyAssetShipment(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existing = $db->prepare(
+            'SELECT shipment_id FROM asset_shipments WHERE report_id = :report_id ORDER BY shipment_id LIMIT 1'
+        );
+        $existing->execute([':report_id' => $reportId]);
+        if ($existing->fetchColumn() !== false) {
+            return [
+                'type' => 'asset-shipment',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => 0,
+            ];
+        }
+
+        $bapeNumber = self::requiredText($fields['nomor'] ?? null, 'Nomor BAPE', 190);
+        $shipmentDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal penyerahan');
+        $senderName = self::requiredText($fields['pengirim'] ?? null, 'Pengirim', 150);
+        $carrierName = self::requiredText($fields['penerima'] ?? null, 'Pihak ekspedisi', 190);
+        $carrierAddress = self::optionalText($fields['alamat'] ?? null, 500);
+        $carrierContact = self::optionalText($fields['konfirmasi'] ?? null, 190);
+        $transportPlate = self::optionalText($fields['nomor_polisi'] ?? null, 50);
+        $transportContract = self::optionalText($fields['kontrak_angkutan'] ?? null, 100);
+
+        $senderStatement = $db->prepare(
+            'SELECT user_id FROM users WHERE is_active = 1 AND full_name = :name ORDER BY user_id LIMIT 1'
+        );
+        $senderStatement->execute([':name' => $senderName]);
+        $senderId = $senderStatement->fetchColumn();
+        if ($senderId === false) {
+            throw new DomainException("Pengirim {$senderName} tidak ditemukan pada Master Personel.");
+        }
+
+        $assetStatement = $db->prepare(
+            'SELECT asset_id, asset_code, status, current_location_id
+             FROM assets
+             WHERE is_active = 1 AND (asset_id = :asset_id OR asset_code = :asset_code)
+             ORDER BY CASE WHEN asset_id = :exact_asset_id THEN 0 ELSE 1 END
+             LIMIT 2 FOR UPDATE'
+        );
+        $preparedRows = [];
+        $seenAssets = [];
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) continue;
+            $line = $position + 1;
+            $assetReference = self::requiredText($row['nama'] ?? null, "Identitas alat baris {$line}", 190);
+            $assetStatement->execute([
+                ':asset_id' => $assetReference,
+                ':asset_code' => $assetReference,
+                ':exact_asset_id' => $assetReference,
+            ]);
+            $matchedAssets = $assetStatement->fetchAll(PDO::FETCH_ASSOC);
+            if ($matchedAssets === []) {
+                throw new DomainException("Unit {$assetReference} pada baris {$line} tidak ditemukan pada Master Asset.");
+            }
+            if (count($matchedAssets) > 1 && (string) $matchedAssets[0]['asset_id'] !== $assetReference) {
+                throw new DomainException("Kode unit {$assetReference} pada baris {$line} tidak unik. Pilih ID aset lengkap.");
+            }
+            $asset = $matchedAssets[0];
+            $assetKey = mb_strtolower((string) $asset['asset_id']);
+            if (isset($seenAssets[$assetKey])) {
+                throw new DomainException("Unit {$asset['asset_id']} dicatat lebih dari sekali dalam BAPE yang sama.");
+            }
+            $seenAssets[$assetKey] = true;
+
+            $unitMeasure = self::requiredText($row['satuan'] ?? null, "Satuan baris {$line}", 20);
+            if (!in_array(mb_strtolower($unitMeasure), ['unit', 'pcs'], true)) {
+                throw new DomainException("Satuan baris {$line} harus Unit atau Pcs.");
+            }
+            $quantity = self::requiredNonNegativeInteger($row['jumlah'] ?? null, "Jumlah baris {$line}", false);
+            $good = self::requiredNonNegativeInteger($row['baik'] ?? null, "Jumlah baik baris {$line}", true);
+            $damaged = self::requiredNonNegativeInteger($row['rusak'] ?? null, "Jumlah rusak baris {$line}", true);
+            $missing = self::requiredNonNegativeInteger($row['kurang'] ?? null, "Jumlah kurang baris {$line}", true);
+            if ($quantity !== 1) {
+                throw new DomainException("Baris {$line}: satu ID aset harus dicatat sebagai satu unit.");
+            }
+            if ($good + $damaged + $missing !== $quantity) {
+                throw new DomainException("Baris {$line}: jumlah baik, rusak, dan kurang harus sama dengan jumlah unit.");
+            }
+            $condition = $good === 1 ? 'GOOD' : ($damaged === 1 ? 'DAMAGED' : 'MISSING');
+            $preparedRows[] = [
+                'position' => $position,
+                'assetId' => (string) $asset['asset_id'],
+                'originLocationId' => $asset['current_location_id'] !== null ? (int) $asset['current_location_id'] : null,
+                'condition' => $condition,
+                'notes' => self::optionalText($row['keterangan'] ?? null, 500),
+            ];
+        }
+        if ($preparedRows === []) {
+            throw new DomainException('BAPE harus memiliki sedikitnya satu unit dari Master Asset.');
+        }
+
+        $insert = $db->prepare(
+            'INSERT INTO asset_shipments
+             (report_id, report_item_position, asset_id, origin_location_id, bape_number,
+              shipment_date, sender_user_id, carrier_name, carrier_address, carrier_contact,
+              transport_plate, transport_contract, unit_condition, shipment_status, notes, created_by)
+             VALUES
+             (:report_id, :position, :asset_id, :origin_location_id, :bape_number,
+              :shipment_date, :sender_user_id, :carrier_name, :carrier_address, :carrier_contact,
+              :transport_plate, :transport_contract, :unit_condition, :shipment_status, :notes, :created_by)'
+        );
+        foreach ($preparedRows as $row) {
+            $insert->bindValue(':report_id', $reportId);
+            $insert->bindValue(':position', $row['position'], PDO::PARAM_INT);
+            $insert->bindValue(':asset_id', $row['assetId']);
+            $insert->bindValue(
+                ':origin_location_id',
+                $row['originLocationId'],
+                $row['originLocationId'] !== null ? PDO::PARAM_INT : PDO::PARAM_NULL
+            );
+            $insert->bindValue(':bape_number', $bapeNumber);
+            $insert->bindValue(':shipment_date', $shipmentDate);
+            $insert->bindValue(':sender_user_id', (int) $senderId, PDO::PARAM_INT);
+            $insert->bindValue(':carrier_name', $carrierName);
+            $insert->bindValue(':carrier_address', $carrierAddress);
+            $insert->bindValue(':carrier_contact', $carrierContact);
+            $insert->bindValue(':transport_plate', $transportPlate);
+            $insert->bindValue(':transport_contract', $transportContract);
+            $insert->bindValue(':unit_condition', $row['condition']);
+            $insert->bindValue(':shipment_status', $row['condition'] === 'MISSING' ? 'DISCREPANCY' : 'IN_TRANSIT');
+            $insert->bindValue(':notes', $row['notes']);
+            $insert->bindValue(':created_by', $actorId, PDO::PARAM_INT);
+            $insert->execute();
+        }
+
+        return [
+            'type' => 'asset-shipment',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => count($preparedRows),
+            'message' => "BAPE {$bapeNumber} berhasil difinalkan dan " . count($preparedRows)
+                . ' unit masuk ke riwayat pengiriman Master Asset.',
         ];
     }
 

@@ -43,6 +43,28 @@ try {
     $stmtMovements->execute($assetScope['params']);
     $globalData['asset_movements'] = $stmtMovements->fetchAll();
 
+    // Penyerahan unit kepada ekspedisi (BAPE) ditampilkan sebagai riwayat,
+    // tetapi tidak mengubah lokasi aktif sebelum ada dokumen perpindahan BAST.
+    $shipmentSql = "SELECT s.shipment_id AS shipmentId, s.report_id AS reportId,
+                           s.asset_id AS assetId, origin.location_name AS originLocation,
+                           s.bape_number AS bapeNumber, s.shipment_date AS shipmentDate,
+                           sender.full_name AS senderName, s.carrier_name AS carrierName,
+                           s.carrier_address AS carrierAddress, s.carrier_contact AS carrierContact,
+                           s.transport_plate AS transportPlate, s.transport_contract AS transportContract,
+                           s.unit_condition AS unitCondition, s.shipment_status AS shipmentStatus,
+                           s.notes
+                    FROM asset_shipments s
+                    INNER JOIN report_records r ON r.report_id = s.report_id AND r.status = 'FINAL'
+                    INNER JOIN assets a ON a.asset_id = s.asset_id
+                    LEFT JOIN locations origin ON origin.location_id = s.origin_location_id
+                    LEFT JOIN users sender ON sender.user_id = s.sender_user_id
+                    WHERE s.reversed_at IS NULL";
+    if ($assetScope['sql'] !== '') $shipmentSql .= ' AND ' . $assetScope['sql'];
+    $shipmentSql .= ' ORDER BY s.shipment_date DESC, s.shipment_id DESC';
+    $stmtShipments = $db->prepare($shipmentSql);
+    $stmtShipments->execute($assetScope['params']);
+    $globalData['asset_shipments'] = $stmtShipments->fetchAll();
+
     // Override Work Orders dari Database
     $workOrderScope = api_location_scope_clause('a', 'init_wo_location_id');
     $workOrderSql = "SELECT w.wo_id as woId, w.asset_id as assetId, w.issue_description as issue,
