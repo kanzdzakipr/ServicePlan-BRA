@@ -931,13 +931,33 @@
                 available: true,
                 ok: response.ok && payload.status === 'success',
                 data: payload.data,
-                message: payload.message || (response.ok ? '' : `HTTP ${response.status}`)
+                message: payload.message || (response.ok ? '' : `HTTP ${response.status}`),
+                code: payload.code || '',
+                httpStatus: response.status
             };
         } catch (error) {
             return { available: false, ok: false, message: 'Server laporan tidak dapat dijangkau.' };
         } finally {
             window.clearTimeout(timeout);
         }
+    }
+
+    function isStaleDraftResult(result) {
+        if (!result?.available || result.ok) return false;
+        if (result.code === 'REPORT_DRAFT_STALE') return true;
+        const message = String(result.message || '').toLocaleLowerCase('id');
+        return message.includes('laporan tidak ditemukan atau tidak dapat diakses')
+            || message.includes('draft tidak ditemukan atau bukan milik browser ini');
+    }
+
+    async function requestWithStaleDraftRecovery(reportId, request) {
+        const currentReportId = String(reportId || '').trim();
+        let result = await request(currentReportId || null);
+        if (!currentReportId || !isStaleDraftResult(result)) {
+            return { result, recovered: false };
+        }
+        result = await request(null);
+        return { result, recovered: true };
     }
 
     function setDraftSyncBadge(markup) {
@@ -956,18 +976,31 @@
         if (!draft?.fields || !Array.isArray(draft.rows)) return;
         const safe = backendSafeDraft(draft);
         setDraftSyncBadge('<i class="fa-solid fa-rotate"></i> Menyinkronkan...');
-        const result = await reportApiRequest('', {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'save_draft',
-                clientKey: getReportClientKey(),
-                reportId: draft._serverReportId || null,
-                template: reportTemplatePayload(schema),
-                draft: safe.draft,
-                sourceMethod: draft.importSource ? 'import' : 'form',
-                hasPendingAttachments: safe.hasPendingAttachments
+        const persistence = await requestWithStaleDraftRecovery(
+            draft._serverReportId,
+            reportId => reportApiRequest('', {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'save_draft',
+                    clientKey: getReportClientKey(),
+                    reportId,
+                    template: reportTemplatePayload(schema),
+                    draft: safe.draft,
+                    sourceMethod: draft.importSource ? 'import' : 'form',
+                    hasPendingAttachments: safe.hasPendingAttachments
+                })
             })
-        });
+        );
+        const result = persistence.result;
+        if (persistence.recovered) {
+            delete draft._serverReportId;
+            if (activeSchema?.id === schema.id && activeDraft) delete activeDraft._serverReportId;
+            try {
+                localStorage.setItem(storagePrefix + schema.id, JSON.stringify(draft));
+            } catch (error) {
+                // Pemulihan tetap dilanjutkan meskipun metadata lokal gagal diperbarui.
+            }
+        }
         if (result.ok && result.data?.id) {
             draft._serverReportId = result.data.id;
             if (safe.hasPendingAttachments) draft._hasPendingAttachments = true;
@@ -3031,8 +3064,12 @@
                 })
             });
             if (result.available && !result.ok) {
-                showToast(result.message || 'Draft server gagal dikosongkan.', true);
-                return;
+                if (isStaleDraftResult(result)) {
+                    resetMessage = 'Draft lokal usang berhasil dibersihkan.';
+                } else {
+                    showToast(result.message || 'Draft server gagal dikosongkan.', true);
+                    return;
+                }
             }
             if (!result.available) {
                 resetMessage = 'Draft lokal dikosongkan, tetapi API belum aktif sehingga draft server lama belum terhapus.';
@@ -3310,25 +3347,37 @@
         };
         const safe = backendSafeDraft({ ...activeDraft, rows: populatedRows, finalizedAt: createdAt });
         try {
-            const result = await reportApiRequest('', {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'finalize',
-                    clientKey: getReportClientKey(),
-                    reportId: activeDraft._serverReportId || null,
-                    template: reportTemplatePayload(activeSchema),
-                    reportNumber,
-                    draft: safe.draft,
-                    standardizedPayload: {
-                        schemaId: activeSchema.id,
-                        schemaVersion: 'report-template-v2',
-                        fields: safe.draft.fields,
-                        rows: safe.draft.rows
-                    },
-                    sourceMethod: activeDraft.importSource ? 'import' : 'form',
-                    hasPendingAttachments: safe.hasPendingAttachments
+            const persistence = await requestWithStaleDraftRecovery(
+                activeDraft._serverReportId,
+                reportId => reportApiRequest('', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'finalize',
+                        clientKey: getReportClientKey(),
+                        reportId,
+                        template: reportTemplatePayload(activeSchema),
+                        reportNumber,
+                        draft: safe.draft,
+                        standardizedPayload: {
+                            schemaId: activeSchema.id,
+                            schemaVersion: 'report-template-v2',
+                            fields: safe.draft.fields,
+                            rows: safe.draft.rows
+                        },
+                        sourceMethod: activeDraft.importSource ? 'import' : 'form',
+                        hasPendingAttachments: safe.hasPendingAttachments
+                    })
                 })
-            });
+            );
+            const result = persistence.result;
+            if (persistence.recovered) {
+                delete activeDraft._serverReportId;
+                try {
+                    localStorage.setItem(storagePrefix + activeSchema.id, JSON.stringify(activeDraft));
+                } catch (error) {
+                    // Finalisasi tetap dilanjutkan karena payload aman sudah tersedia.
+                }
+            }
             if (result.available && !result.ok) {
                 showToast(result.message || 'Laporan gagal disimpan ke server.', true);
                 return;

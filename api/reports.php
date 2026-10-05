@@ -9,11 +9,12 @@ function reportJson($value) {
     return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
 
-function reportReply($status, $data = null, $message = null, $httpCode = 200) {
+function reportReply($status, $data = null, $message = null, $httpCode = 200, $code = null) {
     http_response_code($httpCode);
     $payload = ['status' => $status];
     if ($data !== null) $payload['data'] = $data;
     if ($message !== null) $payload['message'] = $message;
+    if ($code !== null) $payload['code'] = $code;
     echo reportJson($payload);
     exit;
 }
@@ -317,7 +318,14 @@ try {
             $existing->execute(array_merge([':report_id' => $reportId], $ownerScope['params']));
             $current = $existing->fetch();
             if ($reportIdWasProvided && !$current) {
-                throw new DomainException('Laporan tidak ditemukan atau tidak dapat diakses.');
+                $db->rollBack();
+                reportReply(
+                    'error',
+                    null,
+                    'Laporan tidak ditemukan atau tidak dapat diakses.',
+                    409,
+                    'REPORT_DRAFT_STALE'
+                );
             }
             if ($current && $current['status'] !== 'DRAFT') throw new DomainException('Laporan yang sudah final atau void tidak dapat ditimpa.');
             if ($current && $current['client_key'] !== $clientKey) throw new DomainException('Draft ini dimiliki sesi browser lain.');
@@ -411,7 +419,13 @@ try {
         $stmt->execute(array_merge([':report_id' => $reportId, ':client_key' => $clientKey], $ownerScope['params']));
         if ($stmt->rowCount() < 1) {
             $db->rollBack();
-            reportReply('error', null, 'Draft tidak ditemukan atau bukan milik browser ini.', 404);
+            reportReply(
+                'error',
+                null,
+                'Draft tidak ditemukan atau bukan milik browser ini.',
+                404,
+                'REPORT_DRAFT_STALE'
+            );
         }
         writeReportAudit($db, $reportId, $clientKey, 'DISCARD_DRAFT');
         $db->commit();
