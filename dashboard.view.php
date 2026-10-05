@@ -26,7 +26,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261005-2"></script>
+    <script src="scripts/dashboard.js?v=20261005-3"></script>
     <script src="scripts/unit-properties.js?v=20260827-1"></script>
 </head>
 
@@ -2928,21 +2928,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                     <h4 style="margin-top:15px; margin-bottom:10px;"><i class="fa-solid fa-route"></i> Riwayat
                         Perpindahan Lokasi & BAST</h4>
-                    <div class="movement-timeline">
+                    <div class="movement-timeline" id="movementTimeline">
                         <div class="movement-timeline-item latest">
-                            <div class="movement-timeline-title" id="timelineLoc1">Yard KM 12 Duri (Site Alpha)</div>
-                            <div class="movement-timeline-meta">BAST Mutasi Unit #BAST-2026-07-02 | Penanggung Jawab:
-                                Site Manager Alpha</div>
-                        </div>
-                        <div class="movement-timeline-item">
-                            <div class="movement-timeline-title">Borrow Pit Harapan Baru</div>
-                            <div class="movement-timeline-meta">Pekerjaan Cut & Fill Project | 15 Mei 2026 s/d 01 Juli
-                                2026</div>
-                        </div>
-                        <div class="movement-timeline-item">
-                            <div class="movement-timeline-title">Yard Prabumulih (Penerimaan Aset)</div>
-                            <div class="movement-timeline-meta">Registrasi BAST Awal Masuk Armada | 10 Januari 2026
-                            </div>
+                            <div class="movement-timeline-title">Memuat riwayat perpindahan...</div>
+                            <div class="movement-timeline-meta">Data bersumber dari database Laragon.</div>
                         </div>
                     </div>
                 </div>
@@ -5591,7 +5580,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 // Pre-render WO & P2H data for unit
                 renderModalUnitWo(id);
                 renderModalUnitP2h(id);
-                updateModalMovementTimeline(location);
+                updateModalMovementTimeline(id, location);
 
                 openModal('assetModal');
             }
@@ -5757,9 +5746,32 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             `).join('');
             }
 
-            function updateModalMovementTimeline(currentLoc) {
-                const loc1 = document.getElementById('timelineLoc1');
-                if (loc1) loc1.innerText = `${currentLoc || 'Yard KM 12 Duri'} (Lokasi Aktif)`;
+            function updateModalMovementTimeline(unitId, currentLoc) {
+                const timeline = document.getElementById('movementTimeline');
+                if (!timeline) return;
+                const movements = Array.isArray(globalData?.asset_movements)
+                    ? globalData.asset_movements.filter(item => String(item.assetId || '') === String(unitId))
+                    : [];
+                if (!movements.length) {
+                    timeline.innerHTML = `
+                        <div class="movement-timeline-item latest">
+                            <div class="movement-timeline-title">${escapeHtml(currentLoc || 'Lokasi belum ditentukan')} (Lokasi Aktif)</div>
+                            <div class="movement-timeline-meta">Belum ada riwayat BAST atau perpindahan pada database.</div>
+                        </div>`;
+                    return;
+                }
+                timeline.innerHTML = movements.map((movement, index) => {
+                    const date = movement.movementDate
+                        ? new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date(movement.movementDate))
+                        : '-';
+                    const route = `${movement.fromLocation || 'Lokasi awal tidak tercatat'} → ${movement.toLocation || '-'}`;
+                    const person = movement.requestedBy ? ` · Oleh ${movement.requestedBy}` : '';
+                    return `
+                        <div class="movement-timeline-item ${index === 0 ? 'latest' : ''}">
+                            <div class="movement-timeline-title">${escapeHtml(movement.toLocation || currentLoc || '-')} ${index === 0 ? '(Lokasi Aktif)' : ''}</div>
+                            <div class="movement-timeline-meta">${escapeHtml(movement.bastNumber || 'Tanpa nomor BAST')} · ${escapeHtml(date)} · ${escapeHtml(route)}${escapeHtml(person)}</div>
+                        </div>`;
+                }).join('');
             }
 
             function backToStatusDetailModal() {

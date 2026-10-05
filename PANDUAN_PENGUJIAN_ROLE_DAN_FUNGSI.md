@@ -2212,3 +2212,35 @@ ORDER BY rpri.integration_id DESC, pri.id;
 - [ ] Void mempertahankan permintaan yang sudah diproses Logistik.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 13 sebelum Batch 14 dimulai.
+
+### Batch 14 — BAST MDE-1 ke Master Asset dan Riwayat Perpindahan
+
+Integrasi Batch 14 menghubungkan form **Berita Acara Serah Terima Alat Berat (MDE-1)** dengan tabel `asset_movements` dan Master Asset.
+
+Hasil yang wajib diverifikasi:
+
+- unit, kategori, model, lokasi asal, lokasi tujuan, dan HM/OM mengambil referensi database Laragon;
+- draft tidak mengubah Master Asset;
+- finalisasi membuat satu riwayat perpindahan serta memperbarui lokasi dan HM unit;
+- detail Master Asset menampilkan riwayat BAST aktual dari `asset_movements`;
+- lokasi asal yang tidak sesuai, lokasi tujuan yang sama, dan HM yang menurun ditolak;
+- retry tidak membuat perpindahan ganda;
+- void memulihkan perubahan bila belum ada aktivitas lanjutan;
+- void mempertahankan kondisi unit bila sudah ada perpindahan atau pembaruan HM berikutnya.
+
+Panduan langkah demi langkah dan query verifikasi tersedia pada `PANDUAN_PENGUJIAN_BATCH_14.md`.
+
+#### Kriteria lulus Batch 14
+
+- [ ] Pilihan unit dan lokasi berasal dari database Laragon.
+- [ ] Jenis alat, model, lokasi asal, dan HM/OM terisi otomatis.
+- [ ] Draft tidak mengubah lokasi atau HM Master Asset.
+- [ ] Finalisasi membuat tepat satu `asset_movements`.
+- [ ] Lokasi dan HM Master Asset diperbarui sesuai BAST.
+- [ ] Riwayat BAST tampil pada tab Lokasi & GPS di detail unit.
+- [ ] Semua validasi lokasi, HM, unit, dan checklist bekerja.
+- [ ] Retry tidak membuat duplikasi.
+- [ ] Void aman memulihkan data sebelum BAST.
+- [ ] Void tidak menimpa perubahan lanjutan.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 14 sebelum Batch 15 dimulai.

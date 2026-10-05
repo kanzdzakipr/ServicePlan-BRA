@@ -156,7 +156,7 @@
             fields: [
                 field('project', 'Project', 'text', true),
                 field('tanggal', 'Tanggal', 'date', true),
-                field('nomor_urut', 'Nomor urut'),
+                field('nomor_urut', 'Nomor BAST / urut', 'text', true),
                 field('kode_alat', 'Nomor kode alat', 'text', true),
                 field('dari', 'Telah diterima dari', 'text', true),
                 field('kepada', 'Diserahkan kepada', 'text', true),
@@ -166,9 +166,9 @@
                 field('merek_model', 'Merek / engine model'),
                 field('jenis_serah_terima', 'Jenis serah terima', 'select', true, ['Pembelian baru', 'Mobilisasi', 'Sewa-menyewa', 'Pinjaman', 'Pemakaian karya terakhir']),
                 field('nomor_kontrak', 'Nomor kontrak / dasar'),
-                field('project_asal', 'Project asal'),
-                field('project_tujuan', 'Project tujuan'),
-                field('hm_om', 'HM/OM saat serah terima', 'number'),
+                field('project_asal', 'Lokasi / project asal', 'text', true),
+                field('project_tujuan', 'Lokasi / project tujuan', 'text', true),
+                field('hm_om', 'HM/OM saat serah terima', 'number', true),
                 field('lampiran', 'Nomor lampiran checklist')
             ],
             tableTitle: 'Kelengkapan dan catatan serah terima',
@@ -1090,6 +1090,7 @@
     function reportReferenceKind(item, isTableColumn = false) {
         const key = String(item?.key || '').toLowerCase();
         if (isTableColumn && activeSchema?.id === 'maintenance-board' && key === 'kode') return 'assets';
+        if (activeSchema?.id === 'bast-mde1' && /^(project_asal|project_tujuan)$/.test(key)) return 'locations';
         if (/^(id_alat|kode_alat|code_number|id_unit|unit_id|kode_unit)$/.test(key)) return 'assets';
         if (/^(nomor_wo|wo_id|nomor_jo)$/.test(key)) return 'workOrders';
         if (['ppb', 'procurement-monitoring'].includes(activeSchema?.id) && key === 'nomor_spb') return 'purchaseRequests';
@@ -1284,6 +1285,10 @@
         ['lokasi', 'lokasi_alat', 'job_site', 'site'].forEach(key => setAutomatedField(key, asset.location));
         ['serial_number', 'nomor_seri'].forEach(key => setAutomatedField(key, asset.serialNumber));
         setAutomatedField('nomor_polisi', asset.licensePlate);
+        if (activeSchema?.id === 'bast-mde1') {
+            setAutomatedField('project_asal', asset.location);
+            setAutomatedField('hm_om', asset.lastHmKm);
+        }
         setAutomatedField('hm_sebelum', asset.lastHmKm);
         setAutomatedField('hm', asset.lastHmKm);
         setAutomatedField('hour_meter', asset.lastHmKm);

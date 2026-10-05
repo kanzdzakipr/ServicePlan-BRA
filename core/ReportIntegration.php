@@ -51,6 +51,28 @@ final class ReportIntegration
             CONSTRAINT fk_report_inspection_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+        $db->exec("CREATE TABLE IF NOT EXISTS report_asset_movement_integrations (
+            integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            movement_id INT NULL,
+            asset_id VARCHAR(100) NOT NULL,
+            previous_location_id INT NULL,
+            applied_location_id INT NOT NULL,
+            previous_hm DECIMAL(10,2) NOT NULL DEFAULT 0,
+            applied_hm DECIMAL(10,2) NOT NULL DEFAULT 0,
+            applied_payload LONGTEXT NOT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_report_asset_movement_report (report_id),
+            UNIQUE KEY uq_report_asset_movement_record (movement_id),
+            KEY idx_report_asset_movement_asset (asset_id, reversed_at),
+            CONSTRAINT fk_report_asset_movement_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_report_asset_movement_record FOREIGN KEY (movement_id) REFERENCES asset_movements (movement_id) ON DELETE SET NULL,
+            CONSTRAINT fk_report_asset_movement_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
         $db->exec("CREATE TABLE IF NOT EXISTS report_operation_logs (
             operation_log_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             report_id CHAR(36) NOT NULL,
@@ -328,6 +350,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'bukti-kirim') {
             return self::applyInternalDelivery($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'bast-mde1') {
+            return self::applyBastMde1($db, $reportId, $fields, $rows, $actorId);
         }
         return ['type' => 'none', 'applied' => false, 'itemCount' => 0, 'totalQuantity' => 0];
     }
@@ -730,12 +755,89 @@ final class ReportIntegration
         }
         $weekly=$db->prepare('UPDATE parts_weekly_snapshots SET reversed_at=CURRENT_TIMESTAMP,reversed_by=:actor WHERE report_id=:report_id AND reversed_at IS NULL');$weekly->execute([':actor'=>$actorId,':report_id'=>$reportId]);$weeklyReversed=$weekly->rowCount();
 
+        $assetMovementStatement = $db->prepare(
+            'SELECT integration_id, movement_id, asset_id, previous_location_id, applied_location_id,
+                    previous_hm, applied_hm
+             FROM report_asset_movement_integrations
+             WHERE report_id = :report_id AND reversed_at IS NULL
+             FOR UPDATE'
+        );
+        $assetMovementStatement->execute([':report_id' => $reportId]);
+        $assetMovementReversed = 0;
+        $assetMovementDeleted = 0;
+        $assetMovementPreserved = 0;
+        foreach ($assetMovementStatement->fetchAll(PDO::FETCH_ASSOC) as $integration) {
+            $assetStatement = $db->prepare(
+                'SELECT current_location_id, last_hm_km FROM assets WHERE asset_id = :asset_id FOR UPDATE'
+            );
+            $assetStatement->execute([':asset_id' => $integration['asset_id']]);
+            $asset = $assetStatement->fetch(PDO::FETCH_ASSOC);
+            if (!$asset) {
+                throw new DomainException('Unit BAST tidak ditemukan saat proses void.');
+            }
+
+            $movementId = $integration['movement_id'] !== null ? (int) $integration['movement_id'] : null;
+            $hasLaterMovement = false;
+            if ($movementId !== null) {
+                $laterMovement = $db->prepare(
+                    'SELECT COUNT(*) FROM asset_movements WHERE asset_id = :asset_id AND movement_id > :movement_id'
+                );
+                $laterMovement->execute([
+                    ':asset_id' => $integration['asset_id'],
+                    ':movement_id' => $movementId,
+                ]);
+                $hasLaterMovement = (int) $laterMovement->fetchColumn() > 0;
+            }
+
+            $currentLocation = $asset['current_location_id'] !== null ? (int) $asset['current_location_id'] : null;
+            $locationUnchanged = $currentLocation === (int) $integration['applied_location_id'];
+            $hmUnchanged = abs((float) $asset['last_hm_km'] - (float) $integration['applied_hm']) < 0.005;
+            if (!$hasLaterMovement && $locationUnchanged && $hmUnchanged) {
+                $restoreAsset = $db->prepare(
+                    'UPDATE assets SET current_location_id = :location_id, last_hm_km = :last_hm WHERE asset_id = :asset_id'
+                );
+                $restoreAsset->bindValue(
+                    ':location_id',
+                    $integration['previous_location_id'] !== null ? (int) $integration['previous_location_id'] : null,
+                    $integration['previous_location_id'] !== null ? PDO::PARAM_INT : PDO::PARAM_NULL
+                );
+                $restoreAsset->bindValue(':last_hm', (string) $integration['previous_hm']);
+                $restoreAsset->bindValue(':asset_id', $integration['asset_id']);
+                $restoreAsset->execute();
+
+                if ($movementId !== null) {
+                    $deleteMovement = $db->prepare('DELETE FROM asset_movements WHERE movement_id = :movement_id');
+                    $deleteMovement->execute([':movement_id' => $movementId]);
+                    $assetMovementDeleted += $deleteMovement->rowCount();
+                }
+            } else {
+                // Perpindahan lanjutan atau perubahan HM setelah BAST harus tetap dipertahankan.
+                $assetMovementPreserved++;
+            }
+
+            $reverseMovement = $db->prepare(
+                'UPDATE report_asset_movement_integrations
+                 SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor_id
+                 WHERE integration_id = :integration_id AND reversed_at IS NULL'
+            );
+            $reverseMovement->execute([
+                ':actor_id' => $actorId,
+                ':integration_id' => (int) $integration['integration_id'],
+            ]);
+            $assetMovementReversed += $reverseMovement->rowCount();
+        }
+
         $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
             + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed
-            + $goodsReceiptReversed + $monitoringReversed + $weeklyReversed;
+            + $goodsReceiptReversed + $monitoringReversed + $weeklyReversed + $assetMovementReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
-        if ($goodsReceiptReversed > 0) {
+        if ($assetMovementReversed > 0) {
+            $reversalType = 'asset-movement-reversal';
+            $reversalMessage = $assetMovementPreserved > 0
+                ? "Laporan BAST dibatalkan. {$assetMovementPreserved} perpindahan dipertahankan karena unit sudah mengalami perubahan lanjutan."
+                : 'Laporan BAST dibatalkan, riwayat perpindahan dihapus, serta lokasi dan HM unit dipulihkan.';
+        } elseif ($goodsReceiptReversed > 0) {
             $reversalType = 'goods-receipt-reversal';
             $reversalMessage = "Laporan BAPP berhasil dibatalkan. {$goodsReceiptReversed} baris penerimaan dan stok terkait dibalik, lalu status PPB/SPB dipulihkan jika belum diubah lagi.";
         } elseif ($inspectionReversed > 0) {
@@ -794,7 +896,190 @@ final class ReportIntegration
             'goodsReceiptItemCount' => $goodsReceiptReversed,
             'procurementMonitoringItemCount' => $monitoringReversed,
             'partsWeeklyItemCount' => $weeklyReversed,
+            'assetMovementItemCount' => $assetMovementReversed,
+            'assetMovementDeletedCount' => $assetMovementDeleted,
+            'assetMovementPreservedCount' => $assetMovementPreserved,
             'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applyBastMde1(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existingStatement = $db->prepare(
+            'SELECT movement_id FROM report_asset_movement_integrations WHERE report_id = :report_id LIMIT 1'
+        );
+        $existingStatement->execute([':report_id' => $reportId]);
+        $existingMovementId = $existingStatement->fetchColumn();
+        if ($existingMovementId !== false) {
+            return [
+                'type' => 'asset-movement',
+                'applied' => false,
+                'alreadyApplied' => true,
+                'itemCount' => 1,
+                'movementId' => $existingMovementId !== null ? (int) $existingMovementId : null,
+            ];
+        }
+
+        $bastNumber = self::requiredText($fields['nomor_urut'] ?? null, 'Nomor BAST', 100);
+        $movementDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal serah terima');
+        $assetReference = self::requiredText($fields['kode_alat'] ?? null, 'Nomor kode alat', 100);
+        $originName = self::requiredText($fields['project_asal'] ?? null, 'Lokasi/project asal', 190);
+        $destinationName = self::requiredText($fields['project_tujuan'] ?? null, 'Lokasi/project tujuan', 190);
+        $reportedCategory = self::requiredText($fields['jenis_alat'] ?? null, 'Jenis alat', 100);
+        $movementType = self::requiredText($fields['jenis_serah_terima'] ?? null, 'Jenis serah terima', 50);
+        $allowedMovementTypes = ['Pembelian baru', 'Mobilisasi', 'Sewa-menyewa', 'Pinjaman', 'Pemakaian karya terakhir'];
+        if (!in_array($movementType, $allowedMovementTypes, true)) {
+            throw new DomainException('Jenis serah terima BAST tidak dikenali.');
+        }
+        $reportedHm = self::requiredNonNegativeDecimal($fields['hm_om'] ?? null, 'HM/OM saat serah terima');
+
+        $assetStatement = $db->prepare(
+            'SELECT asset_id, asset_code, category, make_model, current_location_id, last_hm_km
+             FROM assets
+             WHERE is_active = 1 AND (asset_id = :asset_id OR asset_code = :asset_code)
+             ORDER BY CASE WHEN asset_id = :exact_asset_id THEN 0 ELSE 1 END
+             LIMIT 2 FOR UPDATE'
+        );
+        $assetStatement->execute([
+            ':asset_id' => $assetReference,
+            ':asset_code' => $assetReference,
+            ':exact_asset_id' => $assetReference,
+        ]);
+        $matchedAssets = $assetStatement->fetchAll(PDO::FETCH_ASSOC);
+        if ($matchedAssets === []) {
+            throw new DomainException("Unit {$assetReference} belum ada atau tidak aktif pada Master Asset.");
+        }
+        if (count($matchedAssets) > 1 && (string) $matchedAssets[0]['asset_id'] !== $assetReference) {
+            throw new DomainException("Kode unit {$assetReference} cocok ke lebih dari satu aset. Pilih ID aset lengkap dari database.");
+        }
+        $asset = $matchedAssets[0];
+        if (strcasecmp((string) $asset['category'], $reportedCategory) !== 0) {
+            throw new DomainException('Jenis alat BAST tidak sesuai dengan Master Asset.');
+        }
+        if ($asset['current_location_id'] === null) {
+            throw new DomainException('Lokasi unit pada Master Asset belum ditentukan. Perbarui Master Asset sebelum membuat BAST.');
+        }
+        if ($reportedHm + 0.005 < (float) $asset['last_hm_km']) {
+            throw new DomainException('HM/OM BAST tidak boleh lebih kecil dari HM/KM Master Asset.');
+        }
+
+        $locationStatement = $db->prepare(
+            'SELECT location_id, location_name FROM locations WHERE is_active = 1 AND location_name = :name LIMIT 1'
+        );
+        $locationStatement->execute([':name' => $originName]);
+        $origin = $locationStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$origin) {
+            throw new DomainException("Lokasi asal {$originName} tidak ditemukan pada Master Lokasi.");
+        }
+        $locationStatement->execute([':name' => $destinationName]);
+        $destination = $locationStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$destination) {
+            throw new DomainException("Lokasi tujuan {$destinationName} tidak ditemukan pada Master Lokasi.");
+        }
+        if ((int) $origin['location_id'] !== (int) $asset['current_location_id']) {
+            throw new DomainException('Lokasi asal BAST tidak sama dengan lokasi unit saat ini pada Master Asset.');
+        }
+        if ((int) $origin['location_id'] === (int) $destination['location_id']) {
+            throw new DomainException('Lokasi tujuan BAST harus berbeda dari lokasi asal.');
+        }
+
+        $checklist = [];
+        $allowedConditions = ['Baik', 'Rusak', 'Kurang', 'Tidak ada'];
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) continue;
+            $line = $position + 1;
+            $condition = self::requiredText($row['kondisi'] ?? null, "Kondisi baris {$line}", 40);
+            if (!in_array($condition, $allowedConditions, true)) {
+                throw new DomainException("Kondisi kelengkapan baris {$line} tidak dikenali.");
+            }
+            $checklist[] = [
+                'item' => self::requiredText($row['item'] ?? null, "Item kelengkapan baris {$line}", 190),
+                'quantity' => self::requiredNonNegativeInteger($row['jumlah'] ?? null, "Jumlah baris {$line}", false),
+                'condition' => $condition,
+                'notes' => self::optionalText($row['keterangan'] ?? null, 500),
+            ];
+        }
+        if ($checklist === []) {
+            throw new DomainException('BAST harus memiliki sedikitnya satu baris kelengkapan atau catatan serah terima.');
+        }
+
+        $snapshot = [
+            'bast_number' => $bastNumber,
+            'asset_id' => (string) $asset['asset_id'],
+            'from_location_id' => (int) $origin['location_id'],
+            'to_location_id' => (int) $destination['location_id'],
+            'movement_date' => $movementDate . ' 00:00:00',
+            'previous_hm' => round((float) $asset['last_hm_km'], 2),
+            'applied_hm' => $reportedHm,
+            'movement_type' => $movementType,
+            'project' => self::optionalText($fields['project'] ?? null, 190),
+            'sender' => self::requiredText($fields['dari'] ?? null, 'Pihak penyerah', 190),
+            'recipient' => self::requiredText($fields['kepada'] ?? null, 'Pihak penerima', 190),
+            'contract_number' => self::optionalText($fields['nomor_kontrak'] ?? null, 100),
+            'attachment_number' => self::optionalText($fields['lampiran'] ?? null, 100),
+            'checklist' => $checklist,
+        ];
+        $notes = json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+        $insertMovement = $db->prepare(
+            'INSERT INTO asset_movements
+             (asset_id, from_location_id, to_location_id, bast_number, movement_date, notes, requested_by, approved_by)
+             VALUES (:asset_id, :from_location_id, :to_location_id, :bast_number, :movement_date, :notes, :requested_by, NULL)'
+        );
+        $insertMovement->execute([
+            ':asset_id' => $snapshot['asset_id'],
+            ':from_location_id' => $snapshot['from_location_id'],
+            ':to_location_id' => $snapshot['to_location_id'],
+            ':bast_number' => $snapshot['bast_number'],
+            ':movement_date' => $snapshot['movement_date'],
+            ':notes' => $notes,
+            ':requested_by' => $actorId,
+        ]);
+        $movementId = (int) $db->lastInsertId();
+
+        $updateAsset = $db->prepare(
+            'UPDATE assets SET current_location_id = :location_id, last_hm_km = :last_hm WHERE asset_id = :asset_id'
+        );
+        $updateAsset->execute([
+            ':location_id' => $snapshot['to_location_id'],
+            ':last_hm' => $snapshot['applied_hm'],
+            ':asset_id' => $snapshot['asset_id'],
+        ]);
+
+        $insertIntegration = $db->prepare(
+            'INSERT INTO report_asset_movement_integrations
+             (report_id, movement_id, asset_id, previous_location_id, applied_location_id,
+              previous_hm, applied_hm, applied_payload, created_by)
+             VALUES (:report_id, :movement_id, :asset_id, :previous_location_id, :applied_location_id,
+              :previous_hm, :applied_hm, :applied_payload, :created_by)'
+        );
+        $insertIntegration->execute([
+            ':report_id' => $reportId,
+            ':movement_id' => $movementId,
+            ':asset_id' => $snapshot['asset_id'],
+            ':previous_location_id' => $snapshot['from_location_id'],
+            ':applied_location_id' => $snapshot['to_location_id'],
+            ':previous_hm' => $snapshot['previous_hm'],
+            ':applied_hm' => $snapshot['applied_hm'],
+            ':applied_payload' => $notes,
+            ':created_by' => $actorId,
+        ]);
+
+        return [
+            'type' => 'asset-movement',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => 1,
+            'movementId' => $movementId,
+            'assetId' => $snapshot['asset_id'],
+            'fromLocation' => $origin['location_name'],
+            'toLocation' => $destination['location_name'],
+            'message' => "BAST {$bastNumber} berhasil difinalkan. Lokasi {$snapshot['asset_id']} diperbarui ke {$destination['location_name']}.",
         ];
     }
 

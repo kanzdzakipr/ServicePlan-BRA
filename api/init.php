@@ -14,13 +14,34 @@ try {
 
     // Override Assets dari Database
     $assetScope = api_location_scope_clause('a', 'init_asset_location_id');
-    $assetSql = "SELECT a.asset_id as id, a.type, a.category, a.status, a.raw_location_notes as location, a.last_hm_km FROM assets a";
+    $assetSql = "SELECT a.asset_id as id, a.type, a.category, a.status,
+                        COALESCE(l.location_name, a.raw_location_notes) as location,
+                        a.last_hm_km
+                 FROM assets a
+                 LEFT JOIN locations l ON l.location_id = a.current_location_id";
     if ($assetScope['sql'] !== '') $assetSql .= " WHERE " . $assetScope['sql'];
     $stmtAssets = $db->prepare($assetSql);
     $stmtAssets->execute($assetScope['params']);
     $dbAssets = $stmtAssets->fetchAll();
     // Never fall back to the unscoped JSON asset list when this user has no accessible rows.
     $globalData['assets'] = $dbAssets;
+
+    // Riwayat perpindahan aktual untuk tab Lokasi & GPS pada detail unit.
+    $movementSql = "SELECT am.movement_id AS movementId, am.asset_id AS assetId,
+                           origin.location_name AS fromLocation,
+                           destination.location_name AS toLocation,
+                           am.bast_number AS bastNumber, am.movement_date AS movementDate,
+                           requester.full_name AS requestedBy
+                    FROM asset_movements am
+                    INNER JOIN assets a ON a.asset_id = am.asset_id
+                    LEFT JOIN locations origin ON origin.location_id = am.from_location_id
+                    INNER JOIN locations destination ON destination.location_id = am.to_location_id
+                    LEFT JOIN users requester ON requester.user_id = am.requested_by";
+    if ($assetScope['sql'] !== '') $movementSql .= " WHERE " . $assetScope['sql'];
+    $movementSql .= ' ORDER BY am.movement_date DESC, am.movement_id DESC';
+    $stmtMovements = $db->prepare($movementSql);
+    $stmtMovements->execute($assetScope['params']);
+    $globalData['asset_movements'] = $stmtMovements->fetchAll();
 
     // Override Work Orders dari Database
     $workOrderScope = api_location_scope_clause('a', 'init_wo_location_id');
