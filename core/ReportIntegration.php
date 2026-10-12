@@ -402,6 +402,99 @@ final class ReportIntegration
             CONSTRAINT fk_spl_overtime_prepared FOREIGN KEY (prepared_by) REFERENCES users (user_id) ON DELETE RESTRICT,
             CONSTRAINT fk_spl_overtime_instructed FOREIGN KEY (instructed_by) REFERENCES users (user_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS cutting_bit_logs (
+            bit_log_id INT AUTO_INCREMENT PRIMARY KEY,
+            asset_id VARCHAR(100) NOT NULL,
+            bit_installed_qty INT NOT NULL DEFAULT 0,
+            bit_broken_qty INT NOT NULL DEFAULT 0,
+            replaced_date DATE NULL,
+            report_id CHAR(36) NULL,
+            report_item_position INT UNSIGNED NULL,
+            activity_date DATE NULL,
+            location_id INT NULL,
+            equipment_label VARCHAR(190) NULL,
+            material VARCHAR(100) NULL,
+            period_label VARCHAR(100) NULL,
+            report_year SMALLINT UNSIGNED NULL,
+            planning_qty INT UNSIGNED NOT NULL DEFAULT 0,
+            actual_qty INT UNSIGNED NOT NULL DEFAULT 0,
+            variance_qty INT NOT NULL DEFAULT 0,
+            realization_percent DECIMAL(8,2) NULL,
+            daily_requirement INT UNSIGNED NULL,
+            daily_target_m DECIMAL(12,2) NULL,
+            working_days INT UNSIGNED NULL,
+            total_target_m DECIMAL(14,2) NULL,
+            base_requirement DECIMAL(14,2) NULL,
+            safety_stock_percent DECIMAL(6,2) NULL,
+            safety_stock_minimum DECIMAL(14,2) NULL,
+            total_requirement DECIMAL(14,2) NULL,
+            source_document VARCHAR(255) NULL,
+            notes VARCHAR(500) NULL,
+            prepared_by INT NULL,
+            checked_by INT NULL,
+            approved_by INT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_cutting_bit_report_line (report_id, report_item_position),
+            KEY idx_cutting_bit_asset_date (asset_id, activity_date, reversed_at),
+            KEY idx_cutting_bit_location (location_id, reversed_at),
+            CONSTRAINT fk_cutting_bit_asset FOREIGN KEY (asset_id) REFERENCES assets (asset_id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        // Older Laragon databases already contain the five-column legacy table.
+        // Add the report linkage non-destructively so PreserveDatabase remains safe.
+        self::ensureColumns($db, 'cutting_bit_logs', [
+            'report_id' => 'CHAR(36) NULL',
+            'report_item_position' => 'INT UNSIGNED NULL',
+            'activity_date' => 'DATE NULL',
+            'location_id' => 'INT NULL',
+            'equipment_label' => 'VARCHAR(190) NULL',
+            'material' => 'VARCHAR(100) NULL',
+            'period_label' => 'VARCHAR(100) NULL',
+            'report_year' => 'SMALLINT UNSIGNED NULL',
+            'planning_qty' => 'INT UNSIGNED NOT NULL DEFAULT 0',
+            'actual_qty' => 'INT UNSIGNED NOT NULL DEFAULT 0',
+            'variance_qty' => 'INT NOT NULL DEFAULT 0',
+            'realization_percent' => 'DECIMAL(8,2) NULL',
+            'daily_requirement' => 'INT UNSIGNED NULL',
+            'daily_target_m' => 'DECIMAL(12,2) NULL',
+            'working_days' => 'INT UNSIGNED NULL',
+            'total_target_m' => 'DECIMAL(14,2) NULL',
+            'base_requirement' => 'DECIMAL(14,2) NULL',
+            'safety_stock_percent' => 'DECIMAL(6,2) NULL',
+            'safety_stock_minimum' => 'DECIMAL(14,2) NULL',
+            'total_requirement' => 'DECIMAL(14,2) NULL',
+            'source_document' => 'VARCHAR(255) NULL',
+            'notes' => 'VARCHAR(500) NULL',
+            'prepared_by' => 'INT NULL',
+            'checked_by' => 'INT NULL',
+            'approved_by' => 'INT NULL',
+            'created_by' => 'INT NULL',
+            'created_at' => 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
+            'reversed_at' => 'TIMESTAMP NULL',
+            'reversed_by' => 'INT NULL',
+        ]);
+        self::ensureIndex(
+            $db,
+            'cutting_bit_logs',
+            'uq_cutting_bit_report_line',
+            'UNIQUE KEY uq_cutting_bit_report_line (report_id, report_item_position)'
+        );
+        self::ensureIndex(
+            $db,
+            'cutting_bit_logs',
+            'idx_cutting_bit_asset_date',
+            'KEY idx_cutting_bit_asset_date (asset_id, activity_date, reversed_at)'
+        );
+        self::ensureIndex(
+            $db,
+            'cutting_bit_logs',
+            'idx_cutting_bit_location',
+            'KEY idx_cutting_bit_location (location_id, reversed_at)'
+        );
     }
 
     public static function applyFinal(
@@ -432,6 +525,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'spl') {
             return self::applySplOvertime($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'cutting-bit-usage') {
+            return self::applyCuttingBitUsage($db, $reportId, $fields, $rows, $actorId);
         }
         if ($templateKey === 'lho') {
             return self::applyLho($db, $reportId, $fields, $rows, $actorId);
@@ -891,6 +987,14 @@ final class ReportIntegration
         $splOvertime->execute([':actor' => $actorId, ':report_id' => $reportId]);
         $splOvertimeReversed = $splOvertime->rowCount();
 
+        $cuttingBit = $db->prepare(
+            'UPDATE cutting_bit_logs
+             SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor
+             WHERE report_id = :report_id AND reversed_at IS NULL'
+        );
+        $cuttingBit->execute([':actor' => $actorId, ':report_id' => $reportId]);
+        $cuttingBitReversed = $cuttingBit->rowCount();
+
         $assetMovementStatement = $db->prepare(
             'SELECT integration_id, movement_id, asset_id, previous_location_id, applied_location_id,
                     previous_hm, applied_hm
@@ -966,7 +1070,7 @@ final class ReportIntegration
         $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
             + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed
             + $goodsReceiptReversed + $monitoringReversed + $weeklyReversed + $assetMovementReversed
-            + $calibrationReversed + $shipmentReversed + $splOvertimeReversed;
+            + $calibrationReversed + $shipmentReversed + $splOvertimeReversed + $cuttingBitReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($assetMovementReversed > 0) {
@@ -980,6 +1084,9 @@ final class ReportIntegration
         } elseif ($splOvertimeReversed > 0) {
             $reversalType = 'spl-overtime-reversal';
             $reversalMessage = "SPL dibatalkan dan {$splOvertimeReversed} catatan lembur dinonaktifkan dari People & KPI.";
+        } elseif ($cuttingBitReversed > 0) {
+            $reversalType = 'cutting-bit-reversal';
+            $reversalMessage = "Laporan Cutting Bit dibatalkan dan {$cuttingBitReversed} catatan pemakaian dinonaktifkan dari Condition Monitoring.";
         } elseif ($calibrationReversed > 0) {
             $reversalType = 'calibration-reversal';
             $reversalMessage = "Laporan kalibrasi dibatalkan dan {$calibrationReversed} record dinonaktifkan dari register Preventive Maintenance.";
@@ -1045,10 +1152,245 @@ final class ReportIntegration
             'calibrationItemCount' => $calibrationReversed,
             'assetShipmentItemCount' => $shipmentReversed,
             'splOvertimeItemCount' => $splOvertimeReversed,
+            'cuttingBitItemCount' => $cuttingBitReversed,
             'assetMovementItemCount' => $assetMovementReversed,
             'assetMovementDeletedCount' => $assetMovementDeleted,
             'assetMovementPreservedCount' => $assetMovementPreserved,
             'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applyCuttingBitUsage(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existing = $db->prepare(
+            'SELECT bit_log_id FROM cutting_bit_logs WHERE report_id = :report_id LIMIT 1'
+        );
+        $existing->execute([':report_id' => $reportId]);
+        if ($existing->fetchColumn() !== false) {
+            return ['type' => 'cutting-bit', 'applied' => false, 'alreadyApplied' => true, 'itemCount' => 0];
+        }
+
+        $assetId = self::requiredText($fields['kode_unit'] ?? null, 'Kode unit Cutting Bit', 100);
+        $assetStatement = $db->prepare(
+            'SELECT asset_id, asset_code, category, make_model
+             FROM assets WHERE asset_id = :asset_id FOR UPDATE'
+        );
+        $assetStatement->execute([':asset_id' => $assetId]);
+        $asset = $assetStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$asset) {
+            throw new DomainException("Unit {$assetId} tidak ditemukan pada Master Asset.");
+        }
+        $assetDescriptor = implode(' ', [
+            (string) ($asset['asset_id'] ?? ''),
+            (string) ($asset['asset_code'] ?? ''),
+            (string) ($asset['category'] ?? ''),
+            (string) ($asset['make_model'] ?? ''),
+        ]);
+        if (!preg_match('/(?:^|\s)(?:RM|WR)-|reclaimer|milling|cold\s*recycler|road\s*reclaimer/i', $assetDescriptor)) {
+            throw new DomainException("Unit {$assetId} bukan unit recycler/milling yang menggunakan cutting bit.");
+        }
+
+        $equipmentLabel = self::requiredText($fields['mesin_unit'] ?? null, 'Mesin/unit', 190);
+        $material = self::requiredText($fields['material'] ?? null, 'Material', 100);
+        $allowedMaterials = [
+            'Clay/Pasir', 'Laterit/Tanah Padat', 'Jalan berbatu/Kerikil',
+            'Aspal tipis (5-10 cm)', 'Aspal sedang (10-20 cm)', 'Aspal tebal (>20 cm)',
+        ];
+        if (!in_array($material, $allowedMaterials, true)) {
+            throw new DomainException('Material Cutting Bit harus dipilih dari opsi form yang tersedia.');
+        }
+
+        $locationName = self::requiredText($fields['lokasi'] ?? null, 'Lokasi Cutting Bit', 190);
+        $locationStatement = $db->prepare(
+            'SELECT location_id, location_name FROM locations
+             WHERE is_active = 1 AND location_name = :name ORDER BY location_id LIMIT 1'
+        );
+        $locationStatement->execute([':name' => $locationName]);
+        $location = $locationStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$location) {
+            throw new DomainException("Lokasi {$locationName} tidak ditemukan pada Master Lokasi.");
+        }
+
+        $periodLabel = self::requiredText($fields['periode_pencatatan'] ?? null, 'Periode pencatatan', 100);
+        $year = self::requiredNonNegativeInteger($fields['tahun'] ?? null, 'Tahun laporan', false);
+        if ($year < 1900 || $year > 2100) {
+            throw new DomainException('Tahun laporan harus berada pada rentang 1900-2100.');
+        }
+        $dailyRequirement = self::requiredNonNegativeInteger(
+            $fields['kebutuhan_harian'] ?? null,
+            'Kebutuhan cutting bit per hari',
+            false
+        );
+        $dailyTarget = self::requiredNonNegativeDecimal(
+            $fields['target_harian_m'] ?? null,
+            'Target pekerjaan per hari'
+        );
+        if ($dailyTarget <= 0) throw new DomainException('Target pekerjaan per hari harus lebih besar dari nol.');
+        $workingDays = self::requiredNonNegativeInteger($fields['hari_kerja'] ?? null, 'Hari kerja', false);
+        $safetyPercent = self::requiredNonNegativeDecimal(
+            $fields['safety_stock_persen'] ?? null,
+            'Safety stock minimum'
+        );
+        if ($safetyPercent > 100) throw new DomainException('Safety stock minimum tidak boleh melebihi 100%.');
+
+        $totalTarget = round($dailyTarget * $workingDays, 2);
+        $baseRequirement = round($dailyRequirement * $workingDays, 2);
+        $safetyMinimum = round($baseRequirement * $safetyPercent / 100, 2);
+        $totalRequirement = round($baseRequirement + $safetyMinimum, 2);
+        $calculatedFields = [
+            'target_total_m' => ['Target total', $totalTarget],
+            'kebutuhan_dasar' => ['Kebutuhan dasar', $baseRequirement],
+            'safety_stock_minimum' => ['Safety stock minimum', $safetyMinimum],
+            'total_kebutuhan' => ['Total kebutuhan', $totalRequirement],
+        ];
+        foreach ($calculatedFields as $key => [$label, $expected]) {
+            $reported = self::requiredNonNegativeDecimal($fields[$key] ?? null, $label);
+            if (abs($reported - $expected) >= 0.01) {
+                throw new DomainException("{$label} tidak sesuai perhitungan backend ({$expected}).");
+            }
+        }
+        $sourceDocument = self::requiredText($fields['sumber_dokumen'] ?? null, 'Dokumen sumber', 255);
+
+        $personStatement = $db->prepare(
+            'SELECT user_id, full_name FROM users
+             WHERE is_active = 1 AND full_name = :name ORDER BY user_id LIMIT 1'
+        );
+        $resolvePerson = static function ($value, string $label) use ($personStatement): int {
+            $name = trim((string) $value);
+            if ($name === '') throw new DomainException("{$label} wajib dipilih dari Master Personel.");
+            $personStatement->execute([':name' => $name]);
+            $id = $personStatement->fetchColumn();
+            if ($id === false) throw new DomainException("{$label} {$name} tidak ditemukan pada Master Personel.");
+            return (int) $id;
+        };
+        $preparedBy = $resolvePerson($fields['dibuat_oleh'] ?? null, 'Pembuat laporan');
+        $checkedBy = $resolvePerson($fields['diperiksa_oleh'] ?? null, 'Pemeriksa laporan');
+        $approvedBy = $resolvePerson($fields['disetujui_oleh'] ?? null, 'Penyetuju laporan');
+
+        $monthNumbers = [
+            'Januari' => 1, 'Februari' => 2, 'Maret' => 3, 'April' => 4,
+            'Mei' => 5, 'Juni' => 6, 'Juli' => 7, 'Agustus' => 8,
+            'September' => 9, 'Oktober' => 10, 'November' => 11, 'Desember' => 12,
+        ];
+        $preparedRows = [];
+        $seenDates = [];
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) continue;
+            $line = $position + 1;
+            $monthName = self::requiredText($row['bulan'] ?? null, "Bulan baris {$line}", 20);
+            if (!isset($monthNumbers[$monthName])) {
+                throw new DomainException("Baris {$line}: bulan tidak dikenali.");
+            }
+            $day = self::requiredNonNegativeInteger($row['tanggal'] ?? null, "Tanggal baris {$line}", false);
+            $month = $monthNumbers[$monthName];
+            if (!checkdate($month, $day, $year)) {
+                throw new DomainException("Baris {$line}: tanggal {$day} {$monthName} {$year} tidak valid.");
+            }
+            $activityDate = sprintf('%04d-%02d-%02d', $year, $month, $day);
+            if (isset($seenDates[$activityDate])) {
+                throw new DomainException("Tanggal {$day} {$monthName} tercatat lebih dari sekali.");
+            }
+            $seenDates[$activityDate] = true;
+
+            $planning = self::requiredNonNegativeInteger($row['planning'] ?? null, "Planning baris {$line}", true);
+            $actual = self::requiredNonNegativeInteger($row['actual'] ?? null, "Actual baris {$line}", true);
+            $variance = $actual - $planning;
+            $reportedVariance = trim((string) ($row['selisih_pcs'] ?? ''));
+            if ($reportedVariance === '' || !is_numeric(str_replace(',', '.', $reportedVariance))
+                || abs((float) str_replace(',', '.', $reportedVariance) - $variance) >= 0.01) {
+                throw new DomainException("Baris {$line}: selisih Actual - Planning tidak sesuai perhitungan backend.");
+            }
+            $realization = $planning > 0 ? round($actual / $planning * 100, 2) : null;
+            $reportedRealization = trim((string) ($row['realisasi_persen'] ?? ''));
+            if ($planning > 0 && (
+                $reportedRealization === ''
+                || !is_numeric(str_replace(',', '.', $reportedRealization))
+                || abs((float) str_replace(',', '.', $reportedRealization) - (float) $realization) >= 0.01
+            )) {
+                throw new DomainException("Baris {$line}: realisasi tidak sesuai perhitungan backend.");
+            }
+            if ($planning === 0 && $reportedRealization !== '') {
+                throw new DomainException("Baris {$line}: realisasi harus kosong ketika planning nol.");
+            }
+
+            $preparedRows[] = [
+                'position' => $position,
+                'date' => $activityDate,
+                'planning' => $planning,
+                'actual' => $actual,
+                'variance' => $variance,
+                'realization' => $realization,
+                'notes' => self::optionalText($row['catatan'] ?? null, 500),
+            ];
+        }
+        if ($preparedRows === []) throw new DomainException('Laporan Cutting Bit harus memiliki sedikitnya satu baris pemakaian.');
+
+        $insert = $db->prepare(
+            'INSERT INTO cutting_bit_logs
+             (asset_id, bit_installed_qty, bit_broken_qty, replaced_date, report_id,
+              report_item_position, activity_date, location_id, equipment_label, material,
+              period_label, report_year, planning_qty, actual_qty, variance_qty,
+              realization_percent, daily_requirement, daily_target_m, working_days,
+              total_target_m, base_requirement, safety_stock_percent, safety_stock_minimum,
+              total_requirement, source_document, notes, prepared_by, checked_by, approved_by, created_by)
+             VALUES
+             (:asset_id, :installed, 0, :replaced_date, :report_id,
+              :position, :activity_date, :location_id, :equipment_label, :material,
+              :period_label, :report_year, :planning, :actual, :variance,
+              :realization, :daily_requirement, :daily_target, :working_days,
+              :total_target, :base_requirement, :safety_percent, :safety_minimum,
+              :total_requirement, :source_document, :notes, :prepared_by, :checked_by, :approved_by, :created_by)'
+        );
+        foreach ($preparedRows as $row) {
+            $insert->execute([
+                ':asset_id' => $assetId,
+                ':installed' => $row['actual'],
+                ':replaced_date' => $row['date'],
+                ':report_id' => $reportId,
+                ':position' => $row['position'],
+                ':activity_date' => $row['date'],
+                ':location_id' => (int) $location['location_id'],
+                ':equipment_label' => $equipmentLabel,
+                ':material' => $material,
+                ':period_label' => $periodLabel,
+                ':report_year' => $year,
+                ':planning' => $row['planning'],
+                ':actual' => $row['actual'],
+                ':variance' => $row['variance'],
+                ':realization' => $row['realization'],
+                ':daily_requirement' => $dailyRequirement,
+                ':daily_target' => $dailyTarget,
+                ':working_days' => $workingDays,
+                ':total_target' => $totalTarget,
+                ':base_requirement' => $baseRequirement,
+                ':safety_percent' => $safetyPercent,
+                ':safety_minimum' => $safetyMinimum,
+                ':total_requirement' => $totalRequirement,
+                ':source_document' => $sourceDocument,
+                ':notes' => $row['notes'],
+                ':prepared_by' => $preparedBy,
+                ':checked_by' => $checkedBy,
+                ':approved_by' => $approvedBy,
+                ':created_by' => $actorId,
+            ]);
+        }
+
+        $totalPlanning = array_sum(array_column($preparedRows, 'planning'));
+        $totalActual = array_sum(array_column($preparedRows, 'actual'));
+        return [
+            'type' => 'cutting-bit',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => count($preparedRows),
+            'totalPlanning' => $totalPlanning,
+            'totalActual' => $totalActual,
+            'message' => 'Laporan Cutting Bit berhasil difinalkan: ' . count($preparedRows)
+                . " hari pemakaian masuk ke Condition Monitoring ({$totalActual}/{$totalPlanning} pcs actual/planning).",
         ];
     }
 
@@ -3782,6 +4124,41 @@ final class ReportIntegration
             }
         }
         return false;
+    }
+
+    private static function ensureColumns(PDO $db, string $table, array $definitions): void
+    {
+        $statement = $db->prepare(
+            'SELECT COLUMN_NAME FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name'
+        );
+        $statement->execute([':table_name' => $table]);
+        $existing = array_fill_keys($statement->fetchAll(PDO::FETCH_COLUMN), true);
+        foreach ($definitions as $column => $definition) {
+            if (isset($existing[$column])) continue;
+            if (!preg_match('/^[a-z0-9_]+$/i', $table) || !preg_match('/^[a-z0-9_]+$/i', $column)) {
+                throw new RuntimeException('Nama tabel atau kolom migrasi tidak valid.');
+            }
+            $db->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$definition}");
+        }
+    }
+
+    private static function ensureIndex(
+        PDO $db,
+        string $table,
+        string $index,
+        string $definition
+    ): void {
+        $statement = $db->prepare(
+            'SELECT COUNT(*) FROM information_schema.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name AND INDEX_NAME = :index_name'
+        );
+        $statement->execute([':table_name' => $table, ':index_name' => $index]);
+        if ((int) $statement->fetchColumn() > 0) return;
+        if (!preg_match('/^[a-z0-9_]+$/i', $table)) {
+            throw new RuntimeException('Nama tabel migrasi tidak valid.');
+        }
+        $db->exec("ALTER TABLE `{$table}` ADD {$definition}");
     }
 
     private static function requiredText($value, string $label, int $maxLength): string

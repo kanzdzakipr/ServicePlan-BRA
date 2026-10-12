@@ -100,6 +100,46 @@ try {
     $stmtSpl->execute($splParams);
     $globalData['spl_overtime_records'] = $stmtSpl->fetchAll();
 
+    // Pemakaian Cutting Bit final untuk riwayat khusus recycler/milling pada Condition Monitoring.
+    $cuttingSql = "SELECT c.bit_log_id AS bitLogId, c.report_id AS reportId,
+                          c.report_item_position AS position, rr.report_number AS reportNumber,
+                          c.asset_id AS assetId, c.activity_date AS activityDate,
+                          l.location_name AS location, c.equipment_label AS equipmentLabel,
+                          c.material, c.period_label AS periodLabel, c.report_year AS reportYear,
+                          c.planning_qty AS planningQty, c.actual_qty AS actualQty,
+                          c.variance_qty AS varianceQty,
+                          c.realization_percent AS realizationPercent,
+                          c.daily_requirement AS dailyRequirement,
+                          c.daily_target_m AS dailyTargetM, c.working_days AS workingDays,
+                          c.total_target_m AS totalTargetM,
+                          c.safety_stock_minimum AS safetyStockMinimum,
+                          c.total_requirement AS totalRequirement,
+                          c.source_document AS sourceDocument, c.notes,
+                          prepared.full_name AS preparedBy, checked.full_name AS checkedBy,
+                          approved.full_name AS approvedBy, c.created_at AS createdAt
+                   FROM cutting_bit_logs c
+                   INNER JOIN report_records rr ON rr.report_id = c.report_id AND rr.status = 'FINAL'
+                   INNER JOIN assets a ON a.asset_id = c.asset_id
+                   LEFT JOIN locations l ON l.location_id = c.location_id
+                   LEFT JOIN users prepared ON prepared.user_id = c.prepared_by
+                   LEFT JOIN users checked ON checked.user_id = c.checked_by
+                   LEFT JOIN users approved ON approved.user_id = c.approved_by
+                   WHERE c.reversed_at IS NULL";
+    $cuttingParams = [];
+    if (!api_has_global_location_scope()) {
+        $scopeLocationId = api_current_location_id();
+        if ($scopeLocationId === null) {
+            $cuttingSql .= ' AND 1 = 0';
+        } else {
+            $cuttingSql .= ' AND c.location_id = :cutting_location_id';
+            $cuttingParams[':cutting_location_id'] = $scopeLocationId;
+        }
+    }
+    $cuttingSql .= ' ORDER BY c.activity_date DESC, c.bit_log_id DESC';
+    $stmtCutting = $db->prepare($cuttingSql);
+    $stmtCutting->execute($cuttingParams);
+    $globalData['cutting_bit_logs'] = $stmtCutting->fetchAll();
+
     // Override Work Orders dari Database
     $workOrderScope = api_location_scope_clause('a', 'init_wo_location_id');
     $workOrderSql = "SELECT w.wo_id as woId, w.asset_id as assetId, w.issue_description as issue,

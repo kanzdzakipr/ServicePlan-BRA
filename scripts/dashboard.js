@@ -661,15 +661,16 @@
             ],
             minimumRequiredContentHints: 2,
             optionalFields: [
-                'tahun',
                 'target_total_m',
                 'kebutuhan_dasar',
                 'safety_stock_minimum',
-                'total_kebutuhan',
-                'sumber_dokumen'
+                'total_kebutuhan'
             ],
+            seedFields: {
+                sumber_dokumen: 'Perhitungan Cutting Bit / kontrol pemakaian harian'
+            },
             fields: [
-                field('mesin_unit', 'Mesin/unit', 'text', true),
+                field('mesin_unit', 'Mesin/unit', 'text', true, [], true),
                 field('kode_unit', 'Kode unit', 'text', true),
                 field('material', 'Material', 'select', true, [
                     'Clay/Pasir',
@@ -681,16 +682,19 @@
                 ]),
                 field('lokasi', 'Lokasi', 'text', true),
                 field('periode_pencatatan', 'Periode pencatatan', 'text', true),
-                field('tahun', 'Tahun laporan', 'number'),
+                field('tahun', 'Tahun laporan', 'number', true),
                 field('kebutuhan_harian', 'Kebutuhan cutting bit per hari', 'number', true),
                 field('target_harian_m', 'Target pekerjaan per hari (meter)', 'number', true),
                 field('hari_kerja', 'Hari kerja', 'number', true),
-                field('target_total_m', 'Target total (meter)', 'number', true),
-                field('kebutuhan_dasar', 'Kebutuhan cutting bit dasar (pcs)', 'number', true),
+                field('target_total_m', 'Target total (meter)', 'number', true, [], true),
+                field('kebutuhan_dasar', 'Kebutuhan cutting bit dasar (pcs)', 'number', true, [], true),
                 field('safety_stock_persen', 'Safety stock minimum (%)', 'number', true),
-                field('safety_stock_minimum', 'Safety stock minimum (pcs)', 'number', true),
-                field('total_kebutuhan', 'Total kebutuhan termasuk safety stock (pcs)', 'number', true),
-                field('sumber_dokumen', 'Dokumen sumber', 'text', true)
+                field('safety_stock_minimum', 'Safety stock minimum (pcs)', 'number', true, [], true),
+                field('total_kebutuhan', 'Total kebutuhan termasuk safety stock (pcs)', 'number', true, [], true),
+                field('sumber_dokumen', 'Dokumen sumber', 'text', true),
+                field('dibuat_oleh', 'Dibuat oleh / Mekanik', 'text', true),
+                field('diperiksa_oleh', 'Diperiksa Supervisor', 'text', true),
+                field('disetujui_oleh', 'Mengetahui Head Equipment', 'text', true)
             ],
             tableTitle: 'Tabulasi planning dan pemakaian harian',
             calculation: 'cuttingBitUsage',
@@ -712,9 +716,9 @@
                 column('catatan', 'Catatan')
             ],
             approvals: [
-                { label: 'Dibuat oleh / Mekanik' },
-                { label: 'Diperiksa Supervisor' },
-                { label: 'Mengetahui Head Equipment' }
+                { label: 'Dibuat oleh / Mekanik', nameField: 'dibuat_oleh' },
+                { label: 'Diperiksa Supervisor', nameField: 'diperiksa_oleh' },
+                { label: 'Mengetahui Head Equipment', nameField: 'disetujui_oleh' }
             ]
         },
         {
@@ -1144,7 +1148,12 @@
 
     function referenceOptionsMarkup(kind) {
         if (kind === 'assets') {
-            return reportReferences.assets.map(asset => (
+            const assets = activeSchema?.id === 'cutting-bit-usage'
+                ? reportReferences.assets.filter(asset => /(?:^|\s)(?:RM|WR)-|reclaimer|milling|cold\s*recycler|road\s*reclaimer/i.test(
+                    `${asset.id || ''} ${asset.code || ''} ${asset.category || ''} ${asset.makeModel || ''}`
+                ))
+                : reportReferences.assets;
+            return assets.map(asset => (
                 `<option value="${escapeHtml(asset.id)}">${escapeHtml([asset.category, asset.makeModel, asset.location, asset.status].filter(Boolean).join(' · '))}</option>`
             )).join('');
         }
@@ -1293,6 +1302,30 @@
         if (control) control.value = String(value);
     }
 
+    function calculateFormFields() {
+        if (activeSchema?.id !== 'cutting-bit-usage' || !activeDraft?.fields) return;
+        const fields = activeDraft.fields;
+        const dailyTarget = numberValue(fields.target_harian_m);
+        const dailyRequirement = numberValue(fields.kebutuhan_harian);
+        const workingDays = numberValue(fields.hari_kerja);
+        const safetyPercent = numberValue(fields.safety_stock_persen);
+        const calculated = {
+            target_total_m: Math.round(dailyTarget * workingDays * 100) / 100,
+            kebutuhan_dasar: Math.round(dailyRequirement * workingDays * 100) / 100,
+        };
+        calculated.safety_stock_minimum = Math.round(
+            calculated.kebutuhan_dasar * safetyPercent
+        ) / 100;
+        calculated.total_kebutuhan = Math.round(
+            (calculated.kebutuhan_dasar + calculated.safety_stock_minimum) * 100
+        ) / 100;
+        Object.entries(calculated).forEach(([key, value]) => {
+            fields[key] = String(value);
+            const control = document.querySelector(`[data-field="${key}"]`);
+            if (control) control.value = String(value);
+        });
+    }
+
     function applyAssetReference(asset, rowIndex = null) {
         if (!asset) return;
         if (rowIndex != null) {
@@ -1352,6 +1385,21 @@
         setAutomatedField('hm', asset.lastHmKm);
         setAutomatedField('hour_meter', asset.lastHmKm);
         setAutomatedField('asset', [asset.category, asset.makeModel].filter(Boolean).join(' '));
+
+        if (activeSchema?.id === 'cutting-bit-usage') {
+            setAutomatedField('mesin_unit', [asset.category, asset.makeModel].filter(Boolean).join(' '));
+            const now = new Date();
+            if (!String(activeDraft.fields.tahun || '').trim()) {
+                setAutomatedField('tahun', now.getFullYear());
+            }
+            if (!String(activeDraft.fields.periode_pencatatan || '').trim()) {
+                setAutomatedField(
+                    'periode_pencatatan',
+                    new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(now)
+                );
+            }
+            calculateFormFields();
+        }
 
         if (activeSchema?.calculation === 'lho' && activeDraft.rows[0]) {
             activeDraft.rows[0].hm_awal = String(asset.lastHmKm ?? 0);
@@ -3069,6 +3117,8 @@
         }
         if (target.dataset.field) {
             activeDraft.fields[target.dataset.field] = target.value;
+            calculateFormFields();
+            renderSummary();
         }
         if (target.dataset.row != null && target.dataset.key) {
             const rowIndex = Number(target.dataset.row);
@@ -3233,11 +3283,11 @@
         for (const key of ['kebutuhan_dasar', 'safety_stock_minimum', 'total_kebutuhan']) {
             if (
                 hasField(key)
-                && (!Number.isInteger(numericField(key)) || numericField(key) < 0)
+                && (!Number.isFinite(numericField(key)) || numericField(key) < 0)
             ) {
                 const definition = activeSchema.fields.find(item => item.key === key);
                 return issue(
-                    `${definition?.label || key} harus berupa bilangan bulat nol atau lebih.`,
+                    `${definition?.label || key} harus berupa angka nol atau lebih.`,
                     `[data-field="${key}"]`
                 );
             }
@@ -5515,6 +5565,44 @@
         return Array.isArray(window.globalData?.assets) ? window.globalData.assets : [];
     }
 
+    function cuttingReportRecords(assetId = '') {
+        const records = Array.isArray(window.globalData?.cutting_bit_logs)
+            ? window.globalData.cutting_bit_logs
+            : [];
+        if (!assetId) return records;
+        const code = shortCode(assetId);
+        return records.filter(item => item.assetId === assetId || shortCode(item.assetId) === code);
+    }
+
+    function cuttingReportStatus(record) {
+        const planning = num(record?.planningQty);
+        const actual = num(record?.actualQty);
+        if (planning <= 0 && actual > 0) return 'danger';
+        if (planning > 0 && actual > planning * 1.2) return 'danger';
+        if (actual > planning || (planning > 0 && actual === 0)) return 'warning';
+        return 'success';
+    }
+
+    function integratedCuttingHistory(assetId) {
+        return cuttingReportRecords(assetId).map(record => ({
+            id: record.reportNumber || `CB-${record.bitLogId}`,
+            assetId: record.assetId,
+            at: record.createdAt || `${record.activityDate}T12:00:00+07:00`,
+            domain: 'Cutting Bit',
+            status: cuttingReportStatus(record),
+            summary: `${record.activityDate} · actual ${num(record.actualQty)} pcs dari planning ${num(record.planningQty)} pcs · selisih ${num(record.varianceQty)} pcs`,
+            source: 'Laporan Cutting Bit'
+        }));
+    }
+
+    function conditionHistory(assetId) {
+        const code = shortCode(assetId);
+        return [
+            ...state.history.filter(item => item.assetId === assetId || shortCode(item.assetId) === code),
+            ...integratedCuttingHistory(assetId)
+        ].sort((left, right) => new Date(right.at).getTime() - new Date(left.at).getTime());
+    }
+
     function selectedAsset() {
         const assets = allAssets();
         if (!assets.length) return null;
@@ -6029,18 +6117,18 @@
                         <thead><tr><th>Unit / Tipe</th><th>Lokasi & Status</th><th>Shift / HM</th><th>Terpasang / Kembali</th><th>Rasio Pemakaian</th><th>Stok Akhir</th><th>Status</th><th>Update Terakhir</th><th>Aksi</th></tr></thead>
                         <tbody>
                             ${cuttingRows.length ? cuttingRows.map(({ asset, profile, cuttingMetrics: metrics }) => {
-            const latestCutting = state.history.find(item => item.assetId === asset.id && item.domain === 'Cutting Bit')
-                || state.history.find(item => shortCode(item.assetId) === shortCode(asset.id) && item.domain === 'Cutting Bit');
+            const latestCutting = conditionHistory(asset.id).find(item => item.domain === 'Cutting Bit');
+            const latestReport = cuttingReportRecords(asset.id)[0] || null;
             const updatedAt = latestCutting?.at || profile.cutting.updatedAt;
             return `<tr>
                                     <td><div class="cm-unit-table-cell"><span class="cm-unit-table-icon ${metrics.status}"><i class="fa-solid fa-road"></i></span><div><strong>${esc(shortCode(asset.id))}</strong><small>${esc(assetType(asset))}</small></div></div></td>
                                     <td><div class="cm-location-cell"><span title="${esc(asset.location || '')}">${esc(asset.location || 'Lokasi belum ditetapkan')}</span><small class="cm-asset-status ${esc(String(asset.status || 'READY').toLowerCase())}">${esc(asset.status || 'READY')}</small></div></td>
                                     <td class="cm-cutting-metric"><strong>${esc(profile.cutting.shift)}</strong><small>${fmt(metrics.hours, 1)} HM operasi</small></td>
-                                    <td class="cm-cutting-metric"><strong>${fmt(profile.cutting.installed, 0)} pcs terpasang</strong><small>${fmt(profile.cutting.returned, 0)} kembali · ${fmt(profile.cutting.lost, 0)} hilang</small></td>
+                                    <td class="cm-cutting-metric"><strong>${fmt(profile.cutting.installed, 0)} pcs terpasang</strong><small>${latestReport ? `Laporan ${fmt(latestReport.actualQty, 0)} / ${fmt(latestReport.planningQty, 0)} pcs actual/planning` : `${fmt(profile.cutting.returned, 0)} kembali · ${fmt(profile.cutting.lost, 0)} hilang`}</small></td>
                                     <td class="cm-cutting-metric"><strong>${fmt(metrics.perHm, 2)} bit/HM</strong><small>${fmt(metrics.per1000m2, 2)} bit/1.000 m²</small></td>
                                     <td class="cm-cutting-metric"><strong>${fmt(metrics.finalStock, 0)} pcs</strong><small>Minimum ${CUTTING_LIMITS.minStock} pcs</small></td>
                                     <td>${conditionCell(metrics.status, `${fmt(metrics.returnRate, 0)}% kembali`)}</td>
-                                    <td>${updatedAt ? `<strong>${esc(formatDate(updatedAt))}</strong><small>${latestCutting ? 'Input inspeksi' : 'Data awal'}</small>` : '<span class="cm-no-record">Belum ada input</span>'}</td>
+                                    <td>${updatedAt ? `<strong>${esc(formatDate(updatedAt))}</strong><small>${latestReport ? esc(latestReport.reportNumber || 'Laporan Cutting Bit') : latestCutting ? 'Input inspeksi' : 'Data awal'}</small>` : '<span class="cm-no-record">Belum ada input</span>'}</td>
                                     <td><button class="cm-detail-button cm-cutting-detail-button" type="button" onclick="ConditionMonitoring.openDetail('${esc(asset.id)}', 'cutting'); event.stopPropagation();"><i class="fa-solid fa-screwdriver-wrench"></i> Periksa</button></td>
                                 </tr>`;
         }).join('') : '<tr><td colspan="9" class="cm-empty-cell">Unit recycler/milling belum ditemukan pada master aset.</td></tr>'}
@@ -6382,7 +6470,7 @@
     }
 
     function renderHistoryTab(asset, profile) {
-        const unitHistory = state.history.filter(item => item.assetId === asset.id);
+        const unitHistory = conditionHistory(asset.id);
         const integratedInspections = (window.globalData?.inspections || []).filter(item => item.unitId === asset.id && item.source !== 'Condition Monitoring');
         const activeWos = (window.globalData?.work_orders || []).filter(wo => wo.assetId === asset.id && wo.status !== 'Closed');
         return `
@@ -6863,7 +6951,35 @@
         }
     };
 
+    async function refreshIntegratedCuttingData() {
+        if (!window.globalData) return null;
+        try {
+            const response = await fetch('api/init.php', {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                cache: 'no-store'
+            });
+            const payload = await response.json();
+            if (!response.ok || payload?.error || !Array.isArray(payload?.cutting_bit_logs)) {
+                throw new Error(payload?.error || 'Register Cutting Bit tidak dapat dimuat ulang.');
+            }
+            window.globalData.cutting_bit_logs = payload.cutting_bit_logs;
+            render();
+            return payload.cutting_bit_logs;
+        } catch (error) {
+            console.error('Data integrasi Cutting Bit gagal dimuat ulang:', error);
+            return null;
+        }
+    }
+
+    api.refreshIntegratedCuttingData = refreshIntegratedCuttingData;
     window.ConditionMonitoring = api;
+    document.addEventListener('fleetreport:finalized', event => {
+        if (event.detail?.schemaId === 'cutting-bit-usage') refreshIntegratedCuttingData();
+    });
+    document.addEventListener('fleetreport:voided', event => {
+        if (event.detail?.schemaId === 'cutting-bit-usage') refreshIntegratedCuttingData();
+    });
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', render);
