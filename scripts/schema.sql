@@ -508,6 +508,7 @@ DROP TABLE IF EXISTS `procurement_monitoring_logs`;
 DROP TABLE IF EXISTS `parts_weekly_snapshots`;
 DROP TABLE IF EXISTS `calibration_records`;
 DROP TABLE IF EXISTS `asset_shipments`;
+DROP TABLE IF EXISTS `spl_overtime_records`;
 DROP TABLE IF EXISTS `report_audit_logs`;
 DROP TABLE IF EXISTS `report_items`;
 DROP TABLE IF EXISTS `report_records`;
@@ -887,6 +888,43 @@ CREATE TABLE `asset_shipments` (
     CONSTRAINT `fk_asset_shipment_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_asset_shipment_origin` FOREIGN KEY (`origin_location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_asset_shipment_sender` FOREIGN KEY (`sender_user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `spl_overtime_records` (
+    `overtime_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `report_id` CHAR(36) NOT NULL,
+    `report_item_position` INT UNSIGNED NOT NULL,
+    `spl_number` VARCHAR(190) NOT NULL,
+    `spl_date` DATE NOT NULL,
+    `period_start` DATE NOT NULL,
+    `period_end` DATE NOT NULL,
+    `location_id` INT NOT NULL,
+    `employee_user_id` INT NOT NULL,
+    `role_snapshot` VARCHAR(150) NOT NULL,
+    `start_time` TIME NOT NULL,
+    `end_time` TIME NOT NULL,
+    `duration_hours` DECIMAL(6,2) NOT NULL,
+    `activity_description` TEXT NOT NULL,
+    `target_description` VARCHAR(500) NULL,
+    `general_instruction` TEXT NOT NULL,
+    `prepared_by` INT NOT NULL,
+    `instructed_by` INT NOT NULL,
+    `start_verified` BOOLEAN NOT NULL DEFAULT FALSE,
+    `end_verified` BOOLEAN NOT NULL DEFAULT FALSE,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    UNIQUE KEY `uq_spl_overtime_report_line` (`report_id`,`report_item_position`),
+    UNIQUE KEY `uq_spl_overtime_employee` (`report_id`,`employee_user_id`),
+    KEY `idx_spl_overtime_number` (`spl_number`),
+    KEY `idx_spl_overtime_employee_active` (`employee_user_id`,`spl_date`,`reversed_at`),
+    KEY `idx_spl_overtime_location` (`location_id`,`reversed_at`),
+    CONSTRAINT `fk_spl_overtime_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_spl_overtime_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_spl_overtime_employee` FOREIGN KEY (`employee_user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_spl_overtime_prepared` FOREIGN KEY (`prepared_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_spl_overtime_instructed` FOREIGN KEY (`instructed_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Re-enable foreign key checks

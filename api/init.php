@@ -65,6 +65,41 @@ try {
     $stmtShipments->execute($assetScope['params']);
     $globalData['asset_shipments'] = $stmtShipments->fetchAll();
 
+    // SPL final untuk register review planner pada People & KPI.
+    $splSql = "SELECT s.overtime_id AS overtimeId, s.report_id AS reportId,
+                      s.report_item_position AS position, s.spl_number AS splNumber,
+                      s.spl_date AS splDate, s.period_start AS periodStart,
+                      s.period_end AS periodEnd, l.location_name AS location,
+                      employee.full_name AS employeeName, s.role_snapshot AS employeeRole,
+                      s.start_time AS startTime, s.end_time AS endTime,
+                      s.duration_hours AS durationHours,
+                      s.activity_description AS activityDescription,
+                      s.target_description AS targetDescription,
+                      s.general_instruction AS generalInstruction,
+                      prepared.full_name AS preparedBy, instructed.full_name AS instructedBy,
+                      s.start_verified AS startVerified, s.end_verified AS endVerified
+               FROM spl_overtime_records s
+               INNER JOIN report_records rr ON rr.report_id = s.report_id AND rr.status = 'FINAL'
+               INNER JOIN locations l ON l.location_id = s.location_id
+               INNER JOIN users employee ON employee.user_id = s.employee_user_id
+               INNER JOIN users prepared ON prepared.user_id = s.prepared_by
+               INNER JOIN users instructed ON instructed.user_id = s.instructed_by
+               WHERE s.reversed_at IS NULL";
+    $splParams = [];
+    if (!api_has_global_location_scope()) {
+        $scopeLocationId = api_current_location_id();
+        if ($scopeLocationId === null) {
+            $splSql .= ' AND 1 = 0';
+        } else {
+            $splSql .= ' AND s.location_id = :spl_location_id';
+            $splParams[':spl_location_id'] = $scopeLocationId;
+        }
+    }
+    $splSql .= ' ORDER BY s.spl_date DESC, s.spl_number, s.report_item_position';
+    $stmtSpl = $db->prepare($splSql);
+    $stmtSpl->execute($splParams);
+    $globalData['spl_overtime_records'] = $stmtSpl->fetchAll();
+
     // Override Work Orders dari Database
     $workOrderScope = api_location_scope_clause('a', 'init_wo_location_id');
     $workOrderSql = "SELECT w.wo_id as woId, w.asset_id as assetId, w.issue_description as issue,

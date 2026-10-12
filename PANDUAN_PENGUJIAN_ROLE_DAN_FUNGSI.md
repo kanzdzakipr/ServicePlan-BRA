@@ -2342,3 +2342,35 @@ Panduan lengkap dan query verifikasi tersedia pada `PANDUAN_PENGUJIAN_BATCH_17.m
 - [ ] Hak akses dan cakupan lokasi diterapkan.
 - [ ] Tidak ada HTTP `500` atau error JavaScript.
 - [ ] Pengguna menyetujui hasil Batch 17 sebelum batch berikutnya dimulai.
+
+### Batch 18 — SPL ke People & KPI
+
+Integrasi Batch 18 menghubungkan **Surat Perintah Lembur (SPL)** dengan tabel `spl_overtime_records` dan **People & KPI → Evaluasi Maintenance Planner → Daftar SPL**.
+
+Hasil yang wajib diverifikasi:
+
+- lokasi, pembuat, pemberi instruksi, dan personel berasal dari database Laragon;
+- jabatan serta lokasi personel terisi otomatis;
+- durasi dan total jam-orang dihitung ulang dari waktu mulai/selesai;
+- pekerjaan melewati tengah malam dihitung dengan benar;
+- draft tidak membuat register lembur;
+- finalisasi membuat satu record per personel dan langsung tampil pada People & KPI;
+- data yang tidak cocok dengan master, personel ganda, dan durasi manipulatif ditolak;
+- retry tidak membuat duplikasi dan void menonaktifkan register aktif.
+
+Panduan lengkap tersedia pada `PANDUAN_PENGUJIAN_BATCH_18.md`.
+
+#### Kriteria lulus Batch 18
+
+- [ ] Pilihan lokasi dan personel berasal dari database.
+- [ ] Jabatan dan lokasi personel terisi otomatis.
+- [ ] Durasi serta total jam-orang benar.
+- [ ] Draft tidak membuat `spl_overtime_records`.
+- [ ] Finalisasi tampil pada Daftar SPL People & KPI.
+- [ ] Detail review memuat pekerjaan, waktu, TTD, dan otorisasi.
+- [ ] Seluruh validasi backend bekerja.
+- [ ] Retry tidak membuat duplikasi.
+- [ ] Void menonaktifkan semua baris aktif.
+- [ ] Cakupan lokasi dan hak akses diterapkan.
+- [ ] Tidak ada HTTP `500` atau error JavaScript.
+- [ ] Pengguna menyetujui hasil Batch 18 sebelum batch berikutnya dimulai.

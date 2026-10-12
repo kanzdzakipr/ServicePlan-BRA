@@ -1258,6 +1258,50 @@ LOCK TABLES `asset_shipments` WRITE;
 /*!40000 ALTER TABLE `asset_shipments` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- Table structure for table `spl_overtime_records`
+DROP TABLE IF EXISTS `spl_overtime_records`;
+CREATE TABLE `spl_overtime_records` (
+  `overtime_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `report_id` char(36) NOT NULL,
+  `report_item_position` int unsigned NOT NULL,
+  `spl_number` varchar(190) NOT NULL,
+  `spl_date` date NOT NULL,
+  `period_start` date NOT NULL,
+  `period_end` date NOT NULL,
+  `location_id` int NOT NULL,
+  `employee_user_id` int NOT NULL,
+  `role_snapshot` varchar(150) NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `duration_hours` decimal(6,2) NOT NULL,
+  `activity_description` text NOT NULL,
+  `target_description` varchar(500) DEFAULT NULL,
+  `general_instruction` text NOT NULL,
+  `prepared_by` int NOT NULL,
+  `instructed_by` int NOT NULL,
+  `start_verified` tinyint(1) NOT NULL DEFAULT '0',
+  `end_verified` tinyint(1) NOT NULL DEFAULT '0',
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reversed_at` timestamp NULL DEFAULT NULL,
+  `reversed_by` int DEFAULT NULL,
+  PRIMARY KEY (`overtime_id`),
+  UNIQUE KEY `uq_spl_overtime_report_line` (`report_id`,`report_item_position`),
+  UNIQUE KEY `uq_spl_overtime_employee` (`report_id`,`employee_user_id`),
+  KEY `idx_spl_overtime_number` (`spl_number`),
+  KEY `idx_spl_overtime_employee_active` (`employee_user_id`,`spl_date`,`reversed_at`),
+  KEY `idx_spl_overtime_location` (`location_id`,`reversed_at`),
+  CONSTRAINT `fk_spl_overtime_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_spl_overtime_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_spl_overtime_employee` FOREIGN KEY (`employee_user_id`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_spl_overtime_prepared` FOREIGN KEY (`prepared_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_spl_overtime_instructed` FOREIGN KEY (`instructed_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+LOCK TABLES `spl_overtime_records` WRITE;
+/*!40000 ALTER TABLE `spl_overtime_records` DISABLE KEYS */;
+/*!40000 ALTER TABLE `spl_overtime_records` ENABLE KEYS */;
+UNLOCK TABLES;
+
 --
 -- Table structure for table `role_permissions`
 --

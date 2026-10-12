@@ -508,24 +508,35 @@
             title: 'Surat Perintah Lembur (Yard)',
             description: 'Penugasan lembur, daftar personel, durasi, dan total jam-orang.',
             source: 'FORM_SPL_Yard_Tabulasi.md',
+            seedFields: { nomor_spl: 'SPL/____/YARD/__/20__' },
             fields: [
+                field('nomor_spl', 'Nomor SPL', 'text', true, [], false, 'SPL/____/YARD/__/20__'),
                 field('tanggal_spl', 'Tanggal SPL', 'date', true),
                 field('mulai_periode', 'Mulai pelaksanaan', 'date', true),
                 field('akhir_periode', 'Selesai pelaksanaan', 'date', true),
                 field('lokasi', 'Area / lokasi', 'text', true),
                 field('target', 'Target waktu / penyelesaian'),
-                field('uraian', 'Uraian tugas lembur', 'textarea', true, [], true)
+                field('uraian', 'Instruksi umum lembur', 'textarea', true, [], true),
+                field('dibuat_oleh', 'Dibuat oleh', 'text', true),
+                field('instruksi_oleh', 'Instruksi dari Head of Equipment', 'text', true)
             ],
             tableTitle: 'Personel lembur',
             calculation: 'spl',
             calculationNote: 'Durasi tiap personel dan total jam-orang dihitung otomatis dari jam mulai dan berakhir.',
             columns: [
-                column('nama', 'Nama'),
-                column('jabatan', 'Jabatan'),
-                column('lokasi', 'Lokasi'),
-                column('mulai', 'Mulai', 'time'),
-                column('selesai', 'Berakhir', 'time'),
+                column('nama', 'Nama', 'text', false, [], false, true),
+                column('jabatan', 'Jabatan', 'text', false, [], false, true),
+                column('lokasi', 'Lokasi', 'text', false, [], false, true),
+                column('uraian', 'Uraian pekerjaan', 'textarea', false, [], false, true),
+                column('mulai', 'Mulai', 'time', false, [], false, true),
+                column('verifikasi_mulai', 'TTD mulai', 'select', false, ['Belum diverifikasi', 'Terverifikasi'], false, true),
+                column('selesai', 'Berakhir', 'time', false, [], false, true),
+                column('verifikasi_selesai', 'TTD selesai', 'select', false, ['Belum diverifikasi', 'Terverifikasi'], false, true),
                 column('durasi', 'Jumlah jam', 'number', true)
+            ],
+            approvals: [
+                { label: 'Dibuat oleh', nameField: 'dibuat_oleh' },
+                { label: 'Instruksi Head of Equipment', nameField: 'instruksi_oleh' }
             ]
         },
         {
@@ -1102,6 +1113,7 @@
             if (isTableColumn && key === 'nama') return 'assets';
             if (!isTableColumn && key === 'penerima') return 'shippingPartners';
         }
+        if (activeSchema?.id === 'spl' && isTableColumn && key === 'nama') return 'people';
         if (isTableColumn && activeSchema?.id === 'maintenance-board' && key === 'kode') return 'assets';
         if (activeSchema?.id === 'bast-mde1' && /^(project_asal|project_tujuan)$/.test(key)) return 'locations';
         if (/^(id_alat|kode_alat|code_number|id_unit|unit_id|kode_unit)$/.test(key)) return 'assets';
@@ -1122,7 +1134,7 @@
         if (/^(lokasi|lokasi_alat|lokasi_pengesahan|area_lokasi)$/.test(key)) return 'locations';
         if (/^(jenis_alat|jenis_unit|kategori_alat)$/.test(key)) return 'categories';
         if (/^(tipe_merk|merek_model|tipe_alat)$/.test(key)) return 'models';
-        if (/^(pic)$|operator|mekanik|verifikator|approver|dibuat_oleh|diperiksa_oleh|disetujui_oleh|diajukan_oleh|penerima|pengirim/.test(key)) return 'people';
+        if (/^(pic)$|operator|mekanik|verifikator|approver|dibuat_oleh|instruksi_oleh|diperiksa_oleh|disetujui_oleh|diajukan_oleh|penerima|pengirim/.test(key)) return 'people';
         return '';
     }
 
@@ -1361,7 +1373,19 @@
     }
 
     function applyPersonReference(person, control) {
-        if (!person || !control || control.dataset.row != null) return;
+        if (!person || !control) return;
+        if (control.dataset.row != null) {
+            if (activeSchema?.id !== 'spl') return;
+            const row = activeDraft?.rows?.[Number(control.dataset.row)];
+            if (!row) return;
+            row.nama = person.name;
+            row.jabatan = person.role;
+            row.lokasi = activeDraft.fields.lokasi || person.location;
+            row.verifikasi_mulai = row.verifikasi_mulai || 'Belum diverifikasi';
+            row.verifikasi_selesai = row.verifikasi_selesai || 'Belum diverifikasi';
+            renderRows();
+            return;
+        }
         const key = String(control.dataset.field || '');
         const roleFieldByPersonField = {
             dibuat_oleh: 'jabatan',
@@ -14296,6 +14320,53 @@
         }
     ];
 
+    function currentSplRegister() {
+        const grouped = new Map();
+        const rows = Array.isArray(window.globalData?.spl_overtime_records)
+            ? window.globalData.spl_overtime_records
+            : [];
+        rows.forEach(row => {
+            const key = String(row.reportId || row.splNumber || '');
+            if (!key) return;
+            if (!grouped.has(key)) {
+                grouped.set(key, {
+                    id: row.splNumber,
+                    reportId: row.reportId,
+                    docDate: row.splDate,
+                    location: row.location,
+                    window: `${row.periodStart} s.d. ${row.periodEnd}`,
+                    personnelCount: 0,
+                    totalPersonHours: '0 Jam-Orang',
+                    personnel: [],
+                    approvals: [
+                        { role: 'Dibuat oleh', name: row.preparedBy, status: 'Approved / Signed' },
+                        { role: 'Instruksi Kerja (Head of Equipment)', name: row.instructedBy, status: 'Approved / Signed' }
+                    ],
+                    sourceDatabase: true,
+                    totalHours: 0
+                });
+            }
+            const record = grouped.get(key);
+            record.totalHours += Number(row.durationHours || 0);
+            record.personnel.push({
+                name: row.employeeName,
+                role: row.employeeRole,
+                tasks: [row.activityDescription || row.generalInstruction].filter(Boolean),
+                startTTD: Number(row.startVerified) === 1,
+                endTTD: Number(row.endVerified) === 1,
+                startTime: String(row.startTime || '').slice(0, 5),
+                endTime: String(row.endTime || '').slice(0, 5)
+            });
+        });
+        const databaseRecords = [...grouped.values()].map(record => ({
+            ...record,
+            personnelCount: record.personnel.length,
+            totalPersonHours: `${Math.round(record.totalHours * 100) / 100} Jam-Orang`
+        }));
+        const databaseIds = new Set(databaseRecords.map(record => record.id));
+        return [...databaseRecords, ...officialSplRegister.filter(record => !databaseIds.has(record.id))];
+    }
+
     function loadPlannerSplReviews() {
         try {
             const stored = JSON.parse(localStorage.getItem(SPL_PLANNER_REVIEW_KEY) || '{}');
@@ -14591,7 +14662,7 @@
                                 <span id="pkSplRegisterTitle"><i class="fa-solid fa-inbox"></i> Daftar SPL masuk untuk review planner</span>
                                 <small>Planner meninjau rincian pekerjaan setelah Head of Equipment memberikan instruksi atau persetujuan.</small>
                             </div>
-                            <span class="pk-spl-register-count"><strong>${officialSplRegister.length}</strong> dokumen masuk</span>
+                            <span class="pk-spl-register-count"><strong>${currentSplRegister().length}</strong> dokumen masuk</span>
                         </div>
                         <div class="pk-panel-body no-padding">
                             <div class="table-responsive">
@@ -15137,7 +15208,7 @@
         const tbody = document.getElementById('tbPlannerSplRegister');
         if (!tbody) return;
 
-        tbody.innerHTML = officialSplRegister.map(record => {
+        tbody.innerHTML = currentSplRegister().map(record => {
             const creator = plannerSplCreator(record);
             const headApproval = plannerSplHeadApproval(record);
             const headApproved = Boolean(headApproval?.status.includes('Approved'));
@@ -15170,7 +15241,7 @@
     function renderPlannerSplDetail() {
         const detail = document.getElementById('pkPlannerSplReviewDetail');
         if (!detail) return;
-        const record = officialSplRegister.find(item => item.id === selectedSplReviewId);
+        const record = currentSplRegister().find(item => item.id === selectedSplReviewId);
         if (!record) {
             detail.innerHTML = `
                 <div class="pk-spl-review-empty">
@@ -15219,7 +15290,7 @@
                             <article class="pk-spl-person-card">
                                 <header><span>${String(index + 1).padStart(2, '0')}</span><div><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.role)}</small></div></header>
                                 <ol>${person.tasks.map(task => `<li>${escapeHtml(task)}</li>`).join('')}</ol>
-                                <footer><span><i class="fa-solid fa-signature"></i> TTD mulai: ${person.startTTD ? 'Ada' : 'Belum ada'}</span><span>TTD selesai: ${person.endTTD ? 'Ada' : 'Belum ada'}</span></footer>
+                                <footer><span><i class="fa-solid fa-clock"></i> ${escapeHtml(person.startTime || '-')}–${escapeHtml(person.endTime || '-')}</span><span>TTD mulai: ${person.startTTD ? 'Ada' : 'Belum ada'} · TTD selesai: ${person.endTTD ? 'Ada' : 'Belum ada'}</span></footer>
                             </article>`).join('')}
                     </div>
                     <div class="pk-spl-authorization-heading"><span>Matriks otorisasi & verifikasi tanda tangan SPL</span><small>Urutan menunjukkan pihak yang membuat, mengetahui, menyetujui, dan meninjau dokumen.</small></div>
@@ -15304,6 +15375,35 @@
         link.click();
         alert('Laporan KPI & People berhasil diekspor ke CSV.');
     };
+
+    async function refreshIntegratedSplData() {
+        if (!window.globalData) return null;
+        try {
+            const response = await fetch('api/init.php', {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                cache: 'no-store'
+            });
+            const payload = await response.json();
+            if (!response.ok || payload?.error || !Array.isArray(payload?.spl_overtime_records)) {
+                throw new Error(payload?.error || 'Register SPL tidak dapat dimuat ulang.');
+            }
+            window.globalData.spl_overtime_records = payload.spl_overtime_records;
+            createPeopleKPIModule();
+            return payload.spl_overtime_records;
+        } catch (error) {
+            console.error('Data integrasi SPL gagal dimuat ulang:', error);
+            return null;
+        }
+    }
+
+    window.refreshIntegratedSplData = refreshIntegratedSplData;
+    document.addEventListener('fleetreport:finalized', event => {
+        if (event.detail?.schemaId === 'spl') refreshIntegratedSplData();
+    });
+    document.addEventListener('fleetreport:voided', event => {
+        if (event.detail?.schemaId === 'spl') refreshIntegratedSplData();
+    });
 
     // Auto Mount Handler
     if (document.readyState === 'loading') {

@@ -365,6 +365,43 @@ final class ReportIntegration
             CONSTRAINT fk_asset_shipment_origin FOREIGN KEY (origin_location_id) REFERENCES locations (location_id) ON DELETE RESTRICT,
             CONSTRAINT fk_asset_shipment_sender FOREIGN KEY (sender_user_id) REFERENCES users (user_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS spl_overtime_records (
+            overtime_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            report_id CHAR(36) NOT NULL,
+            report_item_position INT UNSIGNED NOT NULL,
+            spl_number VARCHAR(190) NOT NULL,
+            spl_date DATE NOT NULL,
+            period_start DATE NOT NULL,
+            period_end DATE NOT NULL,
+            location_id INT NOT NULL,
+            employee_user_id INT NOT NULL,
+            role_snapshot VARCHAR(150) NOT NULL,
+            start_time TIME NOT NULL,
+            end_time TIME NOT NULL,
+            duration_hours DECIMAL(6,2) NOT NULL,
+            activity_description TEXT NOT NULL,
+            target_description VARCHAR(500) NULL,
+            general_instruction TEXT NOT NULL,
+            prepared_by INT NOT NULL,
+            instructed_by INT NOT NULL,
+            start_verified BOOLEAN NOT NULL DEFAULT FALSE,
+            end_verified BOOLEAN NOT NULL DEFAULT FALSE,
+            created_by INT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reversed_at TIMESTAMP NULL,
+            reversed_by INT NULL,
+            UNIQUE KEY uq_spl_overtime_report_line (report_id, report_item_position),
+            UNIQUE KEY uq_spl_overtime_employee (report_id, employee_user_id),
+            KEY idx_spl_overtime_number (spl_number),
+            KEY idx_spl_overtime_employee_active (employee_user_id, spl_date, reversed_at),
+            KEY idx_spl_overtime_location (location_id, reversed_at),
+            CONSTRAINT fk_spl_overtime_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_spl_overtime_location FOREIGN KEY (location_id) REFERENCES locations (location_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_spl_overtime_employee FOREIGN KEY (employee_user_id) REFERENCES users (user_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_spl_overtime_prepared FOREIGN KEY (prepared_by) REFERENCES users (user_id) ON DELETE RESTRICT,
+            CONSTRAINT fk_spl_overtime_instructed FOREIGN KEY (instructed_by) REFERENCES users (user_id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
 
     public static function applyFinal(
@@ -392,6 +429,9 @@ final class ReportIntegration
         }
         if ($templateKey === 'penyerahan-ekspedisi') {
             return self::applyAssetShipment($db, $reportId, $fields, $rows, $actorId);
+        }
+        if ($templateKey === 'spl') {
+            return self::applySplOvertime($db, $reportId, $fields, $rows, $actorId);
         }
         if ($templateKey === 'lho') {
             return self::applyLho($db, $reportId, $fields, $rows, $actorId);
@@ -843,6 +883,14 @@ final class ReportIntegration
         $shipment->execute([':actor' => $actorId, ':report_id' => $reportId]);
         $shipmentReversed = $shipment->rowCount();
 
+        $splOvertime = $db->prepare(
+            'UPDATE spl_overtime_records
+             SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :actor
+             WHERE report_id = :report_id AND reversed_at IS NULL'
+        );
+        $splOvertime->execute([':actor' => $actorId, ':report_id' => $reportId]);
+        $splOvertimeReversed = $splOvertime->rowCount();
+
         $assetMovementStatement = $db->prepare(
             'SELECT integration_id, movement_id, asset_id, previous_location_id, applied_location_id,
                     previous_hm, applied_hm
@@ -918,7 +966,7 @@ final class ReportIntegration
         $totalReversed = $reversed + $inspectionReversed + $operationReversed + $fuelReversed
             + $pmReversed + $workOrderReversed + $purchaseRequestReversed + $purchaseOrderReversed
             + $goodsReceiptReversed + $monitoringReversed + $weeklyReversed + $assetMovementReversed
-            + $calibrationReversed + $shipmentReversed;
+            + $calibrationReversed + $shipmentReversed + $splOvertimeReversed;
         $reversalType = 'inventory-reversal';
         $reversalMessage = null;
         if ($assetMovementReversed > 0) {
@@ -929,6 +977,9 @@ final class ReportIntegration
         } elseif ($shipmentReversed > 0) {
             $reversalType = 'asset-shipment-reversal';
             $reversalMessage = "BAPE dibatalkan dan {$shipmentReversed} catatan pengiriman dinonaktifkan dari riwayat unit.";
+        } elseif ($splOvertimeReversed > 0) {
+            $reversalType = 'spl-overtime-reversal';
+            $reversalMessage = "SPL dibatalkan dan {$splOvertimeReversed} catatan lembur dinonaktifkan dari People & KPI.";
         } elseif ($calibrationReversed > 0) {
             $reversalType = 'calibration-reversal';
             $reversalMessage = "Laporan kalibrasi dibatalkan dan {$calibrationReversed} record dinonaktifkan dari register Preventive Maintenance.";
@@ -993,10 +1044,167 @@ final class ReportIntegration
             'partsWeeklyItemCount' => $weeklyReversed,
             'calibrationItemCount' => $calibrationReversed,
             'assetShipmentItemCount' => $shipmentReversed,
+            'splOvertimeItemCount' => $splOvertimeReversed,
             'assetMovementItemCount' => $assetMovementReversed,
             'assetMovementDeletedCount' => $assetMovementDeleted,
             'assetMovementPreservedCount' => $assetMovementPreserved,
             'message' => $reversalMessage,
+        ];
+    }
+
+    private static function applySplOvertime(
+        PDO $db,
+        string $reportId,
+        array $fields,
+        array $rows,
+        int $actorId
+    ): array {
+        $existing = $db->prepare(
+            'SELECT overtime_id FROM spl_overtime_records WHERE report_id = :report_id LIMIT 1'
+        );
+        $existing->execute([':report_id' => $reportId]);
+        if ($existing->fetchColumn() !== false) {
+            return ['type' => 'spl-overtime', 'applied' => false, 'alreadyApplied' => true, 'itemCount' => 0];
+        }
+
+        $splNumber = self::requiredText($fields['nomor_spl'] ?? null, 'Nomor SPL', 190);
+        $splDate = self::requiredDate($fields['tanggal_spl'] ?? null, 'Tanggal SPL');
+        $periodStart = self::requiredDate($fields['mulai_periode'] ?? null, 'Mulai pelaksanaan');
+        $periodEnd = self::requiredDate($fields['akhir_periode'] ?? null, 'Selesai pelaksanaan');
+        if ($periodEnd < $periodStart) {
+            throw new DomainException('Selesai pelaksanaan SPL tidak boleh sebelum tanggal mulai.');
+        }
+        if ($splDate > $periodEnd) {
+            throw new DomainException('Tanggal SPL tidak boleh setelah periode pelaksanaan berakhir.');
+        }
+
+        $locationName = self::requiredText($fields['lokasi'] ?? null, 'Area / lokasi SPL', 190);
+        $locationStatement = $db->prepare(
+            'SELECT location_id, location_name FROM locations
+             WHERE is_active = 1 AND location_name = :name ORDER BY location_id LIMIT 1'
+        );
+        $locationStatement->execute([':name' => $locationName]);
+        $location = $locationStatement->fetch(PDO::FETCH_ASSOC);
+        if (!$location) throw new DomainException("Lokasi SPL {$locationName} tidak ditemukan pada Master Lokasi.");
+
+        $personStatement = $db->prepare(
+            'SELECT u.user_id, u.full_name, r.role_name
+             FROM users u LEFT JOIN roles r ON r.role_id = u.role_id
+             WHERE u.is_active = 1 AND u.full_name = :name ORDER BY u.user_id LIMIT 1'
+        );
+        $resolvePerson = static function ($value, string $label) use ($personStatement): array {
+            $name = trim((string) $value);
+            if ($name === '') throw new DomainException("{$label} wajib dipilih dari Master Personel.");
+            $personStatement->execute([':name' => $name]);
+            $person = $personStatement->fetch(PDO::FETCH_ASSOC);
+            if (!$person) throw new DomainException("{$label} {$name} tidak ditemukan pada Master Personel.");
+            return $person;
+        };
+        $preparedBy = $resolvePerson($fields['dibuat_oleh'] ?? null, 'Pembuat SPL');
+        $instructedBy = $resolvePerson($fields['instruksi_oleh'] ?? null, 'Pemberi instruksi SPL');
+        $target = self::optionalText($fields['target'] ?? null, 500);
+        $generalInstruction = self::requiredText($fields['uraian'] ?? null, 'Instruksi umum lembur', 5000);
+
+        $preparedRows = [];
+        $seenPeople = [];
+        foreach (array_values($rows) as $position => $row) {
+            if (!is_array($row) || !self::rowHasContent($row)) continue;
+            $line = $position + 1;
+            $person = $resolvePerson($row['nama'] ?? null, "Personel baris {$line}");
+            $personId = (int) $person['user_id'];
+            if (isset($seenPeople[$personId])) {
+                throw new DomainException("Personel {$person['full_name']} dicatat lebih dari sekali dalam SPL yang sama.");
+            }
+            $seenPeople[$personId] = true;
+
+            $masterRole = trim((string) ($person['role_name'] ?? ''));
+            $reportedRole = self::requiredText($row['jabatan'] ?? null, "Jabatan baris {$line}", 150);
+            if ($masterRole === '' || strcasecmp($reportedRole, $masterRole) !== 0) {
+                throw new DomainException("Baris {$line}: jabatan tidak cocok dengan Master Personel.");
+            }
+            $rowLocation = self::requiredText($row['lokasi'] ?? null, "Lokasi baris {$line}", 190);
+            if (strcasecmp($rowLocation, (string) $location['location_name']) !== 0) {
+                throw new DomainException("Baris {$line}: lokasi personel harus sama dengan lokasi SPL {$location['location_name']}.");
+            }
+
+            $startTime = self::requiredTime($row['mulai'] ?? null, "Jam mulai baris {$line}");
+            $endTime = self::requiredTime($row['selesai'] ?? null, "Jam selesai baris {$line}");
+            $duration = self::timeDifferenceHours($startTime, $endTime);
+            if ($duration <= 0 || $duration > 16) {
+                throw new DomainException("Baris {$line}: durasi lembur harus lebih dari 0 dan maksimal 16 jam.");
+            }
+            $reportedDuration = self::requiredNonNegativeDecimal($row['durasi'] ?? null, "Durasi baris {$line}");
+            if (abs($reportedDuration - $duration) >= 0.01) {
+                throw new DomainException("Baris {$line}: durasi tidak sesuai perhitungan waktu backend.");
+            }
+            $activity = self::requiredText($row['uraian'] ?? null, "Uraian pekerjaan baris {$line}", 5000);
+            $startVerification = self::requiredText($row['verifikasi_mulai'] ?? null, "Verifikasi mulai baris {$line}", 30);
+            $endVerification = self::requiredText($row['verifikasi_selesai'] ?? null, "Verifikasi selesai baris {$line}", 30);
+            $allowedVerification = ['Belum diverifikasi', 'Terverifikasi'];
+            if (!in_array($startVerification, $allowedVerification, true)
+                || !in_array($endVerification, $allowedVerification, true)) {
+                throw new DomainException("Baris {$line}: status verifikasi waktu tidak dikenali.");
+            }
+
+            $preparedRows[] = [
+                'position' => $position,
+                'employeeId' => $personId,
+                'role' => $masterRole,
+                'start' => $startTime,
+                'end' => $endTime,
+                'duration' => $duration,
+                'activity' => $activity,
+                'startVerified' => $startVerification === 'Terverifikasi' ? 1 : 0,
+                'endVerified' => $endVerification === 'Terverifikasi' ? 1 : 0,
+            ];
+        }
+        if ($preparedRows === []) throw new DomainException('SPL harus memiliki sedikitnya satu personel.');
+
+        $insert = $db->prepare(
+            'INSERT INTO spl_overtime_records
+             (report_id, report_item_position, spl_number, spl_date, period_start, period_end,
+              location_id, employee_user_id, role_snapshot, start_time, end_time, duration_hours,
+              activity_description, target_description, general_instruction, prepared_by,
+              instructed_by, start_verified, end_verified, created_by)
+             VALUES
+             (:report_id, :position, :spl_number, :spl_date, :period_start, :period_end,
+              :location_id, :employee_user_id, :role_snapshot, :start_time, :end_time, :duration_hours,
+              :activity_description, :target_description, :general_instruction, :prepared_by,
+              :instructed_by, :start_verified, :end_verified, :created_by)'
+        );
+        foreach ($preparedRows as $row) {
+            $insert->execute([
+                ':report_id' => $reportId,
+                ':position' => $row['position'],
+                ':spl_number' => $splNumber,
+                ':spl_date' => $splDate,
+                ':period_start' => $periodStart,
+                ':period_end' => $periodEnd,
+                ':location_id' => (int) $location['location_id'],
+                ':employee_user_id' => $row['employeeId'],
+                ':role_snapshot' => $row['role'],
+                ':start_time' => $row['start'],
+                ':end_time' => $row['end'],
+                ':duration_hours' => $row['duration'],
+                ':activity_description' => $row['activity'],
+                ':target_description' => $target,
+                ':general_instruction' => $generalInstruction,
+                ':prepared_by' => (int) $preparedBy['user_id'],
+                ':instructed_by' => (int) $instructedBy['user_id'],
+                ':start_verified' => $row['startVerified'],
+                ':end_verified' => $row['endVerified'],
+                ':created_by' => $actorId,
+            ]);
+        }
+        $totalHours = round(array_sum(array_column($preparedRows, 'duration')), 2);
+        return [
+            'type' => 'spl-overtime',
+            'applied' => true,
+            'alreadyApplied' => false,
+            'itemCount' => count($preparedRows),
+            'totalHours' => $totalHours,
+            'message' => "SPL {$splNumber} berhasil difinalkan: " . count($preparedRows)
+                . " personel dan {$totalHours} jam-orang masuk ke People & KPI.",
         ];
     }
 
