@@ -31,6 +31,7 @@ $scopeCoverage = [
     'api/fuel_logs.php' => ['api_location_scope_clause', 'api_require_asset_access'],
     'api/pm_plans.php' => ['api_location_scope_clause', 'api_require_asset_access'],
     'api/tire_inspections.php' => ['api_location_scope_clause', 'api_require_asset_access'],
+    'api/condition_monitoring.php' => ['api_location_scope_clause', 'api_require_asset_access'],
     'api/inspections.php' => ['api_location_scope_clause', 'api_require_asset_access'],
     'api/accidents.php' => ['api_location_scope_clause', 'api_require_asset_access', 'OBJECT_ID_CONFLICT'],
     'api/logistics.php' => ['api_location_scope_clause', 'api_require_asset_access', 'OBJECT_ID_CONFLICT'],

@@ -570,6 +570,7 @@ function api_route_permission(): ?string
         'pm_plans.php' => $readWrite('pm.read', 'pm.write'),
         'calibrations.php' => 'pm.read',
         'tire_inspections.php' => $readWrite('tires.read', 'tires.write'),
+        'condition_monitoring.php' => $readWrite('tires.read', 'tires.write'),
         'productivity.php' => 'dashboard.read',
         'reports.php' => $readWrite('reports.read', 'reports.write'),
         'report_references.php' => 'reports.read',

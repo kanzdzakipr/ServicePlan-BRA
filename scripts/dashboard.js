@@ -5488,6 +5488,11 @@
     const TIRE_REPORT_OVERRIDES = {};
 
     const state = loadState();
+    const conditionDatabase = {
+        latest: { tires: [], grease: [], batteries: [] },
+        history: [],
+        loaded: false
+    };
     const catalogState = { query: '', status: 'ALL', type: 'ALL', activeKpi: '', page: 1, pageSize: 20 };
     const previewProfiles = new Map();
     let detailOpen = false;
@@ -5595,9 +5600,25 @@
         }));
     }
 
+    function databaseConditionHistory(assetId) {
+        const code = shortCode(assetId);
+        return conditionDatabase.history
+            .filter(item => item.assetId === assetId || shortCode(item.assetId) === code)
+            .map(item => ({
+                id: item.id,
+                assetId: item.assetId,
+                at: item.inspectedAt,
+                domain: item.domain,
+                status: item.status,
+                summary: item.summary,
+                source: 'Database Condition Monitoring'
+            }));
+    }
+
     function conditionHistory(assetId) {
         const code = shortCode(assetId);
         return [
+            ...databaseConditionHistory(assetId),
             ...state.history.filter(item => item.assetId === assetId || shortCode(item.assetId) === code),
             ...integratedCuttingHistory(assetId)
         ].sort((left, right) => new Date(right.at).getTime() - new Date(left.at).getTime());
@@ -5773,6 +5794,59 @@
         return false;
     }
 
+    function databaseRecordsForAsset(records, assetId) {
+        const code = shortCode(assetId);
+        return records.filter(item => item.assetId === assetId || shortCode(item.assetId) === code);
+    }
+
+    function applyConditionDatabaseProfile(asset, profile) {
+        if (!conditionDatabase.loaded || !asset || !profile) return profile;
+
+        databaseRecordsForAsset(conditionDatabase.latest.tires, asset.id).forEach(record => {
+            const tire = profile.tires.find(item => item.code === record.position || item.posCode === record.position);
+            if (!tire) return;
+            tire.serialNo = record.serialNo || tire.serialNo;
+            tire.tread = record.tread;
+            tire.pressure = record.pressure;
+            tire.physical = record.physical;
+            tire.wearPattern = record.wearPattern;
+            tire.action = record.action;
+            tire.note = record.notes || '';
+            tire.updatedAt = record.inspectedAt;
+        });
+
+        const grease = databaseRecordsForAsset(conditionDatabase.latest.grease, asset.id)[0];
+        if (grease) {
+            Object.assign(profile.grease, {
+                currentHm: grease.currentHm,
+                lastHm: grease.lastHm,
+                interval: grease.interval,
+                quantity: grease.quantity,
+                greaseType: grease.greaseType,
+                points: grease.points,
+                note: grease.note,
+                updatedAt: grease.inspectedAt
+            });
+        }
+
+        const battery = databaseRecordsForAsset(conditionDatabase.latest.batteries, asset.id)[0];
+        if (battery) {
+            Object.assign(profile.battery, {
+                brand: battery.brand,
+                type: battery.type,
+                voltage: battery.voltage,
+                cca: battery.cca,
+                installDate: battery.installDate,
+                terminal: battery.terminal,
+                electrolyte: battery.electrolyte,
+                caseCondition: battery.caseCondition,
+                note: battery.note,
+                updatedAt: battery.inspectedAt
+            });
+        }
+        return profile;
+    }
+
     function getProfile(asset = selectedAsset()) {
         if (!asset) return null;
         if (!state.units[asset.id]) {
@@ -5781,15 +5855,15 @@
         } else if (alignCuttingApplicability(asset, state.units[asset.id])) {
             persist();
         }
-        return state.units[asset.id];
+        return applyConditionDatabaseProfile(asset, state.units[asset.id]);
     }
 
     function tireStatus(tire) {
         if (!tire) return 'muted';
-        if (/DG|rusak|retak|benjol/i.test(tire.physical || '')) return 'danger';
+        if (tire.physical && tire.physical !== 'Baik') return 'danger';
         if (tire.tread === null || tire.tread === '') return 'muted';
         if (num(tire.tread) < TIRE_LIMITS.danger) return 'danger';
-        if (num(tire.tread) <= TIRE_LIMITS.safe || /tidak rata|rotasi/i.test(`${tire.physical} ${tire.wearPattern}`)) return 'warning';
+        if (num(tire.tread) <= TIRE_LIMITS.safe || (tire.wearPattern && tire.wearPattern !== 'Merata')) return 'warning';
         return 'success';
     }
 
@@ -5866,10 +5940,10 @@
     function previewProfile(asset) {
         if (state.units[asset.id]) {
             if (alignCuttingApplicability(asset, state.units[asset.id])) persist();
-            return state.units[asset.id];
+            return applyConditionDatabaseProfile(asset, state.units[asset.id]);
         }
         if (!previewProfiles.has(asset.id)) previewProfiles.set(asset.id, makeProfile(asset));
-        return previewProfiles.get(asset.id);
+        return applyConditionDatabaseProfile(asset, previewProfiles.get(asset.id));
     }
 
     function commonComponentStatus(summary) {
@@ -5881,10 +5955,7 @@
     }
 
     function latestConditionFor(assetId) {
-        const code = shortCode(assetId);
-        return state.history.find(item => item.assetId === assetId && item.domain !== 'Cutting Bit')
-            || state.history.find(item => shortCode(item.assetId) === code && item.domain !== 'Cutting Bit')
-            || null;
+        return conditionHistory(assetId).find(item => item.domain !== 'Cutting Bit') || null;
     }
 
     function commonComponentDetails(profile, summary) {
@@ -6345,7 +6416,7 @@
                         <label class="cm-field-full"><span>Rekomendasi</span><select id="cm-tire-action" class="form-control">${['Monitor', 'Atur tekanan', 'Rotasi', 'Ganti terencana', 'Ganti segera'].map(value => `<option ${tire.action === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
                     </div>
                     <div class="cm-threshold-note"><i class="fa-solid fa-ruler"></i><span><strong>Aturan BRA:</strong> DG selalu merah. Angka 3,2–8,5 mm masuk rotasi/perhatian; di bawah 3,2 mm wajib penggantian.</span></div>
-                    <button class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveTire()"><i class="fa-solid fa-floppy-disk"></i> Simpan inspeksi ${esc(tire.code)}</button>
+                    <button id="cm-save-tire" class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveTire()"><i class="fa-solid fa-floppy-disk"></i> Simpan inspeksi ${esc(tire.code)}</button>
                     <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.tire)}</small>
                 </article>
             </div>`;
@@ -6385,7 +6456,7 @@
                     </div>
                     <fieldset class="cm-check-fieldset"><legend>Titik yang sudah dilumasi</legend>${Object.entries(grease.points).map(([point, done], index) => `<label><input type="checkbox" data-cm-grease-point="${esc(point)}" ${done ? 'checked' : ''}><span>${esc(point)}</span></label>`).join('')}</fieldset>
                     <label class="cm-block-label"><span>Catatan mekanik</span><textarea id="cm-grease-note" class="form-control" rows="3">${esc(grease.note)}</textarea></label>
-                    <button class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveGrease()"><i class="fa-solid fa-floppy-disk"></i> Simpan regreasing</button>
+                    <button id="cm-save-grease" class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveGrease()"><i class="fa-solid fa-floppy-disk"></i> Simpan regreasing</button>
                     <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.grease)}</small>
                 </article>
             </div>`;
@@ -6463,7 +6534,7 @@
                         <label><span>Kondisi casing</span><select id="cm-bat-case" class="form-control">${['Baik', 'Retak', 'Bocor', 'Menggembung'].map(value => `<option ${battery.caseCondition === value ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
                     </div>
                     <label class="cm-block-label"><span>Catatan</span><textarea id="cm-bat-note" class="form-control" rows="3">${esc(battery.note)}</textarea></label>
-                    <button class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveBattery()"><i class="fa-solid fa-floppy-disk"></i> Simpan inspeksi aki</button>
+                    <button id="cm-save-battery" class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveBattery()"><i class="fa-solid fa-floppy-disk"></i> Simpan inspeksi aki</button>
                     <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.battery)} · 51 aki / 31 transaksi, GS 80,4%</small>
                 </article>
             </div>`;
@@ -6553,6 +6624,74 @@
         persist();
         if (window.syncFleetState) window.syncFleetState({ refreshInspection: false });
         else render();
+    }
+
+    async function loadConditionDatabase(shouldRender = true) {
+        try {
+            const response = await fetch('api/condition_monitoring.php', {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                cache: 'no-store'
+            });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || payload?.status !== 'success' || !payload?.data) {
+                throw new Error(payload?.message || 'Data Condition Monitoring tidak dapat dimuat.');
+            }
+            conditionDatabase.latest = {
+                tires: Array.isArray(payload.data.latest?.tires) ? payload.data.latest.tires : [],
+                grease: Array.isArray(payload.data.latest?.grease) ? payload.data.latest.grease : [],
+                batteries: Array.isArray(payload.data.latest?.batteries) ? payload.data.latest.batteries : []
+            };
+            conditionDatabase.history = Array.isArray(payload.data.history) ? payload.data.history : [];
+            conditionDatabase.loaded = true;
+            previewProfiles.clear();
+            if (shouldRender) render();
+            return payload.data;
+        } catch (error) {
+            console.error('Database Condition Monitoring gagal dimuat:', error);
+            return null;
+        }
+    }
+
+    async function saveConditionRecord(payload) {
+        const response = await fetch('api/condition_monitoring.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            cache: 'no-store',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok || result?.status !== 'success') {
+            throw new Error(result?.message || `Penyimpanan gagal (HTTP ${response.status}).`);
+        }
+        await loadConditionDatabase(false);
+        return result.data;
+    }
+
+    function setConditionSaveBusy(buttonId, busy, idleLabel) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+        button.disabled = busy;
+        button.innerHTML = busy
+            ? '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan ke database...'
+            : `<i class="fa-solid fa-floppy-disk"></i> ${idleLabel}`;
+    }
+
+    function finishDatabaseSave(record) {
+        const asset = selectedAsset();
+        if (record.status === 'danger' && !['BREAKDOWN', 'ACCIDENT_HOLD'].includes(asset.status) && window.setIntegratedAssetStatus) {
+            window.setIntegratedAssetStatus(asset.id, 'INSPEKSI', 'Condition Monitoring', record.id, record.summary);
+        }
+        state.notice = {
+            type: record.status === 'danger' ? 'danger' : 'success',
+            text: `${record.id} tersimpan permanen di database Laragon. KPI dan riwayat unit telah diperbarui.`
+        };
+        persist();
+        render();
     }
 
     function worstFinding(profile) {
@@ -6743,7 +6882,7 @@
             persist();
             render();
         },
-        saveTire() {
+        async saveTire() {
             const profile = getProfile();
             const tire = profile.tires.find(item => item.code === state.selectedTire);
             if (!tire) return;
@@ -6753,16 +6892,35 @@
                 window.alert('Masukkan tread depth, atau pilih kondisi fisik DG/rusak.');
                 return;
             }
-            tire.tread = treadValue === '' ? null : num(treadValue);
-            tire.pressure = num(valueOf('cm-tire-pressure'), 0);
-            tire.physical = physical;
-            tire.wearPattern = valueOf('cm-tire-wear');
-            tire.action = valueOf('cm-tire-action');
-            tire.updatedAt = new Date().toISOString();
-            const status = tireStatus(tire);
-            addHistory('Ban', status, `${tire.code} ${tire.tread === null ? tire.physical : `${tire.tread} mm / ${tire.pressure || '-'} PSI`} · ${tire.action}`);
+            const values = {
+                tread: treadValue === '' ? null : num(treadValue),
+                pressure: num(valueOf('cm-tire-pressure'), 0),
+                physical,
+                wearPattern: valueOf('cm-tire-wear'),
+                action: valueOf('cm-tire-action')
+            };
+            setConditionSaveBusy('cm-save-tire', true, `Simpan inspeksi ${tire.code}`);
+            try {
+                const record = await saveConditionRecord({
+                    domain: 'tire',
+                    asset_id: selectedAsset().id,
+                    position: tire.posCode || tire.code,
+                    serial_no: tire.serialNo || '',
+                    tread_depth_mm: values.tread,
+                    air_pressure_psi: values.pressure,
+                    physical_condition: values.physical,
+                    wear_pattern: values.wearPattern,
+                    recommended_action: values.action,
+                    notes: tire.note || ''
+                });
+                Object.assign(tire, values, { updatedAt: new Date().toISOString() });
+                finishDatabaseSave(record);
+            } catch (error) {
+                window.alert(error.message || 'Inspeksi ban gagal disimpan ke database.');
+                setConditionSaveBusy('cm-save-tire', false, `Simpan inspeksi ${tire.code}`);
+            }
         },
-        saveGrease() {
+        async saveGrease() {
             const grease = getProfile().grease;
             const current = num(valueOf('cm-grease-current'));
             const last = num(valueOf('cm-grease-last'));
@@ -6771,18 +6929,38 @@
                 window.alert('HM aktual, HM terakhir, dan interval harus valid. HM aktual tidak boleh lebih kecil.');
                 return;
             }
-            grease.currentHm = current;
-            grease.lastHm = last;
-            grease.interval = interval;
-            grease.quantity = num(valueOf('cm-grease-qty'));
-            grease.greaseType = valueOf('cm-grease-type');
-            grease.note = valueOf('cm-grease-note');
+            const points = {};
             document.querySelectorAll('[data-cm-grease-point]').forEach(input => {
-                grease.points[input.dataset.cmGreasePoint] = input.checked;
+                points[input.dataset.cmGreasePoint] = input.checked;
             });
-            grease.updatedAt = new Date().toISOString();
-            const status = greaseStatus(grease);
-            addHistory('Grease', status, `${current - last} HM sejak grease · ${grease.quantity} kg ${grease.greaseType}`);
+            const values = {
+                currentHm: current,
+                lastHm: last,
+                interval,
+                quantity: num(valueOf('cm-grease-qty')),
+                greaseType: valueOf('cm-grease-type'),
+                note: valueOf('cm-grease-note'),
+                points
+            };
+            setConditionSaveBusy('cm-save-grease', true, 'Simpan regreasing');
+            try {
+                const record = await saveConditionRecord({
+                    domain: 'grease',
+                    asset_id: selectedAsset().id,
+                    current_hm: values.currentHm,
+                    last_grease_hm: values.lastHm,
+                    interval_hm: values.interval,
+                    quantity_kg: values.quantity,
+                    grease_type: values.greaseType,
+                    points: values.points,
+                    notes: values.note
+                });
+                Object.assign(grease, values, { updatedAt: new Date().toISOString() });
+                finishDatabaseSave(record);
+            } catch (error) {
+                window.alert(error.message || 'Data grease gagal disimpan ke database.');
+                setConditionSaveBusy('cm-save-grease', false, 'Simpan regreasing');
+            }
         },
         saveCutting() {
             const cutting = getProfile().cutting;
@@ -6803,23 +6981,44 @@
             const metrics = cuttingMetrics(cutting);
             addHistory('Cutting Bit', metrics.status, `${fmt(metrics.perHm)} bit/HM · ${fmt(metrics.per1000m2)} bit/1.000 m² · return ${fmt(metrics.returnRate, 0)}%`);
         },
-        saveBattery() {
+        async saveBattery() {
             const battery = getProfile().battery;
-            battery.voltage = num(valueOf('cm-bat-voltage'));
-            battery.cca = num(valueOf('cm-bat-cca'));
-            battery.brand = valueOf('cm-bat-brand');
-            battery.type = valueOf('cm-bat-type');
-            battery.installDate = valueOf('cm-bat-install');
-            battery.terminal = valueOf('cm-bat-terminal');
-            battery.electrolyte = valueOf('cm-bat-electrolyte');
-            battery.caseCondition = valueOf('cm-bat-case');
-            battery.note = valueOf('cm-bat-note');
-            if (!battery.voltage || !battery.cca || battery.cca > 100) {
+            const values = {
+                voltage: num(valueOf('cm-bat-voltage')),
+                cca: num(valueOf('cm-bat-cca')),
+                brand: valueOf('cm-bat-brand'),
+                type: valueOf('cm-bat-type'),
+                installDate: valueOf('cm-bat-install'),
+                terminal: valueOf('cm-bat-terminal'),
+                electrolyte: valueOf('cm-bat-electrolyte'),
+                caseCondition: valueOf('cm-bat-case'),
+                note: valueOf('cm-bat-note')
+            };
+            if (!values.voltage || !values.cca || values.cca > 100) {
                 window.alert('Tegangan dan persentase CCA harus valid.');
                 return;
             }
-            battery.updatedAt = new Date().toISOString();
-            addHistory('Aki', batteryStatus(battery), `${battery.voltage} V · ${battery.cca}% CCA · ${battery.terminal}`);
+            setConditionSaveBusy('cm-save-battery', true, 'Simpan inspeksi aki');
+            try {
+                const record = await saveConditionRecord({
+                    domain: 'battery',
+                    asset_id: selectedAsset().id,
+                    voltage: values.voltage,
+                    cca_percent: values.cca,
+                    brand: values.brand,
+                    battery_type: values.type,
+                    installation_date: values.installDate,
+                    terminal_condition: values.terminal,
+                    electrolyte_level: values.electrolyte,
+                    case_condition: values.caseCondition,
+                    notes: values.note
+                });
+                Object.assign(battery, values, { updatedAt: new Date().toISOString() });
+                finishDatabaseSave(record);
+            } catch (error) {
+                window.alert(error.message || 'Inspeksi aki gagal disimpan ke database.');
+                setConditionSaveBusy('cm-save-battery', false, 'Simpan inspeksi aki');
+            }
         },
         openAsset() {
             const asset = selectedAsset();
@@ -6900,8 +7099,12 @@
             api.openDetail(asset.id, 'cutting');
         },
         getDashboardSnapshot() {
-            const recentTire = state.history.find(item => item.domain === 'Ban');
-            const recentGrease = state.history.find(item => item.domain === 'Grease');
+            const combinedHistory = [
+                ...conditionDatabase.history.map(item => ({ ...item, at: item.inspectedAt })),
+                ...state.history
+            ].sort((left, right) => new Date(right.at).getTime() - new Date(left.at).getTime());
+            const recentTire = combinedHistory.find(item => item.domain === 'Ban');
+            const recentGrease = combinedHistory.find(item => item.domain === 'Grease');
             const tireRows = allAssets()
                 .map(asset => getProfile(asset))
                 .filter(profile => profile && Array.isArray(profile.tires) && profile.tires.length > 0)
@@ -6973,6 +7176,7 @@
     }
 
     api.refreshIntegratedCuttingData = refreshIntegratedCuttingData;
+    api.refreshConditionDatabase = loadConditionDatabase;
     window.ConditionMonitoring = api;
     document.addEventListener('fleetreport:finalized', event => {
         if (event.detail?.schemaId === 'cutting-bit-usage') refreshIntegratedCuttingData();
@@ -6982,9 +7186,13 @@
     });
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', render);
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+            loadConditionDatabase();
+        });
     } else {
         render();
+        loadConditionDatabase();
     }
 })();
 (function (global) {

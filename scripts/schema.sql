@@ -298,11 +298,19 @@ CREATE TABLE `tire_inspections` (
     `asset_id` VARCHAR(100) NOT NULL,
     `tire_serial_no` VARCHAR(100) NULL,
     `tire_position` VARCHAR(20) NOT NULL, -- e.g. 'FL', 'FR', 'R1L', 'R1R'
-    `tread_depth_mm` DECIMAL(4,2) NOT NULL,
+    `tread_depth_mm` DECIMAL(4,2) NULL,
     `air_pressure_psi` INT NOT NULL,
     `condition_color` ENUM('GREEN', 'YELLOW', 'RED') NOT NULL,
+    `physical_condition` VARCHAR(30) NULL,
+    `wear_pattern` VARCHAR(40) NULL,
+    `recommended_action` VARCHAR(50) NULL,
+    `status_level` ENUM('success','warning','danger') NULL,
+    `notes` VARCHAR(500) NULL,
+    `inspected_by` INT NULL,
     `inspected_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE
+    KEY `idx_tire_asset_position_date` (`asset_id`, `tire_position`, `inspected_at`),
+    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`inspected_by`) REFERENCES `users`(`user_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `battery_logs`;
@@ -313,7 +321,37 @@ CREATE TABLE `battery_logs` (
     `voltage_val` DECIMAL(4,2) NOT NULL,
     `water_level` ENUM('GOOD', 'LOW', 'REFILL_REQUIRED') DEFAULT 'GOOD',
     `installation_date` DATE NULL,
-    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE
+    `battery_type` VARCHAR(100) NULL,
+    `cca_percent` DECIMAL(5,2) NULL,
+    `terminal_condition` VARCHAR(40) NULL,
+    `electrolyte_level` VARCHAR(50) NULL,
+    `case_condition` VARCHAR(40) NULL,
+    `notes` VARCHAR(500) NULL,
+    `status_level` ENUM('success','warning','danger') NULL,
+    `inspected_by` INT NULL,
+    `inspected_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_battery_asset_date` (`asset_id`, `inspected_at`),
+    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`inspected_by`) REFERENCES `users`(`user_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `grease_logs`;
+CREATE TABLE `grease_logs` (
+    `grease_log_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `current_hm` DECIMAL(10,2) NOT NULL,
+    `last_grease_hm` DECIMAL(10,2) NOT NULL,
+    `interval_hm` DECIMAL(10,2) NOT NULL,
+    `quantity_kg` DECIMAL(10,2) NOT NULL DEFAULT 0,
+    `grease_type` VARCHAR(100) NOT NULL,
+    `lubrication_points` JSON NOT NULL,
+    `notes` VARCHAR(500) NULL,
+    `status_level` ENUM('success','warning','danger') NOT NULL,
+    `inspected_by` INT NOT NULL,
+    `inspected_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_grease_asset_date` (`asset_id`, `inspected_at`),
+    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`inspected_by`) REFERENCES `users`(`user_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `cutting_bit_logs`;
