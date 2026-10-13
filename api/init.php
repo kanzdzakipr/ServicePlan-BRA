@@ -143,7 +143,12 @@ try {
     // Override Work Orders dari Database
     $workOrderScope = api_location_scope_clause('a', 'init_wo_location_id');
     $workOrderSql = "SELECT w.wo_id as woId, w.asset_id as assetId, w.issue_description as issue,
-                            w.downtime_formatted as downtime, w.status, w.priority, w.assigned_mechanic as assignedTo,
+                            w.downtime_formatted as downtime, w.downtime_minutes as downtimeMinutes,
+                            w.status, w.priority, w.maintenance_type as maintenanceType,
+                            w.assigned_mechanic as assignedTo, w.root_cause as rootCause,
+                            w.repair_action as repairAction, w.reported_at as reportedAt,
+                            w.repair_started_at as repairStartedAt, w.closed_at as closedAt,
+                            TIMESTAMPDIFF(MINUTE, w.reported_at, COALESCE(w.closed_at, NOW())) as handlingDurationMinutes,
                             (SELECT rr.report_number
                              FROM report_work_order_integrations rwi
                              INNER JOIN report_records rr ON rr.report_id = rwi.report_id

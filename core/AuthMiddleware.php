@@ -6,7 +6,7 @@ class AuthMiddleware {
     private static array $rbacMatrix = [
         'Administrator' => [
             'dashboard' => 'RCUO', 'monitoring' => 'RCUO', 'asset' => 'RCUO', 'inspection' => 'RCUO', 
-            'wo' => 'RCUO', 'pm' => 'RCUO', 'logistics' => 'RCUO', 'condition' => 'RCUO', 
+            'wo' => 'RCUAO', 'pm' => 'RCUO', 'logistics' => 'RCUO', 'condition' => 'RCUO',
             'fuel' => 'RCUO', 'productivity' => 'RCUO', 'biaya' => 'RCUO', 'people' => 'RCUO', 
             'hse' => 'RCUO', 'reports' => 'RCUO', 'approval' => 'RAO', 'settings' => 'RCUO'
         ],

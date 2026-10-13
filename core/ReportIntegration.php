@@ -2902,9 +2902,9 @@ final class ReportIntegration
             $insertWorkOrder = $db->prepare(
                 'INSERT INTO work_orders
                  (wo_id, asset_id, location_id, raw_location, issue_description,
-                  downtime_minutes, is_downtime, status, priority, assigned_mechanic, reported_at)
+                  downtime_minutes, is_downtime, status, priority, maintenance_type, assigned_mechanic, reported_at)
                  VALUES (:wo_id, :asset_id, :location_id, :raw_location, :issue_description,
-                  :downtime_minutes, :is_downtime, :status, :priority, :assigned_mechanic, :reported_at)'
+                  :downtime_minutes, :is_downtime, :status, :priority, :maintenance_type, :assigned_mechanic, :reported_at)'
             );
             $insertWorkOrder->execute([
                 ':wo_id' => $snapshot['wo_id'],
@@ -2916,8 +2916,23 @@ final class ReportIntegration
                 ':is_downtime' => $snapshot['is_downtime'],
                 ':status' => $snapshot['status'],
                 ':priority' => $snapshot['priority'],
+                ':maintenance_type' => 'Corrective',
                 ':assigned_mechanic' => $snapshot['assigned_mechanic'],
                 ':reported_at' => $snapshot['reported_at'],
+            ]);
+
+            $timelineStatement = $db->prepare(
+                "INSERT INTO work_order_timeline
+                 (wo_id, event_type, to_status, title, description, actor_user_id, occurred_at)
+                 VALUES (:wo_id, 'CREATED', :status, 'Work Order dibuat dari laporan Repair & Overhaul',
+                         :description, :actor_user_id, :occurred_at)"
+            );
+            $timelineStatement->execute([
+                ':wo_id' => $snapshot['wo_id'],
+                ':status' => $snapshot['status'],
+                ':description' => $snapshot['issue_description'],
+                ':actor_user_id' => $actorId,
+                ':occurred_at' => $snapshot['reported_at'],
             ]);
         }
 

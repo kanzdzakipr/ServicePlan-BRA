@@ -105,13 +105,27 @@ try {
         $createdWorkOrder
         && $createdWorkOrder['asset_id'] === $asset['asset_id']
         && $createdWorkOrder['priority'] === 'High'
+        && $createdWorkOrder['maintenance_type'] === 'Corrective'
         && $createdWorkOrder['assigned_mechanic'] === 'Administrator Utama',
-        'asset, urgency, and PIC are mapped to the Work Order'
+        'asset, urgency, maintenance type, and PIC are mapped to the Work Order'
     );
     repairOverhaulAssert(
         str_contains((string) $createdWorkOrder['issue_description'], 'QA Hydraulic Component')
         && str_contains((string) $createdWorkOrder['issue_description'], 'Lakukan dismantle'),
         'part and solution details are retained in the Work Order description'
+    );
+    $timeline = $db->prepare(
+        "SELECT event_type, to_status, actor_user_id FROM work_order_timeline
+         WHERE wo_id = :wo_id ORDER BY timeline_id ASC LIMIT 1"
+    );
+    $timeline->execute([':wo_id' => $baseFields['nomor']]);
+    $createdTimeline = $timeline->fetch(PDO::FETCH_ASSOC);
+    repairOverhaulAssert(
+        $createdTimeline
+        && $createdTimeline['event_type'] === 'CREATED'
+        && $createdTimeline['to_status'] === 'Open'
+        && (int) $createdTimeline['actor_user_id'] === 1,
+        'report-created Work Order records its initial timeline event'
     );
 
     $ledger = $db->prepare(

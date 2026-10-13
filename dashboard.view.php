@@ -3242,10 +3242,24 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 <select id="nwo-type" class="form-control">
                     <option value="Corrective">Corrective (Perbaikan / Breakdown)</option>
                     <option value="Preventive">Preventive (Perawatan Rutin / Terjadwal)</option>
+                    <option value="Inspection">Inspection (Temuan Pemeriksaan)</option>
+                    <option value="Emergency">Emergency (Penanganan Darurat)</option>
                 </select>
                 <label>Keluhan / Diagnosis Awal</label>
                 <textarea id="nwo-issue" rows="3" class="form-control"
                     placeholder="Jelaskan secara detail kerusakan yang terjadi..."></textarea>
+                <label>Penyebab Kerusakan (jika sudah diketahui)</label>
+                <textarea id="nwo-root-cause" rows="2" class="form-control"
+                    placeholder="Contoh: selang getas akibat usia pakai"></textarea>
+                <label>Mekanik / Teknisi Penanggung Jawab</label>
+                <select id="nwo-mechanic" class="form-control">
+                    <option value="Belum ada PIC">Belum ditentukan</option>
+                    <option value="Apeng (Lead Mechanic)">Apeng (Lead Mechanic)</option>
+                    <option value="Maman (Senior Technician)">Maman (Senior Technician)</option>
+                    <option value="Soleh (Hydraulic Specialist)">Soleh (Hydraulic Specialist)</option>
+                    <option value="Darmawan (Electrical Mechanic)">Darmawan (Electrical Mechanic)</option>
+                    <option value="Regar (Junior Mechanic)">Regar (Junior Mechanic)</option>
+                </select>
                 <label>Apakah unit berhenti total (downtime)?</label>
                 <select id="nwo-down" class="form-control">
                     <option value="Yes">Ya, Breakdown</option>
@@ -3348,12 +3362,34 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <div><strong>Prioritas:</strong> <span id="modalWoPriority"></span></div>
                         <div><strong>Downtime:</strong> <span id="modalWoDowntime"
                                 style="color:#dc3545; font-weight:bold;"></span></div>
+                        <div><strong>Jenis Pemeliharaan:</strong> <span id="modalWoMaintenanceType"></span></div>
+                        <div><strong>PIC Mekanik:</strong> <span id="modalWoMechanic"></span></div>
+                        <div><strong>Dilaporkan:</strong> <span id="modalWoReportedAt"></span></div>
+                        <div><strong>Mulai Dikerjakan:</strong> <span id="modalWoStartedAt"></span></div>
+                        <div><strong>Selesai:</strong> <span id="modalWoClosedAt"></span></div>
+                        <div><strong>Durasi Penanganan:</strong> <span id="modalWoDuration"></span></div>
                     </div>
                     <div style="margin-bottom: 15px;">
                         <label style="font-weight: bold; display: block; margin-bottom: 4px; font-size: 0.9rem;">Keluhan
                             / Detail Kerusakan:</label>
                         <div id="modalWoIssue"
                             style="background: #fff; border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 0.88rem; line-height: 1.5; max-height: 140px; overflow-y: auto;">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:15px;">
+                        <div>
+                            <label style="font-weight:bold; display:block; margin-bottom:4px; font-size:0.9rem;">Penyebab Kerusakan:</label>
+                            <div id="modalWoRootCause" style="border:1px solid var(--border); padding:10px; border-radius:6px; font-size:0.88rem; min-height:52px;"></div>
+                        </div>
+                        <div>
+                            <label style="font-weight:bold; display:block; margin-bottom:4px; font-size:0.9rem;">Tindakan Perbaikan Terakhir:</label>
+                            <div id="modalWoRepairAction" style="border:1px solid var(--border); padding:10px; border-radius:6px; font-size:0.88rem; min-height:52px;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label style="font-weight:bold; display:block; margin-bottom:6px; font-size:0.9rem;">Timeline Penanganan:</label>
+                        <div id="modalWoTimeline" style="border-left:3px solid var(--primary); padding-left:12px; font-size:0.84rem;">
+                            <div style="color:var(--text-muted);">Memuat timeline...</div>
                         </div>
                     </div>
                     <div id="modalWoFallbackNotice"
@@ -3416,6 +3452,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <option value="Soleh (Hydraulic Specialist)">Soleh (Hydraulic Specialist)</option>
                         <option value="Darmawan (Electrical Mechanic)">Darmawan (Electrical Mechanic)</option>
                         <option value="Regar (Junior Mechanic)">Regar (Junior Mechanic)</option>
+                    </select>
+
+                    <label style="font-weight:bold;">Penyebab Kerusakan <span style="color:#dc3545;">*</span></label>
+                    <textarea id="woConfirmRootCause" rows="2" class="form-control"
+                        placeholder="Wajib diisi sebelum WO ditutup" style="margin-bottom: 12px;"></textarea>
+
+                    <label style="font-weight:bold;">Jenis Pemeliharaan</label>
+                    <select id="woConfirmMaintenanceType" class="form-control" style="margin-bottom: 12px;">
+                        <option value="Corrective">Corrective</option>
+                        <option value="Preventive">Preventive</option>
+                        <option value="Inspection">Inspection</option>
+                        <option value="Emergency">Emergency</option>
                     </select>
 
                     <label style="font-weight:bold;">Tindakan Perbaikan & Kelengkapan Sparepart</label>
@@ -3533,6 +3581,56 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     return null;
                 }
                 return globalData.work_orders.find(wo => wo.woId === woId) || null;
+            }
+
+            function normalizeWorkOrder(wo) {
+                return {
+                    ...wo,
+                    woId: String(wo.woId ?? wo.wo_id ?? ''),
+                    assetId: String(wo.assetId ?? wo.asset_id ?? ''),
+                    issue: String(wo.issue ?? wo.issue_description ?? ''),
+                    downtime: String(wo.downtime ?? wo.downtime_formatted ?? ''),
+                    status: String(wo.status || 'Open'),
+                    priority: String(wo.priority || 'Normal'),
+                    maintenanceType: String(wo.maintenanceType ?? wo.maintenance_type ?? 'Corrective'),
+                    assignedTo: String(wo.assignedTo ?? wo.assigned_mechanic ?? 'Belum ada PIC'),
+                    rootCause: String(wo.rootCause ?? wo.root_cause ?? ''),
+                    repairAction: String(wo.repairAction ?? wo.repair_action ?? ''),
+                    reportedAt: wo.reportedAt ?? wo.reported_at ?? null,
+                    repairStartedAt: wo.repairStartedAt ?? wo.repair_started_at ?? null,
+                    closedAt: wo.closedAt ?? wo.closed_at ?? null,
+                    handlingDurationMinutes: Number(wo.handlingDurationMinutes ?? wo.handling_duration_minutes ?? 0),
+                    timeline: Array.isArray(wo.timeline) ? wo.timeline : []
+                };
+            }
+
+            function formatWoDateTime(value) {
+                if (!value) return 'Belum tercatat';
+                const parsed = new Date(String(value).replace(' ', 'T'));
+                return Number.isNaN(parsed.getTime())
+                    ? String(value)
+                    : parsed.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+            }
+
+            function formatWoDuration(rawMinutes) {
+                const minutes = Math.max(0, Number(rawMinutes) || 0);
+                const days = Math.floor(minutes / 1440);
+                const hours = Math.floor((minutes % 1440) / 60);
+                const remainder = Math.floor(minutes % 60);
+                return `${days ? `${days} hari ` : ''}${hours} jam ${String(remainder).padStart(2, '0')} menit`;
+            }
+
+            function renderWoTimeline(timeline) {
+                if (!Array.isArray(timeline) || !timeline.length) {
+                    return '<div style="color:var(--text-muted);">Belum ada aktivitas timeline.</div>';
+                }
+                return timeline.map(item => `
+                    <div style="position:relative; padding:0 0 12px 8px;">
+                        <strong style="display:block; color:var(--text-main);">${escapeHtml(item.title || 'Aktivitas WO')}</strong>
+                        <span style="display:block; color:var(--text-muted); margin:2px 0;">${escapeHtml(formatWoDateTime(item.occurred_at))}${item.actor_name ? ` · ${escapeHtml(item.actor_name)}` : ''}</span>
+                        ${item.description ? `<div style="line-height:1.45;">${escapeHtml(item.description)}</div>` : ''}
+                    </div>
+                `).join('');
             }
 
             window.handleWoCardClick = function (e, woId, assetId) {
@@ -3836,6 +3934,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (fromBadge) fromBadge.textContent = fromStatus;
                 if (toSelect) toSelect.value = toStatus;
 
+                const rootCauseInput = document.getElementById('woConfirmRootCause');
+                const maintenanceTypeSelect = document.getElementById('woConfirmMaintenanceType');
+                if (rootCauseInput) rootCauseInput.value = wo.rootCause || '';
+                if (maintenanceTypeSelect) maintenanceTypeSelect.value = wo.maintenanceType || 'Corrective';
+
                 window.updateWoConfirmAutofill(woId, assetId, issue, wo.assignedTo);
 
                 openModal('modalWoStatusConfirm');
@@ -3848,6 +3951,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const mechanic = document.getElementById('woConfirmMechanic').value;
                 const actionLog = document.getElementById('woConfirmAction').value;
                 const unitStatus = document.getElementById('woConfirmUnitStatus').value;
+                const rootCause = document.getElementById('woConfirmRootCause').value.trim();
+                const maintenanceType = document.getElementById('woConfirmMaintenanceType').value;
 
                 if (!globalData || !Array.isArray(globalData.work_orders)) return;
 
@@ -3858,11 +3963,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 const previousStatus = wo.status;
+                if (targetStatus === 'Closed' && !rootCause) {
+                    alert('Penyebab kerusakan wajib diisi sebelum Work Order ditutup.');
+                    document.getElementById('woConfirmRootCause').focus();
+                    return;
+                }
                 const payload = {
                     wo_id: woId,
                     status: targetStatus,
                     assigned_mechanic: mechanic,
-                    issue_description: `${wo.issue || ''} | [Log ${mechanic}]: ${actionLog}`
+                    root_cause: rootCause,
+                    repair_action: actionLog,
+                    maintenance_type: maintenanceType
                 };
 
                 try {
@@ -3877,6 +3989,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         wo.status = targetStatus;
                         wo.lastUpdate = new Date().toISOString();
                         wo.assignedTo = mechanic;
+                        wo.rootCause = rootCause;
+                        wo.repairAction = actionLog;
+                        wo.maintenanceType = maintenanceType;
                         wo.statusHistory = Array.isArray(wo.statusHistory) ? wo.statusHistory : [];
                         wo.statusHistory.unshift({
                             fromStatus: previousStatus,
@@ -3885,8 +4000,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             action: actionLog,
                             updatedAt: wo.lastUpdate
                         });
-                        if (actionLog) wo.issue = payload.issue_description;
-
                         // Tempatkan WO terbaru di urutan pertama agar perpindahannya langsung
                         // terlihat, termasuk pada kolom Closed yang berisi ratusan card.
                         const updatedWoIndex = globalData.work_orders.findIndex(item => item.woId === woId);
@@ -3922,9 +4035,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
             };
 
-            window.openWoDetailModal = function (woId, fallbackAssetId, fallbackIssue) {
+            window.openWoDetailModal = async function (woId, fallbackAssetId, fallbackIssue) {
                 if (!globalData || !globalData.work_orders) return;
-                const wo = globalData.work_orders.find(w => w.woId === woId);
+                let wo = globalData.work_orders.find(w => w.woId === woId);
 
                 const modalWoId = document.getElementById('modalWoId');
                 const modalWoAsset = document.getElementById('modalWoAsset');
@@ -3932,6 +4045,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const modalWoPriority = document.getElementById('modalWoPriority');
                 const modalWoDowntime = document.getElementById('modalWoDowntime');
                 const modalWoIssue = document.getElementById('modalWoIssue');
+                const modalWoMaintenanceType = document.getElementById('modalWoMaintenanceType');
+                const modalWoMechanic = document.getElementById('modalWoMechanic');
+                const modalWoReportedAt = document.getElementById('modalWoReportedAt');
+                const modalWoStartedAt = document.getElementById('modalWoStartedAt');
+                const modalWoClosedAt = document.getElementById('modalWoClosedAt');
+                const modalWoDuration = document.getElementById('modalWoDuration');
+                const modalWoRootCause = document.getElementById('modalWoRootCause');
+                const modalWoRepairAction = document.getElementById('modalWoRepairAction');
+                const modalWoTimeline = document.getElementById('modalWoTimeline');
                 const noticeEl = document.getElementById('modalWoFallbackNotice');
 
                 const assetBtn = document.getElementById('modalWoAssetBtn');
@@ -3944,6 +4066,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge ${wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(wo.priority)}</span>`;
                     if (modalWoDowntime) modalWoDowntime.textContent = wo.downtime || '0 jam 00 menit';
                     if (modalWoIssue) modalWoIssue.textContent = wo.issue || 'Tidak ada deskripsi.';
+                    if (modalWoMaintenanceType) modalWoMaintenanceType.textContent = wo.maintenanceType || 'Corrective';
+                    if (modalWoMechanic) modalWoMechanic.textContent = wo.assignedTo || 'Belum ada PIC';
+                    if (modalWoReportedAt) modalWoReportedAt.textContent = formatWoDateTime(wo.reportedAt);
+                    if (modalWoStartedAt) modalWoStartedAt.textContent = formatWoDateTime(wo.repairStartedAt);
+                    if (modalWoClosedAt) modalWoClosedAt.textContent = formatWoDateTime(wo.closedAt);
+                    if (modalWoDuration) modalWoDuration.textContent = formatWoDuration(wo.handlingDurationMinutes);
+                    if (modalWoRootCause) modalWoRootCause.textContent = wo.rootCause || 'Belum dicatat.';
+                    if (modalWoRepairAction) modalWoRepairAction.textContent = wo.repairAction || 'Belum ada tindakan tercatat.';
+                    if (modalWoTimeline) modalWoTimeline.innerHTML = '<div style="color:var(--text-muted);">Memuat timeline...</div>';
                     if (noticeEl) noticeEl.style.display = 'none';
 
                     if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); openAssetModal(wo.assetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
@@ -3956,6 +4087,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge bg-breakdown">High Emergency</span>`;
                     if (modalWoDowntime) modalWoDowntime.textContent = 'Dalam Penanganan Operasional';
                     if (modalWoIssue) modalWoIssue.textContent = fallbackIssue || 'Penanganan darurat breakdown unit.';
+                    if (modalWoMaintenanceType) modalWoMaintenanceType.textContent = 'Emergency';
+                    if (modalWoMechanic) modalWoMechanic.textContent = 'Belum ada PIC';
+                    if (modalWoReportedAt) modalWoReportedAt.textContent = '-';
+                    if (modalWoStartedAt) modalWoStartedAt.textContent = '-';
+                    if (modalWoClosedAt) modalWoClosedAt.textContent = '-';
+                    if (modalWoDuration) modalWoDuration.textContent = '-';
+                    if (modalWoRootCause) modalWoRootCause.textContent = 'Belum dicatat.';
+                    if (modalWoRepairAction) modalWoRepairAction.textContent = 'Belum ada tindakan tercatat.';
+                    if (modalWoTimeline) modalWoTimeline.innerHTML = '<div style="color:var(--text-muted);">Timeline belum tersedia.</div>';
                     if (noticeEl) noticeEl.style.display = 'block';
 
                     if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); if (fallbackAssetId) openAssetModal(fallbackAssetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
@@ -3963,6 +4103,32 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 openModal('modalWoDetail');
+
+                if (!wo) return;
+                try {
+                    const response = await fetch(`api/work_orders.php?id=${encodeURIComponent(woId)}`, {
+                        headers: { Accept: 'application/json' },
+                        cache: 'no-store'
+                    });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== 'success' || !result.data) {
+                        throw new Error(result.message || 'Detail Work Order tidak tersedia.');
+                    }
+                    const detail = normalizeWorkOrder(result.data);
+                    Object.assign(wo, detail);
+                    if (modalWoMaintenanceType) modalWoMaintenanceType.textContent = detail.maintenanceType;
+                    if (modalWoMechanic) modalWoMechanic.textContent = detail.assignedTo;
+                    if (modalWoReportedAt) modalWoReportedAt.textContent = formatWoDateTime(detail.reportedAt);
+                    if (modalWoStartedAt) modalWoStartedAt.textContent = formatWoDateTime(detail.repairStartedAt);
+                    if (modalWoClosedAt) modalWoClosedAt.textContent = formatWoDateTime(detail.closedAt);
+                    if (modalWoDuration) modalWoDuration.textContent = formatWoDuration(detail.handlingDurationMinutes);
+                    if (modalWoRootCause) modalWoRootCause.textContent = detail.rootCause || 'Belum dicatat.';
+                    if (modalWoRepairAction) modalWoRepairAction.textContent = detail.repairAction || 'Belum ada tindakan tercatat.';
+                    if (modalWoTimeline) modalWoTimeline.innerHTML = renderWoTimeline(detail.timeline);
+                } catch (error) {
+                    console.error('Detail Work Order gagal dimuat:', error);
+                    if (modalWoTimeline) modalWoTimeline.innerHTML = `<div style="color:#dc3545;">${escapeHtml(error.message)}</div>`;
+                }
             };
 
             window.openWoDetailView = function (woId, assetId, issueText) {
@@ -5309,6 +5475,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <span class="font-mono" style="font-weight:700; color:var(--text-main); font-size:0.82rem;">${escapedAsset}</span>
                     </div>
                     ${wo.sourceReportNumber ? `<div style="font-size:0.7rem; color:var(--success); margin-bottom:6px;"><i class="fa-solid fa-file-circle-check"></i> ${escapeHtml(wo.sourceReportNumber)}</div>` : ''}
+                    <div style="font-size:0.7rem; color:var(--primary); margin-bottom:5px; text-transform:uppercase; letter-spacing:.04em;">${escapeHtml(wo.maintenanceType || 'Corrective')}</div>
                     <div style="font-size:0.8rem; color:var(--text-main); line-height:1.35; margin-bottom:8px; font-weight:500;">
                         ${issueShort}
                     </div>
@@ -5503,14 +5670,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (!response.ok || payload?.status !== 'success' || !Array.isArray(payload.data)) {
                         throw new Error(payload?.message || 'Data Work Order tidak tersedia.');
                     }
-                    const workOrders = payload.data.map(wo => ({
-                        woId: String(wo.wo_id || ''),
-                        assetId: String(wo.asset_id || ''),
-                        issue: String(wo.issue_description || ''),
-                        downtime: String(wo.downtime_formatted || ''),
-                        status: String(wo.status || 'Open'),
-                        priority: String(wo.priority || 'Normal'),
-                        assignedTo: String(wo.assigned_mechanic || 'Belum ada PIC'),
+                    const workOrders = payload.data.map(wo => normalizeWorkOrder({
+                        ...wo,
                         sourceReportId: String(wo.source_report_id || ''),
                         sourceReportNumber: String(wo.source_report_number || '')
                     }));
@@ -5969,11 +6130,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const prio = document.getElementById('nwo-prio').value;
                 const type = document.getElementById('nwo-type') ? document.getElementById('nwo-type').value : 'Corrective';
                 const issue = document.getElementById('nwo-issue').value;
+                const rootCause = document.getElementById('nwo-root-cause').value.trim();
+                const mechanic = document.getElementById('nwo-mechanic').value;
                 const down = document.getElementById('nwo-down').value;
 
                 if (!issue) return alert('Keluhan harus diisi');
 
-                const woId = 'WO-26-' + Math.floor(Math.random() * 1000);
+                const year = String(new Date().getFullYear()).slice(-2);
+                const woId = `WO-${year}-${Date.now().toString().slice(-8)}`;
                 const asset = globalData.assets.find(a => a.id === id);
 
                 try {
@@ -5983,8 +6147,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             assetId: id,
                             status: 'Open',
                             priority: prio,
-                            issue: `[${type}] ${issue}`,
-                            assignedTo: 'Belum ada',
+                            maintenanceType: type,
+                            issue: issue,
+                            rootCause: rootCause,
+                            repairAction: '',
+                            assignedTo: mechanic,
                             downtime: down === 'Yes' ? '0' : '-'
                         }],
                         assets: []
@@ -6024,7 +6191,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         }
 
                         globalData.work_orders.unshift({
-                            woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue: `[${type}] ${issue}`, downtime: down === 'Yes' ? '0' : '-', status: 'Open', priority: prio, assignedTo: 'Belum ada'
+                            woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue,
+                            downtime: down === 'Yes' ? '0 jam 00 menit' : '-', status: 'Open', priority: prio,
+                            maintenanceType: type, assignedTo: mechanic, rootCause, repairAction: '',
+                            reportedAt: new Date().toISOString(), repairStartedAt: null, closedAt: null,
+                            handlingDurationMinutes: 0
                         });
 
                         closeModal('modalNewWO');
