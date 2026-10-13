@@ -410,14 +410,12 @@ function api_require_permission(string $permission): void
  */
 function api_has_global_location_scope(): bool
 {
-    // Bypass location scope restriction to allow all roles to see data as per RBAC matrix
-    return true;
+    return api_has_permission('scope.all_locations');
 }
 
 function api_has_global_report_scope(): bool
 {
-    // Bypass report scope restriction
-    return true;
+    return api_has_permission('reports.read_all');
 }
 
 function api_current_location_id(): ?int
