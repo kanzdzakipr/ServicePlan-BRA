@@ -141,6 +141,7 @@ CREATE TABLE `asset_movements` (
 -- ----------------------------------------------------------------------------
 -- 5. WORK ORDERS (WO - Maintenance & Repair Tickets)
 -- ----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `work_order_service_requests`;
 DROP TABLE IF EXISTS `work_orders`;
 CREATE TABLE `work_orders` (
     `wo_id` VARCHAR(50) PRIMARY KEY, -- e.g. 'WO-26-347'
@@ -154,6 +155,8 @@ CREATE TABLE `work_orders` (
     `status` ENUM('Open', 'In Progress', 'Waiting Part', 'Testing', 'Closed', 'Cancelled') DEFAULT 'Open',
     `priority` ENUM('Normal', 'High', 'Emergency') DEFAULT 'Normal',
     `maintenance_type` ENUM('Corrective', 'Preventive', 'Inspection', 'Emergency') NOT NULL DEFAULT 'Corrective',
+    `parts_requirement` ENUM('UNASSESSED', 'REQUIRED', 'NOT_REQUIRED') NOT NULL DEFAULT 'UNASSESSED',
+    `parts_requirement_note` TEXT NULL,
     `assigned_mechanic` VARCHAR(100) DEFAULT 'Belum ada PIC',
     `root_cause` TEXT NULL,
     `repair_action` TEXT NULL,
@@ -273,6 +276,7 @@ CREATE TABLE `purchase_requests` (
     `requested_by` INT NOT NULL,
     `urgency` ENUM('Normal', 'Emergency') DEFAULT 'Normal',
     `status` ENUM('Draft', 'Submitted', 'Approved', 'Ordered', 'Issued', 'Closed') DEFAULT 'Submitted',
+    `notes` TEXT NULL,
     `requested_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`wo_id`) REFERENCES `work_orders`(`wo_id`) ON DELETE CASCADE,
     FOREIGN KEY (`requested_by`) REFERENCES `users`(`user_id`)
@@ -285,7 +289,30 @@ CREATE TABLE `purchase_request_items` (
     `description` VARCHAR(255) NULL,
     `qty_requested` INT NOT NULL DEFAULT 1,
     `status` VARCHAR(50) NOT NULL DEFAULT 'Menunggu Approval',
-    KEY `idx_purchase_request_items_spb` (`spb_id`)
+    KEY `idx_purchase_request_items_spb` (`spb_id`),
+    CONSTRAINT `fk_purchase_request_items_header` FOREIGN KEY (`spb_id`) REFERENCES `purchase_requests` (`spb_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `work_order_service_requests` (
+    `service_request_id` VARCHAR(50) PRIMARY KEY,
+    `wo_id` VARCHAR(50) NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `service_type` ENUM('INTERNAL_WORKSHOP', 'EXTERNAL_WORKSHOP', 'FIELD_SERVICE', 'SPECIALIST_VENDOR') NOT NULL,
+    `provider_name` VARCHAR(150) NULL,
+    `description` TEXT NOT NULL,
+    `priority` ENUM('Normal', 'Urgent', 'Emergency') NOT NULL DEFAULT 'Normal',
+    `status` ENUM('Submitted', 'Assigned', 'In Progress', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Submitted',
+    `requested_by` INT NOT NULL,
+    `assigned_to` VARCHAR(150) NULL,
+    `requested_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `started_at` TIMESTAMP NULL,
+    `completed_at` TIMESTAMP NULL,
+    `notes` TEXT NULL,
+    CONSTRAINT `fk_wo_service_request_wo` FOREIGN KEY (`wo_id`) REFERENCES `work_orders` (`wo_id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_wo_service_request_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+    CONSTRAINT `fk_wo_service_request_user` FOREIGN KEY (`requested_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+    INDEX `idx_wo_service_request_wo` (`wo_id`, `status`),
+    INDEX `idx_wo_service_request_asset` (`asset_id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `purchase_orders` (

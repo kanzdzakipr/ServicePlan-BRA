@@ -3404,8 +3404,84 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <button class="btn btn-primary" id="modalWoAssetBtn" style="padding: 6px 14px;"><i
                                 class="fa-solid fa-truck"></i> Detail Aset 360&deg;</button>
                         <button class="btn btn-success" id="modalWoSpbBtn" style="padding: 6px 14px;"><i
-                                class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)</button>
+                                class="fa-solid fa-boxes-stacked"></i> Kebutuhan &amp; Layanan</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revisi 4: kebutuhan part dan layanan yang tertaut langsung ke Work Order -->
+        <div class="modal-overlay" id="modalWoSupport">
+            <div class="modal-content" style="max-width: 920px; width: 96%; max-height: 92vh; overflow-y: auto;">
+                <div class="modal-header"
+                    style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
+                    <h2 style="margin:0; font-size:1.2rem;"><i class="fa-solid fa-screwdriver-wrench"
+                            style="color:var(--primary);"></i> Kebutuhan WO <span id="supportWoTitle"></span></h2>
+                    <button onclick="closeModal('modalWoSupport')"
+                        style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <div class="modal-body" style="padding:20px;">
+                    <input type="hidden" id="supportWoId">
+                    <input type="hidden" id="supportAssetId">
+                    <div id="supportLoading" style="padding:12px; background:#f8fafc; border-radius:8px; margin-bottom:15px;">
+                        Memuat kebutuhan Work Order...
+                    </div>
+
+                    <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
+                            <div>
+                                <strong style="display:block;">Keputusan kebutuhan suku cadang</strong>
+                                <span id="supportPartsStatus" style="font-size:0.86rem; color:var(--text-muted);">Belum dinilai</span>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="openPartRequestFromSupport()"><i
+                                    class="fa-solid fa-boxes-stacked"></i> Buat SPB dari WO</button>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                            <input id="supportNoPartsReason" class="form-control" style="flex:1; min-width:260px;"
+                                placeholder="Alasan tidak memerlukan suku cadang (wajib)">
+                            <button type="button" class="btn btn-secondary" onclick="markWoNoParts()"><i
+                                    class="fa-solid fa-circle-check"></i> Tidak Memerlukan Part</button>
+                        </div>
+                        <div id="supportSpbList" style="margin-top:12px;"></div>
+                    </section>
+
+                    <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
+                        <strong style="display:block; margin-bottom:12px;">Ajukan layanan perbaikan / bengkel</strong>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px;">
+                            <label>Jenis layanan
+                                <select id="supportServiceType" class="form-control">
+                                    <option value="INTERNAL_WORKSHOP">Bengkel internal</option>
+                                    <option value="EXTERNAL_WORKSHOP">Bengkel eksternal</option>
+                                    <option value="FIELD_SERVICE">Layanan lapangan</option>
+                                    <option value="SPECIALIST_VENDOR">Vendor spesialis</option>
+                                </select>
+                            </label>
+                            <label>Prioritas
+                                <select id="supportServicePriority" class="form-control">
+                                    <option>Normal</option><option>Urgent</option><option>Emergency</option>
+                                </select>
+                            </label>
+                            <label>Penyedia / bengkel
+                                <input id="supportServiceProvider" class="form-control" placeholder="Opsional">
+                            </label>
+                            <label>PIC layanan
+                                <input id="supportServiceAssignee" class="form-control" placeholder="Opsional">
+                            </label>
+                        </div>
+                        <label style="display:block; margin-top:10px;">Deskripsi pekerjaan
+                            <textarea id="supportServiceDescription" class="form-control" rows="3"
+                                placeholder="Jelaskan pekerjaan yang diminta..."></textarea>
+                        </label>
+                        <div style="text-align:right; margin-top:10px;">
+                            <button type="button" class="btn btn-success" onclick="submitWoServiceRequest()"><i
+                                    class="fa-solid fa-paper-plane"></i> Ajukan Layanan</button>
+                        </div>
+                    </section>
+
+                    <section style="border:1px solid var(--border); border-radius:10px; padding:15px;">
+                        <strong style="display:block; margin-bottom:10px;">Tindak lanjut layanan</strong>
+                        <div id="supportServiceList" style="display:grid; gap:10px;"></div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -3540,11 +3616,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             window.openModal = function (id) {
                 const el = document.getElementById(id);
                 if (el) {
+                    // Overlay yang berada di dalam view tersembunyi tetap berukuran 0x0
+                    // walaupun memakai position:fixed. Pindahkan ke body sebelum dibuka.
+                    if (el.classList.contains('modal-overlay') && el.parentElement !== document.body) {
+                        document.body.appendChild(el);
+                    }
                     if (id === 'modalWoStatusConfirm') {
                         document.body.classList.add('wo-confirm-modal-open');
-                        // Pastikan overlay menjadi anak body paling akhir sehingga
-                        // tidak terjebak stacking context komponen lain.
-                        document.body.appendChild(el);
                     }
                     el.classList.add('active');
                     el.style.display = 'flex';
@@ -3572,6 +3650,160 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const woSelect = document.getElementById('spb-wo-id');
                     if (woSelect && woId) woSelect.value = woId;
                 }, 50);
+            };
+
+            const woSupportTypeLabels = {
+                INTERNAL_WORKSHOP: 'Bengkel internal',
+                EXTERNAL_WORKSHOP: 'Bengkel eksternal',
+                FIELD_SERVICE: 'Layanan lapangan',
+                SPECIALIST_VENDOR: 'Vendor spesialis'
+            };
+
+            async function requestWoSupport(payload, method = 'POST') {
+                const url = method === 'GET'
+                    ? `api/work_order_support.php?wo_id=${encodeURIComponent(payload.woId)}`
+                    : 'api/work_order_support.php';
+                const response = await fetch(url, {
+                    method,
+                    headers: { Accept: 'application/json', ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}) },
+                    cache: 'no-store',
+                    ...(method === 'POST' ? { body: JSON.stringify(payload) } : {})
+                });
+                const result = await response.json();
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Kebutuhan Work Order gagal diproses.');
+                }
+                return result.data;
+            }
+
+            function renderWoSupport(data) {
+                const loading = document.getElementById('supportLoading');
+                const partsStatus = document.getElementById('supportPartsStatus');
+                const spbList = document.getElementById('supportSpbList');
+                const serviceList = document.getElementById('supportServiceList');
+                const workOrder = data?.workOrder || {};
+                const requirementLabels = {
+                    UNASSESSED: 'Belum dinilai',
+                    REQUIRED: 'Memerlukan suku cadang',
+                    NOT_REQUIRED: 'Tidak memerlukan suku cadang'
+                };
+                if (loading) loading.style.display = 'none';
+                if (partsStatus) {
+                    partsStatus.innerHTML = `<strong>${escapeHtml(requirementLabels[workOrder.partsRequirement] || 'Belum dinilai')}</strong>${workOrder.partsRequirementNote ? ` &mdash; ${escapeHtml(workOrder.partsRequirementNote)}` : ''}`;
+                }
+
+                const purchaseRequests = Array.isArray(data?.purchaseRequests) ? data.purchaseRequests : [];
+                if (spbList) {
+                    spbList.innerHTML = purchaseRequests.length
+                        ? purchaseRequests.map(spb => `<div style="padding:9px 11px; background:#f8fafc; border-radius:7px; margin-top:6px; font-size:0.84rem;"><strong>${escapeHtml(spb.spbId)}</strong> &middot; ${escapeHtml(spb.status)} &middot; ${Number(spb.itemCount || 0)} item / ${Number(spb.totalQuantity || 0)} qty${spb.notes ? `<br><span style="color:var(--text-muted);">${escapeHtml(spb.notes)}</span>` : ''}</div>`).join('')
+                        : '<div style="font-size:0.84rem; color:var(--text-muted);">Belum ada SPB yang tertaut ke WO ini.</div>';
+                }
+
+                const serviceRequests = Array.isArray(data?.serviceRequests) ? data.serviceRequests : [];
+                if (serviceList) {
+                    serviceList.innerHTML = serviceRequests.length
+                        ? serviceRequests.map(service => {
+                            const transitions = {
+                                Submitted: ['Assigned', 'In Progress', 'Cancelled'],
+                                Assigned: ['In Progress', 'Completed', 'Cancelled'],
+                                'In Progress': ['Completed', 'Cancelled'],
+                                Completed: [],
+                                Cancelled: []
+                            }[service.status] || [];
+                            const controls = transitions.length ? `<div style="display:flex; gap:7px; margin-top:9px; flex-wrap:wrap;">
+                                <input id="supportServiceAssignee-${escapeHtml(service.serviceRequestId)}" class="form-control" style="flex:1; min-width:160px;" value="${escapeHtml(service.assignedTo || '')}" placeholder="PIC layanan">
+                                <select id="supportServiceStatus-${escapeHtml(service.serviceRequestId)}" class="form-control" style="width:auto;">${transitions.map(status => `<option>${escapeHtml(status)}</option>`).join('')}</select>
+                                <button class="btn btn-primary" type="button" onclick="updateWoServiceStatus('${escapeHtml(service.serviceRequestId)}')">Update</button>
+                            </div>` : '<div style="margin-top:7px; color:var(--text-muted); font-size:0.8rem;">Status akhir; tidak ada tindak lanjut berikutnya.</div>';
+                            return `<div style="border:1px solid var(--border); padding:11px; border-radius:8px;">
+                                <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;"><strong>${escapeHtml(service.serviceRequestId)}</strong><span class="badge bg-operating">${escapeHtml(service.status)}</span></div>
+                                <div style="font-size:0.84rem; margin-top:5px;"><strong>${escapeHtml(woSupportTypeLabels[service.serviceType] || service.serviceType)}</strong> &middot; ${escapeHtml(service.priority)}</div>
+                                <div style="font-size:0.84rem; margin-top:4px;">${escapeHtml(service.description)}</div>
+                                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Penyedia: ${escapeHtml(service.providerName || '-')} &middot; PIC: ${escapeHtml(service.assignedTo || '-')}</div>
+                                ${controls}
+                            </div>`;
+                        }).join('')
+                        : '<div style="font-size:0.84rem; color:var(--text-muted);">Belum ada permintaan layanan untuk WO ini.</div>';
+                }
+            }
+
+            window.loadWoSupport = async function () {
+                const woId = document.getElementById('supportWoId')?.value || '';
+                if (!woId) return;
+                const loading = document.getElementById('supportLoading');
+                if (loading) {
+                    loading.style.display = 'block';
+                    loading.textContent = 'Memuat kebutuhan Work Order...';
+                }
+                try {
+                    renderWoSupport(await requestWoSupport({ woId }, 'GET'));
+                } catch (error) {
+                    if (loading) loading.textContent = error.message;
+                }
+            };
+
+            window.openWoSupportModal = function (woId, assetId) {
+                document.getElementById('supportWoId').value = woId || '';
+                document.getElementById('supportAssetId').value = assetId || '';
+                document.getElementById('supportWoTitle').textContent = woId || '-';
+                document.getElementById('supportNoPartsReason').value = '';
+                openModal('modalWoSupport');
+                loadWoSupport();
+            };
+
+            window.openPartRequestFromSupport = function () {
+                const woId = document.getElementById('supportWoId')?.value || '';
+                const assetId = document.getElementById('supportAssetId')?.value || '';
+                closeModal('modalWoSupport');
+                openSpbForWo(woId, assetId);
+            };
+
+            window.markWoNoParts = async function () {
+                const woId = document.getElementById('supportWoId')?.value || '';
+                const reason = document.getElementById('supportNoPartsReason')?.value.trim() || '';
+                if (!reason) return alert('Alasan tidak memerlukan suku cadang wajib diisi.');
+                try {
+                    const data = await requestWoSupport({ action: 'mark_no_parts', woId, reason });
+                    renderWoSupport(data.overview);
+                    alert('Keputusan tidak memerlukan suku cadang berhasil disimpan.');
+                } catch (error) {
+                    alert(error.message);
+                }
+            };
+
+            window.submitWoServiceRequest = async function () {
+                const woId = document.getElementById('supportWoId')?.value || '';
+                const description = document.getElementById('supportServiceDescription')?.value.trim() || '';
+                if (!description) return alert('Deskripsi layanan wajib diisi.');
+                try {
+                    const data = await requestWoSupport({
+                        action: 'create_service',
+                        woId,
+                        serviceType: document.getElementById('supportServiceType').value,
+                        priority: document.getElementById('supportServicePriority').value,
+                        providerName: document.getElementById('supportServiceProvider').value,
+                        assignedTo: document.getElementById('supportServiceAssignee').value,
+                        description
+                    });
+                    document.getElementById('supportServiceProvider').value = '';
+                    document.getElementById('supportServiceAssignee').value = '';
+                    document.getElementById('supportServiceDescription').value = '';
+                    renderWoSupport(data.overview);
+                    alert('Permintaan layanan berhasil ditautkan ke Work Order.');
+                } catch (error) {
+                    alert(error.message);
+                }
+            };
+
+            window.updateWoServiceStatus = async function (serviceRequestId) {
+                const status = document.getElementById(`supportServiceStatus-${serviceRequestId}`)?.value || '';
+                const assignedTo = document.getElementById(`supportServiceAssignee-${serviceRequestId}`)?.value || '';
+                try {
+                    const data = await requestWoSupport({ action: 'update_service_status', serviceRequestId, status, assignedTo });
+                    renderWoSupport(data.overview);
+                } catch (error) {
+                    alert(error.message);
+                }
             };
 
             // Shared helpers for Work Order status workflow.
@@ -4036,8 +4268,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.openWoDetailModal = async function (woId, fallbackAssetId, fallbackIssue) {
-                if (!globalData || !globalData.work_orders) return;
-                let wo = globalData.work_orders.find(w => w.woId === woId);
+                const cachedWorkOrders = typeof globalData !== 'undefined' && Array.isArray(globalData?.work_orders)
+                    ? globalData.work_orders
+                    : [];
+                let wo = cachedWorkOrders.find(w => w.woId === woId) || null;
 
                 const modalWoId = document.getElementById('modalWoId');
                 const modalWoAsset = document.getElementById('modalWoAsset');
@@ -4078,7 +4312,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (noticeEl) noticeEl.style.display = 'none';
 
                     if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); openAssetModal(wo.assetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
-                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openSpbForWo(wo.woId, wo.assetId); };
+                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(wo.woId, wo.assetId); };
                 } else {
                     // Fallback for emergency WOs created dynamically
                     if (modalWoId) modalWoId.textContent = woId || 'WO-EMERGENCY';
@@ -4099,12 +4333,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (noticeEl) noticeEl.style.display = 'block';
 
                     if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); if (fallbackAssetId) openAssetModal(fallbackAssetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
-                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openSpbForWo(woId, fallbackAssetId); };
+                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(woId, fallbackAssetId); };
                 }
 
                 openModal('modalWoDetail');
 
-                if (!wo) return;
                 try {
                     const response = await fetch(`api/work_orders.php?id=${encodeURIComponent(woId)}`, {
                         headers: { Accept: 'application/json' },
@@ -4115,7 +4348,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         throw new Error(result.message || 'Detail Work Order tidak tersedia.');
                     }
                     const detail = normalizeWorkOrder(result.data);
-                    Object.assign(wo, detail);
+                    if (wo) Object.assign(wo, detail);
+                    else wo = detail;
+                    if (modalWoId) modalWoId.textContent = detail.woId;
+                    if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(detail.assetId)}</strong>`;
+                    if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge ${detail.status === 'Open' ? 'bg-breakdown' : detail.status === 'In Progress' ? 'bg-standby' : 'bg-operating'}">${escapeHtml(detail.status)}</span>`;
+                    if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge ${['High', 'Emergency'].includes(detail.priority) ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(detail.priority)}</span>`;
+                    if (modalWoDowntime) modalWoDowntime.textContent = detail.downtime || '0 jam 00 menit';
+                    if (modalWoIssue) modalWoIssue.textContent = detail.issue || 'Tidak ada deskripsi.';
                     if (modalWoMaintenanceType) modalWoMaintenanceType.textContent = detail.maintenanceType;
                     if (modalWoMechanic) modalWoMechanic.textContent = detail.assignedTo;
                     if (modalWoReportedAt) modalWoReportedAt.textContent = formatWoDateTime(detail.reportedAt);
@@ -4125,6 +4365,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (modalWoRootCause) modalWoRootCause.textContent = detail.rootCause || 'Belum dicatat.';
                     if (modalWoRepairAction) modalWoRepairAction.textContent = detail.repairAction || 'Belum ada tindakan tercatat.';
                     if (modalWoTimeline) modalWoTimeline.innerHTML = renderWoTimeline(detail.timeline);
+                    if (noticeEl) noticeEl.style.display = 'none';
+                    if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); openAssetModal(detail.assetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
+                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(detail.woId, detail.assetId); };
                 } catch (error) {
                     console.error('Detail Work Order gagal dimuat:', error);
                     if (modalWoTimeline) modalWoTimeline.innerHTML = `<div style="color:#dc3545;">${escapeHtml(error.message)}</div>`;
@@ -5456,7 +5699,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const isEmergency = ['High', 'Emergency'].includes(wo.priority);
                 const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
                 const issueShort = escapeHtml(issueText.length > 55 ? issueText.substring(0, 55) + '...' : issueText);
-                const escapedIssue = escapeHtml(issueText).replace(/'/g, "&#039;");
                 const escapedAsset = escapeHtml(wo.assetId);
 
                 return `
@@ -5482,12 +5724,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:flex; align-items:center; gap:5px;">
                         <i class="fa-solid fa-user-gear"></i> <span style="font-weight:600;">${escapeHtml(getWorkOrderMechanic(wo))}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:0.75rem;">
                         <span style="color:var(--text-muted); font-family:var(--font-mono);">
                             ${wo.downtime ? `<i class="fa-regular fa-clock" style="color:var(--danger);"></i> <strong style="color:var(--danger);">${escapeHtml(wo.downtime)}</strong>` : '<i class="fa-regular fa-clock"></i> Normal'}
                         </span>
-                        <span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}" style="border-radius:2px; font-size:0.7rem; padding:2px 6px;">
-                            ${isEmergency ? 'EMERGENCY' : escapeHtml(wo.priority || 'NORMAL')}
+                        <span style="display:flex; align-items:center; gap:6px;">
+                            <span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}" style="border-radius:2px; font-size:0.7rem; padding:2px 6px;">
+                                ${isEmergency ? 'EMERGENCY' : escapeHtml(wo.priority || 'NORMAL')}
+                            </span>
+                            <button type="button" class="btn btn-primary" onclick="event.stopPropagation(); openWoDetailModal('${escapeHtml(wo.woId)}', '${escapedAsset}')" style="padding:3px 7px; font-size:0.7rem; border-radius:3px;" title="Buka detail Work Order"><i class="fa-solid fa-eye"></i> Detail</button>
                         </span>
                     </div>
                 </div>

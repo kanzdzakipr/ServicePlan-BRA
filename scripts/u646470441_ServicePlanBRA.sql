@@ -648,6 +648,7 @@ CREATE TABLE `purchase_requests` (
   `requested_by` int NOT NULL,
   `urgency` enum('Normal','Emergency') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Normal',
   `status` enum('Draft','Submitted','Approved','Ordered','Issued','Closed') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Submitted',
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `requested_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`spb_id`),
   KEY `wo_id` (`wo_id`),
@@ -681,7 +682,8 @@ CREATE TABLE `purchase_request_items` (
   `qty_requested` int NOT NULL DEFAULT '1',
   `status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Menunggu Approval',
   PRIMARY KEY (`id`),
-  KEY `idx_purchase_request_items_spb` (`spb_id`)
+  KEY `idx_purchase_request_items_spb` (`spb_id`),
+  CONSTRAINT `fk_purchase_request_items_header` FOREIGN KEY (`spb_id`) REFERENCES `purchase_requests` (`spb_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1799,6 +1801,44 @@ CREATE TABLE `work_order_timeline` (
 INSERT INTO `work_order_timeline` (`wo_id`,`event_type`,`to_status`,`title`,`description`,`occurred_at`)
 SELECT `wo_id`,'CREATED',`status`,'Work Order tercatat','Riwayat awal dibuat dari data Work Order yang sudah ada.',`reported_at`
 FROM `work_orders`;
+
+--
+-- Revisi 4: kebutuhan suku cadang dan layanan dari Work Order
+--
+
+ALTER TABLE `work_orders`
+  ADD COLUMN `parts_requirement` enum('UNASSESSED','REQUIRED','NOT_REQUIRED') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'UNASSESSED' AFTER `maintenance_type`,
+  ADD COLUMN `parts_requirement_note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci AFTER `parts_requirement`;
+
+DROP TABLE IF EXISTS `work_order_service_requests`;
+CREATE TABLE `work_order_service_requests` (
+  `service_request_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `wo_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `asset_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `service_type` enum('INTERNAL_WORKSHOP','EXTERNAL_WORKSHOP','FIELD_SERVICE','SPECIALIST_VENDOR') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `provider_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `priority` enum('Normal','Urgent','Emergency') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Normal',
+  `status` enum('Submitted','Assigned','In Progress','Completed','Cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Submitted',
+  `requested_by` int NOT NULL,
+  `assigned_to` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `requested_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `started_at` timestamp NULL DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`service_request_id`),
+  KEY `idx_wo_service_request_wo` (`wo_id`,`status`),
+  KEY `idx_wo_service_request_asset` (`asset_id`,`status`),
+  KEY `fk_wo_service_request_user` (`requested_by`),
+  CONSTRAINT `fk_wo_service_request_wo` FOREIGN KEY (`wo_id`) REFERENCES `work_orders` (`wo_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_wo_service_request_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_wo_service_request_user` FOREIGN KEY (`requested_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+UPDATE `work_orders` w
+SET w.`parts_requirement` = 'REQUIRED',
+    w.`parts_requirement_note` = COALESCE(NULLIF(w.`parts_requirement_note`, ''), 'Ditandai otomatis dari SPB yang sudah tertaut.')
+WHERE EXISTS (SELECT 1 FROM `purchase_requests` pr WHERE pr.`wo_id` = w.`wo_id`);
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

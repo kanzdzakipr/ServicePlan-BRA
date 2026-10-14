@@ -561,6 +561,7 @@ function api_route_permission(): ?string
         'init.php' => 'dashboard.read',
         'assets.php' => $readWrite('assets.read', 'assets.write'),
         'work_orders.php' => $readWrite('work_orders.read', 'work_orders.write'),
+        'work_order_support.php' => $readWrite('work_orders.read', 'work_orders.write'),
         'accidents.php' => $readWrite('accidents.read', 'accidents.write'),
         'fuel_logs.php' => $readWrite('fuel.read', 'fuel.write'),
         'inspections.php' => $readWrite('inspections.read', 'inspections.write'),

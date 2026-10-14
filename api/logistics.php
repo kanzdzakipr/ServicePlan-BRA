@@ -1,6 +1,7 @@
 <?php
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
+require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
 
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
@@ -219,29 +220,46 @@ switch ($method) {
         try {
             $db->beginTransaction();
             
-            $stmtReq = $db->prepare("INSERT INTO purchase_requests (spb_id, wo_id, asset_id, requested_by, status) 
-                                     VALUES (:spb, :wo, :asset, :user, :status)
-                                     ON DUPLICATE KEY UPDATE status=VALUES(status)");
+            $stmtReq = $db->prepare("INSERT INTO purchase_requests
+                                     (spb_id, wo_id, asset_id, requested_by, urgency, status, notes)
+                                     VALUES (:spb, :wo, :asset, :user, :urgency, :status, :notes)
+                                     ON DUPLICATE KEY UPDATE
+                                         urgency=VALUES(urgency), status=VALUES(status), notes=VALUES(notes)");
                                      
             $stmtItem = $db->prepare("INSERT INTO purchase_request_items (id, spb_id, part_number, description, qty_requested, status)
                                       VALUES (:id, :spb, :part, :desc, :qty, :status)
-                                      ON DUPLICATE KEY UPDATE status=VALUES(status), qty_requested=VALUES(qty_requested)");
+                                      ON DUPLICATE KEY UPDATE
+                                          part_number=VALUES(part_number), description=VALUES(description),
+                                          status=VALUES(status), qty_requested=VALUES(qty_requested)");
+
+            $actor = api_current_user();
+            $actorId = (int) ($actor['id'] ?? 0);
+            $actorName = trim((string) ($actor['full_name'] ?? $actor['username'] ?? 'Pengguna'));
+            $linkedWorkOrders = [];
 
             foreach ($input['records'] as $r) {
                 $assetId = (string) ($r['assetId'] ?? '');
                 api_require_asset_access($db, $assetId);
+                $woId = trim((string) ($r['woId'] ?? ''));
+                $spbId = trim((string) ($r['spbId'] ?? ''));
+                if ($woId === '' || $spbId === '') {
+                    throw new InvalidArgumentException('Work Order dan nomor SPB wajib diisi.');
+                }
+                $workOrder = api_require_work_order_access($db, $woId);
+                if (!hash_equals((string) $workOrder['asset_id'], $assetId)) {
+                    throw new DomainException('Asset SPB tidak sesuai dengan asset pada Work Order.');
+                }
 
-                $existingRequest = $db->prepare('SELECT asset_id FROM purchase_requests WHERE spb_id = :spb_id LIMIT 1');
-                $existingRequest->execute([':spb_id' => (string) ($r['spbId'] ?? '')]);
-                $existingAssetId = $existingRequest->fetchColumn();
-                if ($existingAssetId !== false) {
-                    api_require_asset_access($db, (string) $existingAssetId);
-                    if (!hash_equals((string) $existingAssetId, $assetId)) {
-                        api_json_response(409, [
-                            'status' => 'error',
-                            'code' => 'OBJECT_ID_CONFLICT',
-                            'message' => 'Nomor SPB sudah digunakan oleh objek lain.',
-                        ]);
+                $existingRequest = $db->prepare('SELECT asset_id, wo_id FROM purchase_requests WHERE spb_id = :spb_id LIMIT 1');
+                $existingRequest->execute([':spb_id' => $spbId]);
+                $existingHeader = $existingRequest->fetch(PDO::FETCH_ASSOC);
+                if ($existingHeader) {
+                    api_require_asset_access($db, (string) $existingHeader['asset_id']);
+                    if (
+                        !hash_equals((string) $existingHeader['asset_id'], $assetId)
+                        || !hash_equals((string) $existingHeader['wo_id'], $woId)
+                    ) {
+                        throw new DomainException('Nomor SPB sudah digunakan oleh objek lain.');
                     }
                 }
 
@@ -254,20 +272,20 @@ switch ($method) {
                 if ($itemOwner) {
                     api_require_asset_access($db, (string) $itemOwner['asset_id']);
                     if (!hash_equals((string) $itemOwner['spb_id'], (string) ($r['spbId'] ?? ''))) {
-                        api_json_response(409, [
-                            'status' => 'error',
-                            'code' => 'OBJECT_ID_CONFLICT',
-                            'message' => 'ID item sudah digunakan oleh SPB lain.',
-                        ]);
+                        throw new DomainException('ID item sudah digunakan oleh SPB lain.');
                     }
                 }
                 // Insert Header (Ignore duplicates)
                 $stmtReq->execute([
-                    ':spb' => $r['spbId'],
-                    ':wo' => $r['woId'] ?? '',
-                    ':asset' => $r['assetId'] ?? '',
-                    ':user' => (int) api_current_user()['id'],
-                    ':status' => 'Submitted'
+                    ':spb' => $spbId,
+                    ':wo' => $woId,
+                    ':asset' => $assetId,
+                    ':user' => $actorId,
+                    ':urgency' => in_array((string) ($r['priority'] ?? 'Normal'), ['Urgent', 'Critical', 'Emergency'], true)
+                        ? 'Emergency'
+                        : 'Normal',
+                    ':status' => 'Submitted',
+                    ':notes' => trim((string) ($r['notes'] ?? '')) ?: null,
                 ]);
                 
                 // Insert Item
@@ -279,13 +297,47 @@ switch ($method) {
                     ':qty' => $r['qtyRequested'],
                     ':status' => $r['status'] ?? 'Menunggu Approval'
                 ]);
+
+                $linkedWorkOrders[$woId][$spbId] = trim((string) ($r['notes'] ?? ''));
+            }
+
+            foreach ($linkedWorkOrders as $woId => $requests) {
+                foreach ($requests as $spbId => $note) {
+                    WorkOrderSupport::markPartsRequired(
+                        $db,
+                        (string) $woId,
+                        $note !== '' ? $note : "Permintaan part dicatat melalui {$spbId}.",
+                        $actorId,
+                        $actorName,
+                        (string) $spbId
+                    );
+                }
             }
             
             $db->commit();
             echo json_encode(["status" => "success", "message" => "SPB saved successfully"]);
-        } catch (Exception $e) {
-            $db->rollBack();
-            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            if ($e instanceof InvalidArgumentException) {
+                api_json_response(422, [
+                    'status' => 'error',
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => $e->getMessage(),
+                ]);
+            }
+            if ($e instanceof DomainException) {
+                api_json_response(409, [
+                    'status' => 'error',
+                    'code' => 'OBJECT_ID_CONFLICT',
+                    'message' => $e->getMessage(),
+                ]);
+            }
+            error_log('SPB save failed: ' . $e->getMessage());
+            api_json_response(500, [
+                'status' => 'error',
+                'code' => 'SPB_SAVE_FAILED',
+                'message' => 'SPB gagal disimpan ke database.',
+            ]);
         }
         break;
 
