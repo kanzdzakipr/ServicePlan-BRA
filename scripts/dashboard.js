@@ -16650,6 +16650,8 @@
     ];
 
     let lhoOperationData = [];
+    let contractRows = [];
+    let contractPreviewReady = false;
     let lhoOperationSummary = {
         recordCount: 0,
         totalWorkHours: 0,
@@ -16730,6 +16732,7 @@
                     <button class="prod-tab-btn" data-prod-tab="tab-idling-anomaly"><i class="fa-solid fa-triangle-exclamation"></i> Idling Anomaly & Fuel Loss</button>
                     <button class="prod-tab-btn" data-prod-tab="tab-standby-fleet"><i class="fa-solid fa-boxes-stacked"></i> Audit Fleet Standby (48 Unit)</button>
                     <button class="prod-tab-btn" data-prod-tab="tab-lho-operation"><i class="fa-solid fa-clipboard-list"></i> LHO Operasional</button>
+                    <button class="prod-tab-btn" data-prod-tab="tab-contracts"><i class="fa-solid fa-file-contract"></i> Data Kontrak CSV</button>
                 </div>
 
                 <!-- TAB 1: AVAILABILITY & KPI DASHBOARD -->
@@ -17041,10 +17044,35 @@
                     </div>
                 </div>
 
+                <div class="prod-tab-content" id="tab-contracts">
+                    <div class="pk-panel">
+                        <div class="pk-panel-header"><span><i class="fa-solid fa-file-csv"></i> Kontrak Unit & Target Produktivitas</span></div>
+                        <div class="pk-panel-body">
+                            <p class="contract-csv-intro">Satu baris untuk satu unit dalam satu periode kontrak. Jam aktual dihitung dari LHO final pada periode tersebut.</p>
+                            <div class="contract-csv-actions">
+                                <button type="button" class="btn btn-secondary" id="contractDownloadTemplate"><i class="fa-solid fa-download"></i> Unduh template</button>
+                                <label class="contract-csv-file">Pilih CSV <input id="contractCsvFile" type="file" accept=".csv,text/csv"></label>
+                                <button type="button" class="btn btn-secondary" id="contractPreviewButton">Periksa CSV</button>
+                                <button type="button" class="btn btn-primary" id="contractImportButton" disabled>Impor data</button>
+                                <button type="button" class="btn btn-secondary" id="contractExportButton"><i class="fa-solid fa-file-export"></i> Ekspor CSV</button>
+                            </div>
+                            <div id="contractCsvFeedback" role="status" aria-live="polite" class="contract-csv-feedback">Unduh template untuk melihat nama kolom dan format tanggal yang diperlukan.</div>
+                        </div>
+                        <div class="pk-panel-body no-padding">
+                            <div class="table-responsive">
+                                <table class="prod-table"><thead><tr><th>Kontrak</th><th>Proyek / site</th><th>Unit</th><th>Periode</th><th>Target jam</th><th>Aktual LHO</th><th>Pencapaian</th></tr></thead>
+                                    <tbody id="contractRowsBody"><tr><td colspan="7">Buka tab untuk memuat data kontrak.</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         `;
 
         bindProdEvents();
+        bindContractEvents();
         renderProdModuleContent();
     }
 
@@ -17065,6 +17093,7 @@
                 const targetContent = document.getElementById(targetId);
                 if (targetContent) targetContent.classList.add('active');
                 if (targetId === 'tab-lho-operation') loadLhoOperations();
+                if (targetId === 'tab-contracts') loadContracts();
             });
         });
     }
@@ -17130,6 +17159,113 @@
     }
 
     window.refreshLhoOperations = loadLhoOperations;
+
+    function renderContracts() {
+        const body = document.getElementById('contractRowsBody');
+        if (!body) return;
+        if (!contractRows.length) {
+            body.innerHTML = '<tr><td colspan="7" style="padding:20px; text-align:center;">Belum ada data kontrak unit.</td></tr>';
+            return;
+        }
+        body.innerHTML = contractRows.map(row => `<tr>
+            <td><strong>${escapeHtml(row.contract_number)}</strong></td>
+            <td>${escapeHtml(row.project)}<br><small>${escapeHtml(row.site)}</small></td>
+            <td>${escapeHtml(row.asset_id)}</td>
+            <td>${escapeHtml(row.start_date)} – ${escapeHtml(row.end_date)}</td>
+            <td>${Number(row.target_hours).toLocaleString('id-ID', { maximumFractionDigits: 2 })} jam</td>
+            <td>${Number(row.actual_hours).toLocaleString('id-ID', { maximumFractionDigits: 2 })} jam</td>
+            <td><strong>${Number(row.achievement_percent).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</strong></td>
+        </tr>`).join('');
+    }
+
+    async function loadContracts() {
+        const body = document.getElementById('contractRowsBody');
+        if (body) body.innerHTML = '<tr><td colspan="7" style="padding:20px;">Memuat kontrak...</td></tr>';
+        try {
+            const response = await fetch('api/contracts.php', { credentials: 'same-origin', cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Kontrak gagal dimuat.');
+            contractRows = Array.isArray(payload.data) ? payload.data : [];
+            renderContracts();
+        } catch (error) {
+            if (body) body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);">${escapeHtml(error.message)}</td></tr>`;
+        }
+    }
+
+    function contractFeedback(message, errors = []) {
+        const panel = document.getElementById('contractCsvFeedback');
+        if (!panel) return;
+        panel.classList.toggle('is-error', errors.length > 0);
+        panel.innerHTML = `<strong>${escapeHtml(message)}</strong>${errors.length
+            ? `<ul>${errors.slice(0, 50).map(error => `<li>Baris ${Number(error.row) || 0}: ${escapeHtml(error.message)}</li>`).join('')}</ul>${errors.length > 50 ? `<small>${errors.length - 50} kesalahan lain belum ditampilkan.</small>` : ''}`
+            : ''}`;
+    }
+
+    async function submitContractCsv(mode) {
+        const file = document.getElementById('contractCsvFile')?.files?.[0];
+        if (!file) {
+            contractFeedback('Pilih file CSV terlebih dahulu.', [{ row: 0, message: 'File belum dipilih.' }]);
+            return;
+        }
+        const form = new FormData();
+        form.append('file', file);
+        form.append('mode', mode);
+        const previewButton = document.getElementById('contractPreviewButton');
+        const importButton = document.getElementById('contractImportButton');
+        previewButton.disabled = true;
+        importButton.disabled = true;
+        contractFeedback(mode === 'preview' ? 'Memeriksa CSV...' : 'Menyimpan kontrak...');
+        try {
+            const response = await fetch('api/contracts.php', { method: 'POST', credentials: 'same-origin', body: form });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.message || 'Permintaan gagal.');
+            const errors = payload.data?.errors || [];
+            contractPreviewReady = mode === 'preview' && payload.status === 'success' && errors.length === 0;
+            contractFeedback(payload.status === 'success'
+                ? `${payload.data?.rowCount || 0} baris ${mode === 'preview' ? 'valid dan siap diimpor' : 'berhasil disimpan'}.`
+                : `${errors.length} kesalahan ditemukan. Perbaiki CSV lalu periksa ulang.`, errors);
+            if (mode === 'import' && payload.status === 'success') {
+                document.getElementById('contractCsvFile').value = '';
+                await loadContracts();
+            }
+        } catch (error) {
+            contractPreviewReady = false;
+            contractFeedback(error.message || 'CSV gagal diproses.', [{ row: 0, message: 'Periksa koneksi dan akses akun.' }]);
+        } finally {
+            previewButton.disabled = false;
+            importButton.disabled = !contractPreviewReady;
+        }
+    }
+
+    async function downloadContracts(format) {
+        try {
+            const response = await fetch(`api/contracts.php?format=${format}`, { credentials: 'same-origin', cache: 'no-store' });
+            if (!response.ok) throw new Error('CSV gagal diunduh.');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = format === 'template' ? 'template_kontrak_unit.csv' : 'data_kontrak_unit.csv';
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+            contractFeedback(error.message, [{ row: 0, message: 'Periksa koneksi dan akses akun.' }]);
+        }
+    }
+
+    function bindContractEvents() {
+        document.getElementById('contractDownloadTemplate')?.addEventListener('click', () => downloadContracts('template'));
+        document.getElementById('contractExportButton')?.addEventListener('click', () => downloadContracts('csv'));
+        document.getElementById('contractPreviewButton')?.addEventListener('click', () => submitContractCsv('preview'));
+        document.getElementById('contractImportButton')?.addEventListener('click', () => {
+            if (contractPreviewReady) submitContractCsv('import');
+        });
+        document.getElementById('contractCsvFile')?.addEventListener('change', () => {
+            contractPreviewReady = false;
+            document.getElementById('contractImportButton').disabled = true;
+            contractFeedback('File berubah. Klik Periksa CSV untuk memvalidasi ulang.');
+        });
+    }
 
     function renderKomtraxTable() {
         const tbody = document.getElementById('tbKomtraxBody');

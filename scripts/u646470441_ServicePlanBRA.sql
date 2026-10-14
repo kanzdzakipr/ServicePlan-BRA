@@ -210,6 +210,29 @@ INSERT INTO `assets` VALUES ('CS-41001','CS-41001',NULL,NULL,NULL,NULL,'Heavy Eq
 UNLOCK TABLES;
 
 --
+-- Table structure for table `contract_assignments`
+--
+
+DROP TABLE IF EXISTS `contract_assignments`;
+CREATE TABLE `contract_assignments` (
+  `assignment_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `contract_number` varchar(100) NOT NULL,
+  `project` varchar(150) NOT NULL,
+  `site` varchar(150) NOT NULL,
+  `asset_id` varchar(100) NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `target_hours` decimal(12,2) NOT NULL,
+  `notes` varchar(500) DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`assignment_id`),
+  UNIQUE KEY `uq_contract_assignment` (`contract_number`,`asset_id`,`start_date`),
+  KEY `idx_contract_asset_period` (`asset_id`,`start_date`,`end_date`),
+  CONSTRAINT `fk_contract_assignment_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Table structure for table `battery_logs`
 --
 

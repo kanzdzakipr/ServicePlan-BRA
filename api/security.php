@@ -571,6 +571,7 @@ function api_route_permission(): ?string
         'tire_inspections.php' => $readWrite('tires.read', 'tires.write'),
         'condition_monitoring.php' => $readWrite('tires.read', 'tires.write'),
         'productivity.php' => 'dashboard.read',
+        'contracts.php' => $readWrite('dashboard.read', 'assets.write'),
         'reports.php' => $readWrite('reports.read', 'reports.write'),
         'report_references.php' => 'reports.read',
         'archive.php' => $readWrite('archive.read', 'archive.write'),

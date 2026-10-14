@@ -118,6 +118,27 @@ CREATE TABLE `assets` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
+-- 3.1 CONTRACT ASSIGNMENTS (CSV import/export and productivity targets)
+-- ----------------------------------------------------------------------------
+CREATE TABLE `contract_assignments` (
+    `assignment_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `contract_number` VARCHAR(100) NOT NULL,
+    `project` VARCHAR(150) NOT NULL,
+    `site` VARCHAR(150) NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `start_date` DATE NOT NULL,
+    `end_date` DATE NOT NULL,
+    `target_hours` DECIMAL(12,2) NOT NULL,
+    `notes` VARCHAR(500) NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY `uq_contract_assignment` (`contract_number`, `asset_id`, `start_date`),
+    KEY `idx_contract_asset_period` (`asset_id`, `start_date`, `end_date`),
+    CONSTRAINT `fk_contract_assignment_asset` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
 -- 4. ASSET MOVEMENTS & BAST (Handover & Location Mutation Log)
 -- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `asset_movements`;
