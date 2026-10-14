@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
+require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
 
 $dsn = (string) (getenv('REPORT_TEST_DSN') ?: 'mysql:host=127.0.0.1;port=3306;dbname=u646470441_ServicePlanBRA;charset=utf8mb4');
 $user = (string) (getenv('REPORT_TEST_DB_USER') ?: 'root');
@@ -106,6 +107,15 @@ try {
         && $request['status'] === 'Submitted',
         'Work Order, asset, urgency, and request status are mapped'
     );
+    $partsRequirement = $db->prepare('SELECT parts_requirement FROM work_orders WHERE wo_id = :wo_id');
+    $partsRequirement->execute([':wo_id' => $context['wo_id']]);
+    spbAssert($partsRequirement->fetchColumn() === 'REQUIRED', 'final SPB marks the originating Work Order as requiring parts');
+    $supportTimeline = $db->prepare(
+        "SELECT COUNT(*) FROM work_order_timeline
+         WHERE wo_id = :wo_id AND title = 'Kebutuhan part dicatat'"
+    );
+    $supportTimeline->execute([':wo_id' => $context['wo_id']]);
+    spbAssert((int) $supportTimeline->fetchColumn() >= 1, 'final SPB records its link in the Work Order timeline');
 
     $itemStatement = $db->prepare('SELECT * FROM purchase_request_items WHERE spb_id = :spb_id');
     $itemStatement->execute([':spb_id' => $baseFields['nomor_spb']]);
@@ -141,6 +151,12 @@ try {
     );
     $itemStatement->execute([':spb_id' => $baseFields['nomor_spb']]);
     spbAssert(!$itemStatement->fetch(), 'void removes the SPB line items');
+    $remainingForWo = $db->prepare('SELECT COUNT(*) FROM purchase_requests WHERE wo_id = :wo_id');
+    $remainingForWo->execute([':wo_id' => $context['wo_id']]);
+    if ((int) $remainingForWo->fetchColumn() === 0) {
+        $partsRequirement->execute([':wo_id' => $context['wo_id']]);
+        spbAssert($partsRequirement->fetchColumn() === 'UNASSESSED', 'void resets parts requirement when the WO has no remaining SPB');
+    }
     $secondReversal = ReportIntegration::reverseFinal($db, $reportId, 1);
     spbAssert($secondReversal['applied'] === false, 'repeated void is idempotent');
 
@@ -148,6 +164,14 @@ try {
     $preservedFields = [...$baseFields, 'nomor_spb' => 'QA-SPB-P-' . $suffix];
     $preservedResult = ReportIntegration::applyFinal($db, 'spb', $preservedReportId, $preservedFields, $rows, 1);
     spbAssert($preservedResult['createdItemCount'] === 1, 'second report creates a distinct SPB');
+    $supportBeforeVoid = WorkOrderSupport::overview($db, (string) $context['wo_id']);
+    spbAssert(
+        count(array_filter(
+            $supportBeforeVoid['purchaseRequests'],
+            static fn(array $request): bool => $request['spbId'] === $preservedFields['nomor_spb']
+        )) === 1,
+        'active report-owned SPB is linked in the Work Order detail'
+    );
     $db->prepare("UPDATE purchase_requests SET status = 'Approved' WHERE spb_id = :spb_id")
         ->execute([':spb_id' => $preservedFields['nomor_spb']]);
     $preservedReversal = ReportIntegration::reverseFinal($db, $preservedReportId, 1);
@@ -155,6 +179,14 @@ try {
     spbAssert(
         $preservedReversal['purchaseRequestPreservedCount'] === 1 && (bool) $requestStatement->fetch(),
         'void preserves an SPB already processed by logistics'
+    );
+    $supportAfterVoid = WorkOrderSupport::overview($db, (string) $context['wo_id']);
+    spbAssert(
+        count(array_filter(
+            $supportAfterVoid['purchaseRequests'],
+            static fn(array $request): bool => $request['spbId'] === $preservedFields['nomor_spb']
+        )) === 0,
+        'void detaches a preserved report-owned SPB from the Work Order detail'
     );
 
     try {

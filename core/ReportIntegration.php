@@ -880,6 +880,49 @@ final class ReportIntegration
                 ':integration_id' => (int) $integration['integration_id'],
             ]);
             $purchaseRequestReversed += $reversePurchaseRequest->rowCount();
+
+            if ($request && $reversePurchaseRequest->rowCount() > 0) {
+                $remainingRequest = $db->prepare(
+                    "SELECT COUNT(*)
+                     FROM purchase_requests pr
+                     WHERE pr.wo_id = :wo_id
+                       AND (
+                           NOT EXISTS (
+                               SELECT 1 FROM report_purchase_request_integrations owned
+                               WHERE owned.spb_id = pr.spb_id AND owned.owns_purchase_request = 1
+                           )
+                           OR EXISTS (
+                               SELECT 1 FROM report_purchase_request_integrations active_link
+                               WHERE active_link.spb_id = pr.spb_id AND active_link.reversed_at IS NULL
+                           )
+                       )"
+                );
+                $remainingRequest->execute([':wo_id' => $request['wo_id']]);
+                if ((int) $remainingRequest->fetchColumn() === 0) {
+                    $resetRequirement = $db->prepare(
+                        "UPDATE work_orders
+                         SET parts_requirement = 'UNASSESSED', parts_requirement_note = NULL
+                         WHERE wo_id = :wo_id AND parts_requirement = 'REQUIRED'"
+                    );
+                    $resetRequirement->execute([':wo_id' => $request['wo_id']]);
+                    if ($resetRequirement->rowCount() > 0) {
+                        $actorName = $db->prepare(
+                            "SELECT COALESCE(NULLIF(full_name, ''), username) FROM users WHERE user_id = :user_id LIMIT 1"
+                        );
+                        $actorName->execute([':user_id' => $actorId]);
+                        $db->prepare(
+                            "INSERT INTO work_order_timeline
+                             (wo_id, event_type, title, description, actor_user_id, actor_name)
+                             VALUES (:wo_id, 'DETAIL_UPDATE', 'Kebutuhan part dibatalkan', :description, :actor_id, :actor_name)"
+                        )->execute([
+                            ':wo_id' => $request['wo_id'],
+                            ':description' => "SPB {$integration['spb_id']} dilepas dari WO karena laporan asal di-void.",
+                            ':actor_id' => $actorId,
+                            ':actor_name' => (string) ($actorName->fetchColumn() ?: 'Pengguna'),
+                        ]);
+                    }
+                }
+            }
         }
 
         $purchaseOrderStatement = $db->prepare('SELECT integration_id, ppb_id, owns_purchase_order, applied_payload FROM report_purchase_order_integrations WHERE report_id = :report_id AND reversed_at IS NULL FOR UPDATE');
@@ -2727,6 +2770,27 @@ final class ReportIntegration
                     ':status' => $item['status'],
                 ]);
             }
+
+            $partsNote = "Permintaan part dicatat melalui {$spbId} dari laporan.";
+            $db->prepare(
+                "UPDATE work_orders
+                 SET parts_requirement = 'REQUIRED', parts_requirement_note = :note
+                 WHERE wo_id = :wo_id"
+            )->execute([':note' => $partsNote, ':wo_id' => $workOrderId]);
+            $actorName = $db->prepare(
+                "SELECT COALESCE(NULLIF(full_name, ''), username) FROM users WHERE user_id = :user_id LIMIT 1"
+            );
+            $actorName->execute([':user_id' => $actorId]);
+            $db->prepare(
+                "INSERT INTO work_order_timeline
+                 (wo_id, event_type, title, description, actor_user_id, actor_name)
+                 VALUES (:wo_id, 'DETAIL_UPDATE', 'Kebutuhan part dicatat', :description, :actor_id, :actor_name)"
+            )->execute([
+                ':wo_id' => $workOrderId,
+                ':description' => $partsNote,
+                ':actor_id' => $actorId,
+                ':actor_name' => (string) ($actorName->fetchColumn() ?: 'Pengguna'),
+            ]);
         }
 
         $insertIntegration = $db->prepare(

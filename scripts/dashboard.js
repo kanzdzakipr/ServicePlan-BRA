@@ -4160,6 +4160,8 @@
     let searchTimer = null;
     let toastTimer = null;
     let databaseLoadPromise = null;
+    let masterParts = [];
+    let masterPartsLoadPromise = null;
 
     function escapeHtml(value) {
         return String(value == null ? '' : value)
@@ -4368,6 +4370,66 @@
         const references = window.FleetReportForms?.getReferences?.();
         const part = references?.parts?.find(item => item.number === partNumber);
         return part?.unit || 'pcs';
+    }
+
+    function referenceMasterParts() {
+        const references = window.FleetReportForms?.getReferences?.();
+        return (Array.isArray(references?.parts) ? references.parts : [])
+            .filter(part => part?.number)
+            .map(part => ({
+                id: String(part.id || ''),
+                partNumber: String(part.number || '').trim(),
+                description: String(part.name || '').trim(),
+                uom: String(part.unit || 'pcs').trim() || 'pcs',
+                stockQty: Number(part.stock) || 0,
+                category: String(part.category || '').trim(),
+                warehouse: String(part.warehouse || '').trim()
+            }));
+    }
+
+    function normalizeMasterParts(rows) {
+        const unique = new Map();
+        rows.forEach(row => {
+            const partNumber = String(row.part_number || row.partNumber || row.number || '').trim();
+            if (!partNumber || unique.has(partNumber)) return;
+            unique.set(partNumber, {
+                id: String(row.part_id || row.partId || row.id || ''),
+                partNumber,
+                description: String(row.part_name || row.namaParts || row.description || row.name || '').trim(),
+                uom: String(row.unit_measure || row.satuan || row.uom || row.unit || 'pcs').trim() || 'pcs',
+                stockQty: Number(row.stock_qty ?? row.saldo ?? row.stock) || 0,
+                category: String(row.category || '').trim(),
+                warehouse: String(row.location_warehouse || row.gudang || row.warehouse || '').trim()
+            });
+        });
+        return Array.from(unique.values()).sort((left, right) => (
+            left.partNumber.localeCompare(right.partNumber, 'id', { numeric: true })
+        ));
+    }
+
+    async function loadMasterParts() {
+        if (masterPartsLoadPromise) return masterPartsLoadPromise;
+        masterPartsLoadPromise = fetch('api/logistics.php?type=parts', {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store'
+        }).then(async response => {
+            const payload = await response.json();
+            if (!response.ok || payload?.status !== 'success' || !Array.isArray(payload.data)) {
+                throw new Error(payload?.message || 'Master Part tidak tersedia.');
+            }
+            masterParts = normalizeMasterParts(payload.data);
+            if (!masterParts.length) masterParts = normalizeMasterParts(referenceMasterParts());
+            if (state.modal) render();
+            return masterParts;
+        }).catch(error => {
+            masterParts = normalizeMasterParts(referenceMasterParts());
+            console.error('Master Part gagal dimuat:', error);
+            if (state.modal) render();
+            return masterParts;
+        }).finally(() => {
+            masterPartsLoadPromise = null;
+        });
+        return masterPartsLoadPromise;
     }
 
     async function loadDatabaseRecords() {
@@ -4867,14 +4929,26 @@
         if (!state.modal?.draft.length) {
             return `<tr><td colspan="5" class="sl-draft-empty">Belum ada draft item. Gunakan tombol Tambah Item.</td></tr>`;
         }
-        return state.modal.draft.map((item, index) => `
-            <tr data-sl-draft-row="${index}">
-                <td><input type="text" value="${escapeHtml(item.partNumber || '')}" placeholder="Part number" data-sl-draft-field="partNumber" data-index="${index}"></td>
-                <td><input type="text" value="${escapeHtml(item.description || '')}" placeholder="Nama / spesifikasi part" data-sl-draft-field="description" data-index="${index}"></td>
+        return state.modal.draft.map((item, index) => {
+            const matchedPart = masterParts.find(part => part.partNumber === item.partNumber);
+            const isManual = Boolean(item.isManual || (item.partNumber && !matchedPart));
+            const selectedValue = matchedPart ? matchedPart.partNumber : (isManual ? '__MANUAL__' : '');
+            return `
+            <tr data-sl-draft-row="${index}" data-sl-manual="${isManual ? 'true' : 'false'}">
+                <td>
+                    <select class="sl-master-part-select" data-sl-master-part data-index="${index}" aria-label="Pilih Master Part">
+                        <option value="">Pilih Master Part...</option>
+                        ${masterParts.map(part => `<option value="${escapeHtml(part.partNumber)}" ${selectedValue === part.partNumber ? 'selected' : ''}>${escapeHtml(part.partNumber)} · ${escapeHtml(part.description || 'Tanpa nama')} · stok ${part.stockQty} ${escapeHtml(part.uom)}</option>`).join('')}
+                        <option value="__MANUAL__" ${selectedValue === '__MANUAL__' ? 'selected' : ''}>+ Part baru / input manual</option>
+                    </select>
+                    <input type="text" value="${escapeHtml(item.partNumber || '')}" placeholder="Part number" data-sl-draft-field="partNumber" data-index="${index}" ${matchedPart && !isManual ? 'readonly' : ''}>
+                </td>
+                <td><input type="text" value="${escapeHtml(item.description || '')}" placeholder="Nama / spesifikasi part" data-sl-draft-field="description" data-index="${index}" ${matchedPart && !isManual ? 'readonly' : ''}></td>
                 <td><input type="number" min="1" value="${Number(item.qty) || 1}" data-sl-draft-field="qty" data-index="${index}"></td>
-                <td><input type="text" value="${escapeHtml(item.uom || 'pcs')}" placeholder="pcs" data-sl-draft-field="uom" data-index="${index}"></td>
+                <td><input type="text" value="${escapeHtml(item.uom || 'pcs')}" placeholder="pcs" data-sl-draft-field="uom" data-index="${index}" ${matchedPart && !isManual ? 'readonly' : ''}></td>
                 <td><button type="button" class="sl-remove-draft" data-sl-action="remove-draft" data-index="${index}" title="Hapus draft item"><i class="fa-solid fa-trash"></i></button></td>
-            </tr>`).join('');
+            </tr>`;
+        }).join('');
     }
 
     function renderModal() {
@@ -4942,10 +5016,11 @@
                             </div>
                             <div class="table-responsive sl-draft-table-wrap">
                                 <table id="spb-item-table" class="sl-draft-table">
-                                    <thead><tr><th>Part Number</th><th>Deskripsi / Spesifikasi</th><th>Qty</th><th>Satuan</th><th>Aksi</th></tr></thead>
+                                    <thead><tr><th>Master Part / Part Number</th><th>Deskripsi / Spesifikasi</th><th>Qty</th><th>Satuan</th><th>Aksi</th></tr></thead>
                                     <tbody id="spb-items">${renderDraftRows()}</tbody>
                                 </table>
                             </div>
+                            <div class="sl-master-part-help"><i class="fa-solid fa-circle-info"></i><span>Pilih Master Part agar part number, deskripsi, dan satuan terisi otomatis. Gunakan <strong>Part baru / input manual</strong> hanya jika item belum terdaftar; pengajuan SPB tidak otomatis menambahkannya ke Master Part.</span></div>
                             <div class="sl-draft-actions">
                                 <button type="button" class="sl-add-item-button" data-sl-action="add-draft"><i class="fa-solid fa-plus"></i>Tambah Item</button>
                                 <label><span>Catatan permintaan</span><input id="spb-notes" type="text" value="${escapeHtml(state.modal.notes || '')}" placeholder="Keterangan, spesifikasi alternatif, atau kendala..." data-sl-modal-field="notes"></label>
@@ -5008,12 +5083,36 @@
             partNumber: prefill.partNumber || prefill[0] || '',
             description: prefill.description || prefill[1] || '',
             qty: Number(prefill.qty || prefill[2]) || 1,
-            uom: prefill.uom || prefill[3] || 'pcs'
+            uom: prefill.uom || prefill[3] || 'pcs',
+            isManual: Boolean(prefill.isManual)
         };
         const exists = normalized.partNumber && state.modal.draft.some(item => item.partNumber === normalized.partNumber);
         if (!exists) state.modal.draft.push(normalized);
         render();
-        return document.querySelector('#spb-items tr:last-child');
+        const row = document.querySelector('#spb-items tr:last-child');
+        row?.querySelector('[data-sl-master-part]')?.focus();
+        return row;
+    }
+
+    function applyMasterPart(index, selection) {
+        if (!state.modal?.draft[index]) return;
+        if (selection === '__MANUAL__') {
+            state.modal.draft[index] = { partNumber: '', description: '', qty: state.modal.draft[index].qty || 1, uom: 'pcs', isManual: true };
+        } else {
+            const part = masterParts.find(item => item.partNumber === selection);
+            if (!part) return;
+            state.modal.draft[index] = {
+                partNumber: part.partNumber,
+                description: part.description,
+                qty: state.modal.draft[index].qty || 1,
+                uom: part.uom,
+                stockQty: part.stockQty,
+                masterPartId: part.id,
+                isManual: false
+            };
+        }
+        render();
+        document.querySelector(`[data-sl-draft-field="qty"][data-index="${index}"]`)?.focus();
     }
 
     function openForAsset(assetId, woId = '', recommendedItem = null) {
@@ -5057,12 +5156,13 @@
     function syncDraftFromDom() {
         const rows = Array.from(document.querySelectorAll('#spb-items tr[data-sl-draft-row]'));
         state.modal.draft = rows.map(row => {
-            const inputs = row.querySelectorAll('input');
+            const field = name => row.querySelector(`[data-sl-draft-field="${name}"]`);
             return {
-                partNumber: inputs[0]?.value.trim() || '',
-                description: inputs[1]?.value.trim() || '',
-                qty: Math.max(1, Number(inputs[2]?.value) || 1),
-                uom: inputs[3]?.value.trim() || 'pcs'
+                partNumber: field('partNumber')?.value.trim() || '',
+                description: field('description')?.value.trim() || '',
+                qty: Math.max(1, Number(field('qty')?.value) || 1),
+                uom: field('uom')?.value.trim() || 'pcs',
+                isManual: row.dataset.slManual === 'true'
             };
         });
     }
@@ -5097,8 +5197,12 @@
         const serial = String(new Set(records.map(item => item.spbId).filter(Boolean)).size + 101).padStart(3, '0');
         const spbId = `SPB-${dateCode}-${serial}`;
         const woId = state.modal.woId || '';
+        if (!woId) {
+            notify('Work Order wajib dipilih agar SPB dapat ditelusuri dari sumbernya.', true);
+            return;
+        }
         
-        let newRecords = [];
+        const newRecords = [];
         validLines.forEach((item, index) => {
             const rec = {
                 id: `SL-${dateCode}-${Date.now()}-${index}`,
@@ -5119,7 +5223,6 @@
                 updatedAt: now.toISOString()
             };
             newRecords.push(rec);
-            records.push(rec);
         });
         
         const request = {
@@ -5141,15 +5244,16 @@
                 body: JSON.stringify({ records: newRecords })
             });
             const resData = await response.json();
-            if (resData.status !== 'success') {
-                console.error('SPB Backend Error:', resData.message);
-                notify('Gagal menyimpan SPB ke server: ' + resData.message, true);
+            if (!response.ok || resData.status !== 'success') {
+                throw new Error(resData.message || 'SPB gagal disimpan.');
             }
         } catch (e) {
             console.error('Fetch error:', e);
-            notify('Gagal terhubung ke server saat menyimpan SPB.', true);
+            notify('Gagal menyimpan SPB: ' + e.message, true);
+            return;
         }
 
+        records.push(...newRecords);
         if (window.globalData) {
             window.globalData.spare_part_requests = Array.isArray(window.globalData.spare_part_requests)
                 ? window.globalData.spare_part_requests
@@ -5157,8 +5261,7 @@
             window.globalData.spare_part_requests.unshift(request);
         }
         persist();
-        state.modal.draft = [];
-        render();
+        closeDetail();
         addApprovalRow(request);
         notify(`${spbId} dibuat dan dokumen masuk ke Approval (Database terupdate).`);
     }
@@ -5337,7 +5440,10 @@
         const draftField = event.target.dataset.slDraftField;
         if (draftField && state.modal) {
             const item = state.modal.draft[Number(event.target.dataset.index)];
-            if (item) item[draftField] = draftField === 'qty' ? Number(event.target.value) : event.target.value;
+            if (item) {
+                item[draftField] = draftField === 'qty' ? Number(event.target.value) : event.target.value;
+                if (draftField !== 'qty' && !event.target.readOnly) item.isManual = true;
+            }
             return;
         }
         const modalField = event.target.dataset.slModalField;
@@ -5347,6 +5453,10 @@
     }
 
     function handleChange(event) {
+        if (event.target.matches('[data-sl-master-part]')) {
+            applyMasterPart(Number(event.target.dataset.index), event.target.value);
+            return;
+        }
         const filter = event.target.dataset.slFilter;
         if (filter && filter !== 'query') {
             state[filter] = event.target.value;
@@ -5374,12 +5484,13 @@
         });
         render();
         loadDatabaseRecords();
+        loadMasterParts();
     }
 
     const api = {
         refresh() {
             render();
-            return loadDatabaseRecords();
+            return Promise.all([loadDatabaseRecords(), loadMasterParts()]);
         },
         openForAsset,
         openForWorkOrder,
