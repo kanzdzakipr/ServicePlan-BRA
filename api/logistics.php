@@ -105,6 +105,7 @@ switch ($method) {
 
                 $outgoingStatement = $db->query(
                     "SELECT it.transaction_id, it.transaction_date, it.reference_number, it.counterparty,
+                            it.asset_id, it.wo_id,
                             it.quantity, it.unit_measure, it.stock_before, it.stock_after, it.notes,
                             p.part_number, p.part_name, r.report_number, rt.template_key
                      FROM inventory_transactions it
@@ -122,8 +123,8 @@ switch ($method) {
                         'noSpb' => (string) ($row['report_number'] ?? ''),
                         'noBukti' => (string) $row['reference_number'],
                         'tglSpb' => (string) $row['transaction_date'],
-                        'noJo' => '',
-                        'idUnit' => (string) ($row['counterparty'] ?? ''),
+                        'noJo' => (string) ($row['wo_id'] ?? ''),
+                        'idUnit' => (string) ($row['asset_id'] ?? ''),
                         'namaSparepart' => (string) $row['part_name'],
                         'partNumber' => (string) $row['part_number'],
                         'spesifikasi' => (string) $row['part_number'],

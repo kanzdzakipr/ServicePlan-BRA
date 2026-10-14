@@ -219,6 +219,8 @@
                 column('tanggal', 'Tanggal', 'date'),
                 column('nomor_bukti', 'No. bukti kirim'),
                 column('tujuan', 'Dikirim ke'),
+                column('nomor_jo', 'Nomor WO/JO'),
+                column('id_unit', 'ID unit'),
                 column('part_number', 'Part number'),
                 column('nama', 'Nama parts'),
                 column('satuan', 'Satuan'),
@@ -4162,6 +4164,7 @@
     let databaseLoadPromise = null;
     let masterParts = [];
     let masterPartsLoadPromise = null;
+    let warehouseTransactions = [];
 
     function escapeHtml(value) {
         return String(value == null ? '' : value)
@@ -4500,15 +4503,27 @@
     }
 
     function warehouseUsageForAsset(assetId) {
-        const usage = Array.isArray(window.logisticsData?.keluar)
-            ? window.logisticsData.keluar
-            : [];
+        const legacy = Array.isArray(window.logisticsData?.keluar) ? window.logisticsData.keluar : [];
+        const usage = [...warehouseTransactions, ...legacy];
         const normalizedAssetId = String(assetId || '').toUpperCase();
         return usage.filter(item => {
             const sourceUnit = String(item.idUnit || '').toUpperCase();
-            const strictCode = sourceUnit.match(/\b[A-Z]{2,6}-\d{3,5}\b/)?.[0] || '';
-            return strictCode === normalizedAssetId;
+            return sourceUnit === normalizedAssetId;
         }).sort((left, right) => String(right.tglSpb || '').localeCompare(String(left.tglSpb || '')));
+    }
+
+    async function loadWarehouseTransactions() {
+        try {
+            const response = await fetch('api/logistics.php?type=inventory', {
+                headers: { Accept: 'application/json' }, cache: 'no-store'
+            });
+            const payload = await response.json();
+            if (!response.ok || payload?.status !== 'success') throw new Error(payload?.message || 'Riwayat pemakaian gagal dimuat.');
+            warehouseTransactions = Array.isArray(payload.data?.keluar) ? payload.data.keluar : [];
+            if (state.modal) render();
+        } catch (error) {
+            console.warn('Riwayat warehouse gagal dimuat:', error);
+        }
     }
 
     function summaryForAsset(assetId) {
@@ -4911,13 +4926,13 @@
         return `
             <div class="table-responsive sl-parts-table-wrap">
                 <table class="sl-parts-table">
-                    <thead><tr><th>Tanggal / bukti</th><th>Part / kode</th><th>Qty</th><th>Status bekas</th><th>Sumber</th></tr></thead>
+                    <thead><tr><th>Tanggal / bukti</th><th>Part / kode</th><th>Qty</th><th>WO / JO</th><th>Sumber</th></tr></thead>
                     <tbody>${visible.map(item => `
                         <tr>
                             <td><strong>${escapeHtml(item.tglSpb || '-')}</strong><small>${escapeHtml(item.noBukti || item.noSpb || '-')}</small></td>
                             <td><strong>${escapeHtml(item.namaSparepart || '-')}</strong><small>${escapeHtml(item.spesifikasi || 'Part number tidak tercatat')}</small></td>
                             <td><strong>${escapeHtml(item.qty || '0')}</strong> ${escapeHtml(item.satuan || '')}</td>
-                            <td>${escapeHtml(item.kesimpulan || 'Tidak dicatat')}</td>
+                            <td>${escapeHtml(item.noJo || 'Tidak tercatat')}</td>
                             <td><small>${escapeHtml(item.source || 'Bank Data Equipment')}</small></td>
                         </tr>`).join('')}</tbody>
                 </table>
@@ -5485,12 +5500,13 @@
         render();
         loadDatabaseRecords();
         loadMasterParts();
+        loadWarehouseTransactions();
     }
 
     const api = {
         refresh() {
             render();
-            return Promise.all([loadDatabaseRecords(), loadMasterParts()]);
+            return Promise.all([loadDatabaseRecords(), loadMasterParts(), loadWarehouseTransactions()]);
         },
         openForAsset,
         openForWorkOrder,
@@ -5510,14 +5526,18 @@
     window.SpareLogistics = api;
 
     document.addEventListener('fleetreport:finalized', event => {
+        if (event.detail?.schemaId === 'bhw-out') loadWarehouseTransactions();
         if (['spb', 'ppb', 'procurement-monitoring', 'sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) loadDatabaseRecords();
         if (['parts-weekly', 'bapp', 'bukti-kirim'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
+        if (event.detail?.schemaId === 'bhw-out') window.loadLogisticsData?.('keluar');
         if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
         if (['sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) window.FleetReportForms?.refreshReferences?.();
     });
     document.addEventListener('fleetreport:voided', event => {
+        if (event.detail?.schemaId === 'bhw-out') loadWarehouseTransactions();
         if (['spb', 'ppb', 'procurement-monitoring', 'sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) loadDatabaseRecords();
         if (['parts-weekly', 'bapp', 'bukti-kirim'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
+        if (event.detail?.schemaId === 'bhw-out') window.loadLogisticsData?.('keluar');
         if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
         if (['sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) window.FleetReportForms?.refreshReferences?.();
     });

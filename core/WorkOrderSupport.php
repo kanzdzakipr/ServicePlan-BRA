@@ -53,6 +53,21 @@ final class WorkOrderSupport
         );
         $services->execute([':wo_id' => $woId]);
 
+        $usage = $db->prepare(
+            "SELECT it.transaction_id, it.transaction_date, it.reference_number,
+                    it.quantity, it.unit_measure, it.wo_id, it.asset_id,
+                    p.part_number, p.part_name, rr.report_number
+             FROM inventory_transactions it
+             INNER JOIN parts p ON p.part_id = it.part_id
+             INNER JOIN report_records rr ON rr.report_id = it.report_id
+             WHERE it.wo_id = :wo_id AND it.asset_id = :asset_id
+               AND it.movement_type = 'OUT' AND it.reversed_at IS NULL
+               AND rr.status = 'FINAL'
+             ORDER BY it.transaction_date DESC, it.transaction_id DESC
+             LIMIT 100"
+        );
+        $usage->execute([':wo_id' => $woId, ':asset_id' => $workOrder['asset_id']]);
+
         return [
             'workOrder' => [
                 'woId' => (string) $workOrder['wo_id'],
@@ -71,6 +86,18 @@ final class WorkOrderSupport
                 'itemCount' => (int) $row['item_count'],
                 'totalQuantity' => (int) $row['total_quantity'],
             ], $spb->fetchAll(PDO::FETCH_ASSOC)),
+            'partUsage' => array_map(static fn(array $row): array => [
+                'transactionId' => (int) $row['transaction_id'],
+                'date' => (string) $row['transaction_date'],
+                'referenceNumber' => (string) $row['reference_number'],
+                'reportNumber' => (string) ($row['report_number'] ?? ''),
+                'partNumber' => (string) $row['part_number'],
+                'partName' => (string) $row['part_name'],
+                'quantity' => (int) $row['quantity'],
+                'unit' => (string) $row['unit_measure'],
+                'woId' => (string) $row['wo_id'],
+                'assetId' => (string) $row['asset_id'],
+            ], $usage->fetchAll(PDO::FETCH_ASSOC)),
             'serviceRequests' => array_map([self::class, 'mapServiceRequest'], $services->fetchAll(PDO::FETCH_ASSOC)),
         ];
     }

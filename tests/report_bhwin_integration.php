@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
+require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
 
 $dsn = (string) (getenv('REPORT_TEST_DSN') ?: 'mysql:host=127.0.0.1;port=3306;dbname=u646470441_ServicePlanBRA;charset=utf8mb4');
 $user = (string) (getenv('REPORT_TEST_DB_USER') ?: 'root');
@@ -29,6 +30,11 @@ try {
 }
 
 ReportIntegration::ensureTables($db);
+$workOrder = $db->query("SELECT wo_id, asset_id FROM work_orders WHERE status NOT IN ('Closed', 'Cancelled') ORDER BY wo_id LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+if (!$workOrder) {
+    echo "SKIP: active Work Order is unavailable.\n";
+    exit(0);
+}
 $suffix = strtoupper(substr(bin2hex(random_bytes(6)), 0, 10));
 $partNumber = 'QA-BHWIN-' . $suffix;
 $templateKey = 'qa-bhwin-' . strtolower($suffix);
@@ -120,6 +126,8 @@ try {
         'tanggal' => date('Y-m-d'),
         'nomor_bukti' => 'QA-BK-' . $suffix,
         'tujuan' => 'QA Workshop',
+        'nomor_jo' => $workOrder['wo_id'],
+        'id_unit' => $workOrder['asset_id'],
         'part_number' => $partNumber,
         'nama' => 'QA Integration Part',
         'satuan' => 'Pcs',
@@ -134,6 +142,25 @@ try {
     integrationAssert($outResult['itemCount'] === 1 && $outResult['totalQuantity'] === 2, 'outbound summary is correct');
     $stock->execute([':part_number' => $partNumber]);
     integrationAssert((int) $stock->fetchColumn() === 11, 'BHW-OUT decreases stock exactly once');
+    $usage = WorkOrderSupport::overview($db, (string) $workOrder['wo_id'])['partUsage'];
+    integrationAssert(count(array_filter($usage, static fn(array $item): bool => $item['partNumber'] === $partNumber)) === 1,
+        'outbound part usage is visible in the originating Work Order');
+    $ledger = $db->prepare('SELECT asset_id, wo_id FROM inventory_transactions WHERE report_id = :report_id AND movement_type = :movement');
+    $ledger->execute([':report_id' => $outReportId, ':movement' => 'OUT']);
+    $linked = $ledger->fetch(PDO::FETCH_ASSOC);
+    integrationAssert($linked['asset_id'] === $workOrder['asset_id'] && $linked['wo_id'] === $workOrder['wo_id'],
+        'outbound ledger stores the exact unit and Work Order');
+    try {
+        ReportIntegration::applyFinal($db, 'bhw-out', $outReportId . 'x', $outFields, [[
+            ...$outRows[0],
+            'id_unit' => 'QA-UNIT-TIDAK-SESUAI',
+            'persediaan' => '11',
+            'sisa' => '9',
+        ]], 1);
+        integrationAssert(false, 'mismatched WO and unit must be rejected');
+    } catch (DomainException $error) {
+        integrationAssert(str_contains($error->getMessage(), 'tidak cocok'), 'mismatched WO and unit is rejected');
+    }
 
     $outDuplicate = ReportIntegration::applyFinal($db, 'bhw-out', $outReportId, $outFields, $outRows, 1);
     $stock->execute([':part_number' => $partNumber]);
@@ -153,6 +180,9 @@ try {
     $outReversal = ReportIntegration::reverseFinal($db, $outReportId, 1);
     $stock->execute([':part_number' => $partNumber]);
     integrationAssert($outReversal['applied'] === true && (int) $stock->fetchColumn() === 13, 'void restores outbound stock');
+    $usageAfterVoid = WorkOrderSupport::overview($db, (string) $workOrder['wo_id'])['partUsage'];
+    integrationAssert(count(array_filter($usageAfterVoid, static fn(array $item): bool => $item['partNumber'] === $partNumber)) === 0,
+        'void removes reversed usage from the Work Order history');
 
     $secondOutReversal = ReportIntegration::reverseFinal($db, $outReportId, 1);
     $stock->execute([':part_number' => $partNumber]);

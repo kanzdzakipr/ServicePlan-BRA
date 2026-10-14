@@ -876,6 +876,8 @@ CREATE TABLE `inventory_transactions` (
   `transaction_date` date NOT NULL,
   `reference_number` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `counterparty` varchar(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `asset_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `wo_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `part_id` int NOT NULL,
   `quantity` int unsigned NOT NULL,
   `unit_measure` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -890,6 +892,7 @@ CREATE TABLE `inventory_transactions` (
   UNIQUE KEY `uq_inventory_report_line` (`report_id`,`report_item_position`,`movement_type`),
   KEY `idx_inventory_part_date` (`part_id`,`transaction_date`),
   KEY `idx_inventory_active` (`movement_type`,`reversed_at`,`transaction_date`),
+  KEY `idx_inventory_asset_wo` (`asset_id`,`wo_id`,`reversed_at`,`transaction_date`),
   CONSTRAINT `fk_inventory_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_inventory_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

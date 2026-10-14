@@ -718,6 +718,8 @@ CREATE TABLE `inventory_transactions` (
     `transaction_date` DATE NOT NULL,
     `reference_number` VARCHAR(190) NOT NULL,
     `counterparty` VARCHAR(190) NULL,
+    `asset_id` VARCHAR(100) NULL,
+    `wo_id` VARCHAR(50) NULL,
     `part_id` INT NOT NULL,
     `quantity` INT UNSIGNED NOT NULL,
     `unit_measure` VARCHAR(20) NOT NULL,
@@ -731,6 +733,7 @@ CREATE TABLE `inventory_transactions` (
     UNIQUE KEY `uq_inventory_report_line` (`report_id`, `report_item_position`, `movement_type`),
     KEY `idx_inventory_part_date` (`part_id`, `transaction_date`),
     KEY `idx_inventory_active` (`movement_type`, `reversed_at`, `transaction_date`),
+    KEY `idx_inventory_asset_wo` (`asset_id`, `wo_id`, `reversed_at`, `transaction_date`),
     CONSTRAINT `fk_inventory_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_inventory_part` FOREIGN KEY (`part_id`) REFERENCES `parts` (`part_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

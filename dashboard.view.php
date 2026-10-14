@@ -3446,6 +3446,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </section>
 
                     <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
+                        <strong style="display:block; margin-bottom:10px;">Riwayat penggunaan suku cadang pada WO ini</strong>
+                        <div id="supportPartUsageList" style="display:grid; gap:8px;"></div>
+                    </section>
+
+                    <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
                         <strong style="display:block; margin-bottom:12px;">Ajukan layanan perbaikan / bengkel</strong>
                         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px;">
                             <label>Jenis layanan
@@ -3681,6 +3686,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const partsStatus = document.getElementById('supportPartsStatus');
                 const spbList = document.getElementById('supportSpbList');
                 const serviceList = document.getElementById('supportServiceList');
+                const usageList = document.getElementById('supportPartUsageList');
                 const workOrder = data?.workOrder || {};
                 const requirementLabels = {
                     UNASSESSED: 'Belum dinilai',
@@ -3697,6 +3703,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     spbList.innerHTML = purchaseRequests.length
                         ? purchaseRequests.map(spb => `<div style="padding:9px 11px; background:#f8fafc; border-radius:7px; margin-top:6px; font-size:0.84rem;"><strong>${escapeHtml(spb.spbId)}</strong> &middot; ${escapeHtml(spb.status)} &middot; ${Number(spb.itemCount || 0)} item / ${Number(spb.totalQuantity || 0)} qty${spb.notes ? `<br><span style="color:var(--text-muted);">${escapeHtml(spb.notes)}</span>` : ''}</div>`).join('')
                         : '<div style="font-size:0.84rem; color:var(--text-muted);">Belum ada SPB yang tertaut ke WO ini.</div>';
+                }
+
+                if (usageList) {
+                    const usage = Array.isArray(data?.partUsage) ? data.partUsage : [];
+                    usageList.innerHTML = usage.length
+                        ? usage.map(item => `<div style="padding:9px 11px; background:#f8fafc; border-radius:7px; font-size:0.84rem;"><strong>${escapeHtml(item.partNumber)} · ${escapeHtml(item.partName)}</strong><br>${escapeHtml(item.date)} · ${Number(item.quantity)} ${escapeHtml(item.unit)} · Unit ${escapeHtml(item.assetId)} · WO ${escapeHtml(item.woId)}<br><span style="color:var(--text-muted);">Bukti ${escapeHtml(item.referenceNumber)} · Laporan ${escapeHtml(item.reportNumber)}</span></div>`).join('')
+                        : '<div style="font-size:0.84rem; color:var(--text-muted);">Belum ada transaksi barang keluar yang tertaut ke WO ini.</div>';
                 }
 
                 const serviceRequests = Array.isArray(data?.serviceRequests) ? data.serviceRequests : [];

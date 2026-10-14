@@ -4,8 +4,10 @@ declare(strict_types=1);
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
 require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
+require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 
 $db = Database::getInstance();
+ReportIntegration::ensureTables($db);
 $method = strtoupper((string) $_SERVER['REQUEST_METHOD']);
 
 function support_actor(): array
