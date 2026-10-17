@@ -276,10 +276,16 @@ switch ($method) {
             }
         }
 
+        if (isset($data['new_hull_number']) || (isset($data['action']) && $data['action'] === 'rename_hull')) {
+            $data['alias_name'] = trim((string) ($data['new_hull_number'] ?? ''));
+        } elseif (isset($data['hull_number']) && !isset($data['alias_name'])) {
+            $data['alias_name'] = trim((string) $data['hull_number']);
+        }
+
         $updatableFields = [
             'asset_code', 'serial_number', 'license_plate', 'make_model',
             'year_manufacture', 'type', 'category', 'status',
-            'current_location_id', 'last_hm_km'
+            'current_location_id', 'last_hm_km', 'alias_name'
         ];
 
         $fields = [];

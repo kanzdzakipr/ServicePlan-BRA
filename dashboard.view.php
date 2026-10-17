@@ -610,11 +610,24 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         </div>
                     </div>
                     <div class="panel-body">
+                        <!-- Quick Search Simultan 3 Parameter (Kode Unit, Nomor Lambung, Serial/Plat) -->
+                        <div class="asset-3param-search" style="margin-bottom: 16px;">
+                            <div style="position: relative; display: flex; align-items: center; gap: 10px;">
+                                <div style="position: relative; flex: 1;">
+                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 0.95rem;"></i>
+                                    <input type="text" id="asset3ParamSearch" class="form-control" style="padding-left: 40px; padding-right: 130px; height: 42px; font-size: 0.88rem; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #fff;" placeholder="Pencarian Simultan 3 Parameter: Kode Unit, Nomor Lambung Aktual, atau Serial Number / Plat..." oninput="window.filterMasterAsset3Param(this.value)">
+                                    <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.72rem; font-weight: 600; color: #0284c7; background: #e0f2fe; padding: 3px 8px; border-radius: 4px; pointer-events: none;"><i class="fa-solid fa-bolt"></i> 3-Param Search</span>
+                                </div>
+                                <button type="button" class="btn btn-sm" onclick="window.resetMasterAssetFilters()" style="height: 42px; padding: 0 16px; background: #f8fafc; border: 1.5px solid #cbd5e1; color: #475569;" title="Reset Semua Filter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                            </div>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table">
                                 <thead id="assetTableHeader">
                                     <tr>
                                         <th onclick="window.sortMasterAsset('id')" style="cursor:pointer">Asset ID / Kode <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('hull')" style="cursor:pointer">Nomor Lambung <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('model')" style="cursor:pointer">Merek & Tahun <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('sn')" style="cursor:pointer">SN & Plat Kendaraan <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('category')" style="cursor:pointer">Kategori <i class="fa-solid fa-sort"></i></th>
@@ -625,6 +638,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                     </tr>
                                     <tr class="asset-filter-row" style="background: #f8fafc;">
                                         <th style="padding: 4px 8px;"><input type="text" id="filterAssetId" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter ID..." onkeyup="window.filterMasterAsset('id', this.value)"></th>
+                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetHull" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Lambung..." onkeyup="window.filterMasterAsset('hull', this.value)"></th>
                                         <th style="padding: 4px 8px;"><input type="text" id="filterAssetModel" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Merek/Tahun..." onkeyup="window.filterMasterAsset('model', this.value)"></th>
                                         <th style="padding: 4px 8px;"><input type="text" id="filterAssetSn" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter SN/Plat..." onkeyup="window.filterMasterAsset('sn', this.value)"></th>
                                         <th style="padding: 4px 8px;">
@@ -3519,9 +3533,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </div>
                     <div class="wo-form-grid wo-team-grid">
                         <div class="wo-field">
-                            <label for="nwo-mechanic-input">PIC mekanik / teknisi</label>
+                            <label for="nwo-mechanic-input">PIC mekanik / teknisi (Multi-Pilih)</label>
                             <div class="wo-chip-composer"><input id="nwo-mechanic-input" list="nwo-mechanic-options" placeholder="Ketik nama lalu Enter" onkeydown="handleNewWOMechanicKey(event)"><button type="button" onclick="addNewWOMechanic()" aria-label="Tambah PIC"><i class="fa-solid fa-plus"></i></button></div>
-                            <datalist id="nwo-mechanic-options"><option value="Apeng (Lead Mechanic)"></option><option value="Maman (Senior Technician)"></option><option value="Soleh (Hydraulic Specialist)"></option><option value="Darmawan (Electrical Mechanic)"></option><option value="Regar (Junior Mechanic)"></option></datalist>
+                            <datalist id="nwo-mechanic-options"><option value="Suryanto (Lead Engine)"></option><option value="Bambang (Hydraulic)"></option><option value="Agus W. (Electrical)"></option><option value="Joko P. (Undercarriage)"></option><option value="Dedi K. (Powertrain)"></option><option value="Apeng (Lead Mechanic)"></option><option value="Maman (Senior Technician)"></option><option value="Soleh (Hydraulic Specialist)"></option><option value="Darmawan (Electrical Mechanic)"></option><option value="Regar (Junior Mechanic)"></option></datalist>
+                            <div class="wo-quick-mechanics" style="display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-top:6px;">
+                                <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Pilih Cepat:</span>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Suryanto')">+ Suryanto</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Bambang')">+ Bambang</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Agus W.')">+ Agus W.</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Apeng')">+ Apeng</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Maman')">+ Maman</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Soleh')">+ Soleh</button>
+                            </div>
                             <div class="wo-chip-list" id="nwo-mechanic-chips" aria-live="polite"><span class="wo-chip-empty">Belum ada PIC dipilih</span></div>
                             <input type="hidden" id="nwo-mechanic" value="Belum ada PIC">
                         </div>
@@ -3949,6 +3972,116 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
                 <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border); padding: 15px 20px; background: #fafafa; border-radius: 0 0 12px 12px;">
                     <button class="btn btn-secondary" onclick="closeModal('modalPmCardDetails')">Tutup</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Rename Nomor Lambung Aktual (Masukan Demo & Rapat) -->
+        <div class="modal-overlay" id="modalRenameHullNumber">
+            <div class="modal-content" style="max-width: 480px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff; padding: 18px 24px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:36px; height:36px; border-radius:8px; background:rgba(245,158,11,0.2); display:flex; align-items:center; justify-content:center; color:#fbbf24;">
+                            <i class="fa-solid fa-tag" style="font-size:1.1rem;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0; font-size:1.05rem; color:#fff;">Rename Nomor Lambung</h3>
+                            <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Penyesuaian nomor lambung fisik aktual armada lapangan</p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('modalRenameHullNumber')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 20px 24px;">
+                    <input type="hidden" id="renameHullAssetId">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Kode Aset / Unit ID</label>
+                        <input type="text" id="renameHullAssetCode" class="form-control" readonly style="background:#f1f5f9; font-weight:600; font-family:var(--font-mono); color:#1e293b;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Nomor Lambung Terdaftar Saat Ini</label>
+                        <input type="text" id="renameHullCurrent" class="form-control font-mono" readonly style="background:#f8fafc; font-style:italic; color:#64748b;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label style="font-size:0.8rem; font-weight:700; color:#0f172a; display:block; margin-bottom:4px;">Nomor Lambung Baru (Aktual Lapangan) <span style="color:#ef4444;">*</span></label>
+                        <input type="text" id="renameHullNewInput" class="form-control font-mono" placeholder="Contoh: BRA-45, DT-00088, DZ-00005" required style="font-weight:700; color:#0369a1; border:1.5px solid #7dd3fc; background:#f0f9ff;">
+                        <small style="color:#64748b; font-size:0.72rem; margin-top:3px; display:block;">Masukkan nomor fisik yang tercetak pada bodi alat berat saat ini.</small>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 18px;">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Alasan Perubahan / Catatan Lapangan</label>
+                        <textarea id="renameHullNotes" rows="2" class="form-control" placeholder="Contoh: Pengecatan ulang nomor lambung di Workshop Duri, atau mutasi proyek..."></textarea>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:10px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modalRenameHullNumber')">Batal</button>
+                        <button type="button" class="btn btn-primary" id="btnSubmitRenameHull" onclick="window.submitRenameHull()"><i class="fa-solid fa-floppy-disk"></i> Simpan Nomor Lambung</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Galeri Foto Preventif Maintenance (11 Kolom PM) -->
+        <div class="modal-overlay" id="modalPmGallery">
+            <div class="modal-content" style="max-width: 720px; border-radius: 12px; overflow: hidden; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);">
+                <div class="modal-header" style="background:#0f172a; color:#fff; padding: 16px 22px;">
+                    <div>
+                        <h3 style="margin:0; font-size:1.05rem; color:#fff;" id="pmGalleryTitle"><i class="fa-solid fa-images" style="color:#38bdf8; margin-right:8px;"></i> Dokumentasi Foto Servis Unit</h3>
+                        <p style="margin:0; font-size:0.75rem; color:#94a3b8;" id="pmGallerySubtitle">Dokumentasi fisik penggantian part, oli, dan kondisi komponen</p>
+                    </div>
+                    <button onclick="closeModal('modalPmGallery')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <div id="pmGalleryGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:14px; margin-bottom:16px;">
+                        <!-- Rendered via JS -->
+                    </div>
+                    <div id="pmGalleryEmpty" style="display:none; text-align:center; padding:30px; color:#94a3b8;">
+                        <i class="fa-regular fa-image" style="font-size:2.5rem; margin-bottom:10px; display:block;"></i>
+                        Belum ada foto servis yang diunggah untuk unit ini.
+                    </div>
+                    <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; padding:14px; text-align:center;">
+                        <label for="pmUploadGalleryInput" style="cursor:pointer; display:inline-flex; align-items:center; gap:8px; color:var(--primary); font-weight:600; font-size:0.84rem;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Unggah Dokumentasi Foto Servis Baru
+                        </label>
+                        <input type="file" id="pmUploadGalleryInput" accept="image/*" multiple style="display:none;" onchange="window.handleUploadPmPhoto(this.files)">
+                        <div style="font-size:0.72rem; color:#64748b; margin-top:4px;">Format JPG, PNG, WebP (maksimal 5MB per foto)</div>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0;">
+                    <button class="btn btn-secondary" onclick="closeModal('modalPmGallery')">Tutup</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Pemberkasan PDF JO Servis Berkala (11 Kolom PM) -->
+        <div class="modal-overlay" id="modalPmPdfDoc">
+            <div class="modal-content" style="max-width: 600px; border-radius: 12px; overflow: hidden; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);">
+                <div class="modal-header" style="background:#0f172a; color:#fff; padding: 16px 22px;">
+                    <div>
+                        <h3 style="margin:0; font-size:1.05rem; color:#fff;" id="pmPdfTitle"><i class="fa-solid fa-file-pdf" style="color:#ef4444; margin-right:8px;"></i> Pemberkasan JO Servis Berkala</h3>
+                        <p style="margin:0; font-size:0.75rem; color:#94a3b8;" id="pmPdfSubtitle">Dokumen acuan Job Order dan lembar verifikasi teknis servis berkala</p>
+                    </div>
+                    <button onclick="closeModal('modalPmPdfDoc')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <div id="pmPdfCard" style="background:#fff1f2; border:1px solid #fecdd3; border-radius:8px; padding:16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <i class="fa-solid fa-file-pdf" style="font-size:2.2rem; color:#e11d48;"></i>
+                            <div>
+                                <strong id="pmPdfFileName" style="font-size:0.9rem; color:#881337; display:block;">JO-SB-BERKALA-2026.pdf</strong>
+                                <span id="pmPdfMeta" style="font-size:0.75rem; color:#9f1239;">Arsip JO Servis Berkala Terlampir &middot; 420 KB</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm" id="pmBtnDownloadPdf" style="background:#be123c; color:#fff;" onclick="window.previewPmPdfDoc()"><i class="fa-solid fa-eye"></i> Pratinjau / Download</button>
+                    </div>
+                    <div style="background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:8px; padding:18px; text-align:center;">
+                        <i class="fa-solid fa-file-arrow-up" style="font-size:1.8rem; color:var(--primary); margin-bottom:8px; display:block;"></i>
+                        <label for="pmUploadPdfInput" style="cursor:pointer; display:inline-block; font-weight:600; color:var(--primary); font-size:0.88rem; margin-bottom:4px;">
+                            Pilih File PDF Baru untuk Diunggah
+                        </label>
+                        <input type="file" id="pmUploadPdfInput" accept="application/pdf" style="display:none;" onchange="window.handleUploadPmPdf(this.files)">
+                        <div style="font-size:0.75rem; color:#64748b;">Unggah lembar Job Order (JO) servis berkala resmi yang telah ditandatangani pengawas (Format PDF maks. 10MB)</div>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0;">
+                    <button class="btn btn-secondary" onclick="closeModal('modalPmPdfDoc')">Tutup</button>
                 </div>
             </div>
         </div>
@@ -4631,7 +4764,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
             if (!window.formatAssetIdentityDetails) {
                 window.formatAssetIdentityDetails = function(asset) {
-                    if (!asset) return { unitId: '-', sn: 'Belum tersedia', plate: 'Belum tersedia', model: 'Belum tersedia', year: 'Belum tersedia' };
+                    if (!asset) return { unitId: '-', hull: '-', sn: 'Belum tersedia', plate: 'Belum tersedia', model: 'Belum tersedia', year: 'Belum tersedia' };
                     const parsed = window.parseAssetId ? window.parseAssetId(asset.id || asset.asset_id || '') : { unitId: asset.id, snPlat: '-' };
                     const unitId = asset.asset_code || parsed.unitId || asset.id || '-';
                     
@@ -4650,8 +4783,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const year = asset.year_manufacture ? parseInt(asset.year_manufacture, 10) : 0;
                     const yearText = (year && year >= 1970) ? String(year) : 'Belum tersedia';
 
+                    let hull = asset.alias_name || asset.hull_number || '';
+                    if (!hull && window.assetDbMapping) {
+                        hull = window.assetDbMapping[unitId] || window.assetDbMapping[asset.id] || '';
+                    }
+                    const hullText = (hull && hull !== '-') ? hull : '-';
+
                     return {
                         unitId,
+                        hull: hullText,
                         sn: snText,
                         plate: plateText,
                         model: modelText,
@@ -6043,6 +6183,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.formatAssetIdentityDetails = function(asset) {
+                if (!asset) return { unitId: '-', hull: '-', sn: 'Belum tersedia', plate: 'Belum tersedia', model: 'Belum tersedia', year: 'Belum tersedia' };
                 const parsed = window.parseAssetId ? window.parseAssetId(asset.id || asset.asset_id || '') : { unitId: asset.id, snPlat: '-' };
                 const unitId = asset.asset_code || parsed.unitId || asset.id || '-';
                 
@@ -6061,8 +6202,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const year = asset.year_manufacture ? parseInt(asset.year_manufacture, 10) : 0;
                 const yearText = (year && year >= 1970) ? String(year) : 'Belum tersedia';
 
+                let hull = asset.alias_name || asset.hull_number || '';
+                if (!hull && window.assetDbMapping) {
+                    hull = window.assetDbMapping[unitId] || window.assetDbMapping[asset.id] || '';
+                }
+                const hullText = (hull && hull !== '-') ? hull : '-';
+
                 return {
                     unitId,
+                    hull: hullText,
                     sn: snText,
                     plate: plateText,
                     model: modelText,
@@ -6098,9 +6246,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 window.renderAssetTableBody();
             };
 
+            window.filterMasterAsset3Param = function(val) {
+                if (!window.masterAssetFilters) window.masterAssetFilters = {};
+                window.masterAssetFilters.query3Param = (val || '').trim().toLowerCase();
+                window.renderAssetTableBody();
+            };
+
             window.resetMasterAssetFilters = function() {
-                window.masterAssetFilters = { id: '', model: '', sn: '', category: '', location: '', completeness: '', status: '' };
-                const ids = ['filterAssetId', 'filterAssetModel', 'filterAssetSn'];
+                window.masterAssetFilters = { id: '', hull: '', model: '', sn: '', category: '', location: '', completeness: '', status: '', query3Param: '' };
+                const ids = ['filterAssetId', 'filterAssetHull', 'filterAssetModel', 'filterAssetSn', 'asset3ParamSearch'];
                 ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
                 const selects = ['filterAssetCat', 'filterAssetLoc', 'filterAssetComp', 'filterAssetStat'];
                 selects.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -6119,7 +6273,17 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const ident = window.formatAssetIdentityDetails(a);
                     const compl = window.getAssetCompleteness(a);
                     
+                    // Simultan 3-Parameter Search: Kode Unit, Nomor Lambung, SN / Plat
+                    if (f.query3Param) {
+                        const q = f.query3Param;
+                        const matchCode = ident.unitId.toLowerCase().includes(q) || (a.id || '').toLowerCase().includes(q) || (a.asset_code || '').toLowerCase().includes(q);
+                        const matchHull = ident.hull.toLowerCase().includes(q) || (a.alias_name || '').toLowerCase().includes(q) || (a.hull_number || '').toLowerCase().includes(q);
+                        const matchSn = ident.sn.toLowerCase().includes(q) || ident.plate.toLowerCase().includes(q) || (a.serial_number || '').toLowerCase().includes(q) || (a.license_plate || '').toLowerCase().includes(q);
+                        if (!matchCode && !matchHull && !matchSn) return false;
+                    }
+
                     if (f.id && !ident.unitId.toLowerCase().includes(f.id.toLowerCase()) && !(a.id || '').toLowerCase().includes(f.id.toLowerCase())) return false;
+                    if (f.hull && !ident.hull.toLowerCase().includes(f.hull.toLowerCase())) return false;
                     if (f.model && !ident.model.toLowerCase().includes(f.model.toLowerCase()) && !ident.year.includes(f.model)) return false;
                     if (f.sn && !ident.sn.toLowerCase().includes(f.sn.toLowerCase()) && !ident.plate.toLowerCase().includes(f.sn.toLowerCase())) return false;
                     if (f.location && !(a.location || '').toLowerCase().includes(f.location.toLowerCase())) return false;
@@ -6150,6 +6314,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         if (window.masterAssetSort.col === 'id') {
                             valA = identA.unitId;
                             valB = identB.unitId;
+                        } else if (window.masterAssetSort.col === 'hull') {
+                            valA = identA.hull;
+                            valB = identB.hull;
                         } else if (window.masterAssetSort.col === 'model') {
                             valA = identA.model;
                             valB = identB.model;
@@ -6168,7 +6335,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 if (assets.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 25px; color: var(--text-muted);"><i class="fa-solid fa-filter" style="margin-right:6px;"></i> Tidak ada unit yang cocok dengan filter kelengkapan/pencarian saat ini.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 25px; color: var(--text-muted);"><i class="fa-solid fa-filter" style="margin-right:6px;"></i> Tidak ada unit yang cocok dengan filter kelengkapan/pencarian saat ini.</td></tr>';
                     return;
                 }
 
@@ -6193,6 +6360,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         ? `<span class="badge badge-success" style="font-size:0.72rem; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-circle-check"></i> Lengkap</span>`
                         : `<span class="badge badge-warning" style="font-size:0.72rem; padding:3px 8px; border-radius:4px;" title="Belum lengkap: ${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum Lengkap</span><div style="font-size:0.68rem; color:var(--danger); margin-top:2px;">Kurang: ${escapeHtml(compl.missing.slice(0, 2).join(', '))}${compl.missing.length > 2 ? ' +' + (compl.missing.length - 2) : ''}</div>`;
 
+                    const hullBadge = ident.hull !== '-' 
+                        ? `<span class="badge" style="background:#fef3c7; color:#92400e; font-weight:700; font-family:var(--font-mono); font-size:0.8rem; border:1px solid #fde68a;">${escapeHtml(ident.hull)}</span>`
+                        : `<span style="color:#94a3b8; font-style:italic; font-size:0.75rem;">Belum ada</span>`;
+
                     return `
                     <tr data-asset-id="${escapeHtml(asset.id)}"
                         data-asset-status="${escapeHtml(asset.status)}"
@@ -6203,6 +6374,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         title="Klik 1x untuk membuka Opsi Aksi Integrasi Unit ${escapeHtml(asset.id)}">
                         <td>
                             <strong style="color:var(--primary); font-size:0.88rem;">${escapeHtml(ident.unitId)}</strong>
+                        </td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                ${hullBadge}
+                                <button type="button" class="btn btn-xs" onclick="event.stopPropagation(); window.openRenameHullModal('${escapeHtml(asset.id)}', '${escapeHtml(ident.hull)}')" style="padding:1px 5px; font-size:0.68rem; background:#fff; border:1px solid #cbd5e1; border-radius:3px; cursor:pointer;" title="Rename Nomor Lambung Aktual"><i class="fa-solid fa-pen"></i></button>
+                            </div>
                         </td>
                         <td>
                             ${modelDisplay}
@@ -6230,6 +6407,68 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </tr>
                     `;
                 }).join('');
+            };
+
+            window.openRenameHullModal = function(assetId, currentHull) {
+                const asset = (window.currentAssetData || []).find(a => (a.id || a.asset_id) === assetId);
+                const elId = document.getElementById('renameHullAssetId');
+                const elCode = document.getElementById('renameHullAssetCode');
+                const elCurr = document.getElementById('renameHullCurrent');
+                const elNew = document.getElementById('renameHullNewInput');
+                const elNotes = document.getElementById('renameHullNotes');
+                if (elId) elId.value = assetId;
+                if (elCode) elCode.value = (asset ? asset.asset_code : assetId) || assetId;
+                if (elCurr) elCurr.value = (currentHull && currentHull !== '-') ? currentHull : 'Belum ditetapkan';
+                if (elNew) elNew.value = (currentHull && currentHull !== '-') ? currentHull : '';
+                if (elNotes) elNotes.value = '';
+                window.openModal('modalRenameHullNumber');
+                setTimeout(() => elNew && elNew.focus(), 80);
+            };
+
+            window.submitRenameHull = async function() {
+                const assetId = document.getElementById('renameHullAssetId')?.value;
+                const newHull = document.getElementById('renameHullNewInput')?.value.trim();
+                const notes = document.getElementById('renameHullNotes')?.value.trim();
+                if (!newHull) {
+                    alert('Nomor lambung baru wajib diisi.');
+                    return;
+                }
+                const btn = document.getElementById('btnSubmitRenameHull');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; }
+                try {
+                    const res = await fetch(`api/assets.php?id=${encodeURIComponent(assetId)}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            asset_id: assetId,
+                            alias_name: newHull,
+                            new_hull_number: newHull,
+                            action: 'rename_hull',
+                            notes: notes
+                        })
+                    });
+                    const json = await res.json();
+                    if (!res.ok || json.status === 'error') throw new Error(json.message || 'Gagal update nomor lambung');
+                    
+                    // Update in-memory data
+                    const asset = (window.currentAssetData || []).find(a => (a.id || a.asset_id) === assetId);
+                    if (asset) {
+                        asset.alias_name = newHull;
+                        asset.hull_number = newHull;
+                    }
+                    if (!window.assetDbMapping) window.assetDbMapping = {};
+                    window.assetDbMapping[assetId] = newHull;
+                    if (asset && asset.asset_code) window.assetDbMapping[asset.asset_code] = newHull;
+
+                    window.closeModal('modalRenameHullNumber');
+                    window.renderAssetTableBody();
+                    alert(`Nomor lambung unit ${assetId} berhasil diubah menjadi ${newHull}.`);
+                } catch (err) {
+                    console.error(err);
+                    alert('Gagal mengubah nomor lambung: ' + err.message);
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Nomor Lambung'; }
+                }
             };
 
             function initAssetView(assets) {

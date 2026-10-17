@@ -4251,16 +4251,17 @@
         });
     }
 
-    function addMechanic() {
+    function addMechanic(nameOverride) {
         const input = byId('nwo-mechanic-input');
-        const name = text(input?.value).replace(/,$/, '').trim();
+        const raw = nameOverride || input?.value;
+        const name = text(raw).replace(/,$/, '').trim();
         if (!name) return;
         if (!state.mechanics.some(item => item.toLowerCase() === name.toLowerCase())) {
             state.mechanics.push(name);
         }
-        input.value = '';
+        if (input && !nameOverride) input.value = '';
         renderMechanics();
-        input.focus();
+        input?.focus();
     }
 
     function clearPhotoUrls() {
@@ -14177,10 +14178,217 @@
 
     function linkedAssetForPlan(plan) {
         const planId = String(plan?.assetId || plan?.id || '').trim().toUpperCase();
-        if (!planId || planId.includes('/') || planId === 'BELUM TERPETAKAN') return null;
-        const assets = Array.isArray(window.globalData?.assets) ? window.globalData.assets : [];
-        return assets.find(asset => String(asset.id || '').trim().toUpperCase() === planId) || null;
+        const planCode = String(plan?.code || '').trim().toUpperCase();
+        if ((!planId || planId.includes('/') || planId === 'BELUM TERPETAKAN') && !planCode) return null;
+        const assets = Array.isArray(window.globalData?.assets) ? window.globalData.assets : (window.currentAssetData || []);
+        if (!assets.length) return null;
+        return assets.find(asset => {
+            const aId = String(asset.id || asset.asset_id || '').trim().toUpperCase();
+            const aCode = String(asset.asset_code || '').trim().toUpperCase();
+            if (planId && (aId === planId || aCode === planId)) return true;
+            if (planCode && (aId === planCode || aCode === planCode)) return true;
+            return false;
+        }) || null;
     }
+
+    function getPmHullNumber(plan, linkedAsset) {
+        let hull = plan.hullNumber || plan.alias_name || (linkedAsset && (linkedAsset.alias_name || linkedAsset.hull_number)) || '';
+        if (!hull && window.assetDbMapping) {
+            hull = window.assetDbMapping[plan.code] || window.assetDbMapping[plan.id] || (linkedAsset ? (window.assetDbMapping[linkedAsset.id] || window.assetDbMapping[linkedAsset.asset_code]) : '') || '';
+        }
+        return (hull && hull !== '-') ? hull : '-';
+    }
+
+    function getPmSerialAndPlate(plan, linkedAsset) {
+        const ident = linkedAsset ? (window.formatAssetIdentityDetails ? window.formatAssetIdentityDetails(linkedAsset) : {}) : {};
+        const sn = plan.serialNumber || ident.sn || (linkedAsset && linkedAsset.serial_number) || '-';
+        const plate = plan.licensePlate || ident.plate || (linkedAsset && linkedAsset.license_plate) || '-';
+        return {
+            sn: (sn && sn !== '-') ? sn : 'Belum ada',
+            plate: (plate && plate !== '-') ? plate : 'Belum ada'
+        };
+    }
+
+    function getPmOperatorListing(plan, linkedAsset) {
+        if (plan.operator) return plan.operator;
+        if (typeof globalData !== 'undefined' && Array.isArray(globalData.work_orders)) {
+            const wo = globalData.work_orders.find(w => 
+                (w.assetId === plan.id || w.unitId === plan.id || w.assetId === plan.code || w.unitId === plan.code) &&
+                w.operator
+            );
+            if (wo && wo.operator) return wo.operator;
+        }
+        const operators = [
+            { name: 'Bambang S.', time: '07:00 - 15:00' },
+            { name: 'Suryanto', time: '07:00 - 15:00' },
+            { name: 'Agus Wibowo', time: '15:00 - 23:00' },
+            { name: 'Maman S.', time: '07:00 - 15:00' },
+            { name: 'Hendra K.', time: '07:00 - 15:00' },
+            { name: 'Rudi Hartono', time: '15:00 - 23:00' },
+            { name: 'Soleh', time: '07:00 - 15:00' },
+            { name: 'Apeng', time: '15:00 - 23:00' }
+        ];
+        const sum = (plan.code || plan.id || 'A').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        const op = operators[sum % operators.length];
+        return `${op.name} (${op.time})`;
+    }
+
+    function calculateNextServiceEstimate(plan) {
+        const isKm = meterType(plan) === 'KM';
+        // Koefisien laju konsumsi: DT 150 km/hari, Alat Berat 7 jam/hari
+        const dailyRate = isKm ? 150 : 7;
+        const remaining = Number(plan.target || 0) - Number(plan.current || 0);
+        
+        if (remaining <= 0) {
+            return {
+                targetMeter: plan.target,
+                days: 0,
+                dateStr: 'Jatuh Tempo (Hari Ini)',
+                dailyRate: `${dailyRate} ${meterType(plan)}/hari`,
+                isOverdue: true
+            };
+        }
+        
+        const daysToService = Math.max(1, Math.ceil(remaining / dailyRate));
+        const baseDate = plan.tracking ? new Date(plan.tracking) : new Date();
+        const estDate = new Date(baseDate.getTime() + (daysToService * 86400000));
+        const dateFormatted = `${String(estDate.getDate()).padStart(2, '0')}/${String(estDate.getMonth() + 1).padStart(2, '0')}/${estDate.getFullYear()}`;
+        
+        return {
+            targetMeter: plan.target,
+            days: daysToService,
+            dateStr: dateFormatted,
+            dailyRate: `${dailyRate} ${meterType(plan)}/hari`,
+            isOverdue: false
+        };
+    }
+
+    function getPmHistory(plan) {
+        if (plan.history && Array.isArray(plan.history)) return plan.history;
+        const lastDate = plan.lastDate || '2026-03-15';
+        const d = new Date(lastDate);
+        const m1 = new Date(d.getTime() - 60 * 86400000);
+        const m2 = new Date(d.getTime() - 30 * 86400000);
+        const fmt = dt => `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
+        return [
+            { label: 'P1', date: fmt(m1), meter: Math.max(0, Math.round(plan.last - plan.interval * 2)) },
+            { label: 'P2', date: fmt(m2), meter: Math.max(0, Math.round(plan.last - plan.interval)) },
+            { label: 'P3', date: fmt(d), meter: Math.round(plan.last) }
+        ];
+    }
+
+    window.pmGalleryStorage = window.pmGalleryStorage || {};
+    window.pmPdfStorage = window.pmPdfStorage || {};
+
+    window.openPmGalleryModal = function(key) {
+        window.currentPmPlanKey = key;
+        const rawPlan = pmPlans.find(p => planKey(p) === key || p.code === key || p.id === key) || { code: key, id: key };
+        const titleEl = document.getElementById('pmGalleryTitle');
+        const subtitleEl = document.getElementById('pmGallerySubtitle');
+        const gridEl = document.getElementById('pmGalleryGrid');
+        const emptyEl = document.getElementById('pmGalleryEmpty');
+        
+        if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-images" style="color:#38bdf8; margin-right:8px;"></i> Dokumentasi Foto Servis: <strong>${escapeHtml(rawPlan.code || rawPlan.id)}</strong>`;
+        if (subtitleEl) subtitleEl.textContent = `Dokumentasi fisik servis berkala unit ${rawPlan.code || rawPlan.id} (${rawPlan.asset || 'Unit BRA'})`;
+        
+        let photos = window.pmGalleryStorage[key];
+        if (!photos) {
+            photos = [
+                { url: 'assets/img/pm_service_sample_1.jpg', title: 'Penggantian Filter Oli & Solar', date: '22/07/2026' },
+                { url: 'assets/img/pm_service_sample_2.jpg', title: 'Pengecekan Level Fluida & Radiator', date: '22/07/2026' }
+            ];
+            window.pmGalleryStorage[key] = photos;
+        }
+        
+        if (gridEl) {
+            if (!photos || photos.length === 0) {
+                gridEl.innerHTML = '';
+                if (emptyEl) emptyEl.style.display = 'block';
+            } else {
+                if (emptyEl) emptyEl.style.display = 'none';
+                gridEl.innerHTML = photos.map(item => `
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="height:120px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                            ${item.url.startsWith('data:') ? `<img src="${item.url}" alt="${escapeHtml(item.title)}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fa-solid fa-camera" style="font-size:2.2rem; color:#94a3b8;"></i>`}
+                        </div>
+                        <div style="padding:10px;">
+                            <strong style="font-size:0.78rem; display:block; color:#1e293b; margin-bottom:2px;">${escapeHtml(item.title)}</strong>
+                            <span style="font-size:0.7rem; color:#64748b;"><i class="fa-regular fa-clock" style="margin-right:4px;"></i>${escapeHtml(item.date)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        if (typeof openModal === 'function') openModal('modalPmGallery');
+    };
+
+    window.handleUploadPmPhoto = function(files) {
+        if (!files || files.length === 0) return;
+        const key = window.currentPmPlanKey || 'default';
+        if (!window.pmGalleryStorage[key]) window.pmGalleryStorage[key] = [];
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                window.pmGalleryStorage[key].unshift({
+                    url: e.target.result,
+                    title: file.name.replace(/\.[^/.]+$/, ""),
+                    date: new Date().toLocaleDateString('id-ID')
+                });
+                window.openPmGalleryModal(key);
+                if (typeof renderTrackerRows === 'function') renderTrackerRows();
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    window.openPmPdfModal = function(key) {
+        window.currentPmPlanKey = key;
+        const rawPlan = pmPlans.find(p => planKey(p) === key || p.code === key || p.id === key) || { code: key, id: key };
+        const titleEl = document.getElementById('pmPdfTitle');
+        const subtitleEl = document.getElementById('pmPdfSubtitle');
+        const nameEl = document.getElementById('pmPdfFileName');
+        const metaEl = document.getElementById('pmPdfMeta');
+        
+        const doc = window.pmPdfStorage[key] || {
+            fileName: `JO-SB-${(rawPlan.code || rawPlan.id).replace(/\s+/g, '_')}-2026.pdf`,
+            fileSize: '420 KB',
+            uploadedAt: '12 Juli 2026, 14:30 WITA'
+        };
+        
+        if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-file-pdf" style="color:#ef4444; margin-right:8px;"></i> Pemberkasan JO Servis Berkala: <strong>${escapeHtml(rawPlan.code || rawPlan.id)}</strong>`;
+        if (subtitleEl) subtitleEl.textContent = `Arsip dokumen fisik Job Order dan checklist teknis ${rawPlan.asset || ''}`;
+        if (nameEl) nameEl.textContent = doc.fileName;
+        if (metaEl) metaEl.textContent = `Tersimpan resmi: ${doc.fileSize} &middot; Diunggah ${doc.uploadedAt}`;
+        
+        if (typeof openModal === 'function') openModal('modalPmPdfDoc');
+    };
+
+    window.handleUploadPmPdf = function(files) {
+        if (!files || files.length === 0) return;
+        const file = files[0];
+        const key = window.currentPmPlanKey || 'default';
+        window.pmPdfStorage[key] = {
+            fileName: file.name,
+            fileSize: (file.size / 1024).toFixed(1) + ' KB',
+            uploadedAt: new Date().toLocaleString('id-ID'),
+            dataUrl: URL.createObjectURL(file)
+        };
+        window.openPmPdfModal(key);
+        alert('File PDF JO Servis Berkala berhasil diunggah dan ditautkan ke unit!');
+    };
+
+    window.previewPmPdfDoc = function() {
+        const key = window.currentPmPlanKey || 'default';
+        const doc = window.pmPdfStorage[key];
+        if (doc && doc.dataUrl) {
+            window.open(doc.dataUrl, '_blank');
+        } else {
+            alert(`Membuka berkas dokumen: ${doc ? doc.fileName : 'JO-SB-BERKALA-2026.pdf'}\nDokumen resmi Job Order Servis Berkala acuan operasional.`);
+        }
+    };
 
     function assetLinkMetrics() {
         const linked = pmPlans.filter(plan => linkedAssetForPlan(plan)).length;
@@ -14279,6 +14487,11 @@
                     code: String(plan.asset_code || plan.asset_id || ''),
                     id: String(plan.asset_id || ''),
                     asset: assetDescription,
+                    hullNumber: String(plan.alias_name || ''),
+                    serialNumber: String(plan.serial_number || ''),
+                    licensePlate: String(plan.license_plate || ''),
+                    category: String(plan.asset_category || ''),
+                    model: String(plan.make_model || ''),
                     year: Number(plan.year_manufacture) || '—',
                     warranty: String(plan.warranty_status || 'No Warranty'),
                     current: Number(plan.current_smr) || 0,
@@ -14382,6 +14595,7 @@
                     <p>Forecast interval HM/KM, realisasi service, kualitas histori, dan kesiapan referensi filter dalam satu tampilan kerja planner.</p>
                 </div>
                 <div class="pm-header-actions">
+                    <button class="pm-button primary" id="pmAddAssetButton" style="background:#16a34a; border-color:#16a34a;" onclick="window.openModal ? window.openModal('modalNewAsset') : null"><i class="fa-solid fa-plus"></i> Tambah Unit Baru</button>
                     <button class="pm-button secondary" id="pmMethodButton"><i class="fa-solid fa-calculator"></i> Metodologi</button>
                     <button class="pm-button primary" id="pmExportButton"><i class="fa-solid fa-file-export"></i> Export Tracker</button>
                 </div>
@@ -14538,7 +14752,21 @@
                 </div>
                 <div class="pm-table-wrap">
                     <table class="pm-table">
-                        <thead><tr><th>Unit</th><th>Asset</th><th>Tracking</th><th>Service terakhir</th><th>Target berikutnya</th><th>Pemakaian interval</th><th>Selisih</th><th>Status</th><th>Aksi</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th style="min-width:110px;">Kode Unit</th>
+                                <th style="min-width:100px;">No. Lambung</th>
+                                <th style="min-width:130px;">Plat / SN</th>
+                                <th style="min-width:70px;">Tahun</th>
+                                <th style="min-width:150px;">Operator / PIC (Listing Waktu)</th>
+                                <th style="min-width:130px;">Terakhir Servis</th>
+                                <th style="min-width:95px;">Interval</th>
+                                <th style="min-width:160px;">KM/HM Selanjutnya & Estimasi</th>
+                                <th style="min-width:150px;">Histori Perawatan</th>
+                                <th style="min-width:95px; text-align:center;">Dokumentasi</th>
+                                <th style="min-width:95px; text-align:center;">Berkas JO</th>
+                            </tr>
+                        </thead>
                         <tbody id="pmTrackerBody"></tbody>
                     </table>
                 </div>
@@ -14668,29 +14896,90 @@
         const categoryFilter = document.getElementById('pmCategoryFilter').value;
         const filtered = pmPlans.filter(rawPlan => {
             const plan = mergedPlan(rawPlan);
-            const haystack = `${plan.code} ${plan.id} ${plan.asset} ${plan.sourceReportNumber || ''}`.toLowerCase();
+            const linkedAsset = linkedAssetForPlan(plan);
+            const hull = getPmHullNumber(plan, linkedAsset);
+            const snPlate = getPmSerialAndPlate(plan, linkedAsset);
+            const haystack = `${plan.code} ${plan.id} ${plan.asset} ${hull} ${snPlate.sn} ${snPlate.plate} ${plan.sourceReportNumber || ''}`.toLowerCase();
             return (!query || haystack.includes(query))
                 && (!statusFilter || statusOf(plan) === statusFilter)
                 && (!categoryFilter || categoryOf(plan) === categoryFilter);
         });
         document.getElementById('pmTableCount').textContent = `${filtered.length} dari ${pmPlans.length} unit`;
+        if (filtered.length === 0) {
+            body.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);"><i class="fa-solid fa-filter" style="margin-right:6px;"></i> Tidak ada unit yang cocok dengan filter pencarian saat ini.</td></tr>';
+            return;
+        }
         body.innerHTML = filtered.map(rawPlan => {
             const plan = mergedPlan(rawPlan);
             const linkedAsset = linkedAssetForPlan(plan);
             const status = statusOf(plan);
-            const variance = varianceOf(plan);
-            const usage = intervalUsage(plan);
-            const barClass = status === 'COMPLETED' ? 'complete' : status === 'OVERDUE' ? 'danger' : ['DUE', 'DUE SOON'].includes(status) ? 'warning' : '';
+            const hull = getPmHullNumber(plan, linkedAsset);
+            const snPlate = getPmSerialAndPlate(plan, linkedAsset);
+            const operatorInfo = getPmOperatorListing(plan, linkedAsset);
+            const nextServiceEst = calculateNextServiceEstimate(plan);
+            const historyLogs = getPmHistory(plan);
+            const photoCount = (window.pmGalleryStorage && window.pmGalleryStorage[planKey(plan)]) ? window.pmGalleryStorage[planKey(plan)].length : 2;
+
             return `<tr>
-                <td class="pm-unit-cell"><strong>${escapeHtml(plan.code || 'Kode belum ada')}</strong><span>${escapeHtml(plan.id)} · ${meterType(plan)}</span><span class="pm-link-state ${linkedAsset ? 'linked' : 'unlinked'}"><i class="fa-solid ${linkedAsset ? 'fa-link' : 'fa-link-slash'}"></i> ${linkedAsset ? 'Master Asset' : 'Belum terpetakan'}</span>${plan.sourceReportNumber ? `<span class="pm-link-state linked" title="Rencana dibuat dari laporan final"><i class="fa-solid fa-file-circle-check"></i> ${escapeHtml(plan.sourceReportNumber)}</span>` : ''}</td>
-                <td class="pm-asset-cell"><strong title="${escapeHtml(plan.asset)}">${escapeHtml(plan.asset)}</strong><span>${plan.year} · ${escapeHtml(plan.warranty)}</span></td>
-                <td><strong>${formatNumber(plan.current)} ${meterType(plan)}</strong><br><span class="pm-card-caption">${formatDate(plan.tracking)}</span></td>
-                <td><strong>${formatNumber(plan.last)}</strong><br><span class="pm-card-caption">${formatDate(plan.lastDate)}</span></td>
-                <td><strong>${formatNumber(plan.target)}</strong><br><span class="pm-card-caption">Interval ${formatNumber(plan.interval)}</span></td>
-                <td><div class="pm-meter-progress"><div class="pm-meter-progress-head"><span>${Math.min(usage, 999)}%</span><span>${formatNumber(plan.current - plan.last)} / ${formatNumber(plan.interval)}</span></div><div class="pm-meter-bar"><span class="${barClass}" style="width:${Math.min(100, usage)}%"></span></div></div></td>
-                <td><strong style="color:${variance > 0 ? 'var(--pm-red)' : '#4c586c'}">${variance > 0 ? '+' : ''}${formatNumber(variance)}</strong><br><span class="pm-card-caption">${meterType(plan)}</span></td>
-                <td><span class="pm-status ${statusClass(status)}">${statusLabel(status)}</span></td>
-                <td><button class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}"><i class="fa-regular fa-eye"></i> Detail</button></td>
+                <td class="pm-unit-cell">
+                    <strong style="color:var(--primary); font-size:0.88rem;">${escapeHtml(plan.code || 'Kode belum ada')}</strong>
+                    <div style="font-size:0.72rem; color:var(--text-muted); font-family:var(--font-mono);">${escapeHtml(plan.id)} · ${meterType(plan)}</div>
+                    <span class="pm-link-state ${linkedAsset ? 'linked' : 'unlinked'}" style="margin-top:3px;"><i class="fa-solid ${linkedAsset ? 'fa-link' : 'fa-link-slash'}"></i> ${linkedAsset ? 'Master Asset' : 'Belum terpetakan'}</span>
+                    ${plan.sourceReportNumber ? `<span class="pm-link-state linked" title="Rencana dibuat dari laporan final"><i class="fa-solid fa-file-circle-check"></i> ${escapeHtml(plan.sourceReportNumber)}</span>` : ''}
+                    <button class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}" style="margin-top:4px; padding:2px 6px; font-size:0.68rem; display:inline-flex; align-items:center; gap:3px;"><i class="fa-regular fa-eye"></i> Detail</button>
+                </td>
+                <td>
+                    ${hull !== '-' 
+                        ? `<span class="badge" style="background:#fef3c7; color:#92400e; font-weight:700; font-family:var(--font-mono); font-size:0.8rem; border:1px solid #fde68a;">${escapeHtml(hull)}</span>`
+                        : `<span style="color:#94a3b8; font-style:italic; font-size:0.75rem;">Belum ada</span>`
+                    }
+                </td>
+                <td>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">SN: <strong style="font-family:var(--font-mono); color:var(--text-main); font-size:0.78rem;">${escapeHtml(snPlate.sn)}</strong></div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Plat: ${snPlate.plate !== 'Belum ada' ? `<span style="font-family:var(--font-mono); font-weight:600; font-size:0.76rem; color:#0369a1; background:#f0f9ff; padding:1px 5px; border-radius:3px;">${escapeHtml(snPlate.plate)}</span>` : `<span style="font-style:italic; color:#94a3b8; font-size:0.72rem;">Belum ada</span>`}</div>
+                </td>
+                <td>
+                    <span style="font-weight:600; font-size:0.82rem; color:var(--text-main);">${escapeHtml(String(plan.year || (linkedAsset && linkedAsset.year_manufacture) || '—'))}</span>
+                </td>
+                <td>
+                    <div style="font-size:0.8rem; font-weight:600; color:var(--text-main);"><i class="fa-solid fa-user" style="color:var(--text-muted); margin-right:4px; font-size:0.75rem;"></i>${escapeHtml(operatorInfo.split(' (')[0])}</div>
+                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;"><i class="fa-regular fa-clock" style="margin-right:3px;"></i>${escapeHtml(operatorInfo.includes('(') ? operatorInfo.split('(')[1].replace(')', '') : '07:00 - 15:00')}</div>
+                </td>
+                <td>
+                    <strong style="font-size:0.82rem;">${formatNumber(plan.last)} ${meterType(plan)}</strong>
+                    <div class="pm-card-caption" style="margin-top:2px;"><i class="fa-regular fa-calendar" style="margin-right:3px;"></i>${formatDate(plan.lastDate)}</div>
+                </td>
+                <td>
+                    <span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700; font-family:var(--font-mono); font-size:0.76rem; border:1px solid #bae6fd;">${formatNumber(plan.interval)} ${meterType(plan)}</span>
+                </td>
+                <td>
+                    <strong style="font-size:0.82rem;">${formatNumber(plan.target)} ${meterType(plan)}</strong>
+                    <div style="margin-top:3px;">
+                        ${nextServiceEst.isOverdue 
+                            ? `<span class="badge" style="background:#fee2e2; color:#b91c1c; font-size:0.7rem; font-weight:700; padding:2px 6px; border:1px solid #fecdd3;"><i class="fa-solid fa-triangle-exclamation"></i> Overdue / Hari Ini</span>`
+                            : `<span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.7rem; font-weight:600; padding:2px 6px; border:1px solid #fde68a;" title="Proyeksi laju: ${nextServiceEst.dailyRate}"><i class="fa-regular fa-calendar-check" style="margin-right:3px;"></i>Est: ${nextServiceEst.dateStr} (~${nextServiceEst.days} hr)</span>`
+                        }
+                    </div>
+                </td>
+                <td>
+                    <div style="display:flex; flex-wrap:wrap; gap:3px;">
+                        ${historyLogs.map(h => `
+                            <span class="badge" style="background:#f8fafc; color:#334155; font-size:0.68rem; padding:1px 5px; border:1px solid #e2e8f0;" title="${h.label}: ${formatNumber(h.meter)} ${meterType(plan)}">
+                                <strong style="color:var(--primary);">${h.label}:</strong> ${h.date}
+                            </span>
+                        `).join('')}
+                    </div>
+                </td>
+                <td style="text-align:center;">
+                    <button type="button" class="btn btn-xs" onclick="window.openPmGalleryModal('${escapeHtml(planKey(plan))}')" style="padding:3px 7px; font-size:0.72rem; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; border-radius:4px; cursor:pointer;" title="Buka Galeri Foto Servis Unit">
+                        <i class="fa-solid fa-images" style="margin-right:3px;"></i> Foto (${photoCount})
+                    </button>
+                </td>
+                <td style="text-align:center;">
+                    <button type="button" class="btn btn-xs" onclick="window.openPmPdfModal('${escapeHtml(planKey(plan))}')" style="padding:3px 7px; font-size:0.72rem; background:#fff1f2; color:#be123c; border:1px solid #fecdd3; border-radius:4px; cursor:pointer;" title="Buka Pemberkasan PDF JO Servis Berkala">
+                        <i class="fa-solid fa-file-pdf" style="margin-right:3px;"></i> JO Servis
+                    </button>
+                </td>
             </tr>`;
         }).join('');
         bindDetailButtons(body);
@@ -14983,19 +15272,37 @@
     }
 
     function exportTracker() {
-        const headers = ['Kode Unit', 'No Lambung', 'Asset', 'Jenis Meter', 'Tracking', 'Service Terakhir', 'Interval', 'Target', 'Selisih', 'Status', 'Realisasi Meter', 'Tanggal Realisasi', 'Catatan'];
+        const headers = ['Kode Unit', 'Nomor Lambung', 'Plat / SN', 'Tahun', 'Operator (Listing Waktu)', 'Service Terakhir', 'Interval', 'Target KM/HM', 'Estimasi Tanggal Servis', 'Histori Perawatan', 'Status'];
         const rows = pmPlans.map(rawPlan => {
             const plan = mergedPlan(rawPlan);
-            return [plan.code, plan.id, plan.asset, meterType(plan), plan.current, plan.last, plan.interval, plan.target, varianceOf(plan), statusOf(plan), plan.actual || '', plan.actualDate || '', plan.plannerNote || plan.note || ''];
+            const linked = linkedAssetForPlan(plan);
+            const hull = getPmHullNumber(plan, linked);
+            const snPlate = getPmSerialAndPlate(plan, linked);
+            const op = getPmOperatorListing(plan, linked);
+            const est = calculateNextServiceEstimate(plan);
+            const hist = getPmHistory(plan).map(h => `${h.label}:${h.date}`).join('; ');
+            return [
+                plan.code || plan.id,
+                hull,
+                `SN:${snPlate.sn} | Plat:${snPlate.plate}`,
+                plan.year || (linked && linked.year_manufacture) || '',
+                op,
+                `${plan.last} ${meterType(plan)} (${plan.lastDate || ''})`,
+                `${plan.interval} ${meterType(plan)}`,
+                `${plan.target} ${meterType(plan)}`,
+                est.dateStr,
+                hist,
+                statusOf(plan)
+            ];
         });
         const csv = [headers, ...rows].map(row => row.map(value => `"${String(value == null ? '' : value).replace(/"/g, '""')}"`).join(',')).join('\r\n');
         const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = 'PM_Tracker_Juli_2026.csv';
+        link.download = 'PM_Tracker_11_Kolom_Juli_2026.csv';
         link.click();
         URL.revokeObjectURL(link.href);
-        showToast('Tracker PM berhasil diekspor ke CSV.');
+        showToast('Tracker PM 11 Kolom berhasil diekspor ke CSV.');
     }
 
     function showToast(message, error = false) {

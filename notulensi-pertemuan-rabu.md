@@ -50,24 +50,39 @@ Formulir Work Order disepakati untuk diperluas dengan penambahan atribut operasi
   3. Nomor Seri (*Serial Number* / SN)
 * Disediakan opsi **rename nomor lambung secara manual**, mengingat nomor lambung di lapangan sering diperbarui/diubah tanpa pemberitahuan sebelumnya ke sistem.
 
-### F. Format Tampilan List Preventif Maintenance (PM)
-Halaman Preventif Maintenance akan menyajikan daftar unit dalam format tabel/list terstruktur dengan kolom:
-1. Kode Unit
-2. Nomor Lambung
-3. Nomor Polisi / Nomor Seri (SN)
-4. Tahun Produksi
-5. Nama Operator
-6. Waktu Servis Terakhir
-7. Interval Servis (HM/KM)
-8. Estimasi Tanggal Servis Berikutnya
-9. Histori Tanggal Perawatan Sebelumnya
-10. Dokumentasi Foto
-11. Upload File PDF (JO Servis Berkala)
+### F. Format Tampilan Listing & Manajemen Preventif Maintenance (PM)
+Halaman Preventif Maintenance (PM) disepakati untuk disajikan dalam bentuk **listing terstruktur terpadu** yang dilengkapi tombol aksi langsung serta parameter pemantauan servis yang komprehensif:
 
-### G. Penambahan Unit Baru di Halaman PM
-* Tombol **"Tambah Unit Baru"** ditambahkan langsung pada tampilan Preventif Maintenance, sehingga pengguna tidak perlu berpindah ke dashboard master aset.
+#### 1. Tombol Aksi Cepat
+* **Tombol "Tambah Unit Baru":** Ditambahkan langsung di bagian header tampilan listing Preventif Maintenance, sehingga pengguna/planner dapat mendaftarkan unit ke jadwal perawatan berkala tanpa harus berpindah ke modul Master Asset.
 
-### H. Validasi Formula KPI Produktivitas
+#### 2. Kolom & Parameter Listing Perawatan Unit
+Tabel/listing menyajikan detail unit dan status perawatan dengan atribut:
+1. **Kode Unit:** Identitas unik aset internal perusahaan (contoh: `DT-00052`, `EXC-00001`).
+2. **Nomor Lambung:** Nomor lambung fisik aktual di lapangan (contoh: `BRA-45`, `DZ-00005`).
+3. **Plat Kendaraan / Serial Number (SN):** Nomor polisi atau serial number chasis resmi pabrikan.
+4. **Tahun Produksi:** Tahun pembuatan/perakitan armada.
+5. **Nama Operator / PIC (Listing Waktu):** Nama operator/PIC yang mengoperasikan unit dengan riwayat penugasan/listing jam kerja operasional.
+6. **Waktu & Tanggal Terakhir Servis:** Pencatatan presisi jam dan tanggal pelaksanaan servis berkala terakhir kali dilakukan.
+7. **Interval Servis:** Konfigurasi batas interval servis berkala sesuai rekomendasi pabrikan (misal: kelipatan per 10.000 KM untuk dump truck/LV, atau per 250 / 500 HM untuk alat berat excavator/dozer).
+8. **KM / HM Selanjutnya & Estimasi Tanggal Servis Berikutnya:**
+   - Target pembacaan meteran servis berikutnya: `Meteran Servis Terakhir + Interval`.
+   - **Formula Proyeksi Tanggal Servis:** Dihitung otomatis berdasarkan rata-rata beban kerja harian (*acuan koefisien jam/jarak kerja*):
+     - *Alat Berat:* Estimasi rata-rata kerja harian (contoh acuan: 7 jam/hari).
+     - *Dump Truck:* Estimasi jarak tempuh harian (contoh acuan: 150 km/hari).
+     - Proyeksi tanggal jatuh tempo = `Tanggal Terakhir Servis + (Sisa HM/KM Menuju Servis / Rata-rata Pemakaian Harian)`.
+9. **Histori Tanggal Perawatan Berkelanjutan:**
+   - Rekap jejak riwayat servis berurutan:
+     - *Tanggal Perawatan 1* (`dd/mm/yyyy`)
+     - *Tanggal Perawatan 2* (`dd/mm/yyyy`)
+     - *Tanggal Perawatan 3* (`dd/mm/yyyy`), dst.
+   - Membentuk log histori siklus perawatan unit secara utuh dari waktu ke waktu.
+10. **Dokumentasi Fisik (Galeri Global):**
+    - Dokumentasi foto kondisi fisik unit, penggantian filter/oli, dan bagian komponen disajikan dalam bentuk **galeri visual terpadu (*photo gallery*)**, bukan sekadar link tunggal, agar mudah diperiksa secara visual.
+11. **Pemberkasan PDF JO Servis Berkala:**
+    - Fitur upload dan penautan file PDF pemberkasan dari Job Order (JO) Servis Berkala sebagai dokumen acuan teknis pelaksanaan servis dan arsip digital resmi.
+
+### G. Validasi Formula KPI Produktivitas
 * Fitur ekspor laporan produktivitas ditahan terlebih dahulu; seluruh rumus KPI (Availability, Downtime, dll.) harus dipastikan valid dan diverifikasi akurasinya sebelum dijadikan acuan pengambilan keputusan manajemen.
 
 ---
@@ -99,7 +114,7 @@ Halaman Preventif Maintenance akan menyajikan daftar unit dalam format tabel/lis
 | **Brian & Tim Dev** | Memperluas form WO dan JO dengan atribut lengkap sesuai masukan Fajar dan Bu Widya. | Segera |
 | **Brian & Tim Dev** | Mengembangkan komponen input multi-PIC mekanik dengan mekanisme *type-to-suggest* (ketik nama lalu muncul). | Segera |
 | **Brian & Tim Dev** | Menambahkan fitur pencarian unit 3 parameter (kode aset, nomor lambung, serial number) serta fungsi rename nomor lambung. | Segera |
-| **Brian & Tim Dev** | Membangun tampilan list Preventif Maintenance (PM) lengkap dengan kolom histori, estimasi servis, upload foto, dan dokumen PDF. | Segera |
+| **Brian & Tim Dev** | Membangun tampilan listing Preventif Maintenance (PM) lengkap dengan tombol Tambah Unit, koefisien estimasi tanggal servis (jam/km harian), linimasa histori tanggal perawatan berurutan, galeri dokumentasi foto, dan berkas PDF JO servis berkala. | Segera |
 | **Brian & Tim Dev** | Melakukan audit dan verifikasi kebenaran rumus KPI produktivitas armada. | Prioritas |
 | **Brian** | Menjadwalkan sesi sinkronisasi tatap muka dengan Bu Widya untuk finalisasi modul WO & JO. | Menunggu Jadwal |
 | **Peserta Rapat** | Mengirimkan tangkapan layar (*screenshot*) hasil diskusi rapat ke grup WhatsApp sebagai referensi bersama tim. | Selesai |

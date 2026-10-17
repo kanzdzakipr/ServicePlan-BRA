@@ -198,6 +198,13 @@ switch ($method) {
         if ($issue === '') {
             api_json_response(422, ['status' => 'error', 'message' => 'Keluhan atau detail kerusakan wajib diisi.']);
         }
+        $rawMechanic = $data['assigned_mechanics'] ?? $data['assigned_mechanic'] ?? 'Belum ada PIC';
+        if (is_array($rawMechanic)) {
+            $mechanic = trim(implode(', ', array_filter(array_map('trim', $rawMechanic))));
+        } else {
+            $mechanic = trim((string) $rawMechanic);
+        }
+        if ($mechanic === '') $mechanic = 'Belum ada PIC';
 
         try {
             $db->beginTransaction();
@@ -215,7 +222,7 @@ switch ($method) {
                 ':status' => $status,
                 ':priority' => $priority,
                 ':maintenance_type' => $maintenanceType,
-                ':mechanic' => trim((string) ($data['assigned_mechanic'] ?? 'Belum ada PIC')),
+                ':mechanic' => $mechanic,
                 ':root_cause' => trim((string) ($data['root_cause'] ?? '')) ?: null,
                 ':repair_action' => trim((string) ($data['repair_action'] ?? '')) ?: null,
                 ':is_downtime' => !empty($data['is_downtime']) ? 1 : 0,
@@ -261,6 +268,10 @@ switch ($method) {
             if (!$current) {
                 $db->rollBack();
                 api_json_response(404, ['status' => 'error', 'message' => 'Work Order tidak ditemukan.']);
+            }
+
+            if (isset($data['assigned_mechanics']) && is_array($data['assigned_mechanics'])) {
+                $data['assigned_mechanic'] = trim(implode(', ', array_filter(array_map('trim', $data['assigned_mechanics']))));
             }
 
             $fields = [];

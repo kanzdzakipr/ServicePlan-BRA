@@ -11,7 +11,7 @@ switch ($method) {
         $scope = api_location_scope_clause('a', 'pm_location_id');
         $sql = "
             SELECT p.*, a.asset_code, a.category AS asset_category, a.make_model,
-                   a.year_manufacture, l.location_name,
+                   a.year_manufacture, a.serial_number, a.license_plate, a.alias_name, l.location_name,
                    (SELECT rpi.report_id
                     FROM report_pm_integrations rpi
                     WHERE rpi.pm_plan_id = p.pm_plan_id AND rpi.reversed_at IS NULL
