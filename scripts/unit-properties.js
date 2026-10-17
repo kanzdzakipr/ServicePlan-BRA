@@ -58,35 +58,7 @@
         const hash = Math.abs(crc32(idStr));
 
         if (!asset) {
-            const isExcavator = idStr.startsWith('EX');
-            const isGrader = idStr.startsWith('MG');
-            const isCompactor = idStr.startsWith('CP') || idStr.startsWith('VB');
-            const isDozer = idStr.startsWith('DZ');
-
-            let cat = 'Dump Truck';
-            let model = 'Hino Ranger FM 280 JD';
-            if (isExcavator) { cat = 'Excavator'; model = 'Komatsu PC200-10M0 / CAT 320GX'; }
-            else if (isGrader) { cat = 'Motor Grader'; model = 'Komatsu GD535-5'; }
-            else if (isCompactor) { cat = 'Compactor / Vibro'; model = 'Sakai SV512 Single Drum'; }
-            else if (isDozer) { cat = 'Bulldozer'; model = 'Komatsu D85ESS-2'; }
-
-            asset = {
-                id: assetId,
-                asset_id: assetId,
-                asset_code: assetId,
-                serial_number: 'HINO-' + hash.toString(16).toUpperCase().padStart(8, '0'),
-                license_plate: 'B ' + (9000 + (hash % 900)) + ' ZYT',
-                category: cat,
-                make_model: model,
-                model: model,
-                status: 'OPERATING',
-                location: 'Borrow Pit Harapan Baru',
-                last_hm_km: (32000 + (hash % 6000)),
-                ownership: 'Milik Sendiri (PT BRA)',
-                year_manufacture: 2023,
-                branch: 'PKB PEKANBARU Branch',
-                health_score: (90 + (hash % 8))
-            };
+            asset = { id: assetId, asset_id: assetId, asset_code: assetId };
         }
 
         return asset;
@@ -144,6 +116,7 @@
             if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Gagal memuat');
             if (currentPropUnitId !== assetId) return;
             const asset = payload.data || {};
+            renderAssetOnboarding(asset);
             const hull = asset.hull_number || asset.alias_name || '';
             const hullEl = document.getElementById('propUnitHull');
             if (hullEl) hullEl.textContent = hull || 'Belum tersedia';
@@ -157,6 +130,37 @@
         } catch (error) {
             if (currentPropUnitId === assetId) target.textContent = `Riwayat tidak tersedia: ${error.message}`;
         }
+    }
+
+    function renderAssetOnboarding(asset) {
+        const target = document.getElementById('propAssetOnboarding');
+        if (!target) return;
+        const show = value => value == null || value === '' ? 'Belum tersedia' : escapeHtml(value);
+        const operatorRows = Array.isArray(asset.operator_history) ? asset.operator_history : [];
+        const serviceRows = Array.isArray(asset.service_history) ? asset.service_history : [];
+        const photoRows = Array.isArray(asset.gallery_photos) ? asset.gallery_photos : [];
+        const due = asset.next_service_due_hm_km == null ? 'Belum tersedia' : `${escapeHtml(asset.next_service_due_hm_km)} ${escapeHtml(asset.service_interval_unit || '')}`;
+        target.innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;">
+                <div><strong>Operator saat ini:</strong> ${show(asset.current_operator_name)}</div>
+                <div><strong>Servis terakhir:</strong> ${show(asset.last_service_date)} · ${show(asset.last_service_hm_km)}</div>
+                <div><strong>Interval:</strong> ${show(asset.service_interval_val)} ${show(asset.service_interval_unit)}</div>
+                <div><strong>Target berikutnya:</strong> ${due}</div>
+                <div><strong>Estimasi:</strong> ${show(asset.next_service_estimated_date)}</div>
+                <div><strong>STNK:</strong> ${show(asset.legal_stnk_expiry)}</div>
+                <div><strong>KIR:</strong> ${show(asset.legal_kir_expiry)}</div>
+                <div><strong>SILO:</strong> ${show(asset.legal_silo_expiry)}</div>
+            </div>
+            <details style="margin-top:12px;"><summary>Riwayat operator (${operatorRows.length})</summary>
+                ${operatorRows.length ? operatorRows.map(row => `<div>${show(row.operator_name)} · ${show(row.start_date)}–${show(row.end_date)} · ${show(row.shift_type)}</div>`).join('') : '<p>Belum ada riwayat operator.</p>'}
+            </details>
+            <details style="margin-top:12px;"><summary>Riwayat perawatan (${serviceRows.length})</summary>
+                ${serviceRows.length ? serviceRows.map(row => `<div>${show(row.service_date)} · ${show(row.service_hm_km)} ${show(asset.service_interval_unit)} · ${show(row.service_type)}</div>`).join('') : '<p>Belum ada riwayat perawatan.</p>'}
+            </details>
+            <details style="margin-top:12px;"><summary>Galeri foto (${photoRows.length})</summary>
+                ${photoRows.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">${photoRows.map(row => `<a href="api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(row.photo_id)}" target="_blank" rel="noopener"><img src="api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(row.photo_id)}" alt="${show(row.photo_title)}" style="width:100px;height:75px;object-fit:cover;"></a>`).join('')}</div>` : '<p>Belum ada foto.</p>'}
+            </details>
+            <div style="margin-top:12px;"><strong>PDF JO:</strong> ${asset.service_manual_pdf_url ? `<a href="api/asset_files.php?kind=pdf&asset_id=${encodeURIComponent(asset.asset_id)}" target="_blank" rel="noopener">Buka dokumen</a>` : 'Belum tersedia'}</div>`;
     }
 
     /**
@@ -250,18 +254,20 @@
         }
 
         // Vitals
-        const hmVal = asset.last_hm_km ? Number(asset.last_hm_km).toLocaleString('id-ID') : '34.500';
+        const hmVal = asset.last_hm_km != null ? Number(asset.last_hm_km).toLocaleString('id-ID') : 'Belum tersedia';
         const elVitalHm = document.getElementById('propVitalHm');
         if (elVitalHm) elVitalHm.textContent = `${hmVal} HM`;
 
         const elVitalLoc = document.getElementById('propVitalLoc');
-        if (elVitalLoc) elVitalLoc.textContent = asset.location || 'Borrow Pit Harapan Baru';
+        if (elVitalLoc) elVitalLoc.textContent = asset.location || asset.location_name || 'Belum tersedia';
 
         const elVitalHealth = document.getElementById('propVitalHealth');
-        if (elVitalHealth) elVitalHealth.textContent = `${asset.health_score || (90 + (hash % 8))}%`;
+        if (elVitalHealth) elVitalHealth.textContent = asset.health_score != null ? `${asset.health_score}%` : 'Belum tersedia';
 
         const elVitalNextService = document.getElementById('propVitalNextService');
-        if (elVitalNextService) elVitalNextService.textContent = `PS ${500} (${(120 + (hash % 50))} HM lagi)`;
+        if (elVitalNextService) elVitalNextService.textContent = asset.next_service_due_hm_km != null
+            ? `${Number(asset.next_service_due_hm_km).toLocaleString('id-ID')} ${asset.service_interval_unit || 'HM'} · Est. ${asset.next_service_estimated_date || 'belum tersedia'}`
+            : 'Belum tersedia';
 
         // SECTION 1: Top Live Map & Telemetry CANbus
         renderTopLocationAndTelemetry(asset, hash);

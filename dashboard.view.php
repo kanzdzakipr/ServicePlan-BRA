@@ -772,6 +772,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
             <!-- VIEW: PREVENTIVE MAINTENANCE -->
             <div id="view-pm" class="view-section">
+                <div style="display:flex;justify-content:flex-end;margin:0 0 12px;"><button type="button" class="btn btn-primary" onclick="openModal('modalNewAsset')"><i class="fa-solid fa-plus"></i> Tambah Unit Baru</button></div>
                 <div id="preventiveMaintenanceModule"></div>
             </div>
 
@@ -2419,6 +2420,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <summary style="cursor:pointer;font-weight:600;">Riwayat perubahan nomor lambung</summary>
                         <div id="propHullHistory" style="margin-top:10px;font-size:0.85rem;">Memuat riwayat...</div>
                     </details>
+                    <section style="margin:12px 0;padding:16px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
+                        <h2 style="font-size:1rem;margin:0 0 12px;">Data onboarding dan PM terverifikasi</h2>
+                        <div id="propAssetOnboarding">Memuat data aset...</div>
+                    </section>
 
                     <!-- Core Vitals Grid -->
                     <div class="prop-vitals-bento-grid">
@@ -3234,7 +3239,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
     <!-- Modal Tambah Aset -->
     <div class="modal-overlay" id="modalNewAsset">
-        <div class="modal-content" style="max-width: 650px;">
+        <div class="modal-content" style="max-width: 760px; max-height:90vh; overflow-y:auto;">
             <div class="modal-header">
                 <h2><i class="fa-solid fa-plus-circle text-primary"></i> Registrasi Unit Aset Baru</h2>
                 <button onclick="closeModal('modalNewAsset')"
@@ -3298,16 +3303,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div>
                         <label style="font-weight:600; font-size:0.8rem;">Lokasi Operasional / Site</label>
                         <select id="na-loc" class="form-control">
-                            <option value="3">Borrow Pit Harapan Baru</option>
-                            <option value="1">Yard Duri</option>
-                            <option value="4">Workshop Bay KM 12</option>
-                            <option value="6">Site Alpha Duri</option>
-                            <option value="177">Site Celcin</option>
-                            <option value="11">Minas Field Project</option>
-                            <option value="2">Yard Prabumulih</option>
-                            <option value="7">PKB PEKANBARU Branch</option>
-                            <option value="12">Yard KM 12 Duri</option>
-                            <option value="164">Site NDD</option>
+                            <option value="">Memuat lokasi dari database...</option>
                         </select>
                     </div>
                     <div>
@@ -3326,6 +3322,29 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <label style="font-weight:600; font-size:0.8rem;">Meter Operasional Awal (HM / KM)</label>
                     <input type="number" id="na-hm" placeholder="0.00" step="0.1" value="0.00" class="form-control">
                 </div>
+
+                <h3 style="font-size:0.95rem;margin:18px 0 10px;">Operator dan Preventive Maintenance</h3>
+                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+                    <label>Operator / PIC awal<input id="na-operator" class="form-control" maxlength="150" placeholder="Nama operator"></label>
+                    <label>Mulai bertugas<input id="na-operator-start" type="date" class="form-control"></label>
+                    <label>Shift operator<input id="na-operator-shift" class="form-control" maxlength="50" placeholder="Contoh: Day Shift"></label>
+                    <label>Waktu servis terakhir<input id="na-last-service-date" type="datetime-local" class="form-control" oninput="window.updateAssetServiceEstimate()"></label>
+                    <label>Meter saat servis terakhir<input id="na-last-service-hm" type="number" min="0" step="0.01" class="form-control" oninput="window.updateAssetServiceEstimate()"></label>
+                    <label>Interval servis<input id="na-service-interval" type="number" min="1" step="1" class="form-control" placeholder="250 / 500 / 10000" oninput="window.updateAssetServiceEstimate()"></label>
+                    <label>Jenis meter<select id="na-service-unit" class="form-control" onchange="window.updateAssetServiceEstimate()"><option value="HM">HM</option><option value="KM">KM</option></select></label>
+                    <label>Pemakaian rata-rata per hari<input id="na-daily-rate" type="number" min="0.01" step="0.01" class="form-control" placeholder="Contoh: 7 HM/hari" oninput="window.updateAssetServiceEstimate()"></label>
+                </div>
+                <div id="na-service-estimate" style="margin:10px 0;padding:8px;background:#f0f9ff;border-radius:6px;">Target dan estimasi: belum tersedia</div>
+                <label>Riwayat servis sebelumnya (opsional; satu baris per servis: tanggal,meter,jenis)<textarea id="na-service-history" class="form-control" rows="3" placeholder="2026-01-10,750,PS 250&#10;2026-04-10,1000,PS 500"></textarea></label>
+                <h3 style="font-size:0.95rem;margin:18px 0 10px;">Legalitas dan Dokumentasi</h3>
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;">
+                    <label>STNK berlaku sampai<input id="na-stnk" type="date" class="form-control"></label>
+                    <label>KIR berlaku sampai<input id="na-kir" type="date" class="form-control"></label>
+                    <label>SILO berlaku sampai<input id="na-silo" type="date" class="form-control"></label>
+                </div>
+                <label>Foto unit (JPEG/PNG/WebP, maks. 5 MB per foto)<input id="na-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="form-control" onchange="window.previewAssetPhotos(this.files)"></label>
+                <div id="na-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;"></div>
+                <label>PDF JO servis (maks. 10 MB)<input id="na-service-pdf" type="file" accept="application/pdf" class="form-control"></label>
 
                 <div id="na-error-alert" style="display:none; color:var(--danger); background:#fef2f2; border:1px solid #fecaca; padding:8px 12px; border-radius:4px; font-size:0.8rem; margin-bottom:12px;"></div>
 
@@ -3408,16 +3427,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div>
                         <label style="font-weight:600; font-size:0.8rem;">Lokasi Operasional / Site</label>
                         <select id="ea-loc" class="form-control">
-                            <option value="3">Borrow Pit Harapan Baru</option>
-                            <option value="1">Yard Duri</option>
-                            <option value="4">Workshop Bay KM 12</option>
-                            <option value="6">Site Alpha Duri</option>
-                            <option value="177">Site Celcin</option>
-                            <option value="11">Minas Field Project</option>
-                            <option value="2">Yard Prabumulih</option>
-                            <option value="7">PKB PEKANBARU Branch</option>
-                            <option value="12">Yard KM 12 Duri</option>
-                            <option value="164">Site NDD</option>
+                            <option value="">Memuat lokasi dari database...</option>
                         </select>
                     </div>
                     <div>
@@ -3427,6 +3437,19 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
 
                 <div id="ea-error-alert" style="display:none; color:var(--danger); background:#fef2f2; border:1px solid #fecaca; padding:8px 12px; border-radius:4px; font-size:0.8rem; margin-bottom:12px;"></div>
+                <h3 style="font-size:0.95rem;margin:16px 0 10px;">Operator, servis, dan legalitas</h3>
+                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+                    <label>Operator saat ini<input id="ea-operator" class="form-control" maxlength="150"></label>
+                    <label>Mulai bertugas jika operator berubah<input id="ea-operator-start" type="date" class="form-control"></label>
+                    <label>Waktu servis terakhir<input id="ea-last-service-date" type="datetime-local" class="form-control"></label>
+                    <label>Meter servis terakhir<input id="ea-last-service-hm" type="number" min="0" step="0.01" class="form-control"></label>
+                    <label>Interval servis<input id="ea-service-interval" type="number" min="1" step="1" class="form-control"></label>
+                    <label>Jenis meter<select id="ea-service-unit" class="form-control"><option value="HM">HM</option><option value="KM">KM</option></select></label>
+                    <label>Pemakaian per hari<input id="ea-daily-rate" type="number" min="0.01" step="0.01" class="form-control"></label>
+                    <label>STNK berlaku sampai<input id="ea-stnk" type="date" class="form-control"></label>
+                    <label>KIR berlaku sampai<input id="ea-kir" type="date" class="form-control"></label>
+                    <label>SILO berlaku sampai<input id="ea-silo" type="date" class="form-control"></label>
+                </div>
 
                 <div style="display:flex; justify-content:flex-end; gap:8px;">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modalEditAsset')">Batal</button>
@@ -4116,6 +4139,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             window.openModal = function (id) {
                 const el = document.getElementById(id);
                 if (el) {
+                    if (id === 'modalNewAsset' || id === 'modalEditAsset') window.loadAssetLocations();
                     // Overlay yang berada di dalam view tersembunyi tetap berukuran 0x0
                     // walaupun memakai position:fixed. Pindahkan ke body sebelum dibuka.
                     if (el.classList.contains('modal-overlay') && el.parentElement !== document.body) {
@@ -4127,6 +4151,25 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     el.classList.add('active');
                     el.style.display = 'flex';
                 }
+            };
+            window.loadAssetLocations = async function() {
+                try {
+                    const response = await fetch('api/assets.php?references=locations', { cache: 'no-store' });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Lokasi tidak tersedia');
+                    for (const id of ['na-loc', 'ea-loc']) {
+                        const select = document.getElementById(id);
+                        if (!select) continue;
+                        const chosen = id === 'na-loc' ? '' : (select.dataset.requestedLocationId || select.value);
+                        select.replaceChildren();
+                        const blank = document.createElement('option'); blank.value = ''; blank.textContent = 'Pilih lokasi'; select.appendChild(blank);
+                        for (const location of result.data) {
+                            const option = document.createElement('option'); option.value = String(location.location_id); option.textContent = location.location_name; select.appendChild(option);
+                        }
+                        select.value = chosen && Array.from(select.options).some(option => option.value === chosen) ? chosen : '';
+                        if (id === 'ea-loc') delete select.dataset.requestedLocationId;
+                    }
+                } catch (error) { console.warn('Referensi lokasi gagal dimuat:', error); }
             };
 
             window.closeModal = function (id) {
@@ -6819,6 +6862,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const locSelect = document.getElementById('ea-loc');
                 if (locSelect) {
                     if (assetObj.current_location_id) {
+                        locSelect.dataset.requestedLocationId = String(assetObj.current_location_id);
                         locSelect.value = String(assetObj.current_location_id);
                     } else if (assetObj.location) {
                         const matchedOpt = Array.from(locSelect.options).find(o => o.text.toLowerCase().includes((assetObj.location || '').toLowerCase()));
@@ -6827,6 +6871,19 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 document.getElementById('ea-hm').value = assetObj.last_hm_km !== undefined ? assetObj.last_hm_km : '0.00';
+                const fieldValues = {
+                    'ea-operator': assetObj.current_operator_name,
+                    'ea-last-service-date': assetObj.last_service_date ? String(assetObj.last_service_date).replace(' ', 'T').slice(0, 16) : '',
+                    'ea-last-service-hm': assetObj.last_service_hm_km,
+                    'ea-service-interval': assetObj.service_interval_val,
+                    'ea-service-unit': assetObj.service_interval_unit || 'HM',
+                    'ea-daily-rate': assetObj.daily_usage_coefficient,
+                    'ea-stnk': assetObj.legal_stnk_expiry,
+                    'ea-kir': assetObj.legal_kir_expiry,
+                    'ea-silo': assetObj.legal_silo_expiry
+                };
+                Object.entries(fieldValues).forEach(([key, value]) => { const field = document.getElementById(key); if (field) field.value = value ?? ''; });
+                document.getElementById('ea-operator-start').value = '';
 
                 const errAlert = document.getElementById('ea-error-alert');
                 if (errAlert) {
@@ -7140,6 +7197,52 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             function openModal(id) { window.openModal(id); }
             function closeModal(id) { window.closeModal(id); }
 
+            window.updateAssetServiceEstimate = function() {
+                const last = Number(document.getElementById('na-last-service-hm')?.value);
+                const interval = Number(document.getElementById('na-service-interval')?.value);
+                const current = Number(document.getElementById('na-hm')?.value);
+                const daily = Number(document.getElementById('na-daily-rate')?.value);
+                const output = document.getElementById('na-service-estimate');
+                if (!output) return;
+                if (!document.getElementById('na-last-service-date')?.value || !Number.isFinite(last) || interval <= 0 || daily <= 0) {
+                    output.textContent = 'Target dan estimasi: belum tersedia';
+                    return;
+                }
+                const target = last + interval;
+                const days = Math.max(0, Math.ceil((target - current) / daily));
+                const estimate = new Date();
+                estimate.setDate(estimate.getDate() + days);
+                output.textContent = `Target ${target.toLocaleString('id-ID')} ${document.getElementById('na-service-unit').value}; estimasi ${estimate.toLocaleDateString('id-ID')} (${days} hari dari sekarang). Nilai final dihitung server.`;
+            };
+
+            window.previewAssetPhotos = function(files) {
+                const target = document.getElementById('na-photo-preview');
+                if (!target) return;
+                target.replaceChildren();
+                for (const file of Array.from(files || [])) {
+                    const image = document.createElement('img');
+                    image.alt = file.name;
+                    image.title = file.name;
+                    image.style.cssText = 'width:90px;height:70px;object-fit:cover;border:1px solid #cbd5e1;border-radius:4px;';
+                    const url = URL.createObjectURL(file);
+                    image.src = url;
+                    image.onload = () => URL.revokeObjectURL(url);
+                    target.appendChild(image);
+                }
+            };
+
+            window.uploadAssetAttachment = async function(assetId, kind, file) {
+                const form = new FormData();
+                form.append('asset_id', assetId);
+                form.append('kind', kind);
+                form.append('file', file);
+                if (kind === 'photo') form.append('title', file.name.replace(/\.[^.]+$/, ''));
+                const response = await fetch('api/asset_files.php', { method: 'POST', body: form });
+                const result = await response.json();
+                if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Unggahan gagal');
+                return result;
+            };
+
             async function submitNewAsset() {
                 const id = document.getElementById('na-id').value.trim();
                 const cat = document.getElementById('na-cat').value.trim();
@@ -7186,6 +7289,26 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 try {
+                    const onboardingInput = {
+                        current_operator_name: document.getElementById('na-operator').value.trim() || null,
+                        operator_start_date: document.getElementById('na-operator-start').value || null,
+                        operator_shift: document.getElementById('na-operator-shift').value.trim() || null,
+                        last_service_date: document.getElementById('na-last-service-date').value || null,
+                        last_service_hm_km: document.getElementById('na-last-service-hm').value || null,
+                        service_interval_val: document.getElementById('na-service-interval').value || null,
+                        service_interval_unit: document.getElementById('na-service-unit').value,
+                        daily_usage_coefficient: document.getElementById('na-daily-rate').value || null,
+                        legal_stnk_expiry: document.getElementById('na-stnk').value || null,
+                        legal_kir_expiry: document.getElementById('na-kir').value || null,
+                        legal_silo_expiry: document.getElementById('na-silo').value || null
+                    };
+                    const photoFiles = Array.from(document.getElementById('na-photos').files || []);
+                    const pdfFile = document.getElementById('na-service-pdf').files[0] || null;
+                    const historicalServices = document.getElementById('na-service-history').value.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
+                        const parts = line.split(',').map(part => part.trim());
+                        if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) throw new Error('Riwayat servis harus ditulis tanggal,meter,jenis per baris.');
+                        return { date: parts[0], meter: parts[1], type: parts[2] };
+                    });
                     const payload = {
                         asset_id: id,
                         asset_code: id,
@@ -7198,7 +7321,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         serial_number: sn || null,
                         license_plate: plate || null,
                         current_location_id: locId ? parseInt(locId, 10) : null,
-                        last_hm_km: hm ? parseFloat(hm) : 0.0
+                        last_hm_km: hm ? parseFloat(hm) : 0.0,
+                        ...onboardingInput,
+                        historical_services: historicalServices
                     };
 
                     const response = await fetch('api/assets.php', {
@@ -7210,11 +7335,21 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const result = await response.json();
 
                     if (response.ok && result.status === 'success') {
+                        const uploadErrors = [];
+                        for (const file of photoFiles) {
+                            try { await window.uploadAssetAttachment(id, 'photo', file); }
+                            catch (error) { uploadErrors.push(`${file.name}: ${error.message}`); }
+                        }
+                        if (pdfFile) {
+                            try { await window.uploadAssetAttachment(id, 'pdf', pdfFile); }
+                            catch (error) { uploadErrors.push(`${pdfFile.name}: ${error.message}`); }
+                        }
                         const newAsset = {
                             id: id,
                             asset_id: id,
                             asset_code: id,
                             hull_number: document.getElementById('na-hull')?.value.trim() || null,
+                            ...result.data.onboarding,
                             type: 'Heavy Equipment',
                             category: cat,
                             status: status || 'READY',
@@ -7244,12 +7379,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         document.getElementById('na-sn').value = '';
                         document.getElementById('na-plate').value = '';
                         document.getElementById('na-hm').value = '0.00';
+                        for (const field of ['na-hull','na-operator','na-operator-start','na-operator-shift','na-last-service-date','na-last-service-hm','na-service-interval','na-daily-rate','na-stnk','na-kir','na-silo','na-photos','na-service-pdf','na-service-history']) document.getElementById(field).value = '';
+                        document.getElementById('na-photo-preview').replaceChildren();
 
                         closeModal('modalNewAsset');
                         initAssetView(globalData.assets);
                         if (typeof rebuildFleetSummary === 'function') rebuildFleetSummary();
                         if (typeof window.syncFleetState === 'function') window.syncFleetState();
-                        alert(`Unit aset '${id}' berhasil didaftarkan ke database.`);
+                        if (window.PreventiveMaintenance?.refresh) window.PreventiveMaintenance.refresh();
+                        alert(uploadErrors.length ? `Unit '${id}' tersimpan, tetapi unggahan berikut gagal dan perlu dicoba lagi: ${uploadErrors.join('; ')}` : `Unit aset '${id}' berhasil didaftarkan ke database.`);
                     } else {
                         const msg = result.message || 'Gagal menyimpan aset ke database.';
                         if (errAlert) {
@@ -7325,7 +7463,17 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         serial_number: sn,
                         license_plate: plate,
                         current_location_id: locId ? parseInt(locId, 10) : null,
-                        last_hm_km: hm ? parseFloat(hm) : 0.0
+                        last_hm_km: hm ? parseFloat(hm) : 0.0,
+                        current_operator_name: document.getElementById('ea-operator').value.trim() || null,
+                        operator_start_date: document.getElementById('ea-operator-start').value || null,
+                        last_service_date: document.getElementById('ea-last-service-date').value || null,
+                        last_service_hm_km: document.getElementById('ea-last-service-hm').value || null,
+                        service_interval_val: document.getElementById('ea-service-interval').value || null,
+                        service_interval_unit: document.getElementById('ea-service-unit').value,
+                        daily_usage_coefficient: document.getElementById('ea-daily-rate').value || null,
+                        legal_stnk_expiry: document.getElementById('ea-stnk').value || null,
+                        legal_kir_expiry: document.getElementById('ea-kir').value || null,
+                        legal_silo_expiry: document.getElementById('ea-silo').value || null
                     };
 
                     const response = await fetch('api/assets.php', {
@@ -7348,6 +7496,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             if (locId) item.current_location_id = parseInt(locId, 10);
                             if (locName) item.location = locName;
                             item.last_hm_km = hm ? parseFloat(hm) : 0.0;
+                            for (const field of ['current_operator_name','last_service_date','last_service_hm_km','service_interval_val','service_interval_unit','daily_usage_coefficient','legal_stnk_expiry','legal_kir_expiry','legal_silo_expiry']) item[field] = payload[field];
                             item.lastUpdate = 'Baru saja';
                         };
 
@@ -7364,6 +7513,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         initAssetView(globalData.assets);
                         if (typeof rebuildFleetSummary === 'function') rebuildFleetSummary();
                         if (typeof window.syncFleetState === 'function') window.syncFleetState();
+                        if (window.PreventiveMaintenance?.refresh) window.PreventiveMaintenance.refresh();
                         alert(`Data identitas unit '${id}' berhasil diperbarui.`);
                     } else {
                         const msg = result.message || 'Gagal memperbarui data unit.';

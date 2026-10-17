@@ -14092,7 +14092,7 @@
 (function () {
     'use strict';
 
-    const pmPlans = [
+    const legacyPmPlans = [
         { no: 1, code: 'PF 05', id: 'PF-00001', asset: 'Vibro Bomag Pad Foot Compactor BW 211D-40SL', year: 2024, warranty: 'No Warranty', current: 1894.2, tracking: '2026-06-30', interval: 500, last: 1509, lastDate: '2026-03-30', target: 2009, completed: true, actual: 2036.4, actualDate: '2026-07-22' },
         { no: 2, code: 'SD 02', id: 'SD-00001', asset: 'Vibro Bomag Smooth Drum Compactor BW 211D-40SL', year: 2020, warranty: 'No Warranty', current: 6365, tracking: '2026-06-22', interval: 500, last: 6045, lastDate: '2026-04-24', target: 6545, completed: true, actual: 6532.2, actualDate: '2026-07-20' },
         { no: 3, code: 'GR 5', id: 'MG-00004', asset: 'Motor Grader XCMG GR135 MAX', year: 2025, warranty: 'No Warranty', current: 2446.1, tracking: '2026-07-02', interval: 500, last: 2051.3, lastDate: '2026-04-27', target: 2551.3, completed: true, actual: null, actualDate: null, note: 'Ditandai realisasi pada sumber, tetapi HM/KM dan tanggal PM kosong.' },
@@ -14129,6 +14129,7 @@
         { no: 34, code: '', id: 'LV-00027', asset: 'Light Vehicle Toyota Hilux', year: 2022, warranty: 'No Warranty', current: 243559, tracking: '2026-07-01', interval: 10000, last: 233053, lastDate: '2026-02-06', target: 243053, completed: false, note: 'Kode unit kosong pada sumber.' }
     ];
 
+    const pmPlans = [];
     const kitReferences = [
         { no: 1, code: 'SD 02', id: 'SD-00001', model: 'Bomag BW 211D-40SL', items: 7, issues: 1 },
         { no: 2, code: 'Dozer 06', id: 'Belum terpetakan', model: 'Caterpillar D6R', items: 8, issues: 0 },
@@ -14198,10 +14199,12 @@
     }
 
     function meterType(plan) {
+        if (plan.meterUnit === 'HM' || plan.meterUnit === 'KM') return plan.meterUnit;
         return ['Dump Truck', 'Prime Mover', 'Light Vehicle'].includes(categoryOf(plan)) ? 'KM' : 'HM';
     }
 
     function mergedPlan(plan) {
+        if (plan.source === 'database') return plan;
         const override = overrides[planKey(plan)] || {};
         return {
             ...plan,
@@ -14227,13 +14230,14 @@
 
     function getPmHullNumber(plan, linkedAsset) {
         let hull = plan.hull_number || plan.hullNumber || plan.alias_name || (linkedAsset && (linkedAsset.hull_number || linkedAsset.alias_name)) || '';
-        if (!hull && window.assetDbMapping) {
+        if (!hull && plan.source !== 'database' && window.assetDbMapping) {
             hull = window.assetDbMapping[plan.code] || window.assetDbMapping[plan.id] || (linkedAsset ? (window.assetDbMapping[linkedAsset.id] || window.assetDbMapping[linkedAsset.asset_code]) : '') || '';
         }
         return (hull && hull !== '-') ? hull : '-';
     }
 
     function getPmSerialAndPlate(plan, linkedAsset) {
+        if (plan.source === 'database') return { sn: plan.serialNumber || 'Belum ada', plate: plan.licensePlate || 'Belum ada' };
         const ident = linkedAsset ? (window.formatAssetIdentityDetails ? window.formatAssetIdentityDetails(linkedAsset) : {}) : {};
         const sn = plan.serialNumber || ident.sn || (linkedAsset && linkedAsset.serial_number) || '-';
         const plate = plan.licensePlate || ident.plate || (linkedAsset && linkedAsset.license_plate) || '-';
@@ -14244,33 +14248,14 @@
     }
 
     function getPmOperatorListing(plan, linkedAsset) {
-        if (plan.operator) return plan.operator;
-        if (typeof globalData !== 'undefined' && Array.isArray(globalData.work_orders)) {
-            const wo = globalData.work_orders.find(w => 
-                (w.assetId === plan.id || w.unitId === plan.id || w.assetId === plan.code || w.unitId === plan.code) &&
-                w.operator
-            );
-            if (wo && wo.operator) return wo.operator;
-        }
-        const operators = [
-            { name: 'Bambang S.', time: '07:00 - 15:00' },
-            { name: 'Suryanto', time: '07:00 - 15:00' },
-            { name: 'Agus Wibowo', time: '15:00 - 23:00' },
-            { name: 'Maman S.', time: '07:00 - 15:00' },
-            { name: 'Hendra K.', time: '07:00 - 15:00' },
-            { name: 'Rudi Hartono', time: '15:00 - 23:00' },
-            { name: 'Soleh', time: '07:00 - 15:00' },
-            { name: 'Apeng', time: '15:00 - 23:00' }
-        ];
-        const sum = (plan.code || plan.id || 'A').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        const op = operators[sum % operators.length];
-        return `${op.name} (${op.time})`;
+        return plan.operator || linkedAsset?.current_operator_name || 'Belum tersedia';
     }
 
     function calculateNextServiceEstimate(plan) {
         const isKm = meterType(plan) === 'KM';
         // Koefisien laju konsumsi: DT 150 km/hari, Alat Berat 7 jam/hari
-        const dailyRate = isKm ? 150 : 7;
+        const dailyRate = Number(plan.dailyUsageCoefficient) || 0;
+        if (!dailyRate || plan.target == null || plan.current == null) return { days: null, dateStr: 'Belum tersedia', dailyRate: '-', isOverdue: false };
         const remaining = Number(plan.target || 0) - Number(plan.current || 0);
         
         if (remaining <= 0) {
@@ -14284,7 +14269,7 @@
         }
         
         const daysToService = Math.max(1, Math.ceil(remaining / dailyRate));
-        const baseDate = plan.tracking ? new Date(plan.tracking) : new Date();
+        const baseDate = new Date();
         const estDate = new Date(baseDate.getTime() + (daysToService * 86400000));
         const dateFormatted = `${String(estDate.getDate()).padStart(2, '0')}/${String(estDate.getMonth() + 1).padStart(2, '0')}/${estDate.getFullYear()}`;
         
@@ -14298,17 +14283,7 @@
     }
 
     function getPmHistory(plan) {
-        if (plan.history && Array.isArray(plan.history)) return plan.history;
-        const lastDate = plan.lastDate || '2026-03-15';
-        const d = new Date(lastDate);
-        const m1 = new Date(d.getTime() - 60 * 86400000);
-        const m2 = new Date(d.getTime() - 30 * 86400000);
-        const fmt = dt => `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
-        return [
-            { label: 'P1', date: fmt(m1), meter: Math.max(0, Math.round(plan.last - plan.interval * 2)) },
-            { label: 'P2', date: fmt(m2), meter: Math.max(0, Math.round(plan.last - plan.interval)) },
-            { label: 'P3', date: fmt(d), meter: Math.round(plan.last) }
-        ];
+        return Array.isArray(plan.history) ? plan.history : [];
     }
 
     window.pmGalleryStorage = window.pmGalleryStorage || {};
@@ -14325,14 +14300,7 @@
         if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-images" style="color:#38bdf8; margin-right:8px;"></i> Dokumentasi Foto Servis: <strong>${escapeHtml(rawPlan.code || rawPlan.id)}</strong>`;
         if (subtitleEl) subtitleEl.textContent = `Dokumentasi fisik servis berkala unit ${rawPlan.code || rawPlan.id} (${rawPlan.asset || 'Unit BRA'})`;
         
-        let photos = window.pmGalleryStorage[key];
-        if (!photos) {
-            photos = [
-                { url: 'assets/img/pm_service_sample_1.jpg', title: 'Penggantian Filter Oli & Solar', date: '22/07/2026' },
-                { url: 'assets/img/pm_service_sample_2.jpg', title: 'Pengecekan Level Fluida & Radiator', date: '22/07/2026' }
-            ];
-            window.pmGalleryStorage[key] = photos;
-        }
+        const photos = rawPlan.photos || [];
         
         if (gridEl) {
             if (!photos || photos.length === 0) {
@@ -14343,7 +14311,7 @@
                 gridEl.innerHTML = photos.map(item => `
                     <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                         <div style="height:120px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                            ${item.url.startsWith('data:') ? `<img src="${item.url}" alt="${escapeHtml(item.title)}" style="width:100%; height:100%; object-fit:cover;">` : `<i class="fa-solid fa-camera" style="font-size:2.2rem; color:#94a3b8;"></i>`}
+                            <img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.title)}" style="width:100%; height:100%; object-fit:cover;">
                         </div>
                         <div style="padding:10px;">
                             <strong style="font-size:0.78rem; display:block; color:#1e293b; margin-bottom:2px;">${escapeHtml(item.title)}</strong>
@@ -14357,25 +14325,16 @@
         if (typeof openModal === 'function') openModal('modalPmGallery');
     };
 
-    window.handleUploadPmPhoto = function(files) {
+    window.handleUploadPmPhoto = async function(files) {
         if (!files || files.length === 0) return;
         const key = window.currentPmPlanKey || 'default';
-        if (!window.pmGalleryStorage[key]) window.pmGalleryStorage[key] = [];
-        
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                window.pmGalleryStorage[key].unshift({
-                    url: e.target.result,
-                    title: file.name.replace(/\.[^/.]+$/, ""),
-                    date: new Date().toLocaleDateString('id-ID')
-                });
-                window.openPmGalleryModal(key);
-                if (typeof renderTrackerRows === 'function') renderTrackerRows();
-            };
-            reader.readAsDataURL(file);
-        }
+        const plan = pmPlans.find(p => planKey(p) === key);
+        if (!plan) return;
+        try {
+            for (const file of Array.from(files)) await window.uploadAssetAttachment(plan.assetId, 'photo', file);
+            await hydrateReportPmPlans();
+            window.openPmGalleryModal(key);
+        } catch (error) { alert('Foto gagal diunggah: ' + error.message); }
     };
 
     window.openPmPdfModal = function(key) {
@@ -14386,42 +14345,37 @@
         const nameEl = document.getElementById('pmPdfFileName');
         const metaEl = document.getElementById('pmPdfMeta');
         
-        const doc = window.pmPdfStorage[key] || {
-            fileName: `JO-SB-${(rawPlan.code || rawPlan.id).replace(/\s+/g, '_')}-2026.pdf`,
-            fileSize: '420 KB',
-            uploadedAt: '12 Juli 2026, 14:30 WITA'
-        };
+        const doc = rawPlan.pdfUrl ? { fileName: 'PDF JO Servis', uploadedAt: 'Tersimpan di database' } : null;
         
         if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-file-pdf" style="color:#ef4444; margin-right:8px;"></i> Pemberkasan JO Servis Berkala: <strong>${escapeHtml(rawPlan.code || rawPlan.id)}</strong>`;
         if (subtitleEl) subtitleEl.textContent = `Arsip dokumen fisik Job Order dan checklist teknis ${rawPlan.asset || ''}`;
-        if (nameEl) nameEl.textContent = doc.fileName;
-        if (metaEl) metaEl.textContent = `Tersimpan resmi: ${doc.fileSize} &middot; Diunggah ${doc.uploadedAt}`;
+        if (nameEl) nameEl.textContent = doc ? doc.fileName : 'Belum ada PDF JO';
+        if (metaEl) metaEl.textContent = doc ? doc.uploadedAt : 'Unggah berkas PDF untuk unit ini.';
+        const previewButton = document.getElementById('pmBtnDownloadPdf');
+        if (previewButton) previewButton.disabled = !doc;
         
         if (typeof openModal === 'function') openModal('modalPmPdfDoc');
     };
 
-    window.handleUploadPmPdf = function(files) {
+    window.handleUploadPmPdf = async function(files) {
         if (!files || files.length === 0) return;
         const file = files[0];
         const key = window.currentPmPlanKey || 'default';
-        window.pmPdfStorage[key] = {
-            fileName: file.name,
-            fileSize: (file.size / 1024).toFixed(1) + ' KB',
-            uploadedAt: new Date().toLocaleString('id-ID'),
-            dataUrl: URL.createObjectURL(file)
-        };
-        window.openPmPdfModal(key);
-        alert('File PDF JO Servis Berkala berhasil diunggah dan ditautkan ke unit!');
+        const plan = pmPlans.find(p => planKey(p) === key);
+        if (!plan) return;
+        try {
+            await window.uploadAssetAttachment(plan.assetId, 'pdf', file);
+            await hydrateReportPmPlans();
+            window.openPmPdfModal(key);
+            alert('PDF JO tersimpan di server.');
+        } catch (error) { alert('PDF gagal diunggah: ' + error.message); }
     };
 
     window.previewPmPdfDoc = function() {
         const key = window.currentPmPlanKey || 'default';
-        const doc = window.pmPdfStorage[key];
-        if (doc && doc.dataUrl) {
-            window.open(doc.dataUrl, '_blank');
-        } else {
-            alert(`Membuka berkas dokumen: ${doc ? doc.fileName : 'JO-SB-BERKALA-2026.pdf'}\nDokumen resmi Job Order Servis Berkala acuan operasional.`);
-        }
+        const plan = pmPlans.find(p => planKey(p) === key);
+        if (plan?.pdfUrl) window.open(plan.pdfUrl, '_blank');
+        else alert('PDF JO belum tersedia untuk unit ini.');
     };
 
     function assetLinkMetrics() {
@@ -14437,6 +14391,7 @@
     function statusOf(rawPlan) {
         const plan = mergedPlan(rawPlan);
         if (plan.completed) return 'COMPLETED';
+        if (plan.last == null || plan.interval == null || plan.target == null) return 'NO DATA';
         const variance = varianceOf(plan);
         if (variance == null) return 'NO DATA';
         if (variance > 0) return 'OVERDUE';
@@ -14494,6 +14449,50 @@
     }
 
     async function hydrateReportPmPlans() {
+        pmDatabaseState = { status: 'loading', count: 0, message: 'Memuat aset dari database...' };
+        try {
+            const response = await fetch('api/pm.php?view=table_list', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'success' || !Array.isArray(payload.data)) throw new Error(payload.message || 'Data PM tidak tersedia.');
+            const rows = payload.data.map(asset => {
+                const history = Array.isArray(asset.service_history) ? asset.service_history : [];
+                return {
+                    key: `asset-${asset.asset_id}`, id: String(asset.asset_id), assetId: String(asset.asset_id),
+                    code: String(asset.asset_code || asset.asset_id),
+                    asset: [asset.category, asset.make_model].filter(Boolean).join(' ') || String(asset.asset_code || asset.asset_id),
+                    hullNumber: String(asset.hull_number || asset.alias_name || ''),
+                    serialNumber: String(asset.serial_number || ''), licensePlate: String(asset.license_plate || ''),
+                    category: String(asset.category || ''), model: String(asset.make_model || ''),
+                    year: Number(asset.year_manufacture) || '-', warranty: String(asset.warranty_status || 'No Warranty'),
+                    current: asset.last_hm_km == null ? null : Number(asset.last_hm_km),
+                    tracking: String(asset.last_service_date || ''),
+                    interval: asset.service_interval_val == null ? null : Number(asset.service_interval_val),
+                    last: asset.last_service_hm_km == null ? null : Number(asset.last_service_hm_km),
+                    lastDate: String(asset.last_service_date || ''),
+                    target: asset.next_service_due_hm_km == null ? null : Number(asset.next_service_due_hm_km),
+                    completed: String(asset.pm_status || '').toUpperCase() === 'COMPLETED',
+                    location: String(asset.location_name || ''), locationId: asset.current_location_id,
+                    operator: String(asset.current_operator_name || ''),
+                    dailyUsageCoefficient: asset.daily_usage_coefficient == null ? null : Number(asset.daily_usage_coefficient),
+                    meterUnit: String(asset.service_interval_unit || ''), nextServiceDate: String(asset.next_service_estimated_date || ''),
+                    history: history.map((item, index) => ({ label: `P${history.length - index}`, date: String(item.service_date).slice(0, 10), meter: Number(item.service_hm_km) })),
+                    photos: (asset.gallery_photos || []).map(item => ({ id: item.photo_id, title: item.photo_title, url: `api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(item.photo_id)}`, date: '' })),
+                    pdfUrl: asset.service_manual_pdf_url ? `api/asset_files.php?kind=pdf&asset_id=${encodeURIComponent(asset.asset_id)}` : '',
+                    note: String(asset.planner_note || ''), source: 'database'
+                };
+            });
+            pmPlans.splice(0, pmPlans.length, ...rows);
+            pmDatabaseState = { status: 'success', count: rows.length, message: `${rows.length} aset dari database dimuat` };
+            renderAll();
+        } catch (error) {
+            pmPlans.splice(0, pmPlans.length);
+            pmDatabaseState = { status: 'error', count: 0, message: error.message || 'Database PM gagal dimuat' };
+            renderAll();
+            showToast(`Data PM database gagal dimuat: ${pmDatabaseState.message}`, true);
+        }
+    }
+
+    async function hydrateLegacyReportPmPlans() {
         pmDatabaseState = { status: 'loading', count: 0, message: 'Memuat rencana dari database...' };
         const statusElement = document.getElementById('pmDatabaseStatus');
         if (statusElement) {
@@ -14606,7 +14605,7 @@
             return '<i class="fa-solid fa-triangle-exclamation"></i> Muat ulang database';
         }
         if (pmDatabaseState.status === 'success') {
-            return `<i class="fa-solid fa-database"></i> Database: ${pmDatabaseState.count} laporan`;
+            return `<i class="fa-solid fa-database"></i> Database: ${pmDatabaseState.count} aset`;
         }
         return '<i class="fa-solid fa-rotate"></i> Muat database';
     }
@@ -14716,7 +14715,7 @@
         return {
             total: pmPlans.length,
             completed,
-            achievement: completed / pmPlans.length * 100,
+            achievement: pmPlans.length ? completed / pmPlans.length * 100 : 0,
             overdue: statuses.filter(status => status === 'OVERDUE').length,
             dueSoon: statuses.filter(status => ['DUE SOON', 'DUE'].includes(status)).length,
             issues: pmPlans.filter(plan => qualityFlags(plan).length).length
@@ -14782,6 +14781,7 @@
                     <div class="pm-field"><label>Pencarian unit</label><input id="pmSearch" class="pm-input" type="search" placeholder="Kode, lambung, atau nama asset..."></div>
                     <div class="pm-field"><label>Status</label><select id="pmStatusFilter" class="pm-select"><option value="">Semua status</option>${['COMPLETED', 'OVERDUE', 'DUE SOON', 'DUE', 'NOT DUE', 'NO DATA'].map(status => `<option>${status}</option>`).join('')}</select></div>
                     <div class="pm-field"><label>Kategori</label><select id="pmCategoryFilter" class="pm-select"><option value="">Semua kategori</option>${[...new Set(pmPlans.map(categoryOf))].sort().map(category => `<option>${escapeHtml(category)}</option>`).join('')}</select></div>
+                    <div class="pm-field"><label>Site</label><select id="pmSiteFilter" class="pm-select"><option value="">Semua site</option>${[...new Set(pmPlans.map(p => p.location).filter(Boolean))].sort().map(site => `<option value="${escapeHtml(site)}">${escapeHtml(site)}</option>`).join('')}</select></div>
                     <button class="pm-button secondary" id="pmResetFilter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
                 </div>
                 <div class="pm-table-wrap">
@@ -14804,7 +14804,7 @@
                         <tbody id="pmTrackerBody"></tbody>
                     </table>
                 </div>
-                <div class="pm-table-footer"><span>Jenis meter HM/KM diturunkan secara indikatif dari kelompok aset.</span><span>Data tersimpan lokal untuk prototipe.</span></div>
+                <div class="pm-table-footer"><span>Data aset, servis, foto, dan JO berasal dari database.</span><span>Kolom kosong berarti belum diisi.</span></div>
             </section>
             <div class="pm-formula-strip" id="pmFormulaStrip">
                 <i class="fa-solid fa-calculator"></i>
@@ -14818,11 +14818,13 @@
         document.getElementById('pmSearch').addEventListener('input', renderFiltered);
         document.getElementById('pmStatusFilter').addEventListener('change', renderFiltered);
         document.getElementById('pmCategoryFilter').addEventListener('change', renderFiltered);
+        document.getElementById('pmSiteFilter').addEventListener('change', renderFiltered);
         document.getElementById('pmDatabaseStatus')?.addEventListener('click', hydrateReportPmPlans);
         document.getElementById('pmResetFilter').addEventListener('click', () => {
             document.getElementById('pmSearch').value = '';
             document.getElementById('pmStatusFilter').value = '';
             document.getElementById('pmCategoryFilter').value = '';
+            document.getElementById('pmSiteFilter').value = '';
             renderFiltered();
         });
         renderTrackerRows();
@@ -14928,6 +14930,7 @@
         const query = document.getElementById('pmSearch').value.trim().toLowerCase();
         const statusFilter = document.getElementById('pmStatusFilter').value;
         const categoryFilter = document.getElementById('pmCategoryFilter').value;
+        const siteFilter = document.getElementById('pmSiteFilter').value;
         const filtered = pmPlans.filter(rawPlan => {
             const plan = mergedPlan(rawPlan);
             const linkedAsset = linkedAssetForPlan(plan);
@@ -14936,7 +14939,8 @@
             const haystack = `${plan.code} ${plan.id} ${plan.asset} ${hull} ${snPlate.sn} ${snPlate.plate} ${plan.sourceReportNumber || ''}`.toLowerCase();
             return (!query || haystack.includes(query))
                 && (!statusFilter || statusOf(plan) === statusFilter)
-                && (!categoryFilter || categoryOf(plan) === categoryFilter);
+                && (!categoryFilter || categoryOf(plan) === categoryFilter)
+                && (!siteFilter || plan.location === siteFilter);
         });
         document.getElementById('pmTableCount').textContent = `${filtered.length} dari ${pmPlans.length} unit`;
         if (filtered.length === 0) {
@@ -14952,7 +14956,7 @@
             const operatorInfo = getPmOperatorListing(plan, linkedAsset);
             const nextServiceEst = calculateNextServiceEstimate(plan);
             const historyLogs = getPmHistory(plan);
-            const photoCount = (window.pmGalleryStorage && window.pmGalleryStorage[planKey(plan)]) ? window.pmGalleryStorage[planKey(plan)].length : 2;
+            const photoCount = (plan.photos || []).length;
 
             return `<tr>
                 <td class="pm-unit-cell">
@@ -14977,7 +14981,7 @@
                 </td>
                 <td>
                     <div style="font-size:0.8rem; font-weight:600; color:var(--text-main);"><i class="fa-solid fa-user" style="color:var(--text-muted); margin-right:4px; font-size:0.75rem;"></i>${escapeHtml(operatorInfo.split(' (')[0])}</div>
-                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;"><i class="fa-regular fa-clock" style="margin-right:3px;"></i>${escapeHtml(operatorInfo.includes('(') ? operatorInfo.split('(')[1].replace(')', '') : '07:00 - 15:00')}</div>
+                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">${escapeHtml(plan.operator ? 'Operator terdaftar' : 'Belum ada operator')}</div>
                 </td>
                 <td>
                     <strong style="font-size:0.82rem;">${formatNumber(plan.last)} ${meterType(plan)}</strong>
@@ -14991,7 +14995,7 @@
                     <div style="margin-top:3px;">
                         ${nextServiceEst.isOverdue 
                             ? `<span class="badge" style="background:#fee2e2; color:#b91c1c; font-size:0.7rem; font-weight:700; padding:2px 6px; border:1px solid #fecdd3;"><i class="fa-solid fa-triangle-exclamation"></i> Overdue / Hari Ini</span>`
-                            : `<span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.7rem; font-weight:600; padding:2px 6px; border:1px solid #fde68a;" title="Proyeksi laju: ${nextServiceEst.dailyRate}"><i class="fa-regular fa-calendar-check" style="margin-right:3px;"></i>Est: ${nextServiceEst.dateStr} (~${nextServiceEst.days} hr)</span>`
+                            : `<span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.7rem; font-weight:600; padding:2px 6px; border:1px solid #fde68a;"><i class="fa-regular fa-calendar-check" style="margin-right:3px;"></i>${nextServiceEst.days == null ? 'Estimasi belum tersedia' : `Est: ${nextServiceEst.dateStr} (~${nextServiceEst.days} hr)`}</span>`
                         }
                     </div>
                 </td>
@@ -15001,7 +15005,7 @@
                             <span class="badge" style="background:#f8fafc; color:#334155; font-size:0.68rem; padding:1px 5px; border:1px solid #e2e8f0;" title="${h.label}: ${formatNumber(h.meter)} ${meterType(plan)}">
                                 <strong style="color:var(--primary);">${h.label}:</strong> ${h.date}
                             </span>
-                        `).join('')}
+                        `).join('') || '<span style="color:#94a3b8;">Belum ada histori</span>'}
                     </div>
                 </td>
                 <td style="text-align:center;">
@@ -15011,7 +15015,7 @@
                 </td>
                 <td style="text-align:center;">
                     <button type="button" class="btn btn-xs" onclick="window.openPmPdfModal('${escapeHtml(planKey(plan))}')" style="padding:3px 7px; font-size:0.72rem; background:#fff1f2; color:#be123c; border:1px solid #fecdd3; border-radius:4px; cursor:pointer;" title="Buka Pemberkasan PDF JO Servis Berkala">
-                        <i class="fa-solid fa-file-pdf" style="margin-right:3px;"></i> JO Servis
+                        <i class="fa-solid fa-file-pdf" style="margin-right:3px;"></i> ${plan.pdfUrl ? 'JO Servis' : 'Unggah JO'}
                     </button>
                 </td>
             </tr>`;
@@ -15250,16 +15254,25 @@
         return `<div class="pm-detail-stat"><span>${label}</span><strong>${value}</strong></div>`;
     }
 
-    function saveExecution(planId) {
+    async function saveExecution(planId) {
         const form = document.getElementById('pmExecutionForm');
         if (!form.reportValidity()) return;
         const data = Object.fromEntries(new FormData(form).entries());
-        data.actual = Number(data.actual);
-        overrides[planId] = { ...(overrides[planId] || {}), ...data, completed: true };
-        saveLocalState();
-        closeDetail();
-        renderAll();
-        showToast(`Realisasi ${planId} disimpan; KPI dan status telah dihitung ulang.`);
+        const plan = pmPlans.find(item => planKey(item) === planId);
+        if (!plan) return;
+        try {
+            const response = await fetch('api/pm.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ asset_id: plan.assetId, actual_date: data.actualDate,
+                    actual_meter: Number(data.actual), wo: data.wo, mechanic: data.mechanic,
+                    planner_note: data.plannerNote })
+            });
+            const result = await response.json();
+            if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Gagal menyimpan realisasi');
+            closeDetail();
+            await hydrateReportPmPlans();
+            showToast(`Realisasi ${plan.assetId} tersimpan di database.`);
+        } catch (error) { showToast(error.message, true); }
     }
 
     function openKitDetail(number) {
@@ -15350,6 +15363,7 @@
         showToast.timer = setTimeout(() => toast.classList.remove('show'), 2800);
     }
 
+    window.PreventiveMaintenance = { refresh: hydrateReportPmPlans };
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', createModule);
     } else {

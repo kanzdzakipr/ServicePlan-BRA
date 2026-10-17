@@ -124,6 +124,18 @@ CREATE TABLE `assets` (
     `previous_license_plate` VARCHAR(50) NULL,
     `alias_name` VARCHAR(100) NULL,
     `hull_number` VARCHAR(100) NULL, -- Current physical/project hull; alias_name retained for legacy reads
+    `current_operator_name` VARCHAR(150) NULL,
+    `last_service_date` DATETIME NULL,
+    `last_service_hm_km` DECIMAL(12,2) NULL,
+    `service_interval_val` INT NULL,
+    `service_interval_unit` ENUM('HM','KM') NULL,
+    `daily_usage_coefficient` DECIMAL(8,2) NULL,
+    `next_service_due_hm_km` DECIMAL(12,2) NULL,
+    `next_service_estimated_date` DATE NULL,
+    `legal_stnk_expiry` DATE NULL,
+    `legal_kir_expiry` DATE NULL,
+    `legal_silo_expiry` DATE NULL,
+    `service_manual_pdf_url` VARCHAR(255) NULL,
     `type` VARCHAR(50) DEFAULT 'Heavy Equipment',
     `category` ENUM('Excavator', 'Bulldozer', 'Dump Truck', 'Motor Grader', 'Vibro Compactor', 'Water Truck', 'Prime Mover', 'Light Vehicle', 'Reclaimer Spreader', 'Trado', 'Other') NOT NULL,
     `make_model` VARCHAR(100) NULL,
@@ -160,6 +172,45 @@ CREATE TABLE `asset_hull_history` (
     `changed_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_asset_hull_history_asset_time` (`asset_id`, `changed_at`),
     FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `asset_operator_history` (
+    `history_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `operator_name` VARCHAR(150) NOT NULL,
+    `start_date` DATE NOT NULL,
+    `end_date` DATE NULL,
+    `shift_type` VARCHAR(50) NULL,
+    `handover_notes` TEXT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_operator_asset` (`asset_id`, `start_date`),
+    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `asset_service_history` (
+    `service_log_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `service_sequence` INT NOT NULL,
+    `service_date` DATETIME NOT NULL,
+    `service_hm_km` DECIMAL(12,2) NOT NULL,
+    `service_type` VARCHAR(100) NOT NULL,
+    `mechanic_pic` VARCHAR(150) NULL,
+    `jo_report_number` VARCHAR(100) NULL,
+    `notes` TEXT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_service_asset` (`asset_id`, `service_date`),
+    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `asset_gallery_photos` (
+    `photo_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `photo_title` VARCHAR(150) NOT NULL,
+    `photo_angle` ENUM('Front','Right','Left','Cabin','Engine','SerialPlate','Other') NOT NULL DEFAULT 'Other',
+    `photo_url` VARCHAR(255) NOT NULL,
+    `uploaded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_photo_asset` (`asset_id`, `uploaded_at`),
+    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

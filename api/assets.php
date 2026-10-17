@@ -8,10 +8,23 @@ $db = Database::getInstance();
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
 require_once dirname(__DIR__) . '/core/AssetIdentity.php';
+require_once dirname(__DIR__) . '/core/AssetOnboarding.php';
 
 switch ($method) {
     case 'GET':
         AuthMiddleware::checkAccess('asset', 'R');
+        if (($_GET['references'] ?? '') === 'locations') {
+            $locationSql = 'SELECT location_id, location_name FROM locations WHERE is_active = 1';
+            $locationParams = [];
+            if (!api_has_global_location_scope()) {
+                $locationSql .= ' AND location_id = :location_id';
+                $locationParams[':location_id'] = api_current_location_id() ?? -1;
+            }
+            $locationSql .= ' ORDER BY location_name';
+            $locationStmt = $db->prepare($locationSql);
+            $locationStmt->execute($locationParams);
+            api_json_response(200, ['status' => 'success', 'data' => $locationStmt->fetchAll()]);
+        }
         $scope = api_location_scope_clause('a', 'asset_list_location_id');
 
         if (isset($_GET['id'])) {
@@ -31,6 +44,15 @@ switch ($method) {
             $historyStmt = $db->prepare('SELECT history_id, old_hull_number, new_hull_number, change_reason, effective_date, changed_by_name, changed_at FROM asset_hull_history WHERE asset_id = :id ORDER BY changed_at DESC, history_id DESC');
             $historyStmt->execute([':id' => (string) $_GET['id']]);
             $result['hull_history'] = $historyStmt->fetchAll();
+            foreach ([
+                'operator_history' => 'SELECT history_id, operator_name, start_date, end_date, shift_type, handover_notes FROM asset_operator_history WHERE asset_id = :id ORDER BY start_date DESC, history_id DESC',
+                'service_history' => 'SELECT service_log_id, service_sequence, service_date, service_hm_km, service_type, mechanic_pic, jo_report_number, notes FROM asset_service_history WHERE asset_id = :id ORDER BY service_date DESC, service_log_id DESC',
+                'gallery_photos' => 'SELECT photo_id, photo_title, photo_angle, photo_url, uploaded_at FROM asset_gallery_photos WHERE asset_id = :id ORDER BY photo_id DESC',
+            ] as $key => $relatedSql) {
+                $relatedStmt = $db->prepare($relatedSql);
+                $relatedStmt->execute([':id' => (string) $_GET['id']]);
+                $result[$key] = $relatedStmt->fetchAll();
+            }
         } else {
             $sql = "SELECT a.*, l.location_name as location_name 
                     FROM assets a 
@@ -162,6 +184,17 @@ switch ($method) {
 
         $type = trim((string) ($data['type'] ?? 'Heavy Equipment'));
         $lastHmKm = isset($data['last_hm_km']) ? max(0.0, (float) $data['last_hm_km']) : 0.00;
+        try {
+            $onboarding = AssetOnboarding::fields($data, $lastHmKm);
+            $historicalServices = AssetOnboarding::history($data['historical_services'] ?? []);
+            foreach ($historicalServices as $historical) {
+                if ($onboarding['last_service_date'] !== null && ($historical['date'] > $onboarding['last_service_date'] || $historical['meter'] > $onboarding['last_service_hm_km'])) {
+                    throw new InvalidArgumentException('Riwayat perawatan lampau harus sebelum servis terakhir dan meternya tidak boleh lebih besar.');
+                }
+            }
+        } catch (InvalidArgumentException $e) {
+            api_json_response(422, ['status' => 'error', 'code' => 'INVALID_ONBOARDING', 'message' => $e->getMessage()]);
+        }
 
         try {
             $db->beginTransaction();
@@ -169,11 +202,19 @@ switch ($method) {
                 INSERT INTO assets (
                     asset_id, asset_code, hull_number, alias_name, serial_number, license_plate,
                     make_model, year_manufacture, type, category, status,
-                    current_location_id, last_hm_km, is_active
+                    current_location_id, last_hm_km, is_active,
+                    current_operator_name, last_service_date, last_service_hm_km,
+                    service_interval_val, service_interval_unit, daily_usage_coefficient,
+                    next_service_due_hm_km, next_service_estimated_date,
+                    legal_stnk_expiry, legal_kir_expiry, legal_silo_expiry
                 ) VALUES (
                     :id, :code, :hull, :alias, :sn, :plate,
                     :make_model, :year, :type, :cat, :status,
-                    :loc_id, :hm, 1
+                    :loc_id, :hm, 1,
+                    :operator, :service_date, :service_meter,
+                    :interval_val, :interval_unit, :daily_rate,
+                    :next_due, :next_estimate,
+                    :stnk, :kir, :silo
                 )
             ");
             $stmt->execute([
@@ -189,8 +230,30 @@ switch ($method) {
                 ':cat' => $category,
                 ':status' => $status,
                 ':loc_id' => $targetLocationId,
-                ':hm' => $lastHmKm
+                ':hm' => $lastHmKm,
+                ':operator' => $onboarding['current_operator_name'],
+                ':service_date' => $onboarding['last_service_date'],
+                ':service_meter' => $onboarding['last_service_hm_km'],
+                ':interval_val' => $onboarding['service_interval_val'],
+                ':interval_unit' => $onboarding['service_interval_unit'],
+                ':daily_rate' => $onboarding['daily_usage_coefficient'],
+                ':next_due' => $onboarding['next_service_due_hm_km'],
+                ':next_estimate' => $onboarding['next_service_estimated_date'],
+                ':stnk' => $onboarding['legal_stnk_expiry'],
+                ':kir' => $onboarding['legal_kir_expiry'],
+                ':silo' => $onboarding['legal_silo_expiry'],
             ]);
+            if ($onboarding['current_operator_name'] !== null) {
+                $opStmt = $db->prepare('INSERT INTO asset_operator_history (asset_id, operator_name, start_date, shift_type) VALUES (:id, :name, :start, :shift)');
+                $opStmt->execute([':id' => $assetId, ':name' => $onboarding['current_operator_name'], ':start' => AssetOnboarding::date($data['operator_start_date'] ?? null) ?? date('Y-m-d'), ':shift' => trim((string) ($data['operator_shift'] ?? '')) ?: null]);
+            }
+            $serviceStmt = $db->prepare('INSERT INTO asset_service_history (asset_id, service_sequence, service_date, service_hm_km, service_type, notes) VALUES (:id, :seq, :date, :meter, :type, :notes)');
+            foreach ($historicalServices as $index => $historical) {
+                $serviceStmt->execute([':id' => $assetId, ':seq' => $index + 1, ':date' => $historical['date'], ':meter' => $historical['meter'], ':type' => $historical['type'], ':notes' => null]);
+            }
+            if ($onboarding['last_service_date'] !== null) {
+                $serviceStmt->execute([':id' => $assetId, ':seq' => count($historicalServices) + 1, ':date' => $onboarding['last_service_date'], ':meter' => $onboarding['last_service_hm_km'], ':type' => 'Servis terakhir saat onboarding', ':notes' => trim((string) ($data['service_notes'] ?? '')) ?: null]);
+            }
             $db->commit();
 
             api_json_response(201, [
@@ -200,6 +263,7 @@ switch ($method) {
                     "asset_id" => $assetId,
                     "asset_code" => $assetCode,
                     "hull_number" => $initialHull !== '' ? $initialHull : null,
+                    "onboarding" => $onboarding,
                     "serial_number" => $snValue,
                     "license_plate" => $plateValue,
                     "make_model" => $makeModelValue,
@@ -274,6 +338,22 @@ switch ($method) {
                 if ($db->inTransaction()) $db->rollBack();
                 error_log('Hull rename failed: ' . $e->getMessage());
                 api_json_response(500, ['status' => 'error', 'message' => 'Gagal menyimpan perubahan nomor lambung.']);
+            }
+        }
+
+        $onboardingKeys = ['current_operator_name', 'operator_start_date', 'operator_shift', 'last_service_date', 'last_service_hm_km', 'service_interval_val', 'service_interval_unit', 'daily_usage_coefficient', 'legal_stnk_expiry', 'legal_kir_expiry', 'legal_silo_expiry'];
+        $onboarding = null;
+        $previous = null;
+        if (array_intersect(array_keys($data), $onboardingKeys)) {
+            $previousStmt = $db->prepare('SELECT * FROM assets WHERE asset_id = :id');
+            $previousStmt->execute([':id' => $id]);
+            $previous = $previousStmt->fetch(PDO::FETCH_ASSOC);
+            $merged = array_merge($previous, $data);
+            try {
+                $onboarding = AssetOnboarding::fields($merged, isset($merged['last_hm_km']) ? (float) $merged['last_hm_km'] : 0.0);
+                if (array_key_exists('operator_start_date', $data)) AssetOnboarding::date($data['operator_start_date']);
+            } catch (InvalidArgumentException $e) {
+                api_json_response(422, ['status' => 'error', 'code' => 'INVALID_ONBOARDING', 'message' => $e->getMessage()]);
             }
         }
 
@@ -364,6 +444,12 @@ switch ($method) {
                 $params[":$field"] = $val;
             }
         }
+        if ($onboarding !== null) {
+            foreach ($onboarding as $field => $value) {
+                $fields[] = "`$field` = :$field";
+                $params[":$field"] = $value;
+            }
+        }
 
         if (empty($fields)) {
             api_json_response(422, ["status" => "error", "message" => "Tidak ada field data yang diubah."]);
@@ -374,6 +460,20 @@ switch ($method) {
             $query = "UPDATE assets SET " . implode(", ", $fields) . " WHERE asset_id = :id";
             $stmt = $db->prepare($query);
             $stmt->execute($params);
+            if ($onboarding !== null && $onboarding['current_operator_name'] !== ($previous['current_operator_name'] ?? null)) {
+                $closeOp = $db->prepare('UPDATE asset_operator_history SET end_date = CURDATE() WHERE asset_id = :id AND end_date IS NULL');
+                $closeOp->execute([':id' => $id]);
+                if ($onboarding['current_operator_name'] !== null) {
+                    $newOp = $db->prepare('INSERT INTO asset_operator_history (asset_id, operator_name, start_date, shift_type) VALUES (:id, :name, :date, :shift)');
+                    $newOp->execute([':id' => $id, ':name' => $onboarding['current_operator_name'], ':date' => AssetOnboarding::date($data['operator_start_date'] ?? null) ?? date('Y-m-d'), ':shift' => trim((string) ($data['operator_shift'] ?? '')) ?: null]);
+                }
+            }
+            if ($onboarding !== null && $onboarding['last_service_date'] !== null && ($onboarding['last_service_date'] !== ($previous['last_service_date'] ?? null) || (float) $onboarding['last_service_hm_km'] !== (float) ($previous['last_service_hm_km'] ?? 0))) {
+                $seqStmt = $db->prepare('SELECT COALESCE(MAX(service_sequence), 0) + 1 FROM asset_service_history WHERE asset_id = :id');
+                $seqStmt->execute([':id' => $id]);
+                $newService = $db->prepare('INSERT INTO asset_service_history (asset_id, service_sequence, service_date, service_hm_km, service_type) VALUES (:id, :seq, :date, :meter, :type)');
+                $newService->execute([':id' => $id, ':seq' => (int) $seqStmt->fetchColumn(), ':date' => $onboarding['last_service_date'], ':meter' => $onboarding['last_service_hm_km'], ':type' => 'Servis tercatat']);
+            }
             $db->commit();
             api_json_response(200, ["status" => "success", "message" => "Data unit aset '{$id}' berhasil diperbarui."]);
         } catch (Throwable $e) {

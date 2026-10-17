@@ -560,6 +560,7 @@ function api_route_permission(): ?string
     $routes = [
         'init.php' => 'dashboard.read',
         'assets.php' => $readWrite('assets.read', 'assets.write'),
+        'asset_files.php' => $readWrite('assets.read', 'assets.write'),
         'work_orders.php' => $readWrite('work_orders.read', 'work_orders.write'),
         'work_order_support.php' => $readWrite('work_orders.read', 'work_orders.write'),
         'accidents.php' => $readWrite('accidents.read', 'accidents.write'),
@@ -567,6 +568,7 @@ function api_route_permission(): ?string
         'inspections.php' => $readWrite('inspections.read', 'inspections.write'),
         'logistics.php' => $readWrite('logistics.read', 'logistics.write'),
         'pm_plans.php' => $readWrite('pm.read', 'pm.write'),
+        'pm.php' => $readWrite('pm.read', 'pm.write'),
         'calibrations.php' => 'pm.read',
         'tire_inspections.php' => $readWrite('tires.read', 'tires.write'),
         'condition_monitoring.php' => $readWrite('tires.read', 'tires.write'),
