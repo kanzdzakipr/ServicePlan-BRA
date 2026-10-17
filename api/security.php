@@ -256,7 +256,7 @@ function api_builtin_permissions_for_roles(array $roleNames): array
             'dashboard.read', 'assets.read', 'assets.write', 'work_orders.read', 'work_orders.write',
             'accidents.read', 'fuel.read', 'inspections.read', 'inspections.write', 'logistics.read',
             'logistics.write', 'pm.read', 'pm.write', 'tires.read', 'reports.read', 'reports.write',
-            'archive.read', 'archive.write', 'sync.write',
+            'archive.read', 'archive.write', 'sync.write', 'cost.read', 'cost.write',
         ],
         'Mekanik Senior' => [
             'dashboard.read', 'assets.read', 'work_orders.read', 'work_orders.write', 'inspections.read',
@@ -277,7 +277,7 @@ function api_builtin_permissions_for_roles(array $roleNames): array
         ],
         'Logistic Head' => [
             'dashboard.read', 'assets.read', 'work_orders.read', 'logistics.read', 'logistics.write',
-            'reports.read', 'reports.write', 'archive.read', 'archive.write',
+            'reports.read', 'reports.write', 'archive.read', 'archive.write', 'cost.read',
         ],
         'HRD Manager' => [
             'dashboard.read', 'assets.read', 'reports.read', 'reports.write', 'archive.read',

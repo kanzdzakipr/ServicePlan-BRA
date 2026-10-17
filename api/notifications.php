@@ -34,13 +34,53 @@ try {
 switch ($method) {
     case 'GET':
         try {
-            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
-            $stmt = $db->prepare("SELECT * FROM system_notifications ORDER BY created_at DESC LIMIT :limit");
+            $limit = isset($_GET['limit']) ? max(1, min(100, (int)$_GET['limit'])) : 50;
+            $user = function_exists('api_current_user') ? api_current_user() : [];
+            $userLocationId = !empty($user['location_id']) ? (int)$user['location_id'] : null;
+            $userRole = strtoupper(trim((string)($user['role_name'] ?? $user['role'] ?? '')));
+            $isAdmin = in_array($userRole, ['ADMIN', 'SUPER_ADMIN', 'ADMINISTRATOR', 'HEAD_OF_EQUIPMENT'], true);
+
+            $sql = "SELECT * FROM system_notifications";
+            $params = [];
+            if (!$isAdmin && $userLocationId !== null) {
+                $sql .= " WHERE (
+                    JSON_UNQUOTE(JSON_EXTRACT(related_tables_json, '$.location_id')) IS NULL
+                    OR JSON_UNQUOTE(JSON_EXTRACT(related_tables_json, '$.location_id')) = ''
+                    OR JSON_UNQUOTE(JSON_EXTRACT(related_tables_json, '$.location_id')) = 'null'
+                    OR JSON_UNQUOTE(JSON_EXTRACT(related_tables_json, '$.location_id')) = :loc_id
+                )";
+                $params[':loc_id'] = (string)$userLocationId;
+            }
+            $sql .= " ORDER BY created_at DESC LIMIT :limit";
+            $stmt = $db->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $results = array_map(function($row) {
+                $related = json_decode($row['related_tables_json'] ?? '{}', true) ?: [];
+                $woId = $related['wo_id'] ?? null;
+                if (!$woId && isset($related['records']) && is_array($related['records'])) {
+                    foreach ($related['records'] as $rec) {
+                        if (($rec['table'] ?? '') === 'work_orders' && !empty($rec['id'])) {
+                            $woId = (string) $rec['id'];
+                            break;
+                        }
+                    }
+                }
+                $assetId = $related['asset_id'] ?? null;
+                if (!$assetId && isset($related['records']) && is_array($related['records'])) {
+                    foreach ($related['records'] as $rec) {
+                        if (($rec['table'] ?? '') === 'assets' && !empty($rec['id'])) {
+                            $assetId = (string) $rec['id'];
+                            break;
+                        }
+                    }
+                }
+
                 return [
                     'id' => (int)$row['notification_id'],
                     'menu' => $row['menu_name'],
@@ -51,7 +91,10 @@ switch ($method) {
                     'title' => $row['title'],
                     'message' => $row['message'],
                     'involvedParties' => json_decode($row['involved_parties_json'] ?? '[]', true) ?: [],
-                    'relatedTables' => json_decode($row['related_tables_json'] ?? '{}', true) ?: new stdClass(),
+                    'relatedTables' => $related,
+                    'woId' => $woId,
+                    'assetId' => $assetId,
+                    'locationId' => $related['location_id'] ?? null,
                     'isRead' => (bool)$row['is_read'],
                     'timestamp' => date('H:i \W\I\B (d M Y)', strtotime($row['created_at']))
                 ];

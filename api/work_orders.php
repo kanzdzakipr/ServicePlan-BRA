@@ -54,10 +54,67 @@ function wo_validate_enum(string $field, string $value, array $allowed): string
     return $value;
 }
 
-function wo_notify(PDO $db, string $actionType, string $woId, string $message, string $mechanic): void
+function wo_notify(PDO $db, string $actionType, string $woId, string $message, string $mechanic, ?string $assetId = null): void
 {
     try {
         $actor = wo_actor();
+        $title = match ($actionType) {
+            'WO_CREATE' => "Penerbitan Work Order #{$woId}",
+            'WO_CLOSED' => "Work Order #{$woId} Ditutup",
+            'WO_CANCELLED' => "Work Order #{$woId} Dibatalkan",
+            default => "Pembaruan Work Order #{$woId}",
+        };
+
+        // Idempotency: Prevent duplicate within 60 seconds
+        $dupStmt = $db->prepare(
+            "SELECT notification_id FROM system_notifications
+             WHERE action_type = :action_type AND title = :title AND created_at >= NOW() - INTERVAL 60 SECOND
+             LIMIT 1"
+        );
+        $dupStmt->execute([':action_type' => $actionType, ':title' => $title]);
+        if ($dupStmt->fetchColumn()) {
+            return;
+        }
+
+        // Resolve asset and location
+        $locationId = null;
+        if ($assetId !== null && $assetId !== '') {
+            $locStmt = $db->prepare('SELECT current_location_id FROM assets WHERE asset_id = :asset_id LIMIT 1');
+            $locStmt->execute([':asset_id' => $assetId]);
+            $locVal = $locStmt->fetchColumn();
+            if ($locVal !== false && $locVal !== null) {
+                $locationId = (int) $locVal;
+            }
+        } else {
+            $woStmt = $db->prepare('SELECT w.asset_id, a.current_location_id FROM work_orders w LEFT JOIN assets a ON a.asset_id = w.asset_id WHERE w.wo_id = :wo_id LIMIT 1');
+            $woStmt->execute([':wo_id' => $woId]);
+            $woRow = $woStmt->fetch(PDO::FETCH_ASSOC);
+            if ($woRow) {
+                $assetId = $woRow['asset_id'];
+                $locationId = $woRow['current_location_id'] ? (int) $woRow['current_location_id'] : null;
+            }
+        }
+
+        $parties = array_values(array_unique(array_filter([
+            'Tim Logistik & Suku Cadang',
+            'Maintenance Planner',
+            $actor['name'] ?: 'Planner',
+            $mechanic ?: 'Mekanik Lead',
+        ])));
+
+        $tablesData = [
+            'tables' => ['work_orders', 'assets'],
+            'records' => [
+                ['table' => 'work_orders', 'id' => $woId],
+            ],
+            'wo_id' => $woId,
+            'asset_id' => $assetId,
+            'location_id' => $locationId,
+        ];
+        if ($assetId) {
+            $tablesData['records'][] = ['table' => 'assets', 'id' => $assetId];
+        }
+
         $stmt = $db->prepare(
             "INSERT INTO system_notifications
              (menu_name, user_name, user_role, action_type, title, message,
@@ -68,16 +125,17 @@ function wo_notify(PDO $db, string $actionType, string $woId, string $message, s
         $stmt->execute([
             ':user_name' => $actor['name'],
             ':action_type' => $actionType,
-            ':title' => ($actionType === 'WO_CREATE' ? 'Penerbitan' : 'Pembaruan') . " Work Order #{$woId}",
+            ':title' => $title,
             ':message' => $message,
-            ':parties' => json_encode([$actor['name'], $mechanic], JSON_UNESCAPED_UNICODE),
-            ':tables' => json_encode(['tables' => ['work_orders'], 'records' => [['table' => 'work_orders', 'id' => $woId]]]),
+            ':parties' => json_encode($parties, JSON_UNESCAPED_UNICODE),
+            ':tables' => json_encode($tablesData, JSON_UNESCAPED_UNICODE),
         ]);
     } catch (Throwable $error) {
         error_log('Work Order notification failed: ' . $error->getMessage());
     }
 }
 
+if (!defined('API_SKIP_ROUTING') || API_SKIP_ROUTING !== true) {
 switch ($method) {
     case 'GET':
         AuthMiddleware::checkAccess('wo', 'R');
@@ -172,7 +230,8 @@ switch ($method) {
                 'WO_CREATE',
                 (string) $data['wo_id'],
                 "Work Order #{$data['wo_id']} diterbitkan untuk unit {$data['asset_id']}. Prioritas: {$priority}. PIC: {$mechanic}",
-                $mechanic
+                $mechanic,
+                (string) $data['asset_id']
             );
 
             echo json_encode(['status' => 'success', 'message' => 'Work Order berhasil dibuat.']);
@@ -276,12 +335,18 @@ switch ($method) {
             }
             $db->commit();
 
+            $woActionType = match ($newStatus) {
+                'Closed' => 'WO_CLOSED',
+                'Cancelled' => 'WO_CANCELLED',
+                default => 'WO_UPDATE',
+            };
             wo_notify(
                 $db,
-                'WO_UPDATE',
+                $woActionType,
                 $id,
                 "Work Order #{$id} diperbarui" . ($statusChanged ? " menjadi status {$newStatus}" : '') . ". PIC: {$mergedMechanic}",
-                $mergedMechanic
+                $mergedMechanic,
+                (string) $current['asset_id']
             );
 
             echo json_encode(['status' => 'success', 'message' => 'Work Order berhasil diperbarui.']);
@@ -305,4 +370,5 @@ switch ($method) {
 
     default:
         api_json_response(405, ['status' => 'error', 'message' => 'Method not allowed']);
+}
 }

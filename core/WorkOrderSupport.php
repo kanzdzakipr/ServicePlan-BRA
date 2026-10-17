@@ -113,7 +113,7 @@ final class WorkOrderSupport
         if ($reason === '') {
             throw new InvalidArgumentException('Alasan tidak memerlukan suku cadang wajib diisi.');
         }
-        self::workOrder($db, $woId);
+        $workOrder = self::workOrder($db, $woId);
 
         $active = $db->prepare(
             "SELECT pr.spb_id
@@ -144,6 +144,14 @@ final class WorkOrderSupport
         );
         $stmt->execute([':note' => $reason, ':wo_id' => $woId]);
         self::timeline($db, $woId, 'Kebutuhan part: tidak diperlukan', $reason, $actorId, $actorName);
+        self::notify(
+            $db,
+            'PART_NOT_REQUIRED',
+            "Konfirmasi Tanpa Part WO #{$woId}",
+            "Work Order #{$woId} (Unit: {$workOrder['asset_id']}) dikonfirmasi tidak memerlukan suku cadang. Catatan: {$reason}",
+            $woId,
+            (string) $workOrder['asset_id']
+        );
     }
 
     public static function markPartsRequired(
@@ -154,7 +162,7 @@ final class WorkOrderSupport
         string $actorName,
         ?string $spbId = null
     ): void {
-        self::workOrder($db, $woId);
+        $workOrder = self::workOrder($db, $woId);
         $note = trim($note);
         if ($note === '') {
             $note = $spbId ? "Permintaan part dicatat melalui {$spbId}." : 'Permintaan part dicatat dari Work Order.';
@@ -167,6 +175,15 @@ final class WorkOrderSupport
         );
         $stmt->execute([':note' => $note, ':wo_id' => $woId]);
         self::timeline($db, $woId, 'Kebutuhan part dicatat', $note, $actorId, $actorName);
+        self::notify(
+            $db,
+            'PART_REQUEST',
+            "Permintaan Suku Cadang WO #{$woId}" . ($spbId ? " ({$spbId})" : ''),
+            "Permintaan suku cadang dicatat untuk Work Order #{$woId} (Unit: {$workOrder['asset_id']}). {$note}",
+            $woId,
+            (string) $workOrder['asset_id'],
+            $spbId
+        );
     }
 
     public static function createServiceRequest(
@@ -226,6 +243,16 @@ final class WorkOrderSupport
             $actorId,
             $actorName
         );
+        self::notify(
+            $db,
+            'SERVICE_REQUEST',
+            "Permintaan Layanan WO #{$woId} (#{$requestId})",
+            "Permintaan {$label} diajukan untuk Work Order #{$woId} (Unit: {$assetId}). Prioritas: {$priority}. {$description}",
+            $woId,
+            $assetId,
+            null,
+            $requestId
+        );
 
         return self::serviceRequest($db, $requestId);
     }
@@ -275,6 +302,16 @@ final class WorkOrderSupport
         if ($assignedTo !== null) $description .= " PIC: {$assignedTo}.";
         if ($notes !== null) $description .= " Catatan: {$notes}";
         self::timeline($db, (string) $current['wo_id'], "Status layanan {$requestId}: {$status}", $description, $actorId, $actorName);
+        self::notify(
+            $db,
+            'SERVICE_STATUS_CHANGE',
+            "Status Layanan WO #{$current['wo_id']} (#{$requestId})",
+            "Permintaan layanan #{$requestId} untuk Work Order #{$current['wo_id']} dialihkan ke status {$status}." . ($assignedTo !== null ? " PIC: {$assignedTo}." : ''),
+            (string) $current['wo_id'],
+            (string) $current['asset_id'],
+            null,
+            $requestId
+        );
 
         return self::serviceRequest($db, $requestId);
     }
@@ -387,6 +424,94 @@ final class WorkOrderSupport
             'completedAt' => $row['completed_at'],
             'notes' => (string) ($row['notes'] ?? ''),
         ];
+    }
+
+    public static function notify(
+        PDO $db,
+        string $actionType,
+        string $title,
+        string $message,
+        string $woId,
+        ?string $assetId = null,
+        ?string $spbId = null,
+        ?string $serviceRequestId = null,
+        ?int $locationId = null
+    ): void {
+        try {
+            $user = function_exists('api_current_user') ? api_current_user() : [];
+            $actorName = trim((string) ($user['full_name'] ?? $user['username'] ?? 'Planner'));
+            $actorRole = trim((string) ($user['role_name'] ?? $user['role'] ?? 'Planner'));
+
+            // Idempotency: avoid duplicate within 60s
+            $dupStmt = $db->prepare(
+                "SELECT notification_id FROM system_notifications
+                 WHERE action_type = :action_type AND title = :title AND created_at >= NOW() - INTERVAL 60 SECOND
+                 LIMIT 1"
+            );
+            $dupStmt->execute([':action_type' => $actionType, ':title' => $title]);
+            if ($dupStmt->fetchColumn()) {
+                return;
+            }
+
+            if ($locationId === null && $assetId !== null && $assetId !== '') {
+                $locStmt = $db->prepare('SELECT current_location_id FROM assets WHERE asset_id = :asset_id LIMIT 1');
+                $locStmt->execute([':asset_id' => $assetId]);
+                $locVal = $locStmt->fetchColumn();
+                if ($locVal !== false && $locVal !== null) {
+                    $locationId = (int) $locVal;
+                }
+            }
+
+            $parties = array_values(array_unique(array_filter([
+                'Tim Logistik & Suku Cadang',
+                'Maintenance Planner',
+                $actorName,
+            ])));
+
+            $tables = ['work_orders'];
+            $records = [['table' => 'work_orders', 'id' => $woId]];
+            if ($assetId) {
+                $tables[] = 'assets';
+                $records[] = ['table' => 'assets', 'id' => $assetId];
+            }
+            if ($spbId) {
+                $tables[] = 'purchase_requests';
+                $records[] = ['table' => 'purchase_requests', 'id' => $spbId];
+            }
+            if ($serviceRequestId) {
+                $tables[] = 'work_order_service_requests';
+                $records[] = ['table' => 'work_order_service_requests', 'id' => $serviceRequestId];
+            }
+
+            $tablesData = [
+                'tables' => array_unique($tables),
+                'records' => $records,
+                'wo_id' => $woId,
+                'asset_id' => $assetId,
+                'spb_id' => $spbId,
+                'service_request_id' => $serviceRequestId,
+                'location_id' => $locationId,
+            ];
+
+            $stmt = $db->prepare(
+                "INSERT INTO system_notifications
+                 (menu_name, user_name, user_role, action_type, title, message,
+                  involved_parties_json, related_tables_json, is_read, created_at)
+                 VALUES ('Logistik & Suku Cadang', :user_name, :user_role, :action_type, :title, :message,
+                         :parties, :tables, 0, NOW())"
+            );
+            $stmt->execute([
+                ':user_name' => $actorName,
+                ':user_role' => $actorRole ?: 'Planner',
+                ':action_type' => $actionType,
+                ':title' => $title,
+                ':message' => $message,
+                ':parties' => json_encode($parties, JSON_UNESCAPED_UNICODE),
+                ':tables' => json_encode($tablesData, JSON_UNESCAPED_UNICODE),
+            ]);
+        } catch (Throwable $e) {
+            error_log('WorkOrderSupport notification failed: ' . $e->getMessage());
+        }
     }
 }
 

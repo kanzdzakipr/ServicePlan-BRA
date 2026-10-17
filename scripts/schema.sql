@@ -517,6 +517,35 @@ CREATE TABLE `unit_valuations` (
     `raw_market_price_str` VARCHAR(100) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `asset_cost_transactions`;
+CREATE TABLE `asset_cost_transactions` (
+    `transaction_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `cost_code` VARCHAR(50) NOT NULL UNIQUE,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `wo_id` VARCHAR(50) NULL,
+    `transaction_date` DATE NOT NULL,
+    `cost_category` ENUM('Sparepart', 'Maintenance', 'External', 'Capex', 'Fuel', 'Other') NOT NULL,
+    `description` VARCHAR(255) NOT NULL,
+    `amount` DECIMAL(15,2) NOT NULL,
+    `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR',
+    `vendor_name` VARCHAR(150) NULL,
+    `reference_no` VARCHAR(100) NULL,
+    `source_type` ENUM('MANUAL', 'PO_APPROVED', 'SPPU_FINAL', 'INVENTORY_OUT') NOT NULL DEFAULT 'MANUAL',
+    `source_id` VARCHAR(100) NULL,
+    `location_id` INT NULL,
+    `notes` TEXT NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `reversed_at` TIMESTAMP NULL,
+    `reversed_by` INT NULL,
+    `reversal_reason` VARCHAR(255) NULL,
+    KEY `idx_cost_asset` (`asset_id`, `transaction_date`),
+    KEY `idx_cost_wo` (`wo_id`, `transaction_date`),
+    KEY `idx_cost_active` (`reversed_at`, `transaction_date`),
+    KEY `idx_cost_location` (`location_id`, `reversed_at`),
+    KEY `idx_cost_source` (`source_type`, `source_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ----------------------------------------------------------------------------
 -- 13. TELEMATICS SATELLITE LOGS (KOMTRAX Ingestion Engine & GPS Breadcrumbs)
 -- ----------------------------------------------------------------------------
