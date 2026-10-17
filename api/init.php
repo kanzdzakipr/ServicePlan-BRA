@@ -14,9 +14,13 @@ try {
 
     // Override Assets dari Database
     $assetScope = api_location_scope_clause('a', 'init_asset_location_id');
-    $assetSql = "SELECT a.asset_id as id, a.type, a.category, a.status,
+    $assetSql = "SELECT a.asset_id as id, a.asset_code, a.serial_number, a.license_plate,
+                        a.make_model, a.year_manufacture, a.type, a.category, a.status,
+                        a.current_location_id,
                         COALESCE(l.location_name, a.raw_location_notes) as location,
-                        a.last_hm_km
+                        l.location_name,
+                        a.last_hm_km, a.last_latitude, a.last_longitude, a.gps_updated_at,
+                        a.last_update_timestamp
                  FROM assets a
                  LEFT JOIN locations l ON l.location_id = a.current_location_id";
     if ($assetScope['sql'] !== '') $assetSql .= " WHERE " . $assetScope['sql'];
