@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/KpiCalculator.php';
+
 /**
  * Core Service: Productivity & Telematics Calculator (BR-07 / M8)
  * 
@@ -9,8 +11,9 @@ declare(strict_types=1);
  * based on KOMTRAX telematics logs, work orders, and LHO operation reports.
  * 
  * Formulations strictly adhere to PT BRA Standard Equipment Reliability:
- * - PA   = ((Scheduled Hours - Downtime Hours) / Scheduled Hours) * 100% [Target: >= 90.0%]
- * - UA   = (Operating Hours / (Scheduled Hours - Downtime Hours)) * 100% [Target: >= 80.0%]
+ * - PA   = ((Operating Hours + Standby Hours) / Scheduled Hours) * 100% [Target: >= 90.0%]
+ * - MA   = (Operating Hours / (Operating Hours + Repair Hours)) * 100%
+ * - UA   = (Operating Hours / (Operating Hours + Standby Hours)) * 100% [Target: >= 80.0%]
  * - BR   = (Downtime Hours / Scheduled Hours) * 100% [Target: <= 10.0%]
  * - UT   = (Operating Hours / Scheduled Hours) * 100%
  * - MTBF = Total Operating Hours / Breakdown Count [Target: >= 100h]
@@ -225,52 +228,75 @@ final class ProductivityCalculator
         $avgFuelLPH = $totalWorkingHours > 0 ? round($totalFuelConsumed / $totalWorkingHours, 2) : 0.0;
         $avgIdlingRatio = $activeUnitsForIdling > 0 ? round($sumIdlingRatio / $activeUnitsForIdling, 2) : 0.0;
 
-        // Baseline downtime hours & breakdown count for the 18 KOMTRAX units
-        // Downtime baseline: 155.5 hours, 9 breakdown occurrences, 41 closed repair interventions
-        $downtimeHours = 155.5;
-        $breakdownCount = 9;
-        $closedRepairsCount = 41;
+        // Pull reliability facts from Work Orders for the same period and scope.
+        $repairSql = "SELECT
+                COALESCE(SUM(CASE WHEN w.is_downtime = 1 AND w.status <> 'Cancelled' THEN w.downtime_minutes ELSE 0 END), 0) / 60 AS repair_hours,
+                COALESCE(SUM(CASE WHEN w.is_downtime = 1 AND w.status <> 'Cancelled' THEN 1 ELSE 0 END), 0) AS failure_count,
+                COALESCE(SUM(CASE WHEN w.is_downtime = 1 AND w.status = 'Closed' THEN 1 ELSE 0 END), 0) AS repair_count
+            FROM work_orders w
+            INNER JOIN assets a ON a.asset_id = w.asset_id
+            WHERE 1=1";
+        $repairParams = [];
+        if ($period !== null && $period !== '' && $period !== 'all') {
+            [$periodStart, $periodEnd] = KpiCalculator::periodBoundaries($period);
+            $repairSql .= ' AND COALESCE(w.trouble_at, w.reported_at) >= :period_start
+                            AND COALESCE(w.trouble_at, w.reported_at) < :period_end';
+            $repairParams[':period_start'] = $periodStart;
+            $repairParams[':period_end'] = $periodEnd;
+        }
+        if ($locationId !== null) {
+            $repairSql .= ' AND a.current_location_id = :repair_location_id';
+            $repairParams[':repair_location_id'] = $locationId;
+        }
+        $repairStatement = $db->prepare($repairSql);
+        $repairStatement->execute($repairParams);
+        $repairFacts = $repairStatement->fetch(PDO::FETCH_ASSOC) ?: [];
 
-        // Physical Availability: PA = ((Working Hours - Downtime Hours) / Working Hours) * 100%
-        $pa = $totalWorkingHours > 0
-            ? round((($totalWorkingHours - $downtimeHours) / $totalWorkingHours) * 100.0, 1)
-            : null;
+        $downtimeHours = (float) ($repairFacts['repair_hours'] ?? 0);
+        $breakdownCount = (int) ($repairFacts['failure_count'] ?? 0);
+        $closedRepairsCount = (int) ($repairFacts['repair_count'] ?? 0);
+        $standbyHours = max(0.0, $totalWorkingHours - $totalActualHours - $downtimeHours);
+        $lockedKpis = KpiCalculator::calculate([
+            'operatingHours' => $totalActualHours,
+            'standbyHours' => $standbyHours,
+            'repairHours' => $downtimeHours,
+            'scheduledHours' => $totalWorkingHours,
+            'failureCount' => $breakdownCount,
+            'repairCount' => $closedRepairsCount,
+        ]);
 
-        // Use of Availability: UA = (Actual Operating Hours / (Working Hours - Downtime Hours)) * 100%
-        $availableHours = $totalWorkingHours - $downtimeHours;
-        $ua = $availableHours > 0
-            ? round(($totalActualHours / $availableHours) * 100.0, 1)
-            : null;
-
-        // Breakdown Rate: BR = (Downtime Hours / Working Hours) * 100%
-        $br = $totalWorkingHours > 0
-            ? round(($downtimeHours / $totalWorkingHours) * 100.0, 1)
-            : null;
-
-        // Utilization Rate: UT = (Actual Operating Hours / Working Hours) * 100%
-        $ut = $totalWorkingHours > 0
-            ? round(($totalActualHours / $totalWorkingHours) * 100.0, 1)
-            : null;
-
-        // MTBF = Total Operating Hours / Breakdown Count
-        $mtbf = $breakdownCount > 0 ? round($totalActualHours / $breakdownCount, 1) : null;
-
-        // MTTR = Total Downtime Hours / Closed Repairs Count
-        $mttr = $closedRepairsCount > 0 ? round($downtimeHours / $closedRepairsCount, 1) : null;
+        $pa = $lockedKpis['kpis']['physicalAvailability']['value'];
+        $ma = $lockedKpis['kpis']['mechanicalAvailability']['value'];
+        $ua = $lockedKpis['kpis']['useOfAvailability']['value'];
+        $ut = $lockedKpis['kpis']['effectiveUtilization']['value'];
+        $mtbf = $lockedKpis['kpis']['mtbf']['value'];
+        $mttr = $lockedKpis['kpis']['mttr']['value'];
+        $br = $totalWorkingHours > 0 ? round(($downtimeHours / $totalWorkingHours) * 100.0, 2) : null;
+        $availableHours = $totalActualHours + $standbyHours;
 
         $kpis = [
             'physicalAvailability' => [
                 'value' => $pa,
-                'formatted' => $pa !== null ? "{$pa}%" : 'Tidak Ada Data',
+                'formatted' => $lockedKpis['kpis']['physicalAvailability']['formatted'],
                 'unit' => '%',
                 'target' => '>= 90.0%',
                 'status' => ($pa !== null && $pa >= 90.0) ? 'MEETS_TARGET' : 'BELOW_TARGET',
-                'formula' => 'PA = ((Working Hours - Downtime Hours) / Working Hours) * 100%',
-                'sources' => ['telematics_logs.working_hours (2,046.1h)', 'work_orders.downtime (155.5h)'],
+                'formula' => $lockedKpis['kpis']['physicalAvailability']['formula'],
+                'sources' => ['telematics_logs.actual_working_hours', 'telematics_logs.working_hours', 'work_orders.downtime_minutes'],
                 'details' => [
                     'workingHours' => round($totalWorkingHours, 1),
                     'downtimeHours' => $downtimeHours,
                 ],
+            ],
+            'mechanicalAvailability' => [
+                'value' => $ma,
+                'formatted' => $lockedKpis['kpis']['mechanicalAvailability']['formatted'],
+                'unit' => '%',
+                'target' => 'BRA perlu persetujuan',
+                'status' => 'INFORMATIONAL',
+                'formula' => $lockedKpis['kpis']['mechanicalAvailability']['formula'],
+                'sources' => ['telematics_logs.actual_working_hours', 'work_orders.downtime_minutes'],
+                'details' => ['operatingHours' => round($totalActualHours, 2), 'repairHours' => round($downtimeHours, 2)],
             ],
             'useOfAvailability' => [
                 'value' => $ua,
@@ -278,8 +304,8 @@ final class ProductivityCalculator
                 'unit' => '%',
                 'target' => '>= 80.0%',
                 'status' => ($ua !== null && $ua >= 80.0) ? 'MEETS_TARGET' : 'BELOW_TARGET',
-                'formula' => 'UA = (Actual Operating Hours / (Working Hours - Downtime Hours)) * 100%',
-                'sources' => ['telematics_logs.actual_working_hours (1,066.0h)', 'Available Hours (1,890.6h)'],
+                'formula' => $lockedKpis['kpis']['useOfAvailability']['formula'],
+                'sources' => ['telematics_logs.actual_working_hours', 'Derived standby hours'],
                 'details' => [
                     'actualHours' => round($totalActualHours, 1),
                     'availableHours' => round($availableHours, 1),
@@ -292,7 +318,7 @@ final class ProductivityCalculator
                 'target' => '<= 10.0%',
                 'status' => ($br !== null && $br <= 10.0) ? 'MEETS_TARGET' : 'ABOVE_LIMIT',
                 'formula' => 'BR = (Downtime Hours / Working Hours) * 100%',
-                'sources' => ['work_orders.downtime (155.5h)', 'telematics_logs.working_hours (2,046.1h)'],
+                'sources' => ['work_orders.downtime_minutes', 'telematics_logs.working_hours'],
                 'details' => [
                     'downtimeHours' => $downtimeHours,
                     'workingHours' => round($totalWorkingHours, 1),
@@ -304,7 +330,7 @@ final class ProductivityCalculator
                 'unit' => '%',
                 'target' => 'Fleet Average Baseline',
                 'status' => 'INFORMATIONAL',
-                'formula' => 'UT = (Actual Operating Hours / Working Hours) * 100%',
+                'formula' => $lockedKpis['kpis']['effectiveUtilization']['formula'],
                 'sources' => ['telematics_logs.actual_working_hours', 'telematics_logs.working_hours'],
                 'details' => [
                     'actualHours' => round($totalActualHours, 1),
@@ -317,8 +343,8 @@ final class ProductivityCalculator
                 'unit' => 'Jam',
                 'target' => '>= 100 Jam',
                 'status' => ($mtbf !== null && $mtbf >= 100.0) ? 'MEETS_TARGET' : 'BELOW_TARGET',
-                'formula' => 'MTBF = Actual Operating Hours / Breakdown Count',
-                'sources' => ['telematics_logs.actual_working_hours (1,066.0h)', 'work_orders.breakdown_count (9)'],
+                'formula' => $lockedKpis['kpis']['mtbf']['formula'],
+                'sources' => ['telematics_logs.actual_working_hours', 'work_orders downtime occurrence count'],
                 'details' => [
                     'operatingHours' => round($totalActualHours, 1),
                     'breakdownCount' => $breakdownCount,
@@ -330,8 +356,8 @@ final class ProductivityCalculator
                 'unit' => 'Jam',
                 'target' => '<= 4.0 Jam',
                 'status' => ($mttr !== null && $mttr <= 4.0) ? 'MEETS_TARGET' : 'ABOVE_LIMIT',
-                'formula' => 'MTTR = Downtime Hours / Closed Repair Count',
-                'sources' => ['work_orders.downtime (155.5h)', 'work_orders.closed_repairs (41)'],
+                'formula' => $lockedKpis['kpis']['mttr']['formula'],
+                'sources' => ['work_orders.downtime_minutes', 'work_orders closed repair count'],
                 'details' => [
                     'downtimeHours' => $downtimeHours,
                     'closedCount' => $closedRepairsCount,
@@ -380,6 +406,8 @@ final class ProductivityCalculator
                 'locationId' => $locationId,
                 'recordCount' => $recordCount,
                 'status' => 'SUCCESS',
+                'formulaVersion' => $lockedKpis['formulaVersion'],
+                'dataQuality' => $lockedKpis['dataQuality'],
             ]
         ];
     }
@@ -391,10 +419,11 @@ final class ProductivityCalculator
     private static function buildNoDataKpis(): array
     {
         $keys = [
-            'physicalAvailability' => ['unit' => '%', 'target' => '>= 90.0%', 'formula' => 'PA = ((Working Hours - Downtime) / Working Hours) * 100%'],
-            'useOfAvailability'    => ['unit' => '%', 'target' => '>= 80.0%', 'formula' => 'UA = (Actual Operating Hours / Available Hours) * 100%'],
+            'physicalAvailability' => ['unit' => '%', 'target' => '>= 90.0%', 'formula' => 'PA = ((W + S) / T) x 100%'],
+            'mechanicalAvailability' => ['unit' => '%', 'target' => 'BRA perlu persetujuan', 'formula' => 'MA = (W / (W + R)) x 100%'],
+            'useOfAvailability'    => ['unit' => '%', 'target' => '>= 80.0%', 'formula' => 'UA = (W / (W + S)) x 100%'],
             'breakdownRate'        => ['unit' => '%', 'target' => '<= 10.0%', 'formula' => 'BR = (Downtime Hours / Working Hours) * 100%'],
-            'utilizationRate'      => ['unit' => '%', 'target' => 'Fleet Baseline', 'formula' => 'UT = (Actual Operating Hours / Working Hours) * 100%'],
+            'utilizationRate'      => ['unit' => '%', 'target' => 'Fleet Baseline', 'formula' => 'EU = (W / T) x 100%'],
             'mtbf'                 => ['unit' => 'Jam', 'target' => '>= 100 Jam', 'formula' => 'MTBF = Actual Operating Hours / Breakdown Count'],
             'mttr'                 => ['unit' => 'Jam', 'target' => '<= 4.0 Jam', 'formula' => 'MTTR = Downtime Hours / Closed Repair Count'],
             'totalWorkingHours'    => ['unit' => 'Jam', 'target' => '-', 'formula' => 'Sum of working hours'],

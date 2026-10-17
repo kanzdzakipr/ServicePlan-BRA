@@ -134,6 +134,31 @@ final class KpiCalculator
         ];
     }
 
+    /** @return array{0:string,1:string} */
+    public static function periodBoundaries(string $period): array
+    {
+        $months = [
+            'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4,
+            'mei' => 5, 'juni' => 6, 'juli' => 7, 'agustus' => 8,
+            'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
+            'january' => 1, 'february' => 2, 'march' => 3, 'may' => 5,
+            'june' => 6, 'july' => 7, 'august' => 8, 'october' => 10,
+            'december' => 12,
+        ];
+
+        if (!preg_match('/^([\p{L}]+)\s+(\d{4})$/u', trim($period), $matches)) {
+            throw new InvalidArgumentException('Format periode harus seperti "Januari 2026".');
+        }
+        $month = $months[mb_strtolower($matches[1], 'UTF-8')] ?? null;
+        $year = (int) $matches[2];
+        if ($month === null || $year < 2000 || $year > 2100) {
+            throw new InvalidArgumentException('Nama bulan atau tahun periode KPI tidak valid.');
+        }
+
+        $start = new DateTimeImmutable(sprintf('%04d-%02d-01 00:00:00', $year, $month));
+        return [$start->format('Y-m-d H:i:s'), $start->modify('+1 month')->format('Y-m-d H:i:s')];
+    }
+
     private static function nonNegativeNumber(array $input, string $key): float
     {
         if (!array_key_exists($key, $input) || !is_numeric($input[$key])) {

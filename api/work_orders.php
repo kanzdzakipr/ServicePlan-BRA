@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
+require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
 
 $db = Database::getInstance();
 ReportIntegration::ensureTables($db);
@@ -135,6 +136,67 @@ function wo_notify(PDO $db, string $actionType, string $woId, string $message, s
     }
 }
 
+function wo_upload_before_photo(PDO $db): never
+{
+    AuthMiddleware::checkAccess('wo', 'U');
+    $woId = trim((string) ($_POST['wo_id'] ?? ''));
+    if ($woId === '') {
+        api_json_response(422, ['status' => 'error', 'message' => 'ID Work Order wajib diisi untuk upload foto.']);
+    }
+    api_require_work_order_access($db, $woId);
+
+    $file = $_FILES['photo'] ?? null;
+    if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        api_json_response(422, ['status' => 'error', 'message' => 'Pilih satu foto dokumentasi yang valid.']);
+    }
+    if ((int) ($file['size'] ?? 0) <= 0 || (int) $file['size'] > 5 * 1024 * 1024) {
+        api_json_response(422, ['status' => 'error', 'message' => 'Ukuran foto wajib lebih dari 0 dan maksimal 5 MB.']);
+    }
+
+    $tmpName = (string) ($file['tmp_name'] ?? '');
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($tmpName);
+    $extensions = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ];
+    if (!isset($extensions[$mime]) || @getimagesize($tmpName) === false) {
+        api_json_response(422, ['status' => 'error', 'message' => 'Foto harus berupa gambar JPEG, PNG, atau WebP yang valid.']);
+    }
+
+    $uploadDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'work_orders';
+    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0750, true) && !is_dir($uploadDir)) {
+        api_json_response(500, ['status' => 'error', 'message' => 'Direktori dokumentasi Work Order tidak dapat disiapkan.']);
+    }
+
+    $safeWoId = preg_replace('/[^A-Za-z0-9_-]/', '-', $woId) ?: 'WO';
+    $fileName = $safeWoId . '-' . bin2hex(random_bytes(12)) . '.' . $extensions[$mime];
+    $targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
+    if (!move_uploaded_file($tmpName, $targetPath)) {
+        api_json_response(500, ['status' => 'error', 'message' => 'Foto gagal disimpan pada server.']);
+    }
+
+    $relativePath = 'uploads/work_orders/' . $fileName;
+    try {
+        $db->beginTransaction();
+        $stmt = $db->prepare('UPDATE work_orders SET before_photo_url = :photo WHERE wo_id = :wo_id');
+        $stmt->execute([':photo' => $relativePath, ':wo_id' => $woId]);
+        wo_insert_timeline($db, $woId, 'DETAIL_UPDATE', null, null, 'Dokumentasi foto ditambahkan', $relativePath);
+        $db->commit();
+    } catch (Throwable $error) {
+        if ($db->inTransaction()) $db->rollBack();
+        if (is_file($targetPath)) unlink($targetPath);
+        error_log('WO photo upload failed: ' . $error->getMessage());
+        api_json_response(500, ['status' => 'error', 'message' => 'Referensi foto gagal ditautkan ke Work Order.']);
+    }
+
+    api_json_response(200, [
+        'status' => 'success',
+        'message' => 'Foto dokumentasi berhasil disimpan.',
+        'data' => ['woId' => $woId, 'beforePhotoUrl' => $relativePath],
+    ]);
+}
+
 if (!defined('API_SKIP_ROUTING') || API_SKIP_ROUTING !== true) {
 switch ($method) {
     case 'GET':
@@ -184,10 +246,16 @@ switch ($method) {
         break;
 
     case 'POST':
+        if ((string) ($_GET['action'] ?? '') === 'upload-photo') {
+            wo_upload_before_photo($db);
+        }
         AuthMiddleware::checkAccess('wo', 'C');
         $data = json_decode(file_get_contents('php://input'), true);
         if (!$data || empty($data['wo_id']) || empty($data['asset_id'])) {
             api_json_response(422, ['status' => 'error', 'message' => 'ID Work Order dan aset wajib diisi.']);
+        }
+        if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{2,49}$/', (string) $data['wo_id'])) {
+            api_json_response(422, ['status' => 'error', 'message' => 'Format ID Work Order tidak valid.']);
         }
         api_require_asset_access($db, (string) $data['asset_id']);
 
@@ -208,12 +276,28 @@ switch ($method) {
 
         try {
             $db->beginTransaction();
+            $assetStmt = $db->prepare(
+                'SELECT asset_id, asset_code, alias_name, category, type, status, last_hm_km
+                 FROM assets WHERE asset_id = :asset_id FOR UPDATE'
+            );
+            $assetStmt->execute([':asset_id' => (string) $data['asset_id']]);
+            $asset = $assetStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$asset) {
+                throw new InvalidArgumentException('Aset Work Order tidak ditemukan.');
+            }
+            $ticket = WorkOrderSupport::normalizeTicketInput($data, $asset);
             $stmt = $db->prepare(
                 'INSERT INTO work_orders
-                 (wo_id, asset_id, issue_description, status, priority, maintenance_type,
-                  assigned_mechanic, root_cause, repair_action, is_downtime, downtime_formatted)
-                 VALUES (:wo_id, :asset_id, :issue, :status, :priority, :maintenance_type,
-                         :mechanic, :root_cause, :repair_action, :is_downtime, :downtime_formatted)'
+                 (wo_id, asset_id, hull_number, equipment_type, current_hm_km, trouble_at,
+                  raw_location, issue_description, status, priority, maintenance_type,
+                  assigned_mechanic, assigned_mechanics_json, root_cause, repair_action,
+                  is_downtime, is_forced_operation, mitigation_action, downtime_formatted,
+                  repair_started_at, estimated_completion_at)
+                 VALUES (:wo_id, :asset_id, :hull_number, :equipment_type, :current_hm_km, :trouble_at,
+                         :raw_location, :issue, :status, :priority, :maintenance_type,
+                         :mechanic, :mechanics_json, :root_cause, :repair_action,
+                         :is_downtime, :is_forced_operation, :mitigation_action, :downtime_formatted,
+                         :repair_started_at, :estimated_completion_at)'
             );
             $stmt->execute([
                 ':wo_id' => (string) $data['wo_id'],
@@ -222,16 +306,42 @@ switch ($method) {
                 ':status' => $status,
                 ':priority' => $priority,
                 ':maintenance_type' => $maintenanceType,
+                ':hull_number' => $ticket['hull_number'],
+                ':equipment_type' => $ticket['equipment_type'],
+                ':current_hm_km' => $ticket['current_hm_km'],
+                ':trouble_at' => $ticket['trouble_at'],
+                ':raw_location' => $ticket['raw_location'],
+                ':mechanic' => $ticket['assigned_mechanic'],
+                ':mechanics_json' => $ticket['assigned_mechanics_json'],
                 ':mechanic' => $mechanic,
                 ':root_cause' => trim((string) ($data['root_cause'] ?? '')) ?: null,
                 ':repair_action' => trim((string) ($data['repair_action'] ?? '')) ?: null,
-                ':is_downtime' => !empty($data['is_downtime']) ? 1 : 0,
-                ':downtime_formatted' => !empty($data['is_downtime']) ? '0 jam 00 menit' : '-',
+                ':is_downtime' => $ticket['is_downtime'],
+                ':is_forced_operation' => $ticket['is_forced_operation'],
+                ':mitigation_action' => $ticket['mitigation_action'],
+                ':downtime_formatted' => $ticket['is_downtime'] ? '0 jam 00 menit' : '-',
+                ':repair_started_at' => $ticket['repair_started_at'],
+                ':estimated_completion_at' => $ticket['estimated_completion_at'],
             ]);
-            wo_insert_timeline($db, (string) $data['wo_id'], 'CREATED', null, $status, 'Work Order dibuat', $issue);
+            $assetUpdate = $db->prepare(
+                'UPDATE assets
+                 SET status = :status,
+                     last_hm_km = GREATEST(COALESCE(last_hm_km, 0), :current_hm_km)
+                 WHERE asset_id = :asset_id'
+            );
+            $assetUpdate->execute([
+                ':status' => $ticket['asset_status'],
+                ':current_hm_km' => $ticket['current_hm_km'],
+                ':asset_id' => (string) $data['asset_id'],
+            ]);
+            $timelineDescription = $issue;
+            if ($ticket['is_forced_operation']) {
+                $timelineDescription .= "\nRFU Bersyarat: " . $ticket['mitigation_action'];
+            }
+            wo_insert_timeline($db, (string) $data['wo_id'], 'CREATED', null, $status, 'Work Order dibuat', $timelineDescription);
             $db->commit();
 
-            $mechanic = trim((string) ($data['assigned_mechanic'] ?? 'Belum ada PIC'));
+            $mechanic = $ticket['assigned_mechanic'];
             wo_notify(
                 $db,
                 'WO_CREATE',
@@ -241,7 +351,18 @@ switch ($method) {
                 (string) $data['asset_id']
             );
 
-            echo json_encode(['status' => 'success', 'message' => 'Work Order berhasil dibuat.']);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Work Order berhasil dibuat.',
+                'data' => [
+                    'woId' => (string) $data['wo_id'],
+                    'assetStatus' => $ticket['asset_status'],
+                    'isForcedOperation' => (bool) $ticket['is_forced_operation'],
+                ],
+            ]);
+        } catch (InvalidArgumentException $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            api_json_response(422, ['status' => 'error', 'message' => $e->getMessage()]);
         } catch (Throwable $e) {
             if ($db->inTransaction()) $db->rollBack();
             http_response_code(500);
@@ -270,6 +391,16 @@ switch ($method) {
                 api_json_response(404, ['status' => 'error', 'message' => 'Work Order tidak ditemukan.']);
             }
 
+            $assetStmt = $db->prepare(
+                'SELECT asset_id, asset_code, alias_name, category, type, status, last_hm_km
+                 FROM assets WHERE asset_id = :asset_id FOR UPDATE'
+            );
+            $assetStmt->execute([':asset_id' => (string) $current['asset_id']]);
+            $asset = $assetStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$asset) {
+                throw new RuntimeException('Aset Work Order tidak ditemukan.');
+            }
+
             if (isset($data['assigned_mechanics']) && is_array($data['assigned_mechanics'])) {
                 $data['assigned_mechanic'] = trim(implode(', ', array_filter(array_map('trim', $data['assigned_mechanics']))));
             }
@@ -288,6 +419,65 @@ switch ($method) {
             if (isset($data['maintenance_type'])) {
                 $fields[] = 'maintenance_type = :maintenance_type';
                 $params[':maintenance_type'] = wo_validate_enum('jenis pemeliharaan', (string) $data['maintenance_type'], WO_MAINTENANCE_TYPES);
+            }
+
+            $extendedKeys = [
+                'hull_number' => 'hullNumber',
+                'equipment_type' => 'equipmentType',
+                'current_hm_km' => 'currentHmKm',
+                'trouble_at' => 'troubleAt',
+                'raw_location' => 'rawLocation',
+                'repair_started_at' => 'repairStartedAt',
+                'estimated_completion_at' => 'estimatedCompletionAt',
+                'is_forced_operation' => 'isForcedOperation',
+                'is_downtime' => 'isDowntime',
+                'mitigation_action' => 'mitigationAction',
+                'assigned_mechanics' => 'assignedMechanics',
+            ];
+            $mergedTicketInput = $current;
+            $hasExtendedUpdate = false;
+            foreach ($extendedKeys as $snakeKey => $camelKey) {
+                if (array_key_exists($snakeKey, $data)) {
+                    $mergedTicketInput[$snakeKey] = $data[$snakeKey];
+                    $hasExtendedUpdate = true;
+                } elseif (array_key_exists($camelKey, $data)) {
+                    $mergedTicketInput[$snakeKey] = $data[$camelKey];
+                    $hasExtendedUpdate = true;
+                }
+            }
+
+            $ticket = null;
+            if ($hasExtendedUpdate) {
+                $ticket = WorkOrderSupport::normalizeTicketInput($mergedTicketInput, $asset);
+                $simpleExtendedColumns = [
+                    'hull_number', 'equipment_type', 'current_hm_km', 'trouble_at',
+                    'raw_location', 'repair_started_at', 'estimated_completion_at',
+                    'mitigation_action',
+                ];
+                foreach ($simpleExtendedColumns as $column) {
+                    $camelKey = $extendedKeys[$column];
+                    if (array_key_exists($column, $data) || array_key_exists($camelKey, $data)) {
+                        $fields[] = "{$column} = :{$column}";
+                        $params[":{$column}"] = $ticket[$column];
+                    }
+                }
+                if (array_key_exists('assigned_mechanics', $data) || array_key_exists('assignedMechanics', $data)) {
+                    $fields[] = 'assigned_mechanics_json = :assigned_mechanics_json';
+                    $fields[] = 'assigned_mechanic = :assigned_mechanic_from_list';
+                    $params[':assigned_mechanics_json'] = $ticket['assigned_mechanics_json'];
+                    $params[':assigned_mechanic_from_list'] = $ticket['assigned_mechanic'];
+                }
+                if (
+                    array_key_exists('is_forced_operation', $data) || array_key_exists('isForcedOperation', $data)
+                    || array_key_exists('is_downtime', $data) || array_key_exists('isDowntime', $data)
+                ) {
+                    $fields[] = 'is_forced_operation = :is_forced_operation';
+                    $fields[] = 'is_downtime = :is_downtime_extended';
+                    $fields[] = 'downtime_formatted = :downtime_formatted_extended';
+                    $params[':is_forced_operation'] = $ticket['is_forced_operation'];
+                    $params[':is_downtime_extended'] = $ticket['is_downtime'];
+                    $params[':downtime_formatted_extended'] = $ticket['is_downtime'] ? ($current['downtime_formatted'] ?: '0 jam 00 menit') : '-';
+                }
             }
 
             $newStatus = (string) $current['status'];
@@ -330,6 +520,23 @@ switch ($method) {
             $stmt = $db->prepare('UPDATE work_orders SET ' . implode(', ', array_unique($fields)) . ' WHERE wo_id = :id');
             $stmt->execute($params);
 
+            if ($ticket !== null && (
+                array_key_exists('current_hm_km', $data) || array_key_exists('currentHmKm', $data)
+                || array_key_exists('is_forced_operation', $data) || array_key_exists('isForcedOperation', $data)
+                || array_key_exists('is_downtime', $data) || array_key_exists('isDowntime', $data)
+            )) {
+                $assetUpdate = $db->prepare(
+                    'UPDATE assets SET status = :status,
+                     last_hm_km = GREATEST(COALESCE(last_hm_km, 0), :current_hm_km)
+                     WHERE asset_id = :asset_id'
+                );
+                $assetUpdate->execute([
+                    ':status' => $ticket['asset_status'],
+                    ':current_hm_km' => $ticket['current_hm_km'],
+                    ':asset_id' => (string) $current['asset_id'],
+                ]);
+            }
+
             $action = trim((string) ($data['repair_action'] ?? ''));
             if ($statusChanged) {
                 wo_insert_timeline(
@@ -361,6 +568,9 @@ switch ($method) {
             );
 
             echo json_encode(['status' => 'success', 'message' => 'Work Order berhasil diperbarui.']);
+        } catch (InvalidArgumentException $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            api_json_response(422, ['status' => 'error', 'message' => $e->getMessage()]);
         } catch (Throwable $e) {
             if ($db->inTransaction()) $db->rollBack();
             http_response_code(500);

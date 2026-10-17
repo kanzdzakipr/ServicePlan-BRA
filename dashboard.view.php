@@ -26,7 +26,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261017-wo-ui-1"></script>
+    <script src="scripts/dashboard.js?v=20261017-wo-backend-1"></script>
     <script src="scripts/unit-properties.js?v=20260827-1"></script>
 </head>
 
@@ -3550,8 +3550,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         </div>
                         <div class="wo-field">
                             <label for="nwo-photo-input">Dokumentasi foto lapangan</label>
-                            <label class="wo-photo-dropzone" id="nwo-photo-dropzone" for="nwo-photo-input"><i class="fa-solid fa-camera"></i><strong>Pilih atau jatuhkan foto</strong><small>JPG, PNG, atau WebP &middot; preview lokal</small></label>
-                            <input id="nwo-photo-input" class="wo-file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="previewNewWOPhotos(this.files)">
+                            <label class="wo-photo-dropzone" id="nwo-photo-dropzone" for="nwo-photo-input"><i class="fa-solid fa-camera"></i><strong>Pilih atau jatuhkan foto</strong><small>JPG, PNG, atau WebP &middot; maksimal 5 MB</small></label>
+                            <input id="nwo-photo-input" class="wo-file-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="previewNewWOPhotos(this.files)">
                             <div class="wo-photo-preview" id="nwo-photo-preview"></div>
                         </div>
                     </div>
@@ -4323,6 +4323,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     assignedTo: String(wo.assignedTo ?? wo.assigned_mechanic ?? 'Belum ada PIC'),
                     rootCause: String(wo.rootCause ?? wo.root_cause ?? ''),
                     repairAction: String(wo.repairAction ?? wo.repair_action ?? ''),
+                    hullNumber: String(wo.hullNumber ?? wo.hull_number ?? ''),
+                    equipmentType: String(wo.equipmentType ?? wo.equipment_type ?? ''),
+                    currentHmKm: Number(wo.currentHmKm ?? wo.current_hm_km ?? 0),
+                    troubleAt: wo.troubleAt ?? wo.trouble_at ?? null,
+                    rawLocation: String(wo.rawLocation ?? wo.raw_location ?? ''),
+                    isForcedOperation: Boolean(Number(wo.isForcedOperation ?? wo.is_forced_operation ?? 0)),
+                    mitigationAction: String(wo.mitigationAction ?? wo.mitigation_action ?? ''),
+                    estimatedCompletionAt: wo.estimatedCompletionAt ?? wo.estimated_completion_at ?? null,
+                    beforePhotoUrl: wo.beforePhotoUrl ?? wo.before_photo_url ?? null,
                     reportedAt: wo.reportedAt ?? wo.reported_at ?? null,
                     repairStartedAt: wo.repairStartedAt ?? wo.repair_started_at ?? null,
                     closedAt: wo.closedAt ?? wo.closed_at ?? null,
