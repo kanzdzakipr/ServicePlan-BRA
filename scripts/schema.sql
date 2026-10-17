@@ -82,6 +82,36 @@ CREATE TABLE `role_permissions` (
     UNIQUE KEY `uk_role_perm` (`role_id`, `permission_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Notification events retain their historical payload; delivery/read state is per user.
+-- Legacy events are not backfilled because their audience cannot be inferred safely.
+CREATE TABLE IF NOT EXISTS `system_notifications` (
+    `notification_id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `menu_name` VARCHAR(100) NOT NULL,
+    `user_name` VARCHAR(100) NOT NULL,
+    `user_role` VARCHAR(50) DEFAULT 'User',
+    `action_type` VARCHAR(50) NOT NULL,
+    `title` VARCHAR(255) NOT NULL,
+    `message` TEXT NOT NULL,
+    `involved_parties_json` JSON NULL,
+    `related_tables_json` JSON NULL,
+    `is_read` TINYINT(1) DEFAULT 0,
+    `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_notification_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `notification_recipients` (
+    `notification_id` INT NOT NULL,
+    `user_id` INT NOT NULL,
+    `location_id` INT NULL,
+    `read_at` DATETIME NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`notification_id`, `user_id`),
+    KEY `idx_notification_recipient_user_read` (`user_id`, `read_at`, `created_at`),
+    FOREIGN KEY (`notification_id`) REFERENCES `system_notifications` (`notification_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+    FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ----------------------------------------------------------------------------
 -- 3. MASTER ASSETS (Fleet & Equipment Inventory with Real-Time Spatial Tracking)
 -- ----------------------------------------------------------------------------

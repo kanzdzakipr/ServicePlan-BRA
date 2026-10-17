@@ -5,6 +5,7 @@ require_once 'db.php';
 require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
+require_once dirname(__DIR__) . '/core/NotificationAudience.php';
 
 $db = Database::getInstance();
 ReportIntegration::ensureTables($db);
@@ -131,6 +132,7 @@ function wo_notify(PDO $db, string $actionType, string $woId, string $message, s
             ':parties' => json_encode($parties, JSON_UNESCAPED_UNICODE),
             ':tables' => json_encode($tablesData, JSON_UNESCAPED_UNICODE),
         ]);
+        NotificationAudience::deliverWo($db, (int) $db->lastInsertId(), $locationId, $actor['id']);
     } catch (Throwable $error) {
         error_log('Work Order notification failed: ' . $error->getMessage());
     }

@@ -596,6 +596,7 @@ final class WorkOrderSupport
         ?int $locationId = null
     ): void {
         try {
+            require_once __DIR__ . '/NotificationAudience.php';
             $user = function_exists('api_current_user') ? api_current_user() : [];
             $actorName = trim((string) ($user['full_name'] ?? $user['username'] ?? 'Planner'));
             $actorRole = trim((string) ($user['role_name'] ?? $user['role'] ?? 'Planner'));
@@ -667,6 +668,7 @@ final class WorkOrderSupport
                 ':parties' => json_encode($parties, JSON_UNESCAPED_UNICODE),
                 ':tables' => json_encode($tablesData, JSON_UNESCAPED_UNICODE),
             ]);
+            NotificationAudience::deliverWo($db, (int) $db->lastInsertId(), $locationId, isset($user['id']) ? (int) $user['id'] : null);
         } catch (Throwable $e) {
             error_log('WorkOrderSupport notification failed: ' . $e->getMessage());
         }

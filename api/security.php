@@ -573,6 +573,7 @@ function api_route_permission(): ?string
         'productivity.php' => 'dashboard.read',
         'kpi.php' => 'dashboard.read',
         'contracts.php' => $readWrite('dashboard.read', 'assets.write'),
+        'notifications.php' => 'dashboard.read',
         'reports.php' => $readWrite('reports.read', 'reports.write'),
         'report_references.php' => 'reports.read',
         'archive.php' => $readWrite('archive.read', 'archive.write'),

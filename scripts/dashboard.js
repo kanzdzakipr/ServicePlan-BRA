@@ -21212,24 +21212,31 @@ window.renderArchiveTables = function() {
         }
     ];
 
-    let systemNotificationsState = [...initialNotifications];
+    // The API is authoritative; demo notifications must never appear for real users.
+    let systemNotificationsState = [];
     let currentFilter = 'ALL';
 
     function fetchNotificationsFromApi() {
         fetch('api/notifications.php?limit=50')
             .then(res => res.json())
             .then(res => {
-                if (res.status === 'success' && Array.isArray(res.data) && res.data.length > 0) {
+                if (res.status === 'success' && Array.isArray(res.data)) {
                     systemNotificationsState = res.data;
                     updateBadge();
                     const panel = document.getElementById('notificationDropdownPanel');
                     if (panel && panel.style.display !== 'none') {
                         renderNotifications();
                     }
+                } else {
+                    systemNotificationsState = [];
+                    updateBadge();
+                    renderNotifications();
                 }
             })
             .catch(() => {
-                // Fallback to local state if API is offline
+                systemNotificationsState = [];
+                updateBadge();
+                renderNotifications();
             });
     }
 
@@ -21332,7 +21339,8 @@ window.renderArchiveTables = function() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'MARK_READ', notification_id: id })
-            }).catch(() => {});
+            }).then(fetchNotificationsFromApi)
+              .catch(fetchNotificationsFromApi);
         }
     };
 
@@ -21346,7 +21354,8 @@ window.renderArchiveTables = function() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'MARK_ALL_READ' })
-        }).catch(() => {});
+        }).then(fetchNotificationsFromApi)
+          .catch(fetchNotificationsFromApi);
     };
 
     window.toggleJsonBlock = function(id, event) {
@@ -21373,14 +21382,7 @@ window.renderArchiveTables = function() {
             timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
         };
 
-        systemNotificationsState.unshift(newNotif);
-        updateBadge();
-        const panel = document.getElementById('notificationDropdownPanel');
-        if (panel && panel.style.display !== 'none') {
-            renderNotifications();
-        }
-
-        // Sync to MySQL API
+        // Show only notifications accepted and scoped by the server.
         fetch('api/notifications.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -21395,7 +21397,8 @@ window.renderArchiveTables = function() {
                 involved_parties_json: newNotif.involvedParties,
                 related_tables_json: newNotif.relatedTables
             })
-        }).catch(() => {});
+        }).then(res => { if (res.ok) fetchNotificationsFromApi(); })
+          .catch(() => {});
     };
 
     function updateBadge() {
@@ -21534,11 +21537,13 @@ window.renderArchiveTables = function() {
     // Initialize badge count on DOMReady
     document.addEventListener('DOMContentLoaded', function() {
         updateBadge();
+        fetchNotificationsFromApi();
     });
 
     // Also run immediately if DOM is already ready
     if (document.readyState === 'interactive' || document.readyState === 'complete') {
         updateBadge();
+        fetchNotificationsFromApi();
     }
 })();
 

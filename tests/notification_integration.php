@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 define('API_AUTH_OPTIONAL', true);
 define('API_SKIP_ROUTING', true);
+ini_set('session.save_path', sys_get_temp_dir());
 putenv('APP_ENV=local');
 putenv('DB_NAME=u646470441_ServicePlanBRA');
 putenv('DB_USER=root');
@@ -51,12 +52,11 @@ require_once __DIR__ . '/../api/work_orders.php';
 
 echo "=== MEMULAI TEST INTEGRASI REVISI 6: NOTIFIKASI WO BARU & AUDIENCE ===\n\n";
 
-$testWoId = 'QA-BRIAN-WO-NOTIF-01';
+$testWoId = 'QA-BRIAN-WO-NOTIF-' . getmypid();
 $testAssetId = 'DT-00049';
 
-// 1. Cleanup awal
-$db->exec("DELETE FROM system_notifications WHERE title LIKE '%{$testWoId}%'");
-$db->exec("DELETE FROM work_orders WHERE wo_id = '{$testWoId}'");
+// All writes are rolled back. Never delete a pre-existing QA or real record.
+$db->beginTransaction();
 
 // 2. Test pemanggilan wo_notify (Simulasi Create WO)
 require_once __DIR__ . '/../api/work_orders.php';
@@ -75,6 +75,9 @@ testAssert(in_array('Maintenance Planner', $parties, true), "Audience mencakup '
 $related = json_decode($notif['related_tables_json'] ?? '{}', true);
 testAssert(($related['wo_id'] ?? '') === $testWoId, "Related JSON menyimpan relasi wo_id: {$testWoId}");
 testAssert(($related['asset_id'] ?? '') === $testAssetId, "Related JSON menyimpan relasi asset_id: {$testAssetId}");
+$recipientCountStmt = $db->prepare('SELECT COUNT(*) FROM notification_recipients WHERE notification_id = :id');
+$recipientCountStmt->execute([':id' => (int) $notif['notification_id']]);
+testAssert((int) $recipientCountStmt->fetchColumn() > 0, 'Penerima notifikasi WO tersimpan per akun');
 
 // 3. Test Idempotency (retry cepat tidak menduplikasi notifikasi)
 $countBefore = (int) $db->query("SELECT COUNT(*) FROM system_notifications WHERE title LIKE '%{$testWoId}%'")->fetchColumn();
@@ -94,14 +97,23 @@ WorkOrderSupport::notify($db, 'SERVICE_REQUEST', "Permintaan Layanan WO #{$testW
 $srvNotif = $db->query("SELECT * FROM system_notifications WHERE action_type = 'SERVICE_REQUEST' AND title LIKE '%{$testWoId}%'")->fetch();
 testAssert(!empty($srvNotif), "Notifikasi permintaan layanan (SERVICE_REQUEST) berhasil tersimpan");
 
-// 6. Test Mark Read
+// 6. Test Mark Read per recipient (not global system_notifications.is_read)
 $testNotifId = (int) $notif['notification_id'];
-$db->exec("UPDATE system_notifications SET is_read = 1 WHERE notification_id = {$testNotifId}");
-$readStatus = (int) $db->query("SELECT is_read FROM system_notifications WHERE notification_id = {$testNotifId}")->fetchColumn();
-testAssert($readStatus === 1, "Status is_read berhasil diperbarui menjadi 1 (dibaca)");
+$recipient = $db->prepare('SELECT user_id, location_id FROM notification_recipients WHERE notification_id = :id ORDER BY user_id LIMIT 1');
+$recipient->execute([':id' => $testNotifId]);
+$recipientRow = $recipient->fetch();
+testAssert((bool) $recipientRow, 'Recipient tersedia untuk uji status baca');
+if ($recipientRow) {
+    $recipientId = (int) $recipientRow['user_id'];
+    $recipientLocation = $recipientRow['location_id'] !== null ? (int) $recipientRow['location_id'] : null;
+    testAssert(NotificationAudience::markRead($db, $recipientId, $recipientLocation, false, $testNotifId), 'Penerima dapat menandai notifikasi sendiri');
+    $readStmt = $db->prepare('SELECT read_at FROM notification_recipients WHERE notification_id = :id AND user_id = :user_id');
+    $readStmt->execute([':id' => $testNotifId, ':user_id' => $recipientId]);
+    testAssert($readStmt->fetchColumn() !== null, 'read_at penerima terisi');
+}
 
-// 7. Cleanup
-$db->exec("DELETE FROM system_notifications WHERE title LIKE '%{$testWoId}%'");
+// 7. Roll back every synthetic event and recipient row.
+$db->rollBack();
 
 echo "\n=======================================================\n";
 echo "RINGKASAN HASIL TEST INTEGRASI REVISI 6: {$passed} PASSED, {$failed} FAILED\n";

@@ -1,174 +1,111 @@
 <?php
-/**
- * System Notifications API Endpoint for ServicePlan-BRA
- * Handles fetching, creating, and marking notifications as read in MySQL database
- */
+declare(strict_types=1);
 
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/NotificationAudience.php';
+
 $db = Database::getInstance();
-$method = $_SERVER['REQUEST_METHOD'];
+api_require_permission('dashboard.read');
+$user = api_current_user();
+$userId = (int) ($user['id'] ?? 0);
+$locationId = api_current_location_id();
+$globalScope = api_has_global_location_scope();
+$method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
-// Ensure system_notifications table exists
+if ($method === 'GET') {
+    $limit = max(1, min(100, (int) ($_GET['limit'] ?? 50)));
+    $rows = NotificationAudience::listForUser($db, $userId, $locationId, $globalScope, $limit);
+    $results = array_map(static function (array $row): array {
+        $related = json_decode((string) ($row['related_tables_json'] ?? '{}'), true) ?: [];
+        $woId = $related['wo_id'] ?? null;
+        $assetId = $related['asset_id'] ?? null;
+        foreach (($related['records'] ?? []) as $record) {
+            if (!$woId && ($record['table'] ?? '') === 'work_orders') $woId = (string) ($record['id'] ?? '');
+            if (!$assetId && ($record['table'] ?? '') === 'assets') $assetId = (string) ($record['id'] ?? '');
+        }
+        return [
+            'id' => (int) $row['notification_id'],
+            'menu' => (string) $row['menu_name'],
+            'badgeClass' => strtolower(explode(' ', trim((string) $row['menu_name']))[0] ?: 'wo'),
+            'user' => (string) $row['user_name'],
+            'role' => (string) $row['user_role'],
+            'actionType' => (string) $row['action_type'],
+            'title' => (string) $row['title'],
+            'message' => (string) $row['message'],
+            'involvedParties' => json_decode((string) ($row['involved_parties_json'] ?? '[]'), true) ?: [],
+            'relatedTables' => $related,
+            'woId' => $woId,
+            'assetId' => $assetId,
+            'locationId' => $related['location_id'] ?? null,
+            'isRead' => $row['read_at'] !== null,
+            'timestamp' => date('H:i \W\I\B (d M Y)', strtotime((string) $row['created_at'])),
+        ];
+    }, $rows);
+    api_json_response(200, ['status' => 'success', 'data' => $results]);
+}
+
+if ($method !== 'POST') {
+    api_json_response(405, ['status' => 'error', 'code' => 'METHOD_NOT_ALLOWED', 'message' => 'Metode tidak didukung.']);
+}
+
+$input = json_decode((string) file_get_contents('php://input'), true);
+if (!is_array($input)) {
+    api_json_response(422, ['status' => 'error', 'code' => 'INVALID_PAYLOAD', 'message' => 'Payload tidak valid.']);
+}
+$action = strtoupper(trim((string) ($input['action'] ?? 'CREATE')));
+if ($action === 'MARK_READ') {
+    $id = (int) ($input['notification_id'] ?? $input['id'] ?? 0);
+    if ($id <= 0) api_json_response(422, ['status' => 'error', 'message' => 'ID notifikasi tidak valid.']);
+    if (!NotificationAudience::markRead($db, $userId, $locationId, $globalScope, $id)) {
+        api_json_response(404, ['status' => 'error', 'code' => 'NOT_FOUND', 'message' => 'Notifikasi tidak ditemukan.']);
+    }
+    api_json_response(200, ['status' => 'success', 'message' => 'Notifikasi ditandai dibaca.']);
+}
+if ($action === 'MARK_ALL_READ') {
+    $updated = NotificationAudience::markAllRead($db, $userId, $locationId, $globalScope);
+    api_json_response(200, ['status' => 'success', 'updated' => $updated]);
+}
+if ($action !== 'CREATE') {
+    api_json_response(422, ['status' => 'error', 'code' => 'INVALID_ACTION', 'message' => 'Aksi notifikasi tidak dikenal.']);
+}
+
+// Client-generated notifications are private to the authenticated actor.
+// WO/part/service audience is generated only by trusted server-side producers.
+$title = trim((string) ($input['title'] ?? 'Pembaruan Aktivitas Sistem'));
+$message = trim((string) ($input['message'] ?? 'Pembaruan transaksi tercatat di sistem.'));
+if ($title === '' || $message === '' || mb_strlen($title) > 255 || mb_strlen($message) > 10000) {
+    api_json_response(422, ['status' => 'error', 'code' => 'VALIDATION_ERROR', 'message' => 'Judul atau isi notifikasi tidak valid.']);
+}
+$related = $input['related_tables_json'] ?? $input['relatedTables'] ?? [];
+if (!is_array($related)) $related = [];
+$related['location_id'] = $locationId;
+$actorName = trim((string) ($user['full_name'] ?? $user['username'] ?? 'Pengguna'));
+$actorRole = trim((string) ($user['primary_role'] ?? 'User'));
+$stmt = $db->prepare(
+    'INSERT INTO system_notifications
+     (menu_name, user_name, user_role, action_type, title, message,
+      involved_parties_json, related_tables_json, is_read, created_at)
+     VALUES (:menu, :user_name, :user_role, :action_type, :title, :message,
+             :parties, :related, 0, NOW())'
+);
+$db->beginTransaction();
 try {
-    $db->exec("CREATE TABLE IF NOT EXISTS `system_notifications` (
-      `notification_id` int NOT NULL AUTO_INCREMENT,
-      `menu_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-      `user_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-      `user_role` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'User',
-      `action_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-      `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-      `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-      `involved_parties_json` json DEFAULT NULL,
-      `related_tables_json` json DEFAULT NULL,
-      `is_read` tinyint(1) DEFAULT '0',
-      `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (`notification_id`),
-      KEY `idx_created_at` (`created_at`),
-      KEY `idx_is_read` (`is_read`),
-      KEY `idx_menu_name` (`menu_name`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-} catch (PDOException $e) {
-    // Ignore error if table exists
+    $stmt->execute([
+        ':menu' => mb_substr(trim((string) ($input['menu_name'] ?? $input['menu'] ?? 'System')), 0, 100),
+        ':user_name' => $actorName,
+        ':user_role' => $actorRole,
+        ':action_type' => mb_substr(trim((string) ($input['action_type'] ?? 'UPDATE')), 0, 50),
+        ':title' => $title,
+        ':message' => $message,
+        ':parties' => json_encode([], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+        ':related' => json_encode($related, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+    ]);
+    $newId = (int) $db->lastInsertId();
+    NotificationAudience::deliverSelf($db, $newId, $userId, $locationId);
+    $db->commit();
+} catch (Throwable $error) {
+    $db->rollBack();
+    error_log('Notification CREATE failed: ' . $error->getMessage());
+    api_json_response(500, ['status' => 'error', 'code' => 'NOTIFICATION_FAILED', 'message' => 'Notifikasi gagal disimpan.']);
 }
-
-switch ($method) {
-    case 'GET':
-        try {
-            $limit = isset($_GET['limit']) ? max(1, min(100, (int)$_GET['limit'])) : 50;
-            $user = function_exists('api_current_user') ? api_current_user() : [];
-            $userLocationId = !empty($user['location_id']) ? (int)$user['location_id'] : null;
-            $userRole = strtoupper(trim((string)($user['role_name'] ?? $user['role'] ?? '')));
-            $isAdmin = in_array($userRole, ['ADMIN', 'SUPER_ADMIN', 'ADMINISTRATOR', 'HEAD_OF_EQUIPMENT'], true);
-
-            $sql = "SELECT * FROM system_notifications";
-            $params = [];
-            if (!$isAdmin && $userLocationId !== null) {
-                $sql .= " WHERE (
-                    JSON_UNQUOTE(JSON_EXTRACT(related_tables_json, '$.location_id')) IS NULL
-                    OR JSON_UNQUOTE(JSON_EXTRACT(related_tables_json, '$.location_id')) = ''
-                    OR JSON_UNQUOTE(JSON_EXTRACT(related_tables_json, '$.location_id')) = 'null'
-                    OR JSON_UNQUOTE(JSON_EXTRACT(related_tables_json, '$.location_id')) = :loc_id
-                )";
-                $params[':loc_id'] = (string)$userLocationId;
-            }
-            $sql .= " ORDER BY created_at DESC LIMIT :limit";
-            $stmt = $db->prepare($sql);
-            foreach ($params as $k => $v) {
-                $stmt->bindValue($k, $v);
-            }
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->execute();
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            $results = array_map(function($row) {
-                $related = json_decode($row['related_tables_json'] ?? '{}', true) ?: [];
-                $woId = $related['wo_id'] ?? null;
-                if (!$woId && isset($related['records']) && is_array($related['records'])) {
-                    foreach ($related['records'] as $rec) {
-                        if (($rec['table'] ?? '') === 'work_orders' && !empty($rec['id'])) {
-                            $woId = (string) $rec['id'];
-                            break;
-                        }
-                    }
-                }
-                $assetId = $related['asset_id'] ?? null;
-                if (!$assetId && isset($related['records']) && is_array($related['records'])) {
-                    foreach ($related['records'] as $rec) {
-                        if (($rec['table'] ?? '') === 'assets' && !empty($rec['id'])) {
-                            $assetId = (string) $rec['id'];
-                            break;
-                        }
-                    }
-                }
-
-                return [
-                    'id' => (int)$row['notification_id'],
-                    'menu' => $row['menu_name'],
-                    'badgeClass' => strtolower(explode(' ', trim($row['menu_name']))[0] ?? 'wo'),
-                    'user' => $row['user_name'],
-                    'role' => $row['user_role'],
-                    'actionType' => $row['action_type'],
-                    'title' => $row['title'],
-                    'message' => $row['message'],
-                    'involvedParties' => json_decode($row['involved_parties_json'] ?? '[]', true) ?: [],
-                    'relatedTables' => $related,
-                    'woId' => $woId,
-                    'assetId' => $assetId,
-                    'locationId' => $related['location_id'] ?? null,
-                    'isRead' => (bool)$row['is_read'],
-                    'timestamp' => date('H:i \W\I\B (d M Y)', strtotime($row['created_at']))
-                ];
-            }, $rows);
-
-            echo json_encode(["status" => "success", "data" => $results]);
-        } catch (Exception $e) {
-            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
-        }
-        break;
-
-    case 'POST':
-        $input = json_decode(file_get_contents('php://input'), true);
-        if (!$input) {
-            echo json_encode(["status" => "error", "message" => "No notification data provided"]);
-            break;
-        }
-
-        $action = $input['action'] ?? 'CREATE';
-
-        if ($action === 'MARK_READ') {
-            $id = (int)($input['notification_id'] ?? $input['id'] ?? 0);
-            if ($id > 0) {
-                $stmt = $db->prepare("UPDATE system_notifications SET is_read = 1 WHERE notification_id = :id");
-                $stmt->execute([':id' => $id]);
-            }
-            echo json_encode(["status" => "success", "message" => "Notification marked as read"]);
-            break;
-        }
-
-        if ($action === 'MARK_ALL_READ') {
-            $db->exec("UPDATE system_notifications SET is_read = 1");
-            echo json_encode(["status" => "success", "message" => "All notifications marked as read"]);
-            break;
-        }
-
-        // CREATE
-        try {
-            $stmt = $db->prepare("INSERT INTO system_notifications 
-                (menu_name, user_name, user_role, action_type, title, message, involved_parties_json, related_tables_json, is_read, created_at) 
-                VALUES (:menu, :user, :role, :type, :title, :msg, :parties, :tables, :is_read, NOW())");
-
-            $menu = $input['menu_name'] ?? $input['menu'] ?? 'System';
-            $user = $input['user_name'] ?? $input['user'] ?? 'System User';
-            $role = $input['user_role'] ?? $input['role'] ?? 'User';
-            $type = $input['action_type'] ?? 'UPDATE';
-            $title = $input['title'] ?? 'Pembaruan Aktivitas Sistem';
-            $msg = $input['message'] ?? 'Pembaruan transaksi baru.';
-            $parties = json_encode($input['involved_parties_json'] ?? $input['involvedParties'] ?? []);
-            $tables = json_encode($input['related_tables_json'] ?? $input['relatedTables'] ?? new stdClass());
-            $isRead = !empty($input['is_read']) ? 1 : 0;
-
-            $stmt->execute([
-                ':menu' => $menu,
-                ':user' => $user,
-                ':role' => $role,
-                ':type' => $type,
-                ':title' => $title,
-                ':msg' => $msg,
-                ':parties' => $parties,
-                ':tables' => $tables,
-                ':is_read' => $isRead
-            ]);
-
-            $newId = (int)$db->lastInsertId();
-            echo json_encode(["status" => "success", "message" => "Notification created", "notification_id" => $newId]);
-        } catch (Exception $e) {
-            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
-        }
-        break;
-
-    default:
-        http_response_code(405);
-        echo json_encode(["status" => "error", "message" => "Method not allowed"]);
-        break;
-}
-?>
+api_json_response(201, ['status' => 'success', 'notification_id' => $newId]);
