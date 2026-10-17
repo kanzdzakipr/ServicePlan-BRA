@@ -1,27 +1,27 @@
 # 📊 Laporan Bobot & Persentase Kontribusi Pengerjaan Tim ServicePlan-BRA
 
 > **Repositori**: `kanzdzakipr/ServicePlan-BRA`  
-> **Tanggal Audit**: 17 Oktober 2026  
-> **Basis Audit Git**: `390b46c` (`main`/`origin/main`, 17 Oktober 2026)  
+> **Tanggal Audit**: 18 Oktober 2026  
+> **Basis Audit Git**: `b39285e` (`main`/`origin/main`, 18 Oktober 2026)  
 > **Metode Evaluasi**: Analisis Komparatif Multi-Faktor (jumlah commit, deliverable fitur, dampak arsitektur, risiko produksi yang ditutup, pengujian, data, dan dokumentasi). Angka `Git Numstat` dihitung dari commit non-merge dan dipakai sebagai bukti volume, bukan sebagai satu-satunya penentu bobot.  
 > **Skema Periode**: 
 > - **Term 1** (Periode Awal: s/d 27 Juli 2026) — `[CLOSED]`
 > - **Term 2** (Periode Lanjutan: 28 Juli – 28 Agustus 2026) — `[CLOSED FINAL]`
-> - **Term 3** (Periode Berjalan: 29 Agustus – 17 Oktober 2026) — `[OPEN / ONGOING - UPDATED]`
+> - **Term 3** (Periode Berjalan: 29 Agustus – 18 Oktober 2026) — `[OPEN / ONGOING - UPDATED PER 18 OKTOBER 2026]`
 
 ---
 
 ## 🏆 Ringkasan Persentase Kontribusi Tim
 
-### 📌 1. Akumulasi Total / All-Time (Term 1 + Term 2 + Term 3 per 17 Oktober 2026)
+### 📌 1. Akumulasi Total / All-Time (Term 1 + Term 2 + Term 3 per 18 Oktober 2026)
 
 | Rank | Kontributor / Contributor | Total Commit | Git Numstat `+ / -` (non-merge) | Bobot Kontribusi Fitur & Arsitektur Utama | **Persentase Kontribusi Akumulasi** |
 | :---: | :--- | :---: | :---: | :--- | :---: |
-| 🥇 | **briannugraha** | 111 (34,4%) | +114.152 / -47.133 | Lead Architecture & Roadmap, Blueprint Implementation Plan 1, 2, & 17 Okt 2026 (747 baris), Hybrid DB Config, Asset Population, Live Map & GPS, Fuel Anomaly Engine, Cost Control, Asset 360°, Productivity & KPI, ApexCharts Engine, Monitoring Unit Refurbishment, Heavy Equipment Properties & Diagnostics Inspector, Mobile navbar/CSS fixes, serta Dev-Ops tooling & Laragon sync automation (`sync_to_laragon.ps1`) | **33.7%** |
-| 🥈 | **seagrass489-cell** | 73 (22,6%) | +70.346 / -18.302 | Parser Engine 9.400+ baris, data completeness, backend laporan/form, arsitektur security server-side, authentication/session/CSRF/CORS/RBAC, upload hardening, attack simulation, automated security tests, CI quality gate, **Mobile Responsive Framework** (`mobile-responsive.js`, `dashboard.css`), automated mobile layout audit (`mobile_layout_audit.ps1`), dan audit rekapitulasi tim (`rekap-revisi-tim-brian.md`) | **25.0%** |
-| 🥉 | **kanzdzakipr** | 69 (21,4%) | +16.556 / -6.860 | Inisialisasi repositori, implementasi RBAC 10 roles & navigation guards, WO target status & autofill workflow, downtime split target/actual & overdue styling, monitoring cards active filter & global reset, maintenance routing, sistem arsip DB-synced (`archived_items`), migrasi Hostinger, anti-cache API, **Core Architecture Engines** (`CostLedger.php`, `ProductivityCalculator.php`, `WorkOrderSupport.php`, `AssetIdentity.php`), serta 4 Automated Integration Test Suites | **21.7%** |
-| 4 | **bisamelihat** | 70 (21,7%) | +109.274 / -66.084 | Fondasi struktur proyek, Prisma/seeder architecture, dokumentasi model sistem, prototipe dashboard, integrasi skill UI anti-slop, sprint UI overhaul A1–A9, Condition Monitoring interactive modal, Spare Part Card, People & KPI Standar Kinerja / Daftar SPL, serta **Sprint Integrasi Masif 30 Non-Merge Commits Term 3** (17+ modul logistik & operasional BHW, LHO, SPB, PPB, SPPU, P2H, A2B, BAPP, SPL, MDE, PM, backend database, dan sprint revisi rapat 1–8) | **19.6%** |
-| **TOTAL** | **4 Kontributor** | **323 Commit** | **+310.328 / -128.379** | **Skor dinormalisasi menjadi 100% berdasarkan bukti Git dan dampak deliverable komprehensif lintas 3 periode** | **100.0%** |
+| 🥇 | **briannugraha** | 116 (34,0%) | +117.003 / -47.322 | Lead Architecture & Roadmap, Blueprint Implementation Plan 1, 2, & 17 Okt 2026 (747 baris), Hybrid DB Config, Asset Population, Live Map & GPS, Fuel Anomaly Engine, Cost Control, Asset 360°, Productivity & KPI, ApexCharts Engine, Monitoring Unit Refurbishment, Heavy Equipment Properties & Diagnostics Inspector single-view, **Modul User Management CRUD Lengkap (`api/users.php`, UI modals), Redesign Besar Unit Properties (Galeri 3x3, Hyperlink Dokumen STNK/KIR/SILO/JO, Kartu Vitals, Modal Histori Tersembunyi), Hyperlink Hover Unit ID Executive Dashboard**, Mobile navbar/CSS fixes, serta Dev-Ops tooling & Laragon sync automation (`sync_to_laragon.ps1`) | **34.4%** |
+| 🥈 | **seagrass489-cell** | 76 (22,3%) | +73.079 / -18.719 | Parser Engine 9.400+ baris, data completeness, backend laporan/form, arsitektur security server-side, authentication/session/CSRF/CORS/RBAC, upload hardening, attack simulation, automated security tests, CI quality gate, **Mobile Responsive Framework** (`mobile-responsive.js`, `dashboard.css`), automated mobile layout audit (`mobile_layout_audit.ps1`), audit rekapitulasi tim (`rekap-revisi-tim-brian.md`), **Implementasi Audit Formula Matematika KPI** (`core/KpiCalculator.php`, `api/kpi.php`, `verify_kpi_math.php`), **Implementasi UI Tiket Work Order 12 Field** (`new_work_order_ui_smoke.js`), serta **Integrasi Work Order & KPI** | **25.4%** |
+| 🥉 | **kanzdzakipr** | 71 (20,8%) | +17.526 / -6.918 | Inisialisasi repositori, implementasi RBAC 10 roles & navigation guards, WO target status & autofill workflow, downtime split target/actual & overdue styling, monitoring cards active filter & global reset, maintenance routing, sistem arsip DB-synced (`archived_items`), migrasi Hostinger, anti-cache API, **Core Architecture Engines** (`CostLedger.php`, `ProductivityCalculator.php`, `WorkOrderSupport.php`, `AssetIdentity.php`), 4 Automated Integration Test Suites, **Penuntasan Fitur Non-WO Non-JO** (PM Hull multi-PIC, integrasi dropdown multi-mekanik, sinkronisasi notulensi), serta tata kelola database dump & branch governance | **21.0%** |
+| 4 | **bisamelihat** | 78 (22,9%) | +111.910 / -66.598 | Fondasi struktur proyek, Prisma/seeder architecture, dokumentasi model sistem, prototipe dashboard, integrasi skill UI anti-slop, sprint UI overhaul A1–A9, Condition Monitoring interactive modal, Spare Part Card, People & KPI Standar Kinerja / Daftar SPL, **Sprint Integrasi Masif 38 Non-Merge Commits Term 3** (17+ modul logistik & operasional BHW, LHO, SPB, PPB, SPPU, P2H, A2B, BAPP, SPL, MDE, PM, backend database), serta **Penuntasan 8 Batch Rencana Revisi 17 Okt 2026** (Batch 0 Baseline s/d Batch 7 Testing: notifikasi beda role `NotificationAudience`, identitas aset & audit nomor lambung, form tambah unit/onboarding PM `AssetOnboarding`, pencarian global aset `AssetSearch`, konsistensi WO/JO, gap bukti dokumen, anti-regresi biaya, dan smoke testing browser) | **19.2%** |
+| **TOTAL** | **4 Kontributor** | **341 Commit** | **+319.518 / -139.557** | **Skor dinormalisasi menjadi 100% berdasarkan bukti Git dan dampak deliverable komprehensif lintas 3 periode per 18 Oktober 2026** | **100.0%** |
 
 ---
 
@@ -49,17 +49,17 @@
 
 ---
 
-### 📌 4. Evaluasi Term 3 (Periode Berjalan: 29 Agustus – 17 Oktober 2026) — `[OPEN / ONGOING - UPDATED]`
+### 📌 4. Evaluasi Term 3 (Periode Berjalan: 29 Agustus – 18 Oktober 2026) — `[OPEN / ONGOING - UPDATED PER 18 OKTOBER 2026]`
 
-> *Status: Periode Term 3 mencatat 48 commit aktif dengan lonjakan akselerasi implementasi integrasi operasional, perancangan arsitektur engine bisnis, sistem responsif mobile, dan blueprint komprehensif rapat 17 Oktober 2026.*
+> *Status: Periode Term 3 mencatat 65 commit aktif dengan lonjakan akselerasi pengerjaan 8 batch revisi operasional, modul User Management, perombakan besar Unit Properties, formula audit KPI, antarmuka tiket WO 12 field, hyperlink hover Unit ID Executive Dashboard, dan automated test suites.*
 
 | Rank | Kontributor / Contributor | Commit Term 3 | Git Numstat `+ / -` (non-merge) | Fokus Deliverable & Dampak Teknis Term 3 | **Persentase Term 3** |
 | :---: | :--- | :---: | :---: | :--- | :---: |
-| 🥇 | **bisamelihat** | 31 (64,6%) | +20.181 / -659 | **Sprint Integrasi Modul Terbesar**: 30 commit non-merge meliputi integrasi modul pergudangan & logistik (BHW-IN, BHW-OUT, LHO 1 & 2, SPB, PPB, Procurement Monitoring, SPPU Yard, Bukti Kirim/Terima, Laporan BAPP), integrasi operasional (Form P2H, A2B, WO dari repair & overhaul, LPK ke PM, MDE ke Master Asset, GPS A2B), integrasi SPL & cutting bit, koneksi backend database, serta rangkaian revisi hasil rapat (Rev 3 WO, Rev 4 SPB, Rev 5, Rev 8) | **40.0%** |
-| 🥈 | **kanzdzakipr** | 4 (8,3%) | +5.612 / -440 | **Enterprise Business Logic Engines & Testing Suite**: Membangun 4 engine arsitektur backend inti (`core/CostLedger.php` 522 baris, `core/ProductivityCalculator.php` 461 baris, `core/WorkOrderSupport.php` 129 baris, `core/AssetIdentity.php` 70 baris), penguatan controller API (`costs.php`, `productivity.php`, `work_orders.php`, `assets.php`), pembuatan 4 automated integration test suites (+700 baris test), penyusunan `PANDUAN_PENGUJIAN_REVISI_1.md`, dokumentasi `notulensi-pertemuan-rabu.md`, skrip interaksi sidebar mobile, dan pembaruan database dump Laragon | **24.0%** |
-| 🥉 | **briannugraha** | 9 (18,8%) | +1.766 / -178 | **Strategic Blueprint Roadmap & Dev-Ops Automation**: Menyusun dokumen cetak biru komprehensif `implementation-plan-17102026.md` (747 baris) mencakup arsitektur 12 field WO & mitigasi target kejar, asset onboarding di PM, 5 inisiatif global modular (GLB-A s/d GLB-E) beserta actionable executable prompts, penyempurnaan Dev-Ops Laragon sync utility (`scripts/sync_to_laragon.ps1` IPv4 host binding `-h 127.0.0.1 -P 3306`), perbaikan mobile navbar/CSS checkpoint, pembaruan database dump, dan tata kelola merge branch integrasi | **20.0%** |
-| 4 | **seagrass489-cell** | 4 (8,3%) | +2.293 / -113 | **Mobile Responsive Architecture & Quality Audit**: Membangun arsitektur tata letak antarmuka mobile (`scripts/mobile-responsive.js` 368 baris, `scripts/dashboard.css` 1.044 baris, `scripts/unit-properties.css`), pengujian otomatis layout mobile (`tests/mobile_layout_audit.ps1` 317 baris PowerShell automation), serta penyusunan audit komparatif dan dokumen rekapitulasi tim (`rekap-revisi-tim-brian.md` 434 baris) | **16.0%** |
-| **SUBTOTAL** | **4 Kontributor** | **48 Commit** | **+29.852 / -1.390** | **Integrasi masif 17+ modul logistik & lapangan, 4 enterprise core engines, mobile responsive suite & automated layout audit, master blueprint 17 Okt, dan otomatisasi sinkronisasi Laragon** | **100.0%** |
+| 🥇 | **bisamelihat** | 39 (60,0%) | +22.817 / -1.173 | **Eksekutor Integrasi Terbesar & Penuntasan 8 Batch Revisi**: Memimpin 38 commit non-merge meliputi integrasi 17+ modul logistik & operasional (BHW-IN, BHW-OUT, LHO 1 & 2, SPB, PPB, Procurement, SPPU, P2H, A2B, BAPP, SPL, MDE, PM, backend DB), serta penuntasan 8 batch rencana revisi 17 Okt (Batch 0 Baseline, Batch 1 Notifikasi Multi-Role `NotificationAudience`, Batch 2 Identitas Aset & Audit Nomor Lambung, Batch 3 Form Tambah Unit Onboarding PM `AssetOnboarding`, Batch 4 Pencarian Global Aset GLB-A `AssetSearch`, Batch 5 & 6 Konsistensi WO/JO, Gap Dokumen & Proteksi Regresi Biaya/Produktivitas, Batch 7 Smoke Testing Browser Otomatis & Rencana Penuntasan) | **38.0%** |
+| 🥈 | **briannugraha** | 13 (20,0%) | +4.514 / -306 | **Strategic Blueprint, User Management, Redesign Unit Properties & Interaktivitas Dashboard**: Master Blueprint 17 Okt 2026 (`implementation-plan-17102026.md` 747 baris), pembangunan modul **User Management (Manajemen Pengguna)** backend CRUD (`api/users.php` 311 baris) & UI modals Executive Dashboard, **Redesign Komprehensif Unit Properties** (Galeri Foto Grid 3x3 responsif & Lightbox, Dokumen Legalitas STNK/KIR/SILO/JO Hyperlink Hover Modal, Kartu Vitals Operasional Terpadu, Modal Histori Operator & Servis Tersembunyi, Audit Trail Lambung), **Interaktivitas Hyperlink Hover Unit ID Executive Dashboard** (`.unit-prop-hover-link` modal Tabulasi Semua Unit, WO Aktif, Attention Panel), DevOps Laragon sync utility hardening, serta tata kelola merge branch | **23.5%** |
+| 🥉 | **kanzdzakipr** | 6 (9,2%) | +6.582 / -498 | **Enterprise Core Engines, Testing Suite & Penuntasan Non-WO Non-JO**: 4 enterprise core engines (`core/CostLedger.php` 522 baris, `core/ProductivityCalculator.php` 461 baris, `core/WorkOrderSupport.php` 129 baris, `core/AssetIdentity.php` 70 baris), penguatan controller API (`costs.php`, `productivity.php`, `work_orders.php`, `assets.php`), 4 automated integration test suites (+700 baris test), **Penuntasan Fitur Non-WO Non-JO** (PM Hull multi-PIC, integrasi dropdown dinamis multi-mekanik, pembaruan notulensi rapat `notulensi-pertemuan-rabu.md`), skrip mobile sidebar, dan sinkronisasi dump database SQL | **20.5%** |
+| 4 | **seagrass489-cell** | 7 (10,8%) | +5.026 / -530 | **Mobile Framework Architecture, Formula Audit KPI & UI Tiket WO**: Mobile Responsive Framework (`scripts/mobile-responsive.js` 368 baris, `scripts/dashboard.css` 1.044 baris, `tests/mobile_layout_audit.ps1` 317 baris), audit rekapitulasi tim (`rekap-revisi-tim-brian.md`), **Implementasi Audit Formula Matematika KPI** (`core/KpiCalculator.php` 192 baris, `api/kpi.php` 151 baris, `tests/verify_kpi_math.php` 142 baris), **Implementasi UI Tiket WO 12 Field** (`scripts/dashboard.css` +622 baris, `scripts/dashboard.js` +385 baris, `tests/new_work_order_ui_smoke.js` 151 baris), serta **Integrasi Work Order & KPI** (`scripts/migrate_wo_fields_17102026.sql`, `tests/work_order_ticket_fields.php`) | **18.0%** |
+| **SUBTOTAL** | **4 Kontributor** | **65 Commit** | **+38.939 / -2.507** | **Penyelesaian 8 batch revisi, master blueprint 17 Okt, User Management, Redesign Unit Properties, Hyperlink Hover Unit ID, Mobile Responsive Framework, 4 core engines, formula audit KPI, tiket WO 12 field, dan automated testing suites** | **100.0%** |
 
 ---
 
@@ -70,14 +70,14 @@ Penilaian kontribusi menggunakan dua lapisan bukti:
 1. **Bukti kuantitatif Git**: jumlah commit, commit non-merge, serta `numstat` penambahan/penghapusan baris.
 2. **Dampak deliverable**: keluasan modul, kebaruan fitur, keputusan arsitektur, risiko produksi yang ditutup, pengujian otomatis, data, dan dokumentasi.
 
-Snapshot bukti kuantitatif Term 3 (Periode 29 Agustus – 17 Oktober 2026):
+Snapshot bukti kuantitatif Term 3 (Periode 29 Agustus – 18 Oktober 2026):
 
 | Kontributor | Porsi semua commit | Porsi commit non-merge | Porsi lines added | Skor Term 3 setelah audit deliverable |
 | :--- | ---: | ---: | ---: | ---: |
-| **bisamelihat** | 64,6% | 69,8% | 67,6% | **40,0%** |
-| **kanzdzakipr** | 8,3% | 7,0% | 18,8% | **24,0%** |
-| **briannugraha** | 18,8% | 16,3% | 5,9% | **20,0%** |
-| **seagrass489-cell** | 8,3% | 7,0% | 7,7% | **16,0%** |
+| **bisamelihat** | 60,0% | 64,4% | 58,6% | **38,0%** |
+| **briannugraha** | 20,0% | 18,6% | 11,6% | **23,5%** |
+| **kanzdzakipr** | 9,2% | 6,8% | 16,9% | **20,5%** |
+| **seagrass489-cell** | 10,8% | 10,2% | 12,9% | **18,0%** |
 
 `Lines added` tidak langsung disamakan dengan kontribusi karena dapat terdistorsi oleh impor data, pemindahan file, hasil generator, atau reformat besar. Skor akhir menormalkan bukti Git dengan dampak deliverable yang dapat diuji dan digunakan.
 
@@ -90,11 +90,11 @@ Total Skor Akumulasi = (Bobot Term 1 × 35%) + (Bobot Term 2 × 45%) + (Bobot Te
 ### Breakdown Distribusi Kontribusi:
 
 ```mermaid
-pie title Distribusi Persentase Kontribusi Akumulasi Total (All-Time per 17 Oktober 2026)
-    "briannugraha (33.7%)" : 33.7
-    "seagrass489-cell (25.0%)" : 25.0
-    "kanzdzakipr (21.7%)" : 21.7
-    "bisamelihat (19.6%)" : 19.6
+pie title Distribusi Persentase Kontribusi Akumulasi Total (All-Time per 18 Oktober 2026)
+    "briannugraha (34.4%)" : 34.4
+    "seagrass489-cell (25.4%)" : 25.4
+    "kanzdzakipr (21.0%)" : 21.0
+    "bisamelihat (19.2%)" : 19.2
 ```
 
 #### Perbandingan Distribusi per Term:
@@ -116,20 +116,20 @@ pie title Distribusi Kontribusi Term 2 (28 Juli - 28 Agustus 2026) - CLOSED FINA
 ```
 
 ```mermaid
-pie title Distribusi Kontribusi Term 3 (29 Agustus - 17 Oktober 2026) - UPDATED
-    "bisamelihat (40.0%)" : 40.0
-    "kanzdzakipr (24.0%)" : 24.0
-    "briannugraha (20.0%)" : 20.0
-    "seagrass489-cell (16.0%)" : 16.0
+pie title Distribusi Kontribusi Term 3 (29 Agustus - 18 Oktober 2026) - UPDATED
+    "bisamelihat (38.0%)" : 38.0
+    "briannugraha (23.5%)" : 23.5
+    "kanzdzakipr (20.5%)" : 20.5
+    "seagrass489-cell (18.0%)" : 18.0
 ```
 
 ---
 
 ## 🔍 Detail Rincian Kontribusi per Kontributor
 
-### 1. `briannugraha` — **33.7%** *(Lead Feature, System Architect & Strategic Roadmap)*
-* **Total Commit**: 111 Commit (34,4% dari total 323 commit repositori).
-* **Breakdown Commit**: 45 Commit (Term 1) + 57 Commit (Term 2) + 9 Commit (Term 3).
+### 1. `briannugraha` — **34.4%** *(Lead Feature, System Architect & Strategic Roadmap)*
+* **Total Commit**: 116 Commit (34,0% dari total 341 commit repositori).
+* **Breakdown Commit**: 45 Commit (Term 1) + 57 Commit (Term 2) + 13 Commit (Term 3).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Implementation Plan 1 & 2**: Merancang arsitektur menyeluruh sistem monitoring alat berat ServicePlan-BRA (`implementation-plan-1.md`, `implementation-plan-2.md`).
@@ -157,18 +157,28 @@ pie title Distribusi Kontribusi Term 3 (29 Agustus - 17 Oktober 2026) - UPDATED
       - Mengintegrasikan diagram visual 10 posisi roda ban 3 gandar (PSI/RTD), Program Analisa Pelumas (Oil PAP Lab Sampling), inspeksi P2H harian operator, dan log investigasi insiden TAR.
     - **Pembersihan Antarmuka Monitoring Unit**: Mengganti judul menjadi *"Monitoring Unit"*, menghapus subjudul deskripsi, menghapus capsule badge, dan membersihkan diagram alur integrasi status.
     - **RBAC Master Bypass & Admin Access Fix (`21cb18a`)**: Memastikan akun Administrator memiliki hak akses master penuh ke seluruh modul, implementasi fallback role auto-detection, dan proteksi event guard navigasi.
-  * **Term 3** — `[OPEN / ONGOING - UPDATED]`:
+  * **Term 3** — `[OPEN / ONGOING - UPDATED PER 18 OKTOBER 2026]`:
     - **Master Implementation Blueprint 17 Oktober 2026 (`3bddec0`)**: Menyusun berkas cetak biru komprehensif `implementation-plan-17102026.md` (747 baris) berdasarkan rekaman Zoom BRA; merumuskan arsitektur 12 field WO & mitigasi RFU bersyarat target kejar, penambahan unit di modul PM dengan 12 field onboarding & audit information gap, serta 5 inisiatif global modular (GLB-A s/d GLB-E) yang masing-masing dilengkapi actionable executable prompts.
-    - **DevOps & Laragon Sync Utility Hardening (`3bddec0`)**: Memperbaiki skrip otomasi `scripts/sync_to_laragon.ps1` dengan penambahan host binding IPv4 eksplisit `-h 127.0.0.1 -P 3306` guna mengeliminasi kegagalan koneksi socket Windows IPv6/named-pipe (10061), verifikasi engine MySQL Laragon 8.4, dan otomasi sinkronisasi direktori webroot.
+    - **Modul User Management / Manajemen Pengguna Terpadu (`9cf390c`)**:
+      - Membangun backend controller lengkap `api/users.php` (+311 baris) dengan dukungan CRUD user, assignment role berbasis RBAC matriks, status keaktifan user, dan hashing kata sandi aman.
+      - Mengembangkan antarmuka User Management pada Executive Dashboard (`dashboard.view.php` +490 baris, `dashboard.html` +488 baris) dengan modal tambah/edit pengguna, modal reset password, filter role dinamis, dan tabel user responsif.
+    - **Redesign Besar Antarmuka Unit Properties (`578a526`)**:
+      - Memisahkan galeri foto dokumentasi unit menjadi kartu mandiri di kolom kanan dengan layout grid 3x3 responsif, indikator sudut pandang foto, dan modal lightbox preview foto (`modalPropPhotoPreview`).
+      - Mentransformasi dokumen legalitas unit (STNK, KIR, SILO, PDF JO) menjadi hyperlink hover interaktif berstatus badge dengan modal viewer terintegrasi (`modalPropDocumentViewer`) untuk membuka/mengunduh berkas PDF.
+      - Menata ulang metrik operasional vital (Operator saat ini, Servis terakhir, Interval, Target berikutnya & estimasi) menjadi kartu metrik terpadu yang selaras dengan vitals HM dan geolokasi.
+      - Menyembunyikan tabulasi riwayat operator dan riwayat perawatan ke dalam modal popup terdedikasi (`modalPropOperatorHistory`, `modalPropServiceHistory`) yang dipicu dari ikon riwayat pada kartu masing-masing.
+      - Meleburkan riwayat nomor lambung ke dalam hyperlink hover kode lambung lengkap dengan modal audit trail (`modalPropHullHistory`) dan tombol ganti nomor lambung.
+    - **Interaktivitas Hyperlink Hover Unit ID Executive Dashboard (`b39285e`)**:
+      - Mengembangkan stylesheet `.unit-prop-hover-link`, `.unit-code-text`, dan `.unit-prop-hover-icon` pada `scripts/unit-properties.css` dengan micro-interaction visual, highlight warna primer, dan efek garis bawah dotted-to-solid.
+      - Mengintegrasikan hyperlink hover pada kolom Unit ID di modal Tabulasi Semua Unit Alat (`modalStatusDetail`), tabel Work Order Aktif, dan badge kode unit pada Panel Perhatian WO Emergency di Executive Dashboard, memungkinkan navigasi instan satu-klik ke lembar spesifikasi Unit Properties.
+    - **DevOps, Laragon Sync & Database Protection (`3bddec0`, `07e59e8`, `d04aee6`)**: Hardening skrip sinkronisasi Laragon `scripts/sync_to_laragon.ps1` (IPv4 host binding eksplisit `-h 127.0.0.1 -P 3306`), perbaikan file migrasi database `scripts/migrate_wo_fields_17102026.sql`, sinkronisasi skema SQL, dan tata kelola merge branch integrasi (`390b46c`, `999f009`, `b83aac4`).
     - **Mobile Navbar & Responsive Styling (`5632ca4`, `ebf54c7`, `2df57a2`)**: Mengembangkan dan menyempurnakan stylesheet `scripts/dashboard.css` untuk adaptasi layar mobile, perbaikan navigasi navbar pada layar sentuh, dan penataan mobile checkpoint view.
-    - **Database Normalization & Dump Sync (`d04aee6`)**: Melakukan pembaruan skema data dan ekspor dump database `scripts/u646470441_ServicePlanBRA.sql` agar tersinkronisasi penuh dengan struktur entitas terbaru.
-    - **Access Role Permit & Branch Merge Governance (`fd6f9c1`, `999f009`, `390b46c`)**: Mengonfigurasi perizinan akses role operasional dan memimpin tata kelola integrasi merge branch utama lintas pengembang.
 
 ---
 
-### 2. `seagrass489-cell` — **25.0%** *(Data Engineering, Security Architecture & Mobile Lead)*
-* **Total Commit**: 73 Commit (22,6% dari total 323 commit repositori).
-* **Breakdown Commit**: 27 Commit (Term 1) + 42 Commit (Term 2) + 4 Commit (Term 3).
+### 2. `seagrass489-cell` — **25.4%** *(Data Engineering, Security Architecture & Mobile Lead)*
+* **Total Commit**: 76 Commit (22,3% dari total 341 commit repositori).
+* **Breakdown Commit**: 27 Commit (Term 1) + 42 Commit (Term 2) + 7 Commit (Term 3).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Sistem Parser Data 9.400+ Baris**: Mengamankan dan mengunci parser data workbook besar (`ab602ab FINAL_LOCKDOWN: Sistem parser 9400 baris sukses diamankan`).
@@ -183,17 +193,25 @@ pie title Distribusi Kontribusi Term 3 (29 Agustus - 17 Oktober 2026) - UPDATED
     - **Credential & Deployment Hardening (`a2f0367`, `e7bdd38`)**: Memindahkan konfigurasi sensitif ke environment, menyediakan local temporary-password tooling, memperketat `.htaccess`, dan memperbaiki alur sinkronisasi Laragon tanpa mengekspos kredensial produksi.
     - **Secure Upload & Authorized Download (`9e198d5`)**: Menambahkan validasi MIME-ekstensi, nama file acak, pencegahan eksekusi PHP, helper upload terpusat, serta download controller yang memerlukan authorization.
     - **Automated Security Quality Gate (`9e198d5`, `a3cce11`)**: Menambahkan unit, static, dan HTTP smoke tests (`tests/security_unit.php`, `tests/security_static.php`, `tests/security_http_smoke.php`), runner PowerShell, serta workflow GitHub Actions `.github/workflows/security-tests.yml`.
-  * **Term 3** — `[OPEN / ONGOING - UPDATED]`:
+  * **Term 3** — `[OPEN / ONGOING - UPDATED PER 18 OKTOBER 2026]`:
     - **Mobile Responsive Framework Architecture (`0cbdba3`, `3e67bc4`)**: Mengembangkan arsitektur antarmuka mobile komprehensif dengan penambahan 1.044 baris penataan responsif pada `scripts/dashboard.css`, 368 baris controller interaksi gesture sentuh & navigasi drawer pada `scripts/mobile-responsive.js`, serta optimasi mobile layout untuk lembar teknis `scripts/unit-properties.css`.
     - **Automated Mobile Layout Quality Gate (`0cbdba3`, `3e67bc4`)**: Merancang dan mengintegrasikan suite pengujian otomatis `tests/mobile_layout_audit.ps1` (317 baris PowerShell automation) untuk memverifikasi konsistensi tampilan elemen, tabel, dan kartu pada seluruh breakpoint layar ponsel/tablet.
-    - **Cross-Team Revision Review & Audit Documentation (`900c058`)**: Menyusun dokumen rekapitulasi teknis `rekap-revisi-tim-brian.md` (434 baris) sebagai checklist perbandingan, verifikasi kesiapan deliverable, dan panduan audit pekerjaan pengembang.
-    - **Integrasi Merge Branch (`124b6d0`)**: Sinkronisasi merge branch `main`.
+    - **Implementasi Audit Formula Matematika KPI (`58c7350`)**:
+      - Membangun engine perhitungan KPI armada alat berat `core/KpiCalculator.php` (192 baris) dan controller `api/kpi.php` (151 baris).
+      - Mengimplementasikan formula standar Physical Availability (PA), Mechanical Availability (MA), Use of Availability (UA), MTBF, MTTR, serta benchmark target 176 jam kerja mekanik.
+      - Membangun automated verification script `tests/verify_kpi_math.php` (142 baris) untuk memvalidasi akurasi perhitungan terhadap data historis.
+    - **Implementasi UI Tiket Work Order 12 Field (`60607e0`)**:
+      - Mengembangkan antarmuka tiket Work Order baru pada `dashboard.view.php` & `dashboard.html`.
+      - Menambahkan stylesheet tiket WO pada `scripts/dashboard.css` (+622 baris) dan alur autofill cerdas pada `scripts/dashboard.js` (+385 baris).
+      - Membangun automated browser smoke test `tests/new_work_order_ui_smoke.js` (151 baris).
+    - **Integrasi Work Order dan KPI (`b197b54`)**: Menghubungkan transisi siklus tiket WO dengan kalkulasi metrik downtime dan KPI operasional, controller `api/sync.php` dan `api/work_orders.php` (+229 baris), migrasi database `scripts/migrate_wo_fields_17102026.sql` (75 baris), serta testing `tests/work_order_ticket_fields.php` (93 baris).
+    - **Cross-Team Revision Review & Audit Documentation (`900c058`, `124b6d0`)**: Menyusun dokumen rekapitulasi teknis `rekap-revisi-tim-brian.md` (434 baris) sebagai checklist perbandingan, verifikasi kesiapan deliverable, dan tata kelola merge branch `main`.
 
 ---
 
-### 3. `kanzdzakipr` — **21.7%** *(Repository Owner, Enterprise Logic Engines & Integration Lead)*
-* **Total Commit**: 69 Commit (21,4% dari total 323 commit repositori).
-* **Breakdown Commit**: 9 Commit (Term 1) + 56 Commit (Term 2) + 4 Commit (Term 3).
+### 3. `kanzdzakipr` — **21.0%** *(Repository Owner, Enterprise Logic Engines & Integration Lead)*
+* **Total Commit**: 71 Commit (20,8% dari total 341 commit repositori).
+* **Breakdown Commit**: 9 Commit (Term 1) + 56 Commit (Term 2) + 6 Commit (Term 3).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Inisialisasi Repositori**: Membuat repositori utama `kanzdzakipr/ServicePlan-BRA` dan struktur percabangan awal.
@@ -211,7 +229,7 @@ pie title Distribusi Kontribusi Term 3 (29 Agustus - 17 Oktober 2026) - UPDATED
     - **Anti-Cache Headers & Laragon Sync DB Protection**: Menambahkan header anti-browser-caching pada respon API dan menyisipkan skema tabel `archived_items` ke SQL dump untuk mencegah penghapusan tabel saat sync Laragon (`3a29de3`, `58e52fd`).
     - **Migrasi Data Dummy ke Database Hostinger (`9103193`)**: Melakukan migrasi data dummy ke database MySQL Hostinger (`u646470441_ServicePlanBRA`), update `api/init.php` (`b870565`), dan koneksi `api/db.php`.
     - **Form, Logistik & Workflow Integration**: Memperbaiki form backend lintas perangkat (`e11efd6`), mengaktifkan searchbar, memasukkan inspeksi/unit parts, memperbarui plat kendaraan logistik, dan menyelaraskan fuel logs (`5b632f8`, `292ab96`, `3402709`, `f3394cc`).
-  * **Term 3** — `[OPEN / ONGOING - UPDATED]`:
+  * **Term 3** — `[OPEN / ONGOING - UPDATED PER 18 OKTOBER 2026]`:
     - **Enterprise Core Business Logic Engines (`5d73ab1`, `049a173`)**:
       - `core/CostLedger.php` (+522 baris): Engine enterprise perhitungan buku besar biaya operasional alat berat, alokasi anggaran, dan kalkulasi variansi budget vs actual.
       - `core/ProductivityCalculator.php` (+461 baris): Engine kalkulasi produktivitas armada tambang terstandarisasi (jam kerja, breakdown, standby, scheduled hours).
@@ -219,15 +237,19 @@ pie title Distribusi Kontribusi Term 3 (29 Agustus - 17 Oktober 2026) - UPDATED
       - `core/AssetIdentity.php` (+70 baris): Engine pemetaan multi-identitas unit alat berat (kode unit, nomor lambung, serial number).
     - **API Hardening & Controller Extensions (`5d73ab1`, `049a173`)**: Memperluas endpoint backend pada `api/costs.php`, `api/notifications.php`, `api/productivity.php`, `api/work_orders.php`, dan `api/assets.php`.
     - **Automated Integration Test Suite (`5d73ab1`, `049a173`)**: Membangun 4 berkas pengujian integrasi otomatis komprehensif: `tests/cost_integration.php` (226 baris), `tests/notification_integration.php` (110 baris), `tests/productivity_integration.php` (152 baris), dan `tests/master_asset_integration.php` (211 baris).
+    - **Penuntasan Fitur Non-WO Non-JO (`2818824`)**:
+      - Mengembangkan integrasi Preventive Maintenance Hull multi-PIC dan penugasan multi-mekanik pada formulir PM.
+      - Memperbarui antarmuka `dashboard.view.php` (+251 baris), `dashboard.html` (+240 baris), dan `scripts/dashboard.js` (+357 baris).
+      - Membangun test suite integrasi `tests/pm_hull_multi_pic_integration.php` (+104 baris) dan memperbarui notulensi rapat tim `notulensi-pertemuan-rabu.md` (+53 baris).
     - **Testing & Meeting Documentation (`5d73ab1`, `049a173`)**: Menyusun dokumentasi resmi `notulensi-pertemuan-rabu.md` (105 baris) dan `PANDUAN_PENGUJIAN_REVISI_1.md` (135 baris).
     - **Mobile Sidebar Interaction & Stylesheet (`6fa6653`)**: Mengembangkan skrip interaksi sidebar mobile dan stylesheet pendukung dashboard.
-    - **Database Dump Sync & Merge Integration (`d881d4c`)**: Memperbarui dump database SQL dan mengelola merge branch utama.
+    - **Database Dump Sync & Governance Merge (`d881d4c`, `9aadd01`)**: Memperbarui dump database SQL dan mengelola merge branch utama.
 
 ---
 
-### 4. `bisamelihat` — **19.6%** *(Core Foundation, Module Integration Sprint & Database Architect)*
-* **Total Commit**: 70 Commit (21,7% dari total 323 commit repositori).
-* **Breakdown Commit**: 22 Commit (Term 1) + 17 Commit (Term 2) + 31 Commit (Term 3).
+### 4. `bisamelihat` — **19.2%** *(Core Foundation, Module Integration Sprint & Database Architect)*
+* **Total Commit**: 78 Commit (22,9% dari total 341 commit repositori).
+* **Breakdown Commit**: 22 Commit (Term 1) + 17 Commit (Term 2) + 39 Commit (Term 3).
 * **Kontribusi Kunci & Kebaruan Fitur**:
   * **Term 1**:
     - **Inisialisasi Struktur & Prisma**: Membangun struktur awal repositori Next.js/Prisma, dokumentasi skill set, dan arsitektur database.
@@ -243,9 +265,17 @@ pie title Distribusi Kontribusi Term 3 (29 Agustus - 17 Oktober 2026) - UPDATED
     - **Visual Redesign Tipis Antarmuka (`993dd4d`, `07b9fb6`)**: Melakukan penyegaran estetika tipis pada tampilan dashboard.
     - **UTF-8 Encoding Conflict Resolution**: Menyelesaikan konflik pengkodean UTF-8 pada `dashboard.js` dan sinkronisasi Laragon (`6ae6db9`, `3377eef`).
     - **Maintenance Data Seeder & Documentation**: Pemeliharaan data seeder dan penyusunan markdown parts (`f397d5f`, `f927bb5`).
-  * **Term 3** — `[OPEN / ONGOING - UPDATED]`:
-    - **Sprint Integrasi Masif 30 Non-Merge Commits**: Memimpin volume implementasi fitur operasional tertinggi di Term 3 (+20.181 / -659 baris kode).
-    - **Integrasi Pergudangan & Logistik**:
+  * **Term 3** — `[OPEN / ONGOING - UPDATED PER 18 OKTOBER 2026]`:
+    - **Sprint Integrasi Masif 38 Non-Merge Commits**: Memimpin volume implementasi fitur operasional dan penuntasan batch revisi tertinggi di Term 3 (+22.817 / -1.173 baris kode).
+    - **Penuntasan 8 Batch Rencana Revisi 17 Oktober 2026**:
+      - **Batch 0 - Baseline & Environment Sync (`fe32eb5`)**: Menyusun dokumen `HASIL_BATCH_0_BASELINE_17102026.md` dan `RENCANA_BATCH_REVISI_17102026.md`, serta hardening `scripts/sync_to_laragon.ps1`.
+      - **Batch 1 - Notifikasi Beda Role (`4304273`)**: Membangun engine audience multi-role `core/NotificationAudience.php` (141 baris), controller `api/notifications.php` (+267 baris), migrasi database `scripts/migrate_notification_recipients_17102026.sql`, integration test `tests/notification_audience_integration.php`, dan panduan `PANDUAN_PENGUJIAN_NOTIFIKASI_BATCH_1.md`.
+      - **Batch 2 - Identitas Aset & Audit Nomor Lambung (`1e20e5e`)**: Migrasi database `scripts/migrate_asset_hull_history_17102026.sql`, perluasan `api/assets.php`, visualisasi riwayat lambung di `scripts/unit-properties.js`, dan penyusunan `PANDUAN_PENGUJIAN_BATCH_2_17102026.md`.
+      - **Batch 3 - Form Tambah Unit & Onboarding PM (`655bfbd`)**: Membangun `core/AssetOnboarding.php` (87 baris), controller upload berkas `api/asset_files.php` (76 baris), modal tambah unit di PM pada `dashboard.view.php` (+198 baris) & `scripts/dashboard.js` (+214 baris), migrasi `scripts/migrate_asset_onboarding_17102026.sql` (69 baris), unit test `tests/asset_onboarding_unit.php`, dan panduan `PANDUAN_PENGUJIAN_BATCH_3_17102026.md`.
+      - **Batch 4 - Pencarian Global Aset GLB-A (`86270fd`)**: Membangun engine pencarian `core/AssetSearch.php` (58 baris), endpoint `api/assets.php`, migrasi indeks SQL `scripts/migrate_asset_search_indexes_17102026.sql`, autocomplete dropdown di `scripts/dashboard.js` (+144 baris), test suite `tests/asset_search_integration.php`, dan panduan `PANDUAN_PENGUJIAN_BATCH_4_17102026.md`.
+      - **Batch 5 & 6 - Konsistensi WO & JO, Gap Bukti Fisik & Anti-Regresi Biaya (`5b9941d`)**: Controller dokumen `api/work_order_document.php` (61 baris), verifikasi konsistensi WO/JO, mitigasi regresi kalkulasi biaya `core/CostLedger.php` dan produktivitas `core/ProductivityCalculator.php`, script `scripts/ensure_cost_ledger_local.php`, audit test `tests/batch6_readonly_audit.php`, serta panduan pengujian Batch 5 & Batch 6.
+      - **Batch 7 - Smoke Testing Browser & Rencana Penuntasan (`0cd453a`, `a9bbffe`)**: Pengecekan ulang alur kerja dengan automated browser smoke tests (`tests/work_order_detail_browser_smoke.js`, `tests/new_work_order_ui_smoke.js`, `tests/contract_csv_browser_smoke.js`), panduan `PANDUAN_PENGUJIAN_BATCH_7_17102026.md`, dan penyusunan roadmap `RENCANA_PENUNTASAN_BATCH_LANJUTAN.md` (132 baris).
+    - **Integrasi Pergudangan & Logistik Lapangan**:
       - Transaksi bukti fisik: Integrasi form BHW-IN (`a725d89`), BHW-OUT (`60040ef`), LHO 1 & 2 (`9eac319`, `28bea5f`).
       - Pengadaan & inventaris: Integrasi laporan SPB (`d1c0483`), PPB ke menu parts (`b633c37`), Procurement Monitoring ke menu parts (`3791504`), dan SPPU Yard (`1de3437`).
       - Administrasi penerimaan: Bukti Kirim/Terima barang (`84fd762`) dan Laporan BAPP (`3917bf6`).
@@ -443,9 +473,27 @@ pie title Distribusi Kontribusi Term 3 (29 Agustus - 17 Oktober 2026) - UPDATED
 
 ---
 
-### 📌 Log Commit Term 3 (29 Agustus – 17 Oktober 2026) — `[OPEN / ONGOING - UPDATED]`
+### 📌 Log Commit Term 3 (29 Agustus – 18 Oktober 2026) — `[OPEN / ONGOING - UPDATED PER 18 OKTOBER 2026]`
 
 ```git
+* b39285e (briannugraha) minor detail
+* 578a526 (briannugraha) update unit properties
+* 9cf390c (briannugraha) add user management, fix unit properties
+* 07e59e8 (briannugraha) fix eror
+* a9bbffe (bisamelihat) tiket wo
+* 0cd453a (bisamelihat) cek ulang
+* 5b9941d (bisamelihat) konsistensi wo dan jo, perbaikan gap bukti dan regresi biaya
+* 86270fd (bisamelihat) pencarian glb A
+* 655bfbd (bisamelihat) form tambah unit
+* 1e20e5e (bisamelihat) rev identitas aset dan audit nomor
+* 4304273 (bisamelihat) nyelesain notif beda role
+* fe32eb5 (bisamelihat) sinkronisasi ken
+* 9aadd01 (kanzdzakipr) Merge branch 'main' of https://github.com/kanzdzakipr/ServicePlan-BRA
+* 2818824 (kanzdzakipr) kelarin yang non-WO non-JO
+* b197b54 (seagrass489-cell) Integrasi WO dan KPI
+* 60607e0 (seagrass489-cell) Implementasi UI Tiket WO
+* 58c7350 (seagrass489-cell) Implementasi Audit Formula KPI
+* b83aac4 (briannugraha) kontribusi tim per 17 okt
 * 390b46c (briannugraha) Merge branch 'main' of https://github.com/kanzdzakipr/ServicePlan-BRA
 * 3bddec0 (briannugraha) implementation plan 17 okt
 * d881d4c (kanzdzakipr) Merge branch 'main' of https://github.com/kanzdzakipr/ServicePlan-BRA
@@ -606,4 +654,4 @@ pie title Distribusi Kontribusi Term 3 (29 Agustus - 17 Oktober 2026) - UPDATED
 
 ---
 
-*Laporan ini diperbarui secara otomatis berdasarkan audit komprehensif git log history & graph repositori ServicePlan-BRA per 17 Oktober 2026 (Progres Berjalan Term 3).*
+*Laporan ini diperbarui secara otomatis berdasarkan audit komprehensif git log history & graph repositori ServicePlan-BRA per 18 Oktober 2026 (Progres Berjalan Term 3).*
