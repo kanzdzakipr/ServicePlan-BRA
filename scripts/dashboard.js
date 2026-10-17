@@ -7306,7 +7306,9 @@
                 createdAt: new Date().toISOString(),
                 source: 'Condition Monitoring'
             };
-            window.globalData.work_orders.unshift(wo);
+            if (Array.isArray(window.globalData?.work_orders)) {
+                window.globalData.work_orders.unshift(wo);
+            }
             if (window.setIntegratedAssetStatus) {
                 window.setIntegratedAssetStatus(asset.id, finding.status === 'danger' ? 'BREAKDOWN' : 'STANDBY', 'Condition Monitoring / Work Order', wo.woId, finding.text);
             }
@@ -15096,8 +15098,11 @@
             const readiness = Math.round(usableItems / kit.items * 100);
             
             let mechanicName = '-';
-            if (typeof globalData !== 'undefined' && globalData.work_orders) {
-                const activeWo = globalData.work_orders.find(w => 
+            const woList = (typeof globalData !== 'undefined' && globalData && Array.isArray(globalData.work_orders))
+                ? globalData.work_orders
+                : (Array.isArray(window.globalData?.work_orders) ? window.globalData.work_orders : []);
+            if (woList.length > 0) {
+                const activeWo = woList.find(w => 
                     (w.assetId === kit.id || w.unitId === kit.id || w.assetId === kit.code || w.unitId === kit.code) && 
                     w.status !== 'Closed' && w.status !== 'Resolved'
                 );

@@ -73,3 +73,39 @@ SET @ddl = IF(
 );
 PREPARE statement FROM @ddl; EXECUTE statement; DEALLOCATE PREPARE statement;
 
+SET @ddl = IF(
+    EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'work_orders' AND COLUMN_NAME = 'maintenance_type'),
+    'SELECT 1',
+    'ALTER TABLE `work_orders` ADD COLUMN `maintenance_type` ENUM(\'Corrective\', \'Preventive\', \'Inspection\', \'Emergency\') NOT NULL DEFAULT \'Corrective\' AFTER `priority`'
+);
+PREPARE statement FROM @ddl; EXECUTE statement; DEALLOCATE PREPARE statement;
+
+SET @ddl = IF(
+    EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'work_orders' AND COLUMN_NAME = 'parts_requirement'),
+    'SELECT 1',
+    'ALTER TABLE `work_orders` ADD COLUMN `parts_requirement` ENUM(\'UNASSESSED\', \'REQUIRED\', \'NOT_REQUIRED\') NOT NULL DEFAULT \'UNASSESSED\' AFTER `maintenance_type`'
+);
+PREPARE statement FROM @ddl; EXECUTE statement; DEALLOCATE PREPARE statement;
+
+SET @ddl = IF(
+    EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'work_orders' AND COLUMN_NAME = 'parts_requirement_note'),
+    'SELECT 1',
+    'ALTER TABLE `work_orders` ADD COLUMN `parts_requirement_note` TEXT NULL AFTER `parts_requirement`'
+);
+PREPARE statement FROM @ddl; EXECUTE statement; DEALLOCATE PREPARE statement;
+
+SET @ddl = IF(
+    EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'work_orders' AND COLUMN_NAME = 'root_cause'),
+    'SELECT 1',
+    'ALTER TABLE `work_orders` ADD COLUMN `root_cause` TEXT NULL AFTER `assigned_mechanics_json`'
+);
+PREPARE statement FROM @ddl; EXECUTE statement; DEALLOCATE PREPARE statement;
+
+SET @ddl = IF(
+    EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = @schema_name AND TABLE_NAME = 'work_orders' AND COLUMN_NAME = 'repair_action'),
+    'SELECT 1',
+    'ALTER TABLE `work_orders` ADD COLUMN `repair_action` TEXT NULL AFTER `root_cause`'
+);
+PREPARE statement FROM @ddl; EXECUTE statement; DEALLOCATE PREPARE statement;
+
+
