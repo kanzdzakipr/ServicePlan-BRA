@@ -219,6 +219,8 @@
                 column('tanggal', 'Tanggal', 'date'),
                 column('nomor_bukti', 'No. bukti kirim'),
                 column('tujuan', 'Dikirim ke'),
+                column('nomor_jo', 'Nomor WO/JO'),
+                column('id_unit', 'ID unit'),
                 column('part_number', 'Part number'),
                 column('nama', 'Nama parts'),
                 column('satuan', 'Satuan'),
@@ -4160,6 +4162,9 @@
     let searchTimer = null;
     let toastTimer = null;
     let databaseLoadPromise = null;
+    let masterParts = [];
+    let masterPartsLoadPromise = null;
+    let warehouseTransactions = [];
 
     function escapeHtml(value) {
         return String(value == null ? '' : value)
@@ -4370,6 +4375,66 @@
         return part?.unit || 'pcs';
     }
 
+    function referenceMasterParts() {
+        const references = window.FleetReportForms?.getReferences?.();
+        return (Array.isArray(references?.parts) ? references.parts : [])
+            .filter(part => part?.number)
+            .map(part => ({
+                id: String(part.id || ''),
+                partNumber: String(part.number || '').trim(),
+                description: String(part.name || '').trim(),
+                uom: String(part.unit || 'pcs').trim() || 'pcs',
+                stockQty: Number(part.stock) || 0,
+                category: String(part.category || '').trim(),
+                warehouse: String(part.warehouse || '').trim()
+            }));
+    }
+
+    function normalizeMasterParts(rows) {
+        const unique = new Map();
+        rows.forEach(row => {
+            const partNumber = String(row.part_number || row.partNumber || row.number || '').trim();
+            if (!partNumber || unique.has(partNumber)) return;
+            unique.set(partNumber, {
+                id: String(row.part_id || row.partId || row.id || ''),
+                partNumber,
+                description: String(row.part_name || row.namaParts || row.description || row.name || '').trim(),
+                uom: String(row.unit_measure || row.satuan || row.uom || row.unit || 'pcs').trim() || 'pcs',
+                stockQty: Number(row.stock_qty ?? row.saldo ?? row.stock) || 0,
+                category: String(row.category || '').trim(),
+                warehouse: String(row.location_warehouse || row.gudang || row.warehouse || '').trim()
+            });
+        });
+        return Array.from(unique.values()).sort((left, right) => (
+            left.partNumber.localeCompare(right.partNumber, 'id', { numeric: true })
+        ));
+    }
+
+    async function loadMasterParts() {
+        if (masterPartsLoadPromise) return masterPartsLoadPromise;
+        masterPartsLoadPromise = fetch('api/logistics.php?type=parts', {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store'
+        }).then(async response => {
+            const payload = await response.json();
+            if (!response.ok || payload?.status !== 'success' || !Array.isArray(payload.data)) {
+                throw new Error(payload?.message || 'Master Part tidak tersedia.');
+            }
+            masterParts = normalizeMasterParts(payload.data);
+            if (!masterParts.length) masterParts = normalizeMasterParts(referenceMasterParts());
+            if (state.modal) render();
+            return masterParts;
+        }).catch(error => {
+            masterParts = normalizeMasterParts(referenceMasterParts());
+            console.error('Master Part gagal dimuat:', error);
+            if (state.modal) render();
+            return masterParts;
+        }).finally(() => {
+            masterPartsLoadPromise = null;
+        });
+        return masterPartsLoadPromise;
+    }
+
     async function loadDatabaseRecords() {
         if (!ensureInitialized()) return null;
         if (databaseLoadPromise) return databaseLoadPromise;
@@ -4438,15 +4503,27 @@
     }
 
     function warehouseUsageForAsset(assetId) {
-        const usage = Array.isArray(window.logisticsData?.keluar)
-            ? window.logisticsData.keluar
-            : [];
+        const legacy = Array.isArray(window.logisticsData?.keluar) ? window.logisticsData.keluar : [];
+        const usage = [...warehouseTransactions, ...legacy];
         const normalizedAssetId = String(assetId || '').toUpperCase();
         return usage.filter(item => {
             const sourceUnit = String(item.idUnit || '').toUpperCase();
-            const strictCode = sourceUnit.match(/\b[A-Z]{2,6}-\d{3,5}\b/)?.[0] || '';
-            return strictCode === normalizedAssetId;
+            return sourceUnit === normalizedAssetId;
         }).sort((left, right) => String(right.tglSpb || '').localeCompare(String(left.tglSpb || '')));
+    }
+
+    async function loadWarehouseTransactions() {
+        try {
+            const response = await fetch('api/logistics.php?type=inventory', {
+                headers: { Accept: 'application/json' }, cache: 'no-store'
+            });
+            const payload = await response.json();
+            if (!response.ok || payload?.status !== 'success') throw new Error(payload?.message || 'Riwayat pemakaian gagal dimuat.');
+            warehouseTransactions = Array.isArray(payload.data?.keluar) ? payload.data.keluar : [];
+            if (state.modal) render();
+        } catch (error) {
+            console.warn('Riwayat warehouse gagal dimuat:', error);
+        }
     }
 
     function summaryForAsset(assetId) {
@@ -4849,13 +4926,13 @@
         return `
             <div class="table-responsive sl-parts-table-wrap">
                 <table class="sl-parts-table">
-                    <thead><tr><th>Tanggal / bukti</th><th>Part / kode</th><th>Qty</th><th>Status bekas</th><th>Sumber</th></tr></thead>
+                    <thead><tr><th>Tanggal / bukti</th><th>Part / kode</th><th>Qty</th><th>WO / JO</th><th>Sumber</th></tr></thead>
                     <tbody>${visible.map(item => `
                         <tr>
                             <td><strong>${escapeHtml(item.tglSpb || '-')}</strong><small>${escapeHtml(item.noBukti || item.noSpb || '-')}</small></td>
                             <td><strong>${escapeHtml(item.namaSparepart || '-')}</strong><small>${escapeHtml(item.spesifikasi || 'Part number tidak tercatat')}</small></td>
                             <td><strong>${escapeHtml(item.qty || '0')}</strong> ${escapeHtml(item.satuan || '')}</td>
-                            <td>${escapeHtml(item.kesimpulan || 'Tidak dicatat')}</td>
+                            <td>${escapeHtml(item.noJo || 'Tidak tercatat')}</td>
                             <td><small>${escapeHtml(item.source || 'Bank Data Equipment')}</small></td>
                         </tr>`).join('')}</tbody>
                 </table>
@@ -4867,14 +4944,26 @@
         if (!state.modal?.draft.length) {
             return `<tr><td colspan="5" class="sl-draft-empty">Belum ada draft item. Gunakan tombol Tambah Item.</td></tr>`;
         }
-        return state.modal.draft.map((item, index) => `
-            <tr data-sl-draft-row="${index}">
-                <td><input type="text" value="${escapeHtml(item.partNumber || '')}" placeholder="Part number" data-sl-draft-field="partNumber" data-index="${index}"></td>
-                <td><input type="text" value="${escapeHtml(item.description || '')}" placeholder="Nama / spesifikasi part" data-sl-draft-field="description" data-index="${index}"></td>
+        return state.modal.draft.map((item, index) => {
+            const matchedPart = masterParts.find(part => part.partNumber === item.partNumber);
+            const isManual = Boolean(item.isManual || (item.partNumber && !matchedPart));
+            const selectedValue = matchedPart ? matchedPart.partNumber : (isManual ? '__MANUAL__' : '');
+            return `
+            <tr data-sl-draft-row="${index}" data-sl-manual="${isManual ? 'true' : 'false'}">
+                <td>
+                    <select class="sl-master-part-select" data-sl-master-part data-index="${index}" aria-label="Pilih Master Part">
+                        <option value="">Pilih Master Part...</option>
+                        ${masterParts.map(part => `<option value="${escapeHtml(part.partNumber)}" ${selectedValue === part.partNumber ? 'selected' : ''}>${escapeHtml(part.partNumber)} · ${escapeHtml(part.description || 'Tanpa nama')} · stok ${part.stockQty} ${escapeHtml(part.uom)}</option>`).join('')}
+                        <option value="__MANUAL__" ${selectedValue === '__MANUAL__' ? 'selected' : ''}>+ Part baru / input manual</option>
+                    </select>
+                    <input type="text" value="${escapeHtml(item.partNumber || '')}" placeholder="Part number" data-sl-draft-field="partNumber" data-index="${index}" ${matchedPart && !isManual ? 'readonly' : ''}>
+                </td>
+                <td><input type="text" value="${escapeHtml(item.description || '')}" placeholder="Nama / spesifikasi part" data-sl-draft-field="description" data-index="${index}" ${matchedPart && !isManual ? 'readonly' : ''}></td>
                 <td><input type="number" min="1" value="${Number(item.qty) || 1}" data-sl-draft-field="qty" data-index="${index}"></td>
-                <td><input type="text" value="${escapeHtml(item.uom || 'pcs')}" placeholder="pcs" data-sl-draft-field="uom" data-index="${index}"></td>
+                <td><input type="text" value="${escapeHtml(item.uom || 'pcs')}" placeholder="pcs" data-sl-draft-field="uom" data-index="${index}" ${matchedPart && !isManual ? 'readonly' : ''}></td>
                 <td><button type="button" class="sl-remove-draft" data-sl-action="remove-draft" data-index="${index}" title="Hapus draft item"><i class="fa-solid fa-trash"></i></button></td>
-            </tr>`).join('');
+            </tr>`;
+        }).join('');
     }
 
     function renderModal() {
@@ -4942,10 +5031,11 @@
                             </div>
                             <div class="table-responsive sl-draft-table-wrap">
                                 <table id="spb-item-table" class="sl-draft-table">
-                                    <thead><tr><th>Part Number</th><th>Deskripsi / Spesifikasi</th><th>Qty</th><th>Satuan</th><th>Aksi</th></tr></thead>
+                                    <thead><tr><th>Master Part / Part Number</th><th>Deskripsi / Spesifikasi</th><th>Qty</th><th>Satuan</th><th>Aksi</th></tr></thead>
                                     <tbody id="spb-items">${renderDraftRows()}</tbody>
                                 </table>
                             </div>
+                            <div class="sl-master-part-help"><i class="fa-solid fa-circle-info"></i><span>Pilih Master Part agar part number, deskripsi, dan satuan terisi otomatis. Gunakan <strong>Part baru / input manual</strong> hanya jika item belum terdaftar; pengajuan SPB tidak otomatis menambahkannya ke Master Part.</span></div>
                             <div class="sl-draft-actions">
                                 <button type="button" class="sl-add-item-button" data-sl-action="add-draft"><i class="fa-solid fa-plus"></i>Tambah Item</button>
                                 <label><span>Catatan permintaan</span><input id="spb-notes" type="text" value="${escapeHtml(state.modal.notes || '')}" placeholder="Keterangan, spesifikasi alternatif, atau kendala..." data-sl-modal-field="notes"></label>
@@ -5008,12 +5098,36 @@
             partNumber: prefill.partNumber || prefill[0] || '',
             description: prefill.description || prefill[1] || '',
             qty: Number(prefill.qty || prefill[2]) || 1,
-            uom: prefill.uom || prefill[3] || 'pcs'
+            uom: prefill.uom || prefill[3] || 'pcs',
+            isManual: Boolean(prefill.isManual)
         };
         const exists = normalized.partNumber && state.modal.draft.some(item => item.partNumber === normalized.partNumber);
         if (!exists) state.modal.draft.push(normalized);
         render();
-        return document.querySelector('#spb-items tr:last-child');
+        const row = document.querySelector('#spb-items tr:last-child');
+        row?.querySelector('[data-sl-master-part]')?.focus();
+        return row;
+    }
+
+    function applyMasterPart(index, selection) {
+        if (!state.modal?.draft[index]) return;
+        if (selection === '__MANUAL__') {
+            state.modal.draft[index] = { partNumber: '', description: '', qty: state.modal.draft[index].qty || 1, uom: 'pcs', isManual: true };
+        } else {
+            const part = masterParts.find(item => item.partNumber === selection);
+            if (!part) return;
+            state.modal.draft[index] = {
+                partNumber: part.partNumber,
+                description: part.description,
+                qty: state.modal.draft[index].qty || 1,
+                uom: part.uom,
+                stockQty: part.stockQty,
+                masterPartId: part.id,
+                isManual: false
+            };
+        }
+        render();
+        document.querySelector(`[data-sl-draft-field="qty"][data-index="${index}"]`)?.focus();
     }
 
     function openForAsset(assetId, woId = '', recommendedItem = null) {
@@ -5057,12 +5171,13 @@
     function syncDraftFromDom() {
         const rows = Array.from(document.querySelectorAll('#spb-items tr[data-sl-draft-row]'));
         state.modal.draft = rows.map(row => {
-            const inputs = row.querySelectorAll('input');
+            const field = name => row.querySelector(`[data-sl-draft-field="${name}"]`);
             return {
-                partNumber: inputs[0]?.value.trim() || '',
-                description: inputs[1]?.value.trim() || '',
-                qty: Math.max(1, Number(inputs[2]?.value) || 1),
-                uom: inputs[3]?.value.trim() || 'pcs'
+                partNumber: field('partNumber')?.value.trim() || '',
+                description: field('description')?.value.trim() || '',
+                qty: Math.max(1, Number(field('qty')?.value) || 1),
+                uom: field('uom')?.value.trim() || 'pcs',
+                isManual: row.dataset.slManual === 'true'
             };
         });
     }
@@ -5097,8 +5212,12 @@
         const serial = String(new Set(records.map(item => item.spbId).filter(Boolean)).size + 101).padStart(3, '0');
         const spbId = `SPB-${dateCode}-${serial}`;
         const woId = state.modal.woId || '';
+        if (!woId) {
+            notify('Work Order wajib dipilih agar SPB dapat ditelusuri dari sumbernya.', true);
+            return;
+        }
         
-        let newRecords = [];
+        const newRecords = [];
         validLines.forEach((item, index) => {
             const rec = {
                 id: `SL-${dateCode}-${Date.now()}-${index}`,
@@ -5119,7 +5238,6 @@
                 updatedAt: now.toISOString()
             };
             newRecords.push(rec);
-            records.push(rec);
         });
         
         const request = {
@@ -5141,15 +5259,16 @@
                 body: JSON.stringify({ records: newRecords })
             });
             const resData = await response.json();
-            if (resData.status !== 'success') {
-                console.error('SPB Backend Error:', resData.message);
-                notify('Gagal menyimpan SPB ke server: ' + resData.message, true);
+            if (!response.ok || resData.status !== 'success') {
+                throw new Error(resData.message || 'SPB gagal disimpan.');
             }
         } catch (e) {
             console.error('Fetch error:', e);
-            notify('Gagal terhubung ke server saat menyimpan SPB.', true);
+            notify('Gagal menyimpan SPB: ' + e.message, true);
+            return;
         }
 
+        records.push(...newRecords);
         if (window.globalData) {
             window.globalData.spare_part_requests = Array.isArray(window.globalData.spare_part_requests)
                 ? window.globalData.spare_part_requests
@@ -5157,8 +5276,7 @@
             window.globalData.spare_part_requests.unshift(request);
         }
         persist();
-        state.modal.draft = [];
-        render();
+        closeDetail();
         addApprovalRow(request);
         notify(`${spbId} dibuat dan dokumen masuk ke Approval (Database terupdate).`);
     }
@@ -5337,7 +5455,10 @@
         const draftField = event.target.dataset.slDraftField;
         if (draftField && state.modal) {
             const item = state.modal.draft[Number(event.target.dataset.index)];
-            if (item) item[draftField] = draftField === 'qty' ? Number(event.target.value) : event.target.value;
+            if (item) {
+                item[draftField] = draftField === 'qty' ? Number(event.target.value) : event.target.value;
+                if (draftField !== 'qty' && !event.target.readOnly) item.isManual = true;
+            }
             return;
         }
         const modalField = event.target.dataset.slModalField;
@@ -5347,6 +5468,10 @@
     }
 
     function handleChange(event) {
+        if (event.target.matches('[data-sl-master-part]')) {
+            applyMasterPart(Number(event.target.dataset.index), event.target.value);
+            return;
+        }
         const filter = event.target.dataset.slFilter;
         if (filter && filter !== 'query') {
             state[filter] = event.target.value;
@@ -5374,12 +5499,14 @@
         });
         render();
         loadDatabaseRecords();
+        loadMasterParts();
+        loadWarehouseTransactions();
     }
 
     const api = {
         refresh() {
             render();
-            return loadDatabaseRecords();
+            return Promise.all([loadDatabaseRecords(), loadMasterParts(), loadWarehouseTransactions()]);
         },
         openForAsset,
         openForWorkOrder,
@@ -5399,14 +5526,18 @@
     window.SpareLogistics = api;
 
     document.addEventListener('fleetreport:finalized', event => {
+        if (event.detail?.schemaId === 'bhw-out') loadWarehouseTransactions();
         if (['spb', 'ppb', 'procurement-monitoring', 'sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) loadDatabaseRecords();
         if (['parts-weekly', 'bapp', 'bukti-kirim'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
+        if (event.detail?.schemaId === 'bhw-out') window.loadLogisticsData?.('keluar');
         if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
         if (['sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) window.FleetReportForms?.refreshReferences?.();
     });
     document.addEventListener('fleetreport:voided', event => {
+        if (event.detail?.schemaId === 'bhw-out') loadWarehouseTransactions();
         if (['spb', 'ppb', 'procurement-monitoring', 'sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) loadDatabaseRecords();
         if (['parts-weekly', 'bapp', 'bukti-kirim'].includes(event.detail?.schemaId)) window.loadLogisticsData?.('stock');
+        if (event.detail?.schemaId === 'bhw-out') window.loadLogisticsData?.('keluar');
         if (event.detail?.schemaId === 'bapp') window.FleetReportForms?.refreshReferences?.();
         if (['sppu', 'sppu-006-pf04-cs10'].includes(event.detail?.schemaId)) window.FleetReportForms?.refreshReferences?.();
     });
@@ -16519,6 +16650,8 @@
     ];
 
     let lhoOperationData = [];
+    let contractRows = [];
+    let contractPreviewReady = false;
     let lhoOperationSummary = {
         recordCount: 0,
         totalWorkHours: 0,
@@ -16599,6 +16732,7 @@
                     <button class="prod-tab-btn" data-prod-tab="tab-idling-anomaly"><i class="fa-solid fa-triangle-exclamation"></i> Idling Anomaly & Fuel Loss</button>
                     <button class="prod-tab-btn" data-prod-tab="tab-standby-fleet"><i class="fa-solid fa-boxes-stacked"></i> Audit Fleet Standby (48 Unit)</button>
                     <button class="prod-tab-btn" data-prod-tab="tab-lho-operation"><i class="fa-solid fa-clipboard-list"></i> LHO Operasional</button>
+                    <button class="prod-tab-btn" data-prod-tab="tab-contracts"><i class="fa-solid fa-file-contract"></i> Data Kontrak CSV</button>
                 </div>
 
                 <!-- TAB 1: AVAILABILITY & KPI DASHBOARD -->
@@ -16910,10 +17044,35 @@
                     </div>
                 </div>
 
+                <div class="prod-tab-content" id="tab-contracts">
+                    <div class="pk-panel">
+                        <div class="pk-panel-header"><span><i class="fa-solid fa-file-csv"></i> Kontrak Unit & Target Produktivitas</span></div>
+                        <div class="pk-panel-body">
+                            <p class="contract-csv-intro">Satu baris untuk satu unit dalam satu periode kontrak. Jam aktual dihitung dari LHO final pada periode tersebut.</p>
+                            <div class="contract-csv-actions">
+                                <button type="button" class="btn btn-secondary" id="contractDownloadTemplate"><i class="fa-solid fa-download"></i> Unduh template</button>
+                                <label class="contract-csv-file">Pilih CSV <input id="contractCsvFile" type="file" accept=".csv,text/csv"></label>
+                                <button type="button" class="btn btn-secondary" id="contractPreviewButton">Periksa CSV</button>
+                                <button type="button" class="btn btn-primary" id="contractImportButton" disabled>Impor data</button>
+                                <button type="button" class="btn btn-secondary" id="contractExportButton"><i class="fa-solid fa-file-export"></i> Ekspor CSV</button>
+                            </div>
+                            <div id="contractCsvFeedback" role="status" aria-live="polite" class="contract-csv-feedback">Unduh template untuk melihat nama kolom dan format tanggal yang diperlukan.</div>
+                        </div>
+                        <div class="pk-panel-body no-padding">
+                            <div class="table-responsive">
+                                <table class="prod-table"><thead><tr><th>Kontrak</th><th>Proyek / site</th><th>Unit</th><th>Periode</th><th>Target jam</th><th>Aktual LHO</th><th>Pencapaian</th></tr></thead>
+                                    <tbody id="contractRowsBody"><tr><td colspan="7">Buka tab untuk memuat data kontrak.</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         `;
 
         bindProdEvents();
+        bindContractEvents();
         renderProdModuleContent();
     }
 
@@ -16934,6 +17093,7 @@
                 const targetContent = document.getElementById(targetId);
                 if (targetContent) targetContent.classList.add('active');
                 if (targetId === 'tab-lho-operation') loadLhoOperations();
+                if (targetId === 'tab-contracts') loadContracts();
             });
         });
     }
@@ -16999,6 +17159,113 @@
     }
 
     window.refreshLhoOperations = loadLhoOperations;
+
+    function renderContracts() {
+        const body = document.getElementById('contractRowsBody');
+        if (!body) return;
+        if (!contractRows.length) {
+            body.innerHTML = '<tr><td colspan="7" style="padding:20px; text-align:center;">Belum ada data kontrak unit.</td></tr>';
+            return;
+        }
+        body.innerHTML = contractRows.map(row => `<tr>
+            <td><strong>${escapeHtml(row.contract_number)}</strong></td>
+            <td>${escapeHtml(row.project)}<br><small>${escapeHtml(row.site)}</small></td>
+            <td>${escapeHtml(row.asset_id)}</td>
+            <td>${escapeHtml(row.start_date)} – ${escapeHtml(row.end_date)}</td>
+            <td>${Number(row.target_hours).toLocaleString('id-ID', { maximumFractionDigits: 2 })} jam</td>
+            <td>${Number(row.actual_hours).toLocaleString('id-ID', { maximumFractionDigits: 2 })} jam</td>
+            <td><strong>${Number(row.achievement_percent).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%</strong></td>
+        </tr>`).join('');
+    }
+
+    async function loadContracts() {
+        const body = document.getElementById('contractRowsBody');
+        if (body) body.innerHTML = '<tr><td colspan="7" style="padding:20px;">Memuat kontrak...</td></tr>';
+        try {
+            const response = await fetch('api/contracts.php', { credentials: 'same-origin', cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Kontrak gagal dimuat.');
+            contractRows = Array.isArray(payload.data) ? payload.data : [];
+            renderContracts();
+        } catch (error) {
+            if (body) body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);">${escapeHtml(error.message)}</td></tr>`;
+        }
+    }
+
+    function contractFeedback(message, errors = []) {
+        const panel = document.getElementById('contractCsvFeedback');
+        if (!panel) return;
+        panel.classList.toggle('is-error', errors.length > 0);
+        panel.innerHTML = `<strong>${escapeHtml(message)}</strong>${errors.length
+            ? `<ul>${errors.slice(0, 50).map(error => `<li>Baris ${Number(error.row) || 0}: ${escapeHtml(error.message)}</li>`).join('')}</ul>${errors.length > 50 ? `<small>${errors.length - 50} kesalahan lain belum ditampilkan.</small>` : ''}`
+            : ''}`;
+    }
+
+    async function submitContractCsv(mode) {
+        const file = document.getElementById('contractCsvFile')?.files?.[0];
+        if (!file) {
+            contractFeedback('Pilih file CSV terlebih dahulu.', [{ row: 0, message: 'File belum dipilih.' }]);
+            return;
+        }
+        const form = new FormData();
+        form.append('file', file);
+        form.append('mode', mode);
+        const previewButton = document.getElementById('contractPreviewButton');
+        const importButton = document.getElementById('contractImportButton');
+        previewButton.disabled = true;
+        importButton.disabled = true;
+        contractFeedback(mode === 'preview' ? 'Memeriksa CSV...' : 'Menyimpan kontrak...');
+        try {
+            const response = await fetch('api/contracts.php', { method: 'POST', credentials: 'same-origin', body: form });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.message || 'Permintaan gagal.');
+            const errors = payload.data?.errors || [];
+            contractPreviewReady = mode === 'preview' && payload.status === 'success' && errors.length === 0;
+            contractFeedback(payload.status === 'success'
+                ? `${payload.data?.rowCount || 0} baris ${mode === 'preview' ? 'valid dan siap diimpor' : 'berhasil disimpan'}.`
+                : `${errors.length} kesalahan ditemukan. Perbaiki CSV lalu periksa ulang.`, errors);
+            if (mode === 'import' && payload.status === 'success') {
+                document.getElementById('contractCsvFile').value = '';
+                await loadContracts();
+            }
+        } catch (error) {
+            contractPreviewReady = false;
+            contractFeedback(error.message || 'CSV gagal diproses.', [{ row: 0, message: 'Periksa koneksi dan akses akun.' }]);
+        } finally {
+            previewButton.disabled = false;
+            importButton.disabled = !contractPreviewReady;
+        }
+    }
+
+    async function downloadContracts(format) {
+        try {
+            const response = await fetch(`api/contracts.php?format=${format}`, { credentials: 'same-origin', cache: 'no-store' });
+            if (!response.ok) throw new Error('CSV gagal diunduh.');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = format === 'template' ? 'template_kontrak_unit.csv' : 'data_kontrak_unit.csv';
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+            contractFeedback(error.message, [{ row: 0, message: 'Periksa koneksi dan akses akun.' }]);
+        }
+    }
+
+    function bindContractEvents() {
+        document.getElementById('contractDownloadTemplate')?.addEventListener('click', () => downloadContracts('template'));
+        document.getElementById('contractExportButton')?.addEventListener('click', () => downloadContracts('csv'));
+        document.getElementById('contractPreviewButton')?.addEventListener('click', () => submitContractCsv('preview'));
+        document.getElementById('contractImportButton')?.addEventListener('click', () => {
+            if (contractPreviewReady) submitContractCsv('import');
+        });
+        document.getElementById('contractCsvFile')?.addEventListener('change', () => {
+            contractPreviewReady = false;
+            document.getElementById('contractImportButton').disabled = true;
+            contractFeedback('File berubah. Klik Periksa CSV untuk memvalidasi ulang.');
+        });
+    }
 
     function renderKomtraxTable() {
         const tbody = document.getElementById('tbKomtraxBody');

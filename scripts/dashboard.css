@@ -14273,13 +14273,41 @@ body.sl-modal-open {
     min-width: 820px;
 }
 
-.sl-draft-table input {
+.sl-draft-table input,
+.sl-draft-table select {
     border: 1px solid #cbd5e1;
     border-radius: 5px;
     font: inherit;
     height: 32px;
     padding: 0 8px;
     width: 100%;
+}
+
+.sl-draft-table select {
+    background: #fff;
+    color: #24324a;
+    margin-bottom: 5px;
+}
+
+.sl-draft-table input[readonly] {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.sl-master-part-help {
+    align-items: flex-start;
+    background: #f8fafc;
+    border-bottom: 1px solid #dbe4ef;
+    color: #526078;
+    display: flex;
+    font-size: .61rem;
+    gap: 7px;
+    padding: 8px 14px;
+}
+
+.sl-master-part-help i {
+    color: #2457c5;
+    margin-top: 2px;
 }
 
 .sl-draft-table td:nth-child(1) {
@@ -17981,6 +18009,49 @@ body.sl-modal-open {
 }
 
 /* Interaction clarity and keyboard/touch usability */
+.contract-csv-intro {
+    color: var(--text-muted);
+    font-size: .84rem;
+    margin: 0 0 12px;
+}
+
+.contract-csv-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.contract-csv-file {
+    align-items: center;
+    display: inline-flex;
+    font-size: .82rem;
+    gap: 8px;
+}
+
+.contract-csv-file input {
+    max-width: 240px;
+}
+
+.contract-csv-feedback {
+    background: #eff6ff;
+    border-radius: 7px;
+    color: #1e40af;
+    font-size: .82rem;
+    margin-top: 12px;
+    padding: 10px 12px;
+}
+
+.contract-csv-feedback.is-error {
+    background: #fff1f2;
+    color: #9f1239;
+}
+
+.contract-csv-feedback ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+}
+
 :where(button, a[href], [role="button"], [role="tab"], input, select, textarea, [tabindex]):focus-visible {
     outline: 3px solid color-mix(in srgb, var(--primary) 38%, transparent);
     outline-offset: 2px;

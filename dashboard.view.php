@@ -615,46 +615,65 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <thead id="assetTableHeader">
                                     <tr>
                                         <th onclick="window.sortMasterAsset('id')" style="cursor:pointer">Asset ID / Kode <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('sn')" style="cursor:pointer">SN / Plat Kendaraan <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('model')" style="cursor:pointer">Merek & Tahun <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('sn')" style="cursor:pointer">SN & Plat Kendaraan <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('category')" style="cursor:pointer">Kategori <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('location')" style="cursor:pointer">Lokasi Aktif <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('lastUpdate')" style="cursor:pointer">Update Terakhir <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('completeness')" style="cursor:pointer">Kelengkapan Data <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('status')" style="cursor:pointer">Status Efektif <i class="fa-solid fa-sort"></i></th>
+                                        <th style="text-align:center; min-width: 90px;">Aksi</th>
                                     </tr>
                                     <tr class="asset-filter-row" style="background: #f8fafc;">
-                                        <th style="padding: 4px 8px;"><input type="text" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter ID..." onkeyup="window.filterMasterAsset('id', this.value)"></th>
-                                        <th style="padding: 4px 8px;"><input type="text" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter SN..." onkeyup="window.filterMasterAsset('sn', this.value)"></th>
+                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetId" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter ID..." onkeyup="window.filterMasterAsset('id', this.value)"></th>
+                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetModel" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Merek/Tahun..." onkeyup="window.filterMasterAsset('model', this.value)"></th>
+                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetSn" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter SN/Plat..." onkeyup="window.filterMasterAsset('sn', this.value)"></th>
                                         <th style="padding: 4px 8px;">
-                                            <select class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('category', this.value)">
+                                            <select id="filterAssetCat" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('category', this.value)">
                                                 <option value="">Semua</option>
                                                 <option value="Excavator">Excavator</option>
+                                                <option value="Bulldozer">Bulldozer</option>
                                                 <option value="Dump Truck">Dump Truck</option>
                                                 <option value="Compactor">Compactor</option>
-                                                <option value="Bulldozer">Bulldozer</option>
                                                 <option value="Motor Grader">Motor Grader</option>
                                                 <option value="Wheel Loader">Wheel Loader</option>
                                                 <option value="Light Vehicle">Light Vehicle</option>
-                                                <option value="Genset">Genset</option>
+                                                <option value="Water Truck">Water Truck</option>
+                                                <option value="Prime Mover">Prime Mover</option>
+                                                <option value="Trado">Trado</option>
+                                                <option value="Other">Other</option>
                                             </select>
                                         </th>
                                         <th style="padding: 4px 8px;">
-                                            <select class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('location', this.value)">
+                                            <select id="filterAssetLoc" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('location', this.value)">
                                                 <option value="">Semua</option>
                                                 <option value="Borrow Pit">Borrow Pit</option>
                                                 <option value="Site Celcin">Site Celcin</option>
                                                 <option value="Yard">Yard</option>
                                                 <option value="Workshop">Workshop</option>
+                                                <option value="Site Alpha">Site Alpha</option>
+                                                <option value="Minas">Minas Field</option>
                                             </select>
                                         </th>
-                                        <th></th>
                                         <th style="padding: 4px 8px;">
-                                            <select class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('status', this.value)">
+                                            <select id="filterAssetComp" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('completeness', this.value)">
+                                                <option value="">Semua</option>
+                                                <option value="complete">Lengkap</option>
+                                                <option value="incomplete">Belum Lengkap</option>
+                                            </select>
+                                        </th>
+                                        <th style="padding: 4px 8px;">
+                                            <select id="filterAssetStat" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('status', this.value)">
                                                 <option value="">Semua</option>
                                                 <option value="READY">READY</option>
+                                                <option value="OPERATING">OPERATING</option>
                                                 <option value="STANDBY">STANDBY</option>
                                                 <option value="BREAKDOWN">BREAKDOWN</option>
                                                 <option value="INSPEKSI">INSPEKSI</option>
+                                                <option value="ACCIDENT_HOLD">ACCIDENT HOLD</option>
                                             </select>
+                                        </th>
+                                        <th style="padding: 4px 8px; text-align:center;">
+                                            <button type="button" class="btn btn-sm btn-secondary" onclick="window.resetMasterAssetFilters()" style="padding: 2px 6px; font-size: 0.7rem; border-radius:3px;" title="Reset Filter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
                                         </th>
                                     </tr>
                                 </thead>
@@ -2838,6 +2857,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                     <td id="modalYearSpec">2021</td>
                                 </tr>
                                 <tr>
+                                    <td style="font-weight:bold; background:#f8f9fa;">Nomor Seri (SN)</td>
+                                    <td id="modalSnSpec">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold; background:#f8f9fa;">Nomor Pelat</td>
+                                    <td id="modalPlateSpec">-</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold; background:#f8f9fa;">Status Kelengkapan</td>
+                                    <td id="modalCompletenessSpec">-</td>
+                                </tr>
+                                <tr>
                                     <td style="font-weight:bold; background:#f8f9fa;">Ownership</td>
                                     <td>Milik Sendiri (PT BRA)</td>
                                 </tr>
@@ -3166,26 +3197,200 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
     <!-- Modal Tambah Aset -->
     <div class="modal-overlay" id="modalNewAsset">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content" style="max-width: 650px;">
             <div class="modal-header">
-                <h2>Registrasi Aset Baru</h2>
+                <h2><i class="fa-solid fa-plus-circle text-primary"></i> Registrasi Unit Aset Baru</h2>
                 <button onclick="closeModal('modalNewAsset')"
                     style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             <div class="modal-body form-group">
-                <label>Unit ID / Kode Lambung</label>
-                <input type="text" id="na-id" placeholder="Misal: DT-099" class="form-control">
-                <label>Kategori</label>
-                <select id="na-cat" class="form-control">
-                    <option>Excavator</option>
-                    <option>Bulldozer</option>
-                    <option>Dump Truck</option>
-                    <option>Motor Grader</option>
-                    <option>Vibro Compactor</option>
-                </select>
-                <label>Lokasi / Project</label>
-                <input type="text" id="na-loc" placeholder="Misal: Site Alpha" class="form-control">
-                <button class="btn btn-primary" onclick="submitNewAsset()" style="width:100%;">Simpan Aset</button>
+                <div style="font-size:0.78rem; color:#1e293b; background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 14px; border-radius:6px; margin-bottom:14px; line-height:1.4;">
+                    <i class="fa-solid fa-circle-info" style="color:var(--success);"></i> <strong>Standar Identitas Tim Brian:</strong> Setiap unit wajib memiliki identitas konsisten. Data yang belum tersedia (misal SN/plat belum terbit) akan otomatis ditandai <em>Belum tersedia</em> agar dapat ditindaklanjuti.
+                </div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Unit ID / Kode Lambung <span style="color:var(--danger)">*</span></label>
+                        <input type="text" id="na-id" placeholder="Misal: EXC-00099" class="form-control" required>
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Kategori Aset <span style="color:var(--danger)">*</span></label>
+                        <select id="na-cat" class="form-control">
+                            <option value="Excavator">Excavator</option>
+                            <option value="Bulldozer">Bulldozer</option>
+                            <option value="Dump Truck">Dump Truck</option>
+                            <option value="Motor Grader">Motor Grader</option>
+                            <option value="Vibro Compactor">Vibro Compactor</option>
+                            <option value="Water Truck">Water Truck</option>
+                            <option value="Prime Mover">Prime Mover</option>
+                            <option value="Light Vehicle">Light Vehicle</option>
+                            <option value="Reclaimer Spreader">Reclaimer Spreader</option>
+                            <option value="Trado">Trado</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Merek & Model Spesifik</label>
+                        <input type="text" id="na-model" placeholder="Misal: Komatsu PC200-10M0 CE" class="form-control">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Tahun Pembuatan</label>
+                        <input type="number" id="na-year" placeholder="Misal: 2024" min="1970" max="2099" class="form-control">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Nomor Seri (Serial Number / SN)</label>
+                        <input type="text" id="na-sn" placeholder="Misal: C51502 (SN Chasis/Pabrik)" class="form-control">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Nomor Pelat Kendaraan</label>
+                        <input type="text" id="na-plate" placeholder="Misal: BM 9012 RWI (Jika ada)" class="form-control">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Lokasi Operasional / Site</label>
+                        <select id="na-loc" class="form-control">
+                            <option value="3">Borrow Pit Harapan Baru</option>
+                            <option value="1">Yard Duri</option>
+                            <option value="4">Workshop Bay KM 12</option>
+                            <option value="6">Site Alpha Duri</option>
+                            <option value="177">Site Celcin</option>
+                            <option value="11">Minas Field Project</option>
+                            <option value="2">Yard Prabumulih</option>
+                            <option value="7">PKB PEKANBARU Branch</option>
+                            <option value="12">Yard KM 12 Duri</option>
+                            <option value="164">Site NDD</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Status Operasional Awal</label>
+                        <select id="na-status" class="form-control">
+                            <option value="READY">READY - Siap Operasi</option>
+                            <option value="OPERATING">OPERATING - Langsung Operasi</option>
+                            <option value="STANDBY">STANDBY - Cadangan</option>
+                            <option value="INSPEKSI">INSPEKSI - Pengecekan PM</option>
+                            <option value="BREAKDOWN">BREAKDOWN - Perbaikan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <label style="font-weight:600; font-size:0.8rem;">Meter Operasional Awal (HM / KM)</label>
+                    <input type="number" id="na-hm" placeholder="0.00" step="0.1" value="0.00" class="form-control">
+                </div>
+
+                <div id="na-error-alert" style="display:none; color:var(--danger); background:#fef2f2; border:1px solid #fecaca; padding:8px 12px; border-radius:4px; font-size:0.8rem; margin-bottom:12px;"></div>
+
+                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalNewAsset')">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitNewAsset" onclick="submitNewAsset()"><i class="fa-solid fa-save"></i> Simpan Unit Aset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Aset -->
+    <div class="modal-overlay" id="modalEditAsset">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-pen-to-square text-primary"></i> Edit Data Unit: <span id="ea-id-label"></span></h2>
+                <button onclick="closeModal('modalEditAsset')"
+                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body form-group">
+                <input type="hidden" id="ea-id">
+                
+                <div style="font-size:0.78rem; color:#1e293b; background:#f8fafc; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; margin-bottom:14px; line-height:1.4;">
+                    <i class="fa-solid fa-pen" style="color:var(--primary);"></i> <strong>Perbarui Identitas Unit:</strong> Lengkapi informasi Serial Number (SN), Nomor Pelat, Merek/Model, dan Tahun untuk memenuhi kelengkapan data inventaris aset.
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Kategori Aset</label>
+                        <select id="ea-cat" class="form-control">
+                            <option value="Excavator">Excavator</option>
+                            <option value="Bulldozer">Bulldozer</option>
+                            <option value="Dump Truck">Dump Truck</option>
+                            <option value="Motor Grader">Motor Grader</option>
+                            <option value="Vibro Compactor">Vibro Compactor</option>
+                            <option value="Water Truck">Water Truck</option>
+                            <option value="Prime Mover">Prime Mover</option>
+                            <option value="Light Vehicle">Light Vehicle</option>
+                            <option value="Reclaimer Spreader">Reclaimer Spreader</option>
+                            <option value="Trado">Trado</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Status Efektif</label>
+                        <select id="ea-status" class="form-control">
+                            <option value="READY">READY - Siap Operasi</option>
+                            <option value="OPERATING">OPERATING - Sedang Beroperasi</option>
+                            <option value="STANDBY">STANDBY - Cadangan</option>
+                            <option value="INSPEKSI">INSPEKSI - Pengecekan PM</option>
+                            <option value="BREAKDOWN">BREAKDOWN - Perbaikan</option>
+                            <option value="ACCIDENT_HOLD">ACCIDENT HOLD - Tahan Investigasi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Merek & Model Spesifik</label>
+                        <input type="text" id="ea-model" placeholder="Misal: Komatsu PC200-10M0 CE" class="form-control">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Tahun Pembuatan</label>
+                        <input type="number" id="ea-year" placeholder="Misal: 2024" min="1970" max="2099" class="form-control">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Nomor Seri (SN)</label>
+                        <input type="text" id="ea-sn" placeholder="Nomor Seri Pabrik/Chasis" class="form-control">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Nomor Pelat Kendaraan</label>
+                        <input type="text" id="ea-plate" placeholder="Nomor Pelat Kendaraan" class="form-control">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Lokasi Operasional / Site</label>
+                        <select id="ea-loc" class="form-control">
+                            <option value="3">Borrow Pit Harapan Baru</option>
+                            <option value="1">Yard Duri</option>
+                            <option value="4">Workshop Bay KM 12</option>
+                            <option value="6">Site Alpha Duri</option>
+                            <option value="177">Site Celcin</option>
+                            <option value="11">Minas Field Project</option>
+                            <option value="2">Yard Prabumulih</option>
+                            <option value="7">PKB PEKANBARU Branch</option>
+                            <option value="12">Yard KM 12 Duri</option>
+                            <option value="164">Site NDD</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Meter Operasional (HM / KM)</label>
+                        <input type="number" id="ea-hm" placeholder="0.00" step="0.1" class="form-control">
+                    </div>
+                </div>
+
+                <div id="ea-error-alert" style="display:none; color:var(--danger); background:#fef2f2; border:1px solid #fecaca; padding:8px 12px; border-radius:4px; font-size:0.8rem; margin-bottom:12px;"></div>
+
+                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalEditAsset')">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitEditAsset" onclick="submitEditAsset()"><i class="fa-solid fa-check"></i> Simpan Perubahan</button>
+                </div>
             </div>
         </div>
     </div>
@@ -3404,8 +3609,89 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <button class="btn btn-primary" id="modalWoAssetBtn" style="padding: 6px 14px;"><i
                                 class="fa-solid fa-truck"></i> Detail Aset 360&deg;</button>
                         <button class="btn btn-success" id="modalWoSpbBtn" style="padding: 6px 14px;"><i
-                                class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)</button>
+                                class="fa-solid fa-boxes-stacked"></i> Kebutuhan &amp; Layanan</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revisi 4: kebutuhan part dan layanan yang tertaut langsung ke Work Order -->
+        <div class="modal-overlay" id="modalWoSupport">
+            <div class="modal-content" style="max-width: 920px; width: 96%; max-height: 92vh; overflow-y: auto;">
+                <div class="modal-header"
+                    style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
+                    <h2 style="margin:0; font-size:1.2rem;"><i class="fa-solid fa-screwdriver-wrench"
+                            style="color:var(--primary);"></i> Kebutuhan WO <span id="supportWoTitle"></span></h2>
+                    <button onclick="closeModal('modalWoSupport')"
+                        style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <div class="modal-body" style="padding:20px;">
+                    <input type="hidden" id="supportWoId">
+                    <input type="hidden" id="supportAssetId">
+                    <div id="supportLoading" style="padding:12px; background:#f8fafc; border-radius:8px; margin-bottom:15px;">
+                        Memuat kebutuhan Work Order...
+                    </div>
+
+                    <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
+                            <div>
+                                <strong style="display:block;">Keputusan kebutuhan suku cadang</strong>
+                                <span id="supportPartsStatus" style="font-size:0.86rem; color:var(--text-muted);">Belum dinilai</span>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="openPartRequestFromSupport()"><i
+                                    class="fa-solid fa-boxes-stacked"></i> Buat SPB dari WO</button>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                            <input id="supportNoPartsReason" class="form-control" style="flex:1; min-width:260px;"
+                                placeholder="Alasan tidak memerlukan suku cadang (wajib)">
+                            <button type="button" class="btn btn-secondary" onclick="markWoNoParts()"><i
+                                    class="fa-solid fa-circle-check"></i> Tidak Memerlukan Part</button>
+                        </div>
+                        <div id="supportSpbList" style="margin-top:12px;"></div>
+                    </section>
+
+                    <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
+                        <strong style="display:block; margin-bottom:10px;">Riwayat penggunaan suku cadang pada WO ini</strong>
+                        <div id="supportPartUsageList" style="display:grid; gap:8px;"></div>
+                    </section>
+
+                    <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
+                        <strong style="display:block; margin-bottom:12px;">Ajukan layanan perbaikan / bengkel</strong>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px;">
+                            <label>Jenis layanan
+                                <select id="supportServiceType" class="form-control">
+                                    <option value="INTERNAL_WORKSHOP">Bengkel internal</option>
+                                    <option value="EXTERNAL_WORKSHOP">Bengkel eksternal</option>
+                                    <option value="FIELD_SERVICE">Layanan lapangan</option>
+                                    <option value="SPECIALIST_VENDOR">Vendor spesialis</option>
+                                </select>
+                            </label>
+                            <label>Prioritas
+                                <select id="supportServicePriority" class="form-control">
+                                    <option>Normal</option><option>Urgent</option><option>Emergency</option>
+                                </select>
+                            </label>
+                            <label>Penyedia / bengkel
+                                <input id="supportServiceProvider" class="form-control" placeholder="Opsional">
+                            </label>
+                            <label>PIC layanan
+                                <input id="supportServiceAssignee" class="form-control" placeholder="Opsional">
+                            </label>
+                        </div>
+                        <label style="display:block; margin-top:10px;">Deskripsi pekerjaan
+                            <textarea id="supportServiceDescription" class="form-control" rows="3"
+                                placeholder="Jelaskan pekerjaan yang diminta..."></textarea>
+                        </label>
+                        <div style="text-align:right; margin-top:10px;">
+                            <button type="button" class="btn btn-success" onclick="submitWoServiceRequest()"><i
+                                    class="fa-solid fa-paper-plane"></i> Ajukan Layanan</button>
+                        </div>
+                    </section>
+
+                    <section style="border:1px solid var(--border); border-radius:10px; padding:15px;">
+                        <strong style="display:block; margin-bottom:10px;">Tindak lanjut layanan</strong>
+                        <div id="supportServiceList" style="display:grid; gap:10px;"></div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -3540,11 +3826,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             window.openModal = function (id) {
                 const el = document.getElementById(id);
                 if (el) {
+                    // Overlay yang berada di dalam view tersembunyi tetap berukuran 0x0
+                    // walaupun memakai position:fixed. Pindahkan ke body sebelum dibuka.
+                    if (el.classList.contains('modal-overlay') && el.parentElement !== document.body) {
+                        document.body.appendChild(el);
+                    }
                     if (id === 'modalWoStatusConfirm') {
                         document.body.classList.add('wo-confirm-modal-open');
-                        // Pastikan overlay menjadi anak body paling akhir sehingga
-                        // tidak terjebak stacking context komponen lain.
-                        document.body.appendChild(el);
                     }
                     el.classList.add('active');
                     el.style.display = 'flex';
@@ -3572,6 +3860,168 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const woSelect = document.getElementById('spb-wo-id');
                     if (woSelect && woId) woSelect.value = woId;
                 }, 50);
+            };
+
+            const woSupportTypeLabels = {
+                INTERNAL_WORKSHOP: 'Bengkel internal',
+                EXTERNAL_WORKSHOP: 'Bengkel eksternal',
+                FIELD_SERVICE: 'Layanan lapangan',
+                SPECIALIST_VENDOR: 'Vendor spesialis'
+            };
+
+            async function requestWoSupport(payload, method = 'POST') {
+                const url = method === 'GET'
+                    ? `api/work_order_support.php?wo_id=${encodeURIComponent(payload.woId)}`
+                    : 'api/work_order_support.php';
+                const response = await fetch(url, {
+                    method,
+                    headers: { Accept: 'application/json', ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}) },
+                    cache: 'no-store',
+                    ...(method === 'POST' ? { body: JSON.stringify(payload) } : {})
+                });
+                const result = await response.json();
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Kebutuhan Work Order gagal diproses.');
+                }
+                return result.data;
+            }
+
+            function renderWoSupport(data) {
+                const loading = document.getElementById('supportLoading');
+                const partsStatus = document.getElementById('supportPartsStatus');
+                const spbList = document.getElementById('supportSpbList');
+                const serviceList = document.getElementById('supportServiceList');
+                const usageList = document.getElementById('supportPartUsageList');
+                const workOrder = data?.workOrder || {};
+                const requirementLabels = {
+                    UNASSESSED: 'Belum dinilai',
+                    REQUIRED: 'Memerlukan suku cadang',
+                    NOT_REQUIRED: 'Tidak memerlukan suku cadang'
+                };
+                if (loading) loading.style.display = 'none';
+                if (partsStatus) {
+                    partsStatus.innerHTML = `<strong>${escapeHtml(requirementLabels[workOrder.partsRequirement] || 'Belum dinilai')}</strong>${workOrder.partsRequirementNote ? ` &mdash; ${escapeHtml(workOrder.partsRequirementNote)}` : ''}`;
+                }
+
+                const purchaseRequests = Array.isArray(data?.purchaseRequests) ? data.purchaseRequests : [];
+                if (spbList) {
+                    spbList.innerHTML = purchaseRequests.length
+                        ? purchaseRequests.map(spb => `<div style="padding:9px 11px; background:#f8fafc; border-radius:7px; margin-top:6px; font-size:0.84rem;"><strong>${escapeHtml(spb.spbId)}</strong> &middot; ${escapeHtml(spb.status)} &middot; ${Number(spb.itemCount || 0)} item / ${Number(spb.totalQuantity || 0)} qty${spb.notes ? `<br><span style="color:var(--text-muted);">${escapeHtml(spb.notes)}</span>` : ''}</div>`).join('')
+                        : '<div style="font-size:0.84rem; color:var(--text-muted);">Belum ada SPB yang tertaut ke WO ini.</div>';
+                }
+
+                if (usageList) {
+                    const usage = Array.isArray(data?.partUsage) ? data.partUsage : [];
+                    usageList.innerHTML = usage.length
+                        ? usage.map(item => `<div style="padding:9px 11px; background:#f8fafc; border-radius:7px; font-size:0.84rem;"><strong>${escapeHtml(item.partNumber)} · ${escapeHtml(item.partName)}</strong><br>${escapeHtml(item.date)} · ${Number(item.quantity)} ${escapeHtml(item.unit)} · Unit ${escapeHtml(item.assetId)} · WO ${escapeHtml(item.woId)}<br><span style="color:var(--text-muted);">Bukti ${escapeHtml(item.referenceNumber)} · Laporan ${escapeHtml(item.reportNumber)}</span></div>`).join('')
+                        : '<div style="font-size:0.84rem; color:var(--text-muted);">Belum ada transaksi barang keluar yang tertaut ke WO ini.</div>';
+                }
+
+                const serviceRequests = Array.isArray(data?.serviceRequests) ? data.serviceRequests : [];
+                if (serviceList) {
+                    serviceList.innerHTML = serviceRequests.length
+                        ? serviceRequests.map(service => {
+                            const transitions = {
+                                Submitted: ['Assigned', 'In Progress', 'Cancelled'],
+                                Assigned: ['In Progress', 'Completed', 'Cancelled'],
+                                'In Progress': ['Completed', 'Cancelled'],
+                                Completed: [],
+                                Cancelled: []
+                            }[service.status] || [];
+                            const controls = transitions.length ? `<div style="display:flex; gap:7px; margin-top:9px; flex-wrap:wrap;">
+                                <input id="supportServiceAssignee-${escapeHtml(service.serviceRequestId)}" class="form-control" style="flex:1; min-width:160px;" value="${escapeHtml(service.assignedTo || '')}" placeholder="PIC layanan">
+                                <select id="supportServiceStatus-${escapeHtml(service.serviceRequestId)}" class="form-control" style="width:auto;">${transitions.map(status => `<option>${escapeHtml(status)}</option>`).join('')}</select>
+                                <button class="btn btn-primary" type="button" onclick="updateWoServiceStatus('${escapeHtml(service.serviceRequestId)}')">Update</button>
+                            </div>` : '<div style="margin-top:7px; color:var(--text-muted); font-size:0.8rem;">Status akhir; tidak ada tindak lanjut berikutnya.</div>';
+                            return `<div style="border:1px solid var(--border); padding:11px; border-radius:8px;">
+                                <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;"><strong>${escapeHtml(service.serviceRequestId)}</strong><span class="badge bg-operating">${escapeHtml(service.status)}</span></div>
+                                <div style="font-size:0.84rem; margin-top:5px;"><strong>${escapeHtml(woSupportTypeLabels[service.serviceType] || service.serviceType)}</strong> &middot; ${escapeHtml(service.priority)}</div>
+                                <div style="font-size:0.84rem; margin-top:4px;">${escapeHtml(service.description)}</div>
+                                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Penyedia: ${escapeHtml(service.providerName || '-')} &middot; PIC: ${escapeHtml(service.assignedTo || '-')}</div>
+                                ${controls}
+                            </div>`;
+                        }).join('')
+                        : '<div style="font-size:0.84rem; color:var(--text-muted);">Belum ada permintaan layanan untuk WO ini.</div>';
+                }
+            }
+
+            window.loadWoSupport = async function () {
+                const woId = document.getElementById('supportWoId')?.value || '';
+                if (!woId) return;
+                const loading = document.getElementById('supportLoading');
+                if (loading) {
+                    loading.style.display = 'block';
+                    loading.textContent = 'Memuat kebutuhan Work Order...';
+                }
+                try {
+                    renderWoSupport(await requestWoSupport({ woId }, 'GET'));
+                } catch (error) {
+                    if (loading) loading.textContent = error.message;
+                }
+            };
+
+            window.openWoSupportModal = function (woId, assetId) {
+                document.getElementById('supportWoId').value = woId || '';
+                document.getElementById('supportAssetId').value = assetId || '';
+                document.getElementById('supportWoTitle').textContent = woId || '-';
+                document.getElementById('supportNoPartsReason').value = '';
+                openModal('modalWoSupport');
+                loadWoSupport();
+            };
+
+            window.openPartRequestFromSupport = function () {
+                const woId = document.getElementById('supportWoId')?.value || '';
+                const assetId = document.getElementById('supportAssetId')?.value || '';
+                closeModal('modalWoSupport');
+                openSpbForWo(woId, assetId);
+            };
+
+            window.markWoNoParts = async function () {
+                const woId = document.getElementById('supportWoId')?.value || '';
+                const reason = document.getElementById('supportNoPartsReason')?.value.trim() || '';
+                if (!reason) return alert('Alasan tidak memerlukan suku cadang wajib diisi.');
+                try {
+                    const data = await requestWoSupport({ action: 'mark_no_parts', woId, reason });
+                    renderWoSupport(data.overview);
+                    alert('Keputusan tidak memerlukan suku cadang berhasil disimpan.');
+                } catch (error) {
+                    alert(error.message);
+                }
+            };
+
+            window.submitWoServiceRequest = async function () {
+                const woId = document.getElementById('supportWoId')?.value || '';
+                const description = document.getElementById('supportServiceDescription')?.value.trim() || '';
+                if (!description) return alert('Deskripsi layanan wajib diisi.');
+                try {
+                    const data = await requestWoSupport({
+                        action: 'create_service',
+                        woId,
+                        serviceType: document.getElementById('supportServiceType').value,
+                        priority: document.getElementById('supportServicePriority').value,
+                        providerName: document.getElementById('supportServiceProvider').value,
+                        assignedTo: document.getElementById('supportServiceAssignee').value,
+                        description
+                    });
+                    document.getElementById('supportServiceProvider').value = '';
+                    document.getElementById('supportServiceAssignee').value = '';
+                    document.getElementById('supportServiceDescription').value = '';
+                    renderWoSupport(data.overview);
+                    alert('Permintaan layanan berhasil ditautkan ke Work Order.');
+                } catch (error) {
+                    alert(error.message);
+                }
+            };
+
+            window.updateWoServiceStatus = async function (serviceRequestId) {
+                const status = document.getElementById(`supportServiceStatus-${serviceRequestId}`)?.value || '';
+                const assignedTo = document.getElementById(`supportServiceAssignee-${serviceRequestId}`)?.value || '';
+                try {
+                    const data = await requestWoSupport({ action: 'update_service_status', serviceRequestId, status, assignedTo });
+                    renderWoSupport(data.overview);
+                } catch (error) {
+                    alert(error.message);
+                }
             };
 
             // Shared helpers for Work Order status workflow.
@@ -4036,8 +4486,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.openWoDetailModal = async function (woId, fallbackAssetId, fallbackIssue) {
-                if (!globalData || !globalData.work_orders) return;
-                let wo = globalData.work_orders.find(w => w.woId === woId);
+                const cachedWorkOrders = typeof globalData !== 'undefined' && Array.isArray(globalData?.work_orders)
+                    ? globalData.work_orders
+                    : [];
+                let wo = cachedWorkOrders.find(w => w.woId === woId) || null;
 
                 const modalWoId = document.getElementById('modalWoId');
                 const modalWoAsset = document.getElementById('modalWoAsset');
@@ -4078,7 +4530,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (noticeEl) noticeEl.style.display = 'none';
 
                     if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); openAssetModal(wo.assetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
-                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openSpbForWo(wo.woId, wo.assetId); };
+                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(wo.woId, wo.assetId); };
                 } else {
                     // Fallback for emergency WOs created dynamically
                     if (modalWoId) modalWoId.textContent = woId || 'WO-EMERGENCY';
@@ -4099,12 +4551,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (noticeEl) noticeEl.style.display = 'block';
 
                     if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); if (fallbackAssetId) openAssetModal(fallbackAssetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
-                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openSpbForWo(woId, fallbackAssetId); };
+                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(woId, fallbackAssetId); };
                 }
 
                 openModal('modalWoDetail');
 
-                if (!wo) return;
                 try {
                     const response = await fetch(`api/work_orders.php?id=${encodeURIComponent(woId)}`, {
                         headers: { Accept: 'application/json' },
@@ -4115,7 +4566,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         throw new Error(result.message || 'Detail Work Order tidak tersedia.');
                     }
                     const detail = normalizeWorkOrder(result.data);
-                    Object.assign(wo, detail);
+                    if (wo) Object.assign(wo, detail);
+                    else wo = detail;
+                    if (modalWoId) modalWoId.textContent = detail.woId;
+                    if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(detail.assetId)}</strong>`;
+                    if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge ${detail.status === 'Open' ? 'bg-breakdown' : detail.status === 'In Progress' ? 'bg-standby' : 'bg-operating'}">${escapeHtml(detail.status)}</span>`;
+                    if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge ${['High', 'Emergency'].includes(detail.priority) ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(detail.priority)}</span>`;
+                    if (modalWoDowntime) modalWoDowntime.textContent = detail.downtime || '0 jam 00 menit';
+                    if (modalWoIssue) modalWoIssue.textContent = detail.issue || 'Tidak ada deskripsi.';
                     if (modalWoMaintenanceType) modalWoMaintenanceType.textContent = detail.maintenanceType;
                     if (modalWoMechanic) modalWoMechanic.textContent = detail.assignedTo;
                     if (modalWoReportedAt) modalWoReportedAt.textContent = formatWoDateTime(detail.reportedAt);
@@ -4125,6 +4583,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (modalWoRootCause) modalWoRootCause.textContent = detail.rootCause || 'Belum dicatat.';
                     if (modalWoRepairAction) modalWoRepairAction.textContent = detail.repairAction || 'Belum ada tindakan tercatat.';
                     if (modalWoTimeline) modalWoTimeline.innerHTML = renderWoTimeline(detail.timeline);
+                    if (noticeEl) noticeEl.style.display = 'none';
+                    if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); openAssetModal(detail.assetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
+                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(detail.woId, detail.assetId); };
                 } catch (error) {
                     console.error('Detail Work Order gagal dimuat:', error);
                     if (modalWoTimeline) modalWoTimeline.innerHTML = `<div style="color:#dc3545;">${escapeHtml(error.message)}</div>`;
@@ -5299,7 +5760,74 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.masterAssetSort = { col: null, dir: 'asc' };
-            window.masterAssetFilters = { id: '', sn: '', category: '', location: '', status: '' };
+            window.masterAssetFilters = { id: '', model: '', sn: '', category: '', location: '', completeness: '', status: '' };
+
+            window.getAssetCompleteness = function(asset) {
+                if (!asset) return { isComplete: false, missing: ['Data tidak valid'], label: 'Belum Lengkap' };
+                const missing = [];
+                
+                const sn = (asset.serial_number && String(asset.serial_number).trim() !== '-' && String(asset.serial_number).trim() !== '') 
+                    ? String(asset.serial_number).trim() 
+                    : (window.parseAssetId ? window.parseAssetId(asset.id || '').snPlat : '');
+                const cleanSn = (sn && sn !== '-' && sn !== 'Belum tersedia') ? sn : '';
+                const cleanPlate = (asset.license_plate && String(asset.license_plate).trim() !== '-' && String(asset.license_plate).trim() !== '')
+                    ? String(asset.license_plate).trim() : '';
+
+                if (!cleanSn && !cleanPlate) {
+                    missing.push('SN / Plat');
+                }
+
+                const model = (asset.make_model && String(asset.make_model).trim() !== '-' && String(asset.make_model).trim() !== '')
+                    ? String(asset.make_model).trim() : '';
+                if (!model) {
+                    missing.push('Merek / Model');
+                }
+
+                const year = asset.year_manufacture ? parseInt(asset.year_manufacture, 10) : 0;
+                if (!year || year < 1970) {
+                    missing.push('Tahun');
+                }
+
+                const loc = (asset.location && String(asset.location).trim() !== '-' && String(asset.location).trim() !== '')
+                    ? String(asset.location).trim() : '';
+                if (!loc) {
+                    missing.push('Lokasi');
+                }
+
+                return {
+                    isComplete: missing.length === 0,
+                    missing: missing,
+                    label: missing.length === 0 ? 'Lengkap' : 'Belum Lengkap'
+                };
+            };
+
+            window.formatAssetIdentityDetails = function(asset) {
+                const parsed = window.parseAssetId ? window.parseAssetId(asset.id || asset.asset_id || '') : { unitId: asset.id, snPlat: '-' };
+                const unitId = asset.asset_code || parsed.unitId || asset.id || '-';
+                
+                let sn = asset.serial_number ? String(asset.serial_number).trim() : '';
+                if ((!sn || sn === '-') && parsed.snPlat && parsed.snPlat !== '-') {
+                    sn = parsed.snPlat;
+                }
+                const snText = (sn && sn !== '-') ? sn : 'Belum tersedia';
+
+                const plate = asset.license_plate ? String(asset.license_plate).trim() : '';
+                const plateText = (plate && plate !== '-') ? plate : 'Belum tersedia';
+
+                const model = asset.make_model ? String(asset.make_model).trim() : '';
+                const modelText = (model && model !== '-') ? model : 'Belum tersedia';
+
+                const year = asset.year_manufacture ? parseInt(asset.year_manufacture, 10) : 0;
+                const yearText = (year && year >= 1970) ? String(year) : 'Belum tersedia';
+
+                return {
+                    unitId,
+                    sn: snText,
+                    plate: plateText,
+                    model: modelText,
+                    year: yearText
+                };
+            };
 
             window.sortMasterAsset = function(col) {
                 if (window.masterAssetSort.col === col) {
@@ -5313,7 +5841,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const ths = document.querySelectorAll('#assetTableHeader tr:first-child th');
                 ths.forEach(th => {
                     const icon = th.querySelector('i');
-                    if(icon) {
+                    if(icon && th.getAttribute('onclick')) {
                         icon.className = 'fa-solid fa-sort';
                         if(th.getAttribute('onclick').includes(`'${col}'`)) {
                             icon.className = window.masterAssetSort.dir === 'asc' ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down';
@@ -5329,6 +5857,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 window.renderAssetTableBody();
             };
 
+            window.resetMasterAssetFilters = function() {
+                window.masterAssetFilters = { id: '', model: '', sn: '', category: '', location: '', completeness: '', status: '' };
+                const ids = ['filterAssetId', 'filterAssetModel', 'filterAssetSn'];
+                ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+                const selects = ['filterAssetCat', 'filterAssetLoc', 'filterAssetComp', 'filterAssetStat'];
+                selects.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+                window.renderAssetTableBody();
+            };
+
             window.renderAssetTableBody = function() {
                 const tbody = document.getElementById('assetTableBody');
                 if (!tbody) return;
@@ -5338,28 +5875,49 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 // Apply Filters
                 assets = assets.filter(a => {
                     const f = window.masterAssetFilters;
-                    const parsed = window.parseAssetId ? window.parseAssetId(a.id) : { unitId: a.id, snPlat: '-' };
+                    const ident = window.formatAssetIdentityDetails(a);
+                    const compl = window.getAssetCompleteness(a);
                     
-                    if (f.id && !(parsed.unitId || '').toLowerCase().includes(f.id.toLowerCase())) return false;
-                    if (f.sn && !(parsed.snPlat || '').toLowerCase().includes(f.sn.toLowerCase())) return false;
+                    if (f.id && !ident.unitId.toLowerCase().includes(f.id.toLowerCase()) && !(a.id || '').toLowerCase().includes(f.id.toLowerCase())) return false;
+                    if (f.model && !ident.model.toLowerCase().includes(f.model.toLowerCase()) && !ident.year.includes(f.model)) return false;
+                    if (f.sn && !ident.sn.toLowerCase().includes(f.sn.toLowerCase()) && !ident.plate.toLowerCase().includes(f.sn.toLowerCase())) return false;
                     if (f.location && !(a.location || '').toLowerCase().includes(f.location.toLowerCase())) return false;
                     if (f.category && f.category !== a.category) return false;
-                    if (f.status && f.status !== a.status) return false;
+                    if (f.completeness) {
+                        if (f.completeness === 'complete' && !compl.isComplete) return false;
+                        if (f.completeness === 'incomplete' && compl.isComplete) return false;
+                    }
+                    if (f.status) {
+                        const effStat = (a.subStatus || a.status || '').toUpperCase().replace(/\s+/g, '_');
+                        const filterStat = f.status.toUpperCase().replace(/\s+/g, '_');
+                        if (effStat !== filterStat) return false;
+                    }
                     return true;
                 });
 
                 // Apply Sorting
                 if (window.masterAssetSort.col) {
                     assets.sort((a, b) => {
+                        const identA = window.formatAssetIdentityDetails(a);
+                        const identB = window.formatAssetIdentityDetails(b);
+                        const complA = window.getAssetCompleteness(a);
+                        const complB = window.getAssetCompleteness(b);
+
                         let valA = a[window.masterAssetSort.col] || '';
                         let valB = b[window.masterAssetSort.col] || '';
                         
                         if (window.masterAssetSort.col === 'id') {
-                            valA = (window.parseAssetId ? window.parseAssetId(a.id).unitId : a.id);
-                            valB = (window.parseAssetId ? window.parseAssetId(b.id).unitId : b.id);
+                            valA = identA.unitId;
+                            valB = identB.unitId;
+                        } else if (window.masterAssetSort.col === 'model') {
+                            valA = identA.model;
+                            valB = identB.model;
                         } else if (window.masterAssetSort.col === 'sn') {
-                            valA = (window.parseAssetId ? window.parseAssetId(a.id).snPlat : '');
-                            valB = (window.parseAssetId ? window.parseAssetId(b.id).snPlat : '');
+                            valA = identA.sn;
+                            valB = identB.sn;
+                        } else if (window.masterAssetSort.col === 'completeness') {
+                            valA = complA.isComplete ? '1' : '0';
+                            valB = complB.isComplete ? '1' : '0';
                         }
 
                         if (valA < valB) return window.masterAssetSort.dir === 'asc' ? -1 : 1;
@@ -5368,9 +5926,31 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     });
                 }
 
+                if (assets.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 25px; color: var(--text-muted);"><i class="fa-solid fa-filter" style="margin-right:6px;"></i> Tidak ada unit yang cocok dengan filter kelengkapan/pencarian saat ini.</td></tr>';
+                    return;
+                }
+
                 tbody.innerHTML = assets.slice(0, 100).map(asset => {
-                    const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
+                    const ident = window.formatAssetIdentityDetails(asset);
+                    const compl = window.getAssetCompleteness(asset);
                     const badge = window.getAssetStatusBadge(asset.status);
+
+                    const snDisplay = ident.sn !== 'Belum tersedia' 
+                        ? `<strong style="font-family:var(--font-mono); color:var(--text-main); font-size:0.8rem;">${escapeHtml(ident.sn)}</strong>` 
+                        : `<span style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">Belum tersedia</span>`;
+                    
+                    const plateDisplay = ident.plate !== 'Belum tersedia' 
+                        ? `<span style="font-family:var(--font-mono); font-weight:600; font-size:0.78rem; color:#0369a1; background:#f0f9ff; padding:1px 5px; border-radius:3px;">${escapeHtml(ident.plate)}</span>` 
+                        : `<span style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">Belum tersedia</span>`;
+
+                    const modelDisplay = ident.model !== 'Belum tersedia'
+                        ? `<div style="font-weight:600; font-size:0.82rem; color:var(--text-main);">${escapeHtml(ident.model)}</div><div style="font-size:0.72rem; color:var(--text-muted);">Tahun: ${escapeHtml(ident.year)}</div>`
+                        : `<span style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">Belum tersedia</span>`;
+
+                    const complBadge = compl.isComplete
+                        ? `<span class="badge badge-success" style="font-size:0.72rem; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-circle-check"></i> Lengkap</span>`
+                        : `<span class="badge badge-warning" style="font-size:0.72rem; padding:3px 8px; border-radius:4px;" title="Belum lengkap: ${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum Lengkap</span><div style="font-size:0.68rem; color:var(--danger); margin-top:2px;">Kurang: ${escapeHtml(compl.missing.slice(0, 2).join(', '))}${compl.missing.length > 2 ? ' +' + (compl.missing.length - 2) : ''}</div>`;
 
                     return `
                     <tr data-asset-id="${escapeHtml(asset.id)}"
@@ -5381,15 +5961,31 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         style="cursor:pointer;" 
                         title="Klik 1x untuk membuka Opsi Aksi Integrasi Unit ${escapeHtml(asset.id)}">
                         <td>
-                            <strong style="color:var(--primary);">${escapeHtml(parsed.unitId)}</strong>
+                            <strong style="color:var(--primary); font-size:0.88rem;">${escapeHtml(ident.unitId)}</strong>
                         </td>
                         <td>
-                            ${escapeHtml(parsed.snPlat)}
+                            ${modelDisplay}
                         </td>
-                        <td>${escapeHtml(asset.category)}</td>
-                        <td><i class="fa-solid fa-location-dot" style="color:var(--text-muted);"></i> ${escapeHtml(asset.location)}</td>
-                        <td style="font-size:0.85rem; color:var(--text-muted);">${escapeHtml(asset.lastUpdate)}</td>
+                        <td>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">SN: ${snDisplay}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Plat: ${plateDisplay}</div>
+                        </td>
+                        <td>
+                            <span class="badge badge-info" style="font-size:0.72rem;">${escapeHtml(asset.category || 'Other')}</span>
+                        </td>
+                        <td>
+                            <span style="font-size:0.82rem;"><i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:4px;"></i> ${escapeHtml(asset.location || 'Belum tersedia')}</span>
+                        </td>
+                        <td>
+                            ${complBadge}
+                        </td>
                         <td>${badge}</td>
+                        <td style="text-align:center;" onclick="event.stopPropagation();">
+                            <div style="display:inline-flex; gap:4px;">
+                                <button type="button" class="btn btn-sm btn-primary" onclick="window.openEditAssetModal('${escapeHtml(asset.id)}')" style="padding:3px 7px; font-size:0.72rem; border-radius:3px;" title="Edit & Lengkapi Data Unit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                                <button type="button" class="btn btn-sm" onclick="openAssetActionCalloutFromElement(event, this.closest('tr'))" style="background:#f1f5f9; color:#475569; padding:3px 6px; font-size:0.72rem; border-radius:3px;" title="Menu Aksi Lainnya"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                            </div>
+                        </td>
                     </tr>
                     `;
                 }).join('');
@@ -5422,41 +6018,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (elPA) elPA.innerText = paPercentage;
 
                 // 2. Render Asset Rows with Rich Linkage Actions
-                tbody.innerHTML = assets.slice(0, 100).map(asset => {
-                    const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
-                    const badge = window.getAssetStatusBadge(asset.status);
-
-                    return `
-                    <tr data-asset-id="${escapeHtml(asset.id)}"
-                        data-asset-status="${escapeHtml(asset.status)}"
-                        data-asset-category="${escapeHtml(asset.category)}"
-                        data-asset-location="${escapeHtml(asset.location)}"
-                        onclick="openAssetActionCalloutFromElement(event, this)" 
-                        style="cursor:pointer;" 
-                        title="Klik 1x untuk membuka Opsi Aksi Integrasi Unit ${escapeHtml(asset.id)}">
-                        <td>
-                            <strong style="color:var(--primary);">${escapeHtml(parsed.unitId)}</strong>
-                        </td>
-                        <td>
-                            <strong style="color:var(--text-muted);">${escapeHtml(parsed.snPlat)}</strong>
-                        </td>
-                        <td>${escapeHtml(asset.category)}</td>
-                        <td><i class="fa-solid fa-location-dot" style="color:var(--text-muted); margin-right:4px;"></i> ${escapeHtml(asset.location)}</td>
-                        <td>
-                            ${escapeHtml(asset.lastUpdate)}
-                            <small class="status-source-line">${escapeHtml(asset.statusSource || 'Master Asset')}</small>
-                        </td>
-                        <td>${badge}</td>
-                    </tr>
-                `;
-                }).join('');
+                window.renderAssetTableBody();
             }
 
             function renderKanbanCardHtml(wo, statusKey) {
                 const isEmergency = ['High', 'Emergency'].includes(wo.priority);
                 const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
                 const issueShort = escapeHtml(issueText.length > 55 ? issueText.substring(0, 55) + '...' : issueText);
-                const escapedIssue = escapeHtml(issueText).replace(/'/g, "&#039;");
                 const escapedAsset = escapeHtml(wo.assetId);
 
                 return `
@@ -5482,12 +6050,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:flex; align-items:center; gap:5px;">
                         <i class="fa-solid fa-user-gear"></i> <span style="font-weight:600;">${escapeHtml(getWorkOrderMechanic(wo))}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:0.75rem;">
                         <span style="color:var(--text-muted); font-family:var(--font-mono);">
                             ${wo.downtime ? `<i class="fa-regular fa-clock" style="color:var(--danger);"></i> <strong style="color:var(--danger);">${escapeHtml(wo.downtime)}</strong>` : '<i class="fa-regular fa-clock"></i> Normal'}
                         </span>
-                        <span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}" style="border-radius:2px; font-size:0.7rem; padding:2px 6px;">
-                            ${isEmergency ? 'EMERGENCY' : escapeHtml(wo.priority || 'NORMAL')}
+                        <span style="display:flex; align-items:center; gap:6px;">
+                            <span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}" style="border-radius:2px; font-size:0.7rem; padding:2px 6px;">
+                                ${isEmergency ? 'EMERGENCY' : escapeHtml(wo.priority || 'NORMAL')}
+                            </span>
+                            <button type="button" class="btn btn-primary" onclick="event.stopPropagation(); openWoDetailModal('${escapeHtml(wo.woId)}', '${escapedAsset}')" style="padding:3px 7px; font-size:0.7rem; border-radius:3px;" title="Buka detail Work Order"><i class="fa-solid fa-eye"></i> Detail</button>
                         </span>
                     </div>
                 </div>
@@ -5696,15 +6267,60 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             let modalUnitMapInstance = null;
 
             window.openEditAssetModal = function (id) {
-                const assetObj = globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null;
-                if (assetObj) {
-                    openAssetModal(assetObj.id, assetObj.status, assetObj.category, assetObj.location);
+                const assetObj = (globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null)
+                    || (window.currentAssetData ? window.currentAssetData.find(a => a.id === id) : null);
+                if (!assetObj) {
+                    alert('Data unit tidak ditemukan.');
+                    return;
                 }
+
+                document.getElementById('ea-id-label').textContent = assetObj.id;
+                document.getElementById('ea-id').value = assetObj.id;
+                document.getElementById('ea-cat').value = assetObj.category || 'Other';
+                
+                const normStatus = (assetObj.subStatus || assetObj.status || 'READY').toUpperCase().replace(/\s+/g, '_');
+                const statSelect = document.getElementById('ea-status');
+                if (statSelect) {
+                    statSelect.value = Array.from(statSelect.options).some(o => o.value === normStatus) ? normStatus : 'READY';
+                }
+
+                document.getElementById('ea-model').value = (assetObj.make_model && assetObj.make_model !== '-') ? assetObj.make_model : '';
+                document.getElementById('ea-year').value = (assetObj.year_manufacture && parseInt(assetObj.year_manufacture, 10) >= 1970) ? assetObj.year_manufacture : '';
+                
+                let snVal = (assetObj.serial_number && assetObj.serial_number !== '-') ? assetObj.serial_number : '';
+                if (!snVal && window.parseAssetId) {
+                    const parsed = window.parseAssetId(assetObj.id);
+                    if (parsed && parsed.snPlat && parsed.snPlat !== '-') snVal = parsed.snPlat;
+                }
+                document.getElementById('ea-sn').value = snVal;
+
+                document.getElementById('ea-plate').value = (assetObj.license_plate && assetObj.license_plate !== '-') ? assetObj.license_plate : '';
+
+                const locSelect = document.getElementById('ea-loc');
+                if (locSelect) {
+                    if (assetObj.current_location_id) {
+                        locSelect.value = String(assetObj.current_location_id);
+                    } else if (assetObj.location) {
+                        const matchedOpt = Array.from(locSelect.options).find(o => o.text.toLowerCase().includes((assetObj.location || '').toLowerCase()));
+                        if (matchedOpt) locSelect.value = matchedOpt.value;
+                    }
+                }
+
+                document.getElementById('ea-hm').value = assetObj.last_hm_km !== undefined ? assetObj.last_hm_km : '0.00';
+
+                const errAlert = document.getElementById('ea-error-alert');
+                if (errAlert) {
+                    errAlert.style.display = 'none';
+                    errAlert.textContent = '';
+                }
+
+                openModal('modalEditAsset');
             };
 
             function openAssetModal(id, status, category, location, fromModal = null, targetTab = 'ringkasan') {
                 previousModalId = fromModal;
-                const assetObj = globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null;
+                const assetObj = (globalData && globalData.assets ? globalData.assets.find(a => a.id === id) : null)
+                    || (window.currentAssetData ? window.currentAssetData.find(a => a.id === id) : null);
                 document.getElementById('modalAssetId').textContent = id;
                 document.getElementById('modalStatus').textContent = status;
                 document.getElementById('modalKategori').textContent = category;
@@ -5714,18 +6330,44 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     statusSource.innerHTML = `<i class="fa-solid fa-link"></i> ${escapeHtml(assetObj?.statusSource || 'Master Asset')} &middot; ${escapeHtml(assetObj?.statusReference || 'Data awal')}`;
                 }
 
-                // Populate Specs based on category
+                const ident = window.formatAssetIdentityDetails ? window.formatAssetIdentityDetails(assetObj || { id, category, location }) : { model: 'Belum tersedia', year: 'Belum tersedia', sn: 'Belum tersedia', plate: 'Belum tersedia' };
+                const compl = window.getAssetCompleteness ? window.getAssetCompleteness(assetObj || { id, category, location }) : { isComplete: false, missing: [] };
+
+                // Populate Specs with actual asset properties
                 const modelSpec = document.getElementById('modalModelSpec');
+                const yearSpec = document.getElementById('modalYearSpec');
+                const snSpec = document.getElementById('modalSnSpec');
+                const plateSpec = document.getElementById('modalPlateSpec');
+                const complSpec = document.getElementById('modalCompletenessSpec');
                 const hmSpec = document.getElementById('modalHmSpec');
+
                 if (modelSpec) {
-                    if (category.toLowerCase().includes('excavator')) modelSpec.innerText = 'Komatsu PC200-10M0 / CAT 320GX';
-                    else if (category.toLowerCase().includes('truck')) modelSpec.innerText = 'Mercedes Axor / Hino 500 Dump';
-                    else if (category.toLowerCase().includes('grader')) modelSpec.innerText = 'Komatsu GD535-5 Motor Grader';
-                    else if (category.toLowerCase().includes('vibro') || category.toLowerCase().includes('compactor')) modelSpec.innerText = 'Sakai SV512 / Bomag Single Drum';
-                    else modelSpec.innerText = 'Komatsu D85ESS Bulldozer';
+                    modelSpec.innerHTML = ident.model !== 'Belum tersedia' 
+                        ? escapeHtml(ident.model) 
+                        : `<span style="color:var(--text-muted); font-style:italic;">Belum tersedia</span>`;
+                }
+                if (yearSpec) {
+                    yearSpec.innerHTML = ident.year !== 'Belum tersedia'
+                        ? escapeHtml(ident.year)
+                        : `<span style="color:var(--text-muted); font-style:italic;">Belum tersedia</span>`;
+                }
+                if (snSpec) {
+                    snSpec.innerHTML = ident.sn !== 'Belum tersedia'
+                        ? `<strong style="font-family:var(--font-mono);">${escapeHtml(ident.sn)}</strong>`
+                        : `<span style="color:var(--text-muted); font-style:italic;">Belum tersedia</span>`;
+                }
+                if (plateSpec) {
+                    plateSpec.innerHTML = ident.plate !== 'Belum tersedia'
+                        ? `<strong style="font-family:var(--font-mono); color:#0369a1;">${escapeHtml(ident.plate)}</strong>`
+                        : `<span style="color:var(--text-muted); font-style:italic;">Belum tersedia</span>`;
+                }
+                if (complSpec) {
+                    complSpec.innerHTML = compl.isComplete
+                        ? `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Lengkap</span>`
+                        : `<span class="badge badge-warning" title="Kurang: ${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum Lengkap (${escapeHtml(compl.missing.join(', '))})</span>`;
                 }
                 if (hmSpec) {
-                    hmSpec.innerText = (assetObj && assetObj.last_hm_km ? assetObj.last_hm_km : '8.450') + ' Jam';
+                    hmSpec.innerText = (assetObj && assetObj.last_hm_km !== undefined ? assetObj.last_hm_km : '0.00') + ' Jam';
                 }
 
                 const backBtn = document.getElementById('btnBackAssetModal');
@@ -5979,50 +6621,250 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             function closeModal(id) { window.closeModal(id); }
 
             async function submitNewAsset() {
-                const id = document.getElementById('na-id').value;
-                const cat = document.getElementById('na-cat').value;
-                const loc = document.getElementById('na-loc').value;
-                if (!id) return alert('ID harus diisi');
+                const id = document.getElementById('na-id').value.trim();
+                const cat = document.getElementById('na-cat').value.trim();
+                const model = document.getElementById('na-model').value.trim();
+                const year = document.getElementById('na-year').value.trim();
+                const sn = document.getElementById('na-sn').value.trim();
+                const plate = document.getElementById('na-plate').value.trim();
+                const locSelect = document.getElementById('na-loc');
+                const locId = locSelect ? locSelect.value : '';
+                const locName = locSelect && locSelect.selectedIndex >= 0 ? locSelect.options[locSelect.selectedIndex].text : 'Yard';
+                const status = document.getElementById('na-status').value.trim();
+                const hm = document.getElementById('na-hm').value.trim();
+                const errAlert = document.getElementById('na-error-alert');
+                const submitBtn = document.getElementById('btnSubmitNewAsset');
+
+                if (errAlert) { errAlert.style.display = 'none'; errAlert.textContent = ''; }
+
+                if (!id) {
+                    if (errAlert) {
+                        errAlert.textContent = 'Unit ID / Kode Lambung wajib diisi.';
+                        errAlert.style.display = 'block';
+                    } else {
+                        alert('Unit ID / Kode Lambung wajib diisi.');
+                    }
+                    return;
+                }
+
+                if (year) {
+                    const parsedYear = parseInt(year, 10);
+                    if (isNaN(parsedYear) || parsedYear < 1970 || parsedYear > 2099) {
+                        if (errAlert) {
+                            errAlert.textContent = 'Tahun pembuatan harus berupa angka antara 1970 dan 2099.';
+                            errAlert.style.display = 'block';
+                        } else {
+                            alert('Tahun pembuatan harus valid (1970-2099).');
+                        }
+                        return;
+                    }
+                }
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+                }
 
                 try {
-                    // Simpan ke database melalui API
+                    const payload = {
+                        asset_id: id,
+                        asset_code: id,
+                        category: cat,
+                        type: 'Heavy Equipment',
+                        status: status || 'READY',
+                        make_model: model || null,
+                        year_manufacture: year ? parseInt(year, 10) : null,
+                        serial_number: sn || null,
+                        license_plate: plate || null,
+                        current_location_id: locId ? parseInt(locId, 10) : null,
+                        last_hm_km: hm ? parseFloat(hm) : 0.0
+                    };
+
                     const response = await fetch('api/assets.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            asset_id: id,
-                            asset_code: id,
-                            category: cat,
-                            type: 'Heavy Equipment',
-                            status: 'READY'
-                        })
+                        body: JSON.stringify(payload)
                     });
 
                     const result = await response.json();
 
-                    if (result.status === 'success') {
-                        // Update UI state
-                        globalData.assets.unshift({
+                    if (response.ok && result.status === 'success') {
+                        const newAsset = {
                             id: id,
+                            asset_id: id,
+                            asset_code: id,
                             type: 'Heavy Equipment',
                             category: cat,
-                            status: 'READY',
-                            location: loc || 'Yard',
+                            status: status || 'READY',
+                            make_model: model || null,
+                            year_manufacture: year ? parseInt(year, 10) : null,
+                            serial_number: sn || null,
+                            license_plate: plate || null,
+                            current_location_id: locId ? parseInt(locId, 10) : null,
+                            location: locName,
+                            location_name: locName,
+                            last_hm_km: hm ? parseFloat(hm) : 0.0,
                             lastUpdate: 'Baru saja',
                             statusSource: 'Master Asset',
                             statusReference: 'Registrasi unit baru',
                             statusEvents: []
-                        });
-                        rebuildFleetSummary();
+                        };
+
+                        if (!globalData.assets) globalData.assets = [];
+                        globalData.assets.unshift(newAsset);
+                        if (!window.currentAssetData) window.currentAssetData = [];
+                        window.currentAssetData.unshift(newAsset);
+
+                        // Reset input fields
+                        document.getElementById('na-id').value = '';
+                        document.getElementById('na-model').value = '';
+                        document.getElementById('na-year').value = '';
+                        document.getElementById('na-sn').value = '';
+                        document.getElementById('na-plate').value = '';
+                        document.getElementById('na-hm').value = '0.00';
+
                         closeModal('modalNewAsset');
-                        alert('Aset berhasil didaftarkan ke database');
-                        window.syncFleetState();
+                        initAssetView(globalData.assets);
+                        if (typeof rebuildFleetSummary === 'function') rebuildFleetSummary();
+                        if (typeof window.syncFleetState === 'function') window.syncFleetState();
+                        alert(`Unit aset '${id}' berhasil didaftarkan ke database.`);
                     } else {
-                        alert('Gagal menyimpan aset ke database: ' + result.message);
+                        const msg = result.message || 'Gagal menyimpan aset ke database.';
+                        if (errAlert) {
+                            errAlert.textContent = msg;
+                            errAlert.style.display = 'block';
+                        } else {
+                            alert(msg);
+                        }
                     }
                 } catch (error) {
                     console.error('Error saving asset:', error);
-                    alert('Terjadi kesalahan jaringan atau server saat menyimpan aset');
+                    if (errAlert) {
+                        errAlert.textContent = 'Terjadi kesalahan koneksi atau server saat menyimpan aset.';
+                        errAlert.style.display = 'block';
+                    } else {
+                        alert('Terjadi kesalahan jaringan atau server saat menyimpan aset');
+                    }
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Simpan Unit Aset';
+                    }
+                }
+            }
+
+            async function submitEditAsset() {
+                const id = document.getElementById('ea-id').value.trim();
+                const cat = document.getElementById('ea-cat').value.trim();
+                const status = document.getElementById('ea-status').value.trim();
+                const model = document.getElementById('ea-model').value.trim();
+                const year = document.getElementById('ea-year').value.trim();
+                const sn = document.getElementById('ea-sn').value.trim();
+                const plate = document.getElementById('ea-plate').value.trim();
+                const locSelect = document.getElementById('ea-loc');
+                const locId = locSelect ? locSelect.value : '';
+                const locName = locSelect && locSelect.selectedIndex >= 0 ? locSelect.options[locSelect.selectedIndex].text : '';
+                const hm = document.getElementById('ea-hm').value.trim();
+                const errAlert = document.getElementById('ea-error-alert');
+                const submitBtn = document.getElementById('btnSubmitEditAsset');
+
+                if (errAlert) { errAlert.style.display = 'none'; errAlert.textContent = ''; }
+
+                if (!id) {
+                    alert('ID unit tidak valid.');
+                    return;
+                }
+
+                if (year) {
+                    const parsedYear = parseInt(year, 10);
+                    if (isNaN(parsedYear) || parsedYear < 1970 || parsedYear > 2099) {
+                        if (errAlert) {
+                            errAlert.textContent = 'Tahun pembuatan harus berupa angka antara 1970 dan 2099.';
+                            errAlert.style.display = 'block';
+                        } else {
+                            alert('Tahun pembuatan harus valid (1970-2099).');
+                        }
+                        return;
+                    }
+                }
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan Perubahan...';
+                }
+
+                try {
+                    const payload = {
+                        asset_id: id,
+                        category: cat,
+                        status: status,
+                        make_model: model,
+                        year_manufacture: year ? parseInt(year, 10) : null,
+                        serial_number: sn,
+                        license_plate: plate,
+                        current_location_id: locId ? parseInt(locId, 10) : null,
+                        last_hm_km: hm ? parseFloat(hm) : 0.0
+                    };
+
+                    const response = await fetch('api/assets.php', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.status === 'success') {
+                        const updateTarget = (item) => {
+                            if (!item) return;
+                            item.category = cat;
+                            item.status = status;
+                            item.make_model = model || null;
+                            item.year_manufacture = year ? parseInt(year, 10) : null;
+                            item.serial_number = sn || null;
+                            item.license_plate = plate || null;
+                            if (locId) item.current_location_id = parseInt(locId, 10);
+                            if (locName) item.location = locName;
+                            item.last_hm_km = hm ? parseFloat(hm) : 0.0;
+                            item.lastUpdate = 'Baru saja';
+                        };
+
+                        if (globalData && globalData.assets) {
+                            const a = globalData.assets.find(x => x.id === id || x.asset_id === id);
+                            updateTarget(a);
+                        }
+                        if (window.currentAssetData) {
+                            const a = window.currentAssetData.find(x => x.id === id || x.asset_id === id);
+                            updateTarget(a);
+                        }
+
+                        closeModal('modalEditAsset');
+                        initAssetView(globalData.assets);
+                        if (typeof rebuildFleetSummary === 'function') rebuildFleetSummary();
+                        if (typeof window.syncFleetState === 'function') window.syncFleetState();
+                        alert(`Data identitas unit '${id}' berhasil diperbarui.`);
+                    } else {
+                        const msg = result.message || 'Gagal memperbarui data unit.';
+                        if (errAlert) {
+                            errAlert.textContent = msg;
+                            errAlert.style.display = 'block';
+                        } else {
+                            alert(msg);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error updating asset:', error);
+                    if (errAlert) {
+                        errAlert.textContent = 'Terjadi kesalahan koneksi atau server saat memperbarui aset.';
+                        errAlert.style.display = 'block';
+                    } else {
+                        alert('Terjadi kesalahan jaringan atau server saat memperbarui aset');
+                    }
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan Perubahan';
+                    }
                 }
             }
 

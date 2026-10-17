@@ -13,6 +13,8 @@ final class ReportIntegration
             transaction_date DATE NOT NULL,
             reference_number VARCHAR(190) NOT NULL,
             counterparty VARCHAR(190) NULL,
+            asset_id VARCHAR(100) NULL,
+            wo_id VARCHAR(50) NULL,
             part_id INT NOT NULL,
             quantity INT UNSIGNED NOT NULL,
             unit_measure VARCHAR(20) NOT NULL,
@@ -26,9 +28,17 @@ final class ReportIntegration
             UNIQUE KEY uq_inventory_report_line (report_id, report_item_position, movement_type),
             KEY idx_inventory_part_date (part_id, transaction_date),
             KEY idx_inventory_active (movement_type, reversed_at, transaction_date),
+            KEY idx_inventory_asset_wo (asset_id, wo_id, reversed_at, transaction_date),
             CONSTRAINT fk_inventory_report FOREIGN KEY (report_id) REFERENCES report_records (report_id) ON DELETE RESTRICT,
             CONSTRAINT fk_inventory_part FOREIGN KEY (part_id) REFERENCES parts (part_id) ON DELETE RESTRICT
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        self::ensureColumns($db, 'inventory_transactions', [
+            'asset_id' => 'VARCHAR(100) NULL',
+            'wo_id' => 'VARCHAR(50) NULL',
+        ]);
+        self::ensureIndex($db, 'inventory_transactions', 'idx_inventory_asset_wo',
+            'KEY idx_inventory_asset_wo (asset_id, wo_id, reversed_at, transaction_date)');
 
         $db->exec("CREATE TABLE IF NOT EXISTS report_inspection_integrations (
             integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -880,6 +890,49 @@ final class ReportIntegration
                 ':integration_id' => (int) $integration['integration_id'],
             ]);
             $purchaseRequestReversed += $reversePurchaseRequest->rowCount();
+
+            if ($request && $reversePurchaseRequest->rowCount() > 0) {
+                $remainingRequest = $db->prepare(
+                    "SELECT COUNT(*)
+                     FROM purchase_requests pr
+                     WHERE pr.wo_id = :wo_id
+                       AND (
+                           NOT EXISTS (
+                               SELECT 1 FROM report_purchase_request_integrations owned
+                               WHERE owned.spb_id = pr.spb_id AND owned.owns_purchase_request = 1
+                           )
+                           OR EXISTS (
+                               SELECT 1 FROM report_purchase_request_integrations active_link
+                               WHERE active_link.spb_id = pr.spb_id AND active_link.reversed_at IS NULL
+                           )
+                       )"
+                );
+                $remainingRequest->execute([':wo_id' => $request['wo_id']]);
+                if ((int) $remainingRequest->fetchColumn() === 0) {
+                    $resetRequirement = $db->prepare(
+                        "UPDATE work_orders
+                         SET parts_requirement = 'UNASSESSED', parts_requirement_note = NULL
+                         WHERE wo_id = :wo_id AND parts_requirement = 'REQUIRED'"
+                    );
+                    $resetRequirement->execute([':wo_id' => $request['wo_id']]);
+                    if ($resetRequirement->rowCount() > 0) {
+                        $actorName = $db->prepare(
+                            "SELECT COALESCE(NULLIF(full_name, ''), username) FROM users WHERE user_id = :user_id LIMIT 1"
+                        );
+                        $actorName->execute([':user_id' => $actorId]);
+                        $db->prepare(
+                            "INSERT INTO work_order_timeline
+                             (wo_id, event_type, title, description, actor_user_id, actor_name)
+                             VALUES (:wo_id, 'DETAIL_UPDATE', 'Kebutuhan part dibatalkan', :description, :actor_id, :actor_name)"
+                        )->execute([
+                            ':wo_id' => $request['wo_id'],
+                            ':description' => "SPB {$integration['spb_id']} dilepas dari WO karena laporan asal di-void.",
+                            ':actor_id' => $actorId,
+                            ':actor_name' => (string) ($actorName->fetchColumn() ?: 'Pengguna'),
+                        ]);
+                    }
+                }
+            }
         }
 
         $purchaseOrderStatement = $db->prepare('SELECT integration_id, ppb_id, owns_purchase_order, applied_payload FROM report_purchase_order_integrations WHERE report_id = :report_id AND reversed_at IS NULL FOR UPDATE');
@@ -2727,6 +2780,27 @@ final class ReportIntegration
                     ':status' => $item['status'],
                 ]);
             }
+
+            $partsNote = "Permintaan part dicatat melalui {$spbId} dari laporan.";
+            $db->prepare(
+                "UPDATE work_orders
+                 SET parts_requirement = 'REQUIRED', parts_requirement_note = :note
+                 WHERE wo_id = :wo_id"
+            )->execute([':note' => $partsNote, ':wo_id' => $workOrderId]);
+            $actorName = $db->prepare(
+                "SELECT COALESCE(NULLIF(full_name, ''), username) FROM users WHERE user_id = :user_id LIMIT 1"
+            );
+            $actorName->execute([':user_id' => $actorId]);
+            $db->prepare(
+                "INSERT INTO work_order_timeline
+                 (wo_id, event_type, title, description, actor_user_id, actor_name)
+                 VALUES (:wo_id, 'DETAIL_UPDATE', 'Kebutuhan part dicatat', :description, :actor_id, :actor_name)"
+            )->execute([
+                ':wo_id' => $workOrderId,
+                ':description' => $partsNote,
+                ':actor_id' => $actorId,
+                ':actor_name' => (string) ($actorName->fetchColumn() ?: 'Pengguna'),
+            ]);
         }
 
         $insertIntegration = $db->prepare(
@@ -4054,6 +4128,14 @@ final class ReportIntegration
             );
             $counterparty = self::optionalText($row['tujuan'] ?? null, 190);
             $notes = self::optionalText($row['keterangan'] ?? null, 500);
+            $assetId = self::requiredText($row['id_unit'] ?? null, 'ID unit baris ' . ($position + 1), 100);
+            $woId = self::requiredText($row['nomor_jo'] ?? null, 'Nomor WO/JO baris ' . ($position + 1), 50);
+            $workOrderStatement = $db->prepare('SELECT asset_id FROM work_orders WHERE wo_id = :wo_id LIMIT 1');
+            $workOrderStatement->execute([':wo_id' => $woId]);
+            $workOrderAsset = $workOrderStatement->fetchColumn();
+            if ($workOrderAsset === false || !hash_equals((string) $workOrderAsset, $assetId)) {
+                throw new DomainException("Baris " . ($position + 1) . ": WO {$woId} tidak cocok dengan unit {$assetId}.");
+            }
 
             $partStatement = $db->prepare(
                 'SELECT part_id, part_name, unit_measure, stock_qty
@@ -4092,9 +4174,9 @@ final class ReportIntegration
             $insertTransaction = $db->prepare(
                 "INSERT INTO inventory_transactions
                  (report_id, report_item_position, movement_type, transaction_date, reference_number,
-                  counterparty, part_id, quantity, unit_measure, stock_before, stock_after, notes, created_by)
+                  counterparty, asset_id, wo_id, part_id, quantity, unit_measure, stock_before, stock_after, notes, created_by)
                  VALUES (:report_id, :position, 'OUT', :transaction_date, :reference_number,
-                  :counterparty, :part_id, :quantity, :unit_measure, :stock_before, :stock_after, :notes, :created_by)"
+                  :counterparty, :asset_id, :wo_id, :part_id, :quantity, :unit_measure, :stock_before, :stock_after, :notes, :created_by)"
             );
             $insertTransaction->execute([
                 ':report_id' => $reportId,
@@ -4102,6 +4184,8 @@ final class ReportIntegration
                 ':transaction_date' => $transactionDate,
                 ':reference_number' => $referenceNumber,
                 ':counterparty' => $counterparty,
+                ':asset_id' => $assetId,
+                ':wo_id' => $woId,
                 ':part_id' => (int) $part['part_id'],
                 ':quantity' => $quantity,
                 ':unit_measure' => $unitMeasure,
