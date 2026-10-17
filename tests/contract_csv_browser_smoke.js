@@ -95,7 +95,9 @@ async function main() {
     }
 }
 
-main().catch(error => {
+const watchdog = setTimeout(() => { console.error('FAIL: smoke browser tidak menghasilkan hasil dalam 60 detik.'); process.exit(1); }, 60000);
+main().then(() => clearTimeout(watchdog)).catch(error => {
+    clearTimeout(watchdog);
     console.error('FAIL:', error.message);
     process.exitCode = 1;
 });
