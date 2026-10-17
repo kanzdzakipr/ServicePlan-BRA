@@ -1784,23 +1784,41 @@
                             </div>
                         </div>
 
-                        <!-- TAB 3: REGISTER PO & PENGELUARAN PART (WO LINKED) -->
+                        <!-- TAB 3: REGISTER BIAYA, PO & TRANSAKSI WO (BR-09A / BR-09B) -->
                         <div id="costTabSecPo" style="display:none;">
-                            <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-receipt"></i>
-                                Register Purchase Order (PO) Sparepart & Integrasi Tiket WO</h3>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                                <h3 style="margin:0; font-size:1.05rem;"><i class="fa-solid fa-receipt"></i>
+                                    Buku Besar Biaya Perbaikan (Cost Ledger) &amp; Transaksi WO</h3>
+                                <button type="button" class="btn btn-primary" onclick="openCostInputModal()"><i class="fa-solid fa-plus"></i> Catat Transaksi Biaya</button>
+                            </div>
+
+                            <!-- Decision Gate Note (BR-09B) -->
+                            <div class="pk-alert pk-alert-info" style="margin-bottom:15px; border-left: 4px solid var(--primary);">
+                                <i class="fa-solid fa-circle-question"></i>
+                                <div>
+                                    <strong>Decision Gate Integrasi Otomatis PO &amp; Formulir SPPU (BR-09B - STATUS: NEEDS DECISION):</strong><br>
+                                    Saat ini transaksi biaya dicatat dan ditelusuri per Unit &amp; WO melalui Cost Ledger ini dengan pencegahan double counting. Usulan integrasi otomatis memerlukan keputusan manajemen:
+                                    <div style="margin-top:6px; font-size:0.83rem;">
+                                        &bull; <strong>Opsi A:</strong> Biaya WO otomatis terbentuk dari Purchase Order (PO) yang disetujui.<br>
+                                        &bull; <strong>Opsi B:</strong> Biaya WO otomatis terbentuk dari formulir SPPU yang difinalkan.<br>
+                                        &bull; <strong>Opsi C:</strong> Keduanya dengan deduplikasi (reconciliation matching).<br>
+                                        &bull; <strong>Opsi D:</strong> Tetap dicatat manual melalui Cost Ledger ini (default).
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="table-responsive">
                                 <table style="margin: 0; font-size: 0.88rem;">
                                     <thead>
                                         <tr>
-                                            <th>No. PO / Tanggal</th>
+                                            <th>Kode Transaksi / Tgl</th>
                                             <th>Pemasok / Vendor</th>
-                                            <th>Deskripsi Item Sparepart</th>
-                                            <th>WO Linked / SPB</th>
-                                            <th>Subtotal</th>
-                                            <th>PPN (11%)</th>
-                                            <th>Total PO (Rp)</th>
-                                            <th>Status Pembayaran</th>
-                                            <th>Aksi Integrasi</th>
+                                            <th>Uraian Pengeluaran &amp; Referensi</th>
+                                            <th>Unit &amp; WO Linked</th>
+                                            <th>Kategori</th>
+                                            <th>Total Biaya (Rp)</th>
+                                            <th>Status</th>
+                                            <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="costPoTableBody">
@@ -3579,6 +3597,17 @@
                             style="background: #fff; border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 0.88rem; line-height: 1.5; max-height: 140px; overflow-y: auto;">
                         </div>
                     </div>
+                    <!-- Revisi 9: Biaya Perbaikan Work Order (BR-09A) -->
+                    <div style="margin-bottom:15px; background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="font-weight:bold; font-size:0.88rem; margin:0;"><i class="fa-solid fa-coins" style="color:var(--warning);"></i> Biaya Perbaikan WO: <span id="modalWoCostTotal" style="color:var(--success); font-weight:700;">Rp 0</span></label>
+                            <button type="button" class="btn btn-sm btn-primary" id="modalWoAddCostBtn" style="padding:3px 8px; font-size:0.75rem;"><i class="fa-solid fa-plus"></i> Catat Biaya</button>
+                        </div>
+                        <div id="modalWoCostList" style="font-size:0.82rem; max-height:100px; overflow-y:auto;">
+                            <span class="text-muted">Memuat biaya...</span>
+                        </div>
+                    </div>
+
                     <div id="modalWoFallbackNotice"
                         style="display:none; background:#fff3cd; color:#856404; padding:8px 12px; border-radius:6px; font-size:0.82rem; margin-bottom:15px;">
                         <i class="fa-solid fa-triangle-exclamation"></i> Work Order ini dicatat langsung dari laporan
@@ -3592,8 +3621,76 @@
                                 class="fa-solid fa-truck"></i> Detail Aset 360&deg;</button>
                         <button class="btn btn-success" id="modalWoSpbBtn" style="padding: 6px 14px;"><i
                                 class="fa-solid fa-boxes-stacked"></i> Minta Part (SPB)</button>
+                        <button class="btn btn-warning" id="modalWoCostBtn" style="padding: 6px 14px;"><i
+                                class="fa-solid fa-money-bill-wave"></i> Catat Biaya WO</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Modal Catat Transaksi Biaya Baru (Revisi 9 / BR-09A & Decision BR-09B) -->
+        <div class="modal-overlay" id="modalCostInput">
+            <div class="modal-content" style="max-width: 620px; width: 95%;">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+                    <h2 style="margin: 0; font-size: 1.25rem;"><i class="fa-solid fa-money-bill-wave" style="color: var(--success);"></i> Catat Transaksi Biaya Baru</h2>
+                    <button onclick="closeModal('modalCostInput')" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <form id="formCostInput" onsubmit="window.submitCostTransaction(event)">
+                    <div class="modal-body" style="padding: 20px;">
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label style="font-weight:600; font-size:0.88rem;">Unit Alat Berat (Asset) <span class="text-danger">*</span></label>
+                            <select id="costInputAssetId" class="form-control" required style="width:100%;">
+                                <option value="">-- Pilih Unit Alat --</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label style="font-weight:600; font-size:0.88rem;">Work Order Terkait (Opsional)</label>
+                            <input type="text" id="costInputWoId" class="form-control" placeholder="Contoh: WO-26-101 (atau kosongkan)">
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div class="form-group">
+                                <label style="font-weight:600; font-size:0.88rem;">Kategori Biaya <span class="text-danger">*</span></label>
+                                <select id="costInputCategory" class="form-control" required>
+                                    <option value="Sparepart">Sparepart & Consumable</option>
+                                    <option value="Maintenance" selected>Preventive Maintenance</option>
+                                    <option value="External">Jasa Bengkel / Outsource</option>
+                                    <option value="Capex">Overhaul / Capex</option>
+                                    <option value="Fuel">Fuel / Pelumas</option>
+                                    <option value="Other">Lain-lain</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-weight:600; font-size:0.88rem;">Tanggal Transaksi <span class="text-danger">*</span></label>
+                                <input type="date" id="costInputDate" class="form-control" required>
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div class="form-group">
+                                <label style="font-weight:600; font-size:0.88rem;">Nominal Biaya (Rp) <span class="text-danger">*</span></label>
+                                <input type="number" id="costInputAmount" class="form-control" min="1000" step="1000" placeholder="Contoh: 15000000" required>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-weight:600; font-size:0.88rem;">No. Referensi (PO / SPPU / Invoice)</label>
+                                <input type="text" id="costInputRef" class="form-control" placeholder="Contoh: PO-2026-0812">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label style="font-weight:600; font-size:0.88rem;">Vendor / Bengkel / Pihak Penyedia</label>
+                            <input type="text" id="costInputVendor" class="form-control" placeholder="Contoh: PT United Tractors / Bengkel Presisi Riau">
+                        </div>
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label style="font-weight:600; font-size:0.88rem;">Uraian / Deskripsi Pengeluaran <span class="text-danger">*</span></label>
+                            <textarea id="costInputDesc" class="form-control" rows="2" placeholder="Uraikan perbaikan atau komponen yang dibeli..." required></textarea>
+                        </div>
+                        <div class="pk-alert pk-alert-info" style="font-size:0.8rem; padding:8px 12px; margin-top:12px;">
+                            <i class="fa-solid fa-circle-info"></i> <strong>Catatan Alur Biaya (BR-09B):</strong> Biaya perbaikan dicatat ke ledger biaya dengan pencegahan double counting. Integrasi otomatis langsung dari PO/SPPU ditandai sebagai <code>[NEEDS DECISION]</code> untuk persetujuan manajemen.
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding:15px 20px; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border);">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modalCostInput')">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitCostTransaction"><i class="fa-solid fa-floppy-disk"></i> Simpan Transaksi Biaya</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -4084,6 +4181,37 @@
                 }
             };
 
+            if (!window.formatAssetIdentityDetails) {
+                window.formatAssetIdentityDetails = function(asset) {
+                    if (!asset) return { unitId: '-', sn: 'Belum tersedia', plate: 'Belum tersedia', model: 'Belum tersedia', year: 'Belum tersedia' };
+                    const parsed = window.parseAssetId ? window.parseAssetId(asset.id || asset.asset_id || '') : { unitId: asset.id, snPlat: '-' };
+                    const unitId = asset.asset_code || parsed.unitId || asset.id || '-';
+                    
+                    let sn = asset.serial_number ? String(asset.serial_number).trim() : '';
+                    if ((!sn || sn === '-') && parsed.snPlat && parsed.snPlat !== '-') {
+                        sn = parsed.snPlat;
+                    }
+                    const snText = (sn && sn !== '-') ? sn : 'Belum tersedia';
+
+                    const plate = asset.license_plate ? String(asset.license_plate).trim() : '';
+                    const plateText = (plate && plate !== '-') ? plate : 'Belum tersedia';
+
+                    const model = asset.make_model ? String(asset.make_model).trim() : '';
+                    const modelText = (model && model !== '-') ? model : 'Belum tersedia';
+
+                    const year = asset.year_manufacture ? parseInt(asset.year_manufacture, 10) : 0;
+                    const yearText = (year && year >= 1970) ? String(year) : 'Belum tersedia';
+
+                    return {
+                        unitId,
+                        sn: snText,
+                        plate: plateText,
+                        model: modelText,
+                        year: yearText
+                    };
+                };
+            }
+
             window.openWoDetailModal = function (woId, fallbackAssetId, fallbackIssue) {
                 if (!globalData || !globalData.work_orders) return;
                 const wo = globalData.work_orders.find(w => w.woId === woId);
@@ -4099,9 +4227,14 @@
                 const assetBtn = document.getElementById('modalWoAssetBtn');
                 const spbBtn = document.getElementById('modalWoSpbBtn');
 
+                const targetAssetId = wo ? (wo.assetId || wo.unitId) : (fallbackAssetId || '');
+                const allAssetsList = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
+                const assetObj = allAssetsList.find(a => a.id === targetAssetId || a.asset_id === targetAssetId || a.asset_code === targetAssetId);
+                const ident = window.formatAssetIdentityDetails ? window.formatAssetIdentityDetails(assetObj || { id: targetAssetId }) : { unitId: targetAssetId || 'N/A', sn: 'Belum tersedia', plate: 'Belum tersedia' };
+
                 if (wo) {
                     if (modalWoId) modalWoId.textContent = wo.woId;
-                    if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(wo.assetId)}</strong>`;
+                    if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(ident.unitId)}</strong> <span style="font-size:0.82rem; color:var(--text-muted, #64748b); font-weight:normal; margin-left:6px;">(SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)})</span>`;
                     if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge ${wo.status === 'Open' ? 'bg-breakdown' : wo.status === 'In Progress' ? 'bg-standby' : 'bg-operating'}">${escapeHtml(wo.status)}</span>`;
                     if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge ${wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(wo.priority)}</span>`;
                     if (modalWoDowntime) modalWoDowntime.textContent = wo.downtime || '0 jam 00 menit';
@@ -4113,7 +4246,7 @@
                 } else {
                     // Fallback for emergency WOs created dynamically
                     if (modalWoId) modalWoId.textContent = woId || 'WO-EMERGENCY';
-                    if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(fallbackAssetId || 'N/A')}</strong>`;
+                    if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(ident.unitId)}</strong> <span style="font-size:0.82rem; color:var(--text-muted, #64748b); font-weight:normal; margin-left:6px;">(SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)})</span>`;
                     if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge bg-breakdown">Open (Emergency)</span>`;
                     if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge bg-breakdown">High Emergency</span>`;
                     if (modalWoDowntime) modalWoDowntime.textContent = 'Dalam Penanganan Operasional';
@@ -4124,8 +4257,55 @@
                     if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openSpbForWo(woId, fallbackAssetId); };
                 }
 
+                // Revisi 9: Muat rincian biaya perbaikan WO & hubungkan tombol pencatatan biaya
+                loadWoCosts(woId, targetAssetId);
+                const costBtn = document.getElementById('modalWoCostBtn');
+                const addCostBtn = document.getElementById('modalWoAddCostBtn');
+                if (costBtn) costBtn.onclick = () => { openCostInputModal(targetAssetId, woId); };
+                if (addCostBtn) addCostBtn.onclick = () => { openCostInputModal(targetAssetId, woId); };
+
                 openModal('modalWoDetail');
             };
+
+            async function loadWoCosts(woId, assetId) {
+                const totalEl = document.getElementById('modalWoCostTotal');
+                const listEl = document.getElementById('modalWoCostList');
+                if (totalEl) totalEl.textContent = 'Memuat...';
+                if (listEl) listEl.innerHTML = '<span class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Memuat rincian biaya WO...</span>';
+
+                try {
+                    const response = await fetch(`api/costs.php?wo_id=${encodeURIComponent(woId)}`, {
+                        headers: { Accept: 'application/json' },
+                        cache: 'no-store'
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.status === 'success' && result.data) {
+                        const costData = result.data;
+                        if (totalEl) totalEl.textContent = costData.formattedTotalCost || 'Rp 0';
+                        if (listEl) {
+                            if (Array.isArray(costData.items) && costData.items.length > 0) {
+                                listEl.innerHTML = costData.items.map(it => `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding:5px 0;">
+                                        <div>
+                                            <strong>${escapeHtml(it.costCode)}</strong> - ${escapeHtml(it.description)}
+                                            <small style="color:var(--text-muted); display:block;">${escapeHtml(it.date)} | ${escapeHtml(it.vendor || '-')} | <span class="badge" style="background:#e2e8f0; color:#334155;">${escapeHtml(it.category)}</span></small>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <strong style="color:${it.isReversed ? '#94a3b8; text-decoration:line-through;' : 'var(--danger);'}">${escapeHtml(it.formattedAmount)}</strong>
+                                            ${it.isReversed ? '<span class="badge" style="background:#fee2e2; color:#b91c1c; display:block; font-size:0.7rem;">Dibatalkan</span>' : ''}
+                                        </div>
+                                    </div>
+                                `).join('');
+                            } else {
+                                listEl.innerHTML = '<span class="text-muted">Belum ada transaksi biaya perbaikan untuk Work Order ini.</span>';
+                            }
+                        }
+                    }
+                } catch (e) {
+                    if (totalEl) totalEl.textContent = 'Rp 0';
+                    if (listEl) listEl.innerHTML = '<span class="text-muted">Rincian biaya belum dapat dimuat.</span>';
+                }
+            }
 
             window.openWoDetailView = function (woId, assetId, issueText) {
                 // First: Open Modal Detail for Instant 360&deg; Visual Feedback
@@ -4933,7 +5113,13 @@
 
             function renderEmergencyWorkOrder(wo) {
                 const woIdEsc = escapeHtml(wo.woId);
-                const assetIdEsc = escapeHtml(wo.assetId || wo.unitId || '-');
+                const rawAssetId = wo.assetId || wo.unitId || '-';
+                const allAssetsList = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
+                const assetObj = allAssetsList.find(a => (a.id === rawAssetId || a.asset_id === rawAssetId || a.asset_code === rawAssetId));
+                const ident = window.formatAssetIdentityDetails
+                    ? window.formatAssetIdentityDetails(assetObj || { id: rawAssetId })
+                    : { unitId: rawAssetId, sn: 'Belum tersedia', plate: 'Belum tersedia' };
+                const assetIdEsc = escapeHtml(ident.unitId);
                 const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
                 const issueShort = escapeHtml(issueText.length > 92 ? issueText.substring(0, 92) + '...' : issueText);
                 const mechanic = escapeHtml(getWorkOrderMechanic(wo));
@@ -4946,7 +5132,7 @@
                                 <i class="fa-solid fa-fire attention-severity-icon" aria-hidden="true"></i>
                                 <div class="attention-identity">
                                     <span class="attention-wo-badge">${woIdEsc}</span>
-                                    <span class="attention-asset-pill">${assetIdEsc}</span>
+                                    <span class="attention-asset-pill" title="Unit: ${assetIdEsc} | SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}"><strong>${assetIdEsc}</strong><small style="opacity:0.85; margin-left:5px; font-weight:normal;">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small></span>
                                 </div>
                             </div>
                             <div class="attention-downtime" title="Durasi terhenti">
@@ -5539,23 +5725,31 @@
                 const isEmergency = wo.priority === 'High';
                 const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
                 const issueShort = escapeHtml(issueText.length > 55 ? issueText.substring(0, 55) + '...' : issueText);
-                const escapedIssue = escapeHtml(issueText).replace(/'/g, "&#039;");
-                const escapedAsset = escapeHtml(wo.assetId);
+                const rawAssetId = wo.assetId || wo.unitId || '';
+                const allAssetsList = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
+                const assetObj = allAssetsList.find(item => item.id === rawAssetId || item.asset_id === rawAssetId || item.asset_code === rawAssetId);
+                const ident = window.formatAssetIdentityDetails
+                    ? window.formatAssetIdentityDetails(assetObj || { id: rawAssetId })
+                    : { unitId: rawAssetId || '-', sn: 'Belum tersedia', plate: 'Belum tersedia' };
+                const escapedAsset = escapeHtml(ident.unitId);
 
                 return `
                 <div class="kanban-card ${wo.priority}" 
                      id="wo-card-${escapeHtml(wo.woId)}" 
                      data-wo-id="${escapeHtml(wo.woId)}"
                      data-status="${statusKey}"
-                     data-asset="${escapedAsset}"
+                     data-asset="${escapeHtml(rawAssetId)}"
                      draggable="false"
                      aria-grabbed="false"
-                     onclick="handleWoCardClick(event, '${escapeHtml(wo.woId)}', '${escapedAsset}')"
+                     onclick="handleWoCardClick(event, '${escapeHtml(wo.woId)}', '${escapeHtml(rawAssetId)}')"
                      style="cursor:grab; background:var(--bg-surface); border:1px solid var(--border); border-left:3px solid ${isEmergency ? 'var(--danger)' : 'var(--primary)'}; border-radius:2px; padding:10px 12px; margin-bottom:8px; box-shadow:none;" 
                      title="Klik untuk Detail 360&deg; | Drag untuk ubah status">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--border); padding-bottom:6px; margin-bottom:6px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px dashed var(--border); padding-bottom:6px; margin-bottom:6px;">
                         <span class="font-mono" style="font-weight:700; color:var(--primary); font-size:0.85rem;">${escapeHtml(wo.woId)}</span>
-                        <span class="font-mono" style="font-weight:700; color:var(--text-main); font-size:0.82rem;">${escapedAsset}</span>
+                        <div style="text-align:right;">
+                            <span class="font-mono" style="font-weight:700; color:var(--text-main); font-size:0.82rem;">${escapedAsset}</span>
+                            <div style="font-size:0.68rem; color:var(--text-muted);">SN: ${escapeHtml(ident.sn)} &bull; Plat: ${escapeHtml(ident.plate)}</div>
+                        </div>
                     </div>
                     <div style="font-size:0.8rem; color:var(--text-main); line-height:1.35; margin-bottom:8px; font-weight:500;">
                         ${issueShort}
@@ -5611,14 +5805,20 @@
                 }
                 tbody.innerHTML = workOrders.map(wo => {
                     const assetId = extractCleanAssetId(wo.assetId || wo.unitId || '');
-                    const asset = getAllAssets().find(item => item.id === assetId);
+                    const asset = getAllAssets().find(item => item.id === assetId || item.asset_id === assetId || item.asset_code === assetId);
+                    const ident = window.formatAssetIdentityDetails
+                        ? window.formatAssetIdentityDetails(asset || { id: assetId })
+                        : { unitId: assetId, sn: 'Belum tersedia', plate: 'Belum tersedia' };
                     const issue = wo.issue || wo.description || 'Belum ada uraian keluhan';
                     const mechanic = wo.assignedTo || wo.mechanic || 'Belum ditugaskan';
                     const statusClass = wo.status === 'Closed' ? 'closed' : wo.status === 'In Progress' ? 'progress' : 'open';
                     const priorityClass = wo.priority === 'High' ? 'high' : 'normal';
                     return `<tr>
                         <td><button type="button" class="wo-id-link" onclick="openWoDetailModal('${escapeHtml(wo.woId)}', '${escapeHtml(assetId)}')">${escapeHtml(wo.woId)}</button></td>
-                        <td><strong>${escapeHtml(assetId || '-')}</strong></td>
+                        <td>
+                            <strong>${escapeHtml(ident.unitId || '-')}</strong>
+                            <small style="display:block; font-size:0.75rem; color:var(--text-muted, #64748b);">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small>
+                        </td>
                         <td>${escapeHtml(asset?.location || 'Belum terpetakan')}</td>
                         <td class="wo-issue-cell" title="${escapeHtml(issue)}">${escapeHtml(issue)}</td>
                         <td><span class="wo-priority-pill ${priorityClass}">${escapeHtml(wo.priority || 'Normal')}</span></td>
@@ -6574,6 +6774,9 @@
                 }
                 if (viewName === 'logistics' && window.SpareLogistics) {
                     window.SpareLogistics.refresh();
+                }
+                if (viewName === 'biaya' && typeof window.loadCostDashboard === 'function') {
+                    window.loadCostDashboard();
                 }
                 if (viewName === 'reports') {
                     if (!/^#reports(?:\/|$)/i.test(window.location.hash)) {
@@ -8648,7 +8851,10 @@
                 document.getElementById('costTabSecPmComp').style.display = 'none';
 
                 if (tabName === 'lpj') document.getElementById('costTabSecLpj').style.display = 'block';
-                else if (tabName === 'po') document.getElementById('costTabSecPo').style.display = 'block';
+                else if (tabName === 'po') {
+                    document.getElementById('costTabSecPo').style.display = 'block';
+                    if (typeof window.loadCostDashboard === 'function') window.loadCostDashboard();
+                }
                 else if (tabName === 'pmcomp') document.getElementById('costTabSecPmComp').style.display = 'block';
                 else document.getElementById('costTabSecValuation').style.display = 'block';
             };
@@ -8678,12 +8884,212 @@
                 renderCostValuationTable(filtered);
             };
 
-            window.openCostInputModal = function () {
-                alert('Form pencatatan transaksi biaya baru (PO/SPPU) dibuka.');
+            // =========================================================================
+            // REVISI 9: PENCATATAN BIAYA & TRANSAKSI (BR-09A) & PO/SPPU DECISION (BR-09B)
+            // =========================================================================
+
+            window.openCostInputModal = function (defaultAssetId = '', defaultWoId = '') {
+                const selectAsset = document.getElementById('costInputAssetId');
+                if (selectAsset) {
+                    const allAssets = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
+                    selectAsset.innerHTML = '<option value="">-- Pilih Unit Alat Berat --</option>' + 
+                        allAssets.map(a => {
+                            const code = a.asset_code || a.id || a.asset_id;
+                            const model = a.make_model || a.model || '';
+                            const sn = a.serial_number || '';
+                            return `<option value="${escapeHtml(code)}">${escapeHtml(code)} - ${escapeHtml(model)} ${sn ? '(SN: ' + escapeHtml(sn) + ')' : ''}</option>`;
+                        }).join('');
+
+                    if (defaultAssetId) {
+                        selectAsset.value = defaultAssetId;
+                    }
+                }
+
+                const woInput = document.getElementById('costInputWoId');
+                if (woInput) woInput.value = defaultWoId || '';
+
+                const dateInput = document.getElementById('costInputDate');
+                if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+                const amountInput = document.getElementById('costInputAmount');
+                if (amountInput) amountInput.value = '';
+
+                const refInput = document.getElementById('costInputRef');
+                if (refInput) refInput.value = '';
+
+                const vendorInput = document.getElementById('costInputVendor');
+                if (vendorInput) vendorInput.value = '';
+
+                const descInput = document.getElementById('costInputDesc');
+                if (descInput) descInput.value = defaultWoId ? `Biaya perbaikan tiket ${defaultWoId}` : '';
+
+                openModal('modalCostInput');
+            };
+
+            window.submitCostTransaction = async function (e) {
+                if (e) e.preventDefault();
+                const btn = document.getElementById('btnSubmitCostTransaction');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+                }
+
+                const assetId = document.getElementById('costInputAssetId')?.value || '';
+                const woId = document.getElementById('costInputWoId')?.value || '';
+                const category = document.getElementById('costInputCategory')?.value || 'Maintenance';
+                const date = document.getElementById('costInputDate')?.value || '';
+                const amount = parseFloat(document.getElementById('costInputAmount')?.value || 0);
+                const ref = document.getElementById('costInputRef')?.value || '';
+                const vendor = document.getElementById('costInputVendor')?.value || '';
+                const desc = document.getElementById('costInputDesc')?.value || '';
+
+                const payload = {
+                    asset_id: assetId,
+                    wo_id: woId || null,
+                    cost_category: category,
+                    transaction_date: date,
+                    amount: amount,
+                    reference_no: ref || null,
+                    vendor_name: vendor || null,
+                    description: desc,
+                    source_type: 'MANUAL'
+                };
+
+                try {
+                    const response = await fetch('api/costs.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== 'success') {
+                        throw new Error(result.message || 'Gagal menyimpan transaksi biaya.');
+                    }
+
+                    closeModal('modalCostInput');
+                    alert(`Transaksi biaya berhasil dicatat! Kode: ${result.data?.costCode || ''}`);
+
+                    // Refresh table & WO modal if opened
+                    window.loadCostDashboard();
+                    if (woId && typeof loadWoCosts === 'function') {
+                        loadWoCosts(woId, assetId);
+                    }
+                } catch (err) {
+                    alert('Gagal mencatat transaksi biaya: ' + err.message);
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Transaksi Biaya';
+                    }
+                }
+            };
+
+            window.loadCostDashboard = async function () {
+                const tbody = document.getElementById('costPoTableBody');
+                if (!tbody) return;
+
+                const yr = document.getElementById('costFilterTahun')?.value || 'ALL';
+                const loc = document.getElementById('costFilterLokasi')?.value || 'ALL';
+                const cat = document.getElementById('costFilterKategori')?.value || 'ALL';
+
+                let url = 'api/costs.php?1=1';
+                if (cat !== 'ALL') url += `&cost_category=${encodeURIComponent(cat)}`;
+
+                try {
+                    const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+                    const result = await response.json();
+                    if (response.ok && result.status === 'success' && result.data) {
+                        const transactions = result.data.transactions || [];
+                        const summary = result.data.summary || {};
+
+                        // Update KPI elements if present
+                        const actualEl = document.getElementById('kpiCostActual');
+                        if (actualEl && summary.formattedTotalActive) {
+                            actualEl.textContent = summary.formattedTotalActive;
+                        }
+
+                        if (transactions.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Belum ada data transaksi biaya perbaikan.</td></tr>';
+                            return;
+                        }
+
+                        tbody.innerHTML = transactions.map(t => {
+                            const isReversed = t.isReversed;
+                            const catColors = {
+                                'Sparepart': '#3b82f6',
+                                'Maintenance': '#10b981',
+                                'External': '#f59e0b',
+                                'Capex': '#8b5cf6',
+                                'Fuel': '#06b6d4',
+                                'Other': '#64748b'
+                            };
+                            const catColor = catColors[t.category] || '#64748b';
+
+                            const woCell = t.woId
+                                ? `<button type="button" class="wo-id-link" onclick="openWoDetailModal('${escapeHtml(t.woId)}', '${escapeHtml(t.assetId)}')"><i class="fa-solid fa-screwdriver-wrench"></i> ${escapeHtml(t.woId)}</button>`
+                                : `<span class="text-muted" style="font-size:0.8rem;">Non-WO</span>`;
+
+                            const assetCell = `<strong>${escapeHtml(t.asset_code || t.assetId)}</strong> <small style="display:block; color:var(--text-muted);">${escapeHtml(t.make_model || '')}</small>`;
+
+                            const statusBadge = isReversed
+                                ? `<span class="badge" style="background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-ban"></i> Dibatalkan</span>`
+                                : `<span class="badge" style="background:#dcfce7; color:#15803d;"><i class="fa-solid fa-check"></i> Aktif</span>`;
+
+                            const actionBtn = isReversed
+                                ? `<small class="text-muted" title="${escapeHtml(t.reversalReason || '')}">Audit: ${escapeHtml(t.reversalReason || 'Dibatalkan')}</small>`
+                                : `<button type="button" class="btn btn-sm btn-danger" style="padding:2px 8px; font-size:0.75rem;" onclick="window.reverseCostTransaction(${t.transactionId}, '${escapeHtml(t.costCode)}')"><i class="fa-solid fa-ban"></i> Void</button>`;
+
+                            return `
+                                <tr style="${isReversed ? 'background:#f8fafc; opacity:0.75;' : ''}">
+                                    <td>
+                                        <strong style="color:var(--primary);">${escapeHtml(t.costCode)}</strong>
+                                        <small style="display:block; color:var(--text-muted);">${escapeHtml(t.date)}</small>
+                                    </td>
+                                    <td>${escapeHtml(t.vendor || '-')}</td>
+                                    <td>
+                                        <strong>${escapeHtml(t.description)}</strong>
+                                        ${t.referenceNo ? `<small style="display:block; color:var(--primary);"><i class="fa-solid fa-file-lines"></i> Ref: ${escapeHtml(t.referenceNo)}</small>` : ''}
+                                    </td>
+                                    <td>${assetCell}<div style="margin-top:3px;">${woCell}</div></td>
+                                    <td><span class="badge" style="background:${catColor}20; color:${catColor}; font-weight:600;">${escapeHtml(t.category)}</span></td>
+                                    <td style="font-weight:700; ${isReversed ? 'text-decoration:line-through; color:#94a3b8;' : 'color:var(--danger);'}">${escapeHtml(t.formattedAmount)}</td>
+                                    <td>${statusBadge}</td>
+                                    <td>${actionBtn}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                } catch (e) {
+                    console.warn('Gagal memuat ledger biaya:', e);
+                }
+            };
+
+            window.reverseCostTransaction = async function (transactionId, costCode) {
+                const reason = prompt(`Masukkan alasan pembatalan transaksi ${costCode} (wajib untuk kepatuhan audit):`);
+                if (!reason || reason.trim() === '') {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('api/costs.php?action=reverse', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ transaction_id: transactionId, reason: reason.trim() })
+                    });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== 'success') {
+                        throw new Error(result.message || 'Gagal membatalkan transaksi.');
+                    }
+
+                    alert(`Transaksi ${costCode} berhasil dibatalkan. Riwayat audit tersimpan.`);
+                    window.loadCostDashboard();
+                } catch (err) {
+                    alert('Gagal membatalkan transaksi: ' + err.message);
+                }
             };
 
             window.exportCostReport = function () {
-                alert('Laporan keuangan & valuasi aset berhasil di-export ke format Excel/PDF.');
+                window.open('api/costs.php', '_blank');
             };
 
             function approveDoc(btn) {

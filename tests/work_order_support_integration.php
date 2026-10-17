@@ -44,8 +44,8 @@ $db->beginTransaction();
 try {
     $insertWo = $db->prepare(
         "INSERT INTO work_orders
-         (wo_id, asset_id, issue_description, status, priority, maintenance_type)
-         VALUES (:wo_id, :asset_id, 'QA Revisi 4', 'Open', 'Normal', 'Corrective')"
+         (wo_id, asset_id, issue_description, status, priority)
+         VALUES (:wo_id, :asset_id, 'QA Revisi 4', 'Open', 'Normal')"
     );
     $insertWo->execute([':wo_id' => $woId, ':asset_id' => $asset]);
 

@@ -4601,17 +4601,34 @@
             </div>`;
     }
 
+    function resolveAssetIdentity(asset) {
+        if (typeof window !== 'undefined' && typeof window.formatAssetIdentityDetails === 'function') {
+            return window.formatAssetIdentityDetails(asset);
+        }
+        const unitId = asset?.asset_code || (typeof shortCode === 'function' ? shortCode(asset?.id) : (asset?.id || '-'));
+        const sn = asset?.serial_number && asset.serial_number !== '-' ? String(asset.serial_number).trim() : 'Belum tersedia';
+        const plate = asset?.license_plate && asset.license_plate !== '-' ? String(asset.license_plate).trim() : 'Belum tersedia';
+        const model = asset?.make_model && asset.make_model !== '-' ? String(asset.make_model).trim() : 'Belum tersedia';
+        const year = asset?.year_manufacture && Number(asset.year_manufacture) >= 1970 ? String(asset.year_manufacture) : 'Belum tersedia';
+        return { unitId, sn, plate, model, year };
+    }
+
     function renderAssetRow(asset, hasParts) {
         const summary = summaryForAsset(asset.id);
         const workOrders = activeWorkOrders(asset.id);
         const primaryWo = workOrders[0];
         const fulfilment = summary.requested ? Math.round((summary.available / summary.requested) * 100) : 0;
+        const ident = resolveAssetIdentity(asset);
         return `
             <tr>
                 <td>
                     <div class="sl-unit-cell">
                         <span class="sl-unit-icon ${hasParts ? summary.overall : 'muted'}"><i class="fa-solid ${assetIcon(asset)}"></i></span>
-                        <div><strong>${escapeHtml(shortCode(asset.id))}</strong><small title="${escapeHtml(asset.id)}">${escapeHtml(asset.category || 'Alat Berat')}</small></div>
+                        <div>
+                            <strong>${escapeHtml(ident.unitId)}</strong>
+                            <small title="${escapeHtml(asset.id)}">${escapeHtml(asset.category || 'Alat Berat')}</small>
+                            <small style="display:block; font-size:0.75rem; color:var(--text-muted, #64748b);">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small>
+                        </div>
                     </div>
                 </td>
                 <td>
@@ -4709,10 +4726,15 @@
     }
 
     function kpiUnitCell(asset) {
+        const ident = resolveAssetIdentity(asset);
         return `
             <div class="sl-unit-cell">
                 <span class="sl-unit-icon muted"><i class="fa-solid ${assetIcon(asset)}"></i></span>
-                <div><strong>${escapeHtml(shortCode(asset.id))}</strong><small title="${escapeHtml(asset.id)}">${escapeHtml(asset.category || 'Alat Berat')}</small></div>
+                <div>
+                    <strong>${escapeHtml(ident.unitId)}</strong>
+                    <small title="${escapeHtml(asset.id)}">${escapeHtml(asset.category || 'Alat Berat')}</small>
+                    <small style="display:block; font-size:0.75rem; color:var(--text-muted, #64748b);">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small>
+                </div>
             </div>`;
     }
 
@@ -16649,6 +16671,8 @@
         { no: 18, model: 'PC210-10M0', sn: 'C07076', branch: 'PLB PALEMBANG', smr: 1570.8, lastComm: '02/01/2026 11:03', days: 29, hours: 142.2, actualHours: 73.1, actualRatio: 51.4, eModeRatio: 49.0, travelRatio: 14.3, diggingRatio: 4.6, hoistRatio: 4.9, fuelLiters: 1325.1, fuelLPH: 9.3, idlingRatio: 48.6, status: 'Active' }
     ];
 
+    let telematicsReconciliation = [];
+    let idlingAnomalyData = [];
     let lhoOperationData = [];
     let contractRows = [];
     let contractPreviewReady = false;
@@ -16744,7 +16768,7 @@
                                 <span class="telemetry-metric-label">Physical Availability (PA)</span>
                                 ${renderMiniDonutChartSVG(fleetKPIs.physicalAvailability, 'var(--success)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--success);">${fleetKPIs.physicalAvailability}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-pa-val" style="color:var(--success);">${fleetKPIs.physicalAvailability}%</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 90.0%</span>
                             </div>
@@ -16754,7 +16778,7 @@
                                 <span class="telemetry-metric-label">Use of Availability (UA)</span>
                                 ${renderMiniDonutChartSVG(fleetKPIs.useOfAvailability, 'var(--success)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--success);">${fleetKPIs.useOfAvailability}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-ua-val" style="color:var(--success);">${fleetKPIs.useOfAvailability}%</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 80.0%</span>
                             </div>
@@ -16764,7 +16788,7 @@
                                 <span class="telemetry-metric-label">Breakdown Rate (BR)</span>
                                 ${renderMiniDonutChartSVG(fleetKPIs.breakdownRate, 'var(--primary)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--primary);">${fleetKPIs.breakdownRate}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-br-val" style="color:var(--primary);">${fleetKPIs.breakdownRate}%</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target: &le; 10.0%</span>
                             </div>
@@ -16774,7 +16798,7 @@
                                 <span class="telemetry-metric-label">Utilization Rate (UT)</span>
                                 ${renderMiniDonutChartSVG(fleetKPIs.utilizationRate, 'var(--warning)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--warning);">${fleetKPIs.utilizationRate}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-ut-val" style="color:var(--warning);">${fleetKPIs.utilizationRate}%</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Working vs Total Hours</span>
                             </div>
@@ -16787,7 +16811,7 @@
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">MTBF (Mean Time Between Failures)</span>
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--primary);">${fleetKPIs.mtbf} Jam</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-mtbf-val" style="color:var(--primary);">${fleetKPIs.mtbf} Jam</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 100 Jam</span>
                             </div>
@@ -16796,7 +16820,7 @@
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Total Jam Kerja Terjadwal Armada</span>
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--text-main);">${fleetKPIs.totalWorkingHours.toLocaleString()} Jam</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-total-wh-val" style="color:var(--text-main);">${fleetKPIs.totalWorkingHours.toLocaleString()} Jam</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Operational Baseline 18 Unit</span>
                             </div>
@@ -16810,7 +16834,7 @@
                                 <span class="telemetry-metric-label">MTTR (Mean Time To Repair)</span>
                                 <i class="fa-solid fa-screwdriver-wrench text-muted" style="font-size:0.8rem;"></i>
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--primary);">${fleetKPIs.mttr} Jam</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-mttr-val" style="color:var(--primary);">${fleetKPIs.mttr} Jam</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target Benchmark: &le; 4.0 Jam</span>
                             </div>
@@ -16820,9 +16844,9 @@
                                 <span class="telemetry-metric-label">Total Fuel Fleet Consumed</span>
                                 <i class="fa-solid fa-gas-pump text-muted" style="font-size:0.8rem;"></i>
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--text-main);">${fleetKPIs.totalFuelConsumed.toLocaleString()} L</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-total-fuel-val" style="color:var(--text-main);">${fleetKPIs.totalFuelConsumed.toLocaleString()} L</div>
                             <div class="telemetry-metric-footer">
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Rata-rata: ${fleetKPIs.avgFuelLPH} L/H</span>
+                                <span id="kpi-avg-fuel-val" style="font-size:0.72rem; color:var(--text-muted);">Rata-rata: ${fleetKPIs.avgFuelLPH} L/H</span>
                             </div>
                         </div>
                         <div class="telemetry-metric-item">
@@ -16830,7 +16854,7 @@
                                 <span class="telemetry-metric-label">Rata-rata Idling Fleet</span>
                                 ${renderMiniDonutChartSVG(fleetKPIs.avgIdlingRatio, 'var(--danger)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" style="color:var(--danger);">${fleetKPIs.avgIdlingRatio}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-idling-val" style="color:var(--danger);">${fleetKPIs.avgIdlingRatio}%</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--danger);">Memerlukan Evaluasi Sopir/Mekanik</span>
                             </div>
@@ -16905,6 +16929,36 @@
                                         </tr>
                                     </thead>
                                     <tbody id="tbKomtraxBody">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rekonsiliasi Telematika vs LHO Manual Operator -->
+                    <div class="pk-panel" style="margin-top: 20px;">
+                        <div class="pk-panel-header">
+                            <span><i class="fa-solid fa-code-compare"></i> Tabel Rekonsiliasi Telematika Satelit vs LHO Manual Operator (Audit Variance & Exception)</span>
+                        </div>
+                        <div class="pk-panel-body no-padding">
+                            <div class="table-responsive">
+                                <table id="tbReconciliationTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Serial No</th>
+                                            <th>Model Unit</th>
+                                            <th>Sub Group</th>
+                                            <th>Kode Unit</th>
+                                            <th>Jam Satelit (Komtrax)</th>
+                                            <th>Jam Manual (LHO)</th>
+                                            <th>Selisih Jam</th>
+                                            <th>Selisih %</th>
+                                            <th>Status</th>
+                                            <th>Exception / Tindak Lanjut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbReconciliationBody">
                                         <!-- Populated via JS -->
                                     </tbody>
                                 </table>
@@ -17074,6 +17128,7 @@
         bindProdEvents();
         bindContractEvents();
         renderProdModuleContent();
+        loadProductivityData();
     }
 
     // =========================================================================
@@ -17100,6 +17155,7 @@
 
     function renderProdModuleContent() {
         renderKomtraxTable();
+        renderReconciliationTable();
         renderIdlingAnomalyTable();
         renderStandbyCategoryTable();
     }
@@ -17300,9 +17356,25 @@
         const tbody = document.getElementById('tbIdlingAnomalyBody');
         if (!tbody) return;
 
-        const anomalyUnits = komtraxFleetData.filter(u => u.idlingRatio >= 50);
         const fuelCostPerLiter = 14500; // Rp 14,500 per liter solar industri
 
+        if (idlingAnomalyData && idlingAnomalyData.length > 0) {
+            tbody.innerHTML = idlingAnomalyData.map(u => `
+                <tr class="prod-anomaly-row">
+                    <td><strong class="text-danger">${escapeHtml(u.sn)}</strong></td>
+                    <td><strong>${escapeHtml(u.model)}</strong></td>
+                    <td>${escapeHtml(u.branch)}</td>
+                    <td style="text-align:center;">${(u.hours || 0).toFixed(1)} h</td>
+                    <td style="text-align:center; font-weight:700; font-size:1.05rem;">${(u.idlingRatio || 0).toFixed(1)}%</td>
+                    <td style="text-align:center; font-weight:700;">${(u.estimatedIdleFuel || 0).toFixed(1)} L</td>
+                    <td style="font-weight:700; color:var(--danger);">Rp ${((u.estimatedLossCost || 0) / 1000000).toFixed(2)} Jt</td>
+                    <td style="font-size:0.82rem;">${escapeHtml(u.recommendation || 'Audit perilaku operator & matikan mesin saat standby > 5 menit.')}</td>
+                </tr>
+            `).join('');
+            return;
+        }
+
+        const anomalyUnits = komtraxFleetData.filter(u => u.idlingRatio >= 50);
         tbody.innerHTML = anomalyUnits.map(u => {
             const estimatedIdleFuel = (u.fuelLiters * (u.idlingRatio / 100));
             const idleLossCost = estimatedIdleFuel * fuelCostPerLiter;
@@ -17320,6 +17392,98 @@
                 </tr>
             `;
         }).join('');
+    }
+
+    function renderReconciliationTable() {
+        const tbody = document.getElementById('tbReconciliationBody');
+        if (!tbody) return;
+
+        if (!telematicsReconciliation || telematicsReconciliation.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:var(--text-muted);"><i class="fa-solid fa-rotate fa-spin"></i> Memuat rekonsiliasi telematika...</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = telematicsReconciliation.map(r => {
+            const isAnomaly = r.reconciliationStatus === 'ANOMALY';
+            const badgeCls = isAnomaly ? 'prod-badge-warning' : 'prod-badge-success';
+            const excBadges = (Array.isArray(r.exceptions) && r.exceptions.length > 0)
+                ? r.exceptions.map(e => {
+                    const cls = e.includes('Anomaly') ? 'prod-badge-danger' : e.includes('Offline') ? 'prod-badge-danger' : 'prod-badge-warning';
+                    return `<span class="prod-badge ${cls}">${escapeHtml(e)}</span>`;
+                }).join(' ')
+                : '<span class="prod-badge prod-badge-success"><i class="fa-solid fa-check"></i> Sesuai</span>';
+
+            return `
+                <tr>
+                    <td><strong class="text-primary">${escapeHtml(r.sn)}</strong></td>
+                    <td><strong>${escapeHtml(r.model)}</strong></td>
+                    <td><small class="text-muted">${escapeHtml(r.branch)}</small></td>
+                    <td><code>${escapeHtml(r.assetCode || '-')}</code></td>
+                    <td style="text-align:center; font-weight:700;">${r.telematicsHours !== null && r.telematicsHours !== undefined ? Number(r.telematicsHours).toFixed(1) + ' h' : '-'}</td>
+                    <td style="text-align:center;">${r.manualLhoHours !== null && r.manualLhoHours !== undefined ? Number(r.manualLhoHours).toFixed(1) + ' h' : '<span class="text-muted">Belum ada LHO</span>'}</td>
+                    <td style="text-align:center; font-weight:600;">${r.varianceHours !== null && r.varianceHours !== undefined ? Number(r.varianceHours).toFixed(1) + ' h' : '-'}</td>
+                    <td style="text-align:center; color:${r.variancePercent > 15 ? 'var(--danger)' : 'var(--text-main)'}; font-weight:${r.variancePercent > 15 ? '700' : '400'};">${r.variancePercent !== null && r.variancePercent !== undefined ? Number(r.variancePercent).toFixed(1) + '%' : '-'}</td>
+                    <td style="text-align:center;"><span class="prod-badge ${badgeCls}">${escapeHtml(r.reconciliationStatus)}</span></td>
+                    <td>${excBadges}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderProdKPIs() {
+        function updateKpiEl(id, valObj, fallbackNum, unit = '') {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (valObj && valObj.value === null) {
+                el.innerHTML = '<span class="prod-badge prod-badge-muted" style="font-size:0.9rem; background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1;">Tidak Ada Data</span>';
+                el.style.color = 'var(--text-muted)';
+            } else if (valObj && valObj.formatted) {
+                el.textContent = valObj.formatted;
+                if (valObj.status === 'MEETS_TARGET') el.style.color = 'var(--success)';
+                else if (valObj.status === 'BELOW_TARGET' || valObj.status === 'ABOVE_LIMIT') el.style.color = 'var(--warning)';
+            } else if (fallbackNum !== undefined && fallbackNum !== null) {
+                el.textContent = fallbackNum + unit;
+            }
+        }
+
+        updateKpiEl('kpi-pa-val', fleetKPIs.physicalAvailability, 92.4, '%');
+        updateKpiEl('kpi-ua-val', fleetKPIs.useOfAvailability, 81.8, '%');
+        updateKpiEl('kpi-br-val', fleetKPIs.breakdownRate, 7.6, '%');
+        updateKpiEl('kpi-ut-val', fleetKPIs.utilizationRate, 52.1, '%');
+        updateKpiEl('kpi-mtbf-val', fleetKPIs.mtbf, 114.5, ' Jam');
+        updateKpiEl('kpi-total-wh-val', fleetKPIs.totalWorkingHours, 2046.1, ' Jam');
+        updateKpiEl('kpi-mttr-val', fleetKPIs.mttr, 3.8, ' Jam');
+        updateKpiEl('kpi-total-fuel-val', fleetKPIs.totalFuelConsumed, 18648.8, ' L');
+        updateKpiEl('kpi-avg-fuel-val', fleetKPIs.avgFuelLPH, 9.11, ' L/H');
+        updateKpiEl('kpi-idling-val', fleetKPIs.avgIdlingRatio, 46.41, '%');
+    }
+
+    async function loadProductivityData() {
+        try {
+            const response = await fetch('api/productivity.php', { credentials: 'same-origin', cache: 'no-store' });
+            const payload = await response.json();
+            if (response.ok && payload.status === 'success' && payload.data) {
+                if (Array.isArray(payload.data.telematics) && payload.data.telematics.length > 0) {
+                    komtraxFleetData = payload.data.telematics;
+                }
+                if (payload.data.kpis) {
+                    fleetKPIs = payload.data.kpis;
+                    renderProdKPIs();
+                }
+                if (payload.data.standbySummary) {
+                    standbySummary = payload.data.standbySummary;
+                }
+                if (Array.isArray(payload.data.reconciliation)) {
+                    telematicsReconciliation = payload.data.reconciliation;
+                }
+                if (Array.isArray(payload.data.idlingAnomalies)) {
+                    idlingAnomalyData = payload.data.idlingAnomalies;
+                }
+                renderProdModuleContent();
+            }
+        } catch (e) {
+            console.warn('Gagal memuat data API produktivitas:', e);
+        }
     }
 
     function renderStandbyCategoryTable() {
@@ -20425,6 +20589,20 @@ window.renderArchiveTables = function() {
         renderNotifications();
     };
 
+    window.openNotificationTarget = function(id, woId, assetId) {
+        if (id) {
+            window.markNotificationAsRead(id);
+        }
+        const panel = document.getElementById('notificationDropdownPanel');
+        if (panel) panel.style.display = 'none';
+
+        if (woId && typeof window.openWoDetailModal === 'function') {
+            window.openWoDetailModal(woId, assetId || '');
+        } else if (typeof window.showView === 'function') {
+            window.showView('view-work-order');
+        }
+    };
+
     window.markNotificationAsRead = function(id) {
         const item = systemNotificationsState.find(n => n.id === id);
         if (item) {
@@ -20540,8 +20718,13 @@ window.renderArchiveTables = function() {
             return;
         }
 
-        container.innerHTML = filtered.map(n => `
-            <div class="notif-item ${!n.isRead ? 'unread' : ''}" onclick="markNotificationAsRead(${n.id})">
+        container.innerHTML = filtered.map(n => {
+            const related = n.relatedTables || {};
+            const woId = n.woId || related.wo_id || (Array.isArray(related.records) ? related.records.find(r => r.table === 'work_orders')?.id : null);
+            const assetId = n.assetId || related.asset_id || (Array.isArray(related.records) ? related.records.find(r => r.table === 'assets')?.id : null);
+
+            return `
+            <div class="notif-item ${!n.isRead ? 'unread' : ''}" onclick="${woId ? `window.openNotificationTarget(${n.id}, '${escapeHtml(woId)}', '${escapeHtml(assetId || '')}')` : `markNotificationAsRead(${n.id})`}">
                 <div class="notif-avatar">
                     <i class="fa-solid ${getMenuIcon(n.badgeClass)}"></i>
                 </div>
@@ -20564,6 +20747,14 @@ window.renderArchiveTables = function() {
                         ` : ''}
                     </div>
 
+                    ${woId ? `
+                        <div style="margin-top:6px;">
+                            <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); window.openNotificationTarget(${n.id}, '${escapeHtml(woId)}', '${escapeHtml(assetId || '')}')" style="padding:2px 8px; font-size:0.75rem; background:var(--primary, #0284c7); color:#fff; border:none; border-radius:3px; cursor:pointer;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Work Order #${escapeHtml(woId)}
+                            </button>
+                        </div>
+                    ` : ''}
+
                     ${n.relatedTables ? `
                         <button type="button" class="notif-json-toggle" onclick="toggleJsonBlock(${n.id}, event)">
                             <i class="fa-solid fa-code"></i> Detail Tabel Terkait (JSON)
@@ -20574,7 +20765,8 @@ window.renderArchiveTables = function() {
                     ` : ''}
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function getMenuIcon(badgeClass) {
