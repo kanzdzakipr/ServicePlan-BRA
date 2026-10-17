@@ -2417,31 +2417,132 @@
                                     Plat: <strong id="propUnitPlate" style="color:#0f172a;">B 9104 ZYT</strong> &bull; 
                                     SN: <code id="propUnitSerial" style="color:#475569;">HINO-49821A7C</code>
                                 </div>
+                                <div class="prop-hull-interactive-row">
+                                    <span class="prop-hull-label">Nomor lambung:</span>
+                                    <span class="prop-hull-interactive-group">
+                                        <a href="javascript:void(0)" class="prop-hull-link" id="propUnitHullLink" onclick="window.openPropHullHistoryModal()" title="Klik untuk melihat riwayat nomor lambung">
+                                            <strong id="propUnitHull">Belum tersedia</strong>
+                                            <i class="fa-solid fa-clock-rotate-left prop-hull-history-badge-icon" title="Riwayat Nomor Lambung"></i>
+                                        </a>
+                                        <button type="button" class="prop-btn-icon-rename" id="btnPropRenameHull" onclick="window.openPropRenameModal()" title="Ubah / Rename Nomor Lambung">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Core Vitals Grid -->
-                    <div class="prop-vitals-bento-grid">
-                        <div class="prop-vital-cell">
-                            <div class="vital-label"><i class="fa-solid fa-gauge-high"></i> Total Jam Kerja (HM)</div>
-                            <div class="vital-val" id="propVitalHm">34.500 HM</div>
-                            <div class="vital-sub">SMR Engine Terbaca</div>
+                    <!-- Layout Utama: Kolom Kiri (Dokumen + Bento Vitals) & Kolom Kanan (Card Galeri 3x3) -->
+                    <div class="prop-hero-layout-grid">
+                        <!-- Kolom Kiri -->
+                        <div class="prop-hero-left">
+                            <!-- Strip Dokumen Legalitas & Berkas JO (STNK, KIR, SILO, PDF JO) -->
+                            <div class="prop-docs-strip-card" id="propDocsStrip">
+                                <div class="prop-docs-strip-label">
+                                    <i class="fa-solid fa-file-shield" style="color:var(--primary, #0284c7);"></i>
+                                    <span>Legalitas &amp; Dokumen:</span>
+                                </div>
+                                <div class="prop-docs-links-container" id="propDocsLinksContainer">
+                                    <!-- Rendered dynamically via JS -->
+                                </div>
+                            </div>
+
+                            <!-- Bento Grid Vitals: 5 Card Onboarding & PM + 4 Card Telemetrik Operasional -->
+                            <div class="prop-vitals-bento-grid">
+                                <!-- Vitals Onboarding & PM -->
+                                <div class="prop-vital-cell" id="cardVitalOperator">
+                                    <div class="vital-label-row">
+                                        <div class="vital-label"><i class="fa-solid fa-user-gear"></i> Operator Saat Ini</div>
+                                        <button type="button" class="btn-vital-history" onclick="window.openPropOperatorHistoryModal()" title="Lihat Riwayat Penugasan Operator">
+                                            <i class="fa-solid fa-clock-rotate-left"></i>
+                                        </button>
+                                    </div>
+                                    <div class="vital-val" id="propVitalOperator">Belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalOperatorSub">Penugasan Aktif</div>
+                                </div>
+
+                                <div class="prop-vital-cell" id="cardVitalLastService">
+                                    <div class="vital-label-row">
+                                        <div class="vital-label"><i class="fa-solid fa-wrench"></i> Servis Terakhir</div>
+                                        <button type="button" class="btn-vital-history" onclick="window.openPropServiceHistoryModal()" title="Lihat Riwayat Perawatan & Servis">
+                                            <i class="fa-solid fa-clock-rotate-left"></i>
+                                        </button>
+                                    </div>
+                                    <div class="vital-val" id="propVitalLastService">Belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalLastServiceSub">Belum tercatat</div>
+                                </div>
+
+                                <div class="prop-vital-cell" id="cardVitalInterval">
+                                    <div class="vital-label-row">
+                                        <div class="vital-label"><i class="fa-solid fa-arrows-rotate"></i> Interval Servis</div>
+                                    </div>
+                                    <div class="vital-val" id="propVitalInterval">Belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalIntervalSub">Siklus Rutin PM</div>
+                                </div>
+
+                                <div class="prop-vital-cell" id="cardVitalNextTarget">
+                                    <div class="vital-label-row">
+                                        <div class="vital-label"><i class="fa-solid fa-bullseye"></i> Target Berikutnya</div>
+                                    </div>
+                                    <div class="vital-val" id="propVitalNextTarget">Belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalNextTargetSub">Ambang Batas PM</div>
+                                </div>
+
+                                <div class="prop-vital-cell" id="cardVitalEstimate">
+                                    <div class="vital-label-row">
+                                        <div class="vital-label"><i class="fa-solid fa-calendar-check"></i> Estimasi Servis</div>
+                                    </div>
+                                    <div class="vital-val" id="propVitalEstimate">Belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalEstimateSub">Kalkulasi Jam Operasi</div>
+                                </div>
+
+                                <!-- Core Telemetry Vitals -->
+                                <div class="prop-vital-cell">
+                                    <div class="vital-label-row">
+                                        <div class="vital-label"><i class="fa-solid fa-gauge-high"></i> Total Jam Kerja (HM)</div>
+                                    </div>
+                                    <div class="vital-val" id="propVitalHm">34.500 HM</div>
+                                    <div class="vital-sub">SMR Engine Terbaca</div>
+                                </div>
+                                <div class="prop-vital-cell">
+                                    <div class="vital-label-row">
+                                        <div class="vital-label"><i class="fa-solid fa-location-dot"></i> Posisi Terkini</div>
+                                    </div>
+                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem;">Borrow Pit Harapan Baru</div>
+                                    <div class="vital-sub">Mining Sector Area</div>
+                                </div>
+                                <div class="prop-vital-cell">
+                                    <div class="vital-label-row">
+                                        <div class="vital-label"><i class="fa-solid fa-heart-pulse"></i> Health Score</div>
+                                    </div>
+                                    <div class="vital-val" id="propVitalHealth" style="color:#16a34a;">94%</div>
+                                    <div class="vital-sub">Kondisi Prima</div>
+                                </div>
+                                <div class="prop-vital-cell">
+                                    <div class="vital-label-row">
+                                        <div class="vital-label"><i class="fa-solid fa-clock"></i> Servis PM Berikut</div>
+                                    </div>
+                                    <div class="vital-val" id="propVitalNextService" style="color:#0284c7; font-size:0.95rem;">PS 500 (120 HM lagi)</div>
+                                    <div class="vital-sub">Estimasi 6 Hari Kerja</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="prop-vital-cell">
-                            <div class="vital-label"><i class="fa-solid fa-location-dot"></i> Posisi Terkini</div>
-                            <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem;">Borrow Pit Harapan Baru</div>
-                            <div class="vital-sub">Mining Sector Area</div>
-                        </div>
-                        <div class="prop-vital-cell">
-                            <div class="vital-label"><i class="fa-solid fa-heart-pulse"></i> Health Score</div>
-                            <div class="vital-val" id="propVitalHealth" style="color:#16a34a;">94%</div>
-                            <div class="vital-sub">Kondisi Prima</div>
-                        </div>
-                        <div class="prop-vital-cell">
-                            <div class="vital-label"><i class="fa-solid fa-clock"></i> Servis PM Berikut</div>
-                            <div class="vital-val" id="propVitalNextService" style="color:#0284c7; font-size:0.95rem;">PS 500 (120 HM lagi)</div>
-                            <div class="vital-sub">Estimasi 6 Hari Kerja</div>
+
+                        <!-- Kolom Kanan: Card Galeri Foto Unit Sizing 3x3 -->
+                        <div class="prop-hero-right">
+                            <div class="prop-gallery-card">
+                                <div class="prop-gallery-header">
+                                    <div class="prop-gallery-header-title">
+                                        <i class="fa-solid fa-camera"></i>
+                                        <span>Galeri Foto Unit</span>
+                                    </div>
+                                    <span class="prop-gallery-badge" id="propGalleryCount">0 Foto</span>
+                                </div>
+                                <div class="prop-gallery-body" id="propGalleryContainer">
+                                    <!-- Rendered dynamically via JS: 3x3 grid or empty state -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3993,6 +4094,138 @@
                         <button type="button" class="btn btn-secondary" onclick="closeModal('modalRenameHullNumber')">Batal</button>
                         <button type="button" class="btn btn-primary" id="btnSubmitRenameHull" onclick="window.submitRenameHull()"><i class="fa-solid fa-floppy-disk"></i> Simpan Nomor Lambung</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Riwayat Perubahan Nomor Lambung Unit Properties -->
+        <div class="modal-overlay" id="modalPropHullHistory">
+            <div class="modal-content" style="max-width: 540px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff; padding: 16px 20px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:36px; height:36px; border-radius:8px; background:rgba(2,132,199,0.2); display:flex; align-items:center; justify-content:center; color:#38bdf8;">
+                            <i class="fa-solid fa-clock-rotate-left" style="font-size:1.1rem;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0; font-size:1.05rem; color:#fff;">Riwayat Perubahan Nomor Lambung</h3>
+                            <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Unit: <strong id="mrlAssetTitle" style="color:#38bdf8;">-</strong></p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('modalPropHullHistory')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 18px 20px; max-height: 65vh; overflow-y: auto;">
+                    <div id="mrlHistoryList">Memuat riwayat...</div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalPropHullHistory')">Tutup</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modalPropHullHistory'); window.openPropRenameModal();">
+                        <i class="fa-solid fa-pen-to-square"></i> Ubah Nomor Lambung
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Riwayat Penugasan Operator Unit Properties -->
+        <div class="modal-overlay" id="modalPropOperatorHistory">
+            <div class="modal-content" style="max-width: 680px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff; padding: 16px 20px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:36px; height:36px; border-radius:8px; background:rgba(22,163,74,0.2); display:flex; align-items:center; justify-content:center; color:#4ade80;">
+                            <i class="fa-solid fa-user-gear" style="font-size:1.1rem;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0; font-size:1.05rem; color:#fff;">Riwayat Penugasan Operator</h3>
+                            <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Unit: <strong id="mroAssetTitle" style="color:#4ade80;">-</strong></p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('modalPropOperatorHistory')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 18px 20px; max-height: 65vh; overflow-y: auto;">
+                    <div id="mroHistoryList">Memuat data operator...</div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalPropOperatorHistory')">Tutup</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Riwayat Perawatan & Servis PM Unit Properties -->
+        <div class="modal-overlay" id="modalPropServiceHistory">
+            <div class="modal-content" style="max-width: 760px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff; padding: 16px 20px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:36px; height:36px; border-radius:8px; background:rgba(234,88,12,0.2); display:flex; align-items:center; justify-content:center; color:#fb923c;">
+                            <i class="fa-solid fa-wrench" style="font-size:1.1rem;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0; font-size:1.05rem; color:#fff;">Riwayat Perawatan &amp; Servis PM</h3>
+                            <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Unit: <strong id="mrsAssetTitle" style="color:#fb923c;">-</strong></p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('modalPropServiceHistory')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 18px 20px; max-height: 65vh; overflow-y: auto;">
+                    <div id="mrsHistoryList">Memuat data servis...</div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalPropServiceHistory')">Tutup</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Popup Dokumen Legalitas (STNK, KIR, SILO, PDF JO) -->
+        <div class="modal-overlay" id="modalPropDocumentViewer">
+            <div class="modal-content" style="max-width: 520px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff; padding: 16px 20px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:36px; height:36px; border-radius:8px; background:rgba(2,132,199,0.2); display:flex; align-items:center; justify-content:center; color:#38bdf8;">
+                            <i class="fa-solid fa-file-shield" style="font-size:1.1rem;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin:0; font-size:1.05rem; color:#fff;" id="mpdDocTitle">Dokumen Legalitas</h3>
+                            <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Unit: <strong id="mpdAssetCode" style="color:#38bdf8;">-</strong></p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('modalPropDocumentViewer')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:16px;">
+                        <div style="font-size:0.88rem; font-weight:700; color:#0f172a; margin-bottom:4px;" id="mpdDocDesc">-</div>
+                        <div id="mpdExpiryBadge" style="display:inline-flex; align-items:center; font-size:0.8rem; font-weight:600; color:#1e40af; background:#dbeafe; padding:4px 10px; border-radius:20px; margin-top:6px;">
+                            <!-- Masa Berlaku -->
+                        </div>
+                    </div>
+                    <div style="font-size:0.78rem; color:#64748b; line-height:1.5;">
+                        <i class="fa-solid fa-circle-info" style="color:#0284c7;"></i> Dokumen resmi ini diverifikasi pada saat proses onboarding unit armada dan tersimpan dalam pangkalan data PT Bukit Ringgit Aktiva.
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalPropDocumentViewer')">Tutup</button>
+                    <a href="javascript:void(0)" class="btn btn-primary btn-sm" id="mpdActionBtn" style="display:none;">
+                        <i class="fa-solid fa-file-pdf"></i> Buka / Unduh Berkas
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Lightbox Preview Foto Galeri Unit Properties -->
+        <div class="modal-overlay" id="modalPropPhotoPreview">
+            <div class="modal-content" style="max-width: 680px; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.3); background:#0f172a;">
+                <div class="modal-header" style="background:#0f172a; color:#fff; padding: 12px 18px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span id="mplPhotoAngle" style="font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:12px; background:#0284c7; color:#fff; text-transform:uppercase;">Angle</span>
+                        <h4 style="margin:0; font-size:0.95rem; color:#fff;" id="mplPhotoTitle">Foto Unit</h4>
+                    </div>
+                    <button onclick="closeModal('modalPropPhotoPreview')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 0; background:#020617; display:flex; align-items:center; justify-content:center; min-height:300px; max-height:70vh; overflow:hidden;">
+                    <img id="mplPreviewImg" src="" alt="Preview Foto Unit" style="max-width:100%; max-height:70vh; object-fit:contain; display:block;">
+                </div>
+                <div class="modal-footer" style="padding: 10px 18px; background:#0f172a; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
+                    <span id="mplPhotoDate" style="font-size:0.75rem; color:#94a3b8;"></span>
+                    <a id="mplDownloadBtn" href="" target="_blank" class="btn btn-primary btn-sm" style="font-size:0.8rem; padding:4px 10px;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Resolusi Penuh
+                    </a>
                 </div>
             </div>
         </div>
@@ -6087,7 +6320,12 @@
                     if (asset && asset.asset_code) window.assetDbMapping[asset.asset_code] = newHull;
 
                     window.closeModal('modalRenameHullNumber');
-                    window.renderAssetTableBody();
+                    if (typeof window.renderAssetTableBody === 'function') {
+                        window.renderAssetTableBody();
+                    }
+                    if (typeof window.loadHullHistory === 'function') {
+                        window.loadHullHistory(assetId);
+                    }
                     alert(`Nomor lambung unit ${assetId} berhasil diubah menjadi ${newHull}.`);
                 } catch (err) {
                     console.error(err);

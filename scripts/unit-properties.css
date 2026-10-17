@@ -186,13 +186,202 @@
 }
 
 /* Spec Vitals Bento Grid */
+.prop-hero-layout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 350px;
+    gap: 14px;
+    margin-top: 14px;
+    align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+    .prop-hero-layout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.prop-hero-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.prop-hero-right {
+    min-width: 0;
+    display: flex;
+}
+
+/* Nomor Lambung Hyperlink Hover & Rename Button */
+.prop-hull-interactive-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 0.82rem;
+    color: #475569;
+    flex-wrap: wrap;
+}
+
+.prop-hull-interactive-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.prop-hull-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #0f172a;
+    text-decoration: none;
+    padding: 2px 8px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.prop-hull-link:hover {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+    color: #0284c7;
+    box-shadow: 0 1px 4px rgba(2, 132, 199, 0.15);
+}
+
+.prop-hull-link:hover strong {
+    color: #0284c7;
+    text-decoration: underline;
+}
+
+.prop-hull-history-badge-icon {
+    font-size: 0.72rem;
+    color: #64748b;
+    transition: transform 0.2s;
+}
+
+.prop-hull-link:hover .prop-hull-history-badge-icon {
+    color: #0284c7;
+    transform: rotate(-30deg);
+}
+
+.prop-btn-icon-rename {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 5px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.18s ease;
+}
+
+.prop-btn-icon-rename:hover {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+}
+
+/* Dokumen Legalitas & Berkas JO Strip */
+.prop-docs-strip-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.prop-docs-strip-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.prop-docs-links-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.prop-doc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.18s ease;
+}
+
+.prop-doc-link.active {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #0284c7;
+    cursor: pointer;
+}
+
+.prop-doc-link.active:hover {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+    transform: translateY(-1px);
+}
+
+.prop-doc-link.active:hover .prop-doc-pill-meta {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+.prop-doc-pill-meta {
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: #dbeafe;
+    color: #1e40af;
+    transition: all 0.18s ease;
+}
+
+.prop-doc-link.disabled {
+    background: #f1f5f9;
+    border: 1px dashed #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+    user-select: none;
+}
+
+.prop-doc-link.disabled .prop-doc-muted-text {
+    font-weight: 500;
+    font-style: italic;
+    color: #94a3b8;
+}
+
+/* Vitals Bento Grid */
 .prop-vitals-bento-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 10px;
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px solid #f1f5f9;
 }
 
 .prop-vital-cell {
@@ -200,6 +389,21 @@
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 8px 12px;
+    transition: all 0.15s ease;
+}
+
+.prop-vital-cell:hover {
+    border-color: #cbd5e1;
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.prop-vital-cell .vital-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 2px;
 }
 
 .prop-vital-cell .vital-label {
@@ -211,7 +415,6 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    margin-bottom: 2px;
 }
 
 .prop-vital-cell .vital-val {
@@ -226,6 +429,160 @@
     font-weight: 500;
     color: #94a3b8;
     margin-top: 1px;
+}
+
+.btn-vital-history {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e2e8f0;
+    border: none;
+    border-radius: 4px;
+    color: #475569;
+    cursor: pointer;
+    font-size: 0.72rem;
+    padding: 0;
+    transition: all 0.18s ease;
+}
+
+.btn-vital-history:hover {
+    background: #0284c7;
+    color: #ffffff;
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3);
+}
+
+/* Card Galeri Unit 3x3 (Kolom Kanan) */
+.prop-gallery-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.prop-gallery-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 10px;
+}
+
+.prop-gallery-header-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.prop-gallery-header-title i {
+    color: #0284c7;
+}
+
+.prop-gallery-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 12px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.prop-gallery-empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px 12px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    color: #64748b;
+}
+
+.prop-gallery-empty-icon {
+    font-size: 1.8rem;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+
+.prop-gallery-empty-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 2px;
+}
+
+.prop-gallery-empty-desc {
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+.prop-gallery-grid-3x3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.prop-gallery-thumb-item {
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #e2e8f0;
+    background: #f1f5f9;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.prop-gallery-thumb-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.25s ease;
+}
+
+.prop-gallery-thumb-item:hover {
+    border-color: #0284c7;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    z-index: 2;
+}
+
+.prop-gallery-thumb-item:hover img {
+    transform: scale(1.06);
+}
+
+.prop-gallery-thumb-angle {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    right: 2px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: rgba(15, 23, 42, 0.75);
+    padding: 1px 4px;
+    border-radius: 3px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* --- Section Dividers & Headings --- */

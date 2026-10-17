@@ -106,62 +106,434 @@
         loadHullHistory(assetId);
     };
 
+    let currentAssetOnboardingCache = null;
+
+    /**
+     * Format date string to user-friendly Indonesian format (DD MMM YYYY)
+     */
+    function formatDisplayDate(dateStr) {
+        if (!dateStr || dateStr === 'Belum tersedia') return 'Belum tersedia';
+        try {
+            const d = new Date(dateStr.replace(' ', 'T'));
+            if (isNaN(d.getTime())) return dateStr;
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = months[d.getMonth()];
+            const year = d.getFullYear();
+            return `${day} ${month} ${year}`;
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
     async function loadHullHistory(assetId) {
-        const target = document.getElementById('propHullHistory');
-        if (!target) return;
-        target.textContent = 'Memuat riwayat...';
         try {
             const response = await fetch(`api/assets.php?id=${encodeURIComponent(assetId)}`, { credentials: 'same-origin' });
             const payload = await response.json();
             if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Gagal memuat');
             if (currentPropUnitId !== assetId) return;
             const asset = payload.data || {};
+            currentAssetOnboardingCache = asset;
             renderAssetOnboarding(asset);
             const hull = asset.hull_number || asset.alias_name || '';
             const hullEl = document.getElementById('propUnitHull');
             if (hullEl) hullEl.textContent = hull || 'Belum tersedia';
-            const history = Array.isArray(asset.hull_history) ? asset.hull_history : [];
-            target.innerHTML = history.length ? history.map(row =>
-                `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0;">` +
-                `<strong>${escapeHtml(row.old_hull_number || 'Belum ditetapkan')} → ${escapeHtml(row.new_hull_number)}</strong>` +
-                ` · berlaku ${escapeHtml(row.effective_date)} · ${escapeHtml(row.changed_by_name)}<br>` +
-                `<span>${escapeHtml(row.change_reason)} · dicatat ${escapeHtml(row.changed_at)}</span></div>`
-            ).join('') : 'Belum ada perubahan nomor lambung yang tercatat.';
         } catch (error) {
-            if (currentPropUnitId === assetId) target.textContent = `Riwayat tidak tersedia: ${error.message}`;
+            console.warn('Gagal memuat data onboarding unit:', error);
         }
     }
 
     function renderAssetOnboarding(asset) {
-        const target = document.getElementById('propAssetOnboarding');
-        if (!target) return;
+        if (!asset) return;
         const show = value => value == null || value === '' ? 'Belum tersedia' : escapeHtml(value);
         const operatorRows = Array.isArray(asset.operator_history) ? asset.operator_history : [];
         const serviceRows = Array.isArray(asset.service_history) ? asset.service_history : [];
         const photoRows = Array.isArray(asset.gallery_photos) ? asset.gallery_photos : [];
-        const due = asset.next_service_due_hm_km == null ? 'Belum tersedia' : `${escapeHtml(asset.next_service_due_hm_km)} ${escapeHtml(asset.service_interval_unit || '')}`;
-        target.innerHTML = `
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;">
-                <div><strong>Operator saat ini:</strong> ${show(asset.current_operator_name)}</div>
-                <div><strong>Servis terakhir:</strong> ${show(asset.last_service_date)} · ${show(asset.last_service_hm_km)}</div>
-                <div><strong>Interval:</strong> ${show(asset.service_interval_val)} ${show(asset.service_interval_unit)}</div>
-                <div><strong>Target berikutnya:</strong> ${due}</div>
-                <div><strong>Estimasi:</strong> ${show(asset.next_service_estimated_date)}</div>
-                <div><strong>STNK:</strong> ${show(asset.legal_stnk_expiry)}</div>
-                <div><strong>KIR:</strong> ${show(asset.legal_kir_expiry)}</div>
-                <div><strong>SILO:</strong> ${show(asset.legal_silo_expiry)}</div>
-            </div>
-            <details style="margin-top:12px;"><summary>Riwayat operator (${operatorRows.length})</summary>
-                ${operatorRows.length ? operatorRows.map(row => `<div>${show(row.operator_name)} · ${show(row.start_date)}–${show(row.end_date)} · ${show(row.shift_type)}</div>`).join('') : '<p>Belum ada riwayat operator.</p>'}
-            </details>
-            <details style="margin-top:12px;"><summary>Riwayat perawatan (${serviceRows.length})</summary>
-                ${serviceRows.length ? serviceRows.map(row => `<div>${show(row.service_date)} · ${show(row.service_hm_km)} ${show(asset.service_interval_unit)} · ${show(row.service_type)}</div>`).join('') : '<p>Belum ada riwayat perawatan.</p>'}
-            </details>
-            <details style="margin-top:12px;"><summary>Galeri foto (${photoRows.length})</summary>
-                ${photoRows.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">${photoRows.map(row => `<a href="api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(row.photo_id)}" target="_blank" rel="noopener"><img src="api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(row.photo_id)}" alt="${show(row.photo_title)}" style="width:100px;height:75px;object-fit:cover;"></a>`).join('')}</div>` : '<p>Belum ada foto.</p>'}
-            </details>
-            <div style="margin-top:12px;"><strong>PDF JO:</strong> ${asset.service_manual_pdf_url ? `<a href="api/asset_files.php?kind=pdf&asset_id=${encodeURIComponent(asset.asset_id)}" target="_blank" rel="noopener">Buka dokumen</a>` : 'Belum tersedia'}</div>`;
+
+        // 1. Dokumen Legalitas & Berkas JO Strip (STNK, KIR, SILO, PDF JO)
+        const docsContainer = document.getElementById('propDocsLinksContainer');
+        if (docsContainer) {
+            let docsHtml = '';
+
+            // STNK
+            if (asset.legal_stnk_expiry) {
+                docsHtml += `
+                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('STNK', 'Surat Tanda Nomor Kendaraan (STNK)', '${escapeHtml(asset.legal_stnk_expiry)}', null)" title="Lihat Dokumen STNK (Masa Berlaku: ${escapeHtml(asset.legal_stnk_expiry)})">
+                        <i class="fa-solid fa-file-shield"></i> Lihat STNK
+                        <span class="prop-doc-pill-meta">${escapeHtml(asset.legal_stnk_expiry)}</span>
+                    </a>
+                `;
+            } else {
+                docsHtml += `
+                    <span class="prop-doc-link disabled" title="Dokumen STNK belum diunggah">
+                        <i class="fa-solid fa-file-shield"></i> STNK: <span class="prop-doc-muted-text">Belum tersedia</span>
+                    </span>
+                `;
+            }
+
+            // KIR
+            if (asset.legal_kir_expiry) {
+                docsHtml += `
+                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('KIR', 'Uji Kelayakan Kendaraan Bermotor (KIR)', '${escapeHtml(asset.legal_kir_expiry)}', null)" title="Lihat Dokumen KIR (Masa Berlaku: ${escapeHtml(asset.legal_kir_expiry)})">
+                        <i class="fa-solid fa-certificate"></i> Lihat KIR
+                        <span class="prop-doc-pill-meta">${escapeHtml(asset.legal_kir_expiry)}</span>
+                    </a>
+                `;
+            } else {
+                docsHtml += `
+                    <span class="prop-doc-link disabled" title="Dokumen KIR belum diunggah">
+                        <i class="fa-solid fa-certificate"></i> KIR: <span class="prop-doc-muted-text">Belum tersedia</span>
+                    </span>
+                `;
+            }
+
+            // SILO
+            if (asset.legal_silo_expiry) {
+                docsHtml += `
+                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('SILO', 'Surat Izin Layak Operasi (SILO K3)', '${escapeHtml(asset.legal_silo_expiry)}', null)" title="Lihat Dokumen SILO (Masa Berlaku: ${escapeHtml(asset.legal_silo_expiry)})">
+                        <i class="fa-solid fa-file-contract"></i> Lihat SILO
+                        <span class="prop-doc-pill-meta">${escapeHtml(asset.legal_silo_expiry)}</span>
+                    </a>
+                `;
+            } else {
+                docsHtml += `
+                    <span class="prop-doc-link disabled" title="Dokumen SILO belum diunggah">
+                        <i class="fa-solid fa-file-contract"></i> SILO: <span class="prop-doc-muted-text">Belum tersedia</span>
+                    </span>
+                `;
+            }
+
+            // PDF JO
+            if (asset.service_manual_pdf_url) {
+                const pdfUrl = `api/asset_files.php?kind=pdf&asset_id=${encodeURIComponent(asset.asset_id)}`;
+                docsHtml += `
+                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('PDF JO', 'Job Order & Dokumen Servis Berkala', null, '${pdfUrl}')" title="Buka Dokumen PDF Job Order Servis">
+                        <i class="fa-solid fa-file-pdf"></i> Lihat PDF JO
+                        <span class="prop-doc-pill-meta"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></span>
+                    </a>
+                `;
+            } else {
+                docsHtml += `
+                    <span class="prop-doc-link disabled" title="Dokumen PDF JO belum diunggah">
+                        <i class="fa-solid fa-file-pdf"></i> PDF JO: <span class="prop-doc-muted-text">Belum tersedia</span>
+                    </span>
+                `;
+            }
+
+            docsContainer.innerHTML = docsHtml;
+        }
+
+        // 2. Vitals Cards Onboarding (Operator, Servis Terakhir, Interval, Target, Estimasi)
+        const opVal = document.getElementById('propVitalOperator');
+        const opSub = document.getElementById('propVitalOperatorSub');
+        if (opVal) opVal.textContent = asset.current_operator_name || 'Belum tersedia';
+        if (opSub) {
+            opSub.textContent = asset.operator_shift
+                ? `Shift ${asset.operator_shift}`
+                : (asset.current_operator_name ? 'Penugasan Aktif' : 'Belum Ditugaskan');
+        }
+
+        const srvVal = document.getElementById('propVitalLastService');
+        const srvSub = document.getElementById('propVitalLastServiceSub');
+        if (srvVal) srvVal.textContent = asset.last_service_date ? formatDisplayDate(asset.last_service_date) : 'Belum tersedia';
+        if (srvSub) {
+            srvSub.textContent = asset.last_service_hm_km != null
+                ? `${Number(asset.last_service_hm_km).toLocaleString('id-ID')} ${asset.service_interval_unit || 'HM'}`
+                : 'Belum tercatat';
+        }
+
+        const intVal = document.getElementById('propVitalInterval');
+        const intSub = document.getElementById('propVitalIntervalSub');
+        if (intVal) {
+            intVal.textContent = asset.service_interval_val != null
+                ? `${Number(asset.service_interval_val).toLocaleString('id-ID')} ${asset.service_interval_unit || 'HM'}`
+                : 'Belum tersedia';
+        }
+        if (intSub) intSub.textContent = 'Siklus Rutin PM';
+
+        const tgtVal = document.getElementById('propVitalNextTarget');
+        const tgtSub = document.getElementById('propVitalNextTargetSub');
+        if (tgtVal) {
+            tgtVal.textContent = asset.next_service_due_hm_km != null
+                ? `${Number(asset.next_service_due_hm_km).toLocaleString('id-ID')} ${asset.service_interval_unit || 'HM'}`
+                : 'Belum tersedia';
+        }
+        if (tgtSub) tgtSub.textContent = 'Ambang Batas Jadwal PM';
+
+        const estVal = document.getElementById('propVitalEstimate');
+        const estSub = document.getElementById('propVitalEstimateSub');
+        if (estVal) estVal.textContent = asset.next_service_estimated_date ? formatDisplayDate(asset.next_service_estimated_date) : 'Belum tersedia';
+        if (estSub) {
+            estSub.textContent = asset.daily_usage_coefficient != null
+                ? `Laju: ${asset.daily_usage_coefficient} ${asset.service_interval_unit || 'HM'}/hari`
+                : 'Kalkulasi Beban Operasi';
+        }
+
+        // 3. Card Galeri Foto Unit (3x3 Layout di Sisi Kanan)
+        const galleryCountEl = document.getElementById('propGalleryCount');
+        if (galleryCountEl) galleryCountEl.textContent = `${photoRows.length} Foto`;
+
+        const galleryContainer = document.getElementById('propGalleryContainer');
+        if (galleryContainer) {
+            if (photoRows.length === 0) {
+                galleryContainer.innerHTML = `
+                    <div class="prop-gallery-empty-state">
+                        <div class="prop-gallery-empty-icon"><i class="fa-regular fa-image"></i></div>
+                        <div class="prop-gallery-empty-title">Tidak ada foto dokumentasi</div>
+                        <div class="prop-gallery-empty-desc">Belum ada foto unit yang diunggah untuk unit ini.</div>
+                    </div>
+                `;
+            } else {
+                const photosGridHtml = photoRows.map(photo => {
+                    const photoUrl = `api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(photo.photo_id)}`;
+                    return `
+                        <div class="prop-gallery-thumb-item" onclick="window.openPropPhotoLightbox('${photoUrl}', '${escapeHtml(photo.photo_title)}', '${escapeHtml(photo.photo_angle || 'Foto')}', '${escapeHtml(photo.uploaded_at || '')}')" title="${escapeHtml(photo.photo_title)} (${escapeHtml(photo.photo_angle || 'Foto')})">
+                            <img src="${photoUrl}" alt="${escapeHtml(photo.photo_title)}" loading="lazy">
+                            <span class="prop-gallery-thumb-angle">${escapeHtml(photo.photo_angle || 'Foto')}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                galleryContainer.innerHTML = `<div class="prop-gallery-grid-3x3">${photosGridHtml}</div>`;
+            }
+        }
     }
+
+    /**
+     * Modal Controller: Riwayat Perubahan Nomor Lambung
+     */
+    window.openPropHullHistoryModal = function () {
+        const modal = document.getElementById('modalPropHullHistory');
+        const titleEl = document.getElementById('mrlAssetTitle');
+        const listContainer = document.getElementById('mrlHistoryList');
+        if (titleEl) titleEl.textContent = currentPropUnitId || 'Unit';
+
+        const history = Array.isArray(currentAssetOnboardingCache?.hull_history)
+            ? currentAssetOnboardingCache.hull_history
+            : [];
+
+        if (listContainer) {
+            if (history.length === 0) {
+                listContainer.innerHTML = `
+                    <div style="text-align:center; padding:32px 16px; color:#64748b;">
+                        <i class="fa-solid fa-clock-rotate-left fa-2x" style="color:#cbd5e1; margin-bottom:8px;"></i>
+                        <div style="font-weight:600; color:#475569;">Belum Ada Riwayat Perubahan</div>
+                        <div style="font-size:0.75rem;">Nomor lambung unit ini belum pernah diubah semenjak didaftarkan.</div>
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = history.map((row, idx) => `
+                    <div style="padding:12px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:10px; position:relative;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                            <span style="font-size:0.95rem; font-weight:800; color:#0f172a; font-family:monospace;">
+                                <span style="color:#64748b; font-weight:600;">${escapeHtml(row.old_hull_number || 'Awal')}</span> 
+                                <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; color:#0284c7; margin:0 4px;"></i> 
+                                <span style="color:#0284c7;">${escapeHtml(row.new_hull_number)}</span>
+                            </span>
+                            <span style="font-size:0.75rem; font-weight:600; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px;">
+                                Berlaku: ${escapeHtml(row.effective_date || '-')}
+                            </span>
+                        </div>
+                        <div style="font-size:0.82rem; color:#334155; margin-bottom:4px;">
+                            <strong>Alasan:</strong> ${escapeHtml(row.change_reason || '-')}
+                        </div>
+                        <div style="font-size:0.73rem; color:#94a3b8; display:flex; align-items:center; gap:8px;">
+                            <span><i class="fa-solid fa-user-check"></i> ${escapeHtml(row.changed_by_name || 'Admin')}</span>
+                            <span>&bull;</span>
+                            <span><i class="fa-solid fa-clock"></i> Dicatat: ${escapeHtml(row.changed_at || '-')}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        if (typeof window.openModal === 'function') {
+            window.openModal('modalPropHullHistory');
+        }
+    };
+
+    /**
+     * Trigger Rename Hull modal from Unit Properties
+     */
+    window.openPropRenameModal = function () {
+        const currentHull = currentAssetOnboardingCache?.hull_number || currentAssetOnboardingCache?.alias_name || '';
+        if (typeof window.openRenameHullModal === 'function') {
+            window.openRenameHullModal(currentPropUnitId, currentHull);
+        }
+    };
+
+    /**
+     * Modal Controller: Riwayat Penugasan Operator
+     */
+    window.openPropOperatorHistoryModal = function () {
+        const titleEl = document.getElementById('mroAssetTitle');
+        const listContainer = document.getElementById('mroHistoryList');
+        if (titleEl) titleEl.textContent = currentPropUnitId || 'Unit';
+
+        const history = Array.isArray(currentAssetOnboardingCache?.operator_history)
+            ? currentAssetOnboardingCache.operator_history
+            : [];
+
+        if (listContainer) {
+            if (history.length === 0) {
+                listContainer.innerHTML = `
+                    <div style="text-align:center; padding:32px 16px; color:#64748b;">
+                        <i class="fa-solid fa-user-clock fa-2x" style="color:#cbd5e1; margin-bottom:8px;"></i>
+                        <div style="font-weight:600; color:#475569;">Belum Ada Riwayat Operator</div>
+                        <div style="font-size:0.75rem;">Riwayat penugasan operator belum tercatat untuk unit ini.</div>
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = `
+                    <table style="width:100%; border-collapse:collapse; font-size:0.83rem; text-align:left;">
+                        <thead>
+                            <tr style="background:#f1f5f9; color:#475569; font-size:0.75rem; text-transform:uppercase;">
+                                <th style="padding:8px 12px; border-bottom:1px solid #cbd5e1;">Nama Operator</th>
+                                <th style="padding:8px 12px; border-bottom:1px solid #cbd5e1;">Periode Penugasan</th>
+                                <th style="padding:8px 12px; border-bottom:1px solid #cbd5e1;">Shift</th>
+                                <th style="padding:8px 12px; border-bottom:1px solid #cbd5e1;">Catatan Handover</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${history.map(row => `
+                                <tr style="border-bottom:1px solid #e2e8f0;">
+                                    <td style="padding:10px 12px; font-weight:700; color:#0f172a;">${escapeHtml(row.operator_name)}</td>
+                                    <td style="padding:10px 12px; color:#475569;">${escapeHtml(row.start_date || '-')} s/d ${escapeHtml(row.end_date || 'Aktif')}</td>
+                                    <td style="padding:10px 12px; color:#0284c7; font-weight:600;">${escapeHtml(row.shift_type || 'Normal')}</td>
+                                    <td style="padding:10px 12px; color:#64748b;">${escapeHtml(row.handover_notes || '-')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+        }
+
+        if (typeof window.openModal === 'function') {
+            window.openModal('modalPropOperatorHistory');
+        }
+    };
+
+    /**
+     * Modal Controller: Riwayat Perawatan & Servis PM
+     */
+    window.openPropServiceHistoryModal = function () {
+        const titleEl = document.getElementById('mrsAssetTitle');
+        const listContainer = document.getElementById('mrsHistoryList');
+        if (titleEl) titleEl.textContent = currentPropUnitId || 'Unit';
+
+        const history = Array.isArray(currentAssetOnboardingCache?.service_history)
+            ? currentAssetOnboardingCache.service_history
+            : [];
+
+        if (listContainer) {
+            if (history.length === 0) {
+                listContainer.innerHTML = `
+                    <div style="text-align:center; padding:32px 16px; color:#64748b;">
+                        <i class="fa-solid fa-wrench fa-2x" style="color:#cbd5e1; margin-bottom:8px;"></i>
+                        <div style="font-weight:600; color:#475569;">Belum Ada Riwayat Perawatan</div>
+                        <div style="font-size:0.75rem;">Riwayat perawatan terverifikasi belum tercatat untuk unit ini.</div>
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = `
+                    <table style="width:100%; border-collapse:collapse; font-size:0.83rem; text-align:left;">
+                        <thead>
+                            <tr style="background:#f1f5f9; color:#475569; font-size:0.75rem; text-transform:uppercase;">
+                                <th style="padding:8px 12px; border-bottom:1px solid #cbd5e1;">Tanggal Servis</th>
+                                <th style="padding:8px 12px; border-bottom:1px solid #cbd5e1;">Meter HM/KM</th>
+                                <th style="padding:8px 12px; border-bottom:1px solid #cbd5e1;">Jenis Servis</th>
+                                <th style="padding:8px 12px; border-bottom:1px solid #cbd5e1;">Mekanik PIC</th>
+                                <th style="padding:8px 12px; border-bottom:1px solid #cbd5e1;">No. JO / Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${history.map(row => `
+                                <tr style="border-bottom:1px solid #e2e8f0;">
+                                    <td style="padding:10px 12px; font-weight:700; color:#0f172a;">${formatDisplayDate(row.service_date)}</td>
+                                    <td style="padding:10px 12px; color:#0284c7; font-weight:600;">${Number(row.service_hm_km).toLocaleString('id-ID')} ${currentAssetOnboardingCache?.service_interval_unit || 'HM'}</td>
+                                    <td style="padding:10px 12px; color:#334155; font-weight:600;">${escapeHtml(row.service_type || '-')}</td>
+                                    <td style="padding:10px 12px; color:#475569;">${escapeHtml(row.mechanic_pic || '-')}</td>
+                                    <td style="padding:10px 12px; color:#64748b;">
+                                        ${row.jo_report_number ? `<span style="font-weight:600; color:#0f172a;">JO: ${escapeHtml(row.jo_report_number)}</span><br>` : ''}
+                                        ${escapeHtml(row.notes || '-')}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+        }
+
+        if (typeof window.openModal === 'function') {
+            window.openModal('modalPropServiceHistory');
+        }
+    };
+
+    /**
+     * Modal Controller: Document Viewer (STNK, KIR, SILO, PDF JO)
+     */
+    window.openPropDocumentModal = function (docType, docName, expiryDate, fileUrl) {
+        const titleEl = document.getElementById('mpdDocTitle');
+        const assetCodeEl = document.getElementById('mpdAssetCode');
+        const descEl = document.getElementById('mpdDocDesc');
+        const expiryBadgeEl = document.getElementById('mpdExpiryBadge');
+        const actionBtnEl = document.getElementById('mpdActionBtn');
+
+        if (titleEl) titleEl.textContent = `Dokumen: ${docType}`;
+        if (assetCodeEl) assetCodeEl.textContent = `${currentPropUnitId} (${currentAssetOnboardingCache?.hull_number || currentAssetOnboardingCache?.alias_name || 'Tanpa Lambung'})`;
+        if (descEl) descEl.textContent = docName || `Dokumen legalitas ${docType}`;
+
+        if (expiryBadgeEl) {
+            if (expiryDate) {
+                expiryBadgeEl.style.display = 'inline-flex';
+                expiryBadgeEl.innerHTML = `<i class="fa-solid fa-calendar-check" style="margin-right:5px;"></i> Masa Berlaku: <strong>${escapeHtml(expiryDate)}</strong>`;
+            } else {
+                expiryBadgeEl.style.display = 'none';
+            }
+        }
+
+        if (actionBtnEl) {
+            if (fileUrl) {
+                actionBtnEl.style.display = 'inline-flex';
+                actionBtnEl.href = fileUrl;
+                actionBtnEl.target = '_blank';
+                actionBtnEl.rel = 'noopener';
+                actionBtnEl.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Buka / Unduh Berkas PDF';
+            } else {
+                actionBtnEl.style.display = 'none';
+            }
+        }
+
+        if (typeof window.openModal === 'function') {
+            window.openModal('modalPropDocumentViewer');
+        }
+    };
+
+    /**
+     * Modal Controller: Photo Lightbox Preview
+     */
+    window.openPropPhotoLightbox = function (photoUrl, title, angle, uploadedAt) {
+        const imgEl = document.getElementById('mplPreviewImg');
+        const titleEl = document.getElementById('mplPhotoTitle');
+        const angleEl = document.getElementById('mplPhotoAngle');
+        const dateEl = document.getElementById('mplPhotoDate');
+        const downloadBtn = document.getElementById('mplDownloadBtn');
+
+        if (imgEl) imgEl.src = photoUrl;
+        if (titleEl) titleEl.textContent = title || 'Foto Unit';
+        if (angleEl) angleEl.textContent = angle || 'Angle';
+        if (dateEl) dateEl.textContent = uploadedAt ? `Diunggah: ${uploadedAt}` : '';
+        if (downloadBtn) {
+            downloadBtn.href = photoUrl;
+            downloadBtn.target = '_blank';
+        }
+
+        if (typeof window.openModal === 'function') {
+            window.openModal('modalPropPhotoPreview');
+        }
+    };
 
     /**
      * Return back to previous view
@@ -851,8 +1223,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(handleHashChange, 200);
         });
-    } else {
         setTimeout(handleHashChange, 200);
     }
+
+    // Expose loadHullHistory globally for real-time refresh after modal rename
+    window.loadHullHistory = loadHullHistory;
 
 })();
