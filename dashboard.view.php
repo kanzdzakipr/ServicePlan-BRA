@@ -2411,9 +2411,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                     Plat: <strong id="propUnitPlate" style="color:#0f172a;">B 9104 ZYT</strong> &bull; 
                                     SN: <code id="propUnitSerial" style="color:#475569;">HINO-49821A7C</code>
                                 </div>
+                                <div style="margin-top:6px;font-size:0.82rem;color:#475569;">Nomor lambung: <strong id="propUnitHull">Belum tersedia</strong></div>
                             </div>
                         </div>
                     </div>
+                    <details style="margin:12px 0;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                        <summary style="cursor:pointer;font-weight:600;">Riwayat perubahan nomor lambung</summary>
+                        <div id="propHullHistory" style="margin-top:10px;font-size:0.85rem;">Memuat riwayat...</div>
+                    </details>
 
                     <!-- Core Vitals Grid -->
                     <div class="prop-vitals-bento-grid">
@@ -3242,8 +3247,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
                     <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Unit ID / Kode Lambung <span style="color:var(--danger)">*</span></label>
+                        <label style="font-weight:600; font-size:0.8rem;">Kode Unit Permanen <span style="color:var(--danger)">*</span></label>
                         <input type="text" id="na-id" placeholder="Misal: EXC-00099" class="form-control" required>
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Nomor Lambung Proyek (opsional)</label>
+                        <input type="text" id="na-hull" placeholder="Nomor fisik di alat" class="form-control" maxlength="100">
                     </div>
                     <div>
                         <label style="font-weight:600; font-size:0.8rem;">Kategori Aset <span style="color:var(--danger)">*</span></label>
@@ -4007,8 +4016,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <small style="color:#64748b; font-size:0.72rem; margin-top:3px; display:block;">Masukkan nomor fisik yang tercetak pada bodi alat berat saat ini.</small>
                     </div>
                     <div class="form-group" style="margin-bottom: 18px;">
-                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Alasan Perubahan / Catatan Lapangan</label>
-                        <textarea id="renameHullNotes" rows="2" class="form-control" placeholder="Contoh: Pengecatan ulang nomor lambung di Workshop Duri, atau mutasi proyek..."></textarea>
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Alasan Perubahan <span style="color:#ef4444;">*</span></label>
+                        <textarea id="renameHullNotes" rows="2" class="form-control" required placeholder="Contoh: Mutasi proyek atau penggantian nomor fisik"></textarea>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 18px;">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Tanggal Efektif <span style="color:#ef4444;">*</span></label>
+                        <input type="date" id="renameHullEffectiveDate" class="form-control" required>
                     </div>
                     <div style="display:flex; justify-content:flex-end; gap:10px;">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('modalRenameHullNumber')">Batal</button>
@@ -4792,7 +4805,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const year = asset.year_manufacture ? parseInt(asset.year_manufacture, 10) : 0;
                     const yearText = (year && year >= 1970) ? String(year) : 'Belum tersedia';
 
-                    let hull = asset.alias_name || asset.hull_number || '';
+                    let hull = asset.hull_number || asset.alias_name || '';
                     if (!hull && window.assetDbMapping) {
                         hull = window.assetDbMapping[unitId] || window.assetDbMapping[asset.id] || '';
                     }
@@ -6211,7 +6224,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const year = asset.year_manufacture ? parseInt(asset.year_manufacture, 10) : 0;
                 const yearText = (year && year >= 1970) ? String(year) : 'Belum tersedia';
 
-                let hull = asset.alias_name || asset.hull_number || '';
+                let hull = asset.hull_number || asset.alias_name || '';
                 if (!hull && window.assetDbMapping) {
                     hull = window.assetDbMapping[unitId] || window.assetDbMapping[asset.id] || '';
                 }
@@ -6430,6 +6443,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (elCurr) elCurr.value = (currentHull && currentHull !== '-') ? currentHull : 'Belum ditetapkan';
                 if (elNew) elNew.value = (currentHull && currentHull !== '-') ? currentHull : '';
                 if (elNotes) elNotes.value = '';
+                const effectiveDate = document.getElementById('renameHullEffectiveDate');
+                if (effectiveDate) effectiveDate.value = new Date().toLocaleDateString('en-CA');
                 window.openModal('modalRenameHullNumber');
                 setTimeout(() => elNew && elNew.focus(), 80);
             };
@@ -6438,8 +6453,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const assetId = document.getElementById('renameHullAssetId')?.value;
                 const newHull = document.getElementById('renameHullNewInput')?.value.trim();
                 const notes = document.getElementById('renameHullNotes')?.value.trim();
-                if (!newHull) {
-                    alert('Nomor lambung baru wajib diisi.');
+                const effectiveDate = document.getElementById('renameHullEffectiveDate')?.value;
+                if (!newHull || !notes || !effectiveDate) {
+                    alert('Nomor lambung, alasan, dan tanggal efektif wajib diisi.');
                     return;
                 }
                 const btn = document.getElementById('btnSubmitRenameHull');
@@ -6450,10 +6466,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                         body: JSON.stringify({
                             asset_id: assetId,
-                            alias_name: newHull,
                             new_hull_number: newHull,
                             action: 'rename_hull',
-                            notes: notes
+                            change_reason: notes,
+                            effective_date: effectiveDate
                         })
                     });
                     const json = await res.json();
@@ -7143,10 +7159,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                 if (!id) {
                     if (errAlert) {
-                        errAlert.textContent = 'Unit ID / Kode Lambung wajib diisi.';
+                        errAlert.textContent = 'Kode unit permanen wajib diisi.';
                         errAlert.style.display = 'block';
                     } else {
-                        alert('Unit ID / Kode Lambung wajib diisi.');
+                        alert('Kode unit permanen wajib diisi.');
                     }
                     return;
                 }
@@ -7173,6 +7189,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const payload = {
                         asset_id: id,
                         asset_code: id,
+                        hull_number: document.getElementById('na-hull')?.value.trim() || null,
                         category: cat,
                         type: 'Heavy Equipment',
                         status: status || 'READY',
@@ -7197,6 +7214,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             id: id,
                             asset_id: id,
                             asset_code: id,
+                            hull_number: document.getElementById('na-hull')?.value.trim() || null,
                             type: 'Heavy Equipment',
                             category: cat,
                             status: status || 'READY',

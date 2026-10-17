@@ -28,6 +28,9 @@ switch ($method) {
             }
             $completeness = asset_compute_completeness($row);
             $result = array_merge($row, $completeness);
+            $historyStmt = $db->prepare('SELECT history_id, old_hull_number, new_hull_number, change_reason, effective_date, changed_by_name, changed_at FROM asset_hull_history WHERE asset_id = :id ORDER BY changed_at DESC, history_id DESC');
+            $historyStmt->execute([':id' => (string) $_GET['id']]);
+            $result['hull_history'] = $historyStmt->fetchAll();
         } else {
             $sql = "SELECT a.*, l.location_name as location_name 
                     FROM assets a 
@@ -54,11 +57,15 @@ switch ($method) {
 
         $assetId = trim((string) ($data['asset_id'] ?? ''));
         if ($assetId === '' || strlen($assetId) < 2) {
-            api_json_response(422, ['status' => 'error', 'code' => 'VALIDATION_ERROR', 'message' => 'Unit ID / Kode Lambung wajib diisi minimal 2 karakter.']);
+            api_json_response(422, ['status' => 'error', 'code' => 'VALIDATION_ERROR', 'message' => 'Kode unit permanen wajib diisi minimal 2 karakter.']);
         }
 
         $assetCode = trim((string) ($data['asset_code'] ?? $assetId));
         if ($assetCode === '') $assetCode = $assetId;
+        $initialHull = trim((string) ($data['hull_number'] ?? $data['alias_name'] ?? ''));
+        if (mb_strlen($initialHull, 'UTF-8') > 100) {
+            api_json_response(422, ['status' => 'error', 'message' => 'Nomor lambung maksimal 100 karakter.']);
+        }
 
         // 1. Cek duplikasi Asset ID / Asset Code
         $checkStmt = $db->prepare("SELECT asset_id FROM assets WHERE asset_id = :id OR asset_code = :code LIMIT 1");
@@ -160,11 +167,11 @@ switch ($method) {
             $db->beginTransaction();
             $stmt = $db->prepare("
                 INSERT INTO assets (
-                    asset_id, asset_code, serial_number, license_plate,
+                    asset_id, asset_code, hull_number, alias_name, serial_number, license_plate,
                     make_model, year_manufacture, type, category, status,
                     current_location_id, last_hm_km, is_active
                 ) VALUES (
-                    :id, :code, :sn, :plate,
+                    :id, :code, :hull, :alias, :sn, :plate,
                     :make_model, :year, :type, :cat, :status,
                     :loc_id, :hm, 1
                 )
@@ -172,6 +179,8 @@ switch ($method) {
             $stmt->execute([
                 ':id' => $assetId,
                 ':code' => $assetCode,
+                ':hull' => $initialHull !== '' ? $initialHull : null,
+                ':alias' => $initialHull !== '' ? $initialHull : null,
                 ':sn' => $snValue,
                 ':plate' => $plateValue,
                 ':make_model' => $makeModelValue,
@@ -190,6 +199,7 @@ switch ($method) {
                 "data" => [
                     "asset_id" => $assetId,
                     "asset_code" => $assetCode,
+                    "hull_number" => $initialHull !== '' ? $initialHull : null,
                     "serial_number" => $snValue,
                     "license_plate" => $plateValue,
                     "make_model" => $makeModelValue,
@@ -216,6 +226,56 @@ switch ($method) {
 
         $id = trim((string) ($_GET['id'] ?? $data['asset_id']));
         api_require_asset_access($db, $id);
+
+        if (array_key_exists('asset_code', $data)) {
+            $codeStmt = $db->prepare('SELECT asset_code FROM assets WHERE asset_id = :id');
+            $codeStmt->execute([':id' => $id]);
+            if (trim((string) $data['asset_code']) !== (string) $codeStmt->fetchColumn()) {
+                api_json_response(422, ['status' => 'error', 'code' => 'IMMUTABLE_ASSET_CODE', 'message' => 'Kode unit permanen tidak dapat diubah.']);
+            }
+        }
+
+        $hasHullInput = array_key_exists('new_hull_number', $data) || array_key_exists('hull_number', $data) || array_key_exists('alias_name', $data);
+        if (($data['action'] ?? '') === 'rename_hull' || $hasHullInput) {
+            $roles = api_current_user()['roles'] ?? [];
+            if (!array_intersect((array) $roles, ['Administrator', 'Asset Manager', 'Equipment Manager', 'Maintenance Planner'])) {
+                api_json_response(403, ['status' => 'error', 'code' => 'HULL_RENAME_FORBIDDEN', 'message' => 'Peran Anda tidak dapat mengubah nomor lambung.']);
+            }
+            $newHull = trim((string) ($data['new_hull_number'] ?? $data['hull_number'] ?? $data['alias_name'] ?? ''));
+            $reason = trim((string) ($data['change_reason'] ?? $data['notes'] ?? ''));
+            $effectiveDate = trim((string) ($data['effective_date'] ?? ''));
+            $date = DateTimeImmutable::createFromFormat('!Y-m-d', $effectiveDate);
+            if ($newHull === '' || mb_strlen($newHull, 'UTF-8') > 100 || $reason === '' || mb_strlen($reason, 'UTF-8') > 500 || !$date || $date->format('Y-m-d') !== $effectiveDate) {
+                api_json_response(422, ['status' => 'error', 'code' => 'INVALID_HULL_RENAME', 'message' => 'Nomor lambung, alasan, dan tanggal efektif yang valid wajib diisi.']);
+            }
+            // Identity changes cannot be bundled with unrelated asset updates.
+            $allowedKeys = ['asset_id', 'asset_code', 'action', 'new_hull_number', 'hull_number', 'alias_name', 'change_reason', 'notes', 'effective_date'];
+            if (array_diff(array_keys($data), $allowedKeys)) {
+                api_json_response(422, ['status' => 'error', 'message' => 'Perubahan lambung harus dikirim terpisah dari perubahan data aset lain.']);
+            }
+            try {
+                $db->beginTransaction();
+                $lockStmt = $db->prepare('SELECT hull_number, alias_name FROM assets WHERE asset_id = :id FOR UPDATE');
+                $lockStmt->execute([':id' => $id]);
+                $current = $lockStmt->fetch(PDO::FETCH_ASSOC);
+                $oldHull = trim((string) ($current['hull_number'] ?: $current['alias_name'] ?: ''));
+                if ($oldHull === $newHull) {
+                    $db->rollBack();
+                    api_json_response(409, ['status' => 'error', 'code' => 'HULL_UNCHANGED', 'message' => 'Nomor lambung baru sama dengan yang tercatat.']);
+                }
+                $updateStmt = $db->prepare('UPDATE assets SET hull_number = :hull, alias_name = :alias WHERE asset_id = :id');
+                $updateStmt->execute([':hull' => $newHull, ':alias' => $newHull, ':id' => $id]);
+                $actor = api_current_user();
+                $auditStmt = $db->prepare('INSERT INTO asset_hull_history (asset_id, old_hull_number, new_hull_number, change_reason, effective_date, changed_by_user_id, changed_by_name) VALUES (:id, :old, :new, :reason, :effective, :actor_id, :actor_name)');
+                $auditStmt->execute([':id' => $id, ':old' => $oldHull !== '' ? $oldHull : null, ':new' => $newHull, ':reason' => $reason, ':effective' => $effectiveDate, ':actor_id' => $actor['id'] ?? null, ':actor_name' => $actor['full_name'] ?? $actor['username'] ?? 'Unknown']);
+                $db->commit();
+                api_json_response(200, ['status' => 'success', 'message' => 'Nomor lambung dan riwayatnya berhasil disimpan.', 'data' => ['asset_id' => $id, 'hull_number' => $newHull]]);
+            } catch (Throwable $e) {
+                if ($db->inTransaction()) $db->rollBack();
+                error_log('Hull rename failed: ' . $e->getMessage());
+                api_json_response(500, ['status' => 'error', 'message' => 'Gagal menyimpan perubahan nomor lambung.']);
+            }
+        }
 
         if (array_key_exists('current_location_id', $data)) {
             $targetLocationId = ($data['current_location_id'] !== null && $data['current_location_id'] !== '')
@@ -276,16 +336,10 @@ switch ($method) {
             }
         }
 
-        if (isset($data['new_hull_number']) || (isset($data['action']) && $data['action'] === 'rename_hull')) {
-            $data['alias_name'] = trim((string) ($data['new_hull_number'] ?? ''));
-        } elseif (isset($data['hull_number']) && !isset($data['alias_name'])) {
-            $data['alias_name'] = trim((string) $data['hull_number']);
-        }
-
         $updatableFields = [
-            'asset_code', 'serial_number', 'license_plate', 'make_model',
+            'serial_number', 'license_plate', 'make_model',
             'year_manufacture', 'type', 'category', 'status',
-            'current_location_id', 'last_hm_km', 'alias_name'
+            'current_location_id', 'last_hm_km'
         ];
 
         $fields = [];

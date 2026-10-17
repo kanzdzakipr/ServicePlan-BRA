@@ -30,6 +30,7 @@ $sqlPath = Join-Path $srcDir "scripts\u646470441_ServicePlanBRA.sql"
 $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_wo_fields_17102026.sql"),
     (Join-Path $srcDir "scripts\migrate_notification_recipients_17102026.sql")
+    (Join-Path $srcDir "scripts\migrate_asset_hull_history_17102026.sql")
 )
 
 if (-not (Test-Path -LiteralPath $laragonRootPath -PathType Container) -or

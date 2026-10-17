@@ -123,6 +123,7 @@ CREATE TABLE `assets` (
     `license_plate` VARCHAR(50) NULL,
     `previous_license_plate` VARCHAR(50) NULL,
     `alias_name` VARCHAR(100) NULL,
+    `hull_number` VARCHAR(100) NULL, -- Current physical/project hull; alias_name retained for legacy reads
     `type` VARCHAR(50) DEFAULT 'Heavy Equipment',
     `category` ENUM('Excavator', 'Bulldozer', 'Dump Truck', 'Motor Grader', 'Vibro Compactor', 'Water Truck', 'Prime Mover', 'Light Vehicle', 'Reclaimer Spreader', 'Trado', 'Other') NOT NULL,
     `make_model` VARCHAR(100) NULL,
@@ -145,6 +146,20 @@ CREATE TABLE `assets` (
     INDEX `idx_asset_category` (`category`),
     INDEX `idx_asset_code` (`asset_code`),
     INDEX `idx_asset_spatial` (`last_latitude`, `last_longitude`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `asset_hull_history` (
+    `history_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `old_hull_number` VARCHAR(100) NULL,
+    `new_hull_number` VARCHAR(100) NOT NULL,
+    `change_reason` VARCHAR(500) NOT NULL,
+    `effective_date` DATE NOT NULL,
+    `changed_by_user_id` INT NULL,
+    `changed_by_name` VARCHAR(150) NOT NULL,
+    `changed_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_asset_hull_history_asset_time` (`asset_id`, `changed_at`),
+    FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

@@ -131,7 +131,33 @@
 
         // Render complete unified properties sheet
         renderUnitPropertiesData(assetId);
+        loadHullHistory(assetId);
     };
+
+    async function loadHullHistory(assetId) {
+        const target = document.getElementById('propHullHistory');
+        if (!target) return;
+        target.textContent = 'Memuat riwayat...';
+        try {
+            const response = await fetch(`api/assets.php?id=${encodeURIComponent(assetId)}`, { credentials: 'same-origin' });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Gagal memuat');
+            if (currentPropUnitId !== assetId) return;
+            const asset = payload.data || {};
+            const hull = asset.hull_number || asset.alias_name || '';
+            const hullEl = document.getElementById('propUnitHull');
+            if (hullEl) hullEl.textContent = hull || 'Belum tersedia';
+            const history = Array.isArray(asset.hull_history) ? asset.hull_history : [];
+            target.innerHTML = history.length ? history.map(row =>
+                `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0;">` +
+                `<strong>${escapeHtml(row.old_hull_number || 'Belum ditetapkan')} → ${escapeHtml(row.new_hull_number)}</strong>` +
+                ` · berlaku ${escapeHtml(row.effective_date)} · ${escapeHtml(row.changed_by_name)}<br>` +
+                `<span>${escapeHtml(row.change_reason)} · dicatat ${escapeHtml(row.changed_at)}</span></div>`
+            ).join('') : 'Belum ada perubahan nomor lambung yang tercatat.';
+        } catch (error) {
+            if (currentPropUnitId === assetId) target.textContent = `Riwayat tidak tersedia: ${error.message}`;
+        }
+    }
 
     /**
      * Return back to previous view
@@ -192,10 +218,12 @@
         if (modelEl) modelEl.textContent = asset.make_model || asset.model || 'Heavy Equipment';
 
         const plateEl = document.getElementById('propUnitPlate');
-        if (plateEl) plateEl.textContent = asset.license_plate || ('B ' + (9000 + (hash % 900)) + ' ZYT');
+        if (plateEl) plateEl.textContent = asset.license_plate || 'Belum tersedia';
 
         const serialEl = document.getElementById('propUnitSerial');
-        if (serialEl) serialEl.textContent = asset.serial_number || ('SN-BRA-' + hash.toString(16).toUpperCase());
+        if (serialEl) serialEl.textContent = asset.serial_number || 'Belum tersedia';
+        const hullEl = document.getElementById('propUnitHull');
+        if (hullEl) hullEl.textContent = asset.hull_number || asset.alias_name || 'Belum tersedia';
 
         const iconBox = document.getElementById('propCategoryIcon');
         if (iconBox) {

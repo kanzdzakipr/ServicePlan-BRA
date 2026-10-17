@@ -67,7 +67,7 @@ final class WorkOrderSupport
             'Jenis alat'
         );
         $hullNumber = self::boundedText(
-            self::inputValue($input, 'hull_number', 'hullNumber', $asset['alias_name'] ?? $asset['asset_code'] ?? null),
+            self::inputValue($input, 'hull_number', 'hullNumber', ($asset['hull_number'] ?? null) ?: (($asset['alias_name'] ?? null) ?: ($asset['asset_code'] ?? null))),
             100,
             false,
             'Nomor lambung'

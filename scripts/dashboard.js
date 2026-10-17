@@ -4142,7 +4142,7 @@
         return {
             id,
             category: text(asset?.category || asset?.type || 'Heavy Equipment'),
-            hull: text(asset?.hull_number || asset?.hullNumber || asset?.asset_code || id),
+            hull: text(asset?.hull_number || asset?.alias_name || asset?.hullNumber || asset?.asset_code || id),
             serial: text(asset?.serial_number || asset?.serialNumber || '-'),
             plate: text(asset?.license_plate || asset?.licensePlate || '-'),
             model: text(asset?.make_model || asset?.model || asset?.name || '-'),
@@ -14226,7 +14226,7 @@
     }
 
     function getPmHullNumber(plan, linkedAsset) {
-        let hull = plan.hullNumber || plan.alias_name || (linkedAsset && (linkedAsset.alias_name || linkedAsset.hull_number)) || '';
+        let hull = plan.hull_number || plan.hullNumber || plan.alias_name || (linkedAsset && (linkedAsset.hull_number || linkedAsset.alias_name)) || '';
         if (!hull && window.assetDbMapping) {
             hull = window.assetDbMapping[plan.code] || window.assetDbMapping[plan.id] || (linkedAsset ? (window.assetDbMapping[linkedAsset.id] || window.assetDbMapping[linkedAsset.asset_code]) : '') || '';
         }
@@ -14521,7 +14521,7 @@
                     code: String(plan.asset_code || plan.asset_id || ''),
                     id: String(plan.asset_id || ''),
                     asset: assetDescription,
-                    hullNumber: String(plan.alias_name || ''),
+                    hullNumber: String(plan.hull_number || plan.alias_name || ''),
                     serialNumber: String(plan.serial_number || ''),
                     licensePlate: String(plan.license_plate || ''),
                     category: String(plan.asset_category || ''),

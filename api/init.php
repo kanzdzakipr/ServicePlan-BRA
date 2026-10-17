@@ -14,7 +14,7 @@ try {
 
     // Override Assets dari Database
     $assetScope = api_location_scope_clause('a', 'init_asset_location_id');
-    $assetSql = "SELECT a.asset_id as id, a.asset_code, a.serial_number, a.license_plate,
+    $assetSql = "SELECT a.asset_id as id, a.asset_code, a.hull_number, a.alias_name, a.serial_number, a.license_plate,
                         a.make_model, a.year_manufacture, a.type, a.category, a.status,
                         a.current_location_id,
                         COALESCE(l.location_name, a.raw_location_notes) as location,

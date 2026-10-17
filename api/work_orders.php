@@ -279,7 +279,7 @@ switch ($method) {
         try {
             $db->beginTransaction();
             $assetStmt = $db->prepare(
-                'SELECT asset_id, asset_code, alias_name, category, type, status, last_hm_km
+                'SELECT asset_id, asset_code, hull_number, alias_name, category, type, status, last_hm_km
                  FROM assets WHERE asset_id = :asset_id FOR UPDATE'
             );
             $assetStmt->execute([':asset_id' => (string) $data['asset_id']]);
@@ -394,7 +394,7 @@ switch ($method) {
             }
 
             $assetStmt = $db->prepare(
-                'SELECT asset_id, asset_code, alias_name, category, type, status, last_hm_km
+                'SELECT asset_id, asset_code, hull_number, alias_name, category, type, status, last_hm_km
                  FROM assets WHERE asset_id = :asset_id FOR UPDATE'
             );
             $assetStmt->execute([':asset_id' => (string) $current['asset_id']]);
