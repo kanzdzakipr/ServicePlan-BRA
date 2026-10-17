@@ -19,14 +19,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261004-7">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261017-wo-ui-1">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20260929-1">
     <script src="scripts/auth-client.js?v=20260809-1"></script>
     <script src="scripts/rbac.js?v=20260823-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261012-1"></script>
+    <script src="scripts/dashboard.js?v=20261017-wo-ui-1"></script>
     <script src="scripts/unit-properties.js?v=20260827-1"></script>
 </head>
 
@@ -3445,51 +3445,98 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
     <!-- Modal Lapor Breakdown / WO -->
     <div class="modal-overlay" id="modalNewWO">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>Lapor Breakdown / Buat Work Order</h2>
-                <button onclick="closeModal('modalNewWO')"
-                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+        <div class="modal-content wo-create-dialog" role="dialog" aria-modal="true" aria-labelledby="newWoTitle">
+            <div class="modal-header wo-create-header">
+                <div>
+                    <span class="wo-create-kicker">FRM-WO-01 &middot; Pelaporan lapangan</span>
+                    <h2 id="newWoTitle">Buat Work Order / Job Order</h2>
+                    <p>Catat kondisi unit, waktu penanganan, PIC, dan bukti awal dalam satu formulir.</p>
+                </div>
+                <button type="button" class="wo-create-close" onclick="closeModal('modalNewWO')" aria-label="Tutup formulir">&times;</button>
             </div>
-            <div class="modal-body form-group">
-                <label>Pilih Unit</label>
-                <select id="nwo-id" class="form-control">
-                    <!-- Populated via JS -->
-                </select>
-                <label>Prioritas</label>
-                <select id="nwo-prio" class="form-control">
-                    <option value="Normal">Normal (Terjadwal)</option>
-                    <option value="High">High (Darurat / Breakdown)</option>
-                </select>
-                <label>Sifat Maintenance</label>
-                <select id="nwo-type" class="form-control">
-                    <option value="Corrective">Corrective (Perbaikan / Breakdown)</option>
-                    <option value="Preventive">Preventive (Perawatan Rutin / Terjadwal)</option>
-                    <option value="Inspection">Inspection (Temuan Pemeriksaan)</option>
-                    <option value="Emergency">Emergency (Penanganan Darurat)</option>
-                </select>
-                <label>Keluhan / Diagnosis Awal</label>
-                <textarea id="nwo-issue" rows="3" class="form-control"
-                    placeholder="Jelaskan secara detail kerusakan yang terjadi..."></textarea>
-                <label>Penyebab Kerusakan (jika sudah diketahui)</label>
-                <textarea id="nwo-root-cause" rows="2" class="form-control"
-                    placeholder="Contoh: selang getas akibat usia pakai"></textarea>
-                <label>Mekanik / Teknisi Penanggung Jawab</label>
-                <select id="nwo-mechanic" class="form-control">
-                    <option value="Belum ada PIC">Belum ditentukan</option>
-                    <option value="Apeng (Lead Mechanic)">Apeng (Lead Mechanic)</option>
-                    <option value="Maman (Senior Technician)">Maman (Senior Technician)</option>
-                    <option value="Soleh (Hydraulic Specialist)">Soleh (Hydraulic Specialist)</option>
-                    <option value="Darmawan (Electrical Mechanic)">Darmawan (Electrical Mechanic)</option>
-                    <option value="Regar (Junior Mechanic)">Regar (Junior Mechanic)</option>
-                </select>
-                <label>Apakah unit berhenti total (downtime)?</label>
-                <select id="nwo-down" class="form-control">
-                    <option value="Yes">Ya, Breakdown</option>
-                    <option value="No">Tidak, masih bisa beroperasi terbatas</option>
-                </select>
-                <button class="btn btn-danger" onclick="submitNewWO()" style="width:100%;">Kirim Tiket WO</button>
-            </div>
+            <form id="newWoForm" class="modal-body wo-create-body" onsubmit="event.preventDefault(); submitNewWO();">
+                <section class="wo-form-section" aria-labelledby="woSectionIdentity">
+                    <div class="wo-section-heading">
+                        <span class="wo-section-index">01</span>
+                        <div><h3 id="woSectionIdentity">Identitas alat & lokasi</h3><p>Pilih unit untuk mengisi data master secara otomatis.</p></div>
+                    </div>
+                    <div class="wo-form-grid">
+                        <div class="wo-field wo-field-span-2">
+                            <label for="nwo-unit-search">Cari unit</label>
+                            <div class="wo-unit-search"><i class="fa-solid fa-magnifying-glass"></i><input id="nwo-unit-search" type="search" placeholder="Kode unit, nomor lambung, serial, atau plat" autocomplete="off" oninput="filterNewWOUnits(this.value)"></div>
+                            <select id="nwo-id" class="form-control" onchange="updateNewWOAssetSummary()" required><option value="">Pilih unit alat berat</option></select>
+                            <div class="wo-asset-snapshot" id="nwo-asset-snapshot">Pilih unit untuk melihat identitas dan status terakhir.</div>
+                        </div>
+                        <div class="wo-field"><label for="nwo-equipment-type">Jenis alat berat</label><input id="nwo-equipment-type" class="form-control" readonly placeholder="Terisi otomatis"></div>
+                        <div class="wo-field"><label for="nwo-hull-number">Nomor lambung project</label><input id="nwo-hull-number" class="form-control" placeholder="Boleh disesuaikan dengan nomor di lapangan"></div>
+                        <div class="wo-field"><label for="nwo-location">Lokasi trouble <span>*</span></label><input id="nwo-location" class="form-control" list="nwo-location-options" placeholder="Contoh: Pit Barat Front 3" required><datalist id="nwo-location-options"><option value="Pit Barat"></option><option value="Front 2"></option><option value="Disposal Selatan"></option><option value="Hauling Road KM 14"></option><option value="Workshop Induk"></option></datalist></div>
+                        <div class="wo-field"><label for="nwo-hm-km">HM / KM aktual <span>*</span></label><input id="nwo-hm-km" class="form-control font-mono" type="number" min="0" step="0.1" placeholder="0.0" required></div>
+                    </div>
+                </section>
+
+                <section class="wo-form-section" aria-labelledby="woSectionTime">
+                    <div class="wo-section-heading">
+                        <span class="wo-section-index">02</span>
+                        <div><h3 id="woSectionTime">Waktu & klasifikasi pekerjaan</h3><p>Waktu selesai dapat dikoreksi saat tiket ditutup.</p></div>
+                    </div>
+                    <div class="wo-form-grid">
+                        <div class="wo-field"><label for="nwo-trouble-at">Tanggal & waktu trouble <span>*</span></label><input id="nwo-trouble-at" class="form-control font-mono" type="datetime-local" required></div>
+                        <div class="wo-field"><label for="nwo-type">Sifat maintenance</label><select id="nwo-type" class="form-control"><option value="Corrective">Corrective / Breakdown</option><option value="Preventive">Preventive / Berkala</option><option value="Inspection">Inspection / Temuan</option><option value="Emergency">Emergency / Darurat</option></select></div>
+                        <div class="wo-field"><label for="nwo-started-at">Mulai pekerjaan</label><input id="nwo-started-at" class="form-control font-mono" type="datetime-local"></div>
+                        <div class="wo-field"><label for="nwo-completed-at">Estimasi / waktu selesai</label><input id="nwo-completed-at" class="form-control font-mono" type="datetime-local"></div>
+                        <div class="wo-field"><label for="nwo-prio">Prioritas</label><select id="nwo-prio" class="form-control"><option value="Normal">Normal / Terjadwal</option><option value="High">High / Mendesak</option><option value="Emergency">Emergency / Hentikan unit</option></select></div>
+                        <div class="wo-field"><label for="nwo-down">Status operasi unit</label><select id="nwo-down" class="form-control"><option value="Yes">Berhenti total / Breakdown</option><option value="No">Masih beroperasi terbatas</option></select></div>
+                    </div>
+                </section>
+
+                <section class="wo-form-section" aria-labelledby="woSectionDiagnosis">
+                    <div class="wo-section-heading">
+                        <span class="wo-section-index">03</span>
+                        <div><h3 id="woSectionDiagnosis">Diagnosis & tindakan mekanik</h3><p>Pisahkan gejala, dugaan penyebab, dan pekerjaan yang ditindaklanjuti.</p></div>
+                    </div>
+                    <div class="wo-form-grid">
+                        <div class="wo-field wo-field-span-2"><label for="nwo-issue">Uraian jenis trouble <span>*</span></label><textarea id="nwo-issue" rows="3" class="form-control" placeholder="Gejala, indikator panel, bunyi abnormal, atau komponen terdampak" required></textarea></div>
+                        <div class="wo-field"><label for="nwo-root-cause">Dugaan penyebab</label><textarea id="nwo-root-cause" rows="3" class="form-control" placeholder="Isi jika penyebab awal sudah diketahui"></textarea></div>
+                        <div class="wo-field"><label for="nwo-repair-action">Pekerjaan / tindakan mekanik</label><textarea id="nwo-repair-action" rows="3" class="form-control" placeholder="Pemeriksaan, penyetelan, perbaikan, atau penggantian komponen"></textarea></div>
+                    </div>
+                    <div class="wo-mitigation-card" id="nwo-mitigation-card">
+                        <div class="wo-mitigation-head">
+                            <div><span class="wo-risk-label"><i class="fa-solid fa-triangle-exclamation"></i> Operasi bersyarat</span><strong>Alat tetap dipaksakan beroperasi untuk mengejar target</strong><small>WO tetap mencatat unit rusak dan wajib memuat batasan operasinya.</small></div>
+                            <label class="wo-switch"><input id="nwo-forced-operation" type="checkbox" onchange="toggleNewWOMitigation(this.checked)"><span aria-hidden="true"></span><em>Aktifkan</em></label>
+                        </div>
+                        <div class="wo-mitigation-details" id="nwo-mitigation-details" hidden>
+                            <span class="wo-rfu-badge"><i class="fa-solid fa-gauge-high"></i> RFU Bersyarat</span>
+                            <label for="nwo-mitigation">Kendala teknik, tindakan mitigasi, dan batas operasi <span>*</span></label>
+                            <textarea id="nwo-mitigation" rows="3" class="form-control" placeholder="Contoh: batasi kecepatan, inspeksi tiap pergantian shift, hentikan unit bila temperatur melebihi batas"></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="wo-form-section" aria-labelledby="woSectionTeam">
+                    <div class="wo-section-heading">
+                        <span class="wo-section-index">04</span>
+                        <div><h3 id="woSectionTeam">PIC & dokumentasi</h3><p>Tambahkan lebih dari satu mekanik dan foto kondisi awal.</p></div>
+                    </div>
+                    <div class="wo-form-grid wo-team-grid">
+                        <div class="wo-field">
+                            <label for="nwo-mechanic-input">PIC mekanik / teknisi</label>
+                            <div class="wo-chip-composer"><input id="nwo-mechanic-input" list="nwo-mechanic-options" placeholder="Ketik nama lalu Enter" onkeydown="handleNewWOMechanicKey(event)"><button type="button" onclick="addNewWOMechanic()" aria-label="Tambah PIC"><i class="fa-solid fa-plus"></i></button></div>
+                            <datalist id="nwo-mechanic-options"><option value="Apeng (Lead Mechanic)"></option><option value="Maman (Senior Technician)"></option><option value="Soleh (Hydraulic Specialist)"></option><option value="Darmawan (Electrical Mechanic)"></option><option value="Regar (Junior Mechanic)"></option></datalist>
+                            <div class="wo-chip-list" id="nwo-mechanic-chips" aria-live="polite"><span class="wo-chip-empty">Belum ada PIC dipilih</span></div>
+                            <input type="hidden" id="nwo-mechanic" value="Belum ada PIC">
+                        </div>
+                        <div class="wo-field">
+                            <label for="nwo-photo-input">Dokumentasi foto lapangan</label>
+                            <label class="wo-photo-dropzone" id="nwo-photo-dropzone" for="nwo-photo-input"><i class="fa-solid fa-camera"></i><strong>Pilih atau jatuhkan foto</strong><small>JPG, PNG, atau WebP &middot; preview lokal</small></label>
+                            <input id="nwo-photo-input" class="wo-file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="previewNewWOPhotos(this.files)">
+                            <div class="wo-photo-preview" id="nwo-photo-preview"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="wo-form-message" id="nwo-form-message" role="status" aria-live="polite" hidden></div>
+                <div class="wo-create-actions"><button type="button" class="btn btn-secondary" onclick="closeModal('modalNewWO')">Batal</button><button type="submit" class="btn btn-danger" id="nwo-submit"><i class="fa-solid fa-file-circle-plus"></i> Buat tiket WO</button></div>
+            </form>
         </div>
     </div>
 
@@ -5277,8 +5324,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (activeWo) {
                     openWoDetailView(activeWo.woId, assetId, activeWo.issue || activeWo.description || '');
                 } else {
-                    openNewWOModal();
-                    document.getElementById('nwo-id').value = assetId;
+                    openNewWOModal(assetId);
                     document.getElementById('nwo-down').value = asset.status === 'BREAKDOWN' ? 'Yes' : 'No';
                 }
             };
@@ -7171,101 +7217,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
             }
 
-            function openNewWOModal() {
-                const select = document.getElementById('nwo-id');
-                select.innerHTML = globalData.assets.map(a => `<option value="${a.id}">${a.id} (${a.category})</option>`).join('');
-                openModal('modalNewWO');
+            function openNewWOModal(assetId = '') {
+                window.NewWorkOrderForm.open(assetId);
             }
 
             async function submitNewWO() {
-                const id = document.getElementById('nwo-id').value;
-                const prio = document.getElementById('nwo-prio').value;
-                const type = document.getElementById('nwo-type') ? document.getElementById('nwo-type').value : 'Corrective';
-                const issue = document.getElementById('nwo-issue').value;
-                const rootCause = document.getElementById('nwo-root-cause').value.trim();
-                const mechanic = document.getElementById('nwo-mechanic').value;
-                const down = document.getElementById('nwo-down').value;
-
-                if (!issue) return alert('Keluhan harus diisi');
-
-                const year = String(new Date().getFullYear()).slice(-2);
-                const woId = `WO-${year}-${Date.now().toString().slice(-8)}`;
-                const asset = globalData.assets.find(a => a.id === id);
-
-                try {
-                    let payload = {
-                        work_orders: [{
-                            woId: woId,
-                            assetId: id,
-                            status: 'Open',
-                            priority: prio,
-                            maintenanceType: type,
-                            issue: issue,
-                            rootCause: rootCause,
-                            repairAction: '',
-                            assignedTo: mechanic,
-                            downtime: down === 'Yes' ? '0' : '-'
-                        }],
-                        assets: []
-                    };
-
-                    let newAssetStatus = null;
-                    if (down === 'Yes' && asset && asset.status !== 'BREAKDOWN') {
-                        newAssetStatus = 'BREAKDOWN';
-                    } else if (down === 'No' && asset && asset.status === 'READY') {
-                        newAssetStatus = 'STANDBY';
-                    }
-
-                    if (newAssetStatus) {
-                        payload.assets.push({
-                            id: id,
-                            status: newAssetStatus,
-                            location: asset.location,
-                            last_hm_km: asset.last_hm_km || 0
-                        });
-                    }
-
-                    // Gunakan api/sync.php agar insert WO dan update status unit terjadi secara transaksional
-                    const response = await fetch('api/sync.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                    if (result.status === 'success') {
-                        if (newAssetStatus) {
-                            setIntegratedAssetStatus(id, newAssetStatus, 'Work Order', woId, issue);
-                            if (newAssetStatus === 'BREAKDOWN') {
-                                alert(`Unit ${id} otomatis diubah statusnya menjadi BREAKDOWN karena laporan downtime`);
-                            }
-                        }
-
-                        globalData.work_orders.unshift({
-                            woId: woId, assetId: id, location: asset ? asset.location : 'Unknown', issue,
-                            downtime: down === 'Yes' ? '0 jam 00 menit' : '-', status: 'Open', priority: prio,
-                            maintenanceType: type, assignedTo: mechanic, rootCause, repairAction: '',
-                            reportedAt: new Date().toISOString(), repairStartedAt: null, closedAt: null,
-                            handlingDurationMinutes: 0
-                        });
-
-                        closeModal('modalNewWO');
-                        
-                        if (type === 'Preventive') {
-                            showView('pm');
-                        } else {
-                            showView('wo');
-                        }
-                        alert('Work Order berhasil dibuat dan tersimpan di database');
-                        window.syncFleetState();
-                    } else {
-                        alert('Gagal membuat Work Order: ' + result.message);
-                    }
-                } catch (error) {
-                    console.error('Error creating WO:', error);
-                    alert('Terjadi kesalahan jaringan atau server saat membuat Work Order');
-                }
+                return window.NewWorkOrderForm.submit();
             }
 
             function refreshAllViews() {
@@ -8921,11 +8878,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.openFuelWoModal = function (assetId, issueText) {
-                const woSelect = document.getElementById('nwo-id');
-                if (woSelect) woSelect.value = assetId;
+                openNewWOModal(assetId);
                 const issueInput = document.getElementById('nwo-issue');
                 if (issueInput) issueInput.value = issueText;
-                openModal('modalNewWO');
             };
 
             window.openStockSoundingModal = function () {

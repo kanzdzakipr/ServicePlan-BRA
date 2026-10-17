@@ -4109,6 +4109,391 @@
     }
 })();
 
+/* Work Order / Job Order creation form — Section 1.4 */
+(function initNewWorkOrderForm() {
+    'use strict';
+
+    const state = {
+        mechanics: [],
+        photos: [],
+        photoUrls: [],
+        dropzoneReady: false
+    };
+
+    const byId = id => document.getElementById(id);
+    const text = value => String(value ?? '').trim();
+    const escapeText = value => text(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+    function assets() {
+        return Array.isArray(window.globalData?.assets) ? window.globalData.assets : [];
+    }
+
+    function assetId(asset) {
+        return text(asset?.id || asset?.asset_id || asset?.asset_code);
+    }
+
+    function assetDetails(asset) {
+        const id = assetId(asset);
+        return {
+            id,
+            category: text(asset?.category || asset?.type || 'Heavy Equipment'),
+            hull: text(asset?.hull_number || asset?.hullNumber || asset?.asset_code || id),
+            serial: text(asset?.serial_number || asset?.serialNumber || '-'),
+            plate: text(asset?.license_plate || asset?.licensePlate || '-'),
+            model: text(asset?.make_model || asset?.model || asset?.name || '-'),
+            location: text(asset?.location_name || asset?.location || asset?.raw_location_notes || ''),
+            hm: asset?.last_hm_km ?? asset?.hm ?? '',
+            status: text(asset?.status || 'UNKNOWN')
+        };
+    }
+
+    function findAsset(id) {
+        return assets().find(asset => assetId(asset) === text(id)) || null;
+    }
+
+    function inputDateTime(date = new Date()) {
+        const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        return local.toISOString().slice(0, 16);
+    }
+
+    function setMessage(message = '', type = 'error') {
+        const box = byId('nwo-form-message');
+        if (!box) return;
+        box.hidden = message === '';
+        box.className = `wo-form-message is-${type}`;
+        box.textContent = message;
+        if (message) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function showSuccessToast(message) {
+        const oldToast = byId('woStatusToast');
+        if (oldToast) oldToast.remove();
+        const toast = document.createElement('div');
+        toast.id = 'woStatusToast';
+        toast.className = 'wo-status-toast';
+        toast.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>${escapeText(message)}</span>`;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('active'));
+        window.setTimeout(() => {
+            toast.classList.remove('active');
+            window.setTimeout(() => toast.remove(), 250);
+        }, 3500);
+    }
+
+    function populateAssets(query = '', preferredId = '') {
+        const select = byId('nwo-id');
+        if (!select) return;
+        const keyword = text(query).toLowerCase();
+        const previous = text(preferredId || select.value);
+        const matches = assets().filter(asset => {
+            const details = assetDetails(asset);
+            return !keyword || [details.id, details.hull, details.serial, details.plate, details.category, details.model]
+                .some(value => value.toLowerCase().includes(keyword));
+        });
+
+        select.innerHTML = '<option value="">Pilih unit alat berat</option>' + matches.map(asset => {
+            const details = assetDetails(asset);
+            const label = [details.id, details.hull !== details.id ? `Lambung ${details.hull}` : '', details.category, details.model]
+                .filter(Boolean).join(' · ');
+            return `<option value="${escapeText(details.id)}">${escapeText(label)}</option>`;
+        }).join('');
+
+        if (previous && matches.some(asset => assetId(asset) === previous)) {
+            select.value = previous;
+        } else if (keyword && matches.length === 1) {
+            select.value = assetId(matches[0]);
+        }
+        updateAssetSummary();
+    }
+
+    function updateAssetSummary() {
+        const asset = findAsset(byId('nwo-id')?.value);
+        const snapshot = byId('nwo-asset-snapshot');
+        if (!asset) {
+            if (byId('nwo-equipment-type')) byId('nwo-equipment-type').value = '';
+            if (byId('nwo-hull-number')) byId('nwo-hull-number').value = '';
+            if (snapshot) {
+                snapshot.classList.remove('is-ready');
+                snapshot.textContent = 'Pilih unit untuk melihat identitas dan status terakhir.';
+            }
+            return;
+        }
+
+        const details = assetDetails(asset);
+        byId('nwo-equipment-type').value = details.category;
+        byId('nwo-hull-number').value = details.hull;
+        byId('nwo-location').value = details.location;
+        byId('nwo-hm-km').value = details.hm;
+        if (snapshot) {
+            snapshot.classList.add('is-ready');
+            snapshot.innerHTML = `<strong>${escapeText(details.model)}</strong> · SN ${escapeText(details.serial)} · Plat ${escapeText(details.plate)} · Status ${escapeText(details.status)}`;
+        }
+    }
+
+    function renderMechanics() {
+        const container = byId('nwo-mechanic-chips');
+        const legacy = byId('nwo-mechanic');
+        if (legacy) legacy.value = state.mechanics.length ? state.mechanics.join(', ') : 'Belum ada PIC';
+        if (!container) return;
+        container.innerHTML = state.mechanics.length
+            ? state.mechanics.map((name, index) => `<span class="wo-chip"><i class="fa-solid fa-user-gear"></i>${escapeText(name)}<button type="button" data-mechanic-index="${index}" aria-label="Hapus ${escapeText(name)}">&times;</button></span>`).join('')
+            : '<span class="wo-chip-empty">Belum ada PIC dipilih</span>';
+        container.querySelectorAll('[data-mechanic-index]').forEach(button => {
+            button.addEventListener('click', () => {
+                state.mechanics.splice(Number(button.dataset.mechanicIndex), 1);
+                renderMechanics();
+            });
+        });
+    }
+
+    function addMechanic() {
+        const input = byId('nwo-mechanic-input');
+        const name = text(input?.value).replace(/,$/, '').trim();
+        if (!name) return;
+        if (!state.mechanics.some(item => item.toLowerCase() === name.toLowerCase())) {
+            state.mechanics.push(name);
+        }
+        input.value = '';
+        renderMechanics();
+        input.focus();
+    }
+
+    function clearPhotoUrls() {
+        state.photoUrls.forEach(url => URL.revokeObjectURL(url));
+        state.photoUrls = [];
+    }
+
+    function previewPhotos(fileList) {
+        const files = Array.from(fileList || []);
+        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        const invalid = files.find(file => !allowed.includes(file.type) || file.size > 5 * 1024 * 1024);
+        if (invalid) {
+            setMessage(`Foto ${invalid.name} harus berformat JPG/PNG/WebP dan maksimal 5 MB.`, 'error');
+            return;
+        }
+        setMessage('');
+        clearPhotoUrls();
+        state.photos = files.slice(0, 4);
+        const preview = byId('nwo-photo-preview');
+        if (!preview) return;
+        preview.innerHTML = state.photos.map(file => {
+            const url = URL.createObjectURL(file);
+            state.photoUrls.push(url);
+            return `<figure><img src="${url}" alt="Preview ${escapeText(file.name)}"><figcaption>${escapeText(file.name)}</figcaption></figure>`;
+        }).join('');
+    }
+
+    function setupDropzone() {
+        if (state.dropzoneReady) return;
+        const dropzone = byId('nwo-photo-dropzone');
+        if (!dropzone) return;
+        ['dragenter', 'dragover'].forEach(eventName => dropzone.addEventListener(eventName, event => {
+            event.preventDefault();
+            dropzone.classList.add('is-dragging');
+        }));
+        ['dragleave', 'drop'].forEach(eventName => dropzone.addEventListener(eventName, event => {
+            event.preventDefault();
+            dropzone.classList.remove('is-dragging');
+        }));
+        dropzone.addEventListener('drop', event => previewPhotos(event.dataTransfer?.files));
+        state.dropzoneReady = true;
+    }
+
+    function toggleMitigation(isActive) {
+        const details = byId('nwo-mitigation-details');
+        const card = byId('nwo-mitigation-card');
+        const mitigation = byId('nwo-mitigation');
+        if (details) details.hidden = !isActive;
+        if (card) card.classList.toggle('is-active', isActive);
+        if (mitigation) mitigation.required = Boolean(isActive);
+        if (isActive && byId('nwo-down')) byId('nwo-down').value = 'No';
+    }
+
+    function resetForm() {
+        byId('newWoForm')?.reset();
+        state.mechanics = [];
+        state.photos = [];
+        clearPhotoUrls();
+        renderMechanics();
+        if (byId('nwo-photo-preview')) byId('nwo-photo-preview').innerHTML = '';
+        if (byId('nwo-trouble-at')) byId('nwo-trouble-at').value = inputDateTime();
+        if (byId('nwo-started-at')) byId('nwo-started-at').value = inputDateTime();
+        toggleMitigation(false);
+        setMessage('');
+    }
+
+    async function submit() {
+        const selectedAssetId = text(byId('nwo-id')?.value);
+        const issue = text(byId('nwo-issue')?.value);
+        const location = text(byId('nwo-location')?.value);
+        const hmValue = text(byId('nwo-hm-km')?.value);
+        const troubleAt = text(byId('nwo-trouble-at')?.value);
+        const startedAt = text(byId('nwo-started-at')?.value);
+        const completedAt = text(byId('nwo-completed-at')?.value);
+        const forcedOperation = Boolean(byId('nwo-forced-operation')?.checked);
+        const mitigation = text(byId('nwo-mitigation')?.value);
+
+        const required = [
+            [selectedAssetId, 'Pilih unit yang mengalami trouble.', 'nwo-id'],
+            [location, 'Lokasi trouble wajib diisi.', 'nwo-location'],
+            [hmValue, 'HM/KM aktual wajib diisi.', 'nwo-hm-km'],
+            [troubleAt, 'Tanggal dan waktu trouble wajib diisi.', 'nwo-trouble-at'],
+            [issue, 'Uraian jenis trouble wajib diisi.', 'nwo-issue'],
+            [!forcedOperation || mitigation, 'Mitigasi dan batas operasi wajib dijelaskan untuk RFU Bersyarat.', 'nwo-mitigation']
+        ];
+        const missing = required.find(([valid]) => !valid);
+        if (missing) {
+            setMessage(missing[1], 'error');
+            byId(missing[2])?.focus();
+            return;
+        }
+        if (startedAt && completedAt && completedAt < startedAt) {
+            setMessage('Waktu selesai tidak boleh lebih awal dari waktu mulai pekerjaan.', 'error');
+            byId('nwo-completed-at')?.focus();
+            return;
+        }
+
+        const asset = findAsset(selectedAssetId);
+        if (!asset) {
+            setMessage('Data unit tidak ditemukan pada master aset.', 'error');
+            return;
+        }
+
+        const priority = text(byId('nwo-prio')?.value || 'Normal');
+        const maintenanceType = text(byId('nwo-type')?.value || 'Corrective');
+        const down = forcedOperation ? 'No' : text(byId('nwo-down')?.value || 'Yes');
+        const rootCause = text(byId('nwo-root-cause')?.value);
+        const repairAction = text(byId('nwo-repair-action')?.value);
+        const mechanics = [...state.mechanics];
+        const assignedTo = mechanics.length ? mechanics.join(', ') : 'Belum ada PIC';
+        const currentHmKm = Number(hmValue);
+        const year = String(new Date().getFullYear()).slice(-2);
+        const woId = `WO-${year}-${Date.now().toString().slice(-8)}`;
+        const details = assetDetails(asset);
+        const submitButton = byId('nwo-submit');
+
+        const workOrder = {
+            woId,
+            assetId: selectedAssetId,
+            status: 'Open',
+            priority,
+            maintenanceType,
+            issue,
+            rootCause,
+            repairAction,
+            assignedTo,
+            downtime: down === 'Yes' ? '0' : '-',
+            equipmentType: text(byId('nwo-equipment-type')?.value),
+            hullNumber: text(byId('nwo-hull-number')?.value),
+            currentHmKm,
+            troubleAt,
+            rawLocation: location,
+            repairStartedAt: startedAt || null,
+            estimatedCompletionAt: completedAt || null,
+            isForcedOperation: forcedOperation,
+            mitigationAction: mitigation,
+            assignedMechanics: mechanics,
+            beforePhotoName: state.photos[0]?.name || null
+        };
+
+        let newAssetStatus = null;
+        if (forcedOperation && details.status !== 'OPERATING') {
+            newAssetStatus = 'OPERATING';
+        } else if (down === 'Yes' && details.status !== 'BREAKDOWN') {
+            newAssetStatus = 'BREAKDOWN';
+        } else if (down === 'No' && details.status === 'READY') {
+            newAssetStatus = 'STANDBY';
+        }
+
+        const payload = { work_orders: [workOrder], assets: [] };
+        if (newAssetStatus) {
+            payload.assets.push({
+                id: selectedAssetId,
+                status: newAssetStatus,
+                location: details.location,
+                last_hm_km: Math.max(Number(details.hm) || 0, currentHmKm)
+            });
+        }
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan tiket';
+        }
+        setMessage('Menyimpan data inti tiket. Foto masih berupa preview sampai endpoint upload tersedia.', 'info');
+
+        try {
+            const response = await fetch('api/sync.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (!response.ok || result.status !== 'success') {
+                throw new Error(result.message || 'Server menolak penyimpanan Work Order.');
+            }
+
+            if (newAssetStatus && typeof window.setIntegratedAssetStatus === 'function') {
+                window.setIntegratedAssetStatus(selectedAssetId, newAssetStatus, 'Work Order', woId, issue);
+            }
+            if (Array.isArray(window.globalData?.work_orders)) {
+                window.globalData.work_orders.unshift({
+                    ...workOrder,
+                    location,
+                    downtime: down === 'Yes' ? '0 jam 00 menit' : '-',
+                    reportedAt: troubleAt,
+                    closedAt: null,
+                    handlingDurationMinutes: 0
+                });
+            }
+
+            window.closeModal?.('modalNewWO');
+            if (typeof window.showView === 'function') {
+                window.showView(maintenanceType === 'Preventive' ? 'pm' : 'wo');
+            }
+            showSuccessToast(`${woId} berhasil dibuat untuk ${selectedAssetId}.`);
+            window.syncFleetState?.();
+        } catch (error) {
+            console.error('Error creating WO:', error);
+            setMessage(error?.message || 'Koneksi gagal. Work Order belum tersimpan.', 'error');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fa-solid fa-file-circle-plus"></i> Buat tiket WO';
+            }
+        }
+    }
+
+    window.NewWorkOrderForm = {
+        open(selectedAssetId = '') {
+            resetForm();
+            populateAssets('', selectedAssetId);
+            setupDropzone();
+            window.openModal?.('modalNewWO');
+            window.setTimeout(() => {
+                byId(selectedAssetId ? 'nwo-location' : 'nwo-unit-search')?.focus({ preventScroll: true });
+                if (byId('newWoForm')) byId('newWoForm').scrollTop = 0;
+            }, 80);
+        },
+        submit
+    };
+    window.filterNewWOUnits = query => populateAssets(query);
+    window.updateNewWOAssetSummary = updateAssetSummary;
+    window.toggleNewWOMitigation = toggleMitigation;
+    window.addNewWOMechanic = addMechanic;
+    window.handleNewWOMechanicKey = event => {
+        if (event.key === 'Enter' || event.key === ',') {
+            event.preventDefault();
+            addMechanic();
+        }
+    };
+    window.previewNewWOPhotos = previewPhotos;
+})();
+
 // ============================================================================
 // SPARE PART & LOGISTICS — per-unit catalog, SPB workflow, and module linkage
 // Sources: Form P-1 SPB, Report Parts Weekly, and Procurement Progress Tracker.
