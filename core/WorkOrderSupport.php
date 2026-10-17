@@ -17,6 +17,164 @@ final class WorkOrderSupport
     private const SERVICE_PRIORITIES = ['Normal', 'Urgent', 'Emergency'];
     private const SERVICE_STATUSES = ['Submitted', 'Assigned', 'In Progress', 'Completed', 'Cancelled'];
 
+    /**
+     * Normalize the extended WO form payload into database-ready values.
+     * Supports both API snake_case and dashboard camelCase keys so the
+     * transaction controller and offline sync route share one contract.
+     */
+    public static function normalizeTicketInput(array $input, array $asset): array
+    {
+        $meter = self::inputValue($input, 'current_hm_km', 'currentHmKm');
+        if ($meter === null || $meter === '' || !is_numeric($meter) || !is_finite((float) $meter) || (float) $meter < 0) {
+            throw new InvalidArgumentException('HM/KM aktual wajib berupa angka nol atau positif.');
+        }
+
+        $troubleAt = self::normalizeDateTime(self::inputValue($input, 'trouble_at', 'troubleAt'), true, 'Tanggal trouble');
+        $repairStartedAt = self::normalizeDateTime(self::inputValue($input, 'repair_started_at', 'repairStartedAt'), false, 'Waktu mulai pekerjaan');
+        $estimatedCompletionAt = self::normalizeDateTime(
+            self::inputValue($input, 'estimated_completion_at', 'estimatedCompletionAt'),
+            false,
+            'Estimasi waktu selesai'
+        );
+        if ($repairStartedAt !== null && $estimatedCompletionAt !== null && $estimatedCompletionAt < $repairStartedAt) {
+            throw new InvalidArgumentException('Estimasi waktu selesai tidak boleh lebih awal dari waktu mulai pekerjaan.');
+        }
+
+        $location = self::boundedText(self::inputValue($input, 'raw_location', 'rawLocation'), 255, true, 'Lokasi trouble');
+        $forcedOperation = self::booleanValue(self::inputValue($input, 'is_forced_operation', 'isForcedOperation'));
+        $isDowntime = $forcedOperation
+            ? false
+            : self::booleanValue(self::inputValue($input, 'is_downtime', 'isDowntime', true));
+        $mitigation = self::boundedText(
+            self::inputValue($input, 'mitigation_action', 'mitigationAction'),
+            10000,
+            $forcedOperation,
+            'Tindakan mitigasi'
+        );
+
+        $mechanics = self::normalizeMechanics(
+            self::inputValue($input, 'assigned_mechanics', 'assignedMechanics', $input['assigned_mechanic'] ?? null)
+        );
+        $mechanicLabel = $mechanics ? implode(', ', $mechanics) : 'Belum ada PIC';
+        if (mb_strlen($mechanicLabel, 'UTF-8') > 100) {
+            throw new InvalidArgumentException('Gabungan nama PIC mekanik maksimal 100 karakter.');
+        }
+
+        $equipmentType = self::boundedText(
+            self::inputValue($input, 'equipment_type', 'equipmentType', $asset['category'] ?? $asset['type'] ?? null),
+            100,
+            false,
+            'Jenis alat'
+        );
+        $hullNumber = self::boundedText(
+            self::inputValue($input, 'hull_number', 'hullNumber', $asset['alias_name'] ?? $asset['asset_code'] ?? null),
+            100,
+            false,
+            'Nomor lambung'
+        );
+
+        $calculatedAssetStatus = self::assetStatusFor($forcedOperation, $isDowntime);
+        $currentAssetStatus = strtoupper(trim((string) ($asset['status'] ?? '')));
+        $assetStatus = in_array($currentAssetStatus, ['ACCIDENT_HOLD', 'INACTIVE'], true)
+            ? $currentAssetStatus
+            : $calculatedAssetStatus;
+
+        return [
+            'hull_number' => $hullNumber,
+            'equipment_type' => $equipmentType,
+            'current_hm_km' => round((float) $meter, 2),
+            'trouble_at' => $troubleAt,
+            'raw_location' => $location,
+            'repair_started_at' => $repairStartedAt,
+            'estimated_completion_at' => $estimatedCompletionAt,
+            'is_forced_operation' => $forcedOperation ? 1 : 0,
+            'is_downtime' => $isDowntime ? 1 : 0,
+            'mitigation_action' => $mitigation,
+            'assigned_mechanics' => $mechanics,
+            'assigned_mechanics_json' => json_encode($mechanics, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            'assigned_mechanic' => $mechanicLabel,
+            'asset_status' => $assetStatus,
+        ];
+    }
+
+    /** @return list<string> */
+    public static function normalizeMechanics(mixed $value): array
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) ? $decoded : preg_split('/\s*,\s*/u', $value, -1, PREG_SPLIT_NO_EMPTY);
+        }
+        if ($value === null || $value === '') return [];
+        if (!is_array($value)) throw new InvalidArgumentException('PIC mekanik harus berupa daftar nama.');
+
+        $result = [];
+        $seen = [];
+        foreach ($value as $name) {
+            if (!is_scalar($name)) throw new InvalidArgumentException('Nama PIC mekanik tidak valid.');
+            $name = trim((string) $name);
+            if ($name === '' || in_array(mb_strtolower($name, 'UTF-8'), ['belum ada pic', 'pending'], true)) continue;
+            if (mb_strlen($name, 'UTF-8') > 100) throw new InvalidArgumentException('Nama PIC mekanik maksimal 100 karakter.');
+            $key = mb_strtolower($name, 'UTF-8');
+            if (!isset($seen[$key])) {
+                $seen[$key] = true;
+                $result[] = $name;
+            }
+        }
+        if (count($result) > 20) throw new InvalidArgumentException('Maksimal 20 PIC mekanik dalam satu Work Order.');
+        return $result;
+    }
+
+    public static function assetStatusFor(bool $forcedOperation, bool $isDowntime): string
+    {
+        if ($forcedOperation) return 'OPERATING';
+        return $isDowntime ? 'BREAKDOWN' : 'STANDBY';
+    }
+
+    private static function inputValue(array $input, string $snakeKey, string $camelKey, mixed $default = null): mixed
+    {
+        if (array_key_exists($snakeKey, $input)) return $input[$snakeKey];
+        if (array_key_exists($camelKey, $input)) return $input[$camelKey];
+        return $default;
+    }
+
+    private static function booleanValue(mixed $value): bool
+    {
+        if (is_bool($value)) return $value;
+        if (is_int($value) || is_float($value)) return (int) $value === 1;
+        return in_array(mb_strtolower(trim((string) ($value ?? '')), 'UTF-8'), ['1', 'true', 'yes', 'ya', 'on'], true);
+    }
+
+    private static function normalizeDateTime(mixed $value, bool $required, string $label): ?string
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            if ($required) throw new InvalidArgumentException("{$label} wajib diisi.");
+            return null;
+        }
+
+        foreach (['!Y-m-d\\TH:i', '!Y-m-d\\TH:i:s', '!Y-m-d H:i', '!Y-m-d H:i:s'] as $format) {
+            $date = DateTimeImmutable::createFromFormat($format, $value);
+            $errors = DateTimeImmutable::getLastErrors();
+            if ($date !== false && ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0))) {
+                return $date->format('Y-m-d H:i:s');
+            }
+        }
+        throw new InvalidArgumentException("{$label} tidak valid.");
+    }
+
+    private static function boundedText(mixed $value, int $maxLength, bool $required, string $label): ?string
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            if ($required) throw new InvalidArgumentException("{$label} wajib diisi.");
+            return null;
+        }
+        if (mb_strlen($value, 'UTF-8') > $maxLength) {
+            throw new InvalidArgumentException("{$label} maksimal {$maxLength} karakter.");
+        }
+        return $value;
+    }
+
     public static function overview(PDO $db, string $woId): array
     {
         $workOrder = self::workOrder($db, $woId);

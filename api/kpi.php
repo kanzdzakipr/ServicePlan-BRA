@@ -25,7 +25,7 @@ if (!defined('API_SKIP_ROUTING')) {
     }
 
     try {
-        [$periodStart, $periodEnd] = kpi_period_boundaries($period);
+        [$periodStart, $periodEnd] = KpiCalculator::periodBoundaries($period);
     } catch (InvalidArgumentException $error) {
         api_json_response(422, [
             'status' => 'error',
@@ -66,8 +66,8 @@ if (!defined('API_SKIP_ROUTING')) {
             END), 0) AS repair_count
         FROM work_orders w
         INNER JOIN assets a ON a.asset_id = w.asset_id
-        WHERE w.reported_at >= :period_start
-          AND w.reported_at < :period_end";
+        WHERE COALESCE(w.trouble_at, w.reported_at) >= :period_start
+          AND COALESCE(w.trouble_at, w.reported_at) < :period_end";
     if ($locationScope['sql'] !== '') {
         $workOrderSql .= ' AND ' . $locationScope['sql'];
     }
@@ -115,7 +115,7 @@ if (!defined('API_SKIP_ROUTING')) {
                 'workOrders' => [
                     'table' => 'work_orders',
                     'rowCount' => (int) ($repairs['source_rows'] ?? 0),
-                    'fields' => ['downtime_minutes', 'is_downtime', 'status', 'reported_at'],
+                    'fields' => ['downtime_minutes', 'is_downtime', 'status', 'trouble_at', 'reported_at'],
                 ],
             ],
         ]),
@@ -125,27 +125,5 @@ if (!defined('API_SKIP_ROUTING')) {
 /** @return array{0:string,1:string} */
 function kpi_period_boundaries(string $period): array
 {
-    $months = [
-        'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4,
-        'mei' => 5, 'juni' => 6, 'juli' => 7, 'agustus' => 8,
-        'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
-        'january' => 1, 'february' => 2, 'march' => 3, 'may' => 5,
-        'june' => 6, 'july' => 7, 'august' => 8, 'october' => 10,
-        'december' => 12,
-    ];
-
-    if (!preg_match('/^([\p{L}]+)\s+(\d{4})$/u', trim($period), $matches)) {
-        throw new InvalidArgumentException('Format periode harus seperti "Januari 2026".');
-    }
-
-    $monthName = mb_strtolower($matches[1], 'UTF-8');
-    $month = $months[$monthName] ?? null;
-    $year = (int) $matches[2];
-    if ($month === null || $year < 2000 || $year > 2100) {
-        throw new InvalidArgumentException('Nama bulan atau tahun periode KPI tidak valid.');
-    }
-
-    $start = new DateTimeImmutable(sprintf('%04d-%02d-01 00:00:00', $year, $month));
-    $end = $start->modify('+1 month');
-    return [$start->format('Y-m-d H:i:s'), $end->format('Y-m-d H:i:s')];
+    return KpiCalculator::periodBoundaries($period);
 }

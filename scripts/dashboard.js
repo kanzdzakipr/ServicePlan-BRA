@@ -4278,7 +4278,7 @@
         }
         setMessage('');
         clearPhotoUrls();
-        state.photos = files.slice(0, 4);
+        state.photos = files.slice(0, 1);
         const preview = byId('nwo-photo-preview');
         if (!preview) return;
         preview.innerHTML = state.photos.map(file => {
@@ -4410,24 +4410,36 @@
             newAssetStatus = 'STANDBY';
         }
 
-        const payload = { work_orders: [workOrder], assets: [] };
-        if (newAssetStatus) {
-            payload.assets.push({
-                id: selectedAssetId,
-                status: newAssetStatus,
-                location: details.location,
-                last_hm_km: Math.max(Number(details.hm) || 0, currentHmKm)
-            });
-        }
+        const payload = {
+            wo_id: woId,
+            asset_id: selectedAssetId,
+            status: 'Open',
+            priority,
+            maintenance_type: maintenanceType,
+            issue_description: issue,
+            root_cause: rootCause,
+            repair_action: repairAction,
+            hull_number: workOrder.hullNumber,
+            equipment_type: workOrder.equipmentType,
+            current_hm_km: currentHmKm,
+            trouble_at: troubleAt,
+            raw_location: location,
+            repair_started_at: startedAt || null,
+            estimated_completion_at: completedAt || null,
+            is_downtime: down === 'Yes',
+            is_forced_operation: forcedOperation,
+            mitigation_action: mitigation,
+            assigned_mechanics: mechanics
+        };
 
         if (submitButton) {
             submitButton.disabled = true;
             submitButton.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan tiket';
         }
-        setMessage('Menyimpan data inti tiket. Foto masih berupa preview sampai endpoint upload tersedia.', 'info');
+        setMessage('Menyimpan tiket dan memperbarui status unit secara transaksional.', 'info');
 
         try {
-            const response = await fetch('api/sync.php', {
+            const response = await fetch('api/work_orders.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -4435,6 +4447,28 @@
             const result = await response.json();
             if (!response.ok || result.status !== 'success') {
                 throw new Error(result.message || 'Server menolak penyimpanan Work Order.');
+            }
+
+            newAssetStatus = text(result?.data?.assetStatus || newAssetStatus);
+            let photoWarning = '';
+            if (state.photos[0]) {
+                const photoPayload = new FormData();
+                photoPayload.append('wo_id', woId);
+                photoPayload.append('photo', state.photos[0], state.photos[0].name);
+                try {
+                    const photoResponse = await fetch('api/work_orders.php?action=upload-photo', {
+                        method: 'POST',
+                        body: photoPayload
+                    });
+                    const photoResult = await photoResponse.json();
+                    if (!photoResponse.ok || photoResult.status !== 'success') {
+                        throw new Error(photoResult.message || 'Upload foto ditolak server.');
+                    }
+                    workOrder.beforePhotoUrl = photoResult?.data?.beforePhotoUrl || null;
+                } catch (photoError) {
+                    console.error('Error uploading WO photo:', photoError);
+                    photoWarning = ` Foto belum tersimpan: ${photoError?.message || 'upload gagal'}.`;
+                }
             }
 
             if (newAssetStatus && typeof window.setIntegratedAssetStatus === 'function') {
@@ -4455,7 +4489,7 @@
             if (typeof window.showView === 'function') {
                 window.showView(maintenanceType === 'Preventive' ? 'pm' : 'wo');
             }
-            showSuccessToast(`${woId} berhasil dibuat untuk ${selectedAssetId}.`);
+            showSuccessToast(`${woId} berhasil dibuat untuk ${selectedAssetId}.${photoWarning}`);
             window.syncFleetState?.();
         } catch (error) {
             console.error('Error creating WO:', error);
@@ -17035,7 +17069,7 @@
     // =========================================================================
 
     // Data 1: Komtrax Telematics 18 Units (from 20_BRA_KOMTRAX_Januari_2026.md)
-    const komtraxFleetData = [
+    let komtraxFleetData = [
         { no: 1, model: 'D85ESS-2', sn: 'J21020', branch: 'PKB PEKANBARU', smr: 390.3, lastComm: '02/01/2026 06:08', days: 0, hours: 0, actualHours: 0, actualRatio: 0, eModeRatio: 0, travelRatio: 0, diggingRatio: 0, hoistRatio: 0, fuelLiters: 0, fuelLPH: 0, idlingRatio: 0, status: 'No Activity' },
         { no: 2, model: 'GD535-5', sn: '2066', branch: 'PKB PEKANBARU', smr: 3791.8, lastComm: '02/01/2026 14:14', days: 29, hours: 171.0, actualHours: 105.7, actualRatio: 61.8, eModeRatio: 61.7, travelRatio: 61.3, diggingRatio: 0, hoistRatio: 0, fuelLiters: 889.6, fuelLPH: 5.2, idlingRatio: 38.2, status: 'Active' },
         { no: 3, model: 'GD535-5', sn: '2259', branch: 'PLB PALEMBANG', smr: 1666.5, lastComm: '02/01/2026 06:23', days: 30, hours: 159.8, actualHours: 75.7, actualRatio: 47.4, eModeRatio: 46.8, travelRatio: 47.3, diggingRatio: 0, hoistRatio: 0, fuelLiters: 841.0, fuelLPH: 5.3, idlingRatio: 52.6, status: 'High Idling' },
@@ -17070,7 +17104,7 @@
     };
 
     // Data 2: Standby Fleet Audit Rekap (from REKAP_UNIT_STANDBY.md)
-    const standbySummary = {
+    let standbySummary = {
         totalUnits: 48,
         locations: [
             { name: 'YARD DURI', count: 35, ratio: 72.9, dumpTrucks: 24, excavators: 2, compactors: 6, bulldozers: 3, trados: 0 },
@@ -17086,19 +17120,7 @@
     };
 
     // Data 3: Fleet Overall KPIs (Aggregate metrics)
-    const fleetKPIs = {
-        physicalAvailability: 92.4, // Target >= 90%
-        useOfAvailability: 81.8,     // Target >= 80%
-        breakdownRate: 7.6,          // Target <= 10%
-        utilizationRate: 52.1,       // Fleet average actual working ratio
-        mtbf: 114.5,                 // Hours between failures
-        mttr: 3.8,                   // Hours per repair
-        totalWorkingHours: 2046.1,
-        totalActualHours: 1066.0,
-        totalFuelConsumed: 18648.8,
-        avgFuelLPH: 9.11,
-        avgIdlingRatio: 46.41
-    };
+    let fleetKPIs = {};
 
     // =========================================================================
     // 2. MAIN MODULE RENDER FUNCTION
@@ -17151,9 +17173,9 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Physical Availability (PA)</span>
-                                ${renderMiniDonutChartSVG(fleetKPIs.physicalAvailability, 'var(--success)', 28)}
+                                ${renderMiniDonutChartSVG(0, 'var(--success)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-pa-val" style="color:var(--success);">${fleetKPIs.physicalAvailability}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-pa-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 90.0%</span>
                             </div>
@@ -17161,9 +17183,9 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Use of Availability (UA)</span>
-                                ${renderMiniDonutChartSVG(fleetKPIs.useOfAvailability, 'var(--success)', 28)}
+                                ${renderMiniDonutChartSVG(0, 'var(--success)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-ua-val" style="color:var(--success);">${fleetKPIs.useOfAvailability}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-ua-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 80.0%</span>
                             </div>
@@ -17171,9 +17193,9 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Breakdown Rate (BR)</span>
-                                ${renderMiniDonutChartSVG(fleetKPIs.breakdownRate, 'var(--primary)', 28)}
+                                ${renderMiniDonutChartSVG(0, 'var(--primary)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-br-val" style="color:var(--primary);">${fleetKPIs.breakdownRate}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-br-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target: &le; 10.0%</span>
                             </div>
@@ -17181,9 +17203,9 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Utilization Rate (UT)</span>
-                                ${renderMiniDonutChartSVG(fleetKPIs.utilizationRate, 'var(--warning)', 28)}
+                                ${renderMiniDonutChartSVG(0, 'var(--warning)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-ut-val" style="color:var(--warning);">${fleetKPIs.utilizationRate}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-ut-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Working vs Total Hours</span>
                             </div>
@@ -17196,7 +17218,7 @@
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">MTBF (Mean Time Between Failures)</span>
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-mtbf-val" style="color:var(--primary);">${fleetKPIs.mtbf} Jam</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-mtbf-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 100 Jam</span>
                             </div>
@@ -17205,7 +17227,7 @@
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Total Jam Kerja Terjadwal Armada</span>
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-total-wh-val" style="color:var(--text-main);">${fleetKPIs.totalWorkingHours.toLocaleString()} Jam</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-total-wh-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Operational Baseline 18 Unit</span>
                             </div>
@@ -17219,7 +17241,7 @@
                                 <span class="telemetry-metric-label">MTTR (Mean Time To Repair)</span>
                                 <i class="fa-solid fa-screwdriver-wrench text-muted" style="font-size:0.8rem;"></i>
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-mttr-val" style="color:var(--primary);">${fleetKPIs.mttr} Jam</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-mttr-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target Benchmark: &le; 4.0 Jam</span>
                             </div>
@@ -17229,17 +17251,17 @@
                                 <span class="telemetry-metric-label">Total Fuel Fleet Consumed</span>
                                 <i class="fa-solid fa-gas-pump text-muted" style="font-size:0.8rem;"></i>
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-total-fuel-val" style="color:var(--text-main);">${fleetKPIs.totalFuelConsumed.toLocaleString()} L</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-total-fuel-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
-                                <span id="kpi-avg-fuel-val" style="font-size:0.72rem; color:var(--text-muted);">Rata-rata: ${fleetKPIs.avgFuelLPH} L/H</span>
+                                <span id="kpi-avg-fuel-val" style="font-size:0.72rem; color:var(--text-muted);">Memuat...</span>
                             </div>
                         </div>
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Rata-rata Idling Fleet</span>
-                                ${renderMiniDonutChartSVG(fleetKPIs.avgIdlingRatio, 'var(--danger)', 28)}
+                                ${renderMiniDonutChartSVG(0, 'var(--danger)', 28)}
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-idling-val" style="color:var(--danger);">${fleetKPIs.avgIdlingRatio}%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-idling-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--danger);">Memerlukan Evaluasi Sopir/Mekanik</span>
                             </div>
@@ -17828,19 +17850,22 @@
                 else if (valObj.status === 'BELOW_TARGET' || valObj.status === 'ABOVE_LIMIT') el.style.color = 'var(--warning)';
             } else if (fallbackNum !== undefined && fallbackNum !== null) {
                 el.textContent = fallbackNum + unit;
+            } else {
+                el.textContent = 'Tidak Ada Data';
+                el.style.color = 'var(--text-muted)';
             }
         }
 
-        updateKpiEl('kpi-pa-val', fleetKPIs.physicalAvailability, 92.4, '%');
-        updateKpiEl('kpi-ua-val', fleetKPIs.useOfAvailability, 81.8, '%');
-        updateKpiEl('kpi-br-val', fleetKPIs.breakdownRate, 7.6, '%');
-        updateKpiEl('kpi-ut-val', fleetKPIs.utilizationRate, 52.1, '%');
-        updateKpiEl('kpi-mtbf-val', fleetKPIs.mtbf, 114.5, ' Jam');
-        updateKpiEl('kpi-total-wh-val', fleetKPIs.totalWorkingHours, 2046.1, ' Jam');
-        updateKpiEl('kpi-mttr-val', fleetKPIs.mttr, 3.8, ' Jam');
-        updateKpiEl('kpi-total-fuel-val', fleetKPIs.totalFuelConsumed, 18648.8, ' L');
-        updateKpiEl('kpi-avg-fuel-val', fleetKPIs.avgFuelLPH, 9.11, ' L/H');
-        updateKpiEl('kpi-idling-val', fleetKPIs.avgIdlingRatio, 46.41, '%');
+        updateKpiEl('kpi-pa-val', fleetKPIs.physicalAvailability);
+        updateKpiEl('kpi-ua-val', fleetKPIs.useOfAvailability);
+        updateKpiEl('kpi-br-val', fleetKPIs.breakdownRate);
+        updateKpiEl('kpi-ut-val', fleetKPIs.utilizationRate);
+        updateKpiEl('kpi-mtbf-val', fleetKPIs.mtbf);
+        updateKpiEl('kpi-total-wh-val', fleetKPIs.totalWorkingHours);
+        updateKpiEl('kpi-mttr-val', fleetKPIs.mttr);
+        updateKpiEl('kpi-total-fuel-val', fleetKPIs.totalFuelConsumed);
+        updateKpiEl('kpi-avg-fuel-val', fleetKPIs.avgFuelLPH);
+        updateKpiEl('kpi-idling-val', fleetKPIs.avgIdlingRatio);
     }
 
     async function loadProductivityData() {

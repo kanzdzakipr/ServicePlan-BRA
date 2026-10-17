@@ -20,6 +20,9 @@ $srcDir = (Get-Item $PSScriptRoot).Parent.FullName
 $destDir = [System.IO.Path]::GetFullPath($TargetDir)
 $laragonWebRoot = [System.IO.Path]::GetFullPath("C:\laragon\www")
 $sqlPath = Join-Path $srcDir "scripts\u646470441_ServicePlanBRA.sql"
+$migrationPaths = @(
+    (Join-Path $srcDir "scripts\migrate_wo_fields_17102026.sql")
+)
 
 if (-not $destDir.StartsWith($laragonWebRoot.TrimEnd('\') + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "TargetDir harus berada di bawah C:\laragon\www dan tidak boleh menunjuk ke webroot langsung."
@@ -164,6 +167,19 @@ if ($mysqlExe -and (Test-Path $mysqlExe)) {
         }
     } else {
         Write-Host "[!] SQL file not found at: $sqlPath" -ForegroundColor Yellow
+    }
+
+    Write-Host "`n[Migration] Applying idempotent feature migrations..." -ForegroundColor Cyan
+    foreach ($migrationPath in $migrationPaths) {
+        if (-not (Test-Path $migrationPath)) {
+            throw "Migration file not found: $migrationPath"
+        }
+        $mysqlMigrationPath = $migrationPath.Replace('\', '/')
+        & $mysqlExe @mysqlArgs --default-character-set=utf8mb4 $DbName -e "source $mysqlMigrationPath"
+        if ($LASTEXITCODE -ne 0) {
+            throw "Database migration failed: $(Split-Path $migrationPath -Leaf)"
+        }
+        Write-Host "Applied: $(Split-Path $migrationPath -Leaf)" -ForegroundColor Green
     }
 } else {
     Write-Host "[!] MySQL executable not found. Make sure Laragon MySQL service is installed/running." -ForegroundColor Yellow

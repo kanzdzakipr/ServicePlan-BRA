@@ -43,6 +43,8 @@ kpiAssertNear($baseline['kpis']['mtbf']['value'], 15.0, 'MTBF = W / frekuensi ke
 kpiAssertNear($baseline['kpis']['mttr']['value'], 4.0, 'MTTR = R / frekuensi perbaikan selesai');
 kpiAssert($baseline['dataQuality']['isConsistent'] === true, 'W + S + R konsisten terhadap T');
 kpiAssert($baseline['formulaVersion'] === 'GLB-D-2026-10-17', 'versi formula terkunci dan dapat diaudit');
+[$periodStart, $periodEnd] = KpiCalculator::periodBoundaries('Oktober 2026');
+kpiAssert($periodStart === '2026-10-01 00:00:00' && $periodEnd === '2026-11-01 00:00:00', 'batas periode Indonesia dihitung konsisten');
 
 $precision = KpiCalculator::calculate([
     'operatingHours' => 1,

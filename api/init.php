@@ -152,6 +152,12 @@ try {
                             w.assigned_mechanic as assignedTo, w.root_cause as rootCause,
                             w.repair_action as repairAction, w.reported_at as reportedAt,
                             w.repair_started_at as repairStartedAt, w.closed_at as closedAt,
+                             w.hull_number as hullNumber, w.equipment_type as equipmentType,
+                             w.current_hm_km as currentHmKm, w.trouble_at as troubleAt,
+                             w.raw_location as rawLocation, w.assigned_mechanics_json as assignedMechanicsJson,
+                             w.is_forced_operation as isForcedOperation, w.mitigation_action as mitigationAction,
+                             w.estimated_completion_at as estimatedCompletionAt,
+                             w.before_photo_url as beforePhotoUrl,
                             TIMESTAMPDIFF(MINUTE, w.reported_at, COALESCE(w.closed_at, NOW())) as handlingDurationMinutes,
                             (SELECT rr.report_number
                              FROM report_work_order_integrations rwi

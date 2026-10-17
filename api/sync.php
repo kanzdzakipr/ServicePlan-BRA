@@ -1,5 +1,6 @@
 <?php
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
 $db = Database::getInstance();
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -35,18 +36,36 @@ if ($method === 'POST') {
         // 2. Upsert Work Orders
         if (isset($data['work_orders']) && is_array($data['work_orders'])) {
             $stmtWO = $db->prepare("
-                INSERT INTO work_orders (wo_id, asset_id, status, priority, maintenance_type, issue_description,
-                                         assigned_mechanic, root_cause, repair_action, downtime_formatted, is_downtime)
-                VALUES (:wo, :ass, :st, :prio, :maintenance_type, :iss, :pic, :root_cause, :repair_action, :df, :is_downtime)
+                INSERT INTO work_orders (wo_id, asset_id, hull_number, equipment_type, current_hm_km,
+                                         trouble_at, raw_location, status, priority, maintenance_type, issue_description,
+                                         assigned_mechanic, assigned_mechanics_json, root_cause, repair_action,
+                                         downtime_formatted, is_downtime, is_forced_operation, mitigation_action,
+                                         repair_started_at, estimated_completion_at)
+                VALUES (:wo, :ass, :hull_number, :equipment_type, :current_hm_km,
+                        :trouble_at, :raw_location, :st, :prio, :maintenance_type, :iss,
+                        :pic, :assigned_mechanics_json, :root_cause, :repair_action,
+                        :df, :is_downtime, :is_forced_operation, :mitigation_action,
+                        :repair_started_at, :estimated_completion_at)
                 ON DUPLICATE KEY UPDATE 
                     status = VALUES(status), 
                     priority = VALUES(priority), 
                     maintenance_type = VALUES(maintenance_type),
                     issue_description = VALUES(issue_description), 
                     assigned_mechanic = VALUES(assigned_mechanic), 
+                    assigned_mechanics_json = COALESCE(VALUES(assigned_mechanics_json), assigned_mechanics_json),
+                    hull_number = COALESCE(VALUES(hull_number), hull_number),
+                    equipment_type = COALESCE(VALUES(equipment_type), equipment_type),
+                    current_hm_km = COALESCE(VALUES(current_hm_km), current_hm_km),
+                    trouble_at = COALESCE(VALUES(trouble_at), trouble_at),
+                    raw_location = COALESCE(VALUES(raw_location), raw_location),
                     root_cause = COALESCE(NULLIF(VALUES(root_cause), ''), root_cause),
                     repair_action = COALESCE(NULLIF(VALUES(repair_action), ''), repair_action),
-                    downtime_formatted = VALUES(downtime_formatted)
+                    downtime_formatted = VALUES(downtime_formatted),
+                    is_downtime = VALUES(is_downtime),
+                    is_forced_operation = VALUES(is_forced_operation),
+                    mitigation_action = COALESCE(NULLIF(VALUES(mitigation_action), ''), mitigation_action),
+                    repair_started_at = COALESCE(VALUES(repair_started_at), repair_started_at),
+                    estimated_completion_at = COALESCE(VALUES(estimated_completion_at), estimated_completion_at)
             ");
             foreach ($data['work_orders'] as $w) {
                 if (!isset($w['woId']) || !isset($w['assetId'])) continue;
@@ -64,19 +83,54 @@ if ($method === 'POST') {
                         ]);
                     }
                 }
+                $mechanicInput = $w['assignedMechanics'] ?? $w['assigned_mechanics'] ?? $w['assignedTo'] ?? '';
+                $mechanics = WorkOrderSupport::normalizeMechanics($mechanicInput);
+                $assignedTo = $mechanics ? implode(', ', $mechanics) : trim((string) ($w['assignedTo'] ?? 'Belum ada PIC'));
+                $forcedOperation = in_array(strtolower((string) ($w['isForcedOperation'] ?? $w['is_forced_operation'] ?? '0')), ['1', 'true', 'yes', 'on'], true);
+                $isDowntime = !$forcedOperation && (($w['isDowntime'] ?? $w['is_downtime'] ?? (($w['downtime'] ?? '-') !== '-')) ? true : false);
+                $normalizeDateTime = static function (mixed $value): ?string {
+                    $value = trim((string) ($value ?? ''));
+                    return $value === '' ? null : str_replace('T', ' ', $value) . (strlen($value) === 16 ? ':00' : '');
+                };
+
                 $stmtWO->execute([
                     ':wo' => $w['woId'],
                     ':ass' => $w['assetId'],
+                    ':hull_number' => ($w['hullNumber'] ?? $w['hull_number'] ?? '') !== '' ? ($w['hullNumber'] ?? $w['hull_number']) : null,
+                    ':equipment_type' => ($w['equipmentType'] ?? $w['equipment_type'] ?? '') !== '' ? ($w['equipmentType'] ?? $w['equipment_type']) : null,
+                    ':current_hm_km' => is_numeric($w['currentHmKm'] ?? $w['current_hm_km'] ?? null) ? (float) ($w['currentHmKm'] ?? $w['current_hm_km']) : null,
+                    ':trouble_at' => $normalizeDateTime($w['troubleAt'] ?? $w['trouble_at'] ?? null),
+                    ':raw_location' => ($w['rawLocation'] ?? $w['raw_location'] ?? '') !== '' ? ($w['rawLocation'] ?? $w['raw_location']) : null,
                     ':st' => $w['status'] ?? 'Open',
                     ':prio' => $w['priority'] ?? 'Normal',
                     ':maintenance_type' => $w['maintenanceType'] ?? $w['maintenance_type'] ?? 'Corrective',
                     ':iss' => $w['issue'] ?? '',
-                    ':pic' => $w['assignedTo'] ?? '',
+                    ':pic' => $assignedTo,
+                    ':assigned_mechanics_json' => $mechanics ? json_encode($mechanics, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : null,
                     ':root_cause' => $w['rootCause'] ?? $w['root_cause'] ?? '',
                     ':repair_action' => $w['repairAction'] ?? $w['repair_action'] ?? '',
                     ':df' => $w['downtime'] ?? '',
-                    ':is_downtime' => (($w['downtime'] ?? '-') === '-') ? 0 : 1
+                    ':is_downtime' => $isDowntime ? 1 : 0,
+                    ':is_forced_operation' => $forcedOperation ? 1 : 0,
+                    ':mitigation_action' => $w['mitigationAction'] ?? $w['mitigation_action'] ?? null,
+                    ':repair_started_at' => $normalizeDateTime($w['repairStartedAt'] ?? $w['repair_started_at'] ?? null),
+                    ':estimated_completion_at' => $normalizeDateTime($w['estimatedCompletionAt'] ?? $w['estimated_completion_at'] ?? null),
                 ]);
+
+                if (array_key_exists('currentHmKm', $w) || array_key_exists('current_hm_km', $w) || $forcedOperation) {
+                    $assetStatus = WorkOrderSupport::assetStatusFor($forcedOperation, $isDowntime);
+                    $meter = is_numeric($w['currentHmKm'] ?? $w['current_hm_km'] ?? null)
+                        ? (float) ($w['currentHmKm'] ?? $w['current_hm_km'])
+                        : 0.0;
+                    $db->prepare(
+                        "UPDATE assets SET status = CASE
+                            WHEN status IN ('ACCIDENT_HOLD', 'INACTIVE') THEN status
+                            ELSE :status
+                         END,
+                         last_hm_km = GREATEST(COALESCE(last_hm_km, 0), :meter)
+                         WHERE asset_id = :asset_id"
+                    )->execute([':status' => $assetStatus, ':meter' => $meter, ':asset_id' => (string) $w['assetId']]);
+                }
 
                 $targetStatus = (string) ($w['status'] ?? 'Open');
                 $actor = api_current_user();

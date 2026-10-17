@@ -167,22 +167,30 @@ DROP TABLE IF EXISTS `work_orders`;
 CREATE TABLE `work_orders` (
     `wo_id` VARCHAR(50) PRIMARY KEY, -- e.g. 'WO-26-347'
     `asset_id` VARCHAR(100) NOT NULL,
+    `hull_number` VARCHAR(100) NULL,
+    `equipment_type` VARCHAR(100) NULL,
+    `current_hm_km` DECIMAL(12,2) NULL,
+    `trouble_at` DATETIME NULL,
     `location_id` INT NULL,
     `raw_location` VARCHAR(255) NULL,
     `issue_description` TEXT NOT NULL,
     `downtime_formatted` VARCHAR(100) NULL, -- Raw downtime string (e.g. '10 jam 15 menit')
     `downtime_minutes` INT DEFAULT 0,
     `is_downtime` BOOLEAN DEFAULT TRUE,
+    `is_forced_operation` BOOLEAN NOT NULL DEFAULT FALSE,
+    `mitigation_action` TEXT NULL,
     `status` ENUM('Open', 'In Progress', 'Waiting Part', 'Testing', 'Closed', 'Cancelled') DEFAULT 'Open',
     `priority` ENUM('Normal', 'High', 'Emergency') DEFAULT 'Normal',
     `maintenance_type` ENUM('Corrective', 'Preventive', 'Inspection', 'Emergency') NOT NULL DEFAULT 'Corrective',
     `parts_requirement` ENUM('UNASSESSED', 'REQUIRED', 'NOT_REQUIRED') NOT NULL DEFAULT 'UNASSESSED',
     `parts_requirement_note` TEXT NULL,
     `assigned_mechanic` VARCHAR(100) DEFAULT 'Belum ada PIC',
+    `assigned_mechanics_json` TEXT NULL,
     `root_cause` TEXT NULL,
     `repair_action` TEXT NULL,
     `reported_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `repair_started_at` TIMESTAMP NULL,
+    `estimated_completion_at` DATETIME NULL,
     `closed_at` TIMESTAMP NULL,
     `verification_supervisor_id` INT NULL,
     `before_photo_url` VARCHAR(255) NULL,
@@ -191,7 +199,9 @@ CREATE TABLE `work_orders` (
     FOREIGN KEY (`location_id`) REFERENCES `locations`(`location_id`) ON DELETE SET NULL,
     FOREIGN KEY (`verification_supervisor_id`) REFERENCES `users`(`user_id`),
     INDEX `idx_wo_status` (`status`),
-    INDEX `idx_wo_priority` (`priority`)
+    INDEX `idx_wo_priority` (`priority`),
+    INDEX `idx_wo_trouble_at` (`trouble_at`),
+    INDEX `idx_wo_forced_operation` (`is_forced_operation`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
