@@ -5672,7 +5672,7 @@
                                 <i class="fa-solid fa-fire attention-severity-icon" aria-hidden="true"></i>
                                 <div class="attention-identity">
                                     <span class="attention-wo-badge">${woIdEsc}</span>
-                                    <span class="attention-asset-pill" title="Unit: ${assetIdEsc} | SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}"><strong>${assetIdEsc}</strong><small style="opacity:0.85; margin-left:5px; font-weight:normal;">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small></span>
+                                    <span class="attention-asset-pill" title="Unit: ${assetIdEsc} | SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}"><a href="javascript:void(0)" class="unit-prop-hover-link" style="color:inherit; text-decoration:none;" onclick="window.openUnitProperties('${escapeHtml(rawAssetId)}'); return false;" title="Buka Properties Unit ${assetIdEsc}"><span class="unit-code-text">${assetIdEsc}</span><i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" style="font-size:0.7rem; margin-left:3px;" aria-hidden="true"></i></a><small style="opacity:0.85; margin-left:5px; font-weight:normal;">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small></span>
                                 </div>
                             </div>
                             <div class="attention-downtime" title="Durasi terhenti">
@@ -5686,6 +5686,9 @@
                         <div class="attention-actions">
                             <button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${assetIdEsc}')" title="Buka detail Work Order">
                                 <i class="fa-solid fa-wrench" aria-hidden="true"></i> Detail WO
+                            </button>
+                            <button class="attention-action-btn" onclick="window.openUnitProperties('${escapeHtml(rawAssetId)}')" title="Buka Properties Lengkap Unit">
+                                <i class="fa-solid fa-sliders" aria-hidden="true"></i> Properties
                             </button>
                             <button class="attention-action-btn" onclick="openAssetModal('${assetIdEsc}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat detail aset 360 derajat">
                                 <i class="fa-solid fa-truck" aria-hidden="true"></i> Aset 360&deg;
@@ -5848,7 +5851,12 @@
                         return `
                         <tr>
                             <td><strong>${escapeHtml(wo.woId)}</strong></td>
-                            <td>${escapeHtml(wo.assetId)}</td>
+                            <td>
+                                <a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(wo.assetId)}'); return false;" title="Buka Properties Unit ${escapeHtml(wo.assetId)}">
+                                    <span class="unit-code-text">${escapeHtml(wo.assetId)}</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" aria-hidden="true"></i>
+                                </a>
+                            </td>
                             <td><span style="font-weight:bold; ${statColor}">${escapeHtml(wo.status)}</span></td>
                             <td><span class="badge ${badgeColor}">${escapeHtml(wo.priority)}</span></td>
                         </tr>
@@ -5959,12 +5967,21 @@
 
                 tbody.innerHTML = assets.map(asset => {
                     const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
+                    const targetUnitId = parsed.unitId || asset.id;
                     const effStat = asset.subStatus || asset.status;
                     const badge = window.getAssetStatusBadge(effStat);
 
                     return `
                     <tr>
-                        <td><strong>${escapeHtml(parsed.unitId)}</strong></td>
+                        <td>
+                            <a href="javascript:void(0)" 
+                               class="unit-prop-hover-link" 
+                               onclick="closeModal('modalStatusDetail'); window.openUnitProperties('${escapeHtml(targetUnitId)}'); return false;" 
+                               title="Buka Properties Unit ${escapeHtml(targetUnitId)}">
+                                <span class="unit-code-text">${escapeHtml(parsed.unitId)}</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" aria-hidden="true"></i>
+                            </a>
+                        </td>
                         <td>${escapeHtml(parsed.snPlat)}</td>
                         <td>${escapeHtml(asset.category)}</td>
                         <td>${escapeHtml(asset.location)}</td>

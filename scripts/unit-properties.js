@@ -50,8 +50,18 @@
      */
     function getAssetData(assetId) {
         let asset = null;
-        if (window.globalData && window.globalData.assets) {
-            asset = window.globalData.assets.find(a => a.id === assetId || a.asset_id === assetId || a.asset_code === assetId);
+        if (window.globalData && Array.isArray(window.globalData.assets)) {
+            const cleanId = String(assetId || '').trim().toUpperCase();
+            asset = window.globalData.assets.find(a => {
+                if (!a) return false;
+                if (a.id === assetId || a.asset_id === assetId || a.asset_code === assetId) return true;
+                if (String(a.id || '').toUpperCase() === cleanId) return true;
+                if (window.parseAssetId) {
+                    const parsed = window.parseAssetId(a.id);
+                    if (parsed && (parsed.unitId === assetId || parsed.unitId.toUpperCase() === cleanId)) return true;
+                }
+                return false;
+            });
         }
 
         const idStr = String(assetId || 'DT-00049').toUpperCase();
@@ -70,6 +80,13 @@
     window.openUnitProperties = function (assetId) {
         if (!assetId) return;
         currentPropUnitId = assetId;
+
+        // Close any active overlay modal (e.g. Tabulasi Unit Detail, WO modal)
+        if (typeof window.closeModal === 'function') {
+            window.closeModal('modalStatusDetail');
+            window.closeModal('modalWoDetail');
+            window.closeModal('modalAssetDetail');
+        }
 
         // Remember active view before switching
         const currentActiveSection = document.querySelector('.view-section.active');

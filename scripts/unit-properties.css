@@ -939,6 +939,57 @@
     text-decoration: underline !important;
 }
 
+/* Hyperlink Hover Unit Properties (Executive Dashboard & Modals) */
+.unit-prop-hover-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #0f172a;
+    font-weight: 700;
+    text-decoration: none !important;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: -2px -6px;
+    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    vertical-align: middle;
+}
+
+.unit-prop-hover-link .unit-code-text {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    border-bottom: 1.5px dotted rgba(2, 132, 199, 0.45);
+    transition: border-bottom-color 0.18s ease, color 0.18s ease;
+}
+
+.unit-prop-hover-link .unit-prop-hover-icon {
+    font-size: 0.68rem;
+    color: var(--primary, #0284c7);
+    opacity: 0.45;
+    transform: translate(0, 0);
+    transition: opacity 0.18s ease, transform 0.18s ease, color 0.18s ease;
+}
+
+.unit-prop-hover-link:hover {
+    color: var(--primary, #0284c7) !important;
+    background-color: rgba(2, 132, 199, 0.08);
+}
+
+.unit-prop-hover-link:hover .unit-code-text {
+    color: var(--primary, #0284c7) !important;
+    border-bottom: 1.5px solid var(--primary, #0284c7);
+}
+
+.unit-prop-hover-link:hover .unit-prop-hover-icon {
+    opacity: 1;
+    color: var(--primary, #0284c7);
+    transform: translate(1.5px, -1.5px) scale(1.1);
+}
+
+.unit-prop-hover-link:active {
+    transform: scale(0.98);
+}
+
 /* Print Stylesheet for Equipment Properties Spec Sheet */
 @media print {
     body * {

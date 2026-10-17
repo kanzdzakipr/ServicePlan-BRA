@@ -6178,9 +6178,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     ? window.formatAssetIdentityDetails(assetObj || { id: rawAssetId })
                     : { unitId: rawAssetId, sn: 'Belum tersedia', plate: 'Belum tersedia' };
                 const assetIdEsc = escapeHtml(ident.unitId);
+                const targetUnitId = ident.unitId || rawAssetId;
                 const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
                 const issueShort = escapeHtml(issueText.length > 92 ? issueText.substring(0, 92) + '...' : issueText);
-                return `<li class="attention-item"><div class="attention-header"><div class="attention-title"><i class="fa-solid fa-fire attention-severity-icon" aria-hidden="true"></i><div class="attention-identity"><span class="attention-wo-badge">${woIdEsc}</span><span class="attention-asset-pill" title="Unit: ${assetIdEsc} | SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}"><strong>${assetIdEsc}</strong><small style="opacity:0.85; margin-left:5px; font-weight:normal;">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small></span></div></div><div class="attention-downtime" title="Durasi terhenti"><i class="fa-regular fa-clock" aria-hidden="true"></i> Down ${formatDowntime(wo)}</div></div><div class="attention-meta"><span><i class="fa-solid fa-user-gear" aria-hidden="true"></i><strong>Mekanik</strong> ${escapeHtml(getWorkOrderMechanic(wo))}</span></div><div class="attention-desc" title="${escapeHtml(issueText)}">${issueShort}</div><div class="attention-actions"><button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buka detail Work Order"><i class="fa-solid fa-wrench" aria-hidden="true"></i> Detail WO</button><button class="attention-action-btn" onclick="openAssetModal('${escapeHtml(rawAssetId)}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat detail aset 360 derajat"><i class="fa-solid fa-truck" aria-hidden="true"></i> Aset 360&deg;</button><button class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buat permintaan sparepart"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Minta Part</button></div></li>`;
+                return `<li class="attention-item"><div class="attention-header"><div class="attention-title"><i class="fa-solid fa-fire attention-severity-icon" aria-hidden="true"></i><div class="attention-identity"><span class="attention-wo-badge">${woIdEsc}</span><span class="attention-asset-pill" title="Unit: ${assetIdEsc} | SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}"><a href="javascript:void(0)" class="unit-prop-hover-link" style="color:inherit; text-decoration:none;" onclick="window.openUnitProperties('${escapeHtml(targetUnitId)}'); return false;" title="Buka Properties Unit ${assetIdEsc}"><span class="unit-code-text">${assetIdEsc}</span><i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" style="font-size:0.7rem; margin-left:3px;" aria-hidden="true"></i></a><small style="opacity:0.85; margin-left:5px; font-weight:normal;">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small></span></div></div><div class="attention-downtime" title="Durasi terhenti"><i class="fa-regular fa-clock" aria-hidden="true"></i> Down ${formatDowntime(wo)}</div></div><div class="attention-meta"><span><i class="fa-solid fa-user-gear" aria-hidden="true"></i><strong>Mekanik</strong> ${escapeHtml(getWorkOrderMechanic(wo))}</span></div><div class="attention-desc" title="${escapeHtml(issueText)}">${issueShort}</div><div class="attention-actions"><button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buka detail Work Order"><i class="fa-solid fa-wrench" aria-hidden="true"></i> Detail WO</button><button class="attention-action-btn" onclick="window.openUnitProperties('${escapeHtml(targetUnitId)}')" title="Buka Properties Lengkap Unit"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Properties</button><button class="attention-action-btn" onclick="openAssetModal('${escapeHtml(rawAssetId)}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat detail aset 360 derajat"><i class="fa-solid fa-truck" aria-hidden="true"></i> Aset 360&deg;</button><button class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buat permintaan sparepart"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Minta Part</button></div></li>`;
             }
 
             function loadNextEmergencyWoBatch() {
@@ -6239,10 +6240,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const ident = window.formatAssetIdentityDetails
                     ? window.formatAssetIdentityDetails(assetObj || { id: rawAssetId })
                     : { unitId: rawAssetId, sn: 'Belum tersedia', plate: 'Belum tersedia' };
+                const targetUnitId = ident.unitId || rawAssetId;
                 return `<tr>
                     <td><strong>${escapeHtml(wo.woId)}</strong></td>
                     <td>
-                        <strong>${escapeHtml(ident.unitId)}</strong>
+                        <a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(targetUnitId)}'); return false;" title="Buka Properties Unit ${escapeHtml(targetUnitId)}">
+                            <span class="unit-code-text">${escapeHtml(ident.unitId)}</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" aria-hidden="true"></i>
+                        </a>
                         <div style="font-size:0.75rem; color:var(--text-muted, #64748b);">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</div>
                     </td>
                     <td><span style="font-weight:bold; ${statColor}">${escapeHtml(wo.status || 'Open')}</span></td>
@@ -6513,12 +6518,21 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                 tbody.innerHTML = assets.map(asset => {
                     const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
+                    const targetUnitId = parsed.unitId || asset.id;
                     const effStat = asset.subStatus || asset.status;
                     const badge = window.getAssetStatusBadge(effStat);
 
                     return `
                     <tr>
-                        <td><strong>${escapeHtml(parsed.unitId)}</strong></td>
+                        <td>
+                            <a href="javascript:void(0)" 
+                               class="unit-prop-hover-link" 
+                               onclick="closeModal('modalStatusDetail'); window.openUnitProperties('${escapeHtml(targetUnitId)}'); return false;" 
+                               title="Buka Properties Unit ${escapeHtml(targetUnitId)}">
+                                <span class="unit-code-text">${escapeHtml(parsed.unitId)}</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" aria-hidden="true"></i>
+                            </a>
+                        </td>
                         <td>${escapeHtml(parsed.snPlat)}</td>
                         <td>${escapeHtml(asset.category)}</td>
                         <td>${escapeHtml(asset.location)}</td>
