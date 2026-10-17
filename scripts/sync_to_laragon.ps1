@@ -1,5 +1,7 @@
 param(
     [string]$TargetDir = "C:\laragon\www\ServicePlan-BRA",
+    [string]$DbHost = "127.0.0.1",
+    [string]$DbPort = "3306",
     [string]$DbName = "u646470441_ServicePlanBRA",
     [string]$DbUser = "root",
     [string]$DbPassword = "",
@@ -25,6 +27,10 @@ if (-not $destDir.StartsWith($laragonWebRoot.TrimEnd('\') + '\', [System.StringC
 
 if ($DbName -notmatch '^[A-Za-z0-9_]+$' -or $DbUser -notmatch '^[A-Za-z0-9_]+$') {
     throw "DbName dan DbUser hanya boleh berisi huruf, angka, dan underscore."
+}
+
+if ($DbHost -notmatch '^[A-Za-z0-9.-]+$' -or $DbPort -notmatch '^[0-9]+$') {
+    throw "DbHost dan DbPort tidak valid."
 }
 
 if ($DbPassword -match '[\r\n"]') {
@@ -79,8 +85,8 @@ $localEnvironmentBlock = @"
     SetEnv APP_ENV "local"
     SetEnv APP_ORIGIN "http://localhost"
     SetEnv APP_ALLOWED_ORIGINS "http://localhost,http://127.0.0.1,http://serviceplan-bra.test"
-    SetEnv DB_HOST "127.0.0.1"
-    SetEnv DB_PORT "3306"
+    SetEnv DB_HOST "$DbHost"
+    SetEnv DB_PORT "$DbPort"
     SetEnv DB_NAME "$DbName"
     SetEnv DB_USER "$DbUser"
     SetEnv DB_PASSWORD "$DbPassword"
@@ -96,7 +102,7 @@ Write-Host "`n[2/4] Verifying & preparing MySQL database '$DbName'..." -Foregrou
 if ($mysqlExe -and (Test-Path $mysqlExe)) {
     Write-Host "Found MySQL executable: $mysqlExe" -ForegroundColor Gray
 
-    $mysqlArgs = @('-u', $DbUser)
+    $mysqlArgs = @('-h', $DbHost, '-P', $DbPort, '-u', $DbUser)
     if ($DbPassword) {
         $mysqlArgs += "-p$DbPassword"
     }
@@ -136,8 +142,8 @@ if ($mysqlExe -and (Test-Path $mysqlExe)) {
             }
             try {
                 $env:APP_ENV = 'local'
-                $env:DB_HOST = '127.0.0.1'
-                $env:DB_PORT = '3306'
+                $env:DB_HOST = $DbHost
+                $env:DB_PORT = $DbPort
                 $env:DB_NAME = $DbName
                 $env:DB_USER = $DbUser
                 $env:DB_PASSWORD = $DbPassword
