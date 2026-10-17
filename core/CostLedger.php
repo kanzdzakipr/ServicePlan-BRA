@@ -26,9 +26,7 @@ final class CostLedger
         'INVENTORY_OUT'
     ];
 
-    /**
-     * Ensure database table exists and seed baseline realistic records if empty.
-     */
+    /** Ensure ledger table exists without inserting sample transactions. */
     public static function ensureTables(PDO $db): void
     {
         $db->exec("CREATE TABLE IF NOT EXISTS asset_cost_transactions (
@@ -59,11 +57,6 @@ final class CostLedger
             KEY idx_cost_source (source_type, source_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-        // Seed realistic baseline transactions if empty
-        $count = (int) $db->query("SELECT COUNT(*) FROM asset_cost_transactions")->fetchColumn();
-        if ($count === 0) {
-            self::seedBaselineTransactions($db);
-        }
     }
 
     private static function seedBaselineTransactions(PDO $db): void
@@ -303,6 +296,9 @@ final class CostLedger
             if (!$wo) {
                 throw new InvalidArgumentException("Work Order '{$woId}' tidak ditemukan.");
             }
+            if ($wo['asset_id'] !== $assetId) {
+                throw new InvalidArgumentException('Unit biaya harus sama dengan unit Work Order.');
+            }
         }
 
         $amount = (float)($data['amount'] ?? 0);
@@ -334,7 +330,8 @@ final class CostLedger
         $refNo = trim((string)($data['reference_no'] ?? ''));
         $sourceId = trim((string)($data['source_id'] ?? ''));
         $notes = trim((string)($data['notes'] ?? ''));
-        $locationId = !empty($data['location_id']) ? (int)$data['location_id'] : ($asset['current_location_id'] ? (int)$asset['current_location_id'] : null);
+        // Lokasi biaya mengikuti master aset; input klien tidak boleh mengubah scope audit.
+        $locationId = $asset['current_location_id'] ? (int)$asset['current_location_id'] : null;
 
         // Generate custom or automatic cost code
         $costCode = trim((string)($data['cost_code'] ?? ''));
@@ -347,7 +344,10 @@ final class CostLedger
         $checkStmt = $db->prepare("SELECT transaction_id FROM asset_cost_transactions WHERE cost_code = :code");
         $checkStmt->execute([':code' => $costCode]);
         if ($checkStmt->fetch()) {
-            $costCode .= '-' . substr(bin2hex(random_bytes(2)), 0, 4);
+            if (!empty($data['cost_code'])) {
+                throw new InvalidArgumentException('Kode biaya sudah ada; transaksi duplikat tidak dibuat.');
+            }
+            $costCode .= '-' . bin2hex(random_bytes(4));
         }
 
         $insertStmt = $db->prepare("INSERT INTO asset_cost_transactions 
@@ -413,12 +413,15 @@ final class CostLedger
 
         $upStmt = $db->prepare("UPDATE asset_cost_transactions 
             SET reversed_at = CURRENT_TIMESTAMP, reversed_by = :user_id, reversal_reason = :reason
-            WHERE transaction_id = :id");
+            WHERE transaction_id = :id AND reversed_at IS NULL");
         $upStmt->execute([
             ':user_id' => $user['id'] ?? null,
             ':reason' => $reason,
             ':id' => $transactionId,
         ]);
+        if ($upStmt->rowCount() !== 1) {
+            throw new InvalidArgumentException('Transaksi telah dibatalkan oleh proses lain; reversal kedua ditolak.');
+        }
 
         return [
             'transactionId' => $transactionId,

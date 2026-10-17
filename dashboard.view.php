@@ -3736,6 +3736,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </div>
                     <div
                         style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                        <label for="modalWoDocumentAlias">Tampilan dokumen</label>
+                        <select id="modalWoDocumentAlias" aria-label="Tampilan dokumen WO atau JO"><option value="WO">Work Order (WO)</option><option value="JO">Job Order (JO)</option></select>
+                        <button class="btn btn-secondary" id="modalWoPrintDocumentBtn" type="button" disabled>Cetak / PDF</button>
                         <button class="btn btn-secondary" onclick="closeModal('modalWoDetail')"
                             style="padding: 6px 14px;">Tutup</button>
                         <button class="btn btn-primary" id="modalWoAssetBtn" style="padding: 6px 14px;"><i
@@ -4891,6 +4894,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                 const assetBtn = document.getElementById('modalWoAssetBtn');
                 const spbBtn = document.getElementById('modalWoSpbBtn');
+                const documentBtn = document.getElementById('modalWoPrintDocumentBtn');
+                const documentAlias = document.getElementById('modalWoDocumentAlias');
+                if (documentBtn) { documentBtn.disabled = true; documentBtn.onclick = null; }
 
                 const targetAssetId = wo ? (wo.assetId || wo.unitId) : (fallbackAssetId || '');
                 const allAssetsList = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
@@ -4972,6 +4978,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (noticeEl) noticeEl.style.display = 'none';
                     if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); openAssetModal(detail.assetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
                     if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(detail.woId, detail.assetId); };
+                    if (documentBtn) {
+                        documentBtn.disabled = false;
+                        documentBtn.onclick = () => window.open(`api/work_order_document.php?id=${encodeURIComponent(detail.woId)}&doc_alias=${encodeURIComponent(documentAlias?.value || 'WO')}`, '_blank', 'noopener');
+                    }
 
                     // Revisi 9: Muat rincian biaya perbaikan WO & hubungkan tombol pencatatan biaya
                     loadWoCosts(detail.woId, detail.assetId);

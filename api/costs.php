@@ -13,6 +13,8 @@ if (!defined('API_SKIP_ROUTING')) {
     // 1. Authorization: require authentication and cost permission
     api_require_authenticated();
     $currentUser = api_current_user();
+    if ($method === 'GET') api_require_permission('cost.read');
+    elseif ($method === 'POST') api_require_permission('cost.write');
 
     $locationId = null;
     if (!api_has_global_location_scope()) {
@@ -37,8 +39,6 @@ if (!defined('API_SKIP_ROUTING')) {
     }
 
     if ($method === 'GET') {
-        api_require_permission('cost.read');
-
         $woId = isset($_GET['wo_id']) ? trim((string)$_GET['wo_id']) : '';
         if ($woId !== '') {
             api_require_work_order_access($db, $woId);
@@ -77,8 +77,6 @@ if (!defined('API_SKIP_ROUTING')) {
     }
 
     if ($method === 'POST') {
-        api_require_permission('cost.write');
-
         $raw = file_get_contents('php://input');
         $payload = json_decode($raw, true);
         if (!is_array($payload)) {
@@ -103,6 +101,13 @@ if (!defined('API_SKIP_ROUTING')) {
                 ]);
             }
 
+            $scopeStmt = $db->prepare('SELECT asset_id, wo_id FROM asset_cost_transactions WHERE transaction_id = :id LIMIT 1');
+            $scopeStmt->execute([':id' => $transactionId]);
+            $scopeRow = $scopeStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$scopeRow) api_json_response(404, ['status' => 'error', 'code' => 'OBJECT_NOT_FOUND', 'message' => 'Objek tidak ditemukan atau tidak dapat diakses.']);
+            api_require_asset_access($db, (string) $scopeRow['asset_id']);
+            if ($scopeRow['wo_id'] !== null) api_require_work_order_access($db, (string) $scopeRow['wo_id']);
+
             try {
                 $reversed = CostLedger::reverseTransaction($db, $transactionId, $reason, $currentUser);
                 api_json_response(200, [
@@ -126,7 +131,10 @@ if (!defined('API_SKIP_ROUTING')) {
         }
 
         if (!empty($payload['wo_id'])) {
-            api_require_work_order_access($db, (string)$payload['wo_id']);
+            $wo = api_require_work_order_access($db, (string)$payload['wo_id']);
+            if ($assetId !== '' && $wo['asset_id'] !== $assetId) {
+                api_json_response(422, ['status' => 'error', 'code' => 'VALIDATION_ERROR', 'message' => 'Unit biaya harus sama dengan unit Work Order.']);
+            }
         }
 
         try {

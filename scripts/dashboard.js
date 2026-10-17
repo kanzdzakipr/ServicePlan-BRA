@@ -17598,12 +17598,12 @@
                             <div class="prod-formula-grid">
                                 <div class="prod-formula-box">
                                     <h4><span>Physical Availability (PA)</span> <span class="prod-badge prod-badge-success">Target &ge; 90%</span></h4>
-                                    <code>PA = (Scheduled Hours - Breakdown Hours) / Scheduled Hours &times; 100%</code>
+                                    <code>PA = ((W + S) / T) &times; 100%</code>
                                     <p style="font-size:0.8rem; color:var(--text-muted);">Mengukur kesiapan fisik alat berat untuk beroperasi bebas dari kerusakan mekanis.</p>
                                 </div>
                                 <div class="prod-formula-box">
                                     <h4><span>Use of Availability (UA)</span> <span class="prod-badge prod-badge-success">Target &ge; 80%</span></h4>
-                                    <code>UA = Operating Hours / (Scheduled Hours - Breakdown Hours) &times; 100%</code>
+                                    <code>UA = (W / (W + S)) &times; 100%</code>
                                     <p style="font-size:0.8rem; color:var(--text-muted);">Mengukur efektivitas pemanfaatan unit yang sedang berstatus siap pakai (Ready).</p>
                                 </div>
                                 <div class="prod-formula-box">
@@ -17613,10 +17613,17 @@
                                 </div>
                                 <div class="prod-formula-box">
                                     <h4><span>Mean Time Between Failures (MTBF)</span> <span class="prod-badge prod-badge-success">Target &ge; 100h</span></h4>
-                                    <code>MTBF = Total Operating Time / Jumlah Kejadian Breakdown</code>
+                                    <code>MTBF = W / frekuensi kerusakan</code>
                                     <p style="font-size:0.8rem; color:var(--text-muted);">Rata-rata selang waktu jam kerja di antara dua insiden kerusakan.</p>
                                 </div>
                             </div>
+                            <p>W = jam operasi, S = jam standby, R = jam perbaikan WO, T = jam terjadwal. MA = W / (W + R) &times; 100%; EU = W / T &times; 100%; MTTR = R / frekuensi perbaikan selesai.</p>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px">
+                                <label for="kpi-inspector-period">Periode</label><input id="kpi-inspector-period" type="month" value="2026-01">
+                                <label for="kpi-inspector-asset">Unit</label><select id="kpi-inspector-asset"><option value="">Seluruh unit sesuai akses</option></select>
+                                <button id="kpi-inspector-load" type="button" class="btn btn-primary">Periksa KPI</button>
+                            </div>
+                            <div id="kpi-inspector-result" aria-live="polite" style="margin-top:12px">Pilih periode/unit lalu klik Periksa KPI.</div>
                         </div>
                     </div>
                 </div>
@@ -17864,6 +17871,12 @@
     // =========================================================================
 
     function bindProdEvents() {
+        const inspectorButton = document.getElementById('kpi-inspector-load');
+        if (inspectorButton) inspectorButton.addEventListener('click', loadKpiInspector);
+        const assetSelect = document.getElementById('kpi-inspector-asset');
+        if (assetSelect && Array.isArray(window.globalData?.assets)) {
+            assetSelect.innerHTML += window.globalData.assets.map(a => `<option value="${escapeHtml(String(a.id || a.asset_id || ''))}">${escapeHtml(String(a.id || a.asset_id || ''))}</option>`).join('');
+        }
         const tabBtns = document.querySelectorAll('.prod-tab-btn');
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -17879,6 +17892,29 @@
                 if (targetId === 'tab-contracts') loadContracts();
             });
         });
+    }
+
+    async function loadKpiInspector() {
+        const output = document.getElementById('kpi-inspector-result');
+        const month = document.getElementById('kpi-inspector-period')?.value || '';
+        const assetId = document.getElementById('kpi-inspector-asset')?.value || '';
+        if (!output) return;
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) { output.textContent = 'Pilih periode yang valid.'; return; }
+        const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        const [year, monthNumber] = month.split('-');
+        const params = new URLSearchParams({ period: `${monthNames[Number(monthNumber)-1]} ${year}` });
+        if (assetId) params.set('asset_id', assetId);
+        output.textContent = 'Memuat KPI dan sumber...';
+        try {
+            const response = await fetch(`api/kpi.php?${params}`, { credentials: 'same-origin', cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'KPI tidak tersedia.');
+            const data = payload.data;
+            const variables = data.variables;
+            const metrics = Object.entries(data.kpis).map(([key, item]) => `<tr><td>${escapeHtml(item.label)}</td><td>${escapeHtml(item.formatted)}</td><td>${escapeHtml(item.formula)}</td></tr>`).join('');
+            const warnings = (data.dataQuality?.warnings || []).map(w => `<li>${escapeHtml(w)}</li>`).join('');
+            output.innerHTML = `<div><strong>${escapeHtml(data.period.label)} · ${escapeHtml(data.assetId || 'Seluruh unit sesuai akses')}</strong> · versi ${escapeHtml(data.formulaVersion)}</div><p>W=${variables.W} jam, S=${variables.S} jam, R=${variables.R} jam, T=${variables.T} jam; kerusakan=${variables.failureCount}, perbaikan selesai=${variables.repairCount}.</p><p>Sumber: telematics_logs ${data.sources.telematics.rowCount} baris (actual_working_hours, working_hours); work_orders ${data.sources.workOrders.rowCount} baris (downtime_minutes, is_downtime, status). Rentang ${escapeHtml(data.period.startInclusive)} sampai ${escapeHtml(data.period.endExclusive)} (eksklusif).</p><div class="table-responsive"><table><thead><tr><th>KPI</th><th>Nilai</th><th>Rumus API</th></tr></thead><tbody>${metrics}</tbody></table></div>${warnings ? `<ul>${warnings}</ul>` : ''}`;
+        } catch (error) { output.textContent = error.message || 'Gagal memuat KPI.'; }
     }
 
     function renderProdModuleContent() {

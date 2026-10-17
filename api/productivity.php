@@ -20,13 +20,24 @@ if (!defined('API_SKIP_ROUTING')) {
     $period = isset($_GET['period']) && trim((string)$_GET['period']) !== ''
         ? trim((string)$_GET['period'])
         : 'Januari 2026';
+    try {
+        if ($period !== 'all') KpiCalculator::periodBoundaries($period);
+    } catch (InvalidArgumentException $error) {
+        api_json_response(422, ['status' => 'error', 'code' => 'INVALID_PERIOD', 'message' => $error->getMessage()]);
+    }
+    $assetId = trim((string) ($_GET['asset_id'] ?? ''));
+    if ($assetId !== '') api_require_asset_access($db, $assetId);
+    $category = trim((string) ($_GET['category'] ?? ''));
+    if ($category !== '' && (mb_strlen($category) > 50 || !preg_match('/^[\p{L}\p{N} .\/-]+$/u', $category))) {
+        api_json_response(422, ['status' => 'error', 'code' => 'INVALID_CATEGORY', 'message' => 'Kategori unit tidak valid.']);
+    }
 
     $locationId = null;
     if (!api_has_global_location_scope()) {
         $locationId = api_current_location_id();
         if ($locationId === null) {
             // Deny-all: user has restricted scope but no location assigned
-            $productivityData = ProductivityCalculator::calculate($db, 999999, $period);
+            $productivityData = ProductivityCalculator::calculate($db, 999999, $period, $assetId ?: null, $category ?: null);
             api_json_response(200, [
                 'status' => 'success',
                 'data' => array_merge($productivityData, [
@@ -43,7 +54,7 @@ if (!defined('API_SKIP_ROUTING')) {
         }
     }
 
-    $productivityData = ProductivityCalculator::calculate($db, $locationId, $period);
+    $productivityData = ProductivityCalculator::calculate($db, $locationId, $period, $assetId ?: null, $category ?: null);
 
     // Fetch manual LHO report operations
     $scope = api_location_scope_clause('a', 'productivity_location_id');
@@ -74,10 +85,20 @@ if (!defined('API_SKIP_ROUTING')) {
     if ($scope['sql'] !== '') {
         $sql .= ' AND ' . $scope['sql'];
     }
-    $sql .= ' ORDER BY o.operation_date DESC, o.operation_log_id DESC LIMIT 500';
+    $operationParams = $scope['params'];
+    if ($assetId !== '') { $sql .= ' AND o.asset_id = :operation_asset_id'; $operationParams[':operation_asset_id'] = $assetId; }
+    if ($category !== '') { $sql .= ' AND a.category = :operation_category'; $operationParams[':operation_category'] = $category; }
+    if ($period !== 'all') {
+        [$periodStart, $periodEnd] = KpiCalculator::periodBoundaries($period);
+        $sql .= ' AND o.operation_date >= :operation_start AND o.operation_date < :operation_end';
+        $operationParams[':operation_start'] = substr($periodStart, 0, 10);
+        $operationParams[':operation_end'] = substr($periodEnd, 0, 10);
+    }
+    // Summary must cover the same rows shown in detail; a silent LIMIT breaks reconciliation.
+    $sql .= ' ORDER BY o.operation_date DESC, o.operation_log_id DESC';
 
     $statement = $db->prepare($sql);
-    $statement->execute($scope['params']);
+    $statement->execute($operationParams);
     $rows = array_map(static function (array $row): array {
         return [
             'operationLogId' => (int) $row['operation_log_id'],

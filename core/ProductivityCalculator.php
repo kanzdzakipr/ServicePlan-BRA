@@ -26,7 +26,7 @@ final class ProductivityCalculator
     /**
      * Compute comprehensive productivity, telematics reconciliation, and standby fleet data.
      */
-    public static function calculate(PDO $db, ?int $locationId = null, ?string $period = 'Januari 2026'): array
+    public static function calculate(PDO $db, ?int $locationId = null, ?string $period = 'Januari 2026', ?string $assetId = null, ?string $category = null): array
     {
         // 1. Fetch telematics records with location scoping
         $sqlTele = "SELECT 
@@ -50,6 +50,14 @@ final class ProductivityCalculator
             $sqlTele .= " AND a.current_location_id = :location_id";
             $paramsTele[':location_id'] = $locationId;
         }
+        if ($assetId !== null) {
+            $sqlTele .= ' AND a.asset_id = :tele_asset_id';
+            $paramsTele[':tele_asset_id'] = $assetId;
+        }
+        if ($category !== null) {
+            $sqlTele .= ' AND a.category = :tele_category';
+            $paramsTele[':tele_category'] = $category;
+        }
 
         $sqlTele .= " ORDER BY t.log_id ASC";
         $stmtTele = $db->prepare($sqlTele);
@@ -66,9 +74,25 @@ final class ProductivityCalculator
                        SUM(o.fuel_liters) as total_lho_fuel,
                        COUNT(*) as lho_record_count
                    FROM report_operation_logs o
-                   WHERE o.reversed_at IS NULL
-                   GROUP BY o.asset_id";
-        $lhoAgg = $db->query($sqlLho)->fetchAll(PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
+                   INNER JOIN assets a ON a.asset_id = o.asset_id
+                   WHERE o.reversed_at IS NULL";
+        $lhoParams = [];
+        if ($period !== null && $period !== '' && $period !== 'all') {
+            [$periodStart, $periodEnd] = KpiCalculator::periodBoundaries($period);
+            $sqlLho .= ' AND o.operation_date >= :lho_start AND o.operation_date < :lho_end';
+            $lhoParams[':lho_start'] = substr($periodStart, 0, 10);
+            $lhoParams[':lho_end'] = substr($periodEnd, 0, 10);
+        }
+        if ($locationId !== null) {
+            $sqlLho .= ' AND a.current_location_id = :lho_location_id';
+            $lhoParams[':lho_location_id'] = $locationId;
+        }
+        if ($assetId !== null) { $sqlLho .= ' AND a.asset_id = :lho_asset_id'; $lhoParams[':lho_asset_id'] = $assetId; }
+        if ($category !== null) { $sqlLho .= ' AND a.category = :lho_category'; $lhoParams[':lho_category'] = $category; }
+        $sqlLho .= ' GROUP BY o.asset_id';
+        $lhoStmt = $db->prepare($sqlLho);
+        $lhoStmt->execute($lhoParams);
+        $lhoAgg = $lhoStmt->fetchAll(PDO::FETCH_UNIQUE | PDO::FETCH_ASSOC);
 
         // 3. If no telematics data exists for this scope/filter, return clean NO-DATA indicators
         if ($recordCount === 0) {
@@ -191,7 +215,7 @@ final class ProductivityCalculator
 
             if ($manualHours !== null) {
                 $varianceHours = round(abs($actWh - $manualHours), 1);
-                $variancePct = $actWh > 0 ? round(($varianceHours / $actWh) * 100.0, 1) : 0.0;
+                $variancePct = $actWh > 0 ? round(($varianceHours / $actWh) * 100.0, 1) : ($manualHours > 0 ? 100.0 : 0.0);
                 if ($variancePct > 15.0) {
                     $exceptions[] = 'Selisih Jam Kerja Tinggi (>15%)';
                 }
@@ -248,6 +272,8 @@ final class ProductivityCalculator
             $repairSql .= ' AND a.current_location_id = :repair_location_id';
             $repairParams[':repair_location_id'] = $locationId;
         }
+        if ($assetId !== null) { $repairSql .= ' AND a.asset_id = :repair_asset_id'; $repairParams[':repair_asset_id'] = $assetId; }
+        if ($category !== null) { $repairSql .= ' AND a.category = :repair_category'; $repairParams[':repair_category'] = $category; }
         $repairStatement = $db->prepare($repairSql);
         $repairStatement->execute($repairParams);
         $repairFacts = $repairStatement->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -385,7 +411,7 @@ final class ProductivityCalculator
                 'value' => $avgFuelLPH,
                 'formatted' => "{$avgFuelLPH} L/H",
                 'unit' => 'L/H',
-                'sources' => ['Total Fuel Consumed / Total Actual Hours'],
+                'sources' => ['Total Fuel Consumed / Total Scheduled Working Hours'],
             ],
             'avgIdlingRatio' => [
                 'value' => $avgIdlingRatio,

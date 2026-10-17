@@ -35,6 +35,10 @@ if (!defined('API_SKIP_ROUTING')) {
     }
 
     $locationScope = api_location_scope_clause('a', 'kpi_location_id');
+    $assetId = trim((string) ($_GET['asset_id'] ?? ''));
+    if ($assetId !== '') {
+        api_require_asset_access($db, $assetId);
+    }
 
     $telematicsSql = "SELECT
             COUNT(*) AS source_rows,
@@ -46,8 +50,9 @@ if (!defined('API_SKIP_ROUTING')) {
     if ($locationScope['sql'] !== '') {
         $telematicsSql .= ' AND ' . $locationScope['sql'];
     }
+    if ($assetId !== '') $telematicsSql .= ' AND t.asset_id = :asset_id';
     $telematics = $db->prepare($telematicsSql);
-    $telematics->execute(array_merge([':period' => $period], $locationScope['params']));
+    $telematics->execute(array_merge([':period' => $period], $locationScope['params'], $assetId !== '' ? [':asset_id' => $assetId] : []));
     $hours = $telematics->fetch(PDO::FETCH_ASSOC) ?: [];
 
     $workOrderSql = "SELECT
@@ -71,11 +76,12 @@ if (!defined('API_SKIP_ROUTING')) {
     if ($locationScope['sql'] !== '') {
         $workOrderSql .= ' AND ' . $locationScope['sql'];
     }
+    if ($assetId !== '') $workOrderSql .= ' AND w.asset_id = :asset_id';
     $workOrders = $db->prepare($workOrderSql);
     $workOrders->execute(array_merge([
         ':period_start' => $periodStart,
         ':period_end' => $periodEnd,
-    ], $locationScope['params']));
+    ], $locationScope['params'], $assetId !== '' ? [':asset_id' => $assetId] : []));
     $repairs = $workOrders->fetch(PDO::FETCH_ASSOC) ?: [];
 
     $operatingHours = (float) ($hours['operating_hours'] ?? 0);
@@ -106,6 +112,8 @@ if (!defined('API_SKIP_ROUTING')) {
                 'startInclusive' => $periodStart,
                 'endExclusive' => $periodEnd,
             ],
+            'assetId' => $assetId !== '' ? $assetId : null,
+            'formulaCatalog' => KpiCalculator::formulaCatalog(),
             'sources' => [
                 'telematics' => [
                     'table' => 'telematics_logs',
