@@ -1,31 +1,49 @@
 param(
-    [string]$TargetDir = "C:\laragon\www\ServicePlan-BRA",
+    [string]$LaragonRoot = "C:\laragon",
+    [string]$TargetDir = "",
     [string]$DbHost = "127.0.0.1",
     [string]$DbPort = "3306",
     [string]$DbName = "u646470441_ServicePlanBRA",
     [string]$DbUser = "root",
     [string]$DbPassword = "",
-    [switch]$PreserveDatabase
+    [switch]$PreserveDatabase,
+    [switch]$ImportDatabase,
+    [switch]$DryRun
 )
 
 # ============================================================================
 # ServicePlan-BRA: Synchronization & Local Laragon Hosting Script
 # Multi-user compatible script with automatic root path & MySQL auto-detection
-# Target Local Path: C:\laragon\www\ServicePlan-BRA
+# Target is selected per machine with -LaragonRoot, without changing shared defaults.
 # Database Target: u646470441_ServicePlanBRA (Local MySQL Laragon)
 # ============================================================================
 
 # Auto-detect source directory (repository root directory containing this script)
 $srcDir = (Get-Item $PSScriptRoot).Parent.FullName
+$laragonRootPath = [System.IO.Path]::GetFullPath($LaragonRoot).TrimEnd('\')
+$laragonWebRoot = [System.IO.Path]::GetFullPath((Join-Path $laragonRootPath 'www')).TrimEnd('\')
+if ([string]::IsNullOrWhiteSpace($TargetDir)) {
+    $TargetDir = Join-Path $laragonWebRoot 'ServicePlan-BRA'
+}
 $destDir = [System.IO.Path]::GetFullPath($TargetDir)
-$laragonWebRoot = [System.IO.Path]::GetFullPath("C:\laragon\www")
 $sqlPath = Join-Path $srcDir "scripts\u646470441_ServicePlanBRA.sql"
 $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_wo_fields_17102026.sql")
 )
 
-if (-not $destDir.StartsWith($laragonWebRoot.TrimEnd('\') + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "TargetDir harus berada di bawah C:\laragon\www dan tidak boleh menunjuk ke webroot langsung."
+if (-not (Test-Path -LiteralPath $laragonRootPath -PathType Container) -or
+    -not (Test-Path -LiteralPath $laragonWebRoot -PathType Container)) {
+    throw "LaragonRoot dan folder www harus sudah ada: $laragonRootPath"
+}
+if (-not $destDir.StartsWith($laragonWebRoot + '\', [System.StringComparison]::OrdinalIgnoreCase) -or
+    -not [string]::Equals((Split-Path $destDir -Leaf), 'ServicePlan-BRA', [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "TargetDir harus berada di bawah $laragonWebRoot dan bernama ServicePlan-BRA."
+}
+if ($PreserveDatabase -and $ImportDatabase) {
+    throw 'Pilih salah satu: -PreserveDatabase atau -ImportDatabase.'
+}
+if ($ImportDatabase -and $DbHost -notin @('127.0.0.1', 'localhost', '::1')) {
+    throw '-ImportDatabase hanya diizinkan untuk MySQL lokal.'
 }
 
 if ($DbName -notmatch '^[A-Za-z0-9_]+$' -or $DbUser -notmatch '^[A-Za-z0-9_]+$') {
@@ -40,20 +58,15 @@ if ($DbPassword -match '[\r\n"]') {
     throw 'DbPassword lokal tidak boleh mengandung newline atau tanda kutip ganda.'
 }
 
-# Auto-detect MySQL / MariaDB executable path
+# Resolve MySQL from the selected Laragon installation only. Never borrow an
+# unrelated mysql.exe from PATH when a database import is explicitly requested.
 $mysqlExe = $null
-
-$cmdMysql = Get-Command mysql -ErrorAction SilentlyContinue
-if ($cmdMysql) {
-    $mysqlExe = $cmdMysql.Source
-} else {
-    $possiblePaths = @(
-        Get-ChildItem -Path "C:\laragon\bin\mysql" -Filter "mysql.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
-        Get-ChildItem -Path "C:\laragon\bin\mariadb" -Filter "mysql.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
-    )
-    if ($possiblePaths.Count -gt 0) {
-        $mysqlExe = $possiblePaths[0]
-    }
+$possiblePaths = @(
+    Get-ChildItem -Path (Join-Path $laragonRootPath 'bin\mysql') -Filter "mysql.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+    Get-ChildItem -Path (Join-Path $laragonRootPath 'bin\mariadb') -Filter "mysql.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+)
+if ($possiblePaths.Count -gt 0) {
+    $mysqlExe = $possiblePaths[0]
 }
 
 Write-Host "============================================================================" -ForegroundColor Cyan
@@ -62,24 +75,40 @@ Write-Host " Source: $srcDir" -ForegroundColor Gray
 Write-Host " Target: $destDir" -ForegroundColor Gray
 Write-Host "============================================================================" -ForegroundColor Cyan
 
+if (Test-Path -LiteralPath $destDir) {
+    $existingTarget = Get-Item -LiteralPath $destDir -Force
+    if ($existingTarget.LinkType) {
+        throw "TargetDir bukan folder biasa (link/junction): $destDir"
+    }
+}
+
+# Additive copy: never delete target-only files or overwrite local data/config.
+$copyArgs = @($srcDir, $destDir, '/E', '/XO', '/XD', '.git', '.gemini', '.agents', '.codex', '.runtime', 'brain', 'scratch', 'uploads', '/XF', '.env', '.htaccess', '*.sql', '/R:2', '/W:1')
+if ($DryRun) {
+    Write-Host 'DRY RUN: only listing planned copy operations; no files or database will be changed.' -ForegroundColor Yellow
+    & robocopy @copyArgs /L /NFL /NDL /NJH /NJS
+    if ($LASTEXITCODE -gt 7) { throw "Robocopy dry run gagal dengan exit code $LASTEXITCODE." }
+    return
+}
+
 # 1. Ensure target directory exists
 if (-not (Test-Path $destDir)) {
     New-Item -Path $destDir -ItemType Directory -Force | Out-Null
 }
 
 Write-Host "`n[1/4] Synchronizing files to Laragon webroot ($destDir)..." -ForegroundColor Cyan
-robocopy $srcDir $destDir /MIR /XD .git .gemini .agents .codex .runtime brain scratch /XF .env *.sql /R:2 /W:1 | Out-Null
+& robocopy @copyArgs | Out-Null
 $robocopyExitCode = $LASTEXITCODE
 if ($robocopyExitCode -gt 7) {
     throw "Robocopy gagal dengan exit code $robocopyExitCode."
 }
 Write-Host "Files synchronized successfully!" -ForegroundColor Green
 
-# Add local-only Apache environment configuration to the mirrored copy. This
-# block never modifies the repository .htaccess and is recreated on each sync.
-$sessionDir = "C:\laragon\tmp\ServicePlan-BRA-sessions"
+# Preserve any target-only Apache directives and replace only our managed block.
+$sessionDir = Join-Path $laragonRootPath 'tmp\ServicePlan-BRA-sessions'
 New-Item -Path $sessionDir -ItemType Directory -Force | Out-Null
 $targetHtaccess = Join-Path $destDir '.htaccess'
+$sourceHtaccess = Join-Path $srcDir '.htaccess'
 $apacheSessionDir = $sessionDir.Replace('\', '/')
 $localEnvironmentBlock = @"
 
@@ -98,16 +127,39 @@ $localEnvironmentBlock = @"
 </IfModule>
 # END LARAGON LOCAL ENVIRONMENT
 "@
-Add-Content -LiteralPath $targetHtaccess -Value $localEnvironmentBlock -Encoding UTF8
+$htaccessBase = if (Test-Path -LiteralPath $targetHtaccess) {
+    [System.IO.File]::ReadAllText($targetHtaccess)
+} elseif (Test-Path -LiteralPath $sourceHtaccess) {
+    [System.IO.File]::ReadAllText($sourceHtaccess)
+} else {
+    ''
+}
+$managedPattern = '(?s)\r?\n?# BEGIN LARAGON LOCAL ENVIRONMENT - generated by sync_to_laragon\.ps1\r?\n.*?# END LARAGON LOCAL ENVIRONMENT\r?\n?'
+$htaccessBase = [regex]::Replace($htaccessBase, $managedPattern, '')
+$htaccessNew = $htaccessBase.TrimEnd("`r", "`n") + "`r`n" + $localEnvironmentBlock.Trim("`r", "`n") + "`r`n"
+[System.IO.File]::WriteAllText($targetHtaccess, $htaccessNew, (New-Object System.Text.UTF8Encoding($false)))
 
-# 2. Prepare MySQL database
-Write-Host "`n[2/4] Verifying & preparing MySQL database '$DbName'..." -ForegroundColor Cyan
-if ($mysqlExe -and (Test-Path $mysqlExe)) {
+# Database writes require explicit -ImportDatabase. -PreserveDatabase is retained
+# for existing callers and now also skips CREATE DATABASE and migrations.
+if (-not $ImportDatabase) {
+    Write-Host '[2/4] Database preserved: no CREATE, import, migration, seed, or password reset.' -ForegroundColor Yellow
+} elseif ($mysqlExe -and (Test-Path $mysqlExe)) {
+    Write-Host "`n[2/4] Importing explicitly selected local MySQL database '$DbName'..." -ForegroundColor Cyan
     Write-Host "Found MySQL executable: $mysqlExe" -ForegroundColor Gray
 
     $mysqlArgs = @('-h', $DbHost, '-P', $DbPort, '-u', $DbUser)
     if ($DbPassword) {
         $mysqlArgs += "-p$DbPassword"
+    }
+
+    $serverDataDir = (& $mysqlExe @mysqlArgs --batch --skip-column-names -e 'SELECT @@datadir;' 2>&1 | Select-Object -First 1).ToString().Trim()
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Tidak dapat memverifikasi lokasi data MySQL; impor dibatalkan.'
+    }
+    $expectedDataRoot = [System.IO.Path]::GetFullPath((Join-Path $laragonRootPath 'data')).TrimEnd('\') + '\'
+    $actualDataDir = [System.IO.Path]::GetFullPath($serverDataDir).TrimEnd('\') + '\'
+    if (-not $actualDataDir.StartsWith($expectedDataRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "MySQL yang terhubung bukan milik LaragonRoot terpilih; impor dibatalkan."
     }
     
     # Create DB (Do not drop, preserve data like archived items)
@@ -117,10 +169,7 @@ if ($mysqlExe -and (Test-Path $mysqlExe)) {
         throw "Gagal membuat atau mengakses database '$DbName'."
     }
     
-    if ($PreserveDatabase) {
-        Write-Host "`n[3/4] Database import skipped (-PreserveDatabase); existing Laragon test data is retained." -ForegroundColor Yellow
-        Write-Host "[4/4] Local passwords were not reset." -ForegroundColor Yellow
-    } elseif (Test-Path $sqlPath) {
+    if (Test-Path $sqlPath) {
         Write-Host "`n[3/4] Importing SQL schema & data into local MySQL..." -ForegroundColor Cyan
         $mysqlSourcePath = $sqlPath.Replace('\', '/')
         & $mysqlExe @mysqlArgs --default-character-set=utf8mb4 $DbName -e "source $mysqlSourcePath"
@@ -130,7 +179,7 @@ if ($mysqlExe -and (Test-Path $mysqlExe)) {
         Write-Host "Database '$DbName' successfully synced to local MySQL!" -ForegroundColor Green
 
         $passwordResetScript = Join-Path $srcDir 'scripts\set_local_temporary_passwords.php'
-        $phpExe = Get-ChildItem -Path 'C:\laragon\bin\php' -Filter 'php.exe' -Recurse -ErrorAction SilentlyContinue |
+        $phpExe = Get-ChildItem -Path (Join-Path $laragonRootPath 'bin\php') -Filter 'php.exe' -Recurse -ErrorAction SilentlyContinue |
             Sort-Object FullName -Descending |
             Select-Object -First 1 -ExpandProperty FullName
         if ($phpExe -and (Test-Path $passwordResetScript)) {
@@ -182,8 +231,7 @@ if ($mysqlExe -and (Test-Path $mysqlExe)) {
         Write-Host "Applied: $(Split-Path $migrationPath -Leaf)" -ForegroundColor Green
     }
 } else {
-    Write-Host "[!] MySQL executable not found. Make sure Laragon MySQL service is installed/running." -ForegroundColor Yellow
-    Write-Host "Skipping database import step. Code files were still copied to webroot." -ForegroundColor Yellow
+    throw 'MySQL executable tidak ditemukan untuk -ImportDatabase.'
 }
 
 Write-Host "`n============================================================================" -ForegroundColor Green
