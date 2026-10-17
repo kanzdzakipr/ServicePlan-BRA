@@ -9,10 +9,20 @@ $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
 require_once dirname(__DIR__) . '/core/AssetIdentity.php';
 require_once dirname(__DIR__) . '/core/AssetOnboarding.php';
+require_once dirname(__DIR__) . '/core/AssetSearch.php';
 
 switch ($method) {
     case 'GET':
         AuthMiddleware::checkAccess('asset', 'R');
+        if (($_GET['action'] ?? '') === 'search') {
+            $scope = api_location_scope_clause('a', 'search_asset_location_id');
+            try {
+                $found = AssetSearch::find($db, (string) ($_GET['q'] ?? ''), $scope);
+            } catch (InvalidArgumentException $e) {
+                api_json_response(422, ['status' => 'error', 'code' => 'INVALID_SEARCH', 'message' => $e->getMessage()]);
+            }
+            api_json_response(200, ['status' => 'success', 'data' => $found, 'limit' => AssetSearch::MAX_RESULTS]);
+        }
         if (($_GET['references'] ?? '') === 'locations') {
             $locationSql = 'SELECT location_id, location_name FROM locations WHERE is_active = 1';
             $locationParams = [];

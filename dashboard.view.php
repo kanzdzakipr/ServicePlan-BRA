@@ -124,7 +124,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             <div class="header-right">
                 <!-- Mobile Search Icon Toggle Button -->
                 <button type="button" class="btn-mobile-search-toggle" id="btnMobileSearchToggle"
-                    onclick="toggleMobileSearch(event)" title="Pencarian Unit & WO">
+                    onclick="toggleMobileSearch(event)" title="Pencarian aset">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
 
@@ -159,10 +159,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
 
                 <div class="search-bar" id="globalSearchBarWrapper" style="position: relative;">
-                    <input type="text" id="globalSearchInput" onkeyup="handleGlobalSearch()"
-                        onfocus="if(this.value.length >= 2) document.getElementById('globalSearchResults').style.display='block';"
-                        placeholder="Cari unit, WO, lambung..." autocomplete="off">
-                    <div id="globalSearchResults"
+                    <input type="search" id="globalSearchInput" oninput="handleGlobalSearch()"
+                        onfocus="handleGlobalSearch()" aria-controls="globalSearchResults" aria-expanded="false"
+                        aria-label="Cari kode unit, nomor lambung, plat, atau nomor seri"
+                        placeholder="Cari kode unit, lambung, plat/SN..." autocomplete="off">
+                    <div id="globalSearchResults" role="region" aria-label="Hasil pencarian aset" aria-live="polite"
                         style="display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 100%; min-width: 350px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); z-index: 1000; max-height: 400px; overflow-y: auto;">
                         <!-- Results injected here -->
                     </div>

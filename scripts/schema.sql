@@ -157,6 +157,10 @@ CREATE TABLE `assets` (
     INDEX `idx_asset_status` (`status`),
     INDEX `idx_asset_category` (`category`),
     INDEX `idx_asset_code` (`asset_code`),
+    INDEX `idx_asset_search_hull` (`hull_number`, `asset_id`),
+    INDEX `idx_asset_search_alias` (`alias_name`, `asset_id`),
+    INDEX `idx_asset_search_serial` (`serial_number`, `asset_id`),
+    INDEX `idx_asset_search_plate` (`license_plate`, `asset_id`),
     INDEX `idx_asset_spatial` (`last_latitude`, `last_longitude`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

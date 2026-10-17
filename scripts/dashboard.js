@@ -20870,69 +20870,105 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+let globalAssetSearchTimer = null;
+let globalAssetSearchController = null;
+let globalAssetSearchGeneration = 0;
+
 window.handleGlobalSearch = function () {
     const input = document.getElementById('globalSearchInput');
-    const resultsContainer = document.getElementById('globalSearchResults');
-    if (!input || !resultsContainer) return;
-
-    const query = input.value.toLowerCase().trim();
+    const results = document.getElementById('globalSearchResults');
+    if (!input || !results) return;
+    const query = input.value.trim();
+    clearTimeout(globalAssetSearchTimer);
+    globalAssetSearchController?.abort();
+    const generation = ++globalAssetSearchGeneration;
     if (query.length < 2) {
-        resultsContainer.style.display = 'none';
+        results.replaceChildren();
+        results.style.display = 'none';
+        input.setAttribute('aria-expanded', 'false');
         return;
     }
-
-    resultsContainer.style.display = 'block';
-    let html = '';
-    let resultCount = 0;
-
-    if (window.globalData && window.globalData.assets) {
-        const assets = window.globalData.assets.filter(a =>
-            (a.id && a.id.toLowerCase().includes(query)) ||
-            (a.category && a.category.toLowerCase().includes(query)) ||
-            (a.location && a.location.toLowerCase().includes(query)) ||
-            (a.status && a.status.toLowerCase().includes(query))
-        ).slice(0, 5);
-
-        if (assets.length > 0) {
-            html += '<div style="padding: 8px 15px; background: #f8fafc; font-size: 0.8rem; font-weight: bold; color: #64748b; border-bottom: 1px solid #e2e8f0;"><i class="fa-solid fa-truck"></i> Asset Unit</div>';
-            assets.forEach(a => {
-                const parsedId = window.parseAssetId ? window.parseAssetId(a.id) : { snPlat: '-' };
-                const snPlat = parsedId.snPlat !== '-' ? ' (' + parsedId.snPlat + ')' : '';
-                html += `<div style="padding: 10px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'" onclick="showView('asset'); document.getElementById('globalSearchResults').style.display='none';">
-                    <div style="font-weight: 600; color: #0f172a;">${a.id}${snPlat}</div>
-                    <div style="font-size: 0.8rem; color: #64748b;">${a.category || '-'} &middot; ${a.location || '-'} &middot; <span style="color:var(--primary)">${a.status || '-'}</span></div>
-                </div>`;
-                resultCount++;
+    results.style.display = 'block';
+    input.setAttribute('aria-expanded', 'true');
+    results.textContent = 'Mencari aset...';
+    globalAssetSearchTimer = setTimeout(async () => {
+        const controller = new AbortController();
+        globalAssetSearchController = controller;
+        try {
+            const response = await fetch(`api/assets.php?action=search&q=${encodeURIComponent(query)}`, {
+                headers: { Accept: 'application/json' }, cache: 'no-store', signal: controller.signal
             });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'success' || !Array.isArray(payload.data)) throw new Error(payload.message || 'Pencarian gagal.');
+            if (generation !== globalAssetSearchGeneration || input.value.trim() !== query) return;
+            results.replaceChildren();
+            if (!payload.data.length) {
+                results.textContent = 'Tidak ada aset yang cocok dalam cakupan lokasi Anda.';
+                return;
+            }
+            const hint = document.createElement('div');
+            hint.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid #e2e8f0;';
+            for (const label of ['Kode Unit', 'No. Lambung', 'Plat / SN']) {
+                const badge = document.createElement('span');
+                badge.textContent = label;
+                badge.style.cssText = 'font-size:0.68rem;color:#0369a1;background:#e0f2fe;padding:2px 6px;border-radius:10px;';
+                hint.appendChild(badge);
+            }
+            results.appendChild(hint);
+            for (const asset of payload.data) {
+                const row = document.createElement('button');
+                row.type = 'button';
+                row.className = 'global-asset-search-result';
+                row.style.cssText = 'display:block;width:100%;padding:10px 14px;text-align:left;background:#fff;border:0;border-bottom:1px solid #e2e8f0;cursor:pointer;';
+                const title = document.createElement('strong');
+                title.textContent = `${asset.asset_code || asset.asset_id} · ${asset.hull_number || 'Lambung belum tersedia'}`;
+                const details = document.createElement('small');
+                details.style.cssText = 'display:block;color:#64748b;margin-top:3px;';
+                details.textContent = `${asset.category || '-'} ${asset.make_model || ''} · SN: ${asset.serial_number || '-'} · Plat: ${asset.license_plate || '-'} · ${asset.status || '-'} · ${asset.location_name || 'Lokasi belum tersedia'}`;
+                row.append(title, details);
+                row.addEventListener('click', () => {
+                    results.style.display = 'none';
+                    input.setAttribute('aria-expanded', 'false');
+                    input.value = '';
+                    document.getElementById('globalSearchBarWrapper')?.classList.remove('active');
+                    window.openUnitProperties(asset.asset_id);
+                });
+                results.appendChild(row);
+            }
+            if (payload.data.length >= Number(payload.limit || 20)) {
+                const footer = document.createElement('div');
+                footer.style.cssText = 'padding:8px 14px;color:#64748b;font-size:0.75rem;';
+                footer.textContent = `Menampilkan ${payload.data.length} hasil pertama. Perjelas kata kunci untuk mempersempit pencarian.`;
+                results.appendChild(footer);
+            }
+        } catch (error) {
+            if (error.name === 'AbortError' || generation !== globalAssetSearchGeneration) return;
+            results.textContent = `Pencarian tidak tersedia: ${error.message}`;
         }
-    }
-
-    if (window.globalData && window.globalData.workOrders) {
-        const wos = window.globalData.workOrders.filter(w =>
-            (w.woId && w.woId.toLowerCase().includes(query)) ||
-            (w.assetId && w.assetId.toLowerCase().includes(query)) ||
-            (w.complaint && w.complaint.toLowerCase().includes(query)) ||
-            (w.mechanic && w.mechanic.toLowerCase().includes(query))
-        ).slice(0, 5);
-
-        if (wos.length > 0) {
-            html += '<div style="padding: 8px 15px; background: #f8fafc; font-size: 0.8rem; font-weight: bold; color: #64748b; border-bottom: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0;"><i class="fa-solid fa-screwdriver-wrench"></i> Work Order</div>';
-            wos.forEach(w => {
-                html += `<div style="padding: 10px 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'" onclick="showView('wo'); document.getElementById('globalSearchResults').style.display='none';">
-                    <div style="font-weight: 600; color: #0f172a;">${w.woId} - ${w.assetId}</div>
-                    <div style="font-size: 0.8rem; color: #64748b;">${w.complaint || '-'} &middot; <span style="color:var(--danger)">${w.status || '-'}</span></div>
-                </div>`;
-                resultCount++;
-            });
-        }
-    }
-
-    if (resultCount === 0) {
-        html = '<div style="padding: 15px; text-align: center; color: #94a3b8; font-size: 0.9rem;">Tidak ada hasil ditemukan.</div>';
-    }
-
-    resultsContainer.innerHTML = html;
+    }, 180);
 };
+
+document.addEventListener('keydown', function (event) {
+    const input = document.getElementById('globalSearchInput');
+    const results = document.getElementById('globalSearchResults');
+    if (!input || !results) return;
+    const target = event.target;
+    const editing = target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+    if ((event.key === '/' && !editing) || (event.key.toLowerCase() === 'k' && (event.ctrlKey || event.metaKey))) {
+        event.preventDefault();
+        const wrapper = document.getElementById('globalSearchBarWrapper');
+        wrapper?.classList.add('active');
+        input.focus();
+        input.select();
+    } else if (event.key === 'Escape' && document.activeElement === input) {
+        results.style.display = 'none';
+        input.setAttribute('aria-expanded', 'false');
+        input.blur();
+    } else if (event.key === 'Enter' && document.activeElement === input && results.style.display !== 'none') {
+        const first = results.querySelector('.global-asset-search-result');
+        if (first) { event.preventDefault(); first.click(); }
+    }
+});
 
 document.addEventListener('click', function (e) {
     const searchBar = document.querySelector('.search-bar');
