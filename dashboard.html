@@ -12,7 +12,7 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
     <link rel="stylesheet" href="scripts/dashboard.css?v=20261017-wo-ui-1">
-    <link rel="stylesheet" href="scripts/unit-properties.css?v=20260929-1">
+    <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <script src="scripts/auth-client.js?v=20260810-1"></script>
     <script src="scripts/rbac.js?v=20260822-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
@@ -2003,8 +2003,7 @@
                                 </div>
                                 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                                     <button class="btn btn-secondary" style="padding:4px 12px; font-size:0.78rem;"
-                                        onclick="resetRbacToDefault()"><i class="fa-solid fa-rotate-left"></i> Reset ke
-                                        Standard Default</button>
+                                        onclick="resetRbacToDefault()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
                                     <div style="display:flex; gap:5px; flex-wrap:wrap; font-size:0.85rem;">
                                         <span
                                             style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:3px 7px; border-radius:4px; font-weight:700;">R
@@ -2025,17 +2024,6 @@
                                             style="background:#f8fafc; color:#94a3b8; border:1px solid #e2e8f0; padding:3px 7px; border-radius:4px; font-weight:700;">-
                                             = Denied</span>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Role Filter Selector Buttons -->
-                            <div style="margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
-                                <label
-                                    style="display:block; font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase;">
-                                    <i class="fa-solid fa-filter"></i> Highlight Default Selection User Role:
-                                </label>
-                                <div style="display:flex; gap:6px; flex-wrap:wrap;" id="rbacRoleFilterButtons">
-                                    <!-- Rendered via JS -->
                                 </div>
                             </div>
 
@@ -2797,6 +2785,129 @@
                 <button class="btn btn-secondary" onclick="closeModal('modalEditRbacPermission')">Batal</button>
                 <button class="btn btn-primary rbac-admin-only" data-rbac-menu="settings" onclick="saveRbacCellOverride()"><i class="fa-solid fa-floppy-disk"></i>
                     Simpan Hak Akses</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Manajemen Pengguna per Role -->
+    <div class="modal-overlay" id="modalRoleUsers" style="z-index:999998;">
+        <div class="modal-content" style="max-width: 840px; width: 92%; padding: 22px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:15px;">
+                <div>
+                    <h3 style="margin:0; font-size:1.15rem; color:var(--text-dark); display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-users-gear" style="color:var(--primary);"></i>
+                        <span>Manajemen Pengguna Role: <strong id="mruRoleTitle" style="color:var(--primary);">-</strong></span>
+                    </h3>
+                    <p style="margin:4px 0 0 0; font-size:0.82rem; color:var(--text-muted);">
+                        Daftar akun pengguna aktif dari database MySQL untuk role ini. Anda dapat menambah pengguna, mengganti password, atau menghapus akun.
+                    </p>
+                </div>
+                <button type="button" onclick="closeModal('modalRoleUsers')" style="border:none; background:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted); padding:0 4px;">&times;</button>
+            </div>
+
+            <!-- Modal Action Bar: Search & Add Button -->
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+                <div style="position:relative; flex:1; min-width:200px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:0.85rem;"></i>
+                    <input type="text" id="mruSearchInput" class="form-control" placeholder="Cari username atau nama lengkap..." 
+                           style="padding-left:32px; font-size:0.84rem; height:36px;" oninput="filterRoleUsersTable(this.value)">
+                </div>
+                <button type="button" class="btn btn-primary" style="padding:6px 14px; font-size:0.84rem; display:inline-flex; align-items:center; gap:6px;" onclick="toggleAddUserForm()">
+                    <i class="fa-solid fa-user-plus"></i> Tambah User Baru
+                </button>
+            </div>
+
+            <!-- Inline Form Tambah User (Collapsible) -->
+            <div id="mruAddUserFormContainer" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:14px; margin-bottom:14px;">
+                <div style="font-weight:700; font-size:0.88rem; color:var(--text-dark); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> Form Pendaftaran Pengguna Baru
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:12px;">
+                    <div>
+                        <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Username *</label>
+                        <input type="text" id="mruNewUsername" class="form-control" placeholder="contoh: anton_m" style="font-size:0.82rem; height:34px;">
+                        <small style="font-size:0.7rem; color:#64748b;">Huruf kecil/angka/strip (unik)</small>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Nama Lengkap *</label>
+                        <input type="text" id="mruNewFullName" class="form-control" placeholder="contoh: Anton Maulana" style="font-size:0.82rem; height:34px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Password Awal *</label>
+                        <input type="password" id="mruNewPassword" class="form-control" placeholder="Minimal 6 karakter" style="font-size:0.82rem; height:34px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Role Pengguna *</label>
+                        <select id="mruNewRoleId" class="form-control" style="font-size:0.82rem; height:34px;">
+                            <!-- Populated dynamically via JS -->
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddUserForm(false)">Batal</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSubmitNewUser" onclick="submitNewUser()">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Pengguna
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Tabulasi Pengguna -->
+            <div style="flex:1; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; min-height:220px; max-height:420px;">
+                <table class="table" style="font-size:0.82rem; margin:0; width:100%;" id="mruUsersTable">
+                    <thead>
+                        <tr style="background:#f1f5f9; color:#334155; position:sticky; top:0; z-index:3;">
+                            <th style="width:40px; text-align:center; padding:9px 8px;">#</th>
+                            <th style="padding:9px 12px;">Username</th>
+                            <th style="padding:9px 12px;">Nama Lengkap</th>
+                            <th style="padding:9px 12px;">Role</th>
+                            <th style="padding:9px 10px; text-align:center;">Status</th>
+                            <th style="padding:9px 12px; text-align:center; width:200px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mruUsersTableBody">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:12px; margin-top:14px;">
+                <div style="font-size:0.78rem; color:var(--text-muted);" id="mruTotalCountLabel">
+                    Total: 0 user
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modalRoleUsers')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub-Modal Ganti Password -->
+    <div class="modal-overlay" id="modalChangePassword" style="z-index:999999;">
+        <div class="modal-content" style="max-width: 420px; padding: 22px;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:10px; margin-bottom:14px;">
+                <h4 style="margin:0; font-size:1.05rem; color:var(--text-dark); display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-key" style="color:#d97706;"></i> Ganti Password Pengguna
+                </h4>
+                <button type="button" onclick="closeModal('modalChangePassword')" style="border:none; background:none; font-size:1.4rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="mcpUserId">
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:8px 12px; margin-bottom:14px;">
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Akun Pengguna</div>
+                    <div style="font-size:0.9rem; font-weight:700; color:var(--primary);" id="mcpTargetUserLabel">-</div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Password Baru *</label>
+                    <input type="password" id="mcpNewPassword" class="form-control" placeholder="Minimal 6 karakter" style="font-size:0.85rem;">
+                </div>
+                <div style="margin-bottom:14px;">
+                    <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Ulangi Password Baru *</label>
+                    <input type="password" id="mcpConfirmPassword" class="form-control" placeholder="Ketik ulang password baru" style="font-size:0.85rem;">
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e2e8f0; padding-top:12px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modalChangePassword')">Batal</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitChangePassword" onclick="submitChangePassword()">
+                    <i class="fa-solid fa-check"></i> Simpan Password
+                </button>
             </div>
         </div>
     </div>
@@ -9638,8 +9749,15 @@
 
                     return `
                     <tr style="background:${rowBg}; ${rowBorder}">
-                        <td style="position:sticky; left:0; background:${stickyBg}; z-index:4; border-right:2px solid #cbd5e1; font-weight:${isSelected ? '700' : '600'}; color:${isSelected ? 'var(--primary)' : 'var(--text-dark)'}; padding:8px 12px; cursor:pointer;" onclick="selectRbacRole(${idx})">
-                            <i class="fa-solid ${role.icon}" style="margin-right:6px; color:${role.color};"></i> ${role.name}
+                        <td style="position:sticky; left:0; background:${stickyBg}; z-index:4; border-right:2px solid #cbd5e1; font-weight:${isSelected ? '700' : '600'}; padding:8px 12px; cursor:pointer;" onclick="selectRbacRole(${idx})">
+                            <a href="javascript:void(0)" 
+                               class="rbac-role-hyperlink" 
+                               onclick="event.stopPropagation(); window.openRoleUsersModal(${idx + 1}, '${escapeHtml(role.name)}')" 
+                               title="Klik untuk melihat & kelola akun pengguna role ${escapeHtml(role.name)}"
+                               style="color:${isSelected ? 'var(--primary)' : 'var(--text-dark)'}; text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+                                <i class="fa-solid ${role.icon}" style="color:${role.color}; width:16px; text-align:center;"></i>
+                                <span>${role.name}</span>
+                            </a>
                         </td>
                         ${role.permissions.map((p, modIdx) => {
                         const isCellDiff = defaultRbacRolesMaster[idx] && p !== defaultRbacRolesMaster[idx].permissions[modIdx];
@@ -9671,6 +9789,344 @@
                 }
                 if (window.FleetRBAC) window.FleetRBAC.applyUIPermissions();
                 alert('Seluruh konfigurasi sistem (RBAC 10 Roles, Threshold SLA, Site Project & Security) berhasil disimpan!');
+            };
+
+            // ==========================================
+            // MODAL MANAJEMEN PENGGUNA PER ROLE (DATABASE)
+            // ==========================================
+            let currentModalRoleId = null;
+            let currentModalRoleName = '';
+            let currentRoleUsersCache = [];
+            let allRolesListCache = [];
+
+            async function getCsrfToken() {
+                if (window.APP_CSRF_TOKEN) return window.APP_CSRF_TOKEN;
+                try {
+                    const res = await fetch('api/auth.php', { cache: 'no-store' });
+                    const json = await res.json();
+                    if (json && json.csrf_token) {
+                        window.APP_CSRF_TOKEN = json.csrf_token;
+                        return json.csrf_token;
+                    }
+                } catch (e) {
+                    console.warn('Gagal memuat token CSRF:', e);
+                }
+                return '';
+            }
+
+            window.openRoleUsersModal = async function(roleId, roleName) {
+                currentModalRoleId = roleId;
+                currentModalRoleName = roleName;
+
+                const titleEl = document.getElementById('mruRoleTitle');
+                if (titleEl) titleEl.textContent = roleName;
+
+                const searchInput = document.getElementById('mruSearchInput');
+                if (searchInput) searchInput.value = '';
+
+                window.toggleAddUserForm(false);
+
+                const tbody = document.getElementById('mruUsersTableBody');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:32px 20px; color:#64748b;">
+                                <i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--primary); margin-bottom:10px;"></i>
+                                <div style="font-weight:600;">Memuat daftar pengguna dari database MySQL...</div>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                window.openModal('modalRoleUsers');
+
+                try {
+                    const res = await fetch(`api/users.php?role_id=${encodeURIComponent(roleId)}`, { cache: 'no-store' });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const json = await res.json();
+
+                    if (json.status === 'success') {
+                        currentRoleUsersCache = Array.isArray(json.data) ? json.data : [];
+                        if (Array.isArray(json.roles) && json.roles.length > 0) {
+                            allRolesListCache = json.roles;
+                            populateRoleSelectOptions(json.roles, roleId);
+                        }
+                        renderRoleUsersTable(currentRoleUsersCache);
+                    } else {
+                        throw new Error(json.message || 'Gagal memuat data pengguna');
+                    }
+                } catch (err) {
+                    if (tbody) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding:24px; color:#ef4444;">
+                                    <i class="fa-solid fa-triangle-exclamation fa-2x" style="margin-bottom:8px;"></i>
+                                    <div>Gagal mengambil data dari database: ${escapeHtml(err.message)}</div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+            };
+
+            function populateRoleSelectOptions(roles, selectedId) {
+                const select = document.getElementById('mruNewRoleId');
+                if (!select) return;
+                select.innerHTML = roles.map(r => `
+                    <option value="${r.role_id}" ${Number(r.role_id) === Number(selectedId) ? 'selected' : ''}>
+                        ${escapeHtml(r.role_name)}
+                    </option>
+                `).join('');
+            }
+
+            function renderRoleUsersTable(users) {
+                const tbody = document.getElementById('mruUsersTableBody');
+                const totalLabel = document.getElementById('mruTotalCountLabel');
+                if (!tbody) return;
+
+                if (totalLabel) {
+                    totalLabel.textContent = `Total: ${users.length} pengguna`;
+                }
+
+                if (users.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:35px 20px; color:#64748b;">
+                                <i class="fa-solid fa-user-slash fa-2x" style="color:#cbd5e1; margin-bottom:10px;"></i>
+                                <div style="font-weight:600; font-size:0.9rem; color:#475569;">Belum ada user dengan role ini di database</div>
+                                <div style="font-size:0.8rem; color:#94a3b8; margin-top:4px;">Klik tombol "+ Tambah User Baru" di atas untuk mendaftarkan akun.</div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = users.map((u, i) => {
+                    const initial = (u.full_name || u.username || 'U').charAt(0).toUpperCase();
+                    const isActive = Number(u.is_active) === 1;
+                    const isSuperAdmin = Number(u.user_id) === 1 || u.username === 'admin';
+
+                    return `
+                        <tr style="border-bottom:1px solid #f1f5f9; background:#ffffff;">
+                            <td style="text-align:center; font-weight:600; color:#94a3b8; padding:10px 8px;">${i + 1}</td>
+                            <td style="padding:10px 12px;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="width:28px; height:28px; border-radius:50%; background:#dbeafe; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem;">
+                                        ${initial}
+                                    </div>
+                                    <strong style="color:#1e293b;">${escapeHtml(u.username)}</strong>
+                                </div>
+                            </td>
+                            <td style="padding:10px 12px; font-weight:500; color:#334155;">
+                                ${escapeHtml(u.full_name)}
+                            </td>
+                            <td style="padding:10px 12px;">
+                                <span class="badge" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; font-weight:600; font-size:0.75rem; padding:3px 8px;">
+                                    ${escapeHtml(u.role_name || currentModalRoleName)}
+                                </span>
+                            </td>
+                            <td style="padding:10px 10px; text-align:center;">
+                                <span class="badge ${isActive ? 'badge-success' : 'badge-secondary'}" style="font-size:0.75rem; padding:3px 8px; ${isActive ? 'background:#dcfce7; color:#166534;' : 'background:#f1f5f9; color:#64748b;'}">
+                                    <i class="fa-solid fa-circle" style="font-size:0.5rem; margin-right:4px;"></i>
+                                    ${isActive ? 'Aktif' : 'Nonaktif'}
+                                </span>
+                            </td>
+                            <td style="padding:10px 12px; text-align:center;">
+                                <div style="display:inline-flex; gap:6px;">
+                                    <button type="button" class="btn btn-sm" 
+                                            onclick="openChangePasswordModal(${u.user_id}, '${escapeHtml(u.username)}', '${escapeHtml(u.full_name)}')"
+                                            title="Ganti Password Akun"
+                                            style="padding:3px 8px; font-size:0.75rem; background:#fef3c7; color:#92400e; border:1px solid #fde68a; border-radius:4px; cursor:pointer;">
+                                        <i class="fa-solid fa-key"></i> Password
+                                    </button>
+                                    ${isSuperAdmin ? `
+                                        <span title="Administrator Utama Terproteksi" style="padding:3px 8px; font-size:0.75rem; color:#94a3b8; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:4px;">
+                                            <i class="fa-solid fa-shield"></i> Terproteksi
+                                        </span>
+                                    ` : `
+                                        <button type="button" class="btn btn-sm" 
+                                                onclick="confirmDeleteUser(${u.user_id}, '${escapeHtml(u.username)}')"
+                                                title="Hapus Pengguna"
+                                                style="padding:3px 8px; font-size:0.75rem; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; border-radius:4px; cursor:pointer;">
+                                            <i class="fa-solid fa-trash"></i> Hapus
+                                        </button>
+                                    `}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            window.filterRoleUsersTable = function(term) {
+                term = (term || '').toLowerCase().trim();
+                if (!term) {
+                    renderRoleUsersTable(currentRoleUsersCache);
+                    return;
+                }
+                const filtered = currentRoleUsersCache.filter(u => 
+                    (u.username && u.username.toLowerCase().includes(term)) ||
+                    (u.full_name && u.full_name.toLowerCase().includes(term))
+                );
+                renderRoleUsersTable(filtered);
+            };
+
+            window.toggleAddUserForm = function(forceState) {
+                const formEl = document.getElementById('mruAddUserFormContainer');
+                if (!formEl) return;
+                const willShow = typeof forceState === 'boolean' ? forceState : (formEl.style.display === 'none' || formEl.style.display === '');
+                formEl.style.display = willShow ? 'block' : 'none';
+                if (willShow) {
+                    document.getElementById('mruNewUsername').value = '';
+                    document.getElementById('mruNewFullName').value = '';
+                    document.getElementById('mruNewPassword').value = '';
+                    const select = document.getElementById('mruNewRoleId');
+                    if (select && currentModalRoleId) select.value = currentModalRoleId;
+                    document.getElementById('mruNewUsername').focus();
+                }
+            };
+
+            window.submitNewUser = async function() {
+                const username = (document.getElementById('mruNewUsername').value || '').trim();
+                const fullName = (document.getElementById('mruNewFullName').value || '').trim();
+                const password = document.getElementById('mruNewPassword').value || '';
+                const roleId = Number(document.getElementById('mruNewRoleId').value) || currentModalRoleId;
+
+                if (!username || username.length < 3) {
+                    alert('Username wajib diisi minimal 3 karakter.');
+                    return;
+                }
+                if (!fullName || fullName.length < 2) {
+                    alert('Nama lengkap wajib diisi minimal 2 karakter.');
+                    return;
+                }
+                if (!password || password.length < 6) {
+                    alert('Password wajib diisi minimal 6 karakter.');
+                    return;
+                }
+
+                const btn = document.getElementById('btnSubmitNewUser');
+                const origHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+                try {
+                    const csrf = await getCsrfToken();
+                    const res = await fetch('api/users.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrf
+                        },
+                        body: JSON.stringify({
+                            action: 'create',
+                            username: username,
+                            full_name: fullName,
+                            password: password,
+                            role_id: roleId
+                        })
+                    });
+                    const json = await res.json();
+                    if (!res.ok || json.status !== 'success') {
+                        throw new Error(json.message || 'Gagal menambahkan pengguna baru.');
+                    }
+
+                    alert(json.message || 'Pengguna baru berhasil ditambahkan.');
+                    window.toggleAddUserForm(false);
+                    // Refresh data
+                    window.openRoleUsersModal(currentModalRoleId, currentModalRoleName);
+                } catch (err) {
+                    alert('Kesalahan: ' + err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            };
+
+            window.openChangePasswordModal = function(userId, username, fullName) {
+                document.getElementById('mcpUserId').value = userId;
+                document.getElementById('mcpTargetUserLabel').textContent = `${fullName} (${username})`;
+                document.getElementById('mcpNewPassword').value = '';
+                document.getElementById('mcpConfirmPassword').value = '';
+                window.openModal('modalChangePassword');
+            };
+
+            window.submitChangePassword = async function() {
+                const userId = Number(document.getElementById('mcpUserId').value);
+                const newPass = document.getElementById('mcpNewPassword').value || '';
+                const confirmPass = document.getElementById('mcpConfirmPassword').value || '';
+
+                if (newPass.length < 6) {
+                    alert('Password baru minimal 6 karakter.');
+                    return;
+                }
+                if (newPass !== confirmPass) {
+                    alert('Konfirmasi password tidak cocok dengan password baru.');
+                    return;
+                }
+
+                const btn = document.getElementById('btnSubmitChangePassword');
+                const origHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+
+                try {
+                    const csrf = await getCsrfToken();
+                    const res = await fetch('api/users.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrf
+                        },
+                        body: JSON.stringify({
+                            action: 'change_password',
+                            user_id: userId,
+                            new_password: newPass
+                        })
+                    });
+                    const json = await res.json();
+                    if (!res.ok || json.status !== 'success') {
+                        throw new Error(json.message || 'Gagal mengubah password.');
+                    }
+
+                    alert(json.message || 'Password berhasil diperbarui.');
+                    window.closeModal('modalChangePassword');
+                } catch (err) {
+                    alert('Kesalahan: ' + err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            };
+
+            window.confirmDeleteUser = async function(userId, username) {
+                if (!confirm(`Apakah Anda yakin ingin menghapus pengguna '${username}' dari sistem?\n\nPerhatian: Jika akun memiliki jejak audit operasional, sistem akan menonaktifkannya secara aman demi menjaga integritas data audit.`)) {
+                    return;
+                }
+
+                try {
+                    const csrf = await getCsrfToken();
+                    const res = await fetch('api/users.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrf
+                        },
+                        body: JSON.stringify({
+                            action: 'delete',
+                            user_id: userId
+                        })
+                    });
+                    const json = await res.json();
+                    if (!res.ok || json.status !== 'success') {
+                        throw new Error(json.message || 'Gagal menghapus pengguna.');
+                    }
+
+                    alert(json.message || 'Pengguna berhasil dihapus.');
+                    window.openRoleUsersModal(currentModalRoleId, currentModalRoleName);
+                } catch (err) {
+                    alert('Kesalahan: ' + err.message);
+                }
             };
 
             let tireInspectionStore = {};

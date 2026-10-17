@@ -581,6 +581,7 @@ function api_route_permission(): ?string
         'reports.php' => $readWrite('reports.read', 'reports.write'),
         'report_references.php' => 'reports.read',
         'archive.php' => $readWrite('archive.read', 'archive.write'),
+        'users.php' => $readWrite('dashboard.read', 'dashboard.read'),
         'sync.php' => 'sync.write',
         'seed_dummy.php' => 'admin.seed',
     ];

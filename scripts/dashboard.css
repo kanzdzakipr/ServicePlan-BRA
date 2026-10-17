@@ -18729,4 +18729,17 @@ body.sl-modal-open {
     }
 }
 
+/* RBAC Role Hyperlink (Underline only on hover) */
+.rbac-role-hyperlink {
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+.rbac-role-hyperlink:hover {
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    color: var(--primary) !important;
+}
+
+
 
