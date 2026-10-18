@@ -175,6 +175,39 @@
             columns: [column('item', 'Item / kelengkapan'), column('jumlah', 'Jumlah', 'number'), column('kondisi', 'Kondisi', 'select', false, ['Baik', 'Rusak', 'Kurang', 'Tidak ada']), column('keterangan', 'Keterangan')]
         },
         {
+            id: 'bast-unit-multiple', code: 'BAST-UNIT', category: 'Asset & Serah Terima',
+            title: 'Berita Acara Serah Terima Beberapa Unit',
+            description: 'Dokumen serah terima beberapa unit dalam satu berita acara. Pencatatan ini tidak otomatis memindahkan lokasi atau status aset.',
+            source: 'ADMINISTRASI-011_BAST_Unit_Dump_Truck_Trip_Ke_2_2_unit.md',
+            sourcePath: 'material/ADMINISTRASI/ADMINISTRASI-011_BAST_Unit_Dump_Truck_Trip_Ke_2_2_unit.md',
+            fields: [
+                field('nomor_urut', 'Nomor BAST', 'text', true),
+                field('tanggal', 'Tanggal serah terima', 'date', true),
+                field('lokasi', 'Tempat serah terima', 'text', true),
+                field('project', 'Project', 'text', true),
+                field('nama_penyerah', 'Nama pihak pertama / penyerah', 'text', true),
+                field('jabatan_penyerah', 'Jabatan penyerah'),
+                field('perusahaan_penyerah', 'Perusahaan penyerah'),
+                field('alamat_penyerah', 'Alamat penyerah', 'textarea'),
+                field('nama_penerima', 'Nama pihak kedua / penerima', 'text', true),
+                field('jabatan_penerima', 'Jabatan penerima'),
+                field('perusahaan_penerima', 'Perusahaan penerima'),
+                field('alamat_penerima', 'Alamat penerima', 'textarea')
+            ],
+            tableTitle: 'Daftar unit yang diserahterimakan',
+            columns: [
+                column('jenis_alat', 'Jenis A2B'),
+                column('id_unit', 'ID unit / ID WUR EW'),
+                column('nomor_polisi', 'No. polisi'),
+                column('sn_engine', 'SN engine'),
+                column('nomor_rangka', 'No. rangka'),
+                column('pm_service_terakhir', 'PM service terakhir', 'number'),
+                column('gps_system', 'GPS system', 'select', false, ['Aktif', 'Tidak aktif', 'Tidak ada']),
+                column('keterangan', 'Keterangan')
+            ],
+            optionalColumns: ['nomor_polisi', 'sn_engine', 'nomor_rangka', 'pm_service_terakhir', 'gps_system']
+        },
+        {
             id: 'bhw-in', code: 'BHW-IN', category: 'Logistik & Warehouse',
             title: 'Buku Harian Warehouse (Barang Masuk)',
             description: 'Log penerimaan spare parts dan pembaruan saldo persediaan.',
@@ -194,12 +227,15 @@
                 column('dari', 'Terima dari'),
                 column('part_number', 'Part number'),
                 column('nama', 'Nama parts'),
+                column('merk', 'Merk'),
                 column('satuan', 'Satuan'),
                 column('jumlah', 'Jumlah', 'number'),
                 column('saldo_lalu', 'Saldo lalu', 'number'),
                 column('saldo_sekarang', 'Saldo sekarang', 'number', true),
+                column('nomor_spb', 'No. SPB'),
                 column('keterangan', 'Keterangan')
-            ]
+            ],
+            optionalColumns: ['merk', 'nomor_spb']
         },
         {
             id: 'bhw-out', code: 'BHW-OUT', category: 'Logistik & Warehouse',
@@ -8166,6 +8202,7 @@
     const SCHEMA_HINTS = {
         bapp: ['bapp', 'berita acara penerimaan penyerahan barang', 'penerimaan barang parts'],
         'bast-mde1': ['bast', 'mde 1', 'serah terima alat berat', 'berita acara serah terima'],
+        'bast-unit-multiple': ['bast beberapa unit', 'serah terima dump truck', 'administrasi 011'],
         'bhw-in': ['bhw in', 'barang masuk', 'buku harian warehouse masuk'],
         'bhw-out': ['bhw out', 'barang keluar', 'buku harian warehouse keluar'],
         'bukti-kirim': ['bukti kirim', 'bukti terima barang intern', 'dept equip'],
