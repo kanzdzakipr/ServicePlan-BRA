@@ -580,6 +580,7 @@ function api_route_permission(): ?string
         'notifications.php' => 'dashboard.read',
         'reports.php' => $readWrite('reports.read', 'reports.write'),
         'report_references.php' => 'reports.read',
+        'administration_recap.php' => 'reports.read',
         'archive.php' => $readWrite('archive.read', 'archive.write'),
         'users.php' => $readWrite('dashboard.read', 'dashboard.read'),
         'sync.php' => 'sync.write',

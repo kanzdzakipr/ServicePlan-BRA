@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261017-wo-ui-1">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261018-admin-recap-1">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
     <script>window.APP_CSRF_TOKEN = '<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>';</script>
@@ -28,7 +28,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261017-notification-batch1"></script>
+    <script src="scripts/dashboard.js?v=20261018-admin-recap-1"></script>
     <script src="scripts/unit-properties.js?v=20260827-1"></script>
 </head>
 

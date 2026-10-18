@@ -1855,6 +1855,9 @@
                     <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Laporan
                     <span id="reportHistoryCount">0</span>
                 </button>
+                <button class="report-view-tab" type="button" role="tab" aria-selected="false" data-report-panel="administrasi">
+                    <i class="fa-solid fa-chart-column"></i> Rekap Administrasi
+                </button>
             </nav>
             <section class="catalog-workspace" id="reportCatalog">
                 <div class="report-heading">
@@ -1918,6 +1921,27 @@
             <section class="report-import-workspace hidden" id="reportImport">
                 <div id="documentImportModule"></div>
             </section>
+            <section class="report-admin-workspace hidden" id="reportAdministrasi">
+                <div class="report-heading"><div><h1>Rekap Administrasi Bulanan</h1>
+                    <p>Angka di bawah berasal dari transaksi aplikasi, bukan dari arsip PDF Januari 2026.</p></div></div>
+                <div class="admin-recap-toolbar">
+                    <label for="adminRecapPeriod">Periode</label>
+                    <input type="month" id="adminRecapPeriod" value="${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}">
+                    <button type="button" id="adminRecapLoad">Muat Logistik</button>
+                    <button type="button" id="adminRecapCsv" disabled>Unduh CSV</button>
+                </div>
+                <p>Batch 1: barang masuk/keluar. Saldo stok saat ini tidak dianggap sebagai saldo akhir bulan historis.</p>
+                <div id="adminRecapResult" aria-live="polite"></div>
+                <div class="admin-recap-sources"><h2>Dokumen sumber dan status integrasi</h2><ul>
+                    <li><a href="material/ADMINISTRASI/01_Laporan_Break_Down_Januari_2026_Tabulasi.md" target="_blank" rel="noopener">Breakdown</a> — belum otomatis; perlu tanggal down/ready tervalidasi.</li>
+                    <li><a href="material/ADMINISTRASI/02_Daily_Mechanical_Repairs_Januari_2026_Tabulasi.md" target="_blank" rel="noopener">Daily Mechanical Repairs</a> — belum otomatis; perlu jam dan tindakan.</li>
+                    <li><a href="material/ADMINISTRASI/03_Laporan_Greasing_Januari_2026.md" target="_blank" rel="noopener">Greasing</a> — belum otomatis; perlu hasil mingguan.</li>
+                    <li><a href="material/ADMINISTRASI/04_Laporan_Service_Januari_2026_Tabulasi.md" target="_blank" rel="noopener">Service</a> — belum otomatis; perlu rekonsiliasi PM dan filter/oli.</li>
+                    <li><a href="material/ADMINISTRASI/05_Laporan_Logistik_Januari_2026.md" target="_blank" rel="noopener">Logistik</a> — rekap transaksi aplikasi tersedia; arsip Januari terpisah.</li>
+                    <li><a href="material/ADMINISTRASI/06_Laporan_Cash_Out_Januari_2026_Tabulasi.md" target="_blank" rel="noopener">Cash Out</a> — belum otomatis; perlu pemetaan ledger dan izin biaya.</li>
+                    <li><a href="material/ADMINISTRASI/07_Laporan_Pendapatan_Sewa_Januari_2026_Tabulasi.md" target="_blank" rel="noopener">Pendapatan Sewa</a> — belum otomatis; belum ada ledger sewa harian.</li>
+                </ul></div>
+            </section>
             <section class="form-workspace" id="formWorkspace"></section>
             <div class="report-toast" id="reportToast" role="status" aria-live="polite"><i class="fa-solid fa-circle-check"></i><span></span></div>
         `;
@@ -1929,6 +1953,8 @@
             if (event.key === 'Escape') closeDetailedGuide();
         });
         document.getElementById('historySearch').addEventListener('input', renderHistory);
+        document.getElementById('adminRecapLoad').addEventListener('click', loadAdministrationRecap);
+        document.getElementById('adminRecapCsv').addEventListener('click', downloadAdministrationRecapCsv);
 
         document.getElementById('reportApply').addEventListener('click', () => {
             currentPage = 1;
@@ -1964,6 +1990,8 @@
                 switchReportPanel('import');
             } else if (route[1] === 'history') {
                 switchReportPanel('history');
+            } else if (route[1] === 'administrasi') {
+                switchReportPanel('administrasi');
             } else if (route[1] && formSchemas.some(item => item.id === route[1])) {
                 openForm(route[1]);
             }
@@ -2001,11 +2029,13 @@
     function switchReportPanel(panel) {
         const showHistory = panel === 'history';
         const showImport = panel === 'import';
-        const showTemplates = !showHistory && !showImport;
+        const showAdministrasi = panel === 'administrasi';
+        const showTemplates = !showHistory && !showImport && !showAdministrasi;
         document.body.classList.remove('guide-modal-open');
         document.getElementById('reportCatalog').classList.toggle('hidden', !showTemplates);
         document.getElementById('reportHistory').classList.toggle('hidden', !showHistory);
         document.getElementById('reportImport').classList.toggle('hidden', !showImport);
+        document.getElementById('reportAdministrasi').classList.toggle('hidden', !showAdministrasi);
         document.getElementById('formWorkspace').classList.remove('active');
         document.getElementById('formWorkspace').innerHTML = '';
         document.querySelectorAll('[data-report-panel]').forEach(button => {
@@ -2013,7 +2043,7 @@
             button.classList.toggle('active', selected);
             button.setAttribute('aria-selected', String(selected));
         });
-        const panelRoute = showImport ? '#reports/import' : showHistory ? '#reports/history' : '#reports';
+        const panelRoute = showImport ? '#reports/import' : showHistory ? '#reports/history' : showAdministrasi ? '#reports/administrasi' : '#reports';
         if (window.location.hash !== panelRoute) {
             window.history.replaceState(null, '', panelRoute);
         }
@@ -2024,8 +2054,67 @@
         if (showImport) {
             document.dispatchEvent(new CustomEvent('fleetreport:import-visible'));
         }
+        if (showAdministrasi && !administrationRecap) loadAdministrationRecap();
         activeSchema = null;
         activeDraft = null;
+    }
+
+    let administrationRecap = null;
+
+    async function loadAdministrationRecap() {
+        const period = document.getElementById('adminRecapPeriod').value;
+        const result = document.getElementById('adminRecapResult');
+        const csvButton = document.getElementById('adminRecapCsv');
+        administrationRecap = null;
+        csvButton.disabled = true;
+        result.textContent = 'Memuat transaksi logistik...';
+        if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(period)) {
+            result.textContent = 'Pilih bulan yang valid.';
+            return;
+        }
+        try {
+            const response = await fetch(`api/administration_recap.php?period=${encodeURIComponent(period)}`, {
+                credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' }
+            });
+            const payload = await response.json();
+            if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Rekap gagal dimuat.');
+            administrationRecap = payload;
+            csvButton.disabled = false;
+            const renderTable = (title, rows) => `
+                <h3>${title} (${rows.length} baris)</h3>
+                ${rows.length ? `<div class="admin-recap-table-wrap"><table class="admin-recap-table">
+                    <thead><tr><th>Tanggal</th><th>Bukti</th><th>Dari/ke</th><th>Part number</th><th>Nama part</th><th>Satuan</th><th>Jumlah</th><th>Saldo sebelum</th><th>Saldo sesudah</th><th>Laporan</th></tr></thead>
+                    <tbody>${rows.map(row => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.reference)}</td><td>${escapeHtml(row.counterparty)}</td><td>${escapeHtml(row.partNumber)}</td><td>${escapeHtml(row.partName)}</td><td>${escapeHtml(row.unit)}</td><td>${escapeHtml(row.quantity)}</td><td>${escapeHtml(row.stockBefore)}</td><td>${escapeHtml(row.stockAfter)}</td><td>${escapeHtml(row.reportNumber)}</td></tr>`).join('')}</tbody>
+                </table></div>` : '<p>Belum ada transaksi aplikasi untuk periode ini.</p>'}`;
+            result.innerHTML = `<div class="admin-recap-summary">
+                <strong>Periode ${escapeHtml(payload.period)}</strong>
+                <span>Masuk: ${escapeHtml(payload.summary.incomingLines)} baris / ${escapeHtml(payload.summary.receivedQuantity)} unit</span>
+                <span>Keluar: ${escapeHtml(payload.summary.outgoingLines)} baris / ${escapeHtml(payload.summary.issuedQuantity)} unit</span>
+            </div>${renderTable('Barang masuk', payload.incoming)}${renderTable('Barang keluar', payload.outgoing)}`;
+        } catch (error) {
+            result.textContent = error.message || 'Rekap gagal dimuat.';
+        }
+    }
+
+    function downloadAdministrationRecapCsv() {
+        if (!administrationRecap) return;
+        const quote = value => {
+            const raw = String(value ?? '');
+            const safe = /^[\s]*[=+\-@]/.test(raw) ? `'${raw}` : raw;
+            return `"${safe.replace(/"/g, '""')}"`;
+        };
+        const headers = ['Jenis', 'Tanggal', 'Bukti', 'Dari/ke', 'Part number', 'Nama part', 'Satuan', 'Jumlah', 'Saldo sebelum', 'Saldo sesudah', 'Nomor laporan'];
+        const rows = [
+            ...administrationRecap.incoming.map(row => ['Masuk', row.date, row.reference, row.counterparty, row.partNumber, row.partName, row.unit, row.quantity, row.stockBefore, row.stockAfter, row.reportNumber]),
+            ...administrationRecap.outgoing.map(row => ['Keluar', row.date, row.reference, row.counterparty, row.partNumber, row.partName, row.unit, row.quantity, row.stockBefore, row.stockAfter, row.reportNumber])
+        ];
+        const csv = '\uFEFF' + [headers, ...rows].map(row => row.map(quote).join(',')).join('\r\n');
+        const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `rekap-logistik-${administrationRecap.period}.csv`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     function closeDetailedGuide() {
