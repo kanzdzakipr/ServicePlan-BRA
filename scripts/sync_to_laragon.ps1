@@ -143,10 +143,23 @@ $htaccessBase = [regex]::Replace($htaccessBase, $managedPattern, '')
 $htaccessNew = $htaccessBase.TrimEnd("`r", "`n") + "`r`n" + $localEnvironmentBlock.Trim("`r", "`n") + "`r`n"
 [System.IO.File]::WriteAllText($targetHtaccess, $htaccessNew, (New-Object System.Text.UTF8Encoding($false)))
 
-# Database writes require explicit -ImportDatabase. -PreserveDatabase is retained
-# for existing callers and now also skips CREATE DATABASE and migrations.
+# Database writes require explicit -ImportDatabase. When database is preserved,
+# we still apply idempotent additive migrations so missing columns do not break the APIs.
 if (-not $ImportDatabase) {
-    Write-Host '[2/4] Database preserved: no CREATE, import, migration, seed, or password reset.' -ForegroundColor Yellow
+    Write-Host '[2/4] Database preserved: no full re-import, table drops, or reseed.' -ForegroundColor Yellow
+    if ($mysqlExe -and (Test-Path $mysqlExe)) {
+        $mysqlArgs = @('-h', $DbHost, '-P', $DbPort, '-u', $DbUser)
+        if ($DbPassword) {
+            $mysqlArgs += "-p$DbPassword"
+        }
+        foreach ($migrationPath in $migrationPaths) {
+            if (Test-Path $migrationPath) {
+                $mysqlMigrationPath = $migrationPath.Replace('\', '/')
+                & $mysqlExe @mysqlArgs --default-character-set=utf8mb4 $DbName -e "source $mysqlMigrationPath" 2>$null
+            }
+        }
+        Write-Host "Additive migrations verified." -ForegroundColor Green
+    }
 } elseif ($mysqlExe -and (Test-Path $mysqlExe)) {
     Write-Host "`n[2/4] Importing explicitly selected local MySQL database '$DbName'..." -ForegroundColor Cyan
     Write-Host "Found MySQL executable: $mysqlExe" -ForegroundColor Gray

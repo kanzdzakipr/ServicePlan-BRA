@@ -8118,7 +8118,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     window.loadCostDashboard();
                 }
                 if (viewName === 'monitoring') {
-                    if (typeof renderMonitoringTable === 'function') {
+                    if (typeof initMonitoringView === 'function') {
+                        initMonitoringView();
+                    } else if (typeof renderMonitoringTable === 'function') {
                         renderMonitoringTable();
                     }
                     if (typeof updateMonitoringActiveCard === 'function') {
@@ -8814,6 +8816,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 renderMonitoringTable(assets);
                 updateMonitoringActiveCard(selectedStatus);
             }
+            window.initMonitoringView = initMonitoringView;
+            window.renderMonitoringTable = renderMonitoringTable;
 
             function searchTableMonitoring() {
                 const input = document.getElementById('searchMonitoring');
