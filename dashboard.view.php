@@ -475,7 +475,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <option value="STANDBY">Standby</option>
                                 <option value="INSPEKSI">Inspeksi / P2H</option>
                                 <option value="BREAKDOWN">Breakdown</option>
-                                <option value="ACCIDENT HOLD">Accident Hold</option>
+                                <option value="ACCIDENT_HOLD">Accident Hold</option>
                             </select>
                             <div class="search-bar">
                                 <input type="text" id="searchMonitoring" placeholder="Cari unit ID, lokasi, status..."
@@ -4467,7 +4467,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
         <script>
-            window.escapeHtml = function (str) {
+            function escapeHtml(str) {
                 if (str === null || str === undefined) return '';
                 return String(str)
                     .replace(/&/g, '&amp;')
@@ -4475,7 +4475,32 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     .replace(/>/g, '&gt;')
                     .replace(/"/g, '&quot;')
                     .replace(/'/g, '&#039;');
-            };
+            }
+            window.escapeHtml = escapeHtml;
+
+            function getAssetStatusBadge(status) {
+                const s = String(status || '').toUpperCase().trim();
+                if (s === 'OPERATING') {
+                    return '<span class="badge bg-operating" style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-play" style="font-size:10px;"></i> OPERATING</span>';
+                }
+                if (s === 'READY') {
+                    return '<span class="badge" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-circle-check" style="font-size:10px;"></i> READY</span>';
+                }
+                if (s === 'STANDBY') {
+                    return '<span class="badge bg-standby" style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pause-circle" style="font-size:10px;"></i> STANDBY</span>';
+                }
+                if (s === 'BREAKDOWN') {
+                    return '<span class="badge bg-breakdown" style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-triangle-exclamation" style="font-size:10px;"></i> BREAKDOWN</span>';
+                }
+                if (s === 'INSPEKSI' || s === 'INSPECTION' || s === 'P2H') {
+                    return '<span class="badge bg-inspeksi" style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-clipboard-check" style="font-size:10px;"></i> INSPECTION</span>';
+                }
+                if (s.includes('ACCIDENT') || s.includes('HOLD')) {
+                    return '<span class="badge" style="background:#fef2f2; color:#991b1b; border:1px solid #fecaca; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-hand" style="font-size:10px;"></i> ACCIDENT HOLD</span>';
+                }
+                return `<span class="badge bg-secondary" style="display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-circle-info" style="font-size:10px;"></i> ${escapeHtml(status)}</span>`;
+            }
+            window.getAssetStatusBadge = getAssetStatusBadge;
 
             window.openModal = function (id) {
                 const el = document.getElementById(id);
@@ -8091,6 +8116,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (viewName === 'biaya' && typeof window.loadCostDashboard === 'function') {
                     window.loadCostDashboard();
                 }
+                if (viewName === 'monitoring') {
+                    if (typeof renderMonitoringTable === 'function') {
+                        renderMonitoringTable();
+                    }
+                    if (typeof updateMonitoringActiveCard === 'function') {
+                        const currentFilter = document.getElementById('monitoringStatusFilter')?.value || 'ALL';
+                        updateMonitoringActiveCard(currentFilter);
+                    }
+                }
                 if (viewName === 'reports') {
                     if (!/^#reports(?:\/|$)/i.test(window.location.hash)) {
                         window.history.replaceState(null, '', '#reports');
@@ -8442,69 +8476,75 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             window.setMonitoringStatusFilter = function (status, fromChart = false) {
                 const filterEl = document.getElementById('monitoringStatusFilter');
                 const targetStatus = status || 'ALL';
+                const norm = s => String(s || '').trim().toUpperCase().replace(/[\s_-]+/g, '');
+                const targetNorm = norm(targetStatus);
                 
                 if (filterEl) {
-                    filterEl.value = targetStatus;
+                    let matched = false;
+                    for (let i = 0; i < filterEl.options.length; i++) {
+                        if (norm(filterEl.options[i].value) === targetNorm) {
+                            filterEl.selectedIndex = i;
+                            matched = true;
+                            break;
+                        }
+                    }
+                    if (!matched) {
+                        filterEl.value = targetStatus;
+                    }
                 }
                 
                 updateMonitoringActiveCard(targetStatus);
                 renderMonitoringTable();
             };
 
+            window.toggleMonitoringCardFilter = function (status) {
+                const filterEl = document.getElementById('monitoringStatusFilter');
+                const norm = s => String(s || '').trim().toUpperCase().replace(/[\s_-]+/g, '');
+                const currentVal = filterEl ? norm(filterEl.value) : 'ALL';
+                const targetNorm = norm(status);
+                if (currentVal === targetNorm) {
+                    window.setMonitoringStatusFilter('ALL');
+                } else {
+                    window.setMonitoringStatusFilter(status);
+                }
+            };
+
             function updateMonitoringActiveCard(selectedStatus) {
                 const summaryEl = document.getElementById('monitoringSummary');
                 if (!summaryEl) return;
+                const norm = s => String(s || '').trim().toUpperCase().replace(/[\s_-]+/g, '');
+                const targetNorm = norm(selectedStatus);
                 const cards = summaryEl.querySelectorAll('.mon-card-clickable');
                 cards.forEach(card => {
-                    const cardStatus = card.getAttribute('data-status');
-                    card.classList.remove('active-filter');
-                    
-                    // Don't show indicator for ALL
-                    if (cardStatus === selectedStatus && selectedStatus !== 'ALL') {
+                    const cardStatus = norm(card.getAttribute('data-status'));
+                    if (cardStatus === targetNorm) {
                         card.classList.add('active-filter');
-                        
-                        // Fade out after 1 second
-                        setTimeout(() => {
-                            card.style.transition = 'all 1s ease';
-                            card.classList.remove('active-filter');
-                            setTimeout(() => { card.style.transition = ''; }, 1000);
-                        }, 1000);
+                    } else {
+                        card.classList.remove('active-filter');
                     }
                 });
             }
 
-            // Global click listener to reset filter when clicking outside Monitoring KPI cards
-            document.addEventListener('click', function(e) {
-                const view = document.getElementById('view-monitoring');
-                if (view && window.getComputedStyle(view).display !== 'none') {
-                    // Check if click is outside the cards, filter dropdown, search input, and table
-                    if (!e.target.closest('#monitoringSummary') && 
-                        !e.target.closest('.monitoring-controls') && 
-                        !e.target.closest('.apexcharts-canvas') && 
-                        !e.target.closest('table') && 
-                        !e.target.closest('.unit-link-button')) {
-                        const filterEl = document.getElementById('monitoringStatusFilter');
-                        if (filterEl && filterEl.value !== 'ALL') {
-                            setMonitoringStatusFilter('ALL');
-                        }
-                    }
-                }
-            });
-
             function renderMonitoringTable(assets) {
-                if (!assets) {
+                if (!assets || !Array.isArray(assets) || assets.length === 0) {
                     assets = window.currentMonitoringAssets || (typeof buildProjectScopedData === 'function' ? buildProjectScopedData().assets : (window.globalData ? window.globalData.assets : []));
                 }
                 const filterEl = document.getElementById('monitoringStatusFilter');
                 const selectedStatus = filterEl ? filterEl.value : 'ALL';
 
-                const filtered = selectedStatus === 'ALL'
+                const norm = s => String(s || '').trim().toUpperCase().replace(/[\s_-]+/g, '');
+                const targetNorm = norm(selectedStatus);
+
+                const filtered = (!selectedStatus || targetNorm === 'ALL')
                     ? assets
-                    : assets.filter(asset => asset.status === selectedStatus);
+                    : assets.filter(asset => {
+                        const assetStat = norm(asset.status || asset.subStatus);
+                        return assetStat === targetNorm;
+                    });
 
                 const tbody = document.getElementById('monTableBody');
                 if (!tbody) return;
-                if (filtered.length === 0) {
+                if (!filtered || filtered.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="monitoring-empty"><i class="fa-solid fa-circle-check"></i> Tidak ada unit untuk filter ini.</td></tr>';
                     return;
                 }
@@ -8512,41 +8552,46 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 tbody.innerHTML = filtered.map(asset => {
                     let badge = '';
                     let action = '';
-                    const context = getUnitIntegrationContext(asset);
+                    const context = (typeof getUnitIntegrationContext === 'function')
+                        ? getUnitIntegrationContext(asset)
+                        : { activeWo: null, latestInspection: null };
                     const activeWo = context.activeWo;
                     const inspection = context.latestInspection;
                     const source = asset.statusSource || (activeWo ? 'Work Order' : inspection ? 'Inspeksi & P2H' : 'Master Asset');
                     const reference = asset.statusReference || (activeWo ? activeWo.woId : inspection ? inspection.id : 'Data awal');
 
-                    badge = window.getAssetStatusBadge(asset.status);
+                    badge = (typeof window.getAssetStatusBadge === 'function')
+                        ? window.getAssetStatusBadge(asset.status)
+                        : (typeof getAssetStatusBadge === 'function' ? getAssetStatusBadge(asset.status) : `<span class="badge bg-secondary">${escapeHtml(asset.status || '')}</span>`);
 
-                    if (asset.status === 'READY') {
+                    const statusKey = norm(asset.status || asset.subStatus);
+                    if (statusKey === 'READY') {
                         action = `
                         <button class="integrated-action success" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}', 'OPERATING')"><i class="fa-solid fa-play"></i> Tugaskan</button>
                         <button class="integrated-action primary" onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}', null, 'lokasi')"><i class="fa-solid fa-gauge-high"></i> Telemetri</button>
                         <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
                     }
-                    else if (asset.status === 'OPERATING') {
+                    else if (statusKey === 'OPERATING') {
                         action = `
                         <button class="integrated-action primary" onclick="openAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.status)}', '${escapeHtml(asset.category)}', '${escapeHtml(asset.location)}')"><i class="fa-solid fa-gauge-high"></i> Telemetri</button>
                         <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
                     }
-                    else if (asset.status === 'STANDBY') {
+                    else if (statusKey === 'STANDBY') {
                         action = `
                         <button class="integrated-action primary" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Evaluasi Status</button>
                         <button class="integrated-action" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'form')"><i class="fa-solid fa-clipboard-check"></i> Input P2H</button>`;
                     }
-                    else if (asset.status === 'BREAKDOWN') {
+                    else if (statusKey === 'BREAKDOWN') {
                         action = `
                         <button class="integrated-action danger" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-screwdriver-wrench"></i> ${activeWo ? escapeHtml(activeWo.woId) : 'Buat WO'}</button>
                         <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
                     }
-                    else if (asset.status === 'INSPEKSI') {
+                    else if (statusKey === 'INSPEKSI') {
                         action = `
                         <button class="integrated-action warning" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'history')"><i class="fa-solid fa-clipboard-check"></i> Review P2H</button>
                         ${activeWo ? `<button class="integrated-action" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-wrench"></i> ${escapeHtml(activeWo.woId)}</button>` : `<button class="integrated-action" onclick="openIntegratedP2H('${escapeHtml(asset.id)}', 'form')"><i class="fa-solid fa-plus"></i> Inspeksi</button>`}`;
                     }
-                    else if (asset.status === 'ACCIDENT HOLD') {
+                    else if (statusKey === 'ACCIDENTHOLD') {
                         action = `
                         <button class="integrated-action danger" onclick="openIntegratedWO('${escapeHtml(asset.id)}')"><i class="fa-solid fa-shield-cat"></i> Investigasi</button>
                         <button class="integrated-action" onclick="openIntegratedStatusUpdate('${escapeHtml(asset.id)}')"><i class="fa-solid fa-pen"></i> Update</button>`;
@@ -8564,8 +8609,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             </div>
                             <small>${escapeHtml(asset.lastUpdate || 'Belum ada waktu update')}</small>
                         </td>
-                        <td>${escapeHtml(asset.category)}</td>
-                        <td>${escapeHtml(asset.location)}</td>
+                        <td>${escapeHtml(asset.category || '')}</td>
+                        <td>${escapeHtml(asset.location || '')}</td>
                         <td>
                             ${badge}
                             <span class="status-source-line"><i class="fa-solid fa-link"></i> ${escapeHtml(source)} &middot; ${escapeHtml(reference)}</span>
@@ -8574,31 +8619,34 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </tr>
                 `;
                 }).join('');
-                searchTableMonitoring();
+                if (typeof searchTableMonitoring === 'function') {
+                    searchTableMonitoring();
+                }
             }
 
             function initMonitoringView(assets) {
-                if (!assets) {
+                if (!assets || !Array.isArray(assets) || assets.length === 0) {
                     assets = typeof buildProjectScopedData === 'function' ? buildProjectScopedData().assets : (window.globalData ? window.globalData.assets : []);
                 }
-                if (!assets) return;
+                if (!assets || !Array.isArray(assets)) return;
                 window.currentMonitoringAssets = assets;
 
                 const filterEl = document.getElementById('monitoringStatusFilter');
                 const selectedStatus = filterEl ? filterEl.value : 'ALL';
+                const norm = s => String(s || '').trim().toUpperCase().replace(/[\s_-]+/g, '');
 
                 const totalCount = assets.length;
-                const readyCount = assets.filter(a => a.status === 'READY').length;
-                const operatingCount = assets.filter(a => a.status === 'OPERATING').length;
-                const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN').length;
-                const inspectionCount = assets.filter(a => a.status === 'INSPEKSI').length;
-                const standbyCount = assets.filter(a => a.status === 'STANDBY').length;
+                const readyCount = assets.filter(a => norm(a.status || a.subStatus) === 'READY').length;
+                const operatingCount = assets.filter(a => norm(a.status || a.subStatus) === 'OPERATING').length;
+                const breakdownCount = assets.filter(a => norm(a.status || a.subStatus) === 'BREAKDOWN').length;
+                const inspectionCount = assets.filter(a => norm(a.status || a.subStatus) === 'INSPEKSI').length;
+                const standbyCount = assets.filter(a => norm(a.status || a.subStatus) === 'STANDBY').length;
                 const activeWos = (globalData?.work_orders || []).filter(wo => wo.status !== 'Closed').length;
 
                 const summaryEl = document.getElementById('monitoringSummary');
                 if (summaryEl) {
                     summaryEl.innerHTML = `
-                    <div class="total mon-card-clickable ${selectedStatus === 'ALL' ? 'active-filter' : ''}" data-status="ALL" onclick="setMonitoringStatusFilter('ALL')" title="Klik untuk menampilkan semua unit">
+                    <div class="total mon-card-clickable ${norm(selectedStatus) === 'ALL' ? 'active-filter' : ''}" data-status="ALL" onclick="window.toggleMonitoringCardFilter('ALL')" title="Klik untuk menampilkan semua unit">
                         <div class="mon-card-hdr">
                             <span class="mon-card-lbl">Total Unit Armada</span>
                             <div class="mon-card-icon total"><i class="fa-solid fa-cubes"></i></div>
@@ -8608,7 +8656,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <div class="mon-card-ftr"><i class="fa-solid fa-layer-group"></i> Master Asset Terdaftar</div>
                         </div>
                     </div>
-                    <div class="success mon-card-clickable ${selectedStatus === 'READY' ? 'active-filter' : ''}" data-status="READY" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'READY' ? 'ALL' : 'READY')" title="Klik untuk memfilter unit Ready">
+                    <div class="success mon-card-clickable ${norm(selectedStatus) === 'READY' ? 'active-filter' : ''}" data-status="READY" onclick="window.toggleMonitoringCardFilter('READY')" title="Klik untuk memfilter unit Ready">
                         <div class="mon-card-hdr">
                             <span class="mon-card-lbl">Ready</span>
                             <div class="mon-card-icon success"><i class="fa-solid fa-circle-check"></i></div>
@@ -8616,7 +8664,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <strong style="color:#16a34a;">${readyCount}</strong>
                         <div class="mon-card-ftr"><i class="fa-solid fa-check"></i> Siap Dioperasikan</div>
                     </div>
-                    <div class="info mon-card-clickable ${selectedStatus === 'OPERATING' ? 'active-filter' : ''}" data-status="OPERATING" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'OPERATING' ? 'ALL' : 'OPERATING')" title="Klik untuk memfilter unit Operating">
+                    <div class="info mon-card-clickable ${norm(selectedStatus) === 'OPERATING' ? 'active-filter' : ''}" data-status="OPERATING" onclick="window.toggleMonitoringCardFilter('OPERATING')" title="Klik untuk memfilter unit Operating">
                         <div class="mon-card-hdr">
                             <span class="mon-card-lbl">Operating</span>
                             <div class="mon-card-icon info"><i class="fa-solid fa-play"></i></div>
@@ -8624,7 +8672,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <strong style="color:#0284c7;">${operatingCount}</strong>
                         <div class="mon-card-ftr"><i class="fa-solid fa-truck-fast"></i> Beroperasi di Lapangan</div>
                     </div>
-                    <div class="standby mon-card-clickable ${selectedStatus === 'STANDBY' ? 'active-filter' : ''}" data-status="STANDBY" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'STANDBY' ? 'ALL' : 'STANDBY')" title="Klik untuk memfilter unit Standby">
+                    <div class="standby mon-card-clickable ${norm(selectedStatus) === 'STANDBY' ? 'active-filter' : ''}" data-status="STANDBY" onclick="window.toggleMonitoringCardFilter('STANDBY')" title="Klik untuk memfilter unit Standby">
                         <div class="mon-card-hdr">
                             <span class="mon-card-lbl">Standby</span>
                             <div class="mon-card-icon standby"><i class="fa-solid fa-pause-circle"></i></div>
@@ -8632,7 +8680,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <strong style="color:#0ea5e9;">${standbyCount}</strong>
                         <div class="mon-card-ftr"><i class="fa-solid fa-clock"></i> Cadangan / Standby</div>
                     </div>
-                    <div class="warning mon-card-clickable ${selectedStatus === 'INSPEKSI' ? 'active-filter' : ''}" data-status="INSPEKSI" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'INSPEKSI' ? 'ALL' : 'INSPEKSI')" title="Klik untuk memfilter unit Inspeksi / PM">
+                    <div class="warning mon-card-clickable ${norm(selectedStatus) === 'INSPEKSI' ? 'active-filter' : ''}" data-status="INSPEKSI" onclick="window.toggleMonitoringCardFilter('INSPEKSI')" title="Klik untuk memfilter unit Inspeksi / PM">
                         <div class="mon-card-hdr">
                             <span class="mon-card-lbl">Inspeksi & PM</span>
                             <div class="mon-card-icon warning"><i class="fa-solid fa-clipboard-check"></i></div>
@@ -8640,7 +8688,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <strong style="color:#f59e0b;">${inspectionCount}</strong>
                         <div class="mon-card-ftr"><i class="fa-solid fa-magnifying-glass"></i> Perawatan / P2H</div>
                     </div>
-                    <div class="danger mon-card-clickable ${selectedStatus === 'BREAKDOWN' ? 'active-filter' : ''}" data-status="BREAKDOWN" onclick="setMonitoringStatusFilter(document.getElementById('monitoringStatusFilter')?.value === 'BREAKDOWN' ? 'ALL' : 'BREAKDOWN')" title="Klik untuk memfilter unit Breakdown">
+                    <div class="danger mon-card-clickable ${norm(selectedStatus) === 'BREAKDOWN' ? 'active-filter' : ''}" data-status="BREAKDOWN" onclick="window.toggleMonitoringCardFilter('BREAKDOWN')" title="Klik untuk memfilter unit Breakdown">
                         <div class="mon-card-hdr">
                             <span class="mon-card-lbl">Breakdown</span>
                             <div class="mon-card-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -8689,20 +8737,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                         
                                         let targetStatus = 'ALL';
                                         if (clickedIdx >= 0 && clickedIdx < statusMapping.length) {
-                                            if (isSelected) {
-                                                targetStatus = statusMapping[clickedIdx];
-                                            } else {
-                                                targetStatus = 'ALL';
-                                            }
+                                            targetStatus = isSelected ? statusMapping[clickedIdx] : 'ALL';
                                         }
-                                        setMonitoringStatusFilter(targetStatus, true);
+                                        window.setMonitoringStatusFilter(targetStatus, true);
                                     },
                                     legendClick: function (chartContext, seriesIndex, config) {
                                         if (seriesIndex >= 0 && seriesIndex < statusMapping.length) {
-                                            const currentFilter = document.getElementById('monitoringStatusFilter')?.value || 'ALL';
-                                            const targetStatus = statusMapping[seriesIndex];
-                                            const newStatus = (currentFilter === targetStatus) ? 'ALL' : targetStatus;
-                                            setMonitoringStatusFilter(newStatus, false);
+                                            window.toggleMonitoringCardFilter(statusMapping[seriesIndex]);
                                         }
                                         return false; // prevent hiding series from donut
                                     }
@@ -8731,7 +8772,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                     donut: {
                                         size: '68%',
                                         labels: {
-                                            show: true,
+                                             show: true,
                                             name: { show: true, fontSize: '11px', fontWeight: 600, color: '#64748b', offsetY: -4 },
                                             value: { show: true, fontSize: '18px', fontWeight: 800, color: '#0f172a', offsetY: 4, formatter: (val) => val },
                                             total: {
@@ -8775,10 +8816,20 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
             function searchTableMonitoring() {
                 const input = document.getElementById('searchMonitoring');
-                const filter = input.value.toUpperCase();
-                const tr = document.getElementById('monitoringTable').getElementsByTagName('tr');
+                const filter = input ? input.value.toUpperCase().trim() : '';
+                const table = document.getElementById('monitoringTable');
+                if (!table) return;
+                const tr = table.getElementsByTagName('tr');
 
                 for (let i = 1; i < tr.length; i++) {
+                    if (tr[i].querySelector('.monitoring-empty')) {
+                        tr[i].style.display = "";
+                        continue;
+                    }
+                    if (!filter) {
+                        tr[i].style.display = "";
+                        continue;
+                    }
                     let visible = false;
                     const tds = tr[i].getElementsByTagName('td');
                     for (let j = 0; j < tds.length; j++) {
