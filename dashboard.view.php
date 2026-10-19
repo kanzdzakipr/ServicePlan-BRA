@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261018-admin-recap-1">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261019-mon-filter-fix-1">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
     <script>window.APP_CSRF_TOKEN = '<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>';</script>
@@ -467,7 +467,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div class="panel-header">
                         <span><i class="fa-solid fa-list-check"></i> Daftar Monitoring Status Unit</span>
                         <div class="monitoring-toolbar">
-                            <select id="monitoringStatusFilter" class="form-control"
+                            <select id="monitoringStatusFilter" class="form-control monitoring-status-select"
                                 onchange="setMonitoringStatusFilter(this.value)" aria-label="Filter status monitoring">
                                 <option value="ALL">Semua Status Unit</option>
                                 <option value="READY">Ready</option>
@@ -477,9 +477,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <option value="BREAKDOWN">Breakdown</option>
                                 <option value="ACCIDENT_HOLD">Accident Hold</option>
                             </select>
-                            <div class="search-bar">
+                            <div class="monitoring-search-wrap">
+                                <i class="fa-solid fa-magnifying-glass monitoring-search-icon"></i>
                                 <input type="text" id="searchMonitoring" placeholder="Cari unit ID, lokasi, status..."
-                                    onkeyup="searchTableMonitoring()">
+                                    onkeyup="searchTableMonitoring()" aria-label="Cari unit monitoring">
                             </div>
                         </div>
                     </div>
