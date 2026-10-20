@@ -1,5 +1,13 @@
 # Pengujian STOCK_GUDANG — batch 1
 
+## Hasil audit otomatis 19 Oktober 2026
+
+**Status: PARTIAL.** Pratilik impor menunjukkan 716 nomor part sumber sudah ada (`new: 0`, konflik: 0). Tabel `stock_gudang_imports` berisi 716 baris, semuanya tertaut ke 716 nomor unik di `parts`; total master 721 part. Jumlah saldo awal part impor 582 dan saldo saat audit juga 582. Tidak ada part impor dengan nomor kosong.
+
+Tes integrasi berbasis transaksi rollback lulus: BHW-IN/OUT 19, SPB 17, PPB 10. Endpoint referensi laporan dan master Logistik membaca tabel `parts` tanpa batas jumlah baris, sehingga 721 part tersedia bagi pilihan menu. Pengujian browser dengan akun nyata belum dilakukan; hasil otomatis ini belum membuktikan pengalaman UI lintas role.
+
+**Temuan yang perlu diperbaiki sebelum semua menu dinyatakan aman:** 78 kelompok nama part digunakan oleh lebih dari satu nomor (contoh `O RING`, `Gasket`, `Seal`). Pemilihan berdasarkan **nomor part** dapat membedakannya, tetapi pemilihan berdasarkan **nama saja** pada referensi form dan Report Parts Weekly berpotensi menautkan baris ke part pertama yang namanya sama. Untuk sementara, gunakan nomor part pada SPB, PPB, BHW, dan jangan finalisasi Report Parts Weekly untuk nama duplikat sampai lookup-nya diperbaiki.
+
 Sumber: `material/STOCK_GUDANG.md`, Yard KM 12, periode 26 Agustus–25 September 2026. Saldo sumber adalah posisi per **25 September 2026**, bukan transaksi penerimaan baru pada 18 Oktober.
 
 ## Hasil impor lokal
