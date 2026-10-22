@@ -294,15 +294,22 @@ switch ($method) {
                 throw new InvalidArgumentException('Aset Work Order tidak ditemukan.');
             }
             $ticket = WorkOrderSupport::normalizeTicketInput($data, $asset);
+            $partsReq = in_array((string) ($data['parts_requirement'] ?? ''), ['REQUIRED', 'NOT_REQUIRED', 'UNASSESSED'], true)
+                ? (string) $data['parts_requirement']
+                : (!empty($data['parts_requirement_note']) ? 'REQUIRED' : 'UNASSESSED');
+            $partsNote = trim((string) ($data['parts_requirement_note'] ?? '')) ?: null;
+
             $stmt = $db->prepare(
                 'INSERT INTO work_orders
                  (wo_id, asset_id, hull_number, equipment_type, current_hm_km, trouble_at,
                   raw_location, issue_description, status, priority, maintenance_type,
+                  parts_requirement, parts_requirement_note,
                   assigned_mechanic, assigned_mechanics_json, root_cause, repair_action,
                   is_downtime, is_forced_operation, mitigation_action, downtime_formatted,
                   repair_started_at, estimated_completion_at)
                  VALUES (:wo_id, :asset_id, :hull_number, :equipment_type, :current_hm_km, :trouble_at,
                          :raw_location, :issue, :status, :priority, :maintenance_type,
+                         :parts_requirement, :parts_requirement_note,
                          :mechanic, :mechanics_json, :root_cause, :repair_action,
                          :is_downtime, :is_forced_operation, :mitigation_action, :downtime_formatted,
                          :repair_started_at, :estimated_completion_at)'
@@ -314,6 +321,8 @@ switch ($method) {
                 ':status' => $status,
                 ':priority' => $priority,
                 ':maintenance_type' => $maintenanceType,
+                ':parts_requirement' => $partsReq,
+                ':parts_requirement_note' => $partsNote,
                 ':hull_number' => $ticket['hull_number'],
                 ':equipment_type' => $ticket['equipment_type'],
                 ':current_hm_km' => $ticket['current_hm_km'],
@@ -321,13 +330,12 @@ switch ($method) {
                 ':raw_location' => $ticket['raw_location'],
                 ':mechanic' => $ticket['assigned_mechanic'],
                 ':mechanics_json' => $ticket['assigned_mechanics_json'],
-                ':mechanic' => $mechanic,
                 ':root_cause' => trim((string) ($data['root_cause'] ?? '')) ?: null,
                 ':repair_action' => trim((string) ($data['repair_action'] ?? '')) ?: null,
-                ':is_downtime' => $ticket['is_downtime'],
-                ':is_forced_operation' => $ticket['is_forced_operation'],
+                ':is_downtime' => !empty($ticket['is_downtime']) ? 1 : 0,
+                ':is_forced_operation' => !empty($ticket['is_forced_operation']) ? 1 : 0,
                 ':mitigation_action' => $ticket['mitigation_action'],
-                ':downtime_formatted' => $ticket['is_downtime'] ? '0 jam 00 menit' : '-',
+                ':downtime_formatted' => !empty($ticket['is_downtime']) ? '0 jam 00 menit' : '-',
                 ':repair_started_at' => $ticket['repair_started_at'],
                 ':estimated_completion_at' => $ticket['estimated_completion_at'],
             ]);

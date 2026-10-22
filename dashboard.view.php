@@ -4040,11 +4040,101 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <div class="wo-field"><label for="nwo-root-cause">Dugaan penyebab</label><textarea id="nwo-root-cause" rows="3" class="form-control" placeholder="Isi jika penyebab awal sudah diketahui"></textarea></div>
                         <div class="wo-field"><label for="nwo-repair-action">Pekerjaan / tindakan mekanik</label><textarea id="nwo-repair-action" rows="3" class="form-control" placeholder="Pemeriksaan, penyetelan, perbaikan, atau penggantian komponen"></textarea></div>
                         <div class="wo-field wo-field-span-2">
-                            <label for="nwo-parts-needed">Estimasi Suku Cadang / Material yang Bakal Digunakan</label>
-                            <textarea id="nwo-parts-needed" rows="2" class="form-control" placeholder="Tuliskan nama atau jenis part/oli/seal yang dibutuhkan mekanik (contoh: 1 set Seal Kit Cylinder Boom, 2 botol Minyak Rem DOT 4, Filter Oli 500H)"></textarea>
-                            <small style="color:var(--text-muted); font-size:0.75rem; margin-top:3px; display:block;">
-                                <i class="fa-solid fa-boxes-stacked" style="color:var(--primary);"></i> Uraian ini otomatis tersimpan sebagai catatan kebutuhan spare part WO dan siap diteruskan untuk pembuatan SPB ke logistik.
-                            </small>
+                            <div class="wo-parts-builder-card" id="nwo-parts-builder">
+                                <div class="wo-parts-builder-header">
+                                    <div>
+                                        <label style="margin:0; font-size:0.79rem; font-weight:750; color:#1e293b; display:flex; align-items:center; gap:6px;">
+                                            <i class="fa-solid fa-boxes-stacked" style="color:var(--primary);"></i> Kebutuhan Suku Cadang & Material
+                                        </label>
+                                        <span style="font-size:0.71rem; color:var(--text-muted); display:block; margin-top:2px;">
+                                            Pilih part dari katalog gudang atau tambahkan part custom luar gudang beserta jumlahnya.
+                                        </span>
+                                    </div>
+                                    <button type="button" class="btn btn-xs btn-outline-primary" id="btnOpenPartLibrary" onclick="window.openPartLibraryModal()" title="Buka acuan katalog & stok library part">
+                                        <i class="fa-solid fa-book-open"></i> Buka Library Part
+                                    </button>
+                                </div>
+
+                                <!-- Mode Selector: Gudang vs Luar Gudang -->
+                                <div class="wo-parts-source-toggle">
+                                    <button type="button" class="wo-source-btn active" id="nwo-source-warehouse" onclick="setNewWOPartSource('warehouse')">
+                                        <i class="fa-solid fa-warehouse"></i> Stok Gudang (Katalog)
+                                    </button>
+                                    <button type="button" class="wo-source-btn" id="nwo-source-custom" onclick="setNewWOPartSource('custom')">
+                                        <i class="fa-solid fa-truck-ramp-box"></i> Part Luar Gudang / Custom
+                                    </button>
+                                </div>
+
+                                <!-- Input Row -->
+                                <div class="wo-parts-input-row" id="nwo-parts-input-row">
+                                    <!-- Mode Gudang Input -->
+                                    <div class="wo-part-selector-wrap" id="nwo-warehouse-input-wrap">
+                                        <div class="wo-part-search-input">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
+                                            <input id="nwo-part-search" list="nwo-parts-datalist" placeholder="Cari nama / part number dari katalog gudang..." autocomplete="off">
+                                        </div>
+                                        <datalist id="nwo-parts-datalist"></datalist>
+                                    </div>
+
+                                    <!-- Mode Custom Luar Gudang Input (hidden by default) -->
+                                    <div class="wo-part-selector-wrap" id="nwo-custom-input-wrap" style="display:none;">
+                                        <input id="nwo-custom-part-name" class="form-control" placeholder="Nama part / material di luar gudang (contoh: Seal Kit Boom, Baut Baja 14mm, Selang Press)...">
+                                    </div>
+
+                                    <!-- Qty -->
+                                    <div class="wo-part-qty-wrap">
+                                        <input id="nwo-part-qty" type="number" min="1" step="1" value="1" class="form-control font-mono" placeholder="Qty" title="Jumlah yang dibutuhkan">
+                                    </div>
+
+                                    <!-- Satuan -->
+                                    <div class="wo-part-uom-wrap">
+                                        <select id="nwo-part-uom" class="form-control" title="Satuan ukuran">
+                                            <option value="Pcs">Pcs</option>
+                                            <option value="Set">Set</option>
+                                            <option value="Liter">Liter</option>
+                                            <option value="Can">Can</option>
+                                            <option value="Btl">Btl</option>
+                                            <option value="Roll">Roll</option>
+                                            <option value="Meter">Meter</option>
+                                            <option value="Kg">Kg</option>
+                                            <option value="Box">Box</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Add Button -->
+                                    <button type="button" class="btn btn-primary" id="nwo-btn-add-part" onclick="addNewWOPartItem()" title="Tambahkan part ini ke daftar">
+                                        <i class="fa-solid fa-plus"></i> Tambah
+                                    </button>
+                                </div>
+
+                                <!-- Quick Suggestions (Library Pills) -->
+                                <div class="wo-parts-quick-pills" id="nwo-parts-quick-pills">
+                                    <span class="wo-quick-label"><i class="fa-solid fa-bolt"></i> Acuan Cepat:</span>
+                                    <button type="button" class="wo-quick-pill" onclick="quickSelectNewWOPart('Filter Oli Engine', 'P-001-OIL', 'Pcs')">+ Filter Oli</button>
+                                    <button type="button" class="wo-quick-pill" onclick="quickSelectNewWOPart('Element Set Fuel Filter', '23304-JAF30', 'Pcs')">+ Filter Solar</button>
+                                    <button type="button" class="wo-quick-pill" onclick="quickSelectNewWOPart('Air Filter Primary', 'P-004-AIR', 'Pcs')">+ Filter Udara</button>
+                                    <button type="button" class="wo-quick-pill" onclick="quickSelectNewWOPart('Selang Hidrolik 3/4 Inch (2M)', 'P-002-HYD', 'Pcs')">+ Selang Hidrolik</button>
+                                    <button type="button" class="wo-quick-pill" onclick="quickSelectNewWOPart('Grease Chassis EP-2', 'GRS-LITHIUM-EP2', 'Kg')">+ Grease</button>
+                                    <button type="button" class="wo-quick-pill" onclick="quickSelectNewWOPart('Cutting Bit Grader', 'P-003-BIT', 'Pcs')">+ Cutting Bit</button>
+                                </div>
+
+                                <!-- Selected Parts List -->
+                                <div class="wo-parts-table-wrap">
+                                    <div class="wo-parts-list-header">
+                                        <span>Daftar Part Terpilih (<span id="nwo-parts-count">0</span> item)</span>
+                                        <button type="button" class="btn-clear-parts" onclick="clearAllNewWOParts()" id="nwo-btn-clear-parts" style="display:none;">Hapus Semua</button>
+                                    </div>
+                                    <div class="wo-parts-items-container" id="nwo-parts-items-list">
+                                        <div class="wo-parts-empty-state" id="nwo-parts-empty">
+                                            <i class="fa-solid fa-boxes-packing"></i>
+                                            <span>Belum ada part yang ditambahkan. Pilih dari katalog gudang atau ketik part luar gudang di atas.</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden textarea to preserve backward compatibility & note export -->
+                                <textarea id="nwo-parts-needed" style="display:none;"></textarea>
+                            </div>
                         </div>
                     </div>
                     <div class="wo-mitigation-card" id="nwo-mitigation-card">
@@ -4094,6 +4184,54 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 <div class="wo-form-message" id="nwo-form-message" role="status" aria-live="polite" hidden></div>
                 <div class="wo-create-actions"><button type="button" class="btn btn-secondary" onclick="closeModal('modalNewWO')">Batal</button><button type="submit" class="btn btn-danger" id="nwo-submit"><i class="fa-solid fa-file-circle-plus"></i> Buat tiket WO</button></div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Part Library Explorer -->
+    <div class="modal-overlay" id="modalPartLibrary" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 840px; max-height: 88vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+            <div class="modal-header" style="padding:16px 20px; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h3 style="margin:0; font-size:1.05rem; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-book-open" style="color:var(--primary);"></i> Library & Katalog Spare Part Gudang
+                    </h3>
+                    <small style="color:var(--text-muted); font-size:0.75rem;">Cari suku cadang terdaftar di database untuk langsung dimasukkan ke tiket WO.</small>
+                </div>
+                <button type="button" onclick="closeModal('modalPartLibrary')" style="border:none; background:none; font-size:1.4rem; cursor:pointer; color:#64748b;">&times;</button>
+            </div>
+            <div style="padding:12px 20px; background:#fff; border-bottom:1px solid #f1f5f9; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <div style="flex:1; min-width:240px; position:relative;">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:11px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:0.8rem;"></i>
+                    <input type="search" id="partLibSearch" class="form-control" placeholder="Cari Part Number, Nama Suku Cadang, atau Merek..." style="padding-left:32px; min-height:38px; font-size:0.82rem;" oninput="window.filterPartLibrary(this.value)">
+                </div>
+                <select id="partLibCategoryFilter" class="form-control" style="width:160px; min-height:38px; font-size:0.82rem;" onchange="window.filterPartLibrary()">
+                    <option value="">Semua Kategori</option>
+                </select>
+                <span id="partLibCount" style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Memuat katalog...</span>
+            </div>
+            <div style="flex:1; overflow-y:auto; padding:0 20px 16px;">
+                <table class="pm-table" style="width:100%; margin-top:8px; font-size:0.8rem;">
+                    <thead style="position:sticky; top:0; background:#f8fafc; z-index:2;">
+                        <tr>
+                            <th style="min-width:130px;">Part Number</th>
+                            <th>Nama Suku Cadang</th>
+                            <th style="width:110px;">Kategori</th>
+                            <th style="width:80px; text-align:right;">Stok</th>
+                            <th style="width:70px;">Satuan</th>
+                            <th style="width:90px; text-align:center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="partLibTableBody">
+                        <tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data library...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer" style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.openCustomPartFromLibrary()">
+                    <i class="fa-solid fa-plus"></i> Part Tidak Ada di Library? Tambah Part Luar Gudang
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="closeModal('modalPartLibrary')">Tutup</button>
+            </div>
         </div>
     </div>
 

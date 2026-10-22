@@ -4242,6 +4242,8 @@
         mechanics: [],
         photos: [],
         photoUrls: [],
+        parts: [],
+        partSource: 'warehouse',
         dropzoneReady: false
     };
 
@@ -4440,6 +4442,281 @@
         if (isActive && byId('nwo-down')) byId('nwo-down').value = 'No';
     }
 
+    let cachedLibraryParts = [];
+    let libraryPartsPromise = null;
+
+    async function loadMasterPartsCatalog() {
+        if (cachedLibraryParts.length) return cachedLibraryParts;
+        if (libraryPartsPromise) return libraryPartsPromise;
+        libraryPartsPromise = fetch('api/logistics.php?type=parts', {
+            headers: { Accept: 'application/json' },
+            cache: 'no-store'
+        }).then(async resp => {
+            const result = await resp.json();
+            if (result && result.status === 'success' && Array.isArray(result.data)) {
+                cachedLibraryParts = result.data.map(p => ({
+                    id: String(p.part_id || p.id || ''),
+                    partNumber: String(p.part_number || p.partNumber || '').trim(),
+                    description: String(p.part_name || p.namaParts || p.description || '').trim(),
+                    category: String(p.category || 'General').trim(),
+                    uom: String(p.unit_measure || p.satuan || p.uom || 'Pcs').trim() || 'Pcs',
+                    stock: Number(p.stock_qty ?? p.stock) || 0
+                }));
+            }
+            if (!cachedLibraryParts.length) {
+                cachedLibraryParts = defaultFallbackParts();
+            }
+            return cachedLibraryParts;
+        }).catch(err => {
+            console.warn('Gagal memuat katalog part dari API, menggunakan fallback:', err);
+            cachedLibraryParts = defaultFallbackParts();
+            return cachedLibraryParts;
+        }).finally(() => {
+            libraryPartsPromise = null;
+        });
+        return libraryPartsPromise;
+    }
+
+    function defaultFallbackParts() {
+        return [
+            { partNumber: 'P-001-OIL', description: 'Filter Oli Engine Komatsu PC200-10M0', category: 'Filter', uom: 'Pcs', stock: 23 },
+            { partNumber: 'P-002-HYD', description: 'Selang Hidrolik 3/4 Inch (2 Meter)', category: 'Hydraulic', uom: 'Pcs', stock: 12 },
+            { partNumber: 'P-003-BIT', description: 'Cutting Bit Grader XCMG GR135', category: 'Cutting Bit', uom: 'Pcs', stock: 60 },
+            { partNumber: 'P-004-AIR', description: 'Air Filter Primary Hino Ranger FM280', category: 'Filter', uom: 'Pcs', stock: 18 },
+            { partNumber: 'P-005-TIRE', description: 'Ban Radial 10.00-20 Dump Truck', category: 'Tire', uom: 'Pcs', stock: 8 },
+            { partNumber: '23304-JAF30', description: 'Element Set Fuel Filter Hino', category: 'Filter', uom: 'Pcs', stock: 15 },
+            { partNumber: '15613-JAA10', description: 'Element Oil Filter Hino FM260', category: 'Filter', uom: 'Pcs', stock: 14 },
+            { partNumber: 'GRS-LITHIUM-EP2', description: 'Grease Chassis Lithium EP-2 (Pail 15Kg)', category: 'Lubricant', uom: 'Can', stock: 10 },
+            { partNumber: 'BAT-95D31L', description: 'Aki GS Astra Maintenance Free 12V 80AH', category: 'Electrical', uom: 'Pcs', stock: 6 }
+        ];
+    }
+
+    async function populatePartsDatalist() {
+        const datalist = byId('nwo-parts-datalist');
+        if (!datalist) return;
+        const catalog = await loadMasterPartsCatalog();
+        datalist.innerHTML = catalog.map(p =>
+            `<option value="${escapeText(p.partNumber)} - ${escapeText(p.description)} (${p.stock} ${escapeText(p.uom)})"></option>`
+        ).join('');
+    }
+
+    function setPartSource(source) {
+        state.partSource = source;
+        const btnWh = byId('nwo-source-warehouse');
+        const btnCustom = byId('nwo-source-custom');
+        const wrapWh = byId('nwo-warehouse-input-wrap');
+        const wrapCustom = byId('nwo-custom-input-wrap');
+        if (source === 'warehouse') {
+            btnWh?.classList.add('active');
+            btnCustom?.classList.remove('active');
+            if (wrapWh) wrapWh.style.display = '';
+            if (wrapCustom) wrapCustom.style.display = 'none';
+            byId('nwo-part-search')?.focus();
+        } else {
+            btnWh?.classList.remove('active');
+            btnCustom?.classList.add('active');
+            if (wrapWh) wrapWh.style.display = 'none';
+            if (wrapCustom) wrapCustom.style.display = '';
+            byId('nwo-custom-part-name')?.focus();
+        }
+    }
+
+    function addPart(override = null) {
+        let partNumber = '';
+        let description = '';
+        let qty = 1;
+        let uom = 'Pcs';
+        let isCustom = state.partSource === 'custom';
+
+        if (override) {
+            partNumber = text(override.partNumber);
+            description = text(override.description);
+            qty = Math.max(1, Number(override.qty) || 1);
+            uom = text(override.uom || 'Pcs');
+            isCustom = Boolean(override.isCustom);
+        } else if (isCustom) {
+            description = text(byId('nwo-custom-part-name')?.value);
+            if (!description) {
+                setMessage('Nama part luar gudang wajib diisi.', 'error');
+                byId('nwo-custom-part-name')?.focus();
+                return;
+            }
+            qty = Math.max(1, Number(byId('nwo-part-qty')?.value) || 1);
+            uom = text(byId('nwo-part-uom')?.value || 'Pcs');
+        } else {
+            const rawSearch = text(byId('nwo-part-search')?.value);
+            if (!rawSearch) {
+                setMessage('Pilih part dari katalog gudang atau beralih ke Part Luar Gudang.', 'error');
+                byId('nwo-part-search')?.focus();
+                return;
+            }
+            const matched = cachedLibraryParts.find(p =>
+                rawSearch.toLowerCase().includes(p.partNumber.toLowerCase()) ||
+                rawSearch.toLowerCase().includes(p.description.toLowerCase())
+            );
+            if (matched) {
+                partNumber = matched.partNumber;
+                description = matched.description;
+                uom = matched.uom || text(byId('nwo-part-uom')?.value || 'Pcs');
+            } else {
+                const parts = rawSearch.split(' - ');
+                if (parts.length >= 2) {
+                    partNumber = parts[0].trim();
+                    description = parts.slice(1).join(' - ').replace(/\(.*\)/, '').trim();
+                } else {
+                    description = rawSearch;
+                }
+                uom = text(byId('nwo-part-uom')?.value || 'Pcs');
+            }
+            qty = Math.max(1, Number(byId('nwo-part-qty')?.value) || 1);
+        }
+
+        setMessage('');
+        state.parts.push({
+            partNumber,
+            description,
+            qty,
+            uom,
+            isCustom,
+            source: isCustom ? 'custom' : 'warehouse'
+        });
+
+        if (byId('nwo-part-search')) byId('nwo-part-search').value = '';
+        if (byId('nwo-custom-part-name')) byId('nwo-custom-part-name').value = '';
+        if (byId('nwo-part-qty')) byId('nwo-part-qty').value = '1';
+
+        renderParts();
+    }
+
+    function removePart(index) {
+        if (index >= 0 && index < state.parts.length) {
+            state.parts.splice(index, 1);
+            renderParts();
+        }
+    }
+
+    function clearParts() {
+        state.parts = [];
+        renderParts();
+    }
+
+    function renderParts() {
+        const container = byId('nwo-parts-items-list');
+        const countBadge = byId('nwo-parts-count');
+        const clearBtn = byId('nwo-btn-clear-parts');
+        const hiddenTextarea = byId('nwo-parts-needed');
+
+        if (countBadge) countBadge.textContent = String(state.parts.length);
+        if (clearBtn) clearBtn.style.display = state.parts.length > 0 ? '' : 'none';
+
+        if (state.parts.length === 0) {
+            if (container) {
+                container.innerHTML = `
+                    <div class="wo-parts-empty-state" id="nwo-parts-empty">
+                        <i class="fa-solid fa-boxes-packing"></i>
+                        <span>Belum ada part yang ditambahkan. Pilih dari katalog gudang atau ketik part luar gudang di atas.</span>
+                    </div>`;
+            }
+            if (hiddenTextarea) hiddenTextarea.value = '';
+            return;
+        }
+
+        if (container) {
+            container.innerHTML = state.parts.map((item, idx) => `
+                <div class="wo-part-item-chip">
+                    <div class="wo-part-chip-info">
+                        <span class="wo-part-source-tag ${item.isCustom ? 'custom' : 'warehouse'}">
+                            ${item.isCustom ? '<i class="fa-solid fa-truck-ramp-box"></i> Luar' : '<i class="fa-solid fa-warehouse"></i> Gudang'}
+                        </span>
+                        <div class="wo-part-chip-desc" title="${escapeText(item.description)}">
+                            ${escapeText(item.description)}
+                            ${item.partNumber ? `<span class="wo-part-chip-number">${escapeText(item.partNumber)}</span>` : ''}
+                        </div>
+                    </div>
+                    <span class="wo-part-chip-qty">${item.qty} ${escapeText(item.uom)}</span>
+                    <button type="button" class="wo-part-chip-remove" onclick="removeNewWOPartItem(${idx})" title="Hapus part ini">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        const summary = state.parts.map(p =>
+            `• ${p.qty} ${p.uom} - ${p.description}${p.partNumber ? ` (${p.partNumber})` : ''} [${p.isCustom ? 'Luar Gudang' : 'Gudang'}]`
+        ).join('\n');
+        if (hiddenTextarea) hiddenTextarea.value = summary;
+    }
+
+    async function openPartLibrary() {
+        window.openModal?.('modalPartLibrary');
+        const catalog = await loadMasterPartsCatalog();
+        populateCategoryFilter(catalog);
+        renderPartLibraryTable(catalog);
+    }
+
+    function populateCategoryFilter(catalog) {
+        const select = byId('partLibCategoryFilter');
+        if (!select) return;
+        const categories = [...new Set(catalog.map(p => p.category).filter(Boolean))].sort();
+        select.innerHTML = '<option value="">Semua Kategori</option>' + categories.map(c =>
+            `<option value="${escapeText(c)}">${escapeText(c)}</option>`
+        ).join('');
+    }
+
+    function renderPartLibraryTable(items) {
+        const tbody = byId('partLibTableBody');
+        const countEl = byId('partLibCount');
+        if (!tbody) return;
+        if (countEl) countEl.textContent = `${items.length} part ditemukan`;
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">Tidak ada suku cadang yang sesuai dengan kata kunci.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.slice(0, 100).map(p => `
+            <tr>
+                <td style="font-family:monospace; font-weight:700; color:#0284c7;">${escapeText(p.partNumber)}</td>
+                <td style="font-weight:600; color:#1e293b;">${escapeText(p.description)}</td>
+                <td><span class="badge" style="background:#f1f5f9; color:#475569; font-size:0.72rem;">${escapeText(p.category)}</span></td>
+                <td style="text-align:right; font-weight:700; color:${p.stock > 0 ? '#16a34a' : '#dc2626'};">${p.stock}</td>
+                <td>${escapeText(p.uom)}</td>
+                <td style="text-align:center;">
+                    <button type="button" class="btn btn-xs btn-primary" onclick="window.selectPartFromLibrary('${escapeText(p.partNumber)}')" style="padding:2px 8px; font-size:0.72rem;">
+                        <i class="fa-solid fa-plus"></i> Pilih
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function filterPartLibrary() {
+        const query = text(byId('partLibSearch')?.value).toLowerCase();
+        const category = text(byId('partLibCategoryFilter')?.value);
+        const filtered = cachedLibraryParts.filter(p => {
+            const matchesQuery = !query || p.partNumber.toLowerCase().includes(query) || p.description.toLowerCase().includes(query);
+            const matchesCat = !category || p.category === category;
+            return matchesQuery && matchesCat;
+        });
+        renderPartLibraryTable(filtered);
+    }
+
+    function selectPartFromLibrary(partNumber) {
+        const item = cachedLibraryParts.find(p => p.partNumber === partNumber);
+        if (!item) return;
+        addPart({
+            partNumber: item.partNumber,
+            description: item.description,
+            qty: 1,
+            uom: item.uom,
+            isCustom: false,
+            source: 'warehouse'
+        });
+        window.closeModal?.('modalPartLibrary');
+        showSuccessToast(`Ditambahkan ke tiket WO: ${item.description}`);
+    }
+
+    function openCustomPartFromLibrary() {
+        window.closeModal?.('modalPartLibrary');
+        setPartSource('custom');
+    }
+
     function resetForm() {
         byId('newWoForm')?.reset();
         state.mechanics = [];
@@ -4450,6 +4727,10 @@
         if (byId('nwo-trouble-at')) byId('nwo-trouble-at').value = inputDateTime();
         if (byId('nwo-started-at')) byId('nwo-started-at').value = inputDateTime();
         if (byId('nwo-parts-needed')) byId('nwo-parts-needed').value = '';
+        state.parts = [];
+        state.partSource = 'warehouse';
+        setPartSource('warehouse');
+        renderParts();
         toggleMitigation(false);
         setMessage('');
     }
@@ -4497,6 +4778,7 @@
         const rootCause = text(byId('nwo-root-cause')?.value);
         const repairAction = text(byId('nwo-repair-action')?.value);
         const partsNeeded = text(byId('nwo-parts-needed')?.value);
+        const partsItems = [...state.parts];
         const mechanics = [...state.mechanics];
         const assignedTo = mechanics.length ? mechanics.join(', ') : 'Belum ada PIC';
         const currentHmKm = Number(hmValue);
@@ -4514,8 +4796,9 @@
             issue,
             rootCause,
             repairAction,
-            partsRequirement: partsNeeded ? 'REQUIRED' : 'UNASSESSED',
+            partsRequirement: (partsItems.length > 0 || partsNeeded) ? 'REQUIRED' : 'UNASSESSED',
             partsRequirementNote: partsNeeded,
+            partsItems: partsItems,
             assignedTo,
             downtime: down === 'Yes' ? '0' : '-',
             equipmentType: text(byId('nwo-equipment-type')?.value),
@@ -4549,8 +4832,9 @@
             issue_description: issue,
             root_cause: rootCause,
             repair_action: repairAction,
-            parts_requirement: partsNeeded ? 'REQUIRED' : 'UNASSESSED',
+            parts_requirement: (partsItems.length > 0 || partsNeeded) ? 'REQUIRED' : 'UNASSESSED',
             parts_requirement_note: partsNeeded,
+            parts_items: partsItems,
             hull_number: workOrder.hullNumber,
             equipment_type: workOrder.equipmentType,
             current_hm_km: currentHmKm,
@@ -4638,6 +4922,7 @@
         open(selectedAssetId = '') {
             resetForm();
             populateAssets('', selectedAssetId);
+            populatePartsDatalist();
             setupDropzone();
             window.openModal?.('modalNewWO');
             window.setTimeout(() => {
@@ -4658,6 +4943,15 @@
         }
     };
     window.previewNewWOPhotos = previewPhotos;
+    window.setNewWOPartSource = setPartSource;
+    window.addNewWOPartItem = addPart;
+    window.removeNewWOPartItem = removePart;
+    window.clearAllNewWOParts = clearParts;
+    window.quickSelectNewWOPart = (name, pn, uom) => addPart({ description: name, partNumber: pn, qty: 1, uom, isCustom: false, source: 'warehouse' });
+    window.openPartLibraryModal = openPartLibrary;
+    window.filterPartLibrary = filterPartLibrary;
+    window.selectPartFromLibrary = selectPartFromLibrary;
+    window.openCustomPartFromLibrary = openCustomPartFromLibrary;
 })();
 
 // ============================================================================
@@ -5709,13 +6003,45 @@
         const selectedWo = workOrderById(woId)?.assetId === assetId ? woId : activeWorkOrders(assetId)[0]?.woId || '';
         const woObj = workOrderById(selectedWo);
         const woPartsNote = woObj?.partsRequirementNote || woObj?.parts_requirement_note || '';
+
+        let initialDraft = [];
+        if (recommendedItem) {
+            initialDraft = [{ ...recommendedItem }];
+        } else if (Array.isArray(woObj?.partsItems) && woObj.partsItems.length > 0) {
+            initialDraft = woObj.partsItems.map(p => ({
+                partNumber: p.partNumber || '',
+                description: p.description || '',
+                qty: Number(p.qty) || 1,
+                uom: (p.uom || 'Pcs').toLowerCase(),
+                isManual: Boolean(p.isCustom || !p.partNumber)
+            }));
+        } else if (woPartsNote) {
+            const lines = woPartsNote.split('\n');
+            const parsed = [];
+            for (const line of lines) {
+                const match = line.match(/^[•\-\*]?\s*(\d+)\s*([A-Za-z]+)\s*-\s*([^(\[]+)(?:\(([^)]+)\))?/);
+                if (match) {
+                    parsed.push({
+                        qty: Number(match[1]) || 1,
+                        uom: (match[2] || 'Pcs').toLowerCase(),
+                        description: match[3].trim(),
+                        partNumber: match[4] ? match[4].trim() : '',
+                        isManual: !match[4]
+                    });
+                }
+            }
+            if (parsed.length > 0) {
+                initialDraft = parsed;
+            }
+        }
+
         state.modal = {
             assetId,
             woId: selectedWo,
             priority: woObj?.priority === 'High' ? 'Critical' : 'Normal',
             rtwImpact: asset.status === 'BREAKDOWN',
             notes: woPartsNote,
-            draft: recommendedItem ? [{ ...recommendedItem }] : []
+            draft: initialDraft
         };
         render();
     }
