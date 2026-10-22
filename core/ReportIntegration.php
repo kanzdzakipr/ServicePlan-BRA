@@ -2294,6 +2294,15 @@ final class ReportIntegration
             ':status' => $appliedRequestStatus,
             ':spb_id' => $order['spb_id'],
         ]);
+        if (in_array($appliedRequestStatus, ['Issued', 'Closed'], true)) {
+            require_once __DIR__ . '/WorkOrderSupport.php';
+            $woStmt = $db->prepare('SELECT wo_id FROM purchase_requests WHERE spb_id = :spb_id LIMIT 1');
+            $woStmt->execute([':spb_id' => $order['spb_id']]);
+            $linkedWoId = $woStmt->fetchColumn();
+            if ($linkedWoId) {
+                WorkOrderSupport::checkAndResumeWorkOrder($db, (string) $linkedWoId, $actorId, 'Penerimaan Barang');
+            }
+        }
 
         $currentReceipts = $db->prepare(
             'SELECT receipt_integration_id, purchase_order_item_id, purchase_request_item_id
@@ -2373,6 +2382,10 @@ final class ReportIntegration
             $order=$db->prepare('SELECT po.ppb_id,po.status FROM purchase_orders po INNER JOIN purchase_order_items poi ON poi.ppb_id=po.ppb_id WHERE po.spb_id=:spb_id AND poi.part_number=:part_number ORDER BY po.created_at DESC LIMIT 1 FOR UPDATE');$order->execute([':spb_id'=>$spbId,':part_number'=>$partNumber]);$orderRow=$order->fetch(PDO::FETCH_ASSOC)?:null;
             $appliedRequest=$requestStatusMap[$status];$appliedOrder=$orderRow?$orderStatusMap[$status]:null;
             $db->prepare('UPDATE purchase_requests SET status=:status WHERE spb_id=:spb_id')->execute([':status'=>$appliedRequest,':spb_id'=>$spbId]);
+            if (in_array($appliedRequest, ['Issued', 'Closed'], true)) {
+                require_once __DIR__ . '/WorkOrderSupport.php';
+                WorkOrderSupport::checkAndResumeWorkOrder($db, $woId, $actorId, 'Monitoring Pengadaan');
+            }
             $db->prepare('UPDATE purchase_request_items SET status=:status WHERE id=:id')->execute([':status'=>$status,':id'=>$itemRow['id']]);
             if($orderRow)$db->prepare('UPDATE purchase_orders SET status=:status WHERE ppb_id=:ppb_id')->execute([':status'=>$appliedOrder,':ppb_id'=>$orderRow['ppb_id']]);
             $insert=$db->prepare('INSERT INTO procurement_monitoring_logs(report_id,report_item_position,spb_id,purchase_request_item_id,ppb_id,previous_request_status,applied_request_status,previous_item_status,applied_item_status,previous_order_status,applied_order_status,monitoring_payload,created_by) VALUES(:report_id,:position,:spb_id,:item_id,:ppb_id,:previous_request,:applied_request,:previous_item,:applied_item,:previous_order,:applied_order,:payload,:created_by)');
