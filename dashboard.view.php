@@ -6491,7 +6491,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             let globalData = null;
             let mapInitialized = false;
             let dashboardMapInstance = null;
-            const FLEET_STATE_KEY = 'fleetmonitor-integrated-state-v1';
             const ASSET_STATUS_PRIORITY = { READY: 1, STANDBY: 2, INSPEKSI: 3, BREAKDOWN: 4, 'ACCIDENT HOLD': 5 };
             const MASTER_LOCATION_COORDINATES = Object.freeze({
                 'Yard Duri': { lat: 1.2854300, lng: 101.2185400 },
@@ -6800,31 +6799,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 return assets[0] || null;
             };
 
-            function restoreFleetState() {
-                if (!globalData) return;
-                try {
-                    const saved = JSON.parse(localStorage.getItem(FLEET_STATE_KEY) || 'null');
-                    if (!saved || saved.version !== 1) return;
-                    const savedAssets = new Map((saved.assets || []).map(item => {
-                        const match = String(item.id || '').match(/^([A-Z]{2,5}-\d{4,5})/i);
-                        const cleanId = match ? match[1].toUpperCase() : item.id;
-                        return [cleanId, { ...item, id: cleanId }];
-                    }));
-                    globalData.assets.forEach(asset => {
-                        const override = savedAssets.get(asset.id);
-                        if (override) Object.assign(asset, override);
-                    });
-                    if (Array.isArray(saved.work_orders)) {
-                        const workOrders = new Map((globalData.work_orders || []).map(wo => [wo.woId, wo]));
-                        saved.work_orders.forEach(wo => workOrders.set(wo.woId, { ...(workOrders.get(wo.woId) || {}), ...wo }));
-                        globalData.work_orders = Array.from(workOrders.values());
-                    }
-                    if (Array.isArray(saved.inspections)) globalData.inspections = saved.inspections;
-                } catch (error) {
-                    console.warn('State integrasi tidak dapat dipulihkan:', error);
-                }
-            }
-
             function persistFleetState() {
                 if (!globalData) return;
                 try {
@@ -6844,8 +6818,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         work_orders: globalData.work_orders || [],
                         inspections: globalData.inspections || []
                     };
-                    localStorage.setItem(FLEET_STATE_KEY, JSON.stringify(stateToSave));
-
                     // Sync to Backend
                     fetch('api/sync.php', {
                         method: 'POST',
@@ -7121,7 +7093,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     }
 
                     normalizeAssetRegistry(globalData);
-                    restoreFleetState();
                     linkExistingWorkflowRecords();
                     rebuildFleetSummary();
                     if (inspectionsRes?.status === 'success' && Array.isArray(inspectionsRes.data)) {
@@ -7545,17 +7516,17 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
             function initDashboard(data) {
                 const assets = (data.assets || []).filter(a => !a.isArchived);
-                const totalUnits = assets.length || data.summary?.total_units || 0;
+                const totalUnits = assets.length;
                 const readyOpCount = assets.filter(a => a.status === 'READY' || a.status === 'OPERATING').length;
                 const standbyCount = assets.filter(a => a.status === 'STANDBY').length;
                 const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN').length;
                 const inspeksiCount = assets.filter(a => a.status === 'INSPEKSI').length;
 
                 document.getElementById('kpiTotal').textContent = totalUnits;
-                document.getElementById('kpiReady').textContent = readyOpCount || data.summary?.status_counts?.READY || 0;
-                document.getElementById('kpiStandby').textContent = standbyCount || data.summary?.status_counts?.STANDBY || 0;
-                document.getElementById('kpiBreakdown').textContent = breakdownCount || data.summary?.status_counts?.BREAKDOWN || 0;
-                document.getElementById('kpiInspeksi').textContent = inspeksiCount || data.summary?.status_counts?.INSPEKSI || 0;
+                document.getElementById('kpiReady').textContent = readyOpCount;
+                document.getElementById('kpiStandby').textContent = standbyCount;
+                document.getElementById('kpiBreakdown').textContent = breakdownCount;
+                document.getElementById('kpiInspeksi').textContent = inspeksiCount;
 
                 // Show only high priority / breakdown WOs as emergency attention cards
                 const emergencyWOs = data.work_orders

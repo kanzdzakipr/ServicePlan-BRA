@@ -10,6 +10,9 @@ $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 try {
     switch ($method) {
         case 'GET':
+            if (!api_can_manage_users(api_current_user())) {
+                api_json_response(403, ['status' => 'error', 'code' => 'FORBIDDEN', 'message' => 'Hanya administrator dapat melihat daftar pengguna.']);
+            }
             $roleId = isset($_GET['role_id']) && $_GET['role_id'] !== '' ? (int) $_GET['role_id'] : null;
             $roleName = isset($_GET['role_name']) && trim((string)$_GET['role_name']) !== '' ? trim((string)$_GET['role_name']) : null;
 
@@ -79,6 +82,14 @@ try {
             }
 
             $action = trim((string) ($input['action'] ?? 'create'));
+            $currentUser = api_current_user();
+            $targetUserId = isset($input['user_id']) ? (int) $input['user_id'] : 0;
+            if ($action === 'change_password' && $targetUserId <= 0) {
+                $targetUserId = (int) ($currentUser['id'] ?? 0);
+            }
+            if (!api_can_perform_user_action($currentUser, $action, $targetUserId)) {
+                api_json_response(403, ['status' => 'error', 'code' => 'FORBIDDEN', 'message' => 'Anda tidak berwenang mengelola akun tersebut.']);
+            }
 
             if ($action === 'create' || $action === 'add') {
                 $username = strtolower(trim((string) ($input['username'] ?? '')));

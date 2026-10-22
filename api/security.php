@@ -248,10 +248,20 @@ function api_require_authenticated(): void
 function api_builtin_permissions_for_roles(array $roleNames): array
 {
     $all = ['*'];
+    // Operational managers are not system administrators. Keep their existing
+    // operational scope, but never inherit account-management/seed privileges.
+    $manager = [
+        'dashboard.read', 'assets.read', 'assets.write', 'work_orders.read', 'work_orders.write',
+        'accidents.read', 'accidents.write', 'fuel.read', 'fuel.write', 'inspections.read',
+        'inspections.write', 'logistics.read', 'logistics.write', 'pm.read', 'pm.write',
+        'tires.read', 'tires.write', 'reports.read', 'reports.write', 'reports.approve',
+        'archive.read', 'archive.write', 'sync.write', 'cost.read', 'cost.write',
+        'scope.all_locations', 'reports.read_all',
+    ];
     $roleMap = [
         'Administrator' => $all,
-        'Asset Manager' => $all,
-        'Equipment Manager' => $all,
+        'Asset Manager' => $manager,
+        'Equipment Manager' => $manager,
         'Maintenance Planner' => [
             'dashboard.read', 'assets.read', 'assets.write', 'work_orders.read', 'work_orders.write',
             'accidents.read', 'fuel.read', 'inspections.read', 'inspections.write', 'logistics.read',
@@ -388,6 +398,24 @@ function api_has_permission(string $permission): bool
     $permissions = api_current_user()['permissions'] ?? [];
     return is_array($permissions)
         && (in_array('*', $permissions, true) || in_array($permission, $permissions, true));
+}
+
+function api_can_manage_users(array $user): bool
+{
+    $roles = $user['roles'] ?? [];
+    $permissions = $user['permissions'] ?? [];
+    return is_array($roles) && in_array('Administrator', $roles, true)
+        && is_array($permissions)
+        && (in_array('*', $permissions, true) || in_array('users.manage', $permissions, true));
+}
+
+function api_can_perform_user_action(array $user, string $action, int $targetUserId = 0): bool
+{
+    if ($action === 'change_password' && $targetUserId > 0
+        && $targetUserId === (int) ($user['id'] ?? 0)) {
+        return true; // Current password is verified by users.php before updating.
+    }
+    return api_can_manage_users($user);
 }
 
 function api_require_permission(string $permission): void
@@ -583,7 +611,9 @@ function api_route_permission(): ?string
         'report_references.php' => 'reports.read',
         'administration_recap.php' => 'reports.read',
         'archive.php' => $readWrite('archive.read', 'archive.write'),
-        'users.php' => $readWrite('dashboard.read', 'dashboard.read'),
+        // POST also supports self-service password changes. Action-level checks
+        // in users.php restrict every other operation to administrators.
+        'users.php' => $readWrite('users.manage', 'dashboard.read'),
         'sync.php' => 'sync.write',
         'seed_dummy.php' => 'admin.seed',
     ];
