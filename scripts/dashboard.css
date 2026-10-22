@@ -18921,7 +18921,7 @@ body.sl-modal-open {
     .view-section table.mobile-wide-table,
     #view-asset table.table,
     #assetTable {
-        min-width: 1050px !important;
+        min-width: 1250px !important;
     }
 
     #monitoringTable {

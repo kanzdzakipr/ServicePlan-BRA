@@ -212,6 +212,7 @@ switch ($method) {
                 INSERT INTO assets (
                     asset_id, asset_code, hull_number, alias_name, serial_number, license_plate,
                     make_model, year_manufacture, type, category, status,
+                    warranty, chassis_number,
                     current_location_id, last_hm_km, is_active,
                     current_operator_name, last_service_date, last_service_hm_km,
                     service_interval_val, service_interval_unit, daily_usage_coefficient,
@@ -220,6 +221,7 @@ switch ($method) {
                 ) VALUES (
                     :id, :code, :hull, :alias, :sn, :plate,
                     :make_model, :year, :type, :cat, :status,
+                    :warranty, :chassis,
                     :loc_id, :hm, 1,
                     :operator, :service_date, :service_meter,
                     :interval_val, :interval_unit, :daily_rate,
@@ -227,6 +229,8 @@ switch ($method) {
                     :stnk, :kir, :silo
                 )
             ");
+            $warrantyVal = trim((string) ($data['warranty'] ?? '0 HM')) ?: '0 HM';
+            $chassisVal = trim((string) ($data['chassis_number'] ?? $data['chassis'] ?? '')) ?: null;
             $stmt->execute([
                 ':id' => $assetId,
                 ':code' => $assetCode,
@@ -239,6 +243,8 @@ switch ($method) {
                 ':type' => $type,
                 ':cat' => $category,
                 ':status' => $status,
+                ':warranty' => $warrantyVal,
+                ':chassis' => $chassisVal,
                 ':loc_id' => $targetLocationId,
                 ':hm' => $lastHmKm,
                 ':operator' => $onboarding['current_operator_name'],
@@ -429,6 +435,7 @@ switch ($method) {
         $updatableFields = [
             'serial_number', 'license_plate', 'make_model',
             'year_manufacture', 'type', 'category', 'status',
+            'warranty', 'chassis_number',
             'current_location_id', 'last_hm_km'
         ];
 
@@ -438,8 +445,10 @@ switch ($method) {
         foreach ($updatableFields as $field) {
             if (array_key_exists($field, $data)) {
                 $val = $data[$field];
-                if (in_array($field, ['serial_number', 'license_plate', 'make_model'], true)) {
+                if (in_array($field, ['serial_number', 'license_plate', 'make_model', 'chassis_number'], true)) {
                     $val = (trim((string) $val) === '' || trim((string) $val) === '-') ? null : trim((string) $val);
+                } elseif ($field === 'warranty') {
+                    $val = trim((string) $val) !== '' ? trim((string) $val) : '0 HM';
                 } elseif ($field === 'year_manufacture') {
                     $val = ($val !== null && trim((string) $val) !== '') ? (int) $val : null;
                 } elseif ($field === 'current_location_id') {

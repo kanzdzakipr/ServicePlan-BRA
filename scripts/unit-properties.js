@@ -1044,7 +1044,8 @@
         listEl.innerHTML = [
             row('fa-truck', 'Tipe & Kategori Alat', asset.category || asset.type, 'fa-tag', 'Merek / Model Unit', asset.make_model),
             row('fa-barcode', 'Nomor Seri (SN)', asset.serial_number, 'fa-id-card', 'Nomor Polisi', asset.license_plate),
-            row('fa-shield-halved', 'Status Kepemilikan', asset.ownership, 'fa-building-flag', 'Cabang & Wilayah Operasi', asset.sub_group_branch),
+            row('fa-shield-halved', 'Garansi (Warranty)', asset.warranty, 'fa-fingerprint', 'Nomor Rangka (Chassis)', asset.chassis_number),
+            row('fa-building-shield', 'Status Kepemilikan', asset.ownership, 'fa-building-flag', 'Cabang & Wilayah Operasi', asset.sub_group_branch),
             row('fa-calendar-check', 'Tahun Pembuatan Unit', asset.year_manufacture, 'fa-location-dot', 'Lokasi Aktif', asset.location_name || asset.raw_location_notes),
             row('fa-gears', 'Model Mesin (Powertrain)', asset.engine_model, 'fa-code-branch', 'Transmisi & Drive Train', asset.transmission_drive_train),
             row('fa-weight-hanging', 'Kapasitas Muatan / GVW', asset.payload_gvw, 'fa-road', 'Konfigurasi Penggerak / Drive', asset.drive_configuration),

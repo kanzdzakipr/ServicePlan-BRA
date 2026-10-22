@@ -683,6 +683,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                         <th onclick="window.sortMasterAsset('hull')" style="cursor:pointer">Nomor Lambung <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('model')" style="cursor:pointer">Merek & Tahun <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('sn')" style="cursor:pointer">SN & Plat Kendaraan <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('warranty')" style="cursor:pointer">GARANSI <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('chassis')" style="cursor:pointer">NO. RANGKA <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('category')" style="cursor:pointer">Kategori <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('location')" style="cursor:pointer">Lokasi Aktif <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('completeness')" style="cursor:pointer">Kelengkapan Data <i class="fa-solid fa-sort"></i></th>
@@ -694,6 +696,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                         <th style="padding: 4px 8px;"><input type="text" id="filterAssetHull" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Lambung..." onkeyup="window.filterMasterAsset('hull', this.value)"></th>
                                         <th style="padding: 4px 8px;"><input type="text" id="filterAssetModel" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Merek/Tahun..." onkeyup="window.filterMasterAsset('model', this.value)"></th>
                                         <th style="padding: 4px 8px;"><input type="text" id="filterAssetSn" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter SN/Plat..." onkeyup="window.filterMasterAsset('sn', this.value)"></th>
+                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetWarranty" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Garansi..." onkeyup="window.filterMasterAsset('warranty', this.value)"></th>
+                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetChassis" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter No. Rangka..." onkeyup="window.filterMasterAsset('chassis', this.value)"></th>
                                         <th style="padding: 4px 8px;">
                                             <select id="filterAssetCat" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('category', this.value)">
                                                 <option value="">Semua</option>
@@ -3885,6 +3889,17 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
                     <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Garansi (Warranty)</label>
+                        <input type="text" id="na-warranty" placeholder="Misal: 0 HM, 3000 HM, dsb" class="form-control">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Nomor Rangka (Chassis Number)</label>
+                        <input type="text" id="na-chassis" placeholder="Nomor Rangka Kendaraan" class="form-control">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
                         <label style="font-weight:600; font-size:0.8rem;">Lokasi Operasional / Site</label>
                         <select id="na-loc" class="form-control">
                             <option value="">Memuat lokasi dari database...</option>
@@ -3907,19 +3922,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <input type="number" id="na-hm" placeholder="0.00" step="0.1" value="0.00" class="form-control">
                 </div>
 
-                <h3 style="font-size:0.95rem;margin:18px 0 10px;">Operator dan Preventive Maintenance</h3>
-                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
-                    <label>Operator / PIC awal<input id="na-operator" class="form-control" maxlength="150" placeholder="Nama operator"></label>
-                    <label>Mulai bertugas<input id="na-operator-start" type="date" class="form-control"></label>
-                    <label>Shift operator<input id="na-operator-shift" class="form-control" maxlength="50" placeholder="Contoh: Day Shift"></label>
-                    <label>Waktu servis terakhir<input id="na-last-service-date" type="datetime-local" class="form-control" oninput="window.updateAssetServiceEstimate()"></label>
-                    <label>Meter saat servis terakhir<input id="na-last-service-hm" type="number" min="0" step="0.01" class="form-control" oninput="window.updateAssetServiceEstimate()"></label>
-                    <label>Interval servis<input id="na-service-interval" type="number" min="1" step="1" class="form-control" placeholder="250 / 500 / 10000" oninput="window.updateAssetServiceEstimate()"></label>
-                    <label>Jenis meter<select id="na-service-unit" class="form-control" onchange="window.updateAssetServiceEstimate()"><option value="HM">HM</option><option value="KM">KM</option></select></label>
-                    <label>Pemakaian rata-rata per hari<input id="na-daily-rate" type="number" min="0.01" step="0.01" class="form-control" placeholder="Contoh: 7 HM/hari" oninput="window.updateAssetServiceEstimate()"></label>
-                </div>
-                <div id="na-service-estimate" style="margin:10px 0;padding:8px;background:#f0f9ff;border-radius:6px;">Target dan estimasi: belum tersedia</div>
-                <label>Riwayat servis sebelumnya (opsional; satu baris per servis: tanggal,meter,jenis)<textarea id="na-service-history" class="form-control" rows="3" placeholder="2026-01-10,750,PS 250&#10;2026-04-10,1000,PS 500"></textarea></label>
                 <h3 style="font-size:0.95rem;margin:18px 0 10px;">Legalitas dan Dokumentasi</h3>
                 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;">
                     <label>STNK berlaku sampai<input id="na-stnk" type="date" class="form-control"></label>
@@ -4004,6 +4006,17 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div>
                         <label style="font-weight:600; font-size:0.8rem;">Nomor Pelat Kendaraan</label>
                         <input type="text" id="ea-plate" placeholder="Nomor Pelat Kendaraan" class="form-control">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Garansi (Warranty)</label>
+                        <input type="text" id="ea-warranty" placeholder="Misal: 0 HM, 3000 HM, dsb" class="form-control">
+                    </div>
+                    <div>
+                        <label style="font-weight:600; font-size:0.8rem;">Nomor Rangka (Chassis Number)</label>
+                        <input type="text" id="ea-chassis" placeholder="Nomor Rangka Kendaraan" class="form-control">
                     </div>
                 </div>
 
@@ -7027,7 +7040,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                     globalData = Array.isArray(apiInitData?.assets) ? apiInitData : null;
                     if (!globalData || !Array.isArray(globalData.assets)) {
-                        throw new Error('Data Master Asset tidak dapat dimuat dari API terproteksi');
+                        const fallbackData = await fetchJsonSafely('data.json');
+                        if (fallbackData && Array.isArray(fallbackData.assets)) {
+                            globalData = fallbackData;
+                        } else {
+                            throw new Error('Data Master Asset tidak dapat dimuat dari API terproteksi');
+                        }
                     }
 
                     // Enrich the initialization payload with spatial asset fields.
@@ -7792,7 +7810,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.masterAssetSort = { col: null, dir: 'asc' };
-            window.masterAssetFilters = { id: '', model: '', sn: '', category: '', location: '', completeness: '', status: '' };
+            window.masterAssetFilters = { id: '', hull: '', model: '', sn: '', warranty: '', chassis: '', category: '', location: '', completeness: '', status: '', query3Param: '' };
 
             window.getAssetCompleteness = function(asset) {
                 if (!asset) return { isComplete: false, missing: ['Data tidak valid'], label: 'Belum Lengkap' };
@@ -7904,8 +7922,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.resetMasterAssetFilters = function() {
-                window.masterAssetFilters = { id: '', hull: '', model: '', sn: '', category: '', location: '', completeness: '', status: '', query3Param: '' };
-                const ids = ['filterAssetId', 'filterAssetHull', 'filterAssetModel', 'filterAssetSn', 'asset3ParamSearch'];
+                window.masterAssetFilters = { id: '', hull: '', model: '', sn: '', warranty: '', chassis: '', category: '', location: '', completeness: '', status: '', query3Param: '' };
+                const ids = ['filterAssetId', 'filterAssetHull', 'filterAssetModel', 'filterAssetSn', 'filterAssetWarranty', 'filterAssetChassis', 'asset3ParamSearch'];
                 ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
                 const selects = ['filterAssetCat', 'filterAssetLoc', 'filterAssetComp', 'filterAssetStat'];
                 selects.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -7937,6 +7955,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (f.hull && !ident.hull.toLowerCase().includes(f.hull.toLowerCase())) return false;
                     if (f.model && !ident.model.toLowerCase().includes(f.model.toLowerCase()) && !ident.year.includes(f.model)) return false;
                     if (f.sn && !ident.sn.toLowerCase().includes(f.sn.toLowerCase()) && !ident.plate.toLowerCase().includes(f.sn.toLowerCase())) return false;
+                    if (f.warranty && !(a.warranty || '0 HM').toLowerCase().includes(f.warranty.toLowerCase())) return false;
+                    if (f.chassis && !(a.chassis_number || a.chassis || '').toLowerCase().includes(f.chassis.toLowerCase())) return false;
                     if (f.location && !(a.location || '').toLowerCase().includes(f.location.toLowerCase())) return false;
                     if (f.category && f.category !== a.category) return false;
                     if (f.completeness) {
@@ -7974,6 +7994,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         } else if (window.masterAssetSort.col === 'sn') {
                             valA = identA.sn;
                             valB = identB.sn;
+                        } else if (window.masterAssetSort.col === 'warranty') {
+                            valA = a.warranty || '0 HM';
+                            valB = b.warranty || '0 HM';
+                        } else if (window.masterAssetSort.col === 'chassis') {
+                            valA = a.chassis_number || a.chassis || '';
+                            valB = b.chassis_number || b.chassis || '';
                         } else if (window.masterAssetSort.col === 'completeness') {
                             valA = complA.isComplete ? '1' : '0';
                             valB = complB.isComplete ? '1' : '0';
@@ -7986,7 +8012,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 if (assets.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 25px; color: var(--text-muted);"><i class="fa-solid fa-filter" style="margin-right:6px;"></i> Tidak ada unit yang cocok dengan filter kelengkapan/pencarian saat ini.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 25px; color: var(--text-muted);"><i class="fa-solid fa-filter" style="margin-right:6px;"></i> Tidak ada unit yang cocok dengan filter kelengkapan/pencarian saat ini.</td></tr>';
                     return;
                 }
 
@@ -8006,6 +8032,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const modelDisplay = ident.model !== 'Belum tersedia'
                         ? `<div style="font-weight:600; font-size:0.82rem; color:var(--text-main);">${escapeHtml(ident.model)}</div><div style="font-size:0.72rem; color:var(--text-muted);">Tahun: ${escapeHtml(ident.year)}</div>`
                         : `<span style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">Belum tersedia</span>`;
+
+                    const garansiDisplay = (asset.warranty && asset.warranty !== '0 HM')
+                        ? `<span class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; font-weight:700; font-family:var(--font-mono); font-size:0.75rem; white-space:nowrap;"><i class="fa-solid fa-shield-halved" style="margin-right:3px;"></i>${escapeHtml(asset.warranty)}</span>`
+                        : `<span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted); font-weight:600;">${escapeHtml(asset.warranty || '0 HM')}</span>`;
+
+                    const chassisDisplay = (asset.chassis_number && asset.chassis_number !== '-')
+                        ? `<span style="font-family:var(--font-mono); font-weight:600; font-size:0.75rem; color:#1e293b; background:#f1f5f9; padding:2px 6px; border-radius:4px; border:1px solid #e2e8f0; display:inline-block; letter-spacing:0.3px; white-space:nowrap;">${escapeHtml(asset.chassis_number)}</span>`
+                        : `<span style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">-</span>`;
 
                     const complBadge = compl.isComplete
                         ? `<span class="badge badge-success" style="font-size:0.72rem; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-circle-check"></i> Lengkap</span>`
@@ -8044,6 +8078,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <td>
                             <div style="font-size:0.75rem; color:var(--text-muted);">SN: ${snDisplay}</div>
                             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Plat: ${plateDisplay}</div>
+                        </td>
+                        <td>
+                            ${garansiDisplay}
+                        </td>
+                        <td>
+                            ${chassisDisplay}
                         </td>
                         <td>
                             <span class="badge badge-info" style="font-size:0.72rem;">${escapeHtml(asset.category || 'Other')}</span>
@@ -8465,6 +8505,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 document.getElementById('ea-sn').value = snVal;
 
                 document.getElementById('ea-plate').value = (assetObj.license_plate && assetObj.license_plate !== '-') ? assetObj.license_plate : '';
+                if (document.getElementById('ea-warranty')) document.getElementById('ea-warranty').value = assetObj.warranty || '0 HM';
+                if (document.getElementById('ea-chassis')) document.getElementById('ea-chassis').value = (assetObj.chassis_number && assetObj.chassis_number !== '-') ? assetObj.chassis_number : '';
 
                 const locSelect = document.getElementById('ea-loc');
                 if (locSelect) {
@@ -8859,6 +8901,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const year = document.getElementById('na-year').value.trim();
                 const sn = document.getElementById('na-sn').value.trim();
                 const plate = document.getElementById('na-plate').value.trim();
+                const warranty = document.getElementById('na-warranty') ? document.getElementById('na-warranty').value.trim() : '0 HM';
+                const chassisNumber = document.getElementById('na-chassis') ? document.getElementById('na-chassis').value.trim() : '';
                 const locSelect = document.getElementById('na-loc');
                 const locId = locSelect ? locSelect.value : '';
                 const locName = locSelect && locSelect.selectedIndex >= 0 ? locSelect.options[locSelect.selectedIndex].text : 'Yard';
@@ -8899,25 +8943,28 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                 try {
                     const onboardingInput = {
-                        current_operator_name: document.getElementById('na-operator').value.trim() || null,
-                        operator_start_date: document.getElementById('na-operator-start').value || null,
-                        operator_shift: document.getElementById('na-operator-shift').value.trim() || null,
-                        last_service_date: document.getElementById('na-last-service-date').value || null,
-                        last_service_hm_km: document.getElementById('na-last-service-hm').value || null,
-                        service_interval_val: document.getElementById('na-service-interval').value || null,
-                        service_interval_unit: document.getElementById('na-service-unit').value,
-                        daily_usage_coefficient: document.getElementById('na-daily-rate').value || null,
-                        legal_stnk_expiry: document.getElementById('na-stnk').value || null,
-                        legal_kir_expiry: document.getElementById('na-kir').value || null,
-                        legal_silo_expiry: document.getElementById('na-silo').value || null
+                        current_operator_name: document.getElementById('na-operator')?.value?.trim() || null,
+                        operator_start_date: document.getElementById('na-operator-start')?.value || null,
+                        operator_shift: document.getElementById('na-operator-shift')?.value?.trim() || null,
+                        last_service_date: document.getElementById('na-last-service-date')?.value || null,
+                        last_service_hm_km: document.getElementById('na-last-service-hm')?.value || null,
+                        service_interval_val: document.getElementById('na-service-interval')?.value || null,
+                        service_interval_unit: document.getElementById('na-service-unit')?.value || 'HM',
+                        daily_usage_coefficient: document.getElementById('na-daily-rate')?.value || null,
+                        legal_stnk_expiry: document.getElementById('na-stnk')?.value || null,
+                        legal_kir_expiry: document.getElementById('na-kir')?.value || null,
+                        legal_silo_expiry: document.getElementById('na-silo')?.value || null
                     };
-                    const photoFiles = Array.from(document.getElementById('na-photos').files || []);
-                    const pdfFile = document.getElementById('na-service-pdf').files[0] || null;
-                    const historicalServices = document.getElementById('na-service-history').value.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
-                        const parts = line.split(',').map(part => part.trim());
-                        if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) throw new Error('Riwayat servis harus ditulis tanggal,meter,jenis per baris.');
-                        return { date: parts[0], meter: parts[1], type: parts[2] };
-                    });
+                    const photoFiles = Array.from(document.getElementById('na-photos')?.files || []);
+                    const pdfFile = document.getElementById('na-service-pdf')?.files?.[0] || null;
+                    const historyEl = document.getElementById('na-service-history');
+                    const historicalServices = historyEl && historyEl.value
+                        ? historyEl.value.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
+                            const parts = line.split(',').map(part => part.trim());
+                            if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) throw new Error('Riwayat servis harus ditulis tanggal,meter,jenis per baris.');
+                            return { date: parts[0], meter: parts[1], type: parts[2] };
+                        })
+                        : [];
                     const payload = {
                         asset_id: id,
                         asset_code: id,
@@ -8929,6 +8976,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         year_manufacture: year ? parseInt(year, 10) : null,
                         serial_number: sn || null,
                         license_plate: plate || null,
+                        warranty: warranty || '0 HM',
+                        chassis_number: chassisNumber || null,
                         current_location_id: locId ? parseInt(locId, 10) : null,
                         last_hm_km: hm ? parseFloat(hm) : 0.0,
                         ...onboardingInput,
@@ -8966,6 +9015,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             year_manufacture: year ? parseInt(year, 10) : null,
                             serial_number: sn || null,
                             license_plate: plate || null,
+                            warranty: warranty || '0 HM',
+                            chassis_number: chassisNumber || null,
                             current_location_id: locId ? parseInt(locId, 10) : null,
                             location: locName,
                             location_name: locName,
@@ -8987,8 +9038,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         document.getElementById('na-year').value = '';
                         document.getElementById('na-sn').value = '';
                         document.getElementById('na-plate').value = '';
+                        if (document.getElementById('na-warranty')) document.getElementById('na-warranty').value = '';
+                        if (document.getElementById('na-chassis')) document.getElementById('na-chassis').value = '';
                         document.getElementById('na-hm').value = '0.00';
-                        for (const field of ['na-hull','na-operator','na-operator-start','na-operator-shift','na-last-service-date','na-last-service-hm','na-service-interval','na-daily-rate','na-stnk','na-kir','na-silo','na-photos','na-service-pdf','na-service-history']) document.getElementById(field).value = '';
+                        for (const field of ['na-hull','na-operator','na-operator-start','na-operator-shift','na-last-service-date','na-last-service-hm','na-service-interval','na-daily-rate','na-stnk','na-kir','na-silo','na-photos','na-service-pdf','na-service-history']) {
+                            const el = document.getElementById(field);
+                            if (el) el.value = '';
+                        }
                         document.getElementById('na-photo-preview').replaceChildren();
 
                         closeModal('modalNewAsset');
@@ -9030,6 +9086,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const year = document.getElementById('ea-year').value.trim();
                 const sn = document.getElementById('ea-sn').value.trim();
                 const plate = document.getElementById('ea-plate').value.trim();
+                const warranty = document.getElementById('ea-warranty') ? document.getElementById('ea-warranty').value.trim() : '0 HM';
+                const chassisNumber = document.getElementById('ea-chassis') ? document.getElementById('ea-chassis').value.trim() : '';
                 const locSelect = document.getElementById('ea-loc');
                 const locId = locSelect ? locSelect.value : '';
                 const locName = locSelect && locSelect.selectedIndex >= 0 ? locSelect.options[locSelect.selectedIndex].text : '';
@@ -9071,6 +9129,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         year_manufacture: year ? parseInt(year, 10) : null,
                         serial_number: sn,
                         license_plate: plate,
+                        warranty: warranty || '0 HM',
+                        chassis_number: chassisNumber || null,
                         current_location_id: locId ? parseInt(locId, 10) : null,
                         last_hm_km: hm ? parseFloat(hm) : 0.0,
                         current_operator_name: document.getElementById('ea-operator').value.trim() || null,
@@ -9103,6 +9163,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             item.year_manufacture = year ? parseInt(year, 10) : null;
                             item.serial_number = sn || null;
                             item.license_plate = plate || null;
+                            item.warranty = warranty || '0 HM';
+                            item.chassis_number = chassisNumber || null;
                             if (locId) item.current_location_id = parseInt(locId, 10);
                             if (locName) item.location = locName;
                             item.last_hm_km = hm ? parseFloat(hm) : 0.0;

@@ -1,0 +1,1694 @@
+{
+    "CS-41001": {
+        "id": "CS-41001",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00001": {
+        "id": "DT-00001",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2RJX25335",
+        "method": "Hull == ID"
+    },
+    "DT-00003": {
+        "id": "DT-00003",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2RJX25622",
+        "method": "Hull == ID"
+    },
+    "DT-00004": {
+        "id": "DT-00004",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2RJX26017",
+        "method": "Hull == ID"
+    },
+    "DT-00005": {
+        "id": "DT-00005",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2RJX26020",
+        "method": "Hull == ID"
+    },
+    "DT-00006": {
+        "id": "DT-00006",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2RJX26024",
+        "method": "Hull == ID"
+    },
+    "DT-00008": {
+        "id": "DT-00008",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2RJX26028",
+        "method": "Hull == ID"
+    },
+    "DT-00009": {
+        "id": "DT-00009",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2RJX26031",
+        "method": "Hull == ID"
+    },
+    "DT-00010": {
+        "id": "DT-00010",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2RJX26063",
+        "method": "Hull == ID"
+    },
+    "DT-00011": {
+        "id": "DT-00011",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00012": {
+        "id": "DT-00012",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00013": {
+        "id": "DT-00013",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00014": {
+        "id": "DT-00014",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00015": {
+        "id": "DT-00015",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00016": {
+        "id": "DT-00016",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00017": {
+        "id": "DT-00017",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00019": {
+        "id": "DT-00019",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00021": {
+        "id": "DT-00021",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00022": {
+        "id": "DT-00022",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00023": {
+        "id": "DT-00023",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00024": {
+        "id": "DT-00024",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00025": {
+        "id": "DT-00025",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00026": {
+        "id": "DT-00026",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00027": {
+        "id": "DT-00027",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00028": {
+        "id": "DT-00028",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00029": {
+        "id": "DT-00029",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00030": {
+        "id": "DT-00030",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-00031": {
+        "id": "DT-00031",
+        "garansi": "0 HM",
+        "chassis": "MJEFM2PN1KJM12654",
+        "method": "Hull == ID"
+    },
+    "DT-00032": {
+        "id": "DT-00032",
+        "garansi": "0 HM",
+        "chassis": "MJEFM2PN1KJM12614",
+        "method": "Hull == ID"
+    },
+    "DT-00034": {
+        "id": "DT-00034",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX19886",
+        "method": "KodePad == IdPad"
+    },
+    "DT-00035": {
+        "id": "DT-00035",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX19891",
+        "method": "KodePad == IdPad"
+    },
+    "DT-00037": {
+        "id": "DT-00037",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX19886",
+        "method": "Hull == ID"
+    },
+    "DT-00038": {
+        "id": "DT-00038",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX19891",
+        "method": "Hull == ID"
+    },
+    "DT-00039": {
+        "id": "DT-00039",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX19889",
+        "method": "Hull == ID"
+    },
+    "DT-00040": {
+        "id": "DT-00040",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX19888",
+        "method": "Hull == ID"
+    },
+    "DT-00041": {
+        "id": "DT-00041",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX19887",
+        "method": "Hull == ID"
+    },
+    "DT-00042": {
+        "id": "DT-00042",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX20089",
+        "method": "Hull == ID"
+    },
+    "DT-00043": {
+        "id": "DT-00043",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX20092",
+        "method": "Hull == ID"
+    },
+    "DT-00044": {
+        "id": "DT-00044",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX20093",
+        "method": "Hull == ID"
+    },
+    "DT-00045": {
+        "id": "DT-00045",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX20094",
+        "method": "Hull == ID"
+    },
+    "DT-00046": {
+        "id": "DT-00046",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX20088",
+        "method": "Hull == ID"
+    },
+    "DT-00047": {
+        "id": "DT-00047",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE20266",
+        "method": "Hull == ID"
+    },
+    "DT-00048": {
+        "id": "DT-00048",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE20967",
+        "method": "Hull == ID"
+    },
+    "DT-00049": {
+        "id": "DT-00049",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE20289",
+        "method": "Hull == ID"
+    },
+    "DT-00050": {
+        "id": "DT-00050",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE20969",
+        "method": "Hull == ID"
+    },
+    "DT-00052": {
+        "id": "DT-00052",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE24221",
+        "method": "Hull == ID"
+    },
+    "DT-00053": {
+        "id": "DT-00053",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE24222",
+        "method": "Hull == ID"
+    },
+    "DT-00054": {
+        "id": "DT-00054",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE24223",
+        "method": "Hull == ID"
+    },
+    "DT-00055": {
+        "id": "DT-00055",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1GJE13710",
+        "method": "Hull == ID"
+    },
+    "DT-00056": {
+        "id": "DT-00056",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1HJE17641",
+        "method": "Hull == ID"
+    },
+    "DT-00057": {
+        "id": "DT-00057",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE20291",
+        "method": "Hull == ID"
+    },
+    "DT-00058": {
+        "id": "DT-00058",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE20106",
+        "method": "Hull == ID"
+    },
+    "DT-00059": {
+        "id": "DT-00059",
+        "garansi": "0 HM",
+        "chassis": "MHMFN62FWKK001109",
+        "method": "Hull == ID"
+    },
+    "DT-00060": {
+        "id": "DT-00060",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1KJE28716",
+        "method": "Hull == ID"
+    },
+    "DT-00061": {
+        "id": "DT-00061",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE22567",
+        "method": "Hull == ID"
+    },
+    "DT-00062": {
+        "id": "DT-00062",
+        "garansi": "0 HM",
+        "chassis": "MJEFM2PN1KJM12670",
+        "method": "Hull == ID"
+    },
+    "DT-00063": {
+        "id": "DT-00063",
+        "garansi": "0 HM",
+        "chassis": "MJEFM2PN1KJM12668",
+        "method": "Hull == ID"
+    },
+    "DT-00064": {
+        "id": "DT-00064",
+        "garansi": "0 HM",
+        "chassis": "MJEFM2PN1KJM12669",
+        "method": "Hull == ID"
+    },
+    "DT-00065": {
+        "id": "DT-00065",
+        "garansi": "0 HM",
+        "chassis": "MJEFM2PN1KJM12648",
+        "method": "Hull == ID"
+    },
+    "DT-00071": {
+        "id": "DT-00071",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1HJE18645",
+        "method": "Hull == ID"
+    },
+    "DT-00072": {
+        "id": "DT-00072",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1KJE30436",
+        "method": "Hull == ID"
+    },
+    "DT-00073": {
+        "id": "DT-00073",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1HJE18646",
+        "method": "Hull == ID"
+    },
+    "DT-00074": {
+        "id": "DT-00074",
+        "garansi": "0 HM",
+        "chassis": "MHHCWZ30GKK809994",
+        "method": "Hull == ID"
+    },
+    "DT-00119": {
+        "id": "DT-00119",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00120": {
+        "id": "DT-00120",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00121": {
+        "id": "DT-00121",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00122": {
+        "id": "DT-00122",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00123": {
+        "id": "DT-00123",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00124": {
+        "id": "DT-00124",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00125": {
+        "id": "DT-00125",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00126": {
+        "id": "DT-00126",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00127": {
+        "id": "DT-00127",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00128": {
+        "id": "DT-00128",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00129": {
+        "id": "DT-00129",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00130": {
+        "id": "DT-00130",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00131": {
+        "id": "DT-00131",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "DT-00132": {
+        "id": "DT-00132",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00133": {
+        "id": "DT-00133",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00134": {
+        "id": "DT-00134",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00135": {
+        "id": "DT-00135",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00136": {
+        "id": "DT-00136",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00137": {
+        "id": "DT-00137",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00138": {
+        "id": "DT-00138",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00139": {
+        "id": "DT-00139",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00140": {
+        "id": "DT-00140",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00141": {
+        "id": "DT-00141",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00142": {
+        "id": "DT-00142",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00143": {
+        "id": "DT-00143",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00144": {
+        "id": "DT-00144",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00145": {
+        "id": "DT-00145",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00146": {
+        "id": "DT-00146",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00147": {
+        "id": "DT-00147",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00148": {
+        "id": "DT-00148",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE24221",
+        "method": "Plate match"
+    },
+    "DT-00149": {
+        "id": "DT-00149",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE24222",
+        "method": "Plate match"
+    },
+    "DT-00150": {
+        "id": "DT-00150",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1JJE24223",
+        "method": "Plate match"
+    },
+    "DT-00151": {
+        "id": "DT-00151",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1GJE13710",
+        "method": "Plate match"
+    },
+    "DT-00152": {
+        "id": "DT-00152",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1HJE17641",
+        "method": "Plate match"
+    },
+    "DT-00153": {
+        "id": "DT-00153",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00154": {
+        "id": "DT-00154",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00155": {
+        "id": "DT-00155",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00156": {
+        "id": "DT-00156",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00157": {
+        "id": "DT-00157",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00158": {
+        "id": "DT-00158",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00159": {
+        "id": "DT-00159",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-00160": {
+        "id": "DT-00160",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1HJE18646",
+        "method": "Plate match"
+    },
+    "DT-00161": {
+        "id": "DT-00161",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JN1HJE18645",
+        "method": "Plate match"
+    },
+    "DT-00162": {
+        "id": "DT-00162",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX20089",
+        "method": "Plate match"
+    },
+    "DT-00163": {
+        "id": "DT-00163",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00164": {
+        "id": "DT-00164",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00165": {
+        "id": "DT-00165",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00166": {
+        "id": "DT-00166",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX20088",
+        "method": "Plate match"
+    },
+    "DT-00167": {
+        "id": "DT-00167",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2RJX25335",
+        "method": "Plate match"
+    },
+    "DT-00168": {
+        "id": "DT-00168",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00169": {
+        "id": "DT-00169",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00170": {
+        "id": "DT-00170",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX20094",
+        "method": "Plate match"
+    },
+    "DT-00171": {
+        "id": "DT-00171",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": "MJEFM8JN2PJX20093",
+        "method": "Plate match"
+    },
+    "DT-00172": {
+        "id": "DT-00172",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00173": {
+        "id": "DT-00173",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00174": {
+        "id": "DT-00174",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00175": {
+        "id": "DT-00175",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00176": {
+        "id": "DT-00176",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00177": {
+        "id": "DT-00177",
+        "garansi": "0 HM",
+        "chassis": "MHCNMR81HPJ122145",
+        "method": "Plate match"
+    },
+    "DT-00178": {
+        "id": "DT-00178",
+        "garansi": "0 HM",
+        "chassis": "MHCNMR81HPJ116468",
+        "method": "Plate match"
+    },
+    "DT-00179": {
+        "id": "DT-00179",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00180": {
+        "id": "DT-00180",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00181": {
+        "id": "DT-00181",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00182": {
+        "id": "DT-00182",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00183": {
+        "id": "DT-00183",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00184": {
+        "id": "DT-00184",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00185": {
+        "id": "DT-00185",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00186": {
+        "id": "DT-00186",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00187": {
+        "id": "DT-00187",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00188": {
+        "id": "DT-00188",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00189": {
+        "id": "DT-00189",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00190": {
+        "id": "DT-00190",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00191": {
+        "id": "DT-00191",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-00192": {
+        "id": "DT-00192",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-04001": {
+        "id": "DT-04001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04012": {
+        "id": "DT-04012",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04024": {
+        "id": "DT-04024",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04025": {
+        "id": "DT-04025",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04029": {
+        "id": "DT-04029",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04030": {
+        "id": "DT-04030",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04032": {
+        "id": "DT-04032",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04036": {
+        "id": "DT-04036",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04037": {
+        "id": "DT-04037",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04038": {
+        "id": "DT-04038",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04040": {
+        "id": "DT-04040",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04042": {
+        "id": "DT-04042",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04044": {
+        "id": "DT-04044",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04048": {
+        "id": "DT-04048",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04053": {
+        "id": "DT-04053",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-04054": {
+        "id": "DT-04054",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-04055": {
+        "id": "DT-04055",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-04056": {
+        "id": "DT-04056",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-04057": {
+        "id": "DT-04057",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-04058": {
+        "id": "DT-04058",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "DT-04060": {
+        "id": "DT-04060",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-04061": {
+        "id": "DT-04061",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-04062": {
+        "id": "DT-04062",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-04063": {
+        "id": "DT-04063",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-04064": {
+        "id": "DT-04064",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-04065": {
+        "id": "DT-04065",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DT-41001": {
+        "id": "DT-41001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-41002": {
+        "id": "DT-41002",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-41003": {
+        "id": "DT-41003",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-41004": {
+        "id": "DT-41004",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DT-41005": {
+        "id": "DT-41005",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DZ-00001": {
+        "id": "DZ-00001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DZ-00002": {
+        "id": "DZ-00002",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DZ-00003": {
+        "id": "DZ-00003",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DZ-00004": {
+        "id": "DZ-00004",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DZ-00005": {
+        "id": "DZ-00005",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DZ-00006": {
+        "id": "DZ-00006",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "DZ-00007": {
+        "id": "DZ-00007",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DZ-00008": {
+        "id": "DZ-00008",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DZ-00009": {
+        "id": "DZ-00009",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "DZ-00010": {
+        "id": "DZ-00010",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "DZ-00011": {
+        "id": "DZ-00011",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "EXC-00001": {
+        "id": "EXC-00001",
+        "garansi": "4000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00002": {
+        "id": "EXC-00002",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00003": {
+        "id": "EXC-00003",
+        "garansi": "6000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00004": {
+        "id": "EXC-00004",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00005": {
+        "id": "EXC-00005",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00006": {
+        "id": "EXC-00006",
+        "garansi": "0 HM",
+        "chassis": "MHCNMR81HPJ117832",
+        "method": "Plate match"
+    },
+    "EXC-00007": {
+        "id": "EXC-00007",
+        "garansi": "6000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00008": {
+        "id": "EXC-00008",
+        "garansi": "10000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00009": {
+        "id": "EXC-00009",
+        "garansi": "4000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00010": {
+        "id": "EXC-00010",
+        "garansi": "Warranty (Tidak Ada HM)",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "EXC-00011": {
+        "id": "EXC-00011",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "EXC-00012": {
+        "id": "EXC-00012",
+        "garansi": "4000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00013": {
+        "id": "EXC-00013",
+        "garansi": "10000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00014": {
+        "id": "EXC-00014",
+        "garansi": "6000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "EXC-00015": {
+        "id": "EXC-00015",
+        "garansi": "4000 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "EXC-00016": {
+        "id": "EXC-00016",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "EXC-00017": {
+        "id": "EXC-00017",
+        "garansi": "4000 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "EXC-00018": {
+        "id": "EXC-00018",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "EXC-00019": {
+        "id": "EXC-00019",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "EXC-00020": {
+        "id": "EXC-00020",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "EXC-00022": {
+        "id": "EXC-00022",
+        "garansi": "4000 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "EXC-06001": {
+        "id": "EXC-06001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "EXC-06004": {
+        "id": "EXC-06004",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "EXC-06006": {
+        "id": "EXC-06006",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "EXC-31001": {
+        "id": "EXC-31001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "EXC-41001": {
+        "id": "EXC-41001",
+        "garansi": "4000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "FBT-00001": {
+        "id": "FBT-00001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "FBT-00002": {
+        "id": "FBT-00002",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "FBT-00003": {
+        "id": "FBT-00003",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "FBT-00004": {
+        "id": "FBT-00004",
+        "garansi": "0 HM",
+        "chassis": "MJEFM8JNKCJM34628",
+        "method": "Plate match"
+    },
+    "FBT-00005": {
+        "id": "FBT-00005",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "FBT-00006": {
+        "id": "FBT-00006",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "FBT-00007": {
+        "id": "FBT-00007",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "FBT-00008": {
+        "id": "FBT-00008",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "FBT-31001": {
+        "id": "FBT-31001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "FBT-31002": {
+        "id": "FBT-31002",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "FBT-31003": {
+        "id": "FBT-31003",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "FBT-31004": {
+        "id": "FBT-31004",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "FBT-41001": {
+        "id": "FBT-41001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "FTK-00001": {
+        "id": "FTK-00001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "LV-00028": {
+        "id": "LV-00028",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD0N1135269",
+        "method": "Plate match"
+    },
+    "LV-00029": {
+        "id": "LV-00029",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD8N1136492",
+        "method": "Plate match"
+    },
+    "LV-00030": {
+        "id": "LV-00030",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD9N1136128",
+        "method": "Plate match"
+    },
+    "LV-00031": {
+        "id": "LV-00031",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD6N1137995",
+        "method": "Plate match"
+    },
+    "LV-00032": {
+        "id": "LV-00032",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "LV-00033": {
+        "id": "LV-00033",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD4N1138532",
+        "method": "Plate match"
+    },
+    "LV-00034": {
+        "id": "LV-00034",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "LV-00035": {
+        "id": "LV-00035",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CDGN1137771",
+        "method": "Plate match"
+    },
+    "LV-00036": {
+        "id": "LV-00036",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD7N1137794",
+        "method": "Plate match"
+    },
+    "LV-00037": {
+        "id": "LV-00037",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD7N1138508",
+        "method": "Plate match"
+    },
+    "LV-00038": {
+        "id": "LV-00038",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD2N1137539",
+        "method": "Plate match"
+    },
+    "LV-00039": {
+        "id": "LV-00039",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "LV-00040": {
+        "id": "LV-00040",
+        "garansi": "0 HM",
+        "chassis": "MROKB8CD7N1137486",
+        "method": "Plate match"
+    },
+    "LV-00041": {
+        "id": "LV-00041",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD8N1137836",
+        "method": "Plate match"
+    },
+    "LV-00042": {
+        "id": "LV-00042",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CDIN1138214",
+        "method": "Plate match"
+    },
+    "LV-00043": {
+        "id": "LV-00043",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "LV-00044": {
+        "id": "LV-00044",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "LV-00045": {
+        "id": "LV-00045",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "LV-00046": {
+        "id": "LV-00046",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "LV-00047": {
+        "id": "LV-00047",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "LV-00048": {
+        "id": "LV-00048",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "LV-00049": {
+        "id": "LV-00049",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "LV-00050": {
+        "id": "LV-00050",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "LV-00051": {
+        "id": "LV-00051",
+        "garansi": "0 HM",
+        "chassis": "MR0KB8CD9N1136128",
+        "method": "Plate match"
+    },
+    "MG-00004": {
+        "id": "MG-00004",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "HullPad == IdPad"
+    },
+    "MG-00005": {
+        "id": "MG-00005",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "ML-00002": {
+        "id": "ML-00002",
+        "garansi": "0 HM",
+        "chassis": "MHCNMR81HPJ117832",
+        "method": "Plate match"
+    },
+    "PF-00001": {
+        "id": "PF-00001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "PF-00002": {
+        "id": "PF-00002",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "PF-00003": {
+        "id": "PF-00003",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "PF-00004": {
+        "id": "PF-00004",
+        "garansi": "3000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "PF-00005": {
+        "id": "PF-00005",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "PF-00006": {
+        "id": "PF-00006",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "PF-00007": {
+        "id": "PF-00007",
+        "garansi": "2000 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "PF-00008": {
+        "id": "PF-00008",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "PF-00010": {
+        "id": "PF-00010",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "PF-00011": {
+        "id": "PF-00011",
+        "garansi": "3000 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "PF-00012": {
+        "id": "PF-00012",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "PF-00013": {
+        "id": "PF-00013",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "PF-00014": {
+        "id": "PF-00014",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "PF-00015": {
+        "id": "PF-00015",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "PF-00016": {
+        "id": "PF-00016",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "PF-41001": {
+        "id": "PF-41001",
+        "garansi": "2000 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "PM-00002": {
+        "id": "PM-00002",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "PM-00004": {
+        "id": "PM-00004",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "PM-41002": {
+        "id": "PM-41002",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Plate match"
+    },
+    "RM-00001": {
+        "id": "RM-00001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "RM-00002": {
+        "id": "RM-00002",
+        "garansi": "6000 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "RM-00003": {
+        "id": "RM-00003",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "RM-41001": {
+        "id": "RM-41001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "SB-00001": {
+        "id": "SB-00001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "SUP-00001": {
+        "id": "SUP-00001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "SUP-00009": {
+        "id": "SUP-00009",
+        "garansi": "3000 HM",
+        "chassis": null,
+        "method": "SN match"
+    },
+    "SUP-31001": {
+        "id": "SUP-31001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "SUP-41001": {
+        "id": "SUP-41001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "TMC-00001": {
+        "id": "TMC-00001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "TMC-00005": {
+        "id": "TMC-00005",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": ""
+    },
+    "TMC-31002": {
+        "id": "TMC-31002",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "TMC-31003": {
+        "id": "TMC-31003",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "TMC-31004": {
+        "id": "TMC-31004",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "WT-00001": {
+        "id": "WT-00001",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "Hull == ID"
+    },
+    "WT-00002": {
+        "id": "WT-00002",
+        "garansi": "0 HM",
+        "chassis": null,
+        "method": "KodePad == IdPad"
+    },
+    "WT-00003": {
+        "id": "WT-00003",
+        "garansi": "0 HM",
+        "chassis": "MHMFM517AKK012792",
+        "method": "Plate match"
+    }
+}
