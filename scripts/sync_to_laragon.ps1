@@ -171,6 +171,13 @@ if (-not $ImportDatabase) {
             & $phpExe $stockImportScript --apply | Out-Null
             Write-Host "Stock gudang master parts verified (Batch 1)." -ForegroundColor Green
         }
+
+        $tireSeedScript = Join-Path $srcDir 'scripts\seed_all_heavy_equipment_tires.php'
+        if ($phpExe -and (Test-Path $tireSeedScript)) {
+            $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+            & $phpExe $tireSeedScript | Out-Null
+            Write-Host "Heavy equipment tire specifications verified." -ForegroundColor Green
+        }
     }
 } elseif ($mysqlExe -and (Test-Path $mysqlExe)) {
     Write-Host "`n[2/4] Importing explicitly selected local MySQL database '$DbName'..." -ForegroundColor Cyan
@@ -265,6 +272,13 @@ if (-not $ImportDatabase) {
         $env:LOCAL_MYSQL_PASSWORD = $DbPassword
         & $phpExe $stockImportScript --apply | Out-Null
         Write-Host "Stock gudang master parts verified (Batch 1)." -ForegroundColor Green
+    }
+
+    $tireSeedScript = Join-Path $srcDir 'scripts\seed_all_heavy_equipment_tires.php'
+    if ($phpExe -and (Test-Path $tireSeedScript)) {
+        $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+        & $phpExe $tireSeedScript | Out-Null
+        Write-Host "Heavy equipment tire specifications verified." -ForegroundColor Green
     }
 } else {
     throw 'MySQL executable tidak ditemukan untuk -ImportDatabase.'

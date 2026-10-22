@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-emergency-wo-date-tooltip-10">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-service-table-layout-11">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <script src="scripts/auth-client.js?v=20260810-1"></script>
@@ -19,8 +19,13 @@
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261017-notification-batch1"></script>
+<<<<<<< HEAD
+    <script src="scripts/dashboard.js?v=20261022-service-table-layout-2"></script>
     <script src="scripts/unit-properties.js?v=20260827-1"></script>
+=======
+    <script src="scripts/dashboard.js?v=20261017-notification-batch1"></script>
+    <script src="scripts/unit-properties.js?v=20261022-tire-blueprint-4"></script>
+>>>>>>> e12b3193b050e34b67df476a04415029375a2ca2
     <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>
 
@@ -196,8 +201,15 @@
                         </div>
                         <div class="profile-dropdown-divider"></div>
                         <div class="profile-dropdown-actions">
+                            <button type="button" id="btnChangePassword" class="btn-profile-password" onclick="openSelfChangePasswordModal()" title="Ubah kata sandi akun">
+                                <i class="fa-solid fa-key profile-btn-icon"></i>
+                                <span class="profile-btn-text">Ganti Password</span>
+                                <i class="fa-solid fa-chevron-right profile-btn-chevron"></i>
+                            </button>
                             <button type="button" id="logoutButton" class="btn-profile-logout" title="Keluar dari sesi">
-                                <i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout
+                                <i class="fa-solid fa-right-from-bracket profile-btn-icon"></i>
+                                <span class="profile-btn-text">Keluar / Logout</span>
+                                <i class="fa-solid fa-chevron-right profile-btn-chevron"></i>
                             </button>
                         </div>
                     </div>
@@ -2099,6 +2111,12 @@
                                 </div>
                             </div>
 
+                            <!-- 10 Roles Filter Pills Strip -->
+                            <div id="rbacRoleFilterButtons" class="rbac-role-filter-strip"
+                                style="display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:12px; -webkit-overflow-scrolling:touch; scrollbar-width:thin;">
+                                <!-- Rendered dynamically via renderRbacMatrix -->
+                            </div>
+
                             <!-- Selected Role Summary Card -->
                             <div id="rbacRoleSummaryBox"
                                 style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid var(--primary); border-radius:8px; padding:12px 15px; margin-bottom:15px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
@@ -2106,9 +2124,15 @@
                             </div>
 
                             <!-- Interactive RBAC Matrix Table -->
-                            <div class="table-responsive"
-                                style="max-height:520px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
-                                <table class="table" style="font-size:0.78rem; white-space:nowrap; margin:0;"
+                            <div class="table-scroll-hint rbac-table-scroll-hint"
+                                style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:0.75rem; color:var(--text-muted);">
+                                <span><i class="fa-solid fa-arrows-left-right"></i> Geser ke samping untuk melihat 16 modul operasional</span>
+                                <span style="font-weight:700; color:var(--primary); font-size:0.75rem;">10 Roles &times; 16 Modul</span>
+                            </div>
+                            <div class="table-responsive rbac-matrix-container"
+                                style="max-height:520px; overflow-x:auto; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; -webkit-overflow-scrolling:touch; width:100%;">
+                                <table class="table rbac-matrix-table"
+                                    style="font-size:0.78rem; white-space:nowrap; margin:0; width:max-content; min-width:2400px;"
                                     id="rbacMatrixTable">
                                     <!-- Rendered via JS -->
                                 </table>
@@ -3282,92 +3306,109 @@
                     style="border:none; background:none; font-size:1.4rem; cursor:pointer; color:var(--text-muted); padding:0 4px;">&times;</button>
             </div>
 
-            <!-- Modal Action Bar: Search & Add Button -->
-            <div
-                style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
-                <div style="position:relative; flex:1; min-width:200px;">
-                    <i class="fa-solid fa-magnifying-glass"
-                        style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:0.85rem;"></i>
-                    <input type="text" id="mruSearchInput" class="form-control"
-                        placeholder="Cari username atau nama lengkap..."
-                        style="padding-left:32px; font-size:0.84rem; height:36px;"
-                        oninput="filterRoleUsersTable(this.value)">
-                </div>
-                <button type="button" class="btn btn-primary"
-                    style="padding:6px 14px; font-size:0.84rem; display:inline-flex; align-items:center; gap:6px;"
-                    onclick="toggleAddUserForm()">
-                    <i class="fa-solid fa-user-plus"></i> Tambah User Baru
-                </button>
-            </div>
-
-            <!-- Inline Form Tambah User (Collapsible) -->
-            <div id="mruAddUserFormContainer"
-                style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:14px; margin-bottom:14px;">
-                <div
-                    style="font-weight:700; font-size:0.88rem; color:var(--text-dark); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
-                    <i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> Form Pendaftaran Pengguna Baru
-                </div>
-                <div
-                    style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:12px;">
-                    <div>
-                        <label
-                            style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Username
-                            *</label>
-                        <input type="text" id="mruNewUsername" class="form-control" placeholder="contoh: anton_m"
-                            style="font-size:0.82rem; height:34px;">
-                        <small style="font-size:0.7rem; color:#64748b;">Huruf kecil/angka/strip (unik)</small>
+            <div class="modal-body" style="padding:14px 18px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:12px;">
+                <!-- Modal Action Bar: Search & Add Button -->
+                <div class="mru-action-bar"
+                    style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:4px; flex-wrap:wrap;">
+                    <div style="position:relative; flex:1; min-width:200px;">
+                        <i class="fa-solid fa-magnifying-glass"
+                            style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:0.85rem;"></i>
+                        <input type="text" id="mruSearchInput" class="form-control"
+                            placeholder="Cari username atau nama lengkap..."
+                            style="padding-left:32px; font-size:0.84rem; height:36px;"
+                            oninput="filterRoleUsersTable(this.value)">
                     </div>
-                    <div>
-                        <label
-                            style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Nama
-                            Lengkap *</label>
-                        <input type="text" id="mruNewFullName" class="form-control" placeholder="contoh: Anton Maulana"
-                            style="font-size:0.82rem; height:34px;">
-                    </div>
-                    <div>
-                        <label
-                            style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Password
-                            Awal *</label>
-                        <input type="password" id="mruNewPassword" class="form-control" placeholder="Minimal 6 karakter"
-                            style="font-size:0.82rem; height:34px;">
-                    </div>
-                    <div>
-                        <label
-                            style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Role
-                            Pengguna *</label>
-                        <select id="mruNewRoleId" class="form-control" style="font-size:0.82rem; height:34px;">
-                            <!-- Populated dynamically via JS -->
-                        </select>
-                    </div>
-                </div>
-                <div style="display:flex; justify-content:flex-end; gap:8px;">
-                    <button type="button" class="btn btn-secondary btn-sm"
-                        onclick="toggleAddUserForm(false)">Batal</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btnSubmitNewUser"
-                        onclick="submitNewUser()">
-                        <i class="fa-solid fa-floppy-disk"></i> Simpan Pengguna
+                    <button type="button" class="btn btn-primary"
+                        style="padding:6px 14px; font-size:0.84rem; display:inline-flex; align-items:center; gap:6px;"
+                        onclick="toggleAddUserForm()">
+                        <i class="fa-solid fa-user-plus"></i> Tambah User Baru
                     </button>
                 </div>
-            </div>
 
-            <!-- Table Tabulasi Pengguna -->
-            <div
-                style="flex:1; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; min-height:220px; max-height:420px;">
-                <table class="table" style="font-size:0.82rem; margin:0; width:100%;" id="mruUsersTable">
-                    <thead>
-                        <tr style="background:#f1f5f9; color:#334155; position:sticky; top:0; z-index:3;">
-                            <th style="width:40px; text-align:center; padding:9px 8px;">#</th>
-                            <th style="padding:9px 12px;">Username</th>
-                            <th style="padding:9px 12px;">Nama Lengkap</th>
-                            <th style="padding:9px 12px;">Role</th>
-                            <th style="padding:9px 10px; text-align:center;">Status</th>
-                            <th style="padding:9px 12px; text-align:center; width:200px;">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mruUsersTableBody">
-                        <!-- Populated via JS -->
-                    </tbody>
-                </table>
+                <!-- Inline Form Tambah User (Collapsible) -->
+                <div id="mruAddUserFormContainer"
+                    style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:14px; margin-bottom:4px;">
+                    <div
+                        style="font-weight:700; font-size:0.88rem; color:var(--text-dark); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> Form Pendaftaran Pengguna Baru
+                    </div>
+                    <div
+                        style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:12px;">
+                        <div>
+                            <label
+                                style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Username
+                                *</label>
+                            <input type="text" id="mruNewUsername" class="form-control" placeholder="contoh: anton_m"
+                                style="font-size:0.82rem; height:34px;">
+                            <small style="font-size:0.7rem; color:#64748b;">Huruf kecil/angka/strip (unik)</small>
+                        </div>
+                        <div>
+                            <label
+                                style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Nama
+                                Lengkap *</label>
+                            <input type="text" id="mruNewFullName" class="form-control" placeholder="contoh: Anton Maulana"
+                                style="font-size:0.82rem; height:34px;">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Password
+                                Awal *</label>
+                            <input type="password" id="mruNewPassword" class="form-control" placeholder="Minimal 6 karakter"
+                                style="font-size:0.82rem; height:34px;">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Role
+                                Pengguna *</label>
+                            <select id="mruNewRoleId" class="form-control" style="font-size:0.82rem; height:34px;">
+                                <!-- Populated dynamically via JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label
+                                style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Lokasi Penugasan</label>
+                            <select id="mruNewLocationId" class="form-control" style="font-size:0.82rem; height:34px;">
+                                <option value="">-- Pilih Lokasi Penugasan (Opsional) --</option>
+                                <!-- Populated dynamically via JS -->
+                            </select>
+                            <small style="font-size:0.7rem; color:#64748b;">Site/Yard/Workshop penugasan</small>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="toggleAddUserForm(false)">Batal</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="btnSubmitNewUser"
+                            onclick="submitNewUser()">
+                            <i class="fa-solid fa-floppy-disk"></i> Simpan Pengguna
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Tabulasi Pengguna -->
+                <div class="table-scroll-hint mru-scroll-hint"
+                    style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; font-size:0.75rem; color:var(--text-muted);">
+                    <span><i class="fa-solid fa-arrows-left-right"></i> Geser ke samping untuk melihat seluruh kolom pengguna</span>
+                    <span style="font-weight:700; color:var(--primary); font-size:0.75rem;">7 Kolom</span>
+                </div>
+                <div class="table-responsive mru-table-wrap"
+                    style="flex:1; overflow-x:auto; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; min-height:220px; max-height:420px; -webkit-overflow-scrolling:touch; width:100%;">
+                    <table class="table" style="font-size:0.82rem; margin:0; width:max-content; min-width:780px; white-space:nowrap;" id="mruUsersTable">
+                        <thead>
+                            <tr style="background:#f1f5f9; color:#334155; position:sticky; top:0; z-index:3;">
+                                <th style="width:40px; text-align:center; padding:9px 8px; white-space:nowrap;">#</th>
+                                <th style="padding:9px 14px; white-space:nowrap;">Username</th>
+                                <th style="padding:9px 14px; white-space:nowrap;">Nama Lengkap</th>
+                                <th style="padding:9px 14px; white-space:nowrap;">Role</th>
+                                <th style="padding:9px 14px; white-space:nowrap;">Lokasi Penugasan</th>
+                                <th style="padding:9px 12px; text-align:center; white-space:nowrap;">Status</th>
+                                <th style="padding:9px 14px; text-align:center; width:180px; white-space:nowrap;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mruUsersTableBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="modal-footer"
@@ -3380,48 +3421,88 @@
         </div>
     </div>
 
-    <!-- Sub-Modal Ganti Password -->
-    <div class="modal-overlay" id="modalChangePassword" style="z-index:999999;">
-        <div class="modal-content" style="max-width: 420px; padding: 22px;">
-            <div class="modal-header"
-                style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:10px; margin-bottom:14px;">
-                <h4
-                    style="margin:0; font-size:1.05rem; color:var(--text-dark); display:flex; align-items:center; gap:8px;">
-                    <i class="fa-solid fa-key" style="color:#d97706;"></i> Ganti Password Pengguna
-                </h4>
-                <button type="button" onclick="closeModal('modalChangePassword')"
-                    style="border:none; background:none; font-size:1.4rem; cursor:pointer;">&times;</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="mcpUserId">
-                <div
-                    style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:8px 12px; margin-bottom:14px;">
-                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">
-                        Akun Pengguna</div>
-                    <div style="font-size:0.9rem; font-weight:700; color:var(--primary);" id="mcpTargetUserLabel">-
+    <!-- Modal Ganti Password -->
+    <div class="modal-overlay" id="modalChangePassword" style="z-index:999999;" onclick="if(event.target === this) closeModal('modalChangePassword')">
+        <div class="modal-content modal-change-pwd-content" onclick="event.stopPropagation()">
+            <div class="mcp-header">
+                <div class="mcp-header-left">
+                    <div class="mcp-header-badge" id="mcpHeaderBadge">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div>
+                        <h4 class="mcp-header-title" id="mcpModalTitle">Ganti Password Akun</h4>
+                        <p class="mcp-header-subtitle" id="mcpModalSubtitle">Perbarui kata sandi untuk menjaga keamanan akun Anda.</p>
                     </div>
                 </div>
-                <div style="margin-bottom:12px;">
-                    <label
-                        style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Password
-                        Baru *</label>
-                    <input type="password" id="mcpNewPassword" class="form-control" placeholder="Minimal 6 karakter"
-                        style="font-size:0.85rem;">
-                </div>
-                <div style="margin-bottom:14px;">
-                    <label
-                        style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Ulangi
-                        Password Baru *</label>
-                    <input type="password" id="mcpConfirmPassword" class="form-control"
-                        placeholder="Ketik ulang password baru" style="font-size:0.85rem;">
-                </div>
+                <button type="button" class="mcp-btn-close" onclick="closeModal('modalChangePassword')" aria-label="Tutup modal">&times;</button>
             </div>
-            <div class="modal-footer"
-                style="display:flex; justify-content:flex-end; gap:8px; border-top:1px solid #e2e8f0; padding-top:12px;">
-                <button type="button" class="btn btn-secondary"
-                    onclick="closeModal('modalChangePassword')">Batal</button>
-                <button type="button" class="btn btn-primary" id="btnSubmitChangePassword"
-                    onclick="submitChangePassword()">
+            <div class="modal-body" style="padding: 0;">
+                <input type="hidden" id="mcpUserId">
+
+                <!-- User Account Info Banner -->
+                <div class="mcp-account-card">
+                    <div class="mcp-account-avatar">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div class="mcp-account-details">
+                        <div class="mcp-account-name" id="mcpTargetUserLabel">Memuat pengguna...</div>
+                        <div class="mcp-account-role" id="mcpTargetUserSub"><i class="fa-solid fa-shield-halved"></i> Sesi Aktif Terverifikasi</div>
+                    </div>
+                </div>
+
+                <!-- Password Saat Ini (Hanya untuk Ganti Password Sendiri) -->
+                <div id="mcpCurrentPasswordWrapper" class="mcp-form-group">
+                    <label class="mcp-label">
+                        <i class="fa-solid fa-lock" style="color: #64748b; font-size: 0.8rem;"></i>
+                        Password Saat Ini <span style="color:#ef4444;">*</span>
+                    </label>
+                    <div class="mcp-input-wrap">
+                        <input type="password" id="mcpCurrentPassword" class="mcp-input" placeholder="Masukkan password saat ini" autocomplete="current-password">
+                        <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility('mcpCurrentPassword', this)" title="Lihat/Sembunyikan password" aria-label="Tampilkan password saat ini">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Password Baru -->
+                <div class="mcp-form-group">
+                    <label class="mcp-label">
+                        <i class="fa-solid fa-key" style="color: #64748b; font-size: 0.8rem;"></i>
+                        Password Baru <span style="color:#ef4444;">*</span>
+                    </label>
+                    <div class="mcp-input-wrap">
+                        <input type="password" id="mcpNewPassword" class="mcp-input" placeholder="Minimal 6 karakter" autocomplete="new-password">
+                        <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility('mcpNewPassword', this)" title="Lihat/Sembunyikan password" aria-label="Tampilkan password baru">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="mcp-hint-text">
+                        <i class="fa-solid fa-circle-info"></i> Panjang minimal 6 karakter
+                    </div>
+                </div>
+
+                <!-- Konfirmasi Password Baru -->
+                <div class="mcp-form-group" style="margin-bottom: 8px;">
+                    <label class="mcp-label">
+                        <i class="fa-solid fa-check-double" style="color: #64748b; font-size: 0.8rem;"></i>
+                        Konfirmasi Password Baru <span style="color:#ef4444;">*</span>
+                    </label>
+                    <div class="mcp-input-wrap">
+                        <input type="password" id="mcpConfirmPassword" class="mcp-input" placeholder="Ketik ulang password baru" autocomplete="new-password">
+                        <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility('mcpConfirmPassword', this)" title="Lihat/Sembunyikan password" aria-label="Tampilkan konfirmasi password">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Alert Box -->
+                <div id="mcpAlertBox" style="display:none; padding:10px 14px; border-radius:8px; font-size:0.83rem; margin-top:12px; margin-bottom: 4px;"></div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mcp-footer">
+                <button type="button" class="mcp-btn-cancel" onclick="closeModal('modalChangePassword')">Batal</button>
+                <button type="button" class="mcp-btn-submit" id="btnSubmitChangePassword" onclick="submitChangePassword()">
                     <i class="fa-solid fa-check"></i> Simpan Password
                 </button>
             </div>
@@ -8919,6 +9000,12 @@
                     } else if (/^#reports(?:\/|$)/i.test(window.location.hash)) {
                         window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
                     }
+                    if (viewName === 'settings') {
+                        const activeSettingsTab = document.querySelector('#view-settings .settings-nav-item.active');
+                        if (!activeSettingsTab && typeof window.switchSettingsTab === 'function') {
+                            window.switchSettingsTab('rbac');
+                        }
+                    }
                 }
 
                 document.querySelectorAll('.sidebar-menu a[role="button"]').forEach(menuItem => {
@@ -11575,8 +11662,8 @@
                     let tableHtml = `
                 <thead>
                     <tr style="background:#f1f5f9; color:#334155;">
-                        <th style="position:sticky; left:0; background:#f1f5f9; z-index:5; width:220px; border-right:2px solid #cbd5e1; padding:10px 12px;">User Role (10 Roles)</th>
-                        ${rbacModulesList.map(m => `<th style="text-align:center; padding:10px 10px;">${m}</th>`).join('')}
+                        <th style="position:sticky; left:0; background:#f1f5f9; z-index:7; width:220px; min-width:220px; border-right:2px solid #cbd5e1; padding:10px 14px; white-space:nowrap; box-shadow:2px 0 6px rgba(0,0,0,0.06);">User Role (10 Roles)</th>
+                        ${rbacModulesList.map(m => `<th style="text-align:center; padding:10px 14px; min-width:145px; white-space:nowrap; word-break:keep-all; overflow-wrap:normal;">${m}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -11587,12 +11674,12 @@
                     // 4. Helper function to format permission badge pill
                     const formatPill = (permStr) => {
                         if (permStr === '-') {
-                            return `<span style="display:inline-block; padding:2px 6px; border-radius:4px; background:#f8fafc; color:#cbd5e1; font-weight:600; font-size:0.85rem;">-</span>`;
+                            return `<span style="display:inline-block; padding:2px 6px; border-radius:4px; background:#f8fafc; color:#cbd5e1; font-weight:600; font-size:0.85rem; white-space:nowrap;">-</span>`;
                         }
                         const parts = permStr.split(' ');
                         return parts.map(p => {
                             let bg = '#f1f5f9', col = '#475569';
-                            return `<span style="display:inline-block; padding:2px 5px; border-radius:3px; background:${bg}; color:${col}; font-weight:800; font-size:0.85rem; margin:1px; border:1px solid #e2e8f0;">${p}</span>`;
+                            return `<span style="display:inline-block; padding:2px 5px; border-radius:3px; background:${bg}; color:${col}; font-weight:800; font-size:0.85rem; margin:1px; border:1px solid #e2e8f0; white-space:nowrap;">${p}</span>`;
                         }).join('');
                     };
 
@@ -11605,12 +11692,12 @@
 
                         return `
                     <tr style="background:${rowBg}; ${rowBorder}">
-                        <td style="position:sticky; left:0; background:${stickyBg}; z-index:4; border-right:2px solid #cbd5e1; font-weight:${isSelected ? '700' : '600'}; padding:8px 12px; cursor:pointer;" onclick="selectRbacRole(${idx})">
+                        <td style="position:sticky; left:0; background:${stickyBg}; z-index:5; width:220px; min-width:220px; border-right:2px solid #cbd5e1; font-weight:${isSelected ? '700' : '600'}; padding:8px 12px; cursor:pointer; white-space:nowrap; box-shadow:2px 0 6px rgba(0,0,0,0.06);" onclick="selectRbacRole(${idx})">
                             <a href="javascript:void(0)" 
                                class="rbac-role-hyperlink" 
                                onclick="event.stopPropagation(); window.openRoleUsersModal(${idx + 1}, '${escapeHtml(role.name)}')" 
                                title="Klik untuk melihat & kelola akun pengguna role ${escapeHtml(role.name)}"
-                               style="color:${isSelected ? 'var(--primary)' : 'var(--text-dark)'}; text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+                               style="color:${isSelected ? 'var(--primary)' : 'var(--text-dark)'}; text-decoration:none; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
                                 <i class="fa-solid ${role.icon}" style="color:${role.color}; width:16px; text-align:center;"></i>
                                 <span>${role.name}</span>
                             </a>
@@ -11618,7 +11705,7 @@
                         ${role.permissions.map((p, modIdx) => {
                             const isCellDiff = defaultRbacRolesMaster[idx] && p !== defaultRbacRolesMaster[idx].permissions[modIdx];
                             return `
-                                <td style="text-align:center; padding:6px 8px; background:${isSelected ? (p !== '-' ? 'rgba(37,99,235,0.08)' : 'transparent') : (isCellDiff ? '#fef3c7' : 'transparent')}; cursor:${isAdmin ? 'pointer' : 'default'}; position:relative;" 
+                                <td style="text-align:center; padding:6px 10px; min-width:145px; white-space:nowrap; word-break:keep-all; overflow-wrap:normal; background:${isSelected ? (p !== '-' ? 'rgba(37,99,235,0.08)' : 'transparent') : (isCellDiff ? '#fef3c7' : 'transparent')}; cursor:${isAdmin ? 'pointer' : 'default'}; position:relative;" 
                                     ${isAdmin ? `onclick="openRbacOverrideModal(${idx}, ${modIdx})"` : ''} 
                                     title="${isAdmin ? `Klik untuk override hak akses ${role.name} pada ${rbacModulesList[modIdx]} (Saat ini: ${p})` : `Hak akses ${role.name} pada ${rbacModulesList[modIdx]}: ${p}`}">
                                     ${formatPill(p)}
@@ -11654,6 +11741,7 @@
                 let currentModalRoleName = '';
                 let currentRoleUsersCache = [];
                 let allRolesListCache = [];
+                let allLocationsListCache = [];
 
                 async function getCsrfToken() {
                     if (window.APP_CSRF_TOKEN) return window.APP_CSRF_TOKEN;
@@ -11686,7 +11774,7 @@
                     if (tbody) {
                         tbody.innerHTML = `
                         <tr>
-                            <td colspan="6" style="text-align:center; padding:32px 20px; color:#64748b;">
+                            <td colspan="7" style="text-align:center; padding:32px 20px; color:#64748b;">
                                 <i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--primary); margin-bottom:10px;"></i>
                                 <div style="font-weight:600;">Memuat daftar pengguna dari database MySQL...</div>
                             </td>
@@ -11707,6 +11795,10 @@
                                 allRolesListCache = json.roles;
                                 populateRoleSelectOptions(json.roles, roleId);
                             }
+                            if (Array.isArray(json.locations)) {
+                                allLocationsListCache = json.locations;
+                                populateLocationSelectOptions(json.locations);
+                            }
                             renderRoleUsersTable(currentRoleUsersCache);
                         } else {
                             throw new Error(json.message || 'Gagal memuat data pengguna');
@@ -11715,7 +11807,7 @@
                         if (tbody) {
                             tbody.innerHTML = `
                             <tr>
-                                <td colspan="6" style="text-align:center; padding:24px; color:#ef4444;">
+                                <td colspan="7" style="text-align:center; padding:24px; color:#ef4444;">
                                     <i class="fa-solid fa-triangle-exclamation fa-2x" style="margin-bottom:8px;"></i>
                                     <div>Gagal mengambil data dari database: ${escapeHtml(err.message)}</div>
                                 </td>
@@ -11735,6 +11827,19 @@
                 `).join('');
                 }
 
+                function populateLocationSelectOptions(locations, selectedId) {
+                    const select = document.getElementById('mruNewLocationId');
+                    if (!select) return;
+                    const opts = ['<option value="">-- Pilih Lokasi Penugasan (Opsional) --</option>'];
+                    locations.forEach(loc => {
+                        const sel = selectedId && Number(loc.location_id) === Number(selectedId) ? 'selected' : '';
+                        const typeLabel = loc.location_type ? ` [${escapeHtml(loc.location_type)}]` : '';
+                        const regionLabel = loc.region ? ` - ${escapeHtml(loc.region)}` : '';
+                        opts.push(`<option value="${loc.location_id}" ${sel}>${escapeHtml(loc.location_name)}${typeLabel}${regionLabel}</option>`);
+                    });
+                    select.innerHTML = opts.join('');
+                }
+
                 function renderRoleUsersTable(users) {
                     const tbody = document.getElementById('mruUsersTableBody');
                     const totalLabel = document.getElementById('mruTotalCountLabel');
@@ -11747,7 +11852,7 @@
                     if (users.length === 0) {
                         tbody.innerHTML = `
                         <tr>
-                            <td colspan="6" style="text-align:center; padding:35px 20px; color:#64748b;">
+                            <td colspan="7" style="text-align:center; padding:35px 20px; color:#64748b;">
                                 <i class="fa-solid fa-user-slash fa-2x" style="color:#cbd5e1; margin-bottom:10px;"></i>
                                 <div style="font-weight:600; font-size:0.9rem; color:#475569;">Belum ada user dengan role ini di database</div>
                                 <div style="font-size:0.8rem; color:#94a3b8; margin-top:4px;">Klik tombol "+ Tambah User Baru" di atas untuk mendaftarkan akun.</div>
@@ -11761,6 +11866,7 @@
                         const initial = (u.full_name || u.username || 'U').charAt(0).toUpperCase();
                         const isActive = Number(u.is_active) === 1;
                         const isSuperAdmin = Number(u.user_id) === 1 || u.username === 'admin';
+                        const locName = u.assigned_location_name || '';
 
                         return `
                         <tr style="border-bottom:1px solid #f1f5f9; background:#ffffff;">
@@ -11780,6 +11886,16 @@
                                 <span class="badge" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; font-weight:600; font-size:0.75rem; padding:3px 8px;">
                                     ${escapeHtml(u.role_name || currentModalRoleName)}
                                 </span>
+                            </td>
+                            <td style="padding:10px 12px;">
+                                ${locName ? `
+                                    <span style="display:inline-flex; align-items:center; gap:5px; font-weight:600; color:#0369a1; background:#e0f2fe; padding:2px 8px; border-radius:4px; font-size:0.75rem;">
+                                        <i class="fa-solid fa-location-dot" style="font-size:0.7rem;"></i>
+                                        ${escapeHtml(locName)}
+                                    </span>
+                                ` : `
+                                    <span style="color:#94a3b8; font-size:0.78rem; font-style:italic;">Semua Lokasi / Pusat</span>
+                                `}
                             </td>
                             <td style="padding:10px 10px; text-align:center;">
                                 <span class="badge ${isActive ? 'badge-success' : 'badge-secondary'}" style="font-size:0.75rem; padding:3px 8px; ${isActive ? 'background:#dcfce7; color:#166534;' : 'background:#f1f5f9; color:#64748b;'}">
@@ -11822,7 +11938,8 @@
                     }
                     const filtered = currentRoleUsersCache.filter(u =>
                         (u.username && u.username.toLowerCase().includes(term)) ||
-                        (u.full_name && u.full_name.toLowerCase().includes(term))
+                        (u.full_name && u.full_name.toLowerCase().includes(term)) ||
+                        (u.assigned_location_name && u.assigned_location_name.toLowerCase().includes(term))
                     );
                     renderRoleUsersTable(filtered);
                 };
@@ -11838,6 +11955,8 @@
                         document.getElementById('mruNewPassword').value = '';
                         const select = document.getElementById('mruNewRoleId');
                         if (select && currentModalRoleId) select.value = currentModalRoleId;
+                        const locSelect = document.getElementById('mruNewLocationId');
+                        if (locSelect) locSelect.value = '';
                         document.getElementById('mruNewUsername').focus();
                     }
                 };
@@ -11847,6 +11966,8 @@
                     const fullName = (document.getElementById('mruNewFullName').value || '').trim();
                     const password = document.getElementById('mruNewPassword').value || '';
                     const roleId = Number(document.getElementById('mruNewRoleId').value) || currentModalRoleId;
+                    const locationVal = document.getElementById('mruNewLocationId')?.value || '';
+                    const assignedLocationId = locationVal !== '' ? Number(locationVal) : null;
 
                     if (!username || username.length < 3) {
                         alert('Username wajib diisi minimal 3 karakter.');
@@ -11879,7 +12000,8 @@
                                 username: username,
                                 full_name: fullName,
                                 password: password,
-                                role_id: roleId
+                                role_id: roleId,
+                                assigned_location_id: assignedLocationId
                             })
                         });
                         const json = await res.json();
@@ -11899,25 +12021,185 @@
                     }
                 };
 
-                window.openChangePasswordModal = function (userId, username, fullName) {
-                    document.getElementById('mcpUserId').value = userId;
-                    document.getElementById('mcpTargetUserLabel').textContent = `${fullName} (${username})`;
-                    document.getElementById('mcpNewPassword').value = '';
-                    document.getElementById('mcpConfirmPassword').value = '';
+                window.openSelfChangePasswordModal = function () {
+                    const profilePanel = document.getElementById('profileDropdownPanel');
+                    if (profilePanel) profilePanel.style.display = 'none';
+
+                    const user = window.FleetAuth?.user || {};
+                    const userId = user.id || user.user_id || 0;
+                    const username = user.username || 'Anda';
+                    const fullName = user.full_name || 'Pengguna';
+                    const roleName = user.primary_role || user.role || 'Administrator';
+
+                    const idInput = document.getElementById('mcpUserId');
+                    if (idInput) idInput.value = userId;
+
+                    const targetLabel = document.getElementById('mcpTargetUserLabel');
+                    if (targetLabel) targetLabel.textContent = `${fullName} (${username})`;
+
+                    const targetSub = document.getElementById('mcpTargetUserSub');
+                    if (targetSub) targetSub.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Sesi Aktif • Role: ${escapeHtml(roleName)}`;
+
+                    const titleEl = document.getElementById('mcpModalTitle');
+                    if (titleEl) titleEl.textContent = 'Ganti Password Akun';
+
+                    const subtitleEl = document.getElementById('mcpModalSubtitle');
+                    if (subtitleEl) subtitleEl.textContent = 'Perbarui kata sandi untuk menjaga keamanan akun Anda.';
+
+                    const badgeEl = document.getElementById('mcpHeaderBadge');
+                    if (badgeEl) {
+                        badgeEl.style.background = 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)';
+                        badgeEl.style.color = '#0284c7';
+                        badgeEl.innerHTML = '<i class="fa-solid fa-key"></i>';
+                    }
+
+                    const currWrapper = document.getElementById('mcpCurrentPasswordWrapper');
+                    if (currWrapper) currWrapper.style.display = 'block';
+
+                    const alertBox = document.getElementById('mcpAlertBox');
+                    if (alertBox) {
+                        alertBox.style.display = 'none';
+                        alertBox.textContent = '';
+                    }
+
+                    const currPass = document.getElementById('mcpCurrentPassword');
+                    if (currPass) currPass.value = '';
+                    const newPass = document.getElementById('mcpNewPassword');
+                    if (newPass) newPass.value = '';
+                    const confirmPass = document.getElementById('mcpConfirmPassword');
+                    if (confirmPass) confirmPass.value = '';
+
+                    // Reset visibility toggles to password
+                    ['mcpCurrentPassword', 'mcpNewPassword', 'mcpConfirmPassword'].forEach(id => {
+                        const inp = document.getElementById(id);
+                        if (inp) inp.type = 'password';
+                    });
+                    document.querySelectorAll('#modalChangePassword .btn-toggle-pwd i').forEach(ic => {
+                        ic.className = 'fa-solid fa-eye';
+                    });
+
                     window.openModal('modalChangePassword');
+
+                    setTimeout(() => {
+                        if (currPass) currPass.focus();
+                    }, 150);
                 };
+
+                window.openChangePasswordModal = function (userId, username, fullName) {
+                    const idInput = document.getElementById('mcpUserId');
+                    if (idInput) idInput.value = userId || '';
+
+                    const targetLabel = document.getElementById('mcpTargetUserLabel');
+                    if (targetLabel) targetLabel.textContent = `${fullName || ''} (${username || ''})`;
+
+                    const targetSub = document.getElementById('mcpTargetUserSub');
+                    if (targetSub) targetSub.innerHTML = `<i class="fa-solid fa-user-gear"></i> Reset Kata Sandi oleh Administrator`;
+
+                    const titleEl = document.getElementById('mcpModalTitle');
+                    if (titleEl) titleEl.textContent = 'Reset Password Pengguna';
+
+                    const subtitleEl = document.getElementById('mcpModalSubtitle');
+                    if (subtitleEl) subtitleEl.textContent = 'Tentukan kata sandi baru untuk akun pengguna ini.';
+
+                    const badgeEl = document.getElementById('mcpHeaderBadge');
+                    if (badgeEl) {
+                        badgeEl.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)';
+                        badgeEl.style.color = '#d97706';
+                        badgeEl.innerHTML = '<i class="fa-solid fa-key"></i>';
+                    }
+
+                    const currWrapper = document.getElementById('mcpCurrentPasswordWrapper');
+                    if (currWrapper) currWrapper.style.display = 'none';
+
+                    const alertBox = document.getElementById('mcpAlertBox');
+                    if (alertBox) {
+                        alertBox.style.display = 'none';
+                        alertBox.textContent = '';
+                    }
+
+                    const currPass = document.getElementById('mcpCurrentPassword');
+                    if (currPass) currPass.value = '';
+                    const newPass = document.getElementById('mcpNewPassword');
+                    if (newPass) newPass.value = '';
+                    const confirmPass = document.getElementById('mcpConfirmPassword');
+                    if (confirmPass) confirmPass.value = '';
+
+                    // Reset visibility toggles to password
+                    ['mcpCurrentPassword', 'mcpNewPassword', 'mcpConfirmPassword'].forEach(id => {
+                        const inp = document.getElementById(id);
+                        if (inp) inp.type = 'password';
+                    });
+                    document.querySelectorAll('#modalChangePassword .btn-toggle-pwd i').forEach(ic => {
+                        ic.className = 'fa-solid fa-eye';
+                    });
+
+                    window.openModal('modalChangePassword');
+
+                    setTimeout(() => {
+                        if (newPass) newPass.focus();
+                    }, 150);
+                };
+
+                window.togglePasswordVisibility = function (inputId, btn) {
+                    const input = document.getElementById(inputId);
+                    if (!input) return;
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    const icon = btn.querySelector('i');
+                    if (icon) {
+                        icon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+                    }
+                };
+
+                // Enter key shortcut for change password inputs
+                document.addEventListener('DOMContentLoaded', () => {
+                    ['mcpCurrentPassword', 'mcpNewPassword', 'mcpConfirmPassword'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.addEventListener('keydown', function(e) {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    window.submitChangePassword();
+                                }
+                            });
+                        }
+                    });
+                });
 
                 window.submitChangePassword = async function () {
                     const userId = Number(document.getElementById('mcpUserId').value);
+                    const currPassEl = document.getElementById('mcpCurrentPassword');
+                    const currPassWrapper = document.getElementById('mcpCurrentPasswordWrapper');
+                    const isSelf = currPassWrapper && currPassWrapper.style.display !== 'none';
+                    const currPass = currPassEl ? currPassEl.value : '';
                     const newPass = document.getElementById('mcpNewPassword').value || '';
                     const confirmPass = document.getElementById('mcpConfirmPassword').value || '';
 
+                    const alertBox = document.getElementById('mcpAlertBox');
+                    const showAlert = (msg, type = 'danger') => {
+                        if (!alertBox) { alert(msg); return; }
+                        alertBox.style.display = 'flex';
+                        alertBox.style.alignItems = 'center';
+                        alertBox.style.gap = '8px';
+                        alertBox.style.background = type === 'danger' ? '#fef2f2' : '#f0fdf4';
+                        alertBox.style.color = type === 'danger' ? '#991b1b' : '#166534';
+                        alertBox.style.border = `1px solid ${type === 'danger' ? '#fecaca' : '#bbf7d0'}`;
+                        alertBox.innerHTML = `<i class="fa-solid ${type === 'danger' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> <span>${escapeHtml(msg)}</span>`;
+                    };
+
+                    if (isSelf && !currPass) {
+                        showAlert('Silakan masukkan password saat ini.');
+                        if (currPassEl) currPassEl.focus();
+                        return;
+                    }
                     if (newPass.length < 6) {
-                        alert('Password baru minimal 6 karakter.');
+                        showAlert('Password baru minimal 6 karakter.');
+                        document.getElementById('mcpNewPassword').focus();
                         return;
                     }
                     if (newPass !== confirmPass) {
-                        alert('Konfirmasi password tidak cocok dengan password baru.');
+                        showAlert('Konfirmasi password tidak cocok dengan password baru.');
+                        document.getElementById('mcpConfirmPassword').focus();
                         return;
                     }
 
@@ -11927,28 +12209,35 @@
                     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
 
                     try {
-                        const csrf = await getCsrfToken();
+                        const csrf = typeof getCsrfToken === 'function' ? await getCsrfToken() : (window.APP_CSRF_TOKEN || '');
+                        const payload = {
+                            action: 'change_password',
+                            user_id: userId,
+                            new_password: newPass
+                        };
+                        if (isSelf && currPass) {
+                            payload.current_password = currPass;
+                        }
+
                         const res = await fetch('api/users.php', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-Token': csrf
                             },
-                            body: JSON.stringify({
-                                action: 'change_password',
-                                user_id: userId,
-                                new_password: newPass
-                            })
+                            body: JSON.stringify(payload)
                         });
                         const json = await res.json();
                         if (!res.ok || json.status !== 'success') {
                             throw new Error(json.message || 'Gagal mengubah password.');
                         }
 
-                        alert(json.message || 'Password berhasil diperbarui.');
-                        window.closeModal('modalChangePassword');
+                        showAlert(json.message || 'Password berhasil diperbarui!', 'success');
+                        setTimeout(() => {
+                            window.closeModal('modalChangePassword');
+                        }, 800);
                     } catch (err) {
-                        alert('Kesalahan: ' + err.message);
+                        showAlert(err.message || 'Kesalahan saat menyimpan password.');
                     } finally {
                         btn.disabled = false;
                         btn.innerHTML = origHtml;

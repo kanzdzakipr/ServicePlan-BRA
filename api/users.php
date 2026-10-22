@@ -17,6 +17,10 @@ try {
             $rolesStmt = $db->query('SELECT role_id, role_name, description FROM roles ORDER BY role_id ASC');
             $allRoles = $rolesStmt->fetchAll(PDO::FETCH_ASSOC);
 
+            // Fetch list of active locations for reference dropdown
+            $locationsStmt = $db->query('SELECT location_id, location_name, location_type, region FROM locations WHERE is_active = 1 ORDER BY location_name ASC');
+            $allLocations = $locationsStmt->fetchAll(PDO::FETCH_ASSOC);
+
             // Build user query
             $sql = '
                 SELECT 
@@ -25,10 +29,14 @@ try {
                     u.full_name,
                     u.role_id,
                     r.role_name,
+                    u.assigned_location_id,
+                    l.location_name AS assigned_location_name,
+                    l.location_type AS assigned_location_type,
                     u.is_active,
                     u.created_at
                 FROM users u
                 LEFT JOIN roles r ON u.role_id = r.role_id
+                LEFT JOIN locations l ON u.assigned_location_id = l.location_id
             ';
             $params = [];
             $where = [];
@@ -54,6 +62,7 @@ try {
                 'status' => 'success',
                 'data' => $users,
                 'roles' => $allRoles,
+                'locations' => $allLocations,
                 'total' => count($users),
                 'filter' => [
                     'role_id' => $roleId,
@@ -76,6 +85,9 @@ try {
                 $fullName = trim((string) ($input['full_name'] ?? ''));
                 $password = (string) ($input['password'] ?? '');
                 $roleId = isset($input['role_id']) ? (int) $input['role_id'] : 0;
+                $assignedLocationId = isset($input['assigned_location_id']) && $input['assigned_location_id'] !== '' && (int) $input['assigned_location_id'] > 0 
+                    ? (int) $input['assigned_location_id'] 
+                    : null;
 
                 // Validations
                 if ($username === '' || !preg_match('/^[a-z0-9_.-]{3,50}$/', $username)) {
@@ -117,6 +129,20 @@ try {
                     ]);
                 }
 
+                // Verify assigned_location_id if provided
+                $locationData = null;
+                if ($assignedLocationId !== null) {
+                    $locCheck = $db->prepare('SELECT location_id, location_name FROM locations WHERE location_id = :loc_id AND is_active = 1 LIMIT 1');
+                    $locCheck->execute([':loc_id' => $assignedLocationId]);
+                    $locationData = $locCheck->fetch(PDO::FETCH_ASSOC);
+                    if (!$locationData) {
+                        api_json_response(422, [
+                            'status' => 'error',
+                            'message' => 'Lokasi penugasan yang dipilih tidak terdaftar atau nonaktif di sistem.'
+                        ]);
+                    }
+                }
+
                 // Verify username unique
                 $userCheck = $db->prepare('SELECT user_id FROM users WHERE username = :username LIMIT 1');
                 $userCheck->execute([':username' => $username]);
@@ -131,14 +157,15 @@ try {
 
                 $db->beginTransaction();
                 $insertStmt = $db->prepare('
-                    INSERT INTO users (username, password_hash, full_name, role_id, is_active, created_at)
-                    VALUES (:username, :password_hash, :full_name, :role_id, 1, NOW())
+                    INSERT INTO users (username, password_hash, full_name, role_id, assigned_location_id, is_active, created_at)
+                    VALUES (:username, :password_hash, :full_name, :role_id, :assigned_location_id, 1, NOW())
                 ');
                 $insertStmt->execute([
                     ':username' => $username,
                     ':password_hash' => $passwordHash,
                     ':full_name' => $fullName,
-                    ':role_id' => $roleId
+                    ':role_id' => $roleId,
+                    ':assigned_location_id' => $assignedLocationId
                 ]);
                 $newUserId = (int) $db->lastInsertId();
 
@@ -155,23 +182,33 @@ try {
 
                 $db->commit();
 
+                $locInfo = $locationData ? " (Lokasi: {$locationData['location_name']})" : "";
                 api_json_response(201, [
                     'status' => 'success',
-                    'message' => "Pengguna '{$fullName}' ({$username}) berhasil ditambahkan ke role {$roleData['role_name']}.",
+                    'message' => "Pengguna '{$fullName}' ({$username}) berhasil ditambahkan ke role {$roleData['role_name']}{$locInfo}.",
                     'data' => [
                         'user_id' => $newUserId,
                         'username' => $username,
                         'full_name' => $fullName,
                         'role_id' => $roleId,
                         'role_name' => $roleData['role_name'],
+                        'assigned_location_id' => $assignedLocationId,
+                        'assigned_location_name' => $locationData['location_name'] ?? null,
                         'is_active' => 1
                     ]
                 ]);
             }
 
             if ($action === 'change_password') {
+                $currentUser = api_current_user();
+                $currentAuthId = (int) ($currentUser['id'] ?? 0);
                 $userId = isset($input['user_id']) ? (int) $input['user_id'] : 0;
+                if ($userId <= 0) {
+                    $userId = $currentAuthId;
+                }
+
                 $newPassword = (string) ($input['new_password'] ?? '');
+                $currentPassword = (string) ($input['current_password'] ?? '');
 
                 if ($userId <= 0) {
                     api_json_response(422, ['status' => 'error', 'message' => 'User ID tidak valid.']);
@@ -181,14 +218,34 @@ try {
                     api_json_response(422, ['status' => 'error', 'message' => 'Password baru wajib minimal 6 karakter.']);
                 }
 
-                $userCheck = $db->prepare('SELECT user_id, username, full_name FROM users WHERE user_id = :id LIMIT 1');
+                $userCheck = $db->prepare('SELECT user_id, username, full_name, password_hash FROM users WHERE user_id = :id LIMIT 1');
                 $userCheck->execute([':id' => $userId]);
                 $user = $userCheck->fetch(PDO::FETCH_ASSOC);
                 if (!$user) {
                     api_json_response(404, ['status' => 'error', 'message' => 'Pengguna tidak ditemukan.']);
                 }
 
-                $newHash = password_hash($newPassword, PASSWORD_BCRYPT);
+                $isAdmin = in_array('*', $currentUser['permissions'] ?? []) || in_array('Administrator', $currentUser['roles'] ?? []);
+
+                // Non-admin can only change their own password
+                if (!$isAdmin && $userId !== $currentAuthId) {
+                    api_json_response(403, ['status' => 'error', 'message' => 'Anda tidak memiliki hak untuk mengubah password pengguna lain.']);
+                }
+
+                // If changing self password or if current password was supplied, verify it
+                if ($userId === $currentAuthId || $currentPassword !== '') {
+                    if ($currentPassword === '') {
+                        api_json_response(422, ['status' => 'error', 'message' => 'Password saat ini wajib diisi.']);
+                    }
+                    if (!password_verify($currentPassword, (string) $user['password_hash'])) {
+                        api_json_response(422, ['status' => 'error', 'message' => 'Password saat ini salah.']);
+                    }
+                    if (password_verify($newPassword, (string) $user['password_hash'])) {
+                        api_json_response(422, ['status' => 'error', 'message' => 'Password baru tidak boleh sama dengan password saat ini.']);
+                    }
+                }
+
+                $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
                 $updateStmt = $db->prepare('UPDATE users SET password_hash = :hash WHERE user_id = :id');
                 $updateStmt->execute([':hash' => $newHash, ':id' => $userId]);
 
