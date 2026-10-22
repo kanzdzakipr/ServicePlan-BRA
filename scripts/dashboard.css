@@ -1311,6 +1311,8 @@ body.sidebar-collapsed .sidebar-menu li a i {
             top: 0;
             z-index: 2;
             box-shadow: inset 0 -1px 0 var(--border);
+            vertical-align: middle;
+            white-space: nowrap;
         }
 
         .dashboard-wo-table .col-wo-unit { width: 31%; }
@@ -1318,6 +1320,33 @@ body.sidebar-collapsed .sidebar-menu li a i {
         .dashboard-wo-table .col-priority { width: 14%; }
         .dashboard-wo-table .col-mechanic { width: 22%; }
         .dashboard-wo-table .col-downtime { width: 18%; }
+
+        .dashboard-wo-table th:nth-child(1),
+        .dashboard-wo-table td:nth-child(1),
+        .dashboard-wo-table th:nth-child(4),
+        .dashboard-wo-table td:nth-child(4) {
+            text-align: left;
+        }
+
+        .dashboard-wo-table th:nth-child(2),
+        .dashboard-wo-table td:nth-child(2),
+        .dashboard-wo-table th:nth-child(3),
+        .dashboard-wo-table td:nth-child(3) {
+            text-align: center;
+        }
+
+        .dashboard-wo-table th:nth-child(5),
+        .dashboard-wo-table td:nth-child(5) {
+            text-align: right;
+        }
+
+        .dashboard-wo-row {
+            height: 64px;
+        }
+
+        .dashboard-wo-row td {
+            vertical-align: middle;
+        }
 
         .dashboard-wo-downtime {
             font-family: var(--font-mono, 'JetBrains Mono', Consolas, monospace);
@@ -1347,6 +1376,21 @@ body.sidebar-collapsed .sidebar-menu li a i {
             font-weight: 700;
         }
 
+        .dashboard-wo-status-value {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            text-align: center;
+        }
+
+        .dashboard-wo-priority .badge {
+            justify-content: center;
+            min-width: 58px;
+            min-height: 28px;
+            box-sizing: border-box;
+        }
+
         .dashboard-wo-status-value.is-open {
             color: #dc2626;
         }
@@ -1356,6 +1400,7 @@ body.sidebar-collapsed .sidebar-menu li a i {
         }
 
         .dashboard-wo-mechanic {
+            line-height: 1.35;
             overflow-wrap: break-word;
         }
 
