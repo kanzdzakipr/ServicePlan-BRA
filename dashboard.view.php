@@ -5846,7 +5846,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                         // Sync integrated status for Asset & Monitoring Unit
                         if (assetId && globalData.assets) {
-                            setIntegratedAssetStatus(assetId, unitStatus, 'Work Order', woId, actionLog);
+                            const updatedAsset = setIntegratedAssetStatus(assetId, unitStatus, 'Work Order', woId, actionLog);
+                            if (updatedAsset) updatedAsset.syncExpectedStatus = unitStatus;
                         }
 
                         closeModal('modalWoStatusConfirm');
@@ -6799,34 +6800,33 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 return assets[0] || null;
             };
 
-            function persistFleetState() {
-                if (!globalData) return;
-                try {
-                    const stateToSave = {
-                        version: 1,
-                        assets: globalData.assets.map(asset => ({
-                            id: asset.id,
-                            status: asset.status,
-                            location: asset.location,
-                            lastUpdate: asset.lastUpdate,
-                            last_hm_km: asset.last_hm_km,
-                            statusSource: asset.statusSource,
-                            statusReference: asset.statusReference,
-                            statusNote: asset.statusNote,
-                            statusEvents: (asset.statusEvents || []).slice(0, 20)
-                        })),
-                        work_orders: globalData.work_orders || [],
-                        inspections: globalData.inspections || []
-                    };
-                    // Sync to Backend
-                    fetch('api/sync.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(stateToSave)
-                    }).catch(e => console.warn('Sync API failed:', e));
-                } catch (error) {
-                    console.warn('State integrasi tidak dapat disimpan:', error);
+            async function persistFleetState(options = {}) {
+                if (!globalData || (!options.assetId && !options.workOrderId)) return;
+                const asset = options.assetId
+                    ? globalData.assets?.find(item => item.id === options.assetId)
+                    : null;
+                const workOrder = options.workOrderId
+                    ? globalData.work_orders?.find(item => item.woId === options.workOrderId)
+                    : null;
+                if ((options.assetId && !asset) || (options.workOrderId && !workOrder)) {
+                    throw new Error('Objek sinkronisasi tidak ditemukan. Muat ulang data.');
                 }
+                const payload = {
+                    mode: 'targeted',
+                    assets: asset ? [{ id: asset.id, status: asset.status, expected_status: asset.syncExpectedStatus || asset.status, last_hm_km: asset.last_hm_km }] : [],
+                    work_orders: workOrder ? [workOrder] : []
+                };
+                const response = await fetch('api/sync.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.APP_CSRF_TOKEN || '' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Perubahan unit/WO belum tersimpan di database.');
+                }
+                if (asset) asset.syncExpectedStatus = asset.status;
+                return result;
             }
 
             function setIntegratedAssetStatus(assetId, status, source, reference, note = '') {
@@ -6834,6 +6834,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const asset = window.resolveAsset(assetId);
                 if (!asset) return null;
                 const now = new Date();
+                if (!asset.syncExpectedStatus) asset.syncExpectedStatus = asset.status;
                 asset.status = status;
                 asset.lastUpdate = 'Baru saja';
                 asset.statusUpdatedAt = now.toISOString();
@@ -6899,11 +6900,16 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             window.syncFleetState = function (options = {}) {
                 if (!globalData) return;
                 rebuildFleetSummary();
-                persistFleetState();
+                const syncResult = persistFleetState(options).catch(error => {
+                    console.error('Sinkronisasi terarah gagal:', error);
+                    alert(`Perubahan unit/WO belum tersimpan di database: ${error.message}`);
+                    return null;
+                });
                 refreshAllViews();
                 if (window.FleetInspectionModule && options.refreshInspection !== false) {
                     window.FleetInspectionModule.refresh();
                 }
+                return syncResult;
             };
 
             window.openIntegratedStatusUpdate = function (assetId, defaultTargetStatus = null) {
@@ -9092,6 +9098,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             if (!item) return;
                             item.category = cat;
                             item.status = status;
+                            item.syncExpectedStatus = status;
                             item.make_model = model || null;
                             item.year_manufacture = year ? parseInt(year, 10) : null;
                             item.serial_number = sn || null;
@@ -9164,10 +9171,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                     try {
                         let payload = {
+                            mode: 'targeted',
                             assets: [{
                                 id: id,
                                 status: status,
-                                location: loc || asset.location,
+                                expected_status: asset.status,
+                                location: loc || null,
                                 last_hm_km: asset.last_hm_km || 0
                             }],
                             work_orders: []
@@ -9190,7 +9199,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                         const response = await fetch('api/sync.php', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.APP_CSRF_TOKEN || '' },
                             body: JSON.stringify(payload)
                         });
 
@@ -9199,6 +9208,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         if (result.status === 'success') {
                             if (loc) asset.location = loc;
                             setIntegratedAssetStatus(id, status, 'Master Asset', 'Update status manual', notes);
+                            asset.syncExpectedStatus = status;
 
                             if (status === 'BREAKDOWN') {
                                 if (!activeWo) {

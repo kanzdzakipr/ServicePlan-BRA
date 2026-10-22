@@ -1,6 +1,6 @@
 # Checkpoint F1a — sumber data Dashboard saat refresh
 
-Status: **PARTIAL**. Irisan ini mencegah cache `fleetmonitor-integrated-state-v1` di browser menimpa aset, WO, dan inspeksi yang baru dimuat dari API; kartu jumlah unit/status memakai hitungan data terfilter termasuk nilai nol. Belum mengubah protokol tulis `api/sync.php` yang masih berisiko menimpa banyak baris.
+Status F1a: **PASS pada uji browser menurut konfirmasi pengguna**. Irisan ini mencegah cache `fleetmonitor-integrated-state-v1` di browser menimpa aset, WO, dan inspeksi yang baru dimuat dari API; kartu jumlah unit/status memakai hitungan data terfilter termasuk nilai nol. Protokol tulis `api/sync.php` ditangani pada F1b terpisah.
 
 ## Yang berubah
 

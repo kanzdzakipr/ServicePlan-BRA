@@ -1,6 +1,7 @@
 <?php
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
+require_once dirname(__DIR__) . '/core/FleetSyncPolicy.php';
 $db = Database::getInstance();
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -12,6 +13,11 @@ if ($method === 'POST') {
         exit;
     }
 
+    $policyError = is_array($data) ? FleetSyncPolicy::error($data) : 'Payload sinkronisasi tidak valid.';
+    if ($policyError !== null) {
+        api_json_response(422, ['status' => 'error', 'code' => 'TARGETED_SYNC_REQUIRED', 'message' => $policyError]);
+    }
+
     try {
         $db->beginTransaction();
 
@@ -19,14 +25,26 @@ if ($method === 'POST') {
         if (isset($data['assets']) && is_array($data['assets'])) {
             $stmtAsset = $db->prepare("
                 UPDATE assets 
-                SET status = :status, raw_location_notes = :loc, last_hm_km = :hm 
+                SET status = :status,
+                    raw_location_notes = COALESCE(:loc, raw_location_notes),
+                    last_hm_km = GREATEST(COALESCE(last_hm_km, 0), :hm)
                 WHERE asset_id = :id
             ");
             foreach ($data['assets'] as $a) {
                 api_require_asset_access($db, (string) ($a['id'] ?? ''));
+                $currentAsset = $db->prepare('SELECT status FROM assets WHERE asset_id = :id FOR UPDATE');
+                $currentAsset->execute([':id' => (string) $a['id']]);
+                $currentStatus = $currentAsset->fetchColumn();
+                if ($currentStatus === false || (string) $currentStatus !== (string) $a['expected_status']) {
+                    $db->rollBack();
+                    api_json_response(409, [
+                        'status' => 'error', 'code' => 'STALE_ASSET_STATUS',
+                        'message' => 'Status unit telah berubah di server. Muat ulang sebelum menyimpan.',
+                    ]);
+                }
                 $stmtAsset->execute([
                     ':status' => $a['status'] ?? 'READY',
-                    ':loc' => $a['location'] ?? '',
+                    ':loc' => isset($a['location']) && trim((string) $a['location']) !== '' ? trim((string) $a['location']) : null,
                     ':hm' => $a['last_hm_km'] ?? 0,
                     ':id' => $a['id']
                 ]);
@@ -70,18 +88,30 @@ if ($method === 'POST') {
             foreach ($data['work_orders'] as $w) {
                 if (!isset($w['woId']) || !isset($w['assetId'])) continue;
                 api_require_asset_access($db, (string) $w['assetId']);
-                $existingWorkOrder = $db->prepare('SELECT asset_id, status FROM work_orders WHERE wo_id = :wo_id LIMIT 1');
+                $existingWorkOrder = $db->prepare('SELECT asset_id, status, issue_description FROM work_orders WHERE wo_id = :wo_id LIMIT 1 FOR UPDATE');
                 $existingWorkOrder->execute([':wo_id' => (string) $w['woId']]);
                 $existingRow = $existingWorkOrder->fetch(PDO::FETCH_ASSOC);
                 if ($existingRow !== false) {
                     api_require_work_order_access($db, (string) $w['woId']);
                     if (!hash_equals((string) $existingRow['asset_id'], (string) $w['assetId'])) {
+                        $db->rollBack();
                         api_json_response(409, [
                             'status' => 'error',
                             'code' => 'OBJECT_ID_CONFLICT',
                             'message' => 'ID work order sudah digunakan oleh aset lain.',
                         ]);
                     }
+                    // This endpoint creates generated WOs only. Existing WOs are
+                    // updated through work_orders.php, never by a stale UI snapshot.
+                    if ((string) $existingRow['status'] === (string) $w['status']
+                        && (string) $existingRow['issue_description'] === (string) ($w['issue'] ?? '')) {
+                        continue; // Idempotent retry of the same generated WO.
+                    }
+                    $db->rollBack();
+                    api_json_response(409, [
+                        'status' => 'error', 'code' => 'WORK_ORDER_EXISTS',
+                        'message' => 'Work Order sudah berubah. Muat ulang dan gunakan detail WO.',
+                    ]);
                 }
                 $mechanicInput = $w['assignedMechanics'] ?? $w['assigned_mechanics'] ?? $w['assignedTo'] ?? '';
                 $mechanics = WorkOrderSupport::normalizeMechanics($mechanicInput);

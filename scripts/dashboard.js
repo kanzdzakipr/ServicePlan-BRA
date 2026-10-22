@@ -6367,7 +6367,8 @@
             }
 
             if (newAssetStatus && typeof window.setIntegratedAssetStatus === 'function') {
-                window.setIntegratedAssetStatus(selectedAssetId, newAssetStatus, 'Work Order', woId, issue);
+                const updatedAsset = window.setIntegratedAssetStatus(selectedAssetId, newAssetStatus, 'Work Order', woId, issue);
+                if (updatedAsset) updatedAsset.syncExpectedStatus = newAssetStatus;
             }
             if (Array.isArray(window.globalData?.work_orders)) {
                 window.globalData.work_orders.unshift({
@@ -10111,7 +10112,7 @@
     };
     persist();
     if (window.syncFleetState)
-      window.syncFleetState({ refreshInspection: false });
+      window.syncFleetState({ refreshInspection: false, assetId: status === "danger" ? asset.id : null });
     else render();
   }
 
@@ -10160,6 +10161,7 @@
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        "X-CSRF-Token": window.APP_CSRF_TOKEN || "",
       },
       body: JSON.stringify(payload),
     });
@@ -10203,6 +10205,9 @@
     };
     persist();
     render();
+    if (record.status === "danger") {
+      window.syncFleetState?.({ refreshInspection: false, assetId: asset.id });
+    }
   }
 
   function worstFinding(profile) {
@@ -10298,7 +10303,7 @@
         text: `${wo.woId} dibuat dan terhubung dengan inspeksi ${shortCode(asset.id)}.`,
       };
       persist();
-      window.syncFleetState?.({ refreshInspection: false });
+      window.syncFleetState?.({ refreshInspection: false, assetId: asset.id, workOrderId: wo.woId });
     }
     if (navigate) {
       if (window.openWoDetailView)
@@ -25994,26 +25999,27 @@
       itemNotes: { ...currentFormData.notes },
     };
 
-    // Add to History
-    inspectionHistory.unshift(newP2H);
-
     try {
       const response = await fetch("api/inspections.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": window.APP_CSRF_TOKEN || "" },
         body: JSON.stringify(newP2H),
       });
       const resData = await response.json();
-      if (resData.status !== "success") {
+      if (!response.ok || resData.status !== "success") {
         console.error("Inspection Backend Error:", resData.message);
         alert("Peringatan: Gagal menyimpan data ke database server.");
+        return;
       }
     } catch (e) {
       console.error("Fetch error:", e);
       alert("Peringatan: Gagal terhubung ke server saat menyimpan inspeksi.");
+      return;
     }
+    inspectionHistory.unshift(newP2H);
 
     // Update global assets & trigger Auto Work Order if Critical Fail
+    let newAutoWoId = null;
     if (window.globalData) {
       if (!window.globalData.inspections) window.globalData.inspections = [];
       window.globalData.inspections.unshift(newP2H);
@@ -26086,6 +26092,7 @@
           ? existingWo.woId
           : "WO-P2H-" + Math.floor(1000 + Math.random() * 9000);
         if (!existingWo) {
+          newAutoWoId = autoWoId;
           window.globalData.work_orders.unshift({
             woId: autoWoId,
             assetId: assetId,
@@ -26160,7 +26167,7 @@
 
     renderHistoryTable();
     updateKpiSummary();
-    window.syncFleetState?.({ refreshInspection: false });
+    await window.syncFleetState?.({ refreshInspection: false, assetId, workOrderId: newAutoWoId });
     window.switchP2HTab("history");
   };
 
