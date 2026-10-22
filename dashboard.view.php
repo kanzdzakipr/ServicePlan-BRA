@@ -128,7 +128,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             <div class="header-right">
                 <!-- Mobile Search Icon Toggle Button -->
                 <button type="button" class="btn-mobile-search-toggle" id="btnMobileSearchToggle"
-                    onclick="toggleMobileSearch(event)" title="Pencarian aset">
+                    onclick="toggleMobileSearch(event)" title="Pencarian Unit & WO" aria-label="Buka pencarian aset dan unit">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
 
