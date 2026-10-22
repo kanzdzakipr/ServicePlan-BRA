@@ -294,10 +294,42 @@ switch ($method) {
                 throw new InvalidArgumentException('Aset Work Order tidak ditemukan.');
             }
             $ticket = WorkOrderSupport::normalizeTicketInput($data, $asset);
+
+            // Parse structured parts items from Draft SPB Unit table
+            $rawPartsItems = is_array($data['parts_items'] ?? null) ? $data['parts_items'] : [];
+            $validPartsItems = [];
+            foreach ($rawPartsItems as $pItem) {
+                $pDesc = trim((string) ($pItem['description'] ?? ''));
+                $pNum = trim((string) ($pItem['part_number'] ?? $pItem['partNumber'] ?? ''));
+                $pQty = max(1, (int) ($pItem['qty'] ?? 1));
+                $pUom = trim((string) ($pItem['uom'] ?? 'pcs')) ?: 'pcs';
+                if ($pDesc !== '' || $pNum !== '') {
+                    $validPartsItems[] = [
+                        'part_number' => $pNum,
+                        'description' => $pDesc ?: $pNum,
+                        'qty' => $pQty,
+                        'uom' => $pUom,
+                        'is_manual' => !empty($pItem['is_manual']) || !empty($pItem['isManual']),
+                    ];
+                }
+            }
+
             $partsReq = in_array((string) ($data['parts_requirement'] ?? ''), ['REQUIRED', 'NOT_REQUIRED', 'UNASSESSED'], true)
                 ? (string) $data['parts_requirement']
-                : (!empty($data['parts_requirement_note']) ? 'REQUIRED' : 'UNASSESSED');
+                : ((!empty($validPartsItems) || !empty($data['parts_requirement_note'])) ? 'REQUIRED' : 'UNASSESSED');
+            
             $partsNote = trim((string) ($data['parts_requirement_note'] ?? '')) ?: null;
+            if (!empty($validPartsItems)) {
+                $partsReq = 'REQUIRED';
+                if ($partsNote === null) {
+                    $lines = array_map(function($p) {
+                        $pn = $p['part_number'] ? " ({$p['part_number']})" : '';
+                        $tag = $p['is_manual'] ? ' [Luar Gudang/Manual]' : ' [Gudang]';
+                        return "• {$p['qty']} {$p['uom']} - {$p['description']}{$pn}{$tag}";
+                    }, $validPartsItems);
+                    $partsNote = implode("\n", $lines);
+                }
+            }
 
             $stmt = $db->prepare(
                 'INSERT INTO work_orders
@@ -355,6 +387,78 @@ switch ($method) {
                 $timelineDescription .= "\nRFU Bersyarat: " . $ticket['mitigation_action'];
             }
             wo_insert_timeline($db, (string) $data['wo_id'], 'CREATED', null, $status, 'Work Order dibuat', $timelineDescription);
+
+            // Integrated Draft SPB creation if parts are specified
+            $createdSpbId = null;
+            $actor = wo_actor();
+            if (!empty($validPartsItems)) {
+                $year = date('y');
+                $month = date('m');
+                $createdSpbId = sprintf('SPB-%s%s-%04d', $year, $month, random_int(1000, 9999));
+                $spbUrgency = in_array($priority, ['Emergency', 'High'], true) ? 'Emergency' : 'Normal';
+
+                $stmtSpb = $db->prepare(
+                    'INSERT INTO purchase_requests
+                     (spb_id, wo_id, asset_id, requested_by, urgency, status, notes, requested_at)
+                     VALUES (:spb_id, :wo_id, :asset_id, :requested_by, :urgency, :status, :notes, NOW())'
+                );
+                $stmtSpb->execute([
+                    ':spb_id' => $createdSpbId,
+                    ':wo_id' => (string) $data['wo_id'],
+                    ':asset_id' => (string) $data['asset_id'],
+                    ':requested_by' => (int) ($actor['id'] ?? 1),
+                    ':urgency' => $spbUrgency,
+                    ':status' => 'Submitted',
+                    ':notes' => $partsNote ?: $issue,
+                ]);
+
+                $stmtSpbItem = $db->prepare(
+                    'INSERT INTO purchase_request_items
+                     (id, spb_id, part_number, description, qty_requested, status)
+                     VALUES (:id, :spb_id, :part_number, :description, :qty_requested, :status)'
+                );
+                foreach ($validPartsItems as $idx => $p) {
+                    $itemId = sprintf('SPBI-%s-%02d', substr(md5($createdSpbId), 0, 8), $idx + 1);
+                    $stmtSpbItem->execute([
+                        ':id' => $itemId,
+                        ':spb_id' => $createdSpbId,
+                        ':part_number' => $p['part_number'] ?: 'CUSTOM',
+                        ':description' => mb_substr($p['description'], 0, 255),
+                        ':qty_requested' => $p['qty'],
+                        ':status' => 'Submitted',
+                    ]);
+                }
+
+                // If WO was Open, automatically transition to Waiting Part because active SPB is submitted
+                if ($status === 'Open') {
+                    $updWo = $db->prepare("UPDATE work_orders SET status = 'Waiting Part', parts_requirement = 'REQUIRED', parts_requirement_note = :note WHERE wo_id = :wo_id");
+                    $updWo->execute([
+                        ':note' => $partsNote,
+                        ':wo_id' => (string) $data['wo_id']
+                    ]);
+                    wo_insert_timeline(
+                        $db,
+                        (string) $data['wo_id'],
+                        'STATUS_CHANGE',
+                        'Open',
+                        'Waiting Part',
+                        'Status otomatis: Waiting Part',
+                        "Status dialihkan ke Waiting Part karena terdapat kebutuhan suku cadang aktif (SPB #{$createdSpbId})."
+                    );
+                    $status = 'Waiting Part';
+                } else {
+                    wo_insert_timeline(
+                        $db,
+                        (string) $data['wo_id'],
+                        'NOTE',
+                        null,
+                        null,
+                        'Pengajuan SPB Unit',
+                        "Kebutuhan suku cadang diajukan ke logistik melalui SPB #{$createdSpbId}."
+                    );
+                }
+            }
+
             $db->commit();
 
             $mechanic = $ticket['assigned_mechanic'];
@@ -372,8 +476,10 @@ switch ($method) {
                 'message' => 'Work Order berhasil dibuat.',
                 'data' => [
                     'woId' => (string) $data['wo_id'],
+                    'status' => $status,
                     'assetStatus' => $ticket['asset_status'],
                     'isForcedOperation' => (bool) $ticket['is_forced_operation'],
+                    'createdSpbId' => $createdSpbId,
                 ],
             ]);
         } catch (InvalidArgumentException $e) {

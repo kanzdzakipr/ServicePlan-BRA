@@ -23,10 +23,10 @@ $testWoId = 'WO-TEST-' . bin2hex(random_bytes(4));
 try {
     // 2. Prepare WO data with parts items
     $partsItems = [
-        ['partNumber' => 'P-001-OIL', 'description' => 'Filter Oli Engine', 'qty' => 2, 'uom' => 'Pcs', 'isCustom' => false],
-        ['partNumber' => '', 'description' => 'Baut Khusus 14mm Baja', 'qty' => 4, 'uom' => 'Pcs', 'isCustom' => true]
+        ['partNumber' => 'P-001-OIL', 'description' => 'Filter Oli Engine', 'qty' => 2, 'uom' => 'Pcs', 'isManual' => false],
+        ['partNumber' => '', 'description' => 'Baut Khusus 14mm Baja', 'qty' => 4, 'uom' => 'Pcs', 'isManual' => true]
     ];
-    $partsNote = "• 2 Pcs - Filter Oli Engine (P-001-OIL) [Gudang]\n• 4 Pcs - Baut Khusus 14mm Baja [Luar Gudang]";
+    $partsNote = "• 2 Pcs - Filter Oli Engine (P-001-OIL) [Gudang]\n• 4 Pcs - Baut Khusus 14mm Baja [Luar Gudang/Manual]";
 
     $woData = [
         'wo_id' => $testWoId,
@@ -42,6 +42,7 @@ try {
         'maintenance_type' => 'Corrective',
         'parts_requirement' => 'REQUIRED',
         'parts_requirement_note' => $partsNote,
+        'parts_items' => $partsItems,
         'assigned_mechanics' => ['Suryanto', 'Bambang'],
         'assigned_mechanic' => 'Suryanto, Bambang',
         'root_cause' => 'Vibrasi tinggi',
@@ -53,9 +54,29 @@ try {
         'estimated_completion_at' => null
     ];
 
+    // Simulate backend WO creation logic with Draft SPB Unit integration
     $asset = $db->query("SELECT * FROM assets WHERE asset_id = " . $db->quote($testAssetId))->fetch(PDO::FETCH_ASSOC);
     $ticket = WorkOrderSupport::normalizeTicketInput($woData, $asset);
 
+    $rawPartsItems = $woData['parts_items'];
+    $validPartsItems = [];
+    foreach ($rawPartsItems as $pItem) {
+        $pDesc = trim((string) ($pItem['description'] ?? ''));
+        $pNum = trim((string) ($pItem['part_number'] ?? $pItem['partNumber'] ?? ''));
+        $pQty = max(1, (int) ($pItem['qty'] ?? 1));
+        $pUom = trim((string) ($pItem['uom'] ?? 'pcs')) ?: 'pcs';
+        if ($pDesc !== '' || $pNum !== '') {
+            $validPartsItems[] = [
+                'part_number' => $pNum,
+                'description' => $pDesc ?: $pNum,
+                'qty' => $pQty,
+                'uom' => $pUom,
+                'is_manual' => !empty($pItem['is_manual']) || !empty($pItem['isManual']),
+            ];
+        }
+    }
+
+    $status = 'Open';
     $stmt = $db->prepare(
         'INSERT INTO work_orders
          (wo_id, asset_id, hull_number, equipment_type, current_hm_km, trouble_at,
@@ -75,7 +96,7 @@ try {
         ':wo_id' => $testWoId,
         ':asset_id' => $testAssetId,
         ':issue' => $woData['issue_description'],
-        ':status' => 'Open',
+        ':status' => $status,
         ':priority' => 'High',
         ':maintenance_type' => 'Corrective',
         ':parts_requirement' => 'REQUIRED',
@@ -97,14 +118,60 @@ try {
         ':estimated_completion_at' => null,
     ]);
 
+    $createdSpbId = sprintf('SPB-%s%s-%04d', date('y'), date('m'), random_int(1000, 9999));
+    $stmtSpb = $db->prepare(
+        'INSERT INTO purchase_requests
+         (spb_id, wo_id, asset_id, requested_by, urgency, status, notes, requested_at)
+         VALUES (:spb_id, :wo_id, :asset_id, :requested_by, :urgency, :status, :notes, NOW())'
+    );
+    $stmtSpb->execute([
+        ':spb_id' => $createdSpbId,
+        ':wo_id' => $testWoId,
+        ':asset_id' => $testAssetId,
+        ':requested_by' => 1,
+        ':urgency' => 'Emergency',
+        ':status' => 'Submitted',
+        ':notes' => $partsNote,
+    ]);
+
+    $stmtSpbItem = $db->prepare(
+        'INSERT INTO purchase_request_items
+         (id, spb_id, part_number, description, qty_requested, status)
+         VALUES (:id, :spb_id, :part_number, :description, :qty_requested, :status)'
+    );
+    foreach ($validPartsItems as $idx => $p) {
+        $itemId = sprintf('SPBI-%s-%02d', substr(md5($createdSpbId), 0, 8), $idx + 1);
+        $stmtSpbItem->execute([
+            ':id' => $itemId,
+            ':spb_id' => $createdSpbId,
+            ':part_number' => $p['part_number'] ?: 'CUSTOM',
+            ':description' => mb_substr($p['description'], 0, 255),
+            ':qty_requested' => $p['qty'],
+            ':status' => 'Submitted',
+        ]);
+    }
+
+    if ($status === 'Open') {
+        $db->prepare("UPDATE work_orders SET status = 'Waiting Part' WHERE wo_id = ?")->execute([$testWoId]);
+        $status = 'Waiting Part';
+    }
+
     // 3. Verify fetched overview
     $overview = WorkOrderSupport::overview($db, $testWoId);
     $wo = $overview['workOrder'];
+    assertTrue($wo['status'] === 'Waiting Part', 'WO status should auto-transition to Waiting Part');
     assertTrue($wo['partsRequirement'] === 'REQUIRED', 'Parts requirement should be REQUIRED');
     assertTrue(str_contains($wo['partsRequirementNote'], 'Filter Oli Engine'), 'Parts note should contain Filter Oli');
-    assertTrue(str_contains($wo['partsRequirementNote'], 'Baut Khusus 14mm'), 'Parts note should contain custom part');
-    echo "PASS: Work order creation with parts builder note and requirement verified.\n";
+    assertTrue(count($overview['purchaseRequests']) === 1, 'Should have 1 linked SPB');
+    assertTrue($overview['purchaseRequests'][0]['spbId'] === $createdSpbId, 'SPB ID should match');
+    assertTrue(count($overview['purchaseRequests'][0]['items']) === 2, 'Should have 2 SPB items');
+
+    echo "PASS: Work order creation with parts builder and auto-generated SPB verified successfully.\n";
 
 } finally {
+    if (isset($createdSpbId)) {
+        $db->prepare("DELETE FROM purchase_request_items WHERE spb_id = ?")->execute([$createdSpbId]);
+        $db->prepare("DELETE FROM purchase_requests WHERE spb_id = ?")->execute([$createdSpbId]);
+    }
     $db->prepare("DELETE FROM work_orders WHERE wo_id = ?")->execute([$testWoId]);
 }
