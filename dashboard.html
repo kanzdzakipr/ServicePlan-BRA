@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261019-mon-filter-fix-1">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-dashboard-table-layout-1">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <script src="scripts/auth-client.js?v=20260810-1"></script>
@@ -398,12 +398,12 @@
                     </div>
                 </div>
 
-                <div class="dashboard-layout" style="margin-top: 20px;">
-                    <div class="panel">
+                <div class="dashboard-layout dashboard-data-layout" style="margin-top: 20px;">
+                    <div class="panel dashboard-data-panel dashboard-category-panel">
                         <div class="panel-header"><span><i class="fa-solid fa-list"></i> Unit per Kategori</span></div>
                         <div class="panel-body" style="padding: 0;">
-                            <div class="table-responsive">
-                                <table style="margin: 0; font-size: 0.85rem;">
+                            <div class="table-responsive dashboard-data-table-wrap">
+                                <table class="dashboard-data-table dashboard-category-table">
                                     <thead>
                                         <tr>
                                             <th style="white-space: nowrap;">Kategori</th>
@@ -428,12 +428,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="panel">
+                    <div class="panel dashboard-data-panel dashboard-work-order-panel">
                         <div class="panel-header"><span><i class="fa-solid fa-clipboard-list"></i> Work Order Aktif
                                 (Terbaru)</span></div>
                         <div class="panel-body" style="padding: 0;">
-                            <div class="table-responsive">
-                                <table style="margin: 0;">
+                            <div class="table-responsive dashboard-data-table-wrap">
+                                <table class="dashboard-data-table dashboard-wo-table dashboard-wo-table-compact">
                                     <thead>
                                         <tr>
                                             <th>WO ID</th>
@@ -6523,7 +6523,7 @@
                     if (catTable) {
                         catTable.innerHTML = catArr.map(([cat, stats]) => `
                     <tr>
-                        <td style="display: flex; align-items: center; white-space: nowrap;">${getCategoryIcon(cat)} <strong>${escapeHtml(cat)}</strong></td>
+                        <td class="dashboard-category-name">${getCategoryIcon(cat)} <strong>${escapeHtml(cat)}</strong></td>
                         <td style="text-align: center; font-weight: 700; color: #16a34a;">${stats.readyOp}</td>
                         <td style="text-align: center; font-weight: 700; color: #0284c7;">${stats.standby}</td>
                         <td style="text-align: center; font-weight: 700; color: #dc2626;">${stats.breakdown}</td>

@@ -1034,6 +1034,142 @@ body.sidebar-collapsed .sidebar-menu li a i {
             scrollbar-width: thin;
         }
 
+        /* Dashboard data tables: readable widths and consistent baselines. */
+        .dashboard-data-layout {
+            grid-template-columns: minmax(31rem, 0.82fr) minmax(44rem, 1.3fr);
+            align-items: start;
+        }
+
+        .dashboard-data-panel {
+            margin-bottom: 0;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .dashboard-data-panel .panel-header {
+            min-height: 48px;
+        }
+
+        .dashboard-data-table-wrap {
+            border: 0;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+        }
+
+        .dashboard-data-table {
+            margin: 0;
+            font-size: 0.82rem;
+            table-layout: fixed;
+        }
+
+        .dashboard-data-table th,
+        .dashboard-data-table td {
+            box-sizing: border-box;
+            line-height: 1.35;
+            vertical-align: middle;
+        }
+
+        .dashboard-data-table th {
+            height: 46px;
+            padding: 9px 10px;
+        }
+
+        .dashboard-data-table td {
+            min-height: 46px;
+            padding: 10px;
+        }
+
+        .dashboard-category-table {
+            min-width: 500px;
+        }
+
+        .dashboard-category-table .col-category { width: 29%; }
+        .dashboard-category-table .col-ready { width: 15%; }
+        .dashboard-category-table .col-standby { width: 14%; }
+        .dashboard-category-table .col-breakdown { width: 17%; }
+        .dashboard-category-table .col-inspection { width: 15%; }
+        .dashboard-category-table .col-total { width: 10%; }
+
+        .dashboard-category-table th:not(:first-child),
+        .dashboard-category-table td:not(:first-child) {
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dashboard-category-table td:first-child,
+        .dashboard-category-name {
+            white-space: nowrap;
+        }
+
+        .dashboard-category-name > i,
+        .dashboard-category-name > strong,
+        .dashboard-category-name > button {
+            vertical-align: middle;
+        }
+
+        .dashboard-wo-table {
+            min-width: 760px;
+        }
+
+        .dashboard-wo-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            box-shadow: inset 0 -1px 0 var(--border);
+        }
+
+        .dashboard-wo-table .col-wo-id { width: 12%; }
+        .dashboard-wo-table .col-unit { width: 24%; }
+        .dashboard-wo-table .col-status { width: 14%; }
+        .dashboard-wo-table .col-priority { width: 14%; }
+        .dashboard-wo-table .col-mechanic { width: 19%; }
+        .dashboard-wo-table .col-downtime { width: 17%; }
+
+        .dashboard-wo-id,
+        .dashboard-wo-downtime {
+            font-family: var(--font-mono, 'JetBrains Mono', Consolas, monospace);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .dashboard-wo-unit .unit-prop-hover-link,
+        .dashboard-wo-status,
+        .dashboard-wo-priority {
+            white-space: nowrap;
+        }
+
+        .dashboard-wo-status span {
+            font-weight: 700;
+        }
+
+        .dashboard-unit-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            margin-top: 3px;
+            color: var(--text-muted, #64748b);
+            font-size: 0.72rem;
+            line-height: 1.3;
+            overflow-wrap: anywhere;
+        }
+
+        .dashboard-wo-mechanic {
+            overflow-wrap: break-word;
+        }
+
+        .dashboard-wo-table-compact {
+            min-width: 520px;
+        }
+
+        @media (max-width: 1440px) {
+            .dashboard-data-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .dashboard-data-panel {
+                margin-bottom: 20px;
+            }
+        }
+
         .dashboard-wo-loading td,
         .dashboard-wo-load-more-hint td {
             text-align: center;
