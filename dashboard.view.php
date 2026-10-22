@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261019-mon-filter-fix-1">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-dashboard-table-layout-1">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -393,12 +393,20 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </div>
                 </div>
 
-                <div class="dashboard-layout" style="margin-top: 20px;">
-                    <div class="panel">
+                <div class="dashboard-layout dashboard-data-layout" style="margin-top: 20px;">
+                    <div class="panel dashboard-data-panel dashboard-category-panel">
                         <div class="panel-header"><span><i class="fa-solid fa-list"></i> Unit per Kategori</span></div>
                         <div class="panel-body" style="padding: 0;">
-                            <div class="table-responsive">
-                                <table style="margin: 0; font-size: 0.85rem;">
+                            <div class="table-responsive dashboard-data-table-wrap">
+                                <table class="dashboard-data-table dashboard-category-table">
+                                    <colgroup>
+                                        <col class="col-category">
+                                        <col class="col-ready">
+                                        <col class="col-standby">
+                                        <col class="col-breakdown">
+                                        <col class="col-inspection">
+                                        <col class="col-total">
+                                    </colgroup>
                                     <thead>
                                         <tr>
                                             <th style="white-space: nowrap;">Kategori</th>
@@ -416,11 +424,19 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             </div>
                         </div>
                     </div>
-                    <div class="panel">
+                    <div class="panel dashboard-data-panel dashboard-work-order-panel">
                         <div class="panel-header"><a href="#work-order" class="dashboard-panel-link" onclick="event.preventDefault(); showView('wo');"><i class="fa-solid fa-clipboard-list"></i> Work Order Aktif (Terbaru)</a></div>
                         <div class="panel-body" style="padding: 0;">
-                            <div class="table-responsive dashboard-wo-scroll" id="dashboardWoScroll">
-                                <table style="margin: 0;">
+                            <div class="table-responsive dashboard-data-table-wrap dashboard-wo-scroll" id="dashboardWoScroll">
+                                <table class="dashboard-data-table dashboard-wo-table">
+                                    <colgroup>
+                                        <col class="col-wo-id">
+                                        <col class="col-unit">
+                                        <col class="col-status">
+                                        <col class="col-priority">
+                                        <col class="col-mechanic">
+                                        <col class="col-downtime">
+                                    </colgroup>
                                     <thead>
                                         <tr>
                                             <th>WO ID</th>
@@ -7162,18 +7178,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     : { unitId: rawAssetId, sn: 'Belum tersedia', plate: 'Belum tersedia' };
                 const targetUnitId = ident.unitId || rawAssetId;
                 return `<tr>
-                    <td><strong>${escapeHtml(wo.woId)}</strong></td>
-                    <td>
+                    <td class="dashboard-wo-id"><strong>${escapeHtml(wo.woId)}</strong></td>
+                    <td class="dashboard-wo-unit">
                         <a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(targetUnitId)}'); return false;" title="Buka Properties Unit ${escapeHtml(targetUnitId)}">
                             <span class="unit-code-text">${escapeHtml(ident.unitId)}</span>
                             <i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" aria-hidden="true"></i>
                         </a>
-                        <div style="font-size:0.75rem; color:var(--text-muted, #64748b);">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</div>
+                        <div class="dashboard-unit-meta"><span>SN: ${escapeHtml(ident.sn)}</span><span>Plat: ${escapeHtml(ident.plate)}</span></div>
                     </td>
-                    <td><span style="font-weight:bold; ${statColor}">${escapeHtml(wo.status || 'Open')}</span></td>
-                    <td><span class="badge ${badgeColor}">${escapeHtml(wo.priority || 'Normal')}</span></td>
-                    <td>${escapeHtml(getWorkOrderMechanic(wo))}</td>
-                    <td>${escapeHtml(formatDowntime(wo))}</td>
+                    <td class="dashboard-wo-status"><span style="${statColor}">${escapeHtml(wo.status || 'Open')}</span></td>
+                    <td class="dashboard-wo-priority"><span class="badge ${badgeColor}">${escapeHtml(wo.priority || 'Normal')}</span></td>
+                    <td class="dashboard-wo-mechanic">${escapeHtml(getWorkOrderMechanic(wo))}</td>
+                    <td class="dashboard-wo-downtime">${escapeHtml(formatDowntime(wo))}</td>
                 </tr>`;
             }
 
@@ -7301,7 +7317,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (catTable) {
                     catTable.innerHTML = catArr.map(([cat, stats]) => `
                     <tr>
-                        <td style="display: flex; align-items: center; white-space: nowrap;">${getCategoryIcon(cat)} <button type="button" class="category-link" data-category="${escapeHtml(cat)}" onclick="openCategoryAssetModal(this.dataset.category)">${escapeHtml(cat)}</button></td>
+                        <td class="dashboard-category-name">${getCategoryIcon(cat)} <button type="button" class="category-link" data-category="${escapeHtml(cat)}" onclick="openCategoryAssetModal(this.dataset.category)">${escapeHtml(cat)}</button></td>
                         <td style="text-align: center; font-weight: 700; color: #16a34a;">${stats.readyOp}</td>
                         <td style="text-align: center; font-weight: 700; color: #0284c7;">${stats.standby}</td>
                         <td style="text-align: center; font-weight: 700; color: #dc2626;">${stats.breakdown}</td>
@@ -8176,7 +8192,25 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         locSelect.dataset.requestedLocationId = String(assetObj.current_location_id);
                         locSelect.value = String(assetObj.current_location_id);
                     } else if (assetObj.location) {
-  
+                        const matchedOpt = Array.from(locSelect.options).find(option =>
+                            option.text.toLowerCase().includes((assetObj.location || '').toLowerCase())
+                        );
+                        if (matchedOpt) locSelect.value = matchedOpt.value;
+                    }
+                }
+
+                document.getElementById('ea-hm').value = assetObj.last_hm_km !== undefined ? assetObj.last_hm_km : '0.00';
+                const fieldValues = {
+                    'ea-operator': assetObj.current_operator_name,
+                    'ea-last-service-date': assetObj.last_service_date ? String(assetObj.last_service_date).replace(' ', 'T').slice(0, 16) : '',
+                    'ea-last-service-hm': assetObj.last_service_hm_km,
+                    'ea-service-interval': assetObj.service_interval_val,
+                    'ea-service-unit': assetObj.service_interval_unit || 'HM',
+                    'ea-daily-rate': assetObj.daily_usage_coefficient,
+                    'ea-stnk': assetObj.legal_stnk_expiry,
+                    'ea-kir': assetObj.legal_kir_expiry,
+                    'ea-silo': assetObj.legal_silo_expiry
+                };
                 Object.entries(fieldValues).forEach(([key, value]) => { const field = document.getElementById(key); if (field) field.value = value ?? ''; });
                 document.getElementById('ea-operator-start').value = '';
 
