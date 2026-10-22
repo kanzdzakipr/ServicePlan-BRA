@@ -1209,19 +1209,170 @@
 
         const tireBlueprintLive = document.getElementById('propTireBlueprint');
         if (tireBlueprintLive) {
-            tireBlueprintLive.innerHTML = tires.length
-                ? `<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(105px,1fr)); gap:10px; width:100%;">${tires.map(tire => {
+            const assetCategory = String(payload.asset?.category || '').trim();
+            const isTracked = ['Excavator', 'Bulldozer', 'Reclaimer Spreader'].includes(assetCategory);
+
+            if (tires.length > 0) {
+                const tireMap = {};
+                tires.forEach(t => {
+                    const pos = String(t.tire_position || '').trim().toUpperCase();
+                    tireMap[pos] = t;
+                });
+
+                const renderBadge = (posCode, label) => {
+                    const tire = tireMap[posCode];
+                    if (!tire) return '';
                     const color = String(tire.condition_color || '').toUpperCase();
                     const cls = color === 'RED' ? 'danger' : (color === 'YELLOW' ? 'warning' : 'good');
                     const pressure = Number(tire.air_pressure_psi) > 0 ? `${tire.air_pressure_psi} PSI` : NO_DATA;
                     const tread = Number(tire.tread_depth_mm) > 0 ? `${tire.tread_depth_mm} mm` : NO_DATA;
-                    return `<div class="prop-tire-badge ${cls}" title="Inspeksi ${escapeHtml(formatDisplayDateTime(tire.inspected_at))}">
-                        <span class="tire-pos">${escapeHtml(tire.tire_position)}</span>
+                    const serial = tire.tire_serial_no ? `SN: ${tire.tire_serial_no}` : '';
+                    const inspectDate = tire.inspected_at ? ` | Insp: ${formatDisplayDate(tire.inspected_at)}` : '';
+                    const tooltip = `${label || posCode} | ${serial}${inspectDate} | ${pressure} | ${tread}`;
+                    return `<div class="prop-tire-badge ${cls}" title="${escapeHtml(tooltip)}">
+                        <span class="tire-pos">${escapeHtml(posCode)}</span>
                         <span class="tire-psi">${escapeHtml(pressure)}</span>
                         <span class="tire-rtd">${escapeHtml(tread)}</span>
                     </div>`;
-                }).join('')}</div>`
-                : `<div style="padding:22px; text-align:center; color:#64748b;">${NO_DATA}</div>`;
+                };
+
+                const hasSteer = Boolean(tireMap['FL'] || tireMap['FR']);
+                const hasR1Dual = Boolean(tireMap['R1LO'] || tireMap['R1LI'] || tireMap['R1RI'] || tireMap['R1RO']);
+                const hasR1Single = Boolean(tireMap['R1L'] || tireMap['R1R']);
+                const hasR2Dual = Boolean(tireMap['R2LO'] || tireMap['R2LI'] || tireMap['R2RI'] || tireMap['R2RO']);
+                const hasR2Single = Boolean(tireMap['R2L'] || tireMap['R2R'] || tireMap['RL'] || tireMap['RR']);
+                const hasTrailer = Boolean(tireMap['T1LO'] || tireMap['T1LI'] || tireMap['T1RI'] || tireMap['T1RO']);
+                const hasSpare = Boolean(tireMap['SPARE']);
+
+                const handledPositions = new Set();
+                let axlesHtml = '';
+
+                if (hasSteer) {
+                    handledPositions.add('FL');
+                    handledPositions.add('FR');
+                    axlesHtml += `
+                    <div class="prop-tire-axle-row">
+                        <div class="prop-axle-line"></div>
+                        <div class="prop-axle-label">AXLE 1 (STEER FRONT)</div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('FL', 'Depan Kiri (FL)')}
+                        </div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('FR', 'Depan Kanan (FR)')}
+                        </div>
+                    </div>`;
+                }
+
+                if (hasR1Dual) {
+                    ['R1LO', 'R1LI', 'R1RI', 'R1RO'].forEach(p => handledPositions.add(p));
+                    axlesHtml += `
+                    <div class="prop-tire-axle-row">
+                        <div class="prop-axle-line"></div>
+                        <div class="prop-axle-label">AXLE 2 (DRIVE MID)</div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('R1LO', 'Tengah Luar Kiri (R1LO)')}
+                            ${renderBadge('R1LI', 'Tengah Dalam Kiri (R1LI)')}
+                        </div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('R1RI', 'Tengah Dalam Kanan (R1RI)')}
+                            ${renderBadge('R1RO', 'Tengah Luar Kanan (R1RO)')}
+                        </div>
+                    </div>`;
+                } else if (hasR1Single) {
+                    ['R1L', 'R1R'].forEach(p => handledPositions.add(p));
+                    axlesHtml += `
+                    <div class="prop-tire-axle-row">
+                        <div class="prop-axle-line"></div>
+                        <div class="prop-axle-label">AXLE 2 (MID)</div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('R1L', 'Tengah Kiri (R1L)')}
+                        </div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('R1R', 'Tengah Kanan (R1R)')}
+                        </div>
+                    </div>`;
+                }
+
+                if (hasR2Dual) {
+                    ['R2LO', 'R2LI', 'R2RI', 'R2RO'].forEach(p => handledPositions.add(p));
+                    axlesHtml += `
+                    <div class="prop-tire-axle-row">
+                        <div class="prop-axle-line"></div>
+                        <div class="prop-axle-label">AXLE 3 (DRIVE REAR)</div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('R2LO', 'Belakang Luar Kiri (R2LO)')}
+                            ${renderBadge('R2LI', 'Belakang Dalam Kiri (R2LI)')}
+                        </div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('R2RI', 'Belakang Dalam Kanan (R2RI)')}
+                            ${renderBadge('R2RO', 'Belakang Luar Kanan (R2RO)')}
+                        </div>
+                    </div>`;
+                } else if (hasR2Single) {
+                    const lPos = tireMap['R2L'] ? 'R2L' : 'RL';
+                    const rPos = tireMap['R2R'] ? 'R2R' : 'RR';
+                    handledPositions.add(lPos);
+                    handledPositions.add(rPos);
+                    axlesHtml += `
+                    <div class="prop-tire-axle-row">
+                        <div class="prop-axle-line"></div>
+                        <div class="prop-axle-label">${hasR1Single ? 'AXLE 3 (REAR)' : 'AXLE 2 (DRIVE REAR)'}</div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge(lPos, 'Belakang Kiri')}
+                        </div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge(rPos, 'Belakang Kanan')}
+                        </div>
+                    </div>`;
+                }
+
+                if (hasTrailer) {
+                    ['T1LO', 'T1LI', 'T1RI', 'T1RO'].forEach(p => handledPositions.add(p));
+                    axlesHtml += `
+                    <div class="prop-tire-axle-row">
+                        <div class="prop-axle-line"></div>
+                        <div class="prop-axle-label">AXLE 4 (TRAILER / TAG)</div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('T1LO', 'Trailer Luar Kiri (T1LO)')}
+                            ${renderBadge('T1LI', 'Trailer Dalam Kiri (T1LI)')}
+                        </div>
+                        <div class="prop-wheel-group">
+                            ${renderBadge('T1RI', 'Trailer Dalam Kanan (T1RI)')}
+                            ${renderBadge('T1RO', 'Trailer Luar Kanan (T1RO)')}
+                        </div>
+                    </div>`;
+                }
+
+                if (hasSpare) {
+                    handledPositions.add('SPARE');
+                    axlesHtml += `
+                    <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:4px; padding-top:6px; border-top:1px dashed #334155; width:100%; max-width:440px;">
+                        <span style="font-size:0.68rem; color:#94a3b8; font-weight:700;">BAN CADANGAN:</span>
+                        ${renderBadge('SPARE', 'Ban Cadangan (Spare Tire)')}
+                    </div>`;
+                }
+
+                const unhandledTires = tires.filter(t => !handledPositions.has(String(t.tire_position || '').trim().toUpperCase()));
+                if (unhandledTires.length > 0) {
+                    axlesHtml += `
+                    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:8px; padding-top:6px; border-top:1px dashed #334155; width:100%; max-width:440px;">
+                        ${unhandledTires.map(t => renderBadge(t.tire_position, t.tire_position)).join('')}
+                    </div>`;
+                }
+
+                tireBlueprintLive.innerHTML = axlesHtml || `<div style="padding:22px; text-align:center; color:#64748b;">${NO_DATA}</div>`;
+            } else if (isTracked) {
+                tireBlueprintLive.innerHTML = `
+                <div style="padding: 24px; text-align: center; color: #94a3b8; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-link" style="font-size: 2rem; color: #38bdf8;"></i>
+                    <strong style="color: #f1f5f9; font-size: 0.95rem;">Sistem Penggerak: Crawler Undercarriage (Rantai Baja)</strong>
+                    <span style="font-size: 0.78rem; max-width: 420px; line-height: 1.4; color:#94a3b8;">
+                        Unit tipe perayap (crawler) beroperasi menggunakan sistem track link, track shoe, idler, sprocket, dan roller. Tidak menggunakan konfigurasi ban pneumatik.
+                    </span>
+                </div>`;
+            } else {
+                tireBlueprintLive.innerHTML = `<div style="padding:22px; text-align:center; color:#64748b;">${NO_DATA}</div>`;
+            }
         }
 
         const tbPapLive = document.getElementById('propOilPapTableBody');

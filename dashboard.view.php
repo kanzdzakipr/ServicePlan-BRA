@@ -30,7 +30,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=20261018-admin-recap-1"></script>
-    <script src="scripts/unit-properties.js?v=20261022-db-3"></script>
+    <script src="scripts/unit-properties.js?v=20261022-tire-blueprint-4"></script>
     <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>
 

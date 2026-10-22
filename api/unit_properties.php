@@ -136,11 +136,6 @@ $allTires = $fetchAll($db,
             status_level, notes
      FROM tire_inspections
      WHERE asset_id = :asset_id
-       AND NOT (
-           COALESCE(tire_serial_no, '') REGEXP '^(BS|MI|GY|GT|MA)-1200R24-[0-9]+$'
-           AND inspected_by IS NULL
-           AND (notes IS NULL OR TRIM(notes) = '')
-       )
      ORDER BY inspected_at DESC, tire_inspection_id DESC",
     $params
 );
