@@ -30,12 +30,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=20261018-admin-recap-1"></script>
-<<<<<<< HEAD
     <script src="scripts/unit-properties.js?v=20261022-db-3"></script>
-=======
-    <script src="scripts/unit-properties.js?v=20261022-db-1"></script>
     <script src="scripts/site-properties.js?v=20261022-1"></script>
->>>>>>> b181ff79cf69936ddc10ab61587216e4fd50df6e
 </head>
 
 <body>
@@ -2505,13 +2501,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                             <i class="fa-solid fa-arrow-up-right-from-square"></i>
                                         </button>
                                     </div>
-<<<<<<< HEAD
-                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem;">Data belum tersedia</div>
-                                    <div class="vital-sub">Data belum tersedia</div>
-=======
-                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem; cursor:pointer;" onclick="window.openSiteProperties(this.textContent, 'unit-properties')" title="Klik untuk membuka lembar properties site ini">Borrow Pit Harapan Baru</div>
-                                    <div class="vital-sub">Mining Sector Area · <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties(document.getElementById('propVitalLoc').textContent, 'unit-properties')" style="font-size:0.7rem; color:var(--primary, #0284c7); padding:0;"><span class="site-name-text">Lihat Peta &amp; Unit Site &rarr;</span></a></div>
->>>>>>> b181ff79cf69936ddc10ab61587216e4fd50df6e
+                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem; cursor:pointer;" onclick="window.openSiteProperties(this.textContent.trim(), 'unit-properties')" title="Klik untuk membuka lembar properties site ini">Data belum tersedia</div>
+                                    <div class="vital-sub">Mining Sector Area · <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties(document.getElementById('propVitalLoc').textContent.trim(), 'unit-properties')" style="font-size:0.7rem; color:var(--primary, #0284c7); padding:0;"><span class="site-name-text">Lihat Peta &amp; Unit Site &rarr;</span></a></div>
                                 </div>
                                 <div class="prop-vital-cell">
                                     <div class="vital-label-row">
