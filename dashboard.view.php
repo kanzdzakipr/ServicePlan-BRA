@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-dashboard-status-icons-3">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-dashboard-wo-filter-4">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -441,7 +441,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         </div>
                     </div>
                     <div class="panel dashboard-data-panel dashboard-work-order-panel">
-                        <div class="panel-header"><a href="#work-order" class="dashboard-panel-link" onclick="event.preventDefault(); showView('wo');"><i class="fa-solid fa-clipboard-list"></i> Work Order Aktif (Terbaru)</a></div>
+                        <div class="panel-header dashboard-wo-panel-header">
+                            <a href="#work-order" class="dashboard-panel-link" onclick="event.preventDefault(); showView('wo');"><i class="fa-solid fa-clipboard-list"></i> Work Order Aktif (Terbaru)</a>
+                            <label class="dashboard-wo-category-filter" for="dashboardWoCategoryFilter">
+                                <span>Jenis Unit</span>
+                                <span class="dashboard-wo-filter-control">
+                                    <i class="fa-solid fa-filter" aria-hidden="true"></i>
+                                    <select id="dashboardWoCategoryFilter" aria-label="Filter Work Order berdasarkan jenis unit" onchange="window.filterDashboardWoByCategory(this.value)">
+                                        <option value="ALL">Semua Jenis Unit</option>
+                                    </select>
+                                </span>
+                            </label>
+                        </div>
                         <div class="panel-body" style="padding: 0;">
                             <div class="table-responsive dashboard-data-table-wrap dashboard-wo-scroll" id="dashboardWoScroll">
                                 <table class="dashboard-data-table dashboard-wo-table">
@@ -7179,7 +7190,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             }
 
             const DASHBOARD_WO_BATCH_SIZE = 10;
-            let dashboardWoState = { items: [], rendered: 0, loading: false, scroll: null, groupCounts: {}, lastCategory: '' };
+            let dashboardWoState = { allItems: [], items: [], rendered: 0, loading: false, scroll: null, selectedCategory: 'ALL' };
 
             function getDashboardWoContext(wo) {
                 const rawAssetId = wo.assetId || wo.unitId || '-';
@@ -7203,29 +7214,19 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 };
             }
 
-            function renderDashboardWoCategoryRow(category, count) {
-                return `<tr class="dashboard-wo-category-row">
-                    <td colspan="5">
-                        <span class="dashboard-wo-category-name"><i class="fa-solid fa-layer-group" aria-hidden="true"></i>${escapeHtml(category)}</span>
-                        <span class="dashboard-wo-category-count">${count.toLocaleString('id-ID')} WO aktif</span>
-                    </td>
-                </tr>`;
-            }
-
             function renderDashboardWoRow(entry) {
                 const wo = entry.wo || entry;
                 const context = entry.context || getDashboardWoContext(wo);
                 const badgeColor = wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating';
                 const statusText = wo.status || 'Open';
                 const statusClass = statusText === 'Open' ? 'is-open' : 'is-progress';
-                return `<tr>
+                return `<tr class="dashboard-wo-row" data-category="${escapeHtml(context.category)}">
                     <td class="dashboard-wo-unit">
                         <div class="dashboard-wo-number">${escapeHtml(wo.woId)}</div>
                         <a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(context.targetUnitId)}'); return false;" title="Buka Properties Unit ${escapeHtml(context.targetUnitId)}">
                             <span class="unit-code-text">${escapeHtml(context.ident.unitId)}</span>
                             <i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" aria-hidden="true"></i>
                         </a>
-                        <div class="dashboard-unit-meta"><span>SN: ${escapeHtml(context.ident.sn)}</span><span>Plat: ${escapeHtml(context.ident.plate)}</span></div>
                     </td>
                     <td class="dashboard-wo-status"><span class="dashboard-wo-status-value ${statusClass}">${escapeHtml(statusText)}</span></td>
                     <td class="dashboard-wo-priority"><span class="badge ${badgeColor}">${escapeHtml(wo.priority || 'Normal')}</span></td>
@@ -7247,15 +7248,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 requestAnimationFrame(() => {
                     const nextItems = state.items.slice(state.rendered, state.rendered + DASHBOARD_WO_BATCH_SIZE);
                     loadingRow.remove();
-                    const rows = [];
-                    nextItems.forEach(entry => {
-                        if (entry.category !== state.lastCategory) {
-                            rows.push(renderDashboardWoCategoryRow(entry.category, state.groupCounts[entry.category] || 0));
-                            state.lastCategory = entry.category;
-                        }
-                        rows.push(renderDashboardWoRow(entry));
-                    });
-                    tbody.insertAdjacentHTML('beforeend', rows.join(''));
+                    tbody.insertAdjacentHTML('beforeend', nextItems.map(renderDashboardWoRow).join(''));
                     state.rendered += nextItems.length;
                     state.loading = false;
                     if (state.rendered < state.items.length) {
@@ -7267,28 +7260,58 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 });
             }
 
+            window.filterDashboardWoByCategory = function (category) {
+                const state = dashboardWoState;
+                const tbody = document.getElementById('dashboardWoTable');
+                if (!tbody || !state.scroll) return;
+
+                const availableCategories = new Set(state.allItems.map(entry => entry.category));
+                const selectedCategory = category === 'ALL' || availableCategories.has(category) ? category : 'ALL';
+                state.selectedCategory = selectedCategory;
+                state.items = selectedCategory === 'ALL'
+                    ? [...state.allItems]
+                    : state.allItems.filter(entry => entry.category === selectedCategory);
+                state.rendered = 0;
+                state.loading = false;
+                state.scroll.scrollTop = 0;
+                tbody.replaceChildren();
+
+                const filter = document.getElementById('dashboardWoCategoryFilter');
+                if (filter && filter.value !== selectedCategory) filter.value = selectedCategory;
+
+                if (!state.items.length) {
+                    const message = selectedCategory === 'ALL'
+                        ? 'Tidak ada Work Order aktif.'
+                        : `Tidak ada Work Order aktif untuk jenis unit ${selectedCategory}.`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="dashboard-wo-empty">${escapeHtml(message)}</td></tr>`;
+                    return;
+                }
+
+                loadNextDashboardWoBatch();
+            };
+
             function setupDashboardWoList(items) {
                 const scroll = document.getElementById('dashboardWoScroll');
                 const tbody = document.getElementById('dashboardWoTable');
                 if (!scroll || !tbody) return;
-                const groupedItems = items.map((wo, originalIndex) => {
+                const allItems = items.map((wo, originalIndex) => {
                     const context = getDashboardWoContext(wo);
                     return { wo, context, category: context.category, originalIndex };
-                }).sort((left, right) => (
-                    left.category.localeCompare(right.category, 'id', { sensitivity: 'base', numeric: true })
-                    || left.originalIndex - right.originalIndex
-                ));
-                const groupCounts = groupedItems.reduce((counts, entry) => {
-                    counts[entry.category] = (counts[entry.category] || 0) + 1;
-                    return counts;
-                }, {});
-                dashboardWoState = { items: groupedItems, rendered: 0, loading: false, scroll, groupCounts, lastCategory: '' };
-                tbody.replaceChildren();
-                if (!items.length) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada Work Order aktif.</td></tr>';
-                    return;
+                });
+                const categories = [...new Set(allItems.map(entry => entry.category))]
+                    .sort((left, right) => left.localeCompare(right, 'id', { sensitivity: 'base', numeric: true }));
+                const filter = document.getElementById('dashboardWoCategoryFilter');
+                const previousSelection = filter?.value || 'ALL';
+
+                if (filter) {
+                    filter.replaceChildren(new Option('Semua Jenis Unit', 'ALL'));
+                    categories.forEach(category => filter.add(new Option(category, category)));
+                    filter.disabled = categories.length === 0;
                 }
-                loadNextDashboardWoBatch();
+
+                const selectedCategory = categories.includes(previousSelection) ? previousSelection : 'ALL';
+                dashboardWoState = { allItems, items: [], rendered: 0, loading: false, scroll, selectedCategory };
+                window.filterDashboardWoByCategory(selectedCategory);
                 if (scroll.dataset.dashboardWoScrollBound !== 'true') {
                     scroll.dataset.dashboardWoScrollBound = 'true';
                     scroll.addEventListener('scroll', () => {
