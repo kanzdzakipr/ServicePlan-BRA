@@ -990,6 +990,54 @@
     transform: scale(0.98);
 }
 
+/* Hyperlink Hover Site Location Properties */
+.site-prop-hover-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #0f172a;
+    font-weight: 600;
+    text-decoration: none !important;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: -2px -6px;
+    transition: background-color 0.18s ease, color 0.18s ease;
+    vertical-align: middle;
+}
+
+.site-prop-hover-link .site-name-text {
+    font-weight: 600;
+    border-bottom: 1.5px dotted rgba(2, 132, 199, 0.45);
+    transition: border-bottom-color 0.18s ease, color 0.18s ease;
+}
+
+.site-prop-hover-link .site-prop-hover-icon {
+    font-size: 0.65rem;
+    color: var(--primary, #0284c7);
+    opacity: 0.45;
+    transition: opacity 0.18s ease, transform 0.18s ease, color 0.18s ease;
+}
+
+.site-prop-hover-link:hover {
+    color: var(--primary, #0284c7) !important;
+    background-color: rgba(2, 132, 199, 0.08);
+}
+
+.site-prop-hover-link:hover .site-name-text {
+    color: var(--primary, #0284c7) !important;
+    border-bottom: 1.5px solid var(--primary, #0284c7);
+}
+
+.site-prop-hover-link:hover .site-prop-hover-icon {
+    opacity: 1;
+    transform: translate(1px, -1px) scale(1.1);
+}
+
+.site-prop-hover-link:active {
+    transform: scale(0.98);
+}
+
 /* Print Stylesheet for Equipment Properties Spec Sheet */
 @media print {
     body * {

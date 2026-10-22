@@ -30,7 +30,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=20261018-admin-recap-1"></script>
-    <script src="scripts/unit-properties.js?v=20260827-1"></script>
+    <script src="scripts/unit-properties.js?v=20261022-db-1"></script>
     <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>
 
@@ -2710,7 +2710,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <!-- Tire Schematic Blueprint -->
                     <div class="prop-card">
                         <div class="prop-card-header">
-                            <h3><i class="fa-solid fa-circle-dot" style="color:#0284c7;"></i> Diagram 10 Posisi Roda &amp; Tekanan Ban (PSI / RTD)</h3>
+                            <h3><i class="fa-solid fa-circle-dot" style="color:#0284c7;"></i> Diagram Posisi Roda &amp; Tekanan Ban (PSI / RTD)</h3>
                         </div>
                         <div class="prop-card-body">
                             <div class="prop-tire-chassis-container" id="propTireBlueprint">

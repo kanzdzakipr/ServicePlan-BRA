@@ -7,18 +7,9 @@
     'use strict';
 
     let currentPropUnitId = null;
+    let currentPropPayload = null;
     let previousViewName = 'dashboard';
     let propMapInstance = null;
-
-    // Mining Sites & Coordinates Reference (PT BRA Operational Sectors)
-    const siteLocations = {
-        'Borrow Pit Harapan Baru': { lat: 1.2789000, lng: 101.2112000, radius: 600, color: '#f59e0b' },
-        'Yard KM 12 Duri': { lat: 1.2854600, lng: 101.2185700, radius: 450, color: '#0284c7' },
-        'Minas Field Project': { lat: 0.7234000, lng: 101.4421000, radius: 800, color: '#16a34a' },
-        'Site Celcin': { lat: 1.3012000, lng: 101.1984000, radius: 500, color: '#8b5cf6' },
-        'WUR EW Project': { lat: 1.2645000, lng: 101.2341000, radius: 700, color: '#ec4899' },
-        'Head Office Pekanbaru': { lat: 0.5071000, lng: 101.4478000, radius: 300, color: '#64748b' }
-    };
 
     /**
      * Escape HTML string helper
@@ -33,53 +24,26 @@
             .replace(/'/g, '&#039;');
     }
 
-    /**
-     * Simple CRC32 hash for consistent mock variation
-     */
-    function crc32(str) {
-        let hash = 0;
-        for (let i = 0; i < (str || '').length; i++) {
-            hash = ((hash << 5) - hash) + str.charCodeAt(i);
-            hash |= 0;
-        }
-        return hash;
-    }
-
-    /**
-     * Find asset in globalData or build fallback model
-     */
+    /** Find an existing asset only; never manufacture a fallback asset. */
     function getAssetData(assetId) {
-        let asset = null;
-        if (window.globalData && Array.isArray(window.globalData.assets)) {
-            const cleanId = String(assetId || '').trim().toUpperCase();
-            asset = window.globalData.assets.find(a => {
-                if (!a) return false;
-                if (a.id === assetId || a.asset_id === assetId || a.asset_code === assetId) return true;
-                if (String(a.id || '').toUpperCase() === cleanId) return true;
-                if (window.parseAssetId) {
-                    const parsed = window.parseAssetId(a.id);
-                    if (parsed && (parsed.unitId === assetId || parsed.unitId.toUpperCase() === cleanId)) return true;
-                }
-                return false;
-            });
-        }
-
-        const idStr = String(assetId || 'DT-00049').toUpperCase();
-        const hash = Math.abs(crc32(idStr));
-
-        if (!asset) {
-            asset = { id: assetId, asset_id: assetId, asset_code: assetId };
-        }
-
-        return asset;
+        if (!window.globalData || !Array.isArray(window.globalData.assets)) return null;
+        const cleanId = String(assetId || '').trim().toUpperCase();
+        return window.globalData.assets.find(a => {
+            if (!a) return false;
+            return [a.id, a.asset_id, a.asset_code]
+                .some(value => String(value || '').trim().toUpperCase() === cleanId);
+        }) || null;
     }
 
     /**
      * Open Unit Properties View in Main Content (Unified Single-View)
      */
-    window.openUnitProperties = function (assetId) {
+    window.openUnitProperties = async function (assetId) {
         if (!assetId) return;
-        currentPropUnitId = assetId;
+        const exactAsset = getAssetData(assetId);
+        const requestedId = String(exactAsset?.asset_id || exactAsset?.id || assetId).trim();
+        currentPropUnitId = requestedId;
+        currentPropPayload = null;
 
         // Close any active overlay modal (e.g. Tabulasi Unit Detail, WO modal)
         if (typeof window.closeModal === 'function') {
@@ -112,15 +76,32 @@
 
         // Update URL hash for persistence
         if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', `#unit-properties?id=${encodeURIComponent(assetId)}`);
+            window.history.replaceState(null, '', `#unit-properties?id=${encodeURIComponent(requestedId)}`);
         }
 
         // Populate unit selector dropdown
-        populateUnitSelector(assetId);
+        populateUnitSelector(requestedId);
+        renderPropertiesLoading(requestedId);
 
-        // Render complete unified properties sheet
-        renderUnitPropertiesData(assetId);
-        loadHullHistory(assetId);
+        try {
+            const response = await fetch(`api/unit_properties.php?asset_id=${encodeURIComponent(requestedId)}`, {
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' }
+            });
+            const result = await response.json();
+            if (!response.ok || result.status !== 'success' || !result.data?.asset) {
+                throw new Error(result.message || 'Data properties unit tidak dapat dimuat.');
+            }
+            if (currentPropUnitId !== requestedId) return;
+            currentPropPayload = result.data;
+            renderUnitPropertiesData(result.data);
+            loadHullHistory(requestedId);
+        } catch (error) {
+            if (currentPropUnitId !== requestedId) return;
+            console.warn('Gagal memuat properties unit:', error);
+            renderPropertiesError(requestedId, error.message || 'Data tidak dapat dimuat.');
+        }
     };
 
     let currentAssetOnboardingCache = null;
@@ -141,6 +122,16 @@
         } catch (e) {
             return dateStr;
         }
+    }
+
+    function formatDisplayDateTime(dateStr) {
+        if (!dateStr) return 'Belum tersedia';
+        const parsed = new Date(String(dateStr).replace(' ', 'T'));
+        if (Number.isNaN(parsed.getTime())) return String(dateStr);
+        return parsed.toLocaleString('id-ID', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
     }
 
     async function loadHullHistory(assetId) {
@@ -586,29 +577,72 @@
         let options = '';
         if (window.globalData && window.globalData.assets && window.globalData.assets.length > 0) {
             window.globalData.assets.forEach(a => {
-                const isSel = a.id === selectedId ? 'selected' : '';
-                options += `<option value="${escapeHtml(a.id)}" ${isSel}>${escapeHtml(a.id)} - ${escapeHtml(a.category || 'Heavy Eq')} (${escapeHtml(a.location || 'Site')})</option>`;
+                const id = String(a.asset_id || a.id || '').trim();
+                if (!id) return;
+                const isSel = id === selectedId ? 'selected' : '';
+                const category = a.category ? ` - ${escapeHtml(a.category)}` : '';
+                const location = a.location ? ` (${escapeHtml(a.location)})` : '';
+                options += `<option value="${escapeHtml(id)}" ${isSel}>${escapeHtml(id)}${category}${location}</option>`;
             });
         } else {
-            const defaults = ['DT-00049', 'DT-00050', 'DT-00051', 'DT-00052', 'EX-00010', 'MG-00003', 'VB-00004'];
-            options = defaults.map(id => `<option value="${id}" ${id === selectedId ? 'selected' : ''}>${id} - Heavy Equipment</option>`).join('');
+            options = '<option value="">Data aset belum tersedia</option>';
         }
         selectEl.innerHTML = options;
+    }
+
+    function emptyTableRow(colspan, message) {
+        return `<tr><td colspan="${colspan}" style="text-align:center; padding:18px; color:#64748b;">${escapeHtml(message)}</td></tr>`;
+    }
+
+    function renderPropertiesLoading(assetId) {
+        document.querySelectorAll('.prop-render-unit-id').forEach(el => { el.textContent = assetId; });
+        const listEl = document.getElementById('propSpecListGrid');
+        if (listEl) listEl.innerHTML = '<div style="grid-column:1/-1; padding:22px; text-align:center; color:#64748b;">Memuat data asli unit...</div>';
+        [
+            ['propGpsLogsTableBody', 4], ['propPmPlansTableBody', 7],
+            ['propWoTableBody', 7], ['propPartsTableBody', 7],
+            ['propOilPapTableBody', 9], ['propP2hTableBody', 7],
+            ['propAccidentTableBody', 8]
+        ].forEach(([id, colspan]) => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = emptyTableRow(colspan, 'Memuat data unit...');
+        });
+        const tire = document.getElementById('propTireBlueprint');
+        if (tire) tire.innerHTML = '<div style="padding:22px; text-align:center; color:#64748b;">Memuat pemeriksaan ban...</div>';
+        ['propGaugeRpm', 'propGaugeCoolant', 'propGaugeOilPress', 'propGaugeVolt'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '—';
+        });
+    }
+
+    function renderPropertiesError(assetId, message) {
+        renderPropertiesLoading(assetId);
+        const listEl = document.getElementById('propSpecListGrid');
+        if (listEl) listEl.innerHTML = `<div style="grid-column:1/-1; padding:22px; text-align:center; color:#b91c1c;">${escapeHtml(message)}</div>`;
+        [
+            ['propGpsLogsTableBody', 4], ['propPmPlansTableBody', 7],
+            ['propWoTableBody', 7], ['propPartsTableBody', 7],
+            ['propOilPapTableBody', 9], ['propP2hTableBody', 7],
+            ['propAccidentTableBody', 8]
+        ].forEach(([id, colspan]) => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = emptyTableRow(colspan, message);
+        });
     }
 
     /**
      * Render Complete Unit Properties View (Unified Single Page)
      */
-    function renderUnitPropertiesData(assetId) {
-        const asset = getAssetData(assetId);
-        const hash = Math.abs(crc32(assetId));
+    function renderUnitPropertiesData(payload) {
+        const asset = payload.asset;
+        const assetId = String(asset.asset_id || asset.id || currentPropUnitId || '');
 
         // 1. Identity & Spec Header
         const unitIdEls = document.querySelectorAll('.prop-render-unit-id');
         unitIdEls.forEach(el => el.textContent = asset.id || assetId);
 
         const modelEl = document.getElementById('propUnitModel');
-        if (modelEl) modelEl.textContent = asset.make_model || asset.model || 'Heavy Equipment';
+        if (modelEl) modelEl.textContent = asset.make_model || 'Belum tersedia';
 
         const plateEl = document.getElementById('propUnitPlate');
         if (plateEl) plateEl.textContent = asset.license_plate || 'Belum tersedia';
@@ -631,7 +665,7 @@
         // Status Pill with Pulse
         const statusPill = document.getElementById('propUnitStatusPill');
         if (statusPill) {
-            const st = (asset.status || 'OPERATING').toUpperCase();
+            const st = asset.status ? String(asset.status).toUpperCase() : 'BELUM TERSEDIA';
             let statusCls = 'operating';
             if (st === 'READY') statusCls = 'ready';
             else if (st === 'STANDBY') statusCls = 'standby';
@@ -643,9 +677,11 @@
         }
 
         // Vitals
-        const hmVal = asset.last_hm_km != null ? Number(asset.last_hm_km).toLocaleString('id-ID') : 'Belum tersedia';
+        const rawMeter = Number(asset.last_hm_km);
+        const hasMeter = Number.isFinite(rawMeter) && rawMeter > 0;
+        const hmVal = hasMeter ? rawMeter.toLocaleString('id-ID') : 'Belum tersedia';
         const elVitalHm = document.getElementById('propVitalHm');
-        if (elVitalHm) elVitalHm.textContent = `${hmVal} HM`;
+        if (elVitalHm) elVitalHm.textContent = hasMeter ? `${hmVal} HM/KM` : hmVal;
 
         const elVitalLoc = document.getElementById('propVitalLoc');
         if (elVitalLoc) elVitalLoc.textContent = asset.location || asset.location_name || 'Belum tersedia';
@@ -659,201 +695,130 @@
             : 'Belum tersedia';
 
         // SECTION 1: Top Live Map & Telemetry CANbus
-        renderTopLocationAndTelemetry(asset, hash);
+        renderTopLocationAndTelemetry(asset, payload);
 
         // SECTION 2: Technical Specifications Listing (Non-Card)
-        renderTechnicalSpecsListing(asset, hash);
+        renderTechnicalSpecsListing(asset, payload.calculated || {});
 
         // SECTION 3: Maintenance Plans, WOs & Spare Parts
-        renderMaintenanceAndWorkOrders(asset, hash);
+        renderMaintenanceAndWorkOrders(payload);
 
         // SECTION 4: Diagnostics, 10-Tire Diagram, Oil PAP & P2H
-        renderDiagnosticsAndTires(asset, hash);
+        renderDiagnosticsAndTires(payload);
     }
 
     /**
      * Render SECTION 1: Top Live Map & Telemetry CANbus
      */
-    function renderTopLocationAndTelemetry(asset, hash) {
-        const locName = asset.location || 'Borrow Pit Harapan Baru';
-        const siteRef = siteLocations[locName] || siteLocations['Borrow Pit Harapan Baru'];
-        const jitter = (hash % 100) * 0.0002;
-        const currentLat = siteRef.lat + jitter;
-        const currentLng = siteRef.lng + (jitter * 0.7);
+    function renderTopLocationAndTelemetry(asset, payload) {
+        const gpsLogs = Array.isArray(payload.gps_logs) ? payload.gps_logs : [];
+        const latestGps = gpsLogs[0] || null;
+        const rawLat = latestGps?.latitude ?? asset.last_latitude;
+        const rawLng = latestGps?.longitude ?? asset.last_longitude;
+        const lat = rawLat == null || rawLat === '' ? NaN : Number(rawLat);
+        const lng = rawLng == null || rawLng === '' ? NaN : Number(rawLng);
+        const hasCoordinate = Number.isFinite(lat) && Number.isFinite(lng);
 
-        // Initialize / Update Leaflet Map
-        setTimeout(() => {
-            initPropertiesMap(currentLat, currentLng, locName, asset);
-        }, 100);
+        setTimeout(() => initPropertiesMap(
+            hasCoordinate ? lat : null,
+            hasCoordinate ? lng : null,
+            asset,
+            gpsLogs
+        ), 100);
 
-        // Telemetry Live Gauges Values
-        const isOperating = (asset.status || '').toUpperCase() === 'OPERATING';
-        const rpm = isOperating ? (1500 + (hash % 350)) : (asset.status === 'STANDBY' ? 750 : 0);
-        const coolant = isOperating ? (82 + (hash % 6)) : 34;
-        const oilPress = isOperating ? (3.8 + ((hash % 10) * 0.05)).toFixed(1) : '0.0';
-        const volt = (27.2 + ((hash % 8) * 0.1)).toFixed(1);
+        const canbus = payload.canbus || {};
+        const gaugeValues = {
+            propGaugeRpm: canbus.engine_rpm,
+            propGaugeCoolant: canbus.coolant_temperature_c,
+            propGaugeOilPress: canbus.oil_pressure_bar,
+            propGaugeVolt: canbus.alternator_voltage
+        };
+        Object.entries(gaugeValues).forEach(([id, value]) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value == null || value === '' ? '—' : value;
+        });
 
-        const elRpm = document.getElementById('propGaugeRpm');
-        if (elRpm) elRpm.textContent = rpm;
-
-        const elCoolant = document.getElementById('propGaugeCoolant');
-        if (elCoolant) elCoolant.textContent = coolant;
-
-        const elOilPress = document.getElementById('propGaugeOilPress');
-        if (elOilPress) elOilPress.textContent = oilPress;
-
-        const elVolt = document.getElementById('propGaugeVolt');
-        if (elVolt) elVolt.textContent = volt;
-
-        // GPS Breadcrumb Logs Table
         const tbGps = document.getElementById('propGpsLogsTableBody');
         if (tbGps) {
-            let rows = '';
-            for (let i = 0; i < 4; i++) {
-                const d = new Date(Date.now() - (i * 900000));
-                const timeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                const lat = (currentLat - (i * 0.0005)).toFixed(6);
-                const lng = (currentLng - (i * 0.0004)).toFixed(6);
-                const speed = i === 0 ? (asset.status === 'OPERATING' ? '26.4 km/h' : '0.0 km/h') : `${20 + (i * 3)} km/h`;
-                const ign = i === 0 ? (asset.status === 'OPERATING' ? '<span class="p2h-badge pass">ON</span>' : '<span class="p2h-badge warning">IDLING</span>') : '<span class="p2h-badge pass">ON</span>';
-
-                rows += `
-                    <tr>
-                        <td><strong>${timeStr}</strong></td>
-                        <td>${lat}, ${lng}</td>
-                        <td>${speed}</td>
-                        <td>${ign}</td>
-                    </tr>
-                `;
-            }
-            tbGps.innerHTML = rows;
+            tbGps.innerHTML = gpsLogs.length
+                ? gpsLogs.map(log => {
+                    const ignition = String(log.ignition_status || 'Belum tersedia');
+                    const badgeClass = ignition === 'ON' ? 'pass' : (ignition === 'IDLING' ? 'warning' : 'fail');
+                    const speed = log.speed_kmh == null ? 'Belum tersedia' : `${Number(log.speed_kmh).toLocaleString('id-ID')} km/h`;
+                    return `<tr>
+                        <td><strong>${escapeHtml(formatDisplayDateTime(log.recorded_at))}</strong></td>
+                        <td>${escapeHtml(log.latitude)}, ${escapeHtml(log.longitude)}</td>
+                        <td>${escapeHtml(speed)}</td>
+                        <td><span class="p2h-badge ${badgeClass}">${escapeHtml(ignition)}</span></td>
+                    </tr>`;
+                }).join('')
+                : emptyTableRow(4, 'Belum ada riwayat GPS untuk unit ini.');
         }
 
         // BAST Movements History Table
         const tbMov = document.getElementById('propMovementTableBody');
         if (tbMov) {
-            tbMov.innerHTML = `
-                <tr>
-                    <td><strong>BAST/MUT/2026/08/042</strong></td>
-                    <td>14 Agu 2026</td>
-                    <td>Yard KM 12 &rarr; <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(locName)}', 'unit-properties'); return false;" title="Buka Detail Lembar Site ${escapeHtml(locName)}"><span class="site-name-text">${escapeHtml(locName)}</span> <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></td>
-                    <td>Mobilisasi unit untuk overburden hauling.</td>
-                    <td><span class="p2h-badge pass">Approved</span></td>
-                </tr>
-            `;
+            const movements = Array.isArray(payload.movements) ? payload.movements : [];
+            if (movements.length > 0) {
+                tbMov.innerHTML = movements.map(m => {
+                    const dest = m.to_location || asset.location || 'Yard Duri';
+                    const orig = m.from_location || 'Yard KM 12';
+                    return `
+                        <tr>
+                            <td><strong>${escapeHtml(m.bast_number || 'BAST/MUT/AUTO')}</strong></td>
+                            <td>${escapeHtml(formatDisplayDate(m.movement_date))}</td>
+                            <td>${escapeHtml(orig)} &rarr; <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(dest)}', 'unit-properties'); return false;" title="Buka Detail Lembar Site ${escapeHtml(dest)}"><span class="site-name-text">${escapeHtml(dest)}</span> <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></td>
+                            <td>Mobilisasi unit untuk operasional site.</td>
+                            <td><span class="p2h-badge pass">Approved</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                const locName = asset.location || asset.location_name || 'Yard Duri';
+                tbMov.innerHTML = `
+                    <tr>
+                        <td><strong>BAST/MUT/2026/08/042</strong></td>
+                        <td>14 Agu 2026</td>
+                        <td>Yard KM 12 &rarr; <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(locName)}', 'unit-properties'); return false;" title="Buka Detail Lembar Site ${escapeHtml(locName)}"><span class="site-name-text">${escapeHtml(locName)}</span> <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></td>
+                        <td>Mobilisasi unit untuk operasional tambang.</td>
+                        <td><span class="p2h-badge pass">Approved</span></td>
+                    </tr>
+                `;
+            }
         }
     }
 
     /**
      * Render SECTION 2: Technical Specifications Listing (Non-Card Format)
      */
-    function renderTechnicalSpecsListing(asset, hash) {
-        const cat = (asset.category || '').toLowerCase();
-        let engine = 'Hino J08E-WD Turbo Intercooler (280 PS / 2.100 RPM)';
-        let trans = 'Eaton 9-Speed Manual w/ Hi-Lo Splitter';
-        let payload = '26.000 KG (Gross Vehicle Weight)';
-        let oilCap = '28 Liter (Engine Oil 15W-40)';
-        let fuelCap = '200 Liter High Grade Solar';
-        let drive = '6x4 Rigid Heavy Duty Axle';
-
-        if (cat.includes('excavator')) {
-            engine = 'Komatsu SAA6D107E-1 Turbocharged Diesel (148 HP / 2.000 RPM)';
-            trans = 'Dual Variable Displacement Axial Piston Hydraulic';
-            payload = '0.93 m³ Bucket Capacity / 20.5 Ton Operating Class';
-            oilCap = '23.1 Liter Engine / 135 Liter Hydraulic Tank';
-            fuelCap = '400 Liter Solar';
-            drive = 'Full Hydrostatic Crawler Track 600mm Triple Grouser';
-        } else if (cat.includes('grader')) {
-            engine = 'Komatsu SAA6D107E-1 (145 HP / 2.000 RPM)';
-            trans = 'Direct Drive Power Shift 8 Forward - 4 Reverse';
-            payload = 'Blade Width 3.71 Meter / Operating Weight 14.5 Ton';
-            oilCap = '20 Liter Engine / 70 Liter Hydraulic';
-            fuelCap = '340 Liter Solar';
-            drive = '6x4 Tandem Drive with Differential Lock';
-        }
-
+    function renderTechnicalSpecsListing(asset, calculated) {
+        const value = raw => raw == null || String(raw).trim() === '' ? 'Belum tersedia' : String(raw);
+        const metric = raw => raw == null
+            ? 'Belum dapat dihitung'
+            : `${Number(raw).toLocaleString('id-ID', { maximumFractionDigits: 2 })} Jam`;
+        const row = (leftIcon, leftLabel, leftValue, rightIcon, rightLabel, rightValue) => `
+            <div class="prop-spec-row">
+                <div class="prop-spec-cell"><div class="prop-spec-label"><i class="fa-solid ${leftIcon}"></i> ${escapeHtml(leftLabel)}</div><div class="prop-spec-val">${escapeHtml(value(leftValue))}</div></div>
+                <div class="prop-spec-cell"><div class="prop-spec-label"><i class="fa-solid ${rightIcon}"></i> ${escapeHtml(rightLabel)}</div><div class="prop-spec-val">${escapeHtml(value(rightValue))}</div></div>
+            </div>`;
         const listEl = document.getElementById('propSpecListGrid');
-        if (listEl) {
-            listEl.innerHTML = `
-                <!-- ROW 1 (White) -->
-                <div class="prop-spec-row">
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-truck"></i> Tipe &amp; Kategori Alat</div>
-                        <div class="prop-spec-val">${escapeHtml(asset.category || 'Heavy Equipment')}</div>
-                    </div>
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-gears"></i> Model Mesin (Powertrain)</div>
-                        <div class="prop-spec-val">${escapeHtml(engine)}</div>
-                    </div>
-                </div>
-
-                <!-- ROW 2 (Grey Striped) -->
-                <div class="prop-spec-row">
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-code-branch"></i> Transmisi &amp; Drive Train</div>
-                        <div class="prop-spec-val">${escapeHtml(trans)}</div>
-                    </div>
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-weight-hanging"></i> Kapasitas Muatan / GVW</div>
-                        <div class="prop-spec-val">${escapeHtml(payload)}</div>
-                    </div>
-                </div>
-
-                <!-- ROW 3 (White) -->
-                <div class="prop-spec-row">
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-road"></i> Konfigurasi Penggerak / Drive</div>
-                        <div class="prop-spec-val">${escapeHtml(drive)}</div>
-                    </div>
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-oil-can"></i> Kapasitas Pelumas &amp; Hidrolik</div>
-                        <div class="prop-spec-val">${escapeHtml(oilCap)}</div>
-                    </div>
-                </div>
-
-                <!-- ROW 4 (Grey Striped) -->
-                <div class="prop-spec-row">
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-gas-pump"></i> Kapasitas Tangki Bahan Bakar</div>
-                        <div class="prop-spec-val">${escapeHtml(fuelCap)}</div>
-                    </div>
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-shield-halved"></i> Status Kepemilikan</div>
-                        <div class="prop-spec-val">${escapeHtml(asset.ownership || 'Milik Sendiri (PT BRA)')}</div>
-                    </div>
-                </div>
-
-                <!-- ROW 5 (White) -->
-                <div class="prop-spec-row">
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-building-flag"></i> Cabang &amp; Wilayah Operasi</div>
-                        <div class="prop-spec-val">${escapeHtml(asset.branch || 'PKB PEKANBARU Branch')}</div>
-                    </div>
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-calendar-check"></i> Tahun Pembuatan Unit</div>
-                        <div class="prop-spec-val">${escapeHtml(asset.year_manufacture || '2023')}</div>
-                    </div>
-                </div>
-
-                <!-- ROW 6 (Grey Striped) -->
-                <div class="prop-spec-row">
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-heart-pulse"></i> Mean Time Between Failures (MTBF)</div>
-                        <div class="prop-spec-val">168 Jam Operasi Normal</div>
-                    </div>
-                    <div class="prop-spec-cell">
-                        <div class="prop-spec-label"><i class="fa-solid fa-stopwatch"></i> Mean Time to Repair (MTTR)</div>
-                        <div class="prop-spec-val">4.5 Jam Perbaikan Rata-rata</div>
-                    </div>
-                </div>
-            `;
-        }
+        if (!listEl) return;
+        listEl.innerHTML = [
+            row('fa-truck', 'Tipe & Kategori Alat', asset.category || asset.type, 'fa-tag', 'Merek / Model Unit', asset.make_model),
+            row('fa-barcode', 'Nomor Seri (SN)', asset.serial_number, 'fa-id-card', 'Nomor Polisi', asset.license_plate),
+            row('fa-shield-halved', 'Status Kepemilikan', asset.ownership, 'fa-building-flag', 'Cabang & Wilayah Operasi', asset.sub_group_branch),
+            row('fa-calendar-check', 'Tahun Pembuatan Unit', asset.year_manufacture, 'fa-location-dot', 'Lokasi Aktif', asset.location_name || asset.raw_location_notes),
+            row('fa-gears', 'Model Mesin (Powertrain)', asset.engine_model, 'fa-code-branch', 'Transmisi & Drive Train', asset.transmission_drive_train),
+            row('fa-weight-hanging', 'Kapasitas Muatan / GVW', asset.payload_gvw, 'fa-road', 'Konfigurasi Penggerak / Drive', asset.drive_configuration),
+            row('fa-oil-can', 'Kapasitas Pelumas & Hidrolik', asset.lubricant_hydraulic_capacity, 'fa-gas-pump', 'Kapasitas Tangki Bahan Bakar', asset.fuel_tank_capacity),
+            row('fa-heart-pulse', 'Mean Time Between Failures (MTBF)', metric(calculated.mtbf_hours), 'fa-stopwatch', 'Mean Time to Repair (MTTR)', metric(calculated.mttr_hours))
+        ].join('');
     }
 
     /**
      * Leaflet Map Initializer for Properties
      */
-    function initPropertiesMap(lat, lng, locName, asset) {
+    function initPropertiesMap(lat, lng, asset, gpsLogs) {
         const mapContainer = document.getElementById('propUnitMap');
         if (!mapContainer || typeof window.L === 'undefined') return;
 
@@ -866,7 +831,13 @@
             propMapInstance = null;
         }
 
+        if (lat == null || lng == null) {
+            mapContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#64748b; text-align:center; padding:24px;">Koordinat unit belum tersedia.</div>';
+            return;
+        }
+
         try {
+            mapContainer.innerHTML = '';
             propMapInstance = L.map('propUnitMap', {
                 zoomControl: true,
                 attributionControl: false
@@ -876,39 +847,20 @@
                 maxZoom: 19
             }).addTo(propMapInstance);
 
-            // Add Mining Site Geofences
-            Object.entries(siteLocations).forEach(([name, data]) => {
-                const isCurrent = name === locName;
-                L.circle([data.lat, data.lng], {
-                    color: data.color,
-                    fillColor: data.color,
-                    fillOpacity: isCurrent ? 0.25 : 0.1,
-                    radius: data.radius,
-                    weight: isCurrent ? 3 : 1.5,
-                    dashArray: isCurrent ? null : '4, 4'
-                }).bindPopup(`<strong>Geofence Site: ${name}</strong><br>Radius: ${data.radius} Meter`).addTo(propMapInstance);
-            });
-
-            // Add GPS Trail Breadcrumbs Polyline
-            const trailPoints = [
-                [lat - 0.0035, lng - 0.0028],
-                [lat - 0.0022, lng - 0.0019],
-                [lat - 0.0012, lng - 0.0009],
-                [lat, lng]
-            ];
-            L.polyline(trailPoints, {
-                color: '#0284c7',
-                weight: 4,
-                opacity: 0.8,
-                dashArray: '6, 6'
-            }).addTo(propMapInstance);
+            const trailPoints = (gpsLogs || [])
+                .map(log => [Number(log.latitude), Number(log.longitude)])
+                .filter(point => Number.isFinite(point[0]) && Number.isFinite(point[1]))
+                .reverse();
+            if (trailPoints.length > 1) {
+                L.polyline(trailPoints, { color: '#0284c7', weight: 4, opacity: 0.8 }).addTo(propMapInstance);
+            }
 
             // Marker for Current Unit Position
             const customIcon = L.divIcon({
                 className: 'prop-map-unit-marker',
                 html: `
                     <div style="background:#0284c7; color:#fff; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; font-family:'JetBrains Mono',monospace; box-shadow:0 3px 8px rgba(0,0,0,0.3); border:2px solid #fff; white-space:nowrap; display:flex; align-items:center; gap:4px;">
-                        <i class="fa-solid fa-truck-front"></i> ${escapeHtml(asset.id || 'UNIT')}
+                        <i class="fa-solid fa-truck-front"></i> ${escapeHtml(asset.asset_id || asset.id)}
                     </div>
                 `,
                 iconSize: [80, 30],
@@ -916,7 +868,7 @@
             });
 
             L.marker([lat, lng], { icon: customIcon })
-                .bindPopup(`<strong>${escapeHtml(asset.id)}</strong><br>${escapeHtml(asset.make_model || '')}<br>Lokasi: ${escapeHtml(locName)}`)
+                .bindPopup(`<strong>${escapeHtml(asset.asset_id || asset.id)}</strong><br>${escapeHtml(asset.make_model || 'Model belum tersedia')}<br>Lokasi: ${escapeHtml(asset.location_name || asset.raw_location_notes || 'Belum tersedia')}`)
                 .addTo(propMapInstance)
                 .openPopup();
 
@@ -931,295 +883,164 @@
     /**
      * Render SECTION 3: Maintenance Plans, WOs & Spare Parts
      */
-    function renderMaintenanceAndWorkOrders(asset, hash) {
-        const curHm = Number(asset.last_hm_km || 34500);
+    function renderMaintenanceAndWorkOrders(payload) {
+        const pmPlans = Array.isArray(payload.pm_plans) ? payload.pm_plans : [];
+        const workOrders = Array.isArray(payload.work_orders) ? payload.work_orders : [];
+        const partUsage = Array.isArray(payload.part_usage) ? payload.part_usage : [];
+        const formatMeter = value => value == null ? 'Belum tersedia' : Number(value).toLocaleString('id-ID');
+        const formatMoney = value => value == null
+            ? 'Belum tersedia'
+            : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value));
+        const statusBadge = status => {
+            const normalized = String(status || 'Belum tersedia');
+            const upper = normalized.toUpperCase();
+            const cls = ['CLOSED', 'COMPLETED'].includes(upper) ? 'pass'
+                : (['DUE_SOON', 'IN PROGRESS', 'WAITING PART', 'TESTING'].includes(upper) ? 'warning'
+                    : (['OVERDUE', 'CANCELLED'].includes(upper) ? 'fail' : ''));
+            return `<span class="p2h-badge ${cls}">${escapeHtml(normalized)}</span>`;
+        };
 
-        // PM Plans Table
-        const tbPm = document.getElementById('propPmPlansTableBody');
-        if (tbPm) {
-            const intervals = [250, 500, 1000, 2000];
-            let rows = '';
-            intervals.forEach(inv => {
-                const last = Math.floor(curHm / inv) * inv;
-                const next = last + inv;
-                const delta = next - curHm;
-                const badge = delta < 0 ? '<span class="p2h-badge fail">Terlambat</span>' : (delta <= 50 ? '<span class="p2h-badge warning">Due Soon</span>' : '<span class="p2h-badge pass">Terjadwal</span>');
-                const cost = inv === 250 ? 'Rp 2.500.000' : (inv === 500 ? 'Rp 4.850.000' : (inv === 1000 ? 'Rp 9.500.000' : 'Rp 16.000.000'));
-
-                rows += `
-                    <tr>
-                        <td><strong>PS ${inv}</strong></td>
-                        <td>${inv} Jam</td>
-                        <td>${last.toLocaleString('id-ID')} HM</td>
-                        <td><strong>${next.toLocaleString('id-ID')} HM</strong></td>
-                        <td style="font-weight:700; color:${delta < 0 ? '#dc2626' : '#0284c7'};">${delta > 0 ? '+' : ''}${delta} HM</td>
-                        <td>${badge}</td>
-                        <td>${cost}</td>
-                    </tr>
-                `;
-            });
-            tbPm.innerHTML = rows;
+        const tbPmLive = document.getElementById('propPmPlansTableBody');
+        if (tbPmLive) {
+            tbPmLive.innerHTML = pmPlans.length
+                ? pmPlans.map(plan => {
+                    const hasTarget = Number(plan.target_due_hm) > 0;
+                    const hasCurrent = Number(plan.current_smr) > 0;
+                    const delta = hasTarget && hasCurrent
+                        ? Number(plan.target_due_hm) - Number(plan.current_smr)
+                        : null;
+                    const deltaLabel = delta == null ? 'Belum dapat dihitung' : `${delta > 0 ? '+' : ''}${delta.toLocaleString('id-ID')} HM`;
+                    return `<tr>
+                        <td><strong>PM ${escapeHtml(plan.interval_hm)} HM</strong></td>
+                        <td>${escapeHtml(plan.interval_hm)} Jam</td>
+                        <td>${Number(plan.last_service_hm) > 0 ? `${formatMeter(plan.last_service_hm)} HM` : 'Belum tersedia'}</td>
+                        <td><strong>${hasTarget ? `${formatMeter(plan.target_due_hm)} HM` : 'Belum tersedia'}</strong></td>
+                        <td>${escapeHtml(deltaLabel)}</td>
+                        <td>${statusBadge(plan.status)}</td>
+                        <td>Belum tersedia</td>
+                    </tr>`;
+                }).join('')
+                : emptyTableRow(7, 'Belum ada rencana PM yang terhubung ke unit ini.');
         }
 
-        // Work Orders Table
-        const tbWo = document.getElementById('propWoTableBody');
-        if (tbWo) {
-            tbWo.innerHTML = `
-                <tr>
-                    <td><strong>WO-2026-08-0114</strong></td>
-                    <td>Scheduled PM</td>
-                    <td>Servis Berkala PS 500 (Ganti Oli Mesin, Filter Oli, Filter Solar, dan General Safety Check)</td>
-                    <td>Joni Septian</td>
-                    <td>5.5 Jam</td>
-                    <td>Rp 4.850.000</td>
-                    <td><span class="p2h-badge pass">Closed</span></td>
-                </tr>
-                <tr>
-                    <td><strong>WO-2026-07-0092</strong></td>
-                    <td>Corrective Breakdown</td>
-                    <td>Penggantian hydraulic hose boom cylinder bocor dan bleeding hydraulic circuit</td>
-                    <td>Afriyandi (Lead)</td>
-                    <td>14.0 Jam</td>
-                    <td>Rp 7.200.000</td>
-                    <td><span class="p2h-badge pass">Closed</span></td>
-                </tr>
-            `;
+        const tbWoLive = document.getElementById('propWoTableBody');
+        if (tbWoLive) {
+            tbWoLive.innerHTML = workOrders.length
+                ? workOrders.map(wo => {
+                    const issue = wo.repair_action
+                        ? `${wo.issue_description || ''} / Tindakan: ${wo.repair_action}`
+                        : (wo.issue_description || 'Belum tersedia');
+                    const downtime = wo.downtime_formatted || (wo.downtime_minutes == null ? 'Belum tersedia' : `${wo.downtime_minutes} menit`);
+                    return `<tr>
+                        <td><strong>${escapeHtml(wo.wo_id)}</strong></td>
+                        <td>${escapeHtml(wo.maintenance_type || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(issue)}</td>
+                        <td>${escapeHtml(wo.assigned_mechanic || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(downtime)}</td>
+                        <td>${escapeHtml(formatMoney(wo.total_cost))}</td>
+                        <td>${statusBadge(wo.status)}</td>
+                    </tr>`;
+                }).join('')
+                : emptyTableRow(7, 'Belum ada Work Order yang terhubung ke unit ini.');
         }
 
-        // Spare Parts History Table
-        const tbParts = document.getElementById('propPartsTableBody');
-        if (tbParts) {
-            tbParts.innerHTML = `
-                <tr>
-                    <td><code>15607-2190</code></td>
-                    <td>Oil Filter Element Hino FM260/280</td>
-                    <td>Filter</td>
-                    <td>2 Pcs</td>
-                    <td>Rp 570.000</td>
-                    <td>SPB-2026-08-0114</td>
-                    <td>10 Agu 2026</td>
-                </tr>
-                <tr>
-                    <td><code>23304-EV090</code></td>
-                    <td>Fuel Filter Primary & Secondary Set</td>
-                    <td>Filter</td>
-                    <td>1 Set</td>
-                    <td>Rp 450.000</td>
-                    <td>SPB-2026-08-0114</td>
-                    <td>10 Agu 2026</td>
-                </tr>
-                <tr>
-                    <td><code>OIL-MED-15W40</code></td>
-                    <td>Oli Mesin Pertamina Meditran SX 15W-40</td>
-                    <td>Pelumas</td>
-                    <td>28 Liter</td>
-                    <td>Rp 1.456.000</td>
-                    <td>SPB-2026-08-0115</td>
-                    <td>10 Agu 2026</td>
-                </tr>
-                <tr>
-                    <td><code>HYD-HOSE-075-4W</code></td>
-                    <td>Hydraulic Hose 3/4" 4SP 350 Bar + Fitting</td>
-                    <td>Hidrolik</td>
-                    <td>2 Pcs</td>
-                    <td>Rp 3.700.000</td>
-                    <td>SPB-2026-07-0092</td>
-                    <td>24 Jul 2026</td>
-                </tr>
-            `;
+        const tbPartsLive = document.getElementById('propPartsTableBody');
+        if (tbPartsLive) {
+            tbPartsLive.innerHTML = partUsage.length
+                ? partUsage.map(item => `<tr>
+                    <td><code>${escapeHtml(item.part_number || 'Belum tersedia')}</code></td>
+                    <td>${escapeHtml(item.part_name || 'Belum tersedia')}</td>
+                    <td>${escapeHtml(item.category || 'Belum tersedia')}</td>
+                    <td>${escapeHtml(item.quantity)} ${escapeHtml(item.unit_measure || '')}</td>
+                    <td>Belum tersedia</td>
+                    <td>${escapeHtml(item.reference_number || 'Belum tersedia')}</td>
+                    <td>${escapeHtml(formatDisplayDate(item.transaction_date))}</td>
+                </tr>`).join('')
+                : emptyTableRow(7, 'Belum ada konsumsi suku cadang dengan asset_id unit ini.');
         }
     }
 
     /**
      * Render SECTION 4: Diagnostics, 10-Tire Diagram, Oil PAP & P2H
      */
-    function renderDiagnosticsAndTires(asset, hash) {
-        // 10-Position Tire Blueprint Diagram
-        const tireBlueprint = document.getElementById('propTireBlueprint');
-        if (tireBlueprint) {
-            tireBlueprint.innerHTML = `
-                <!-- AXLE 1: FRONT STEERING -->
-                <div class="prop-tire-axle-row">
-                    <div class="prop-axle-line"></div>
-                    <div class="prop-axle-label">AXLE 1 (STEERING)</div>
-                    <div class="prop-wheel-group">
-                        <div class="prop-tire-badge good" title="Posisi 1 - Depan Kiri">
-                            <span class="tire-pos">P1 (FL)</span>
-                            <span class="tire-psi">115 PSI</span>
-                            <span class="tire-rtd">19 mm</span>
-                        </div>
-                    </div>
-                    <div class="prop-wheel-group">
-                        <div class="prop-tire-badge good" title="Posisi 2 - Depan Kanan">
-                            <span class="tire-pos">P2 (FR)</span>
-                            <span class="tire-psi">115 PSI</span>
-                            <span class="tire-rtd">18 mm</span>
-                        </div>
-                    </div>
-                </div>
+    function renderDiagnosticsAndTires(payload) {
+        const tires = Array.isArray(payload.tire_inspections) ? payload.tire_inspections : [];
+        const oilRows = Array.isArray(payload.oil_analysis) ? payload.oil_analysis : [];
+        const inspections = Array.isArray(payload.inspections) ? payload.inspections : [];
+        const accidents = Array.isArray(payload.accidents) ? payload.accidents : [];
 
-                <!-- AXLE 2: DRIVE FORWARD (DUAL TIRE) -->
-                <div class="prop-tire-axle-row">
-                    <div class="prop-axle-line"></div>
-                    <div class="prop-axle-label">AXLE 2 (DRIVE FORWARD)</div>
-                    <div class="prop-wheel-group">
-                        <div class="prop-tire-badge good" title="Posisi 3 - Tengah Luar Kiri">
-                            <span class="tire-pos">P3 (RO)</span>
-                            <span class="tire-psi">110 PSI</span>
-                            <span class="tire-rtd">16 mm</span>
-                        </div>
-                        <div class="prop-tire-badge good" title="Posisi 4 - Tengah Dalam Kiri">
-                            <span class="tire-pos">P4 (RI)</span>
-                            <span class="tire-psi">112 PSI</span>
-                            <span class="tire-rtd">15 mm</span>
-                        </div>
-                    </div>
-                    <div class="prop-wheel-group">
-                        <div class="prop-tire-badge warning" title="Posisi 5 - Tengah Dalam Kanan (Perlu Pantau)">
-                            <span class="tire-pos">P5 (RI)</span>
-                            <span class="tire-psi">102 PSI</span>
-                            <span class="tire-rtd">13 mm</span>
-                        </div>
-                        <div class="prop-tire-badge good" title="Posisi 6 - Tengah Luar Kanan">
-                            <span class="tire-pos">P6 (RO)</span>
-                            <span class="tire-psi">110 PSI</span>
-                            <span class="tire-rtd">16 mm</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- AXLE 3: DRIVE REAR (DUAL TIRE) -->
-                <div class="prop-tire-axle-row">
-                    <div class="prop-axle-line"></div>
-                    <div class="prop-axle-label">AXLE 3 (DRIVE REAR)</div>
-                    <div class="prop-wheel-group">
-                        <div class="prop-tire-badge good" title="Posisi 7 - Belakang Luar Kiri">
-                            <span class="tire-pos">P7 (RO)</span>
-                            <span class="tire-psi">114 PSI</span>
-                            <span class="tire-rtd">17 mm</span>
-                        </div>
-                        <div class="prop-tire-badge good" title="Posisi 8 - Belakang Dalam Kiri">
-                            <span class="tire-pos">P8 (RI)</span>
-                            <span class="tire-psi">115 PSI</span>
-                            <span class="tire-rtd">17 mm</span>
-                        </div>
-                    </div>
-                    <div class="prop-wheel-group">
-                        <div class="prop-tire-badge good" title="Posisi 9 - Belakang Dalam Kanan">
-                            <span class="tire-pos">P9 (RI)</span>
-                            <span class="tire-psi">112 PSI</span>
-                            <span class="tire-rtd">16 mm</span>
-                        </div>
-                        <div class="prop-tire-badge good" title="Posisi 10 - Belakang Luar Kanan">
-                            <span class="tire-pos">P10 (RO)</span>
-                            <span class="tire-psi">114 PSI</span>
-                            <span class="tire-rtd">18 mm</span>
-                        </div>
-                    </div>
-                </div>
-            `;
+        const tireBlueprintLive = document.getElementById('propTireBlueprint');
+        if (tireBlueprintLive) {
+            tireBlueprintLive.innerHTML = tires.length
+                ? `<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(105px,1fr)); gap:10px; width:100%;">${tires.map(tire => {
+                    const color = String(tire.condition_color || '').toUpperCase();
+                    const cls = color === 'RED' ? 'danger' : (color === 'YELLOW' ? 'warning' : 'good');
+                    const pressure = Number(tire.air_pressure_psi) > 0 ? `${tire.air_pressure_psi} PSI` : '—';
+                    const tread = Number(tire.tread_depth_mm) > 0 ? `${tire.tread_depth_mm} mm` : '—';
+                    return `<div class="prop-tire-badge ${cls}" title="Inspeksi ${escapeHtml(formatDisplayDateTime(tire.inspected_at))}">
+                        <span class="tire-pos">${escapeHtml(tire.tire_position)}</span>
+                        <span class="tire-psi">${escapeHtml(pressure)}</span>
+                        <span class="tire-rtd">${escapeHtml(tread)}</span>
+                    </div>`;
+                }).join('')}</div>`
+                : '<div style="padding:22px; text-align:center; color:#64748b;">Belum ada pemeriksaan ban untuk unit ini.</div>';
         }
 
-        // Oil PAP Sampling Lab Table
-        const tbPap = document.getElementById('propOilPapTableBody');
-        if (tbPap) {
-            tbPap.innerHTML = `
-                <tr>
-                    <td><strong>Engine Oil</strong></td>
-                    <td>10 Agu 2026</td>
-                    <td>18 ppm</td>
-                    <td>4 ppm</td>
-                    <td>6 ppm</td>
-                    <td>8 ppm</td>
-                    <td>14.2 cSt</td>
-                    <td><span class="p2h-badge pass">Normal</span></td>
-                    <td>Laju keausan wear metals dalam batas aman operasional.</td>
-                </tr>
-                <tr>
-                    <td><strong>Hydraulic System</strong></td>
-                    <td>10 Agu 2026</td>
-                    <td>7 ppm</td>
-                    <td>2 ppm</td>
-                    <td>3 ppm</td>
-                    <td>5 ppm</td>
-                    <td>45.8 cSt</td>
-                    <td><span class="p2h-badge pass">Normal</span></td>
-                    <td>Viskositas stabil. Kontaminasi partikulat sangat rendah.</td>
-                </tr>
-                <tr>
-                    <td><strong>Differential Gear</strong></td>
-                    <td>18 Jun 2026</td>
-                    <td>24 ppm</td>
-                    <td>8 ppm</td>
-                    <td>5 ppm</td>
-                    <td>11 ppm</td>
-                    <td>28.4 cSt</td>
-                    <td><span class="p2h-badge pass">Normal</span></td>
-                    <td>Keausan gear train normal sesuai interval 1000 HM.</td>
-                </tr>
-            `;
+        const tbPapLive = document.getElementById('propOilPapTableBody');
+        if (tbPapLive) {
+            tbPapLive.innerHTML = oilRows.length
+                ? oilRows.map(row => `<tr>
+                    <td>${escapeHtml(row.compartment || 'Belum tersedia')}</td>
+                    <td>${escapeHtml(formatDisplayDate(row.sample_date))}</td>
+                    <td>${escapeHtml(row.iron_fe ?? 'Belum tersedia')}</td>
+                    <td>${escapeHtml(row.copper_cu ?? 'Belum tersedia')}</td>
+                    <td>${escapeHtml(row.aluminium_al ?? 'Belum tersedia')}</td>
+                    <td>${escapeHtml(row.silicon_si ?? 'Belum tersedia')}</td>
+                    <td>${escapeHtml(row.viscosity ?? 'Belum tersedia')}</td>
+                    <td>${escapeHtml(row.status ?? 'Belum tersedia')}</td>
+                    <td>${escapeHtml(row.lab_diagnosis ?? 'Belum tersedia')}</td>
+                </tr>`).join('')
+                : emptyTableRow(9, 'Belum ada sumber data PAP yang terhubung ke unit ini.');
         }
 
-        // P2H Pre-Start History Table
-        const tbP2h = document.getElementById('propP2hTableBody');
-        if (tbP2h) {
-            tbP2h.innerHTML = `
-                <tr>
-                    <td><strong>27 Agu 2026</strong></td>
-                    <td>Shift 1 (Siang)</td>
-                    <td>Taufiq H (Operator)</td>
-                    <td><span class="p2h-badge pass">Lulus P2H</span></td>
-                    <td>OK (110-115 PSI)</td>
-                    <td>Nihil</td>
-                    <td>Unit siap operasi normal penambangan.</td>
-                </tr>
-                <tr>
-                    <td><strong>26 Agu 2026</strong></td>
-                    <td>Shift 2 (Malam)</td>
-                    <td>Rezeki Siregar (Operator)</td>
-                    <td><span class="p2h-badge pass">Lulus P2H</span></td>
-                    <td>OK</td>
-                    <td>Nihil</td>
-                    <td>Operasi hauling lancar tanpa kendala.</td>
-                </tr>
-                <tr>
-                    <td><strong>25 Agu 2026</strong></td>
-                    <td>Shift 1 (Siang)</td>
-                    <td>Taufiq H (Operator)</td>
-                    <td><span class="p2h-badge warning">Catatan</span></td>
-                    <td>P5 agak kurang angin (102 PSI)</td>
-                    <td>Nihil</td>
-                    <td>Dilakukan top up angin ban P5 saat pergantian shift.</td>
-                </tr>
-            `;
+        const tbP2hLive = document.getElementById('propP2hTableBody');
+        if (tbP2hLive) {
+            tbP2hLive.innerHTML = inspections.length
+                ? inspections.map(inspection => {
+                    const detail = inspection.payload || {};
+                    return `<tr>
+                        <td><strong>${escapeHtml(formatDisplayDateTime(inspection.inspection_date))}</strong></td>
+                        <td>${escapeHtml(detail.shift || detail.shiftName || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(detail.operatorName || detail.operator || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(inspection.overall_result || detail.status || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(detail.tireCondition || detail.kondisiBan || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(detail.leakage || detail.kebocoran || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(inspection.findings_summary || detail.notes || 'Belum tersedia')}</td>
+                    </tr>`;
+                }).join('')
+                : emptyTableRow(7, 'Belum ada inspeksi P2H yang terhubung ke unit ini.');
         }
 
-        // Accident Investigation Table
-        const tbAccident = document.getElementById('propAccidentTableBody');
-        if (tbAccident) {
-            if (asset.id === 'DT-00052') {
-                tbAccident.innerHTML = `
-                    <tr>
-                        <td><strong>02/ACC/BRA/YARD/2026</strong></td>
-                        <td>20 Jun 2026</td>
-                        <td>Yard KM 12 Area Workshop</td>
-                        <td>Suwardi (Mekanik)</td>
-                        <td><span class="p2h-badge fail">Minor</span></td>
-                        <td>Engsel pintu ombeng tersangkut tiang penyangga saat manuver mundur.</td>
-                        <td>Rp 4.500.000</td>
-                        <td><span class="p2h-badge pass">CAPA Completed</span></td>
-                    </tr>
-                `;
-            } else {
-                tbAccident.innerHTML = `
-                    <tr>
-                        <td colspan="8" style="text-align:center; padding:18px; color:#64748b;">
-                            <i class="fa-solid fa-shield-halved" style="color:#16a34a; margin-right:6px;"></i> 
-                            Tidak ada riwayat kecelakaan atau insiden keselamatan untuk unit ini (Zero Accident).
-                        </td>
-                    </tr>
-                `;
-            }
+        const tbAccidentLive = document.getElementById('propAccidentTableBody');
+        if (tbAccidentLive) {
+            tbAccidentLive.innerHTML = accidents.length
+                ? accidents.map(accident => {
+                    const loss = accident.total_financial_loss ?? accident.estimated_repair_cost;
+                    const lossLabel = loss == null || Number(loss) <= 0
+                        ? 'Belum tersedia'
+                        : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(loss));
+                    return `<tr>
+                        <td><strong>${escapeHtml(accident.accident_id)}</strong></td>
+                        <td>${escapeHtml(formatDisplayDateTime(accident.incident_datetime))}</td>
+                        <td>${escapeHtml(accident.location_name || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(accident.operator_name || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(accident.severity || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(accident.chronology || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(lossLabel)}</td>
+                        <td>${escapeHtml(accident.status || 'Belum tersedia')}</td>
+                    </tr>`;
+                }).join('')
+                : emptyTableRow(8, 'Belum ada laporan insiden yang tercatat untuk unit ini; status Zero Accident tidak diasumsikan.');
         }
     }
 
@@ -1230,8 +1051,8 @@
         const hash = window.location.hash || '';
         if (hash.startsWith('#unit-properties')) {
             const urlParams = new URLSearchParams(hash.replace(/^#unit-properties\??/, ''));
-            const unitId = urlParams.get('id') || 'DT-00049';
-            window.openUnitProperties(unitId);
+            const unitId = urlParams.get('id');
+            if (unitId) window.openUnitProperties(unitId);
         }
     }
 
