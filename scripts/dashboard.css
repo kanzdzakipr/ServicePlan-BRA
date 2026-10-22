@@ -18150,6 +18150,8 @@ body.sl-modal-open {
 }
 
 #modalNewWO .wo-create-dialog {
+    display: flex !important;
+    flex-direction: column !important;
     width: min(1040px, 96vw);
     max-width: 1040px;
     max-height: 92dvh;
@@ -18157,12 +18159,15 @@ body.sl-modal-open {
     border-radius: 14px;
     border-color: #cbd5e1;
     box-shadow: 0 28px 70px rgba(15, 23, 42, .24);
+    overflow: hidden !important;
 }
 
 #modalNewWO .wo-create-header {
+    flex-shrink: 0 !important;
     align-items: flex-start;
     background: #f8fafc;
     padding: 20px 24px 18px;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .wo-create-header h2 {
@@ -18213,6 +18218,11 @@ body.sl-modal-open {
 }
 
 #modalNewWO .wo-create-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     background: #eef2f6;
     display: grid;
     gap: 12px;
@@ -18655,17 +18665,19 @@ body.sl-modal-open {
 }
 
 .wo-create-actions {
+    flex-shrink: 0 !important;
     align-items: center;
-    background: #fff;
+    background: #ffffff !important;
     border-top: 1px solid #dbe3ec;
     bottom: 0;
     display: flex;
     gap: 8px;
     justify-content: flex-end;
-    margin: 2px -18px 0;
+    margin: 4px -18px 0;
     padding: 13px 18px;
     position: sticky;
-    z-index: 2;
+    z-index: 10;
+    box-shadow: 0 -4px 14px rgba(15, 23, 42, 0.05);
 }
 
 .wo-create-actions .btn {
