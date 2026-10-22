@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-dashboard-column-alignment-5">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-emergency-wo-date-tooltip-10">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -7175,19 +7175,104 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 return wo?.assignedTo || wo?.assigned_mechanic || wo?.mechanic || 'Belum ada PIC';
             }
 
+            function formatWorkOrderSubmittedAt(wo) {
+                const rawValue = wo?.reportedAt ?? wo?.reported_at ?? wo?.troubleAt ?? wo?.trouble_at ?? null;
+                if (!rawValue) return 'Belum tercatat';
+                const parsed = new Date(String(rawValue).replace(' ', 'T'));
+                return Number.isNaN(parsed.getTime())
+                    ? String(rawValue)
+                    : parsed.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
+            }
+
+            function getDashboardWoDateTooltip() {
+                let tooltip = document.getElementById('dashboardWoDateTooltip');
+                if (tooltip) return tooltip;
+                tooltip = document.createElement('div');
+                tooltip.id = 'dashboardWoDateTooltip';
+                tooltip.className = 'dashboard-wo-date-tooltip';
+                tooltip.setAttribute('role', 'tooltip');
+                tooltip.setAttribute('aria-hidden', 'true');
+                tooltip.innerHTML = '<span>Tanggal pengajuan WO</span><strong></strong>';
+                document.body.appendChild(tooltip);
+                return tooltip;
+            }
+
+            window.showDashboardWoDateTooltip = function (trigger) {
+                if (!trigger) return;
+                const tooltip = getDashboardWoDateTooltip();
+                const value = trigger.dataset.submittedAt || 'Belum tercatat';
+                tooltip.querySelector('strong').textContent = value;
+                tooltip.classList.add('is-visible');
+                tooltip.setAttribute('aria-hidden', 'false');
+                trigger.setAttribute('aria-describedby', tooltip.id);
+
+                const triggerRect = trigger.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+                const viewportGap = 8;
+                const left = Math.min(
+                    window.innerWidth - tooltipRect.width - viewportGap,
+                    Math.max(viewportGap, triggerRect.left + (triggerRect.width - tooltipRect.width) / 2)
+                );
+                let top = triggerRect.bottom + 8;
+                if (top + tooltipRect.height > window.innerHeight - viewportGap) {
+                    top = triggerRect.top - tooltipRect.height - 8;
+                }
+                tooltip.style.left = `${Math.round(left)}px`;
+                tooltip.style.top = `${Math.round(Math.max(viewportGap, top))}px`;
+            };
+
+            window.hideDashboardWoDateTooltip = function (trigger) {
+                const tooltip = document.getElementById('dashboardWoDateTooltip');
+                if (!tooltip) return;
+                tooltip.classList.remove('is-visible');
+                tooltip.setAttribute('aria-hidden', 'true');
+                trigger?.removeAttribute('aria-describedby');
+            };
+
+            window.toggleAttentionIssue = function (button) {
+                const issueBlock = button?.closest('.attention-issue-summary');
+                if (!issueBlock) return;
+                const expanded = issueBlock.classList.toggle('is-expanded');
+                button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                button.innerHTML = expanded
+                    ? '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i><span>Tutup detail</span>'
+                    : '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span>Detail kendala</span>';
+            };
+
+            function updateAttentionIssueDisclosure(root = document) {
+                requestAnimationFrame(() => {
+                    root.querySelectorAll('.attention-issue-summary').forEach(issueBlock => {
+                        if (issueBlock.classList.contains('is-expanded')) return;
+                        const issueText = issueBlock.querySelector('.attention-issue-text');
+                        const toggle = issueBlock.querySelector('.attention-issue-toggle');
+                        if (!issueText || !toggle) return;
+                        toggle.hidden = issueText.scrollHeight <= issueText.clientHeight + 1;
+                    });
+                });
+            }
+
             function renderEmergencyWorkOrder(wo) {
                 const woIdEsc = escapeHtml(wo.woId);
                 const rawAssetId = wo.assetId || wo.unitId || '-';
-                const allAssetsList = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
-                const assetObj = allAssetsList.find(a => (a.id === rawAssetId || a.asset_id === rawAssetId || a.asset_code === rawAssetId));
-                const ident = window.formatAssetIdentityDetails
-                    ? window.formatAssetIdentityDetails(assetObj || { id: rawAssetId })
-                    : { unitId: rawAssetId, sn: 'Belum tersedia', plate: 'Belum tersedia' };
-                const assetIdEsc = escapeHtml(ident.unitId);
-                const targetUnitId = ident.unitId || rawAssetId;
                 const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
-                const issueShort = escapeHtml(issueText.length > 92 ? issueText.substring(0, 92) + '...' : issueText);
-                return `<li class="attention-item"><div class="attention-header"><div class="attention-title"><i class="fa-solid fa-fire attention-severity-icon" aria-hidden="true"></i><div class="attention-identity"><span class="attention-wo-badge">${woIdEsc}</span><span class="attention-asset-pill" title="Unit: ${assetIdEsc} | SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}"><a href="javascript:void(0)" class="unit-prop-hover-link" style="color:inherit; text-decoration:none;" onclick="window.openUnitProperties('${escapeHtml(targetUnitId)}'); return false;" title="Buka Properties Unit ${assetIdEsc}"><span class="unit-code-text">${assetIdEsc}</span><i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" style="font-size:0.7rem; margin-left:3px;" aria-hidden="true"></i></a><small style="opacity:0.85; margin-left:5px; font-weight:normal;">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small></span></div></div><div class="attention-downtime" title="Durasi terhenti"><i class="fa-regular fa-clock" aria-hidden="true"></i> Down ${formatDowntime(wo)}</div></div><div class="attention-meta"><span><i class="fa-solid fa-user-gear" aria-hidden="true"></i><strong>Mekanik</strong> ${escapeHtml(getWorkOrderMechanic(wo))}</span></div><div class="attention-desc" title="${escapeHtml(issueText)}">${issueShort}</div><div class="attention-actions"><button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buka detail Work Order"><i class="fa-solid fa-wrench" aria-hidden="true"></i> Detail WO</button><button class="attention-action-btn" onclick="window.openUnitProperties('${escapeHtml(targetUnitId)}')" title="Buka Properties Lengkap Unit"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Properties</button><button class="attention-action-btn" onclick="openAssetModal('${escapeHtml(rawAssetId)}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat detail aset 360 derajat"><i class="fa-solid fa-truck" aria-hidden="true"></i> Aset 360&deg;</button><button class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buat permintaan sparepart"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Minta Part</button></div></li>`;
+                const issueEsc = escapeHtml(issueText);
+                const mechanicEsc = escapeHtml(getWorkOrderMechanic(wo));
+                const submittedAtEsc = escapeHtml(formatWorkOrderSubmittedAt(wo));
+                const downtimeEsc = escapeHtml(`Down ${formatDowntime(wo)}`);
+                return `<li class="attention-item attention-item-compact" aria-label="Work Order ${woIdEsc}">
+                    <div class="attention-priority-row">
+                        <span class="attention-wo-name"><i class="fa-solid fa-fire attention-severity-icon" aria-hidden="true"></i><strong>${woIdEsc}</strong></span>
+                        <span class="attention-issue-summary" title="${issueEsc}"><strong class="attention-issue-label">Kendala:</strong><span class="attention-issue-text">${issueEsc}</span><button type="button" class="attention-issue-toggle" aria-expanded="false" onclick="toggleAttentionIssue(this)" hidden><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span>Detail kendala</span></button></span>
+                        <span class="attention-downtime attention-downtime-strong" tabindex="0" data-submitted-at="${submittedAtEsc}" aria-label="${downtimeEsc}. Tanggal pengajuan WO: ${submittedAtEsc}" onmouseenter="showDashboardWoDateTooltip(this)" onmouseleave="hideDashboardWoDateTooltip(this)" onfocus="showDashboardWoDateTooltip(this)" onblur="hideDashboardWoDateTooltip(this)"><i class="fa-regular fa-clock" aria-hidden="true"></i><span>${downtimeEsc}</span></span>
+                    </div>
+                    <div class="attention-support-row">
+                        <span class="attention-mechanic-name" title="Mekanik: ${mechanicEsc}"><i class="fa-solid fa-user-gear" aria-label="Mekanik"></i><span>${mechanicEsc}</span></span>
+                        <span class="attention-compact-actions">
+                            <button type="button" class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buka detail Work Order ${woIdEsc}"><i class="fa-solid fa-wrench" aria-hidden="true"></i><span>Detail WO</span></button>
+                            <button type="button" class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buat permintaan part untuk ${woIdEsc}"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i><span>Minta Part</span></button>
+                        </span>
+                    </div>
+                </li>`;
             }
 
             function loadNextEmergencyWoBatch() {
@@ -7202,6 +7287,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const nextItems = state.items.slice(state.rendered, state.rendered + EMERGENCY_WO_BATCH_SIZE);
                     loadingItem.remove();
                     state.list.insertAdjacentHTML('beforeend', nextItems.map(renderEmergencyWorkOrder).join(''));
+                    updateAttentionIssueDisclosure(state.list);
                     state.rendered += nextItems.length;
                     state.loading = false;
                     if (state.rendered < state.items.length) {
@@ -7226,6 +7312,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (attentionList.dataset.emergencyScrollBound !== 'true') {
                     attentionList.dataset.emergencyScrollBound = 'true';
                     attentionList.addEventListener('scroll', () => {
+                        hideDashboardWoDateTooltip();
                         if (attentionList.scrollTop + attentionList.clientHeight >= attentionList.scrollHeight - 24) {
                             attentionList.querySelector('.attention-load-more-hint')?.remove();
                             loadNextEmergencyWoBatch();
