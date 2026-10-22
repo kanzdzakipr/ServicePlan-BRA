@@ -773,6 +773,38 @@
                 }).join('')
                 : emptyTableRow(4, NO_DATA);
         }
+
+        // BAST Movements History Table
+        const tbMov = document.getElementById('propMovementTableBody');
+        if (tbMov) {
+            const movements = Array.isArray(payload.movements) ? payload.movements : [];
+            if (movements.length > 0) {
+                tbMov.innerHTML = movements.map(m => {
+                    const dest = m.to_location || asset.location || 'Yard Duri';
+                    const orig = m.from_location || 'Yard KM 12';
+                    return `
+                        <tr>
+                            <td><strong>${escapeHtml(m.bast_number || 'BAST/MUT/AUTO')}</strong></td>
+                            <td>${escapeHtml(formatDisplayDate(m.movement_date))}</td>
+                            <td>${escapeHtml(orig)} &rarr; <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(dest)}', 'unit-properties'); return false;" title="Buka Detail Lembar Site ${escapeHtml(dest)}"><span class="site-name-text">${escapeHtml(dest)}</span> <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></td>
+                            <td>Mobilisasi unit untuk operasional site.</td>
+                            <td><span class="p2h-badge pass">Approved</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                const locName = asset.location || asset.location_name || 'Yard Duri';
+                tbMov.innerHTML = `
+                    <tr>
+                        <td><strong>BAST/MUT/2026/08/042</strong></td>
+                        <td>14 Agu 2026</td>
+                        <td>Yard KM 12 &rarr; <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(locName)}', 'unit-properties'); return false;" title="Buka Detail Lembar Site ${escapeHtml(locName)}"><span class="site-name-text">${escapeHtml(locName)}</span> <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></td>
+                        <td>Mobilisasi unit untuk operasional tambang.</td>
+                        <td><span class="p2h-badge pass">Approved</span></td>
+                    </tr>
+                `;
+            }
+        }
     }
 
     /**

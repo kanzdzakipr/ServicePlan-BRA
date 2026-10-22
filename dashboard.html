@@ -13,6 +13,7 @@
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
     <link rel="stylesheet" href="scripts/dashboard.css?v=20261019-mon-filter-fix-1">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
+    <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <script src="scripts/auth-client.js?v=20260810-1"></script>
     <script src="scripts/rbac.js?v=20260822-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
@@ -20,6 +21,7 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=20261017-notification-batch1"></script>
     <script src="scripts/unit-properties.js?v=20260827-1"></script>
+    <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>
 
 <body>
@@ -2582,14 +2584,15 @@
                                     <div class="vital-val" id="propVitalHm">34.500 HM</div>
                                     <div class="vital-sub">SMR Engine Terbaca</div>
                                 </div>
-                                <div class="prop-vital-cell">
+                                <div class="prop-vital-cell" id="cardVitalLocation">
                                     <div class="vital-label-row">
-                                        <div class="vital-label"><i class="fa-solid fa-location-dot"></i> Posisi Terkini
-                                        </div>
+                                        <div class="vital-label"><i class="fa-solid fa-location-dot"></i> Posisi Terkini</div>
+                                        <button type="button" class="btn-vital-history" onclick="window.openSiteProperties(document.getElementById('propVitalLoc').textContent.trim(), 'unit-properties')" title="Buka Detail Lembar Properties Site Ini">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                        </button>
                                     </div>
-                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem;">Borrow Pit
-                                        Harapan Baru</div>
-                                    <div class="vital-sub">Mining Sector Area</div>
+                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem; cursor:pointer;" onclick="window.openSiteProperties(this.textContent.trim(), 'unit-properties')" title="Klik untuk membuka lembar properties site ini">Borrow Pit Harapan Baru</div>
+                                    <div class="vital-sub">Mining Sector Area · <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties(document.getElementById('propVitalLoc').textContent.trim(), 'unit-properties')" style="font-size:0.7rem; color:var(--primary, #0284c7); padding:0;"><span class="site-name-text">Lihat Peta &amp; Unit Site &rarr;</span></a></div>
                                 </div>
                                 <div class="prop-vital-cell">
                                     <div class="vital-label-row">
@@ -2920,6 +2923,246 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: SITE LOCATION PROPERTIES & FLEET GEO-DIAGNOSTICS -->
+            <div id="view-site-properties" class="view-section">
+                <!-- Top Navigation & Action Bar -->
+                <div class="site-top-bar">
+                    <div class="site-breadcrumb-group">
+                        <button type="button" class="site-btn-back" onclick="window.backFromSiteProperties()">
+                            <i class="fa-solid fa-arrow-left"></i> Kembali
+                        </button>
+                        <div class="site-breadcrumbs">
+                            <span>Fleet Management</span>
+                            <i class="fa-solid fa-chevron-right" style="font-size:0.65rem; color:#94a3b8;"></i>
+                            <span>Site Location</span>
+                            <i class="fa-solid fa-chevron-right" style="font-size:0.65rem; color:#94a3b8;"></i>
+                            <strong id="siteBreadcrumbName">Borrow Pit Harapan Baru</strong>
+                        </div>
+                    </div>
+                    <div class="site-top-actions">
+                        <select id="siteLocationSelector" class="site-location-selector" aria-label="Pilih lokasi site untuk melihat properties" onchange="window.openSiteProperties(this.value)">
+                            <!-- Populated via JS -->
+                        </select>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.printSiteProperties()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+                            <i class="fa-solid fa-print"></i> Cetak Ringkasan Site
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="window.exportSiteUnitsCsv()" style="display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+                            <i class="fa-solid fa-file-csv"></i> Unduh Data Unit (.CSV)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Site Identity & Status Hero Card -->
+                <div class="site-spec-header-card">
+                    <div class="site-header-main-row">
+                        <div class="site-identity-block">
+                            <div class="site-category-icon-box">
+                                <i class="fa-solid fa-industry"></i>
+                            </div>
+                            <div class="site-title">
+                                <h1>
+                                    <span id="sitePropTitle">Borrow Pit Harapan Baru</span>
+                                    <span id="sitePropStatusPill" class="site-badge-pill active">
+                                        <span class="prop-pulse-dot"></span> ACTIVE OPERATIONS
+                                    </span>
+                                </h1>
+                                <div class="site-meta-subtitle">
+                                    <span id="sitePropType">Borrow Pit Area</span> &bull; 
+                                    Wilayah: <strong id="sitePropRegion" style="color:#0f172a;">Duri, Riau</strong> &bull; 
+                                    Radius Geofence: <code id="sitePropRadius">600 Meter</code>
+                                </div>
+                                <div class="site-pic-row">
+                                    <div class="site-pic-item">
+                                        <i class="fa-solid fa-user-shield"></i>
+                                        <span>Pengawas Site: <strong id="sitePropPic">Joni Septian (Foreman) / Rahmad K (Mekanik)</strong></span>
+                                    </div>
+                                    <div class="site-pic-item">
+                                        <i class="fa-solid fa-walkie-talkie"></i>
+                                        <span>Saluran Radio: <strong id="sitePropRadio">CH 14 (156.700 MHz VHF)</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bento Grid Site Vitals (8 KPIs) -->
+                    <div class="site-vitals-bento-grid">
+                        <div class="site-vital-cell">
+                            <div class="vital-label-row">
+                                <div class="vital-label"><i class="fa-solid fa-cubes"></i> Total Armada di Site</div>
+                            </div>
+                            <div class="vital-val" id="siteVitalTotalUnits">18 Unit</div>
+                            <div class="vital-sub">Alat Berat &amp; Support</div>
+                        </div>
+                        <div class="site-vital-cell">
+                            <div class="vital-label-row">
+                                <div class="vital-label"><i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> Ready / Operating</div>
+                            </div>
+                            <div class="vital-val" id="siteVitalReadyUnits" style="color:#16a34a;">14 Unit</div>
+                            <div class="vital-sub">Siap Operasi / Bekerja</div>
+                        </div>
+                        <div class="site-vital-cell">
+                            <div class="vital-label-row">
+                                <div class="vital-label"><i class="fa-solid fa-pause" style="color:#d97706;"></i> Standby</div>
+                            </div>
+                            <div class="vital-val" id="siteVitalStandbyUnits" style="color:#d97706;">3 Unit</div>
+                            <div class="vital-sub">Menunggu Giliran / Antrian</div>
+                        </div>
+                        <div class="site-vital-cell">
+                            <div class="vital-label-row">
+                                <div class="vital-label"><i class="fa-solid fa-triangle-exclamation" style="color:#dc2626;"></i> Breakdown / Perbaikan</div>
+                            </div>
+                            <div class="vital-val" id="siteVitalBreakdownUnits" style="color:#dc2626;">1 Unit</div>
+                            <div class="vital-sub">Dalam Penanganan WO</div>
+                        </div>
+                        <div class="site-vital-cell">
+                            <div class="vital-label-row">
+                                <div class="vital-label"><i class="fa-solid fa-gauge-high"></i> Rata-rata HM Armada</div>
+                            </div>
+                            <div class="vital-val" id="siteVitalAvgHm">18.450 HM</div>
+                            <div class="vital-sub">SMR Operasi Rata-rata</div>
+                        </div>
+                        <div class="site-vital-cell">
+                            <div class="vital-label-row">
+                                <div class="vital-label"><i class="fa-solid fa-heart-pulse"></i> Health Score Site</div>
+                            </div>
+                            <div class="vital-val" id="siteVitalHealth" style="color:#16a34a;">94%</div>
+                            <div class="vital-sub">Kondisi Fisik Prima</div>
+                        </div>
+                        <div class="site-vital-cell">
+                            <div class="vital-label-row">
+                                <div class="vital-label"><i class="fa-solid fa-wrench"></i> Work Order Aktif</div>
+                            </div>
+                            <div class="vital-val" id="siteVitalActiveWo" style="color:#0284c7;">2 Tiket</div>
+                            <div class="vital-sub">Tiket Terbuka di Site</div>
+                        </div>
+                        <div class="site-vital-cell">
+                            <div class="vital-label-row">
+                                <div class="vital-label"><i class="fa-solid fa-satellite"></i> Akurasi Geofence</div>
+                            </div>
+                            <div class="vital-val" id="siteVitalGeofenceLock" style="color:#0284c7;">100% Locked</div>
+                            <div class="vital-sub">0 Pelanggaran Batas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: PETA INTERAKTIF SITE & LOKASI SETIAP UNIT -->
+                <div class="site-section-heading">
+                    <div class="site-section-heading-left">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <span>1. Peta Interaktif Site &amp; Lokasi Unit Armada Tambang</span>
+                    </div>
+                </div>
+                <div class="site-panel-grid-top-map">
+                    <!-- Leaflet Map Container -->
+                    <div class="site-card">
+                        <div class="site-card-header">
+                            <h3><i class="fa-solid fa-map" style="color:#0284c7;"></i> Peta Geofence Site &amp; Sebaran Unit Real-Time</h3>
+                            <span style="font-size:0.75rem; color:#64748b;"><i class="fa-solid fa-circle-info"></i> Klik marker unit untuk rincian cepat</span>
+                        </div>
+                        <div class="site-card-body" style="padding:10px;">
+                            <div id="siteLocationMap"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Distribusi Armada & Info Geofence -->
+                    <div>
+                        <!-- Distribusi Berdasarkan Kategori Alat -->
+                        <div class="site-card">
+                            <div class="site-card-header">
+                                <h3><i class="fa-solid fa-chart-pie" style="color:#0284c7;"></i> Komposisi Armada di Site</h3>
+                            </div>
+                            <div class="site-card-body" style="padding:14px;">
+                                <div class="site-cat-dist-list" id="siteCategoryDistributionList">
+                                    <!-- Rendered dynamically via JS -->
+                                </div>
+
+                                <!-- Geofence Coordinates Hub -->
+                                <div class="site-geofence-info-box">
+                                    <div class="site-geofence-item">
+                                        <span class="site-geofence-item-label">Titik Acuan (Lat, Lng)</span>
+                                        <span class="site-geofence-item-val" id="siteGeofenceCenter">1.31245, 101.24512</span>
+                                    </div>
+                                    <div class="site-geofence-item">
+                                        <span class="site-geofence-item-label">Radius Geofence</span>
+                                        <span class="site-geofence-item-val" id="siteGeofenceRadiusVal">600 Meter</span>
+                                    </div>
+                                    <div class="site-geofence-item">
+                                        <span class="site-geofence-item-label">Sinyal Telemetri GPS</span>
+                                        <span class="site-geofence-item-val" style="color:#16a34a;"><i class="fa-solid fa-signal"></i> 4G / Satelit OK</span>
+                                    </div>
+                                    <div class="site-geofence-item">
+                                        <span class="site-geofence-item-label">Kondisi Lapangan</span>
+                                        <span class="site-geofence-item-val" style="color:#0284c7;"><i class="fa-solid fa-cloud-sun"></i> Kering / Aman</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: TABULASI ALAT BERAT & PROPERTIES IDENTIFICATION -->
+                <div class="site-section-heading">
+                    <div class="site-section-heading-left">
+                        <i class="fa-solid fa-table-list"></i>
+                        <span>2. Tabulasi Alat Berat &amp; Properties Identification (Armada di Site Ini)</span>
+                    </div>
+                </div>
+
+                <div class="site-card">
+                    <!-- Toolbar & Filter -->
+                    <div class="site-table-toolbar">
+                        <div class="site-table-search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="siteUnitSearchInput" class="site-table-search-input" placeholder="Cari kode unit, lambung, plat, SN, model..." aria-label="Cari unit di site ini">
+                        </div>
+                        <div class="site-table-filters">
+                            <select id="siteUnitStatusFilter" class="site-filter-select" aria-label="Filter status operasional">
+                                <option value="ALL">Semua Status</option>
+                                <option value="OPERATING">Operating / Ready</option>
+                                <option value="STANDBY">Standby</option>
+                                <option value="BREAKDOWN">Breakdown</option>
+                                <option value="INSPEKSI">Inspeksi</option>
+                            </select>
+                            <select id="siteUnitCategoryFilter" class="site-filter-select" aria-label="Filter kategori alat">
+                                <option value="ALL">Semua Kategori</option>
+                                <option value="Dump Truck">Dump Truck</option>
+                                <option value="Excavator">Excavator</option>
+                                <option value="Bulldozer">Bulldozer</option>
+                                <option value="Motor Grader">Motor Grader</option>
+                                <option value="Vibro Compactor">Vibro Compactor</option>
+                                <option value="Water Truck">Water Truck</option>
+                                <option value="Light Vehicle">Light Vehicle</option>
+                            </select>
+                            <span id="siteUnitsCountLabel" style="font-size:0.78rem; font-weight:600; color:#64748b; margin-left:8px;">Menghitung unit...</span>
+                        </div>
+                    </div>
+
+                    <!-- Table Data -->
+                    <div class="site-prop-table-responsive">
+                        <table class="site-prop-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px; text-align:center;">No.</th>
+                                    <th>Unit ID / Lambung</th>
+                                    <th>Nomor Lambung Fisik</th>
+                                    <th>Merek &amp; Model</th>
+                                    <th>Kategori Alat</th>
+                                    <th>Legal &amp; Serial Number</th>
+                                    <th>Jam Kerja (HM)</th>
+                                    <th>Status Operasional</th>
+                                    <th>Health Score</th>
+                                    <th style="text-align:center; min-width:140px;">Aksi Aksesibilitas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="siteUnitsTableBody">
+                                <!-- Rendered via JS -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -6422,7 +6665,15 @@
                         </td>
                         <td>${escapeHtml(parsed.snPlat)}</td>
                         <td>${escapeHtml(asset.category)}</td>
-                        <td>${escapeHtml(asset.location)}</td>
+                        <td>
+                            <a href="javascript:void(0)" 
+                               class="site-prop-hover-link" 
+                               onclick="closeModal('modalStatusDetail'); window.openSiteProperties('${escapeHtml(asset.location)}', 'dashboard'); return false;" 
+                               title="Buka Properties &amp; Peta Site ${escapeHtml(asset.location)}">
+                                <span class="site-name-text">${escapeHtml(asset.location)}</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon" aria-hidden="true"></i>
+                            </a>
+                        </td>
                         <td>${escapeHtml(asset.lastUpdate || '2 jam lalu')}</td>
                         <td>${badge}</td>
                         <td style="text-align: center;">
@@ -6686,8 +6937,14 @@
                         onclick="openAssetActionCalloutFromElement(event, this)" 
                         style="cursor:pointer;" 
                         title="Klik 1x untuk membuka Opsi Aksi Integrasi Unit ${escapeHtml(asset.id)}">
-                        <td>
-                            <strong style="color:var(--primary); font-size:0.88rem;">${escapeHtml(ident.unitId)}</strong>
+                        <td onclick="event.stopPropagation();">
+                            <a href="javascript:void(0)" 
+                               class="unit-prop-hover-link" 
+                               onclick="window.openUnitProperties('${escapeHtml(ident.unitId)}'); return false;" 
+                               title="Buka Properties Unit ${escapeHtml(ident.unitId)}">
+                                <span class="unit-code-text" style="font-weight:700; color:var(--primary);">${escapeHtml(ident.unitId)}</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" aria-hidden="true"></i>
+                            </a>
                         </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:5px;">
@@ -6705,8 +6962,12 @@
                         <td>
                             <span class="badge badge-info" style="font-size:0.72rem;">${escapeHtml(asset.category || 'Other')}</span>
                         </td>
-                        <td>
-                            <span style="font-size:0.82rem;"><i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:4px;"></i> ${escapeHtml(asset.location || 'Belum tersedia')}</span>
+                        <td onclick="event.stopPropagation();">
+                            <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || '')}">
+                                <i class="fa-solid fa-location-dot site-loc-pin-icon" style="color:var(--primary); margin-right:4px;"></i>
+                                <span class="site-name-text">${escapeHtml(asset.location || 'Belum tersedia')}</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon" aria-hidden="true"></i>
+                            </a>
                         </td>
                         <td>
                             ${complBadge}
@@ -7757,7 +8018,7 @@
                         let checkMenu = viewName;
                         if (checkMenu === 'workorder') checkMenu = 'wo';
 
-                        if (checkMenu !== 'dashboard' && checkMenu !== 'uc' && checkMenu !== 'archive' && checkMenu !== 'unit-properties' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
+                        if (checkMenu !== 'dashboard' && checkMenu !== 'uc' && checkMenu !== 'archive' && checkMenu !== 'unit-properties' && checkMenu !== 'site-properties' && !window.FleetRBAC.hasAccess(checkMenu, 'R')) {
                             console.warn(`RBAC: Akses ditolak untuk menu ${checkMenu}`);
                             alert('Akses Ditolak: Anda tidak memiliki hak akses untuk menu ini.');
                             if (viewName !== 'dashboard') {
@@ -8066,10 +8327,13 @@
                         <small style="color:#64748b;">${cluster.isRepresentative ? 'Koordinat representatif cabang' : `${cluster.lat.toFixed(6)}, ${cluster.lng.toFixed(6)}`}</small>
                         <p style="margin:8px 0;"><b>Total ${cluster.assets.length} Unit Armada</b><br><div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">${statusSummary}</div></p>
                         <div style="max-height:220px; overflow-y:auto; border-top:1px solid #e2e8f0; margin-top:6px;">${assetRows}</div>
-                        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-                            <a href="https://www.google.com/maps?q=${cluster.lat.toFixed(6)},${cluster.lng.toFixed(6)}" target="_blank" rel="noopener noreferrer" style="color:#0d6efd; font-weight:600; text-decoration:none; font-size:12px;">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Google Maps
+                        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                            <a href="https://www.google.com/maps?q=${cluster.lat.toFixed(6)},${cluster.lng.toFixed(6)}" target="_blank" rel="noopener noreferrer" style="color:#0d6efd; font-weight:600; text-decoration:none; font-size:11px;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Google Maps
                             </a>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="window.openSiteProperties('${escapeHtml(cluster.location)}', 'dashboard')" style="padding:3px 8px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                                <i class="fa-solid fa-industry"></i> Properties Site &rarr;
+                            </button>
                         </div>
                     </div>`;
 
@@ -8300,7 +8564,15 @@
                             <small>${escapeHtml(asset.lastUpdate || 'Belum ada waktu update')}</small>
                         </td>
                         <td>${escapeHtml(asset.category || '')}</td>
-                        <td>${escapeHtml(asset.location || '')}</td>
+                        <td>
+                            <a href="javascript:void(0)" 
+                               class="site-prop-hover-link" 
+                               onclick="window.openSiteProperties('${escapeHtml(asset.location || '')}', 'monitoring'); return false;" 
+                               title="Buka Properties &amp; Peta Site ${escapeHtml(asset.location || '')}">
+                                <span class="site-name-text">${escapeHtml(asset.location || '-')}</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon" aria-hidden="true"></i>
+                            </a>
+                        </td>
                         <td>
                             ${badge}
                             <span class="status-source-line"><i class="fa-solid fa-link"></i> ${escapeHtml(source)} &middot; ${escapeHtml(reference)}</span>
