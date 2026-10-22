@@ -321,33 +321,7 @@
         }
 
         // 3. Card Galeri Foto Unit (3x3 Layout di Sisi Kanan)
-        const galleryCountEl = document.getElementById('propGalleryCount');
-        if (galleryCountEl) galleryCountEl.textContent = `${photoRows.length} Foto`;
-
-        const galleryContainer = document.getElementById('propGalleryContainer');
-        if (galleryContainer) {
-            if (photoRows.length === 0) {
-                galleryContainer.innerHTML = `
-                    <div class="prop-gallery-empty-state">
-                        <div class="prop-gallery-empty-icon"><i class="fa-regular fa-image"></i></div>
-                        <div class="prop-gallery-empty-title">${NO_DATA}</div>
-                        <div class="prop-gallery-empty-desc">${NO_DATA}</div>
-                    </div>
-                `;
-            } else {
-                const photosGridHtml = photoRows.map(photo => {
-                    const photoUrl = `api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(photo.photo_id)}`;
-                    return `
-                        <div class="prop-gallery-thumb-item" onclick="window.openPropPhotoLightbox('${photoUrl}', '${escapeHtml(photo.photo_title)}', '${escapeHtml(photo.photo_angle || 'Foto')}', '${escapeHtml(photo.uploaded_at || '')}')" title="${escapeHtml(photo.photo_title)} (${escapeHtml(photo.photo_angle || 'Foto')})">
-                            <img src="${photoUrl}" alt="${escapeHtml(photo.photo_title)}" loading="lazy">
-                            <span class="prop-gallery-thumb-angle">${escapeHtml(photo.photo_angle || 'Foto')}</span>
-                        </div>
-                    `;
-                }).join('');
-
-                galleryContainer.innerHTML = `<div class="prop-gallery-grid-3x3">${photosGridHtml}</div>`;
-            }
-        }
+        renderGallerySection(photoRows);
     }
 
     /**
@@ -563,14 +537,215 @@
     };
 
     /**
+     * Notification Toast Helper for Unit Properties
+     */
+    function showPropToast(message, isError = false) {
+        let toast = document.getElementById('propToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'propToast';
+            toast.className = 'prop-toast';
+            document.body.appendChild(toast);
+        }
+        toast.className = `prop-toast ${isError ? 'prop-toast-error' : 'prop-toast-success'}`;
+        toast.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> <span>${escapeHtml(message)}</span>`;
+        requestAnimationFrame(() => toast.classList.add('active'));
+        clearTimeout(showPropToast.timer);
+        showPropToast.timer = setTimeout(() => {
+            toast.classList.remove('active');
+        }, 3500);
+    }
+
+    /**
+     * Render Gallery Section: 3x3 Grid or Empty State with Upload Trigger
+     */
+    function renderGallerySection(photoRows) {
+        const galleryCountEl = document.getElementById('propGalleryCount');
+        if (galleryCountEl) galleryCountEl.textContent = `${photoRows.length} Foto`;
+
+        const galleryContainer = document.getElementById('propGalleryContainer');
+        if (!galleryContainer) return;
+
+        if (photoRows.length === 0) {
+            galleryContainer.innerHTML = `
+                <div class="prop-gallery-empty-state clickable" onclick="window.triggerPropPhotoUpload()" role="button" tabindex="0" title="Klik untuk upload foto unit (PNG, JPG, JPEG)">
+                    <div class="prop-gallery-empty-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div class="prop-gallery-empty-title">Belum ada foto unit</div>
+                    <div class="prop-gallery-empty-desc">Klik di sini atau tombol <strong>+ Upload</strong> untuk menambah foto</div>
+                    <div style="margin-top:6px; font-size:0.68rem; color:#94a3b8; font-weight:500;">Format: PNG, JPG, JPEG (Maks. 5 MB)</div>
+                </div>
+            `;
+        } else {
+            const photosGridHtml = photoRows.map(photo => {
+                const photoUrl = `api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(photo.photo_id)}`;
+                return `
+                    <div class="prop-gallery-thumb-item" onclick="window.openPropPhotoLightbox('${photoUrl}', '${escapeHtml(photo.photo_title)}', '${escapeHtml(photo.photo_angle || 'Foto')}', '${escapeHtml(photo.uploaded_at || '')}', ${Number(photo.photo_id)})" title="${escapeHtml(photo.photo_title)} (${escapeHtml(photo.photo_angle || 'Foto')})">
+                        <img src="${photoUrl}" alt="${escapeHtml(photo.photo_title)}" loading="lazy">
+                        <span class="prop-gallery-thumb-angle">${escapeHtml(photo.photo_angle || 'Foto')}</span>
+                    </div>
+                `;
+            }).join('');
+
+            galleryContainer.innerHTML = `<div class="prop-gallery-grid-3x3">${photosGridHtml}</div>`;
+        }
+    }
+
+    /**
+     * Trigger File Picker for Unit Photo Upload
+     */
+    window.triggerPropPhotoUpload = function () {
+        if (!currentPropUnitId) {
+            showPropToast('Pilih unit terlebih dahulu sebelum mengunggah foto.', true);
+            return;
+        }
+        const fileInput = document.getElementById('propPhotoFileInput');
+        if (fileInput) {
+            fileInput.value = '';
+            fileInput.click();
+        }
+    };
+
+    /**
+     * Handle File Selection and Upload directly to database
+     */
+    window.handlePropPhotoSelected = async function (input) {
+        if (!input || !input.files || input.files.length === 0) return;
+        const file = input.files[0];
+        if (!currentPropUnitId) {
+            showPropToast('Pilih unit terlebih dahulu.', true);
+            input.value = '';
+            return;
+        }
+
+        // Validasi ekstensi & format: Hanya PNG, JPG, JPEG
+        const allowedExts = ['png', 'jpg', 'jpeg'];
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        const allowedMime = ['image/png', 'image/jpeg'];
+
+        if (!allowedExts.includes(ext) || (file.type && !allowedMime.includes(file.type))) {
+            showPropToast('Format file tidak didukung! Hanya file PNG, JPG, atau JPEG yang diperbolehkan.', true);
+            input.value = '';
+            return;
+        }
+
+        // Validasi ukuran: Maksimal 5 MB
+        const maxSizeBytes = 5 * 1024 * 1024;
+        if (file.size > maxSizeBytes) {
+            showPropToast('Ukuran foto terlalu besar! Maksimal ukuran file adalah 5 MB.', true);
+            input.value = '';
+            return;
+        }
+
+        const galleryContainer = document.getElementById('propGalleryContainer');
+        const prevHtml = galleryContainer ? galleryContainer.innerHTML : '';
+        if (galleryContainer) {
+            galleryContainer.innerHTML = `
+                <div class="prop-gallery-uploading-state">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#0284c7; margin-bottom:8px;"></i>
+                    <div style="font-size:0.82rem; font-weight:700; color:#0f172a;">Menyimpan foto ke database...</div>
+                    <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">${escapeHtml(file.name)}</div>
+                </div>
+            `;
+        }
+
+        const uploadBtn = document.getElementById('btnPropUploadPhoto');
+        if (uploadBtn) uploadBtn.disabled = true;
+
+        try {
+            const formData = new FormData();
+            formData.append('asset_id', currentPropUnitId);
+            formData.append('kind', 'photo');
+            formData.append('file', file);
+            const titleWithoutExt = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
+            formData.append('title', titleWithoutExt || `Foto Unit ${currentPropUnitId}`);
+            formData.append('angle', 'Other');
+
+            const response = await fetch('api/asset_files.php', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result || result.status !== 'success') {
+                throw new Error(result?.message || 'Gagal menyimpan foto ke database.');
+            }
+
+            showPropToast('Foto berhasil diunggah dan disimpan ke database!');
+            await window.reloadPropGallery(currentPropUnitId);
+        } catch (error) {
+            console.error('Upload foto unit gagal:', error);
+            showPropToast(error.message || 'Terjadi kesalahan saat mengunggah foto.', true);
+            if (galleryContainer && prevHtml) {
+                galleryContainer.innerHTML = prevHtml;
+            }
+        } finally {
+            if (uploadBtn) uploadBtn.disabled = false;
+            input.value = '';
+        }
+    };
+
+    /**
+     * Reload Gallery Photos for an Asset
+     */
+    window.reloadPropGallery = async function (assetId) {
+        if (!assetId) return;
+        try {
+            const response = await fetch(`api/unit_properties.php?asset_id=${encodeURIComponent(assetId)}`, {
+                credentials: 'same-origin',
+                cache: 'no-store'
+            });
+            const result = await response.json();
+            if (response.ok && result.status === 'success' && result.data?.asset) {
+                currentPropPayload = result.data;
+                const photoRows = Array.isArray(result.data.asset.gallery_photos) ? result.data.asset.gallery_photos : [];
+                renderGallerySection(photoRows);
+            }
+        } catch (e) {
+            console.warn('Gagal memuat ulang galeri:', e);
+        }
+    };
+
+    /**
+     * Delete Photo from Database and Server
+     */
+    window.deletePropPhoto = async function (photoId) {
+        if (!photoId) return;
+        if (!confirm('Apakah Anda yakin ingin menghapus foto ini dari galeri dan database?')) {
+            return;
+        }
+        try {
+            const response = await fetch(`api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(photoId)}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result || result.status !== 'success') {
+                throw new Error(result?.message || 'Gagal menghapus foto.');
+            }
+            if (typeof window.closeModal === 'function') {
+                window.closeModal('modalPropPhotoPreview');
+            }
+            showPropToast('Foto berhasil dihapus dari database.');
+            if (currentPropUnitId) {
+                await window.reloadPropGallery(currentPropUnitId);
+            }
+        } catch (err) {
+            showPropToast(err.message || 'Gagal menghapus foto.', true);
+        }
+    };
+
+    /**
      * Modal Controller: Photo Lightbox Preview
      */
-    window.openPropPhotoLightbox = function (photoUrl, title, angle, uploadedAt) {
+    window.openPropPhotoLightbox = function (photoUrl, title, angle, uploadedAt, photoId) {
         const imgEl = document.getElementById('mplPreviewImg');
         const titleEl = document.getElementById('mplPhotoTitle');
         const angleEl = document.getElementById('mplPhotoAngle');
         const dateEl = document.getElementById('mplPhotoDate');
         const downloadBtn = document.getElementById('mplDownloadBtn');
+        const deleteBtn = document.getElementById('mplDeleteBtn');
 
         if (imgEl) imgEl.src = photoUrl;
         if (titleEl) titleEl.textContent = title || 'Foto Unit';
@@ -579,6 +754,17 @@
         if (downloadBtn) {
             downloadBtn.href = photoUrl;
             downloadBtn.target = '_blank';
+        }
+
+        if (deleteBtn) {
+            if (photoId) {
+                deleteBtn.style.display = 'inline-flex';
+                deleteBtn.onclick = function () {
+                    window.deletePropPhoto(photoId);
+                };
+            } else {
+                deleteBtn.style.display = 'none';
+            }
         }
 
         if (typeof window.openModal === 'function') {

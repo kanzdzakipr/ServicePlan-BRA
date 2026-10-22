@@ -2529,7 +2529,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                         <i class="fa-solid fa-camera"></i>
                                         <span>Galeri Foto Unit</span>
                                     </div>
-                                    <span class="prop-gallery-badge" id="propGalleryCount">0 Foto</span>
+                                    <div class="prop-gallery-header-actions">
+                                        <span class="prop-gallery-badge" id="propGalleryCount">0 Foto</span>
+                                        <button type="button" class="btn-prop-upload" id="btnPropUploadPhoto" onclick="window.triggerPropPhotoUpload()" title="Upload Foto Unit (Format: PNG, JPG, JPEG)">
+                                            <i class="fa-solid fa-plus"></i> <span>Upload</span>
+                                        </button>
+                                        <input type="file" id="propPhotoFileInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg" style="display:none;" onchange="window.handlePropPhotoSelected(this)">
+                                    </div>
                                 </div>
                                 <div class="prop-gallery-body" id="propGalleryContainer">
                                     <!-- Rendered dynamically via JS: 3x3 grid or empty state -->
@@ -4665,9 +4671,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
                 <div class="modal-footer" style="padding: 10px 18px; background:#0f172a; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
                     <span id="mplPhotoDate" style="font-size:0.75rem; color:#94a3b8;"></span>
-                    <a id="mplDownloadBtn" href="" target="_blank" class="btn btn-primary btn-sm" style="font-size:0.8rem; padding:4px 10px;">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Resolusi Penuh
-                    </a>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button type="button" class="btn btn-danger btn-sm" id="mplDeleteBtn" style="display:none; font-size:0.8rem; padding:4px 10px; background:#ef4444; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+                            <i class="fa-solid fa-trash"></i> Hapus Foto
+                        </button>
+                        <a id="mplDownloadBtn" href="" target="_blank" class="btn btn-primary btn-sm" style="font-size:0.8rem; padding:4px 10px;">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Resolusi Penuh
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -7552,23 +7563,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         locSelect.dataset.requestedLocationId = String(assetObj.current_location_id);
                         locSelect.value = String(assetObj.current_location_id);
                     } else if (assetObj.location) {
-                        const matchedOpt = Array.from(locSelect.options).find(o => o.text.toLowerCase().includes((assetObj.location || '').toLowerCase()));
-                        if (matchedOpt) locSelect.value = matchedOpt.value;
-                    }
-                }
-
-                document.getElementById('ea-hm').value = assetObj.last_hm_km !== undefined ? assetObj.last_hm_km : '0.00';
-                const fieldValues = {
-                    'ea-operator': assetObj.current_operator_name,
-                    'ea-last-service-date': assetObj.last_service_date ? String(assetObj.last_service_date).replace(' ', 'T').slice(0, 16) : '',
-                    'ea-last-service-hm': assetObj.last_service_hm_km,
-                    'ea-service-interval': assetObj.service_interval_val,
-                    'ea-service-unit': assetObj.service_interval_unit || 'HM',
-                    'ea-daily-rate': assetObj.daily_usage_coefficient,
-                    'ea-stnk': assetObj.legal_stnk_expiry,
-                    'ea-kir': assetObj.legal_kir_expiry,
-                    'ea-silo': assetObj.legal_silo_expiry
-                };
+  
                 Object.entries(fieldValues).forEach(([key, value]) => { const field = document.getElementById(key); if (field) field.value = value ?? ''; });
                 document.getElementById('ea-operator-start').value = '';
 

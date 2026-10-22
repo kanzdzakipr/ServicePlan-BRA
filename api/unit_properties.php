@@ -251,6 +251,30 @@ if (count($failureMeters) >= 2) {
     }
 }
 
+$asset['gallery_photos'] = $fetchAll($db,
+    "SELECT photo_id, photo_title, photo_angle, photo_url, uploaded_at
+     FROM asset_gallery_photos
+     WHERE asset_id = :asset_id
+     ORDER BY photo_id DESC",
+    $params
+);
+
+$asset['operator_history'] = $fetchAll($db,
+    "SELECT history_id, operator_name, start_date, end_date, shift_type, handover_notes
+     FROM asset_operator_history
+     WHERE asset_id = :asset_id
+     ORDER BY start_date DESC, history_id DESC",
+    $params
+);
+
+$asset['service_history'] = $fetchAll($db,
+    "SELECT service_log_id, service_sequence, service_date, service_hm_km, service_type, mechanic_pic, jo_report_number, notes
+     FROM asset_service_history
+     WHERE asset_id = :asset_id
+     ORDER BY service_date DESC, service_log_id DESC",
+    $params
+);
+
 api_json_response(200, [
     'status' => 'success',
     'data' => [

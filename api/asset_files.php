@@ -19,9 +19,18 @@ if ($method === 'POST') {
     if ($size <= 0 || $size > $limit) api_json_response(422, ['status' => 'error', 'message' => 'Ukuran berkas tidak valid atau melebihi batas.']);
     $tmp = (string) ($file['tmp_name'] ?? '');
     if (!is_uploaded_file($tmp)) api_json_response(422, ['status' => 'error', 'message' => 'Sumber berkas tidak valid.']);
+
+    // Validasi ekstensi dan tipe file khusus foto (hanya PNG, JPG, JPEG)
+    if ($kind === 'photo') {
+        $origExt = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+        if (!in_array($origExt, ['png', 'jpg', 'jpeg'], true)) {
+            api_json_response(422, ['status' => 'error', 'message' => 'Format file tidak didukung. Hanya file PNG, JPG, dan JPEG yang diperbolehkan.']);
+        }
+    }
+
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($tmp);
-    $allowed = $kind === 'pdf' ? ['application/pdf' => 'pdf'] : ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    if (!isset($allowed[$mime]) || ($kind === 'photo' && @getimagesize($tmp) === false)) api_json_response(422, ['status' => 'error', 'message' => 'Hanya JPEG, PNG, WebP, atau PDF sesuai jenis unggahan yang diterima.']);
+    $allowed = $kind === 'pdf' ? ['application/pdf' => 'pdf'] : ['image/jpeg' => 'jpg', 'image/png' => 'png'];
+    if (!isset($allowed[$mime]) || ($kind === 'photo' && @getimagesize($tmp) === false)) api_json_response(422, ['status' => 'error', 'message' => 'Hanya file format PNG, JPG, atau JPEG yang diterima.']);
     if ($kind === 'pdf' && file_get_contents($tmp, false, null, 0, 5) !== '%PDF-') api_json_response(422, ['status' => 'error', 'message' => 'Isi PDF tidak valid.']);
     $dir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'assets';
     if (!is_dir($dir) && !mkdir($dir, 0750, true) && !is_dir($dir)) api_json_response(500, ['status' => 'error', 'message' => 'Folder unggahan tidak tersedia.']);
@@ -47,7 +56,35 @@ if ($method === 'POST') {
         error_log('Asset document DB update failed: ' . $e->getMessage());
         api_json_response(500, ['status' => 'error', 'message' => 'Metadata berkas gagal disimpan.']);
     }
-    api_json_response(201, ['status' => 'success', 'photo_id' => $kind === 'photo' ? (int) $db->lastInsertId() : null]);
+    api_json_response(201, [
+        'status' => 'success',
+        'message' => 'Foto berhasil diunggah dan disimpan ke database.',
+        'photo_id' => $kind === 'photo' ? (int) $db->lastInsertId() : null,
+        'photo_url' => $relative
+    ]);
+}
+
+if ($method === 'DELETE') {
+    AuthMiddleware::checkAccess('asset', 'U');
+    $photoId = (int) ($_GET['photo_id'] ?? 0);
+    if ($photoId <= 0) {
+        api_json_response(422, ['status' => 'error', 'message' => 'ID foto tidak valid.']);
+    }
+    $stmt = $db->prepare('SELECT photo_id, asset_id, photo_url FROM asset_gallery_photos WHERE photo_id = :id');
+    $stmt->execute([':id' => $photoId]);
+    $photo = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$photo) {
+        api_json_response(404, ['status' => 'error', 'message' => 'Foto tidak ditemukan.']);
+    }
+    api_require_asset_access($db, (string) $photo['asset_id']);
+    $delStmt = $db->prepare('DELETE FROM asset_gallery_photos WHERE photo_id = :id');
+    $delStmt->execute([':id' => $photoId]);
+    $base = realpath(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'assets');
+    $path = realpath(dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, (string) $photo['photo_url']));
+    if ($base && $path && str_starts_with($path, $base . DIRECTORY_SEPARATOR) && is_file($path)) {
+        @unlink($path);
+    }
+    api_json_response(200, ['status' => 'success', 'message' => 'Foto berhasil dihapus dari database.']);
 }
 
 if ($method !== 'GET') api_json_response(405, ['status' => 'error', 'message' => 'Metode tidak didukung.']);
