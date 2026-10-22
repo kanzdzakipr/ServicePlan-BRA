@@ -103,7 +103,9 @@ $auditExpression = @'
         horizontalOverflow: Math.max(0, dashboardWoScroll.scrollWidth - dashboardWoScroll.clientWidth),
         verticalOverflow: Math.max(0, dashboardWoScroll.scrollHeight - dashboardWoScroll.clientHeight),
         visibleDataRows: visibleDashboardWoRows,
-        categoryGroups: dashboardWoScroll.querySelectorAll('.dashboard-wo-category-row').length,
+        categoryFilterOptions: document.getElementById('dashboardWoCategoryFilter')?.options.length || 0,
+        categoryGroupRows: dashboardWoScroll.querySelectorAll('.dashboard-wo-category-row').length,
+        serialOrPlateVisible: dashboardWoRows.some(row => /(^|\s)(SN|Plat):/i.test(row.textContent || '')),
         columnCount: dashboardWoScroll.querySelectorAll('thead th').length,
         woAboveUnit: Boolean(firstWoNumber && firstWoUnit && firstWoNumber.top < firstWoUnit.top)
     } : null;
@@ -238,6 +240,33 @@ try {
     Wait-JavaScript -Expression "document.readyState === 'complete' && typeof window.showView === 'function' && document.querySelectorAll('.view-section').length >= 19" -TimeoutSeconds 30
     Wait-JavaScript -Expression "document.querySelectorAll('#dashboardWoTable > tr').length > 0" -TimeoutSeconds 30
 
+    $dashboardFilterAudit = Invoke-JavaScript -AwaitPromise -Expression @'
+(async () => {
+    const filter = document.getElementById('dashboardWoCategoryFilter');
+    if (!filter || filter.options.length < 2) {
+        return { available: false, optionCount: filter?.options.length || 0, filteredRowsMatch: false, serialOrPlateHidden: false };
+    }
+    const targetCategory = filter.options[1].value;
+    filter.value = targetCategory;
+    filter.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const filteredRows = Array.from(document.querySelectorAll('#dashboardWoTable > .dashboard-wo-row'));
+    const result = {
+        available: true,
+        optionCount: filter.options.length,
+        targetCategory,
+        filteredRowCount: filteredRows.length,
+        filteredRowsMatch: filteredRows.length > 0 && filteredRows.every(row => row.dataset.category === targetCategory),
+        serialOrPlateHidden: filteredRows.every(row => !/(^|\s)(SN|Plat):/i.test(row.textContent || '')),
+        categoryGroupRows: document.querySelectorAll('#dashboardWoTable > .dashboard-wo-category-row').length
+    };
+    filter.value = 'ALL';
+    filter.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return result;
+})()
+'@
+
     $views = @('dashboard','monitoring','asset','wo','pm','reports','people','hse','productivity','inspection','uc','logistics','condition','fuel','biaya','approval','settings','archive','unit-properties')
     $tabButtonSelector = '.asset-tabs button, .asset-tabs .asset-tab, .report-view-tabs button, .logistics-ledger-tabs button, .cm-tabs button, .pm-tabs button, .pk-nav-tabs button, .hse-nav-tabs button, .prod-nav-tabs button, .p2h-nav-tabs button, .settings-sidebar-nav .settings-nav-item'
     $results = New-Object System.Collections.Generic.List[object]
@@ -304,11 +333,14 @@ try {
                 horizontalOverflow = $_.audit.dashboardWo.horizontalOverflow
                 verticalOverflow = $_.audit.dashboardWo.verticalOverflow
                 visibleDataRows = $_.audit.dashboardWo.visibleDataRows
-                categoryGroups = $_.audit.dashboardWo.categoryGroups
+                categoryFilterOptions = $_.audit.dashboardWo.categoryFilterOptions
+                categoryGroupRows = $_.audit.dashboardWo.categoryGroupRows
+                serialOrPlateVisible = $_.audit.dashboardWo.serialOrPlateVisible
                 columnCount = $_.audit.dashboardWo.columnCount
                 woAboveUnit = $_.audit.dashboardWo.woAboveUnit
             }
         })
+        dashboardFilter = $dashboardFilterAudit
         failures = @($failures | ForEach-Object {
             [pscustomobject]@{
                 width = $_.width
