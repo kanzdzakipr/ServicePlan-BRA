@@ -20050,7 +20050,7 @@
             <div class="dash-analytics-row">
                 <div class="dash-grid-2">
                     <!-- Left: Table & Counter Header -->
-                    <div class="panel">
+                    <div class="panel executive-service-panel">
                         <div class="panel-header">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span><i class="fa-solid fa-clock-rotate-left"></i> Status Service Berkala Unit</span>
@@ -20090,7 +20090,16 @@
 
                             <!-- Table -->
                             <div class="table-responsive executive-service-table-scroll" id="executiveServiceTableScroll">
-                                <table style="margin-top:5px; font-size:0.85rem;">
+                                <table class="executive-service-table">
+                                    <colgroup>
+                                        <col class="executive-service-col-unit">
+                                        <col class="executive-service-col-meter">
+                                        <col class="executive-service-col-meter">
+                                        <col class="executive-service-col-difference">
+                                        <col class="executive-service-col-date">
+                                        <col class="executive-service-col-status">
+                                        <col class="executive-service-col-priority">
+                                    </colgroup>
                                     <thead>
                                         <tr>
                                             <th>Unit</th>
@@ -20105,18 +20114,18 @@
                                     <tbody id="executiveServiceTableBody">
                                         ${displayServiceRows.map(s => `
                                             <tr data-service-category="${escapeHtml(s.category)}" data-service-date="${escapeHtml(s.dateValue)}" data-service-status="${escapeHtml(s.status)}">
-                                                <td>
+                                                <td class="executive-service-unit-cell">
                                                     <a href="javascript:void(0)" onclick="window.openUnitProperties('${escapeHtml(s.unit)}')" class="unit-prop-link" title="Buka Properties Unit ${escapeHtml(s.unit)}">
                                                         <strong>${escapeHtml(s.unit)}</strong>
                                                         <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px; opacity:0.65;"></i>
                                                     </a>
                                                 </td>
-                                                <td>${s.hmAktual}</td>
-                                                <td>${s.hmService}</td>
-                                                <td style="font-weight:bold; ${s.diffColor}">${s.diff}</td>
-                                                <td>${escapeHtml(s.dateLabel || s.date)}</td>
-                                                <td><span class="p2h-badge ${s.badge}">${s.status}</span></td>
-                                                <td style="font-weight:600; color:${s.priority.includes('Tinggi') ? 'var(--danger)' : 'var(--text-main)'};">${s.priority}</td>
+                                                <td class="executive-service-number-cell">${s.hmAktual}</td>
+                                                <td class="executive-service-number-cell">${s.hmService}</td>
+                                                <td class="executive-service-number-cell executive-service-difference" style="${s.diffColor}">${s.diff}</td>
+                                                <td class="executive-service-date-cell">${escapeHtml(s.dateLabel || s.date)}</td>
+                                                <td class="executive-service-status-cell"><span class="p2h-badge ${s.badge}">${s.status}</span></td>
+                                                <td class="executive-service-priority-cell" style="color:${s.priority.includes('Tinggi') ? 'var(--danger)' : 'var(--text-main)'};">${s.priority}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -20126,7 +20135,7 @@
                     </div>
 
                     <!-- Right: Donut Chart & Compliance Metrics -->
-                    <div class="panel">
+                    <div class="panel executive-distribution-panel">
                         <div class="panel-header">
                             <span><i class="fa-solid fa-chart-pie"></i> Distribusi Status Service</span>
                         </div>
@@ -20249,24 +20258,31 @@
                     <div class="panel">
                         <div class="panel-header"><a href="#logistics" class="dashboard-panel-link" onclick="event.preventDefault(); window.showView('logistics', '', 'menu-logistics');"><i class="fa-solid fa-boxes-packing"></i> Status Pemesanan Logistik</a></div>
                         <div class="panel-body" style="padding:15px;">
-                            <table style="width:100%; font-size:0.83rem;">
-                                <thead>
-                                    <tr>
-                                        <th>Status</th>
-                                        <th style="text-align:center;">Jumlah</th>
-                                        <th style="text-align:right;">Persentase</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${logisticsStatusData.map(l => `
-                                        <tr>
-                                            <td><span class="p2h-badge ${l.badge}">${escapeHtml(l.status)}</span></td>
-                                            <td style="text-align:center; font-weight:bold;">${l.count}</td>
-                                            <td style="text-align:right; font-weight:bold; color:var(--text-muted);">${l.pct}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                            <div class="donut-chart-wrapper">
+                                <div id="apexLogisticsStatusDonutChart" style="min-height: 210px; width: 100%;"></div>
+                                <div class="donut-legend">
+                                    <div class="donut-legend-item">
+                                        <div class="donut-legend-left"><span class="donut-color-dot" style="background:#0284c7;"></span> Dipesan</div>
+                                        <strong>12 item (24%)</strong>
+                                    </div>
+                                    <div class="donut-legend-item">
+                                        <div class="donut-legend-left"><span class="donut-color-dot" style="background:#f59e0b;"></span> Diproses Vendor</div>
+                                        <strong>7 item (14%)</strong>
+                                    </div>
+                                    <div class="donut-legend-item">
+                                        <div class="donut-legend-left"><span class="donut-color-dot" style="background:#38bdf8;"></span> Dalam Pengiriman</div>
+                                        <strong>8 item (16%)</strong>
+                                    </div>
+                                    <div class="donut-legend-item">
+                                        <div class="donut-legend-left"><span class="donut-color-dot" style="background:#16a34a;"></span> Tiba</div>
+                                        <strong>15 item (30%)</strong>
+                                    </div>
+                                    <div class="donut-legend-item">
+                                        <div class="donut-legend-left"><span class="donut-color-dot" style="background:#dc2626;"></span> Tertunda</div>
+                                        <strong>6 item (12%)</strong>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -20294,17 +20310,24 @@
                                 </div>
                             </div>
 
-                            <div class="executive-tire-table-scroll" id="executiveTireTableScroll"><table style="width:100%; font-size:0.8rem;">
-                                <thead>
-                                    <tr>
-                                        <th>Unit</th>
-                                        <th>Posisi Ban</th>
-                                        <th>Kondisi</th>
-                                        <th>Tekanan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="executiveTireTableBody"></tbody>
-                            </table>
+                            <div class="executive-tire-table-scroll" id="executiveTireTableScroll">
+                                <table class="executive-data-table executive-tire-table">
+                                    <colgroup>
+                                        <col style="width:30%;">
+                                        <col style="width:22%;">
+                                        <col style="width:26%;">
+                                        <col style="width:22%;">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th class="text-left">Unit</th>
+                                            <th class="text-center">Posisi Ban</th>
+                                            <th class="text-center">Kondisi</th>
+                                            <th class="text-right">Tekanan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="executiveTireTableBody"></tbody>
+                                </table>
                             </div>
 
                             <div class="dash-alert-banner pink">
@@ -20333,24 +20356,31 @@
                                 </div>
                             </div>
 
-                            <table style="width:100%; font-size:0.8rem;">
-                                <thead>
-                                    <tr>
-                                        <th>Unit</th>
-                                        <th>Jam Terakhir</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${greaseDashboard.rows.map(g => `
+                            <div class="executive-grease-table-wrapper">
+                                <table class="executive-data-table executive-grease-table">
+                                    <colgroup>
+                                        <col style="width:36%;">
+                                        <col style="width:32%;">
+                                        <col style="width:32%;">
+                                    </colgroup>
+                                    <thead>
                                         <tr>
-                                            <td><strong>${escapeHtml(g.unit)}</strong></td>
-                                            <td>${g.lastHm}</td>
-                                            <td><span class="p2h-badge ${g.badge}">${g.status}</span></td>
+                                            <th class="text-left">Unit</th>
+                                            <th class="text-center">Jam Terakhir</th>
+                                            <th class="text-center">Status</th>
                                         </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        ${greaseDashboard.rows.map(g => `
+                                            <tr>
+                                                <td class="text-left cell-unit"><strong class="unit-code">${escapeHtml(g.unit)}</strong></td>
+                                                <td class="text-center cell-val tabular-nums">${escapeHtml(g.lastHm)}</td>
+                                                <td class="text-center cell-badge"><span class="p2h-badge ${g.badge}">${escapeHtml(g.status)}</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
 
                             <div class="dash-alert-banner">
                                 <i class="fa-solid fa-lightbulb" style="margin-top:2px;"></i>
@@ -20370,26 +20400,34 @@
                         <div class="panel-body" style="padding:15px;">
                             <div id="apexMechanicProductivityChart" style="min-height: 210px; width:100%; margin-bottom:10px;"></div>
 
-                            <table style="width:100%; font-size:0.8rem;">
-                                <thead>
-                                    <tr>
-                                        <th>Mekanik</th>
-                                        <th style="text-align:center;">Jam Aktual</th>
-                                        <th style="text-align:center;">Target</th>
-                                        <th style="text-align:right;">Produktivitas</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${mechanicProductivityData.map(m => `
+                            <div class="executive-mechanic-table-wrapper">
+                                <table class="executive-data-table executive-mechanic-table">
+                                    <colgroup>
+                                        <col style="width:32%;">
+                                        <col style="width:24%;">
+                                        <col style="width:20%;">
+                                        <col style="width:24%;">
+                                    </colgroup>
+                                    <thead>
                                         <tr>
-                                            <td><strong>${escapeHtml(m.name)}</strong></td>
-                                            <td style="text-align:center; font-weight:bold; color:#0284c7;">${m.actual} jam</td>
-                                            <td style="text-align:center; color:var(--text-muted);">${m.target} jam</td>
-                                            <td style="text-align:right;"><span class="p2h-badge ${m.color}">${m.pct}%</span></td>
+                                            <th class="text-left">Mekanik</th>
+                                            <th class="text-center">Jam Aktual</th>
+                                            <th class="text-center">Target</th>
+                                            <th class="text-right">Produktivitas</th>
                                         </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        ${mechanicProductivityData.map(m => `
+                                            <tr>
+                                                <td class="text-left cell-name"><strong class="mechanic-name">${escapeHtml(m.name)}</strong></td>
+                                                <td class="text-center cell-actual tabular-nums"><strong>${m.actual} jam</strong></td>
+                                                <td class="text-center cell-target tabular-nums">${m.target} jam</td>
+                                                <td class="text-right cell-badge"><span class="p2h-badge ${m.color}">${m.pct}%</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -20452,7 +20490,12 @@
         const tireConditionFilter = document.getElementById('executiveTireConditionFilter');
         let visibleTireRows = tireDashboard.rows;
         const loadNextTireBatch = () => {
-            if (!tireBody || tireLoading || tireRendered >= visibleTireRows.length) return;
+            if (!tireBody || tireLoading) return;
+            if (visibleTireRows.length === 0) {
+                tireBody.innerHTML = '<tr><td colspan="4" class="text-center" style="padding:24px 10px; color:var(--text-muted); font-size:0.8rem;"><i class="fa-solid fa-circle-info" style="margin-right:6px;"></i>Tidak ada data inspeksi untuk kondisi ini</td></tr>';
+                return;
+            }
+            if (tireRendered >= visibleTireRows.length) return;
             tireLoading = true;
             const loadingRow = document.createElement('tr');
             loadingRow.className = 'executive-tire-loading';
@@ -20461,7 +20504,7 @@
             setTimeout(() => {
                 const batch = visibleTireRows.slice(tireRendered, tireRendered + tireBatchSize);
                 loadingRow.remove();
-                tireBody.insertAdjacentHTML('beforeend', batch.map(t => `<tr><td><strong>${escapeHtml(t.unit)}</strong></td><td>${escapeHtml(t.pos)}</td><td><span class="p2h-badge ${t.badge}">${escapeHtml(t.cond)}</span></td><td>${escapeHtml(t.pressure)}</td></tr>`).join(''));
+                tireBody.insertAdjacentHTML('beforeend', batch.map(t => `<tr><td class="text-left cell-unit"><strong class="unit-code">${escapeHtml(t.unit)}</strong></td><td class="text-center cell-pos">${escapeHtml(t.pos)}</td><td class="text-center cell-badge"><span class="p2h-badge ${t.badge}">${escapeHtml(t.cond)}</span></td><td class="text-right cell-val tabular-nums">${escapeHtml(t.pressure)}</td></tr>`).join(''));
                 tireRendered += batch.length;
                 tireLoading = false;
                 if (tireRendered < visibleTireRows.length) {
@@ -20808,7 +20851,24 @@
                         colors: ['#0284c7', '#16a34a', '#f59e0b', '#ec4899', '#64748b'],
                         legend: { show: false },
                         dataLabels: { enabled: true, formatter: (val) => val.toFixed(1) + '%' },
-                        plotOptions: { pie: { donut: { size: '68%' } } },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '68%',
+                                    labels: {
+                                        show: true,
+                                        total: {
+                                            show: true,
+                                            label: 'TOTAL ASET',
+                                            fontSize: '10px',
+                                            fontWeight: 700,
+                                            color: '#64748b',
+                                            formatter: () => '282 Unit'
+                                        }
+                                    }
+                                }
+                            }
+                        },
                         stroke: { width: 2, colors: ['#ffffff'] },
                         tooltip: { y: { formatter: (val) => val + '%' } }
                     });
@@ -20832,7 +20892,14 @@
                                     size: '68%',
                                     labels: {
                                         show: true,
-                                        total: { show: true, label: 'TOTAL WO', formatter: () => totalWoUnits }
+                                        total: {
+                                            show: true,
+                                            label: 'TOTAL WO',
+                                            fontSize: '10px',
+                                            fontWeight: 700,
+                                            color: '#64748b',
+                                            formatter: () => totalWoUnits
+                                        }
                                     }
                                 }
                             }
@@ -20841,6 +20908,42 @@
                         tooltip: { y: { formatter: (val) => val + ' Unit' } }
                     });
                     chartRepair.render();
+                }
+
+                // 3B. Logistics Order Status Donut Chart
+                const elLogistics = document.getElementById('apexLogisticsStatusDonutChart');
+                if (elLogistics) {
+                    elLogistics.innerHTML = '';
+                    const totalPoItems = logisticsStatusData.reduce((acc, curr) => acc + curr.count, 0);
+                    const chartLogistics = new ApexCharts(elLogistics, {
+                        series: logisticsStatusData.map(l => l.count),
+                        labels: logisticsStatusData.map(l => l.status),
+                        chart: { type: 'donut', height: 200, fontFamily: 'Inter, sans-serif' },
+                        colors: ['#0284c7', '#f59e0b', '#38bdf8', '#16a34a', '#dc2626'],
+                        legend: { show: false },
+                        dataLabels: { enabled: true, formatter: (val, opts) => opts.w.globals.series[opts.seriesIndex] + ' Item' },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '68%',
+                                    labels: {
+                                        show: true,
+                                        total: {
+                                            show: true,
+                                            label: 'TOTAL PO',
+                                            fontSize: '10px',
+                                            fontWeight: 700,
+                                            color: '#64748b',
+                                            formatter: () => totalPoItems + ' Item'
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        stroke: { width: 2, colors: ['#ffffff'] },
+                        tooltip: { y: { formatter: (val) => val + ' Item' } }
+                    });
+                    chartLogistics.render();
                 }
 
                 // 4. Mechanic Productivity Column Chart

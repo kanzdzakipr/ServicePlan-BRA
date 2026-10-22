@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-emergency-wo-date-tooltip-10">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-service-table-layout-11">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -29,7 +29,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261018-admin-recap-1"></script>
+    <script src="scripts/dashboard.js?v=20261022-service-table-layout-2"></script>
     <script src="scripts/unit-properties.js?v=20261022-db-3"></script>
     <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>

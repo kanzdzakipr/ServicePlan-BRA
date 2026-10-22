@@ -57,6 +57,155 @@
     padding: 0;
 }
 
+/* Executive service schedule: content-sized table with predictable alignment and bounded height matching right distribution panel. */
+.executive-service-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.executive-service-panel .panel-body,
+.panel:has(.executive-service-table-scroll) .panel-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 16px 18px 18px 18px;
+}
+
+.executive-service-panel .service-counter-bar,
+.panel:has(.executive-service-table-scroll) .service-counter-bar {
+    flex-shrink: 0;
+    margin-bottom: 14px;
+}
+
+.executive-service-table-scroll {
+    width: 100%;
+    flex: 1 1 0;
+    height: 440px;
+    max-height: 440px !important;
+    min-height: 0;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-surface);
+}
+
+.executive-service-table-scroll .executive-service-table {
+    width: 100%;
+    min-width: 0 !important;
+    margin: 0;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.executive-service-table .executive-service-col-unit { width: 14%; }
+.executive-service-table .executive-service-col-meter { width: 14.5%; }
+.executive-service-table .executive-service-col-difference { width: 10%; }
+.executive-service-table .executive-service-col-date { width: 16%; }
+.executive-service-table .executive-service-col-status { width: 16%; }
+.executive-service-table .executive-service-col-priority { width: 15%; }
+
+.executive-service-table th,
+.executive-service-table td {
+    height: auto;
+    padding: 12px 14px;
+    vertical-align: middle;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.executive-service-table th {
+    text-align: left;
+}
+
+.executive-service-table th:nth-child(2),
+.executive-service-table th:nth-child(3),
+.executive-service-table th:nth-child(4),
+.executive-service-table .executive-service-number-cell {
+    text-align: right;
+}
+
+.executive-service-table th:nth-child(6),
+.executive-service-table .executive-service-status-cell {
+    text-align: center;
+}
+
+.executive-service-table .executive-service-number-cell {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.executive-service-table .executive-service-difference,
+.executive-service-table .executive-service-priority-cell {
+    font-weight: 700;
+}
+
+.executive-service-table .executive-service-unit-cell,
+.executive-service-table .executive-service-date-cell,
+.executive-service-table .executive-service-priority-cell {
+    text-align: left;
+}
+
+.executive-service-table .unit-prop-link {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    gap: 5px;
+    vertical-align: middle;
+}
+
+.executive-service-table .unit-prop-link strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.executive-service-table .unit-prop-link i {
+    flex: 0 0 auto;
+    width: 12px;
+    text-align: center;
+}
+
+.executive-service-table .executive-service-status-cell .p2h-badge {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+}
+
+@media (max-width: 720px) {
+    .executive-service-table-scroll .executive-service-table {
+        font-size: 0.72rem;
+    }
+
+    .executive-service-table th,
+    .executive-service-table td {
+        padding: 9px 5px;
+    }
+
+    .executive-service-table th {
+        font-size: 0.64rem;
+        letter-spacing: 0.02em;
+    }
+
+    .executive-service-table .executive-service-col-unit { width: 16%; }
+    .executive-service-table .executive-service-col-meter { width: 14%; }
+    .executive-service-table .executive-service-col-difference { width: 10%; }
+    .executive-service-table .executive-service-col-date { width: 16%; }
+    .executive-service-table .executive-service-col-status { width: 17%; }
+    .executive-service-table .executive-service-col-priority { width: 13%; }
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-body);
@@ -11876,12 +12025,38 @@ body.cm-modal-open {
     display: grid;
     grid-template-columns: 1fr 340px;
     gap: 20px;
+    align-items: stretch;
+}
+
+.dash-grid-2 > .panel {
+    margin-bottom: 0;
+    height: 100%;
 }
 
 .dash-grid-3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
+    align-items: stretch;
+}
+
+.dash-grid-3 > .panel {
+    margin-bottom: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-grid-3 > .panel > .panel-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-grid-3 .donut-chart-wrapper {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .dash-grid-4 {
@@ -11914,8 +12089,6 @@ body.cm-modal-open {
 }
 
 .executive-service-table-scroll {
-    max-height: 430px;
-    overflow: auto;
     border: 1px solid var(--border);
     border-radius: 6px;
 }
@@ -11927,18 +12100,122 @@ body.cm-modal-open {
     background: var(--bg-surface);
 }
 
+/* Executive Dashboard Row 3 Data Tables (Tire, Grease, Mechanic) */
+.executive-data-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.executive-data-table th,
+.executive-data-table td {
+    padding: 8px 10px;
+    vertical-align: middle;
+    line-height: 1.35;
+    border-bottom: 1px solid var(--border);
+}
+
+.executive-data-table thead th {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    background: var(--bg-surface);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+}
+
+.executive-data-table tbody tr:hover {
+    background-color: var(--bg-hover, rgba(0, 0, 0, 0.02));
+}
+
+.executive-data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.executive-data-table .text-left {
+    text-align: left;
+}
+
+.executive-data-table .text-center {
+    text-align: center;
+}
+
+.executive-data-table .text-right {
+    text-align: right;
+}
+
+.executive-data-table .cell-unit,
+.executive-data-table .cell-name,
+.executive-data-table .unit-code,
+.executive-data-table .mechanic-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.executive-data-table .tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+.executive-data-table .cell-actual {
+    color: #0284c7;
+    font-weight: 700;
+}
+
+.executive-data-table .cell-target {
+    color: var(--text-muted);
+}
+
+.executive-data-table .p2h-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.executive-data-table td.text-center .p2h-badge {
+    margin: 0 auto;
+}
+
+.executive-data-table td.text-right .p2h-badge {
+    margin-left: auto;
+}
+
 .executive-tire-table-scroll {
-    max-height: 430px;
-    overflow: auto;
+    max-height: 380px;
+    overflow-y: auto;
+    overflow-x: hidden;
     border: 1px solid var(--border);
     border-radius: 6px;
+    background: var(--bg-surface);
 }
 
 .executive-tire-table-scroll thead th {
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: 2;
     background: var(--bg-surface);
+    box-shadow: 0 1px 0 var(--border);
+}
+
+.executive-grease-table-wrapper,
+.executive-mechanic-table-wrapper {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-surface);
+    overflow: hidden;
 }
 
 .executive-tire-condition-filter {
@@ -20159,6 +20436,34 @@ body.sl-modal-open {
         min-height: 30px;
         padding-inline: 6px !important;
         font-size: 0.7rem !important;
+    }
+}
+
+/* Keep the service schedule scrollable and bounded to match the distribution panel */
+.table-responsive.executive-service-table-scroll {
+    flex: 1 1 0;
+    height: 440px !important;
+    max-height: 440px !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+@media (max-width: 1200px) {
+    .executive-service-table-scroll,
+    .table-responsive.executive-service-table-scroll {
+        height: 400px !important;
+        max-height: 400px !important;
+        min-height: 0 !important;
+    }
+}
+
+@media (max-width: 720px) {
+    .executive-service-table-scroll .executive-service-table th,
+    .executive-service-table-scroll .executive-service-table td {
+        padding: 9px 5px;
     }
 }
 
