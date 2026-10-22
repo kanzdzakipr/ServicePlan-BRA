@@ -74,7 +74,11 @@ function Wait-JavaScript {
         if (Invoke-JavaScript -Expression $Expression) { return }
         Start-Sleep -Milliseconds 150
     } while ([DateTime]::UtcNow -lt $deadline)
-    throw "Timeout menunggu kondisi browser: $Expression"
+    $diagnostic = Invoke-JavaScript -Expression "JSON.stringify({ url: location.href, title: document.title, readyState: document.readyState, showView: typeof window.showView, viewCount: document.querySelectorAll('.view-section').length, inlineScriptErrors: Array.from(document.scripts).filter(script => !script.src).map((script, index) => { try { new Function(script.textContent + '\n//# sourceURL=dashboard-inline-' + index + '.js'); return null; } catch (error) { return { index, message: error.message, stack: error.stack }; } }).filter(Boolean), bodyText: (document.body?.innerText || '').slice(0, 240) })"
+    $scriptSource = Invoke-JavaScript -Expression "Array.from(document.scripts).filter(script => !script.src)[1]?.textContent || ''"
+    $compileResult = Invoke-Cdp -Method 'Runtime.compileScript' -Params @{ expression = $scriptSource; sourceURL = 'dashboard-inline-main.js'; persistScript = $false }
+    $compileDiagnostic = $compileResult.exceptionDetails | ConvertTo-Json -Compress -Depth 12
+    throw "Timeout menunggu kondisi browser: $Expression | Kondisi akhir: $diagnostic | Compile: $compileDiagnostic"
 }
 
 $auditExpression = @'

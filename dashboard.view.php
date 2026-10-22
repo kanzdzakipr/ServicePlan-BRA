@@ -7579,7 +7579,25 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         locSelect.dataset.requestedLocationId = String(assetObj.current_location_id);
                         locSelect.value = String(assetObj.current_location_id);
                     } else if (assetObj.location) {
-  
+                        const matchedOpt = Array.from(locSelect.options).find(option =>
+                            option.text.toLowerCase().includes((assetObj.location || '').toLowerCase())
+                        );
+                        if (matchedOpt) locSelect.value = matchedOpt.value;
+                    }
+                }
+
+                document.getElementById('ea-hm').value = assetObj.last_hm_km !== undefined ? assetObj.last_hm_km : '0.00';
+                const fieldValues = {
+                    'ea-operator': assetObj.current_operator_name,
+                    'ea-last-service-date': assetObj.last_service_date ? String(assetObj.last_service_date).replace(' ', 'T').slice(0, 16) : '',
+                    'ea-last-service-hm': assetObj.last_service_hm_km,
+                    'ea-service-interval': assetObj.service_interval_val,
+                    'ea-service-unit': assetObj.service_interval_unit || 'HM',
+                    'ea-daily-rate': assetObj.daily_usage_coefficient,
+                    'ea-stnk': assetObj.legal_stnk_expiry,
+                    'ea-kir': assetObj.legal_kir_expiry,
+                    'ea-silo': assetObj.legal_silo_expiry
+                };
                 Object.entries(fieldValues).forEach(([key, value]) => { const field = document.getElementById(key); if (field) field.value = value ?? ''; });
                 document.getElementById('ea-operator-start').value = '';
 
