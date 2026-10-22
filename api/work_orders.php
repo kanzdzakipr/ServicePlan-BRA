@@ -236,6 +236,12 @@ switch ($method) {
             );
             $timelineStmt->execute([':wo_id' => (string) $_GET['id']]);
             $result['timeline'] = $timelineStmt->fetchAll();
+
+            try {
+                $result['support'] = WorkOrderSupport::overview($db, (string) $_GET['id']);
+            } catch (Throwable $e) {
+                $result['support'] = null;
+            }
         } else {
             $sql = $select;
             if ($scope['sql'] !== '') $sql .= ' WHERE ' . $scope['sql'];

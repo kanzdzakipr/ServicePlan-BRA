@@ -5183,7 +5183,7 @@
                     </div>
                 </td>
                 <td>${primaryWo
-                ? `<strong class="sl-wo-code">${escapeHtml(primaryWo.woId)}</strong><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(primaryWo.priority || 'Normal')}</small>`
+                ? `<button type="button" class="clickable-wo-link" onclick="openWoDetailModal('${escapeHtml(primaryWo.woId)}', '${escapeHtml(asset.id)}')"><i class="fa-solid fa-screwdriver-wrench"></i> ${escapeHtml(primaryWo.woId)}</button><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(primaryWo.priority || 'Normal')}</small>`
                 : '<span class="sl-empty-value">Tidak ada WO aktif</span>'}</td>
                 <td>
                     <div class="sl-item-counter ${hasParts ? summary.overall : 'muted'}">
