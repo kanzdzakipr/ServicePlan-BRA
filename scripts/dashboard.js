@@ -23976,41 +23976,194 @@
                         </div>
                     </div>
 
-                    <!-- Formula Guide Panel -->
+                    <!-- KPI Inspector & Calculation Panel -->
                     <div class="pk-panel">
-                        <div class="pk-panel-header">
-                            <span><i class="fa-solid fa-square-root-variable"></i> Panduan Standar Formula Perhitungan Availability & Efisiensi BRA</span>
+                        <div class="pk-panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <span><i class="fa-solid fa-chart-line"></i> Inspeksi & Kalkulasi KPI Availability & Efisiensi BRA</span>
+                            <button type="button" class="kpi-formula-trigger-btn" onclick="window.openModal('modalKpiFormulaGuide')" title="Lihat metode dan rumus standar perhitungan KPI">
+                                <i class="fa-solid fa-calculator"></i>
+                                <span>Metode Perhitungan</span>
+                            </button>
                         </div>
-                        <div class="pk-panel-body">
-                            <div class="prod-formula-grid">
-                                <div class="prod-formula-box">
-                                    <h4><span>Physical Availability (PA)</span> <span class="prod-badge prod-badge-success">Target &ge; 90%</span></h4>
-                                    <code>PA = ((W + S) / T) &times; 100%</code>
-                                    <p style="font-size:0.8rem; color:var(--text-muted);">Mengukur kesiapan fisik alat berat untuk beroperasi bebas dari kerusakan mekanis.</p>
+                        <div class="pk-panel-body" style="padding: 18px 20px;">
+                            <div class="kpi-inspector-filter-bar">
+                                <div class="kpi-filter-group">
+                                    <label for="kpi-inspector-period"><i class="fa-regular fa-calendar" style="margin-right:4px;"></i> Periode</label>
+                                    <input id="kpi-inspector-period" type="month" value="2026-01" class="kpi-filter-input">
                                 </div>
-                                <div class="prod-formula-box">
-                                    <h4><span>Use of Availability (UA)</span> <span class="prod-badge prod-badge-success">Target &ge; 80%</span></h4>
-                                    <code>UA = (W / (W + S)) &times; 100%</code>
-                                    <p style="font-size:0.8rem; color:var(--text-muted);">Mengukur efektivitas pemanfaatan unit yang sedang berstatus siap pakai (Ready).</p>
+                                <div class="kpi-filter-group">
+                                    <label for="kpi-inspector-asset"><i class="fa-solid fa-truck-front" style="margin-right:4px;"></i> Unit</label>
+                                    <select id="kpi-inspector-asset" class="kpi-filter-select">
+                                        <option value="">Seluruh unit sesuai akses</option>
+                                    </select>
                                 </div>
-                                <div class="prod-formula-box">
-                                    <h4><span>Breakdown Rate (BR)</span> <span class="prod-badge prod-badge-info">Target &le; 10%</span></h4>
-                                    <code>BR = Breakdown Hours / Scheduled Hours &times; 100%</code>
-                                    <p style="font-size:0.8rem; color:var(--text-muted);">Persentase total jam mati/kerusakan terhadap total jam kerja terjadwal.</p>
+                                <button id="kpi-inspector-load" type="button" class="btn btn-primary kpi-filter-btn">
+                                    <i class="fa-solid fa-magnifying-glass-chart" style="margin-right:5px;"></i> Periksa KPI
+                                </button>
+                            </div>
+                            <div id="kpi-inspector-result" aria-live="polite" class="kpi-inspector-result-box">
+                                <i class="fa-solid fa-circle-info" style="margin-right:6px; color:#0284c7;"></i> Pilih periode dan unit, lalu klik <strong>Periksa KPI</strong> untuk melihat detail kalkulasi. Untuk mempelajari metodologi formula perhitungan, klik <strong>Metode Perhitungan</strong> di atas.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Panduan Standar Formula Perhitungan KPI BRA -->
+                    <div class="modal-overlay" id="modalKpiFormulaGuide" style="z-index:999999;" onclick="if(event.target === this) window.closeModal('modalKpiFormulaGuide')">
+                        <div class="modal-content kpi-formula-modal-content" onclick="event.stopPropagation()">
+                            <div class="kpi-formula-modal-header">
+                                <div class="kpi-formula-header-left">
+                                    <div class="kpi-formula-icon-box">
+                                        <i class="fa-solid fa-square-root-variable"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="kpi-formula-modal-title">Panduan Standar Formula Perhitungan KPI</h3>
+                                        <p class="kpi-formula-modal-subtitle">Standar Metodologi Availability, Reliability & Efisiensi Armada PT Berau Rantau Abadi</p>
+                                    </div>
                                 </div>
-                                <div class="prod-formula-box">
-                                    <h4><span>Mean Time Between Failures (MTBF)</span> <span class="prod-badge prod-badge-success">Target &ge; 100h</span></h4>
-                                    <code>MTBF = W / frekuensi kerusakan</code>
-                                    <p style="font-size:0.8rem; color:var(--text-muted);">Rata-rata selang waktu jam kerja di antara dua insiden kerusakan.</p>
+                                <button type="button" class="kpi-formula-close-btn" onclick="window.closeModal('modalKpiFormulaGuide')" aria-label="Tutup panduan formula">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <div class="kpi-formula-modal-body">
+                                <!-- Section: 4 KPI Utama -->
+                                <div class="kpi-modal-section-title">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                    <span>Indikator Kinerja Utama (Primary Fleet KPIs)</span>
+                                </div>
+
+                                <div class="kpi-formula-cards-grid">
+                                    <!-- 1. Physical Availability -->
+                                    <div class="kpi-formula-card">
+                                        <div class="kpi-formula-card-header">
+                                            <div class="kpi-formula-metric-name">
+                                                <strong>Physical Availability (PA)</strong>
+                                                <span class="kpi-formula-tag">Kesiapan Fisik Unit</span>
+                                            </div>
+                                            <span class="prod-badge prod-badge-success">Target &ge; 90%</span>
+                                        </div>
+                                        <div class="kpi-formula-code-box">
+                                            <span class="formula-eq">PA = </span>
+                                            <span class="formula-expr"><span class="formula-bracket">(</span>(W + S) / T<span class="formula-bracket">)</span> &times; 100%</span>
+                                        </div>
+                                        <p class="kpi-formula-desc">Mengukur kesiapan fisik alat berat untuk dapat beroperasi bebas dari kerusakan mekanis (kondisi siap pakai operasional / standby).</p>
+                                    </div>
+
+                                    <!-- 2. Use of Availability -->
+                                    <div class="kpi-formula-card">
+                                        <div class="kpi-formula-card-header">
+                                            <div class="kpi-formula-metric-name">
+                                                <strong>Use of Availability (UA)</strong>
+                                                <span class="kpi-formula-tag">Utilisasi Siap Pakai</span>
+                                            </div>
+                                            <span class="prod-badge prod-badge-success">Target &ge; 80%</span>
+                                        </div>
+                                        <div class="kpi-formula-code-box">
+                                            <span class="formula-eq">UA = </span>
+                                            <span class="formula-expr"><span class="formula-bracket">(</span>W / (W + S)<span class="formula-bracket">)</span> &times; 100%</span>
+                                        </div>
+                                        <p class="kpi-formula-desc">Mengukur efektivitas dan efisiensi pemanfaatan jam kerja operasi nyata terhadap unit yang sedang berstatus siap pakai (Ready).</p>
+                                    </div>
+
+                                    <!-- 3. Breakdown Rate -->
+                                    <div class="kpi-formula-card">
+                                        <div class="kpi-formula-card-header">
+                                            <div class="kpi-formula-metric-name">
+                                                <strong>Breakdown Rate (BR)</strong>
+                                                <span class="kpi-formula-tag">Tingkat Kerusakan</span>
+                                            </div>
+                                            <span class="prod-badge prod-badge-info">Target &le; 10%</span>
+                                        </div>
+                                        <div class="kpi-formula-code-box">
+                                            <span class="formula-eq">BR = </span>
+                                            <span class="formula-expr"><span class="formula-bracket">(</span>Breakdown Hours / Scheduled Hours<span class="formula-bracket">)</span> &times; 100%</span>
+                                        </div>
+                                        <p class="kpi-formula-desc">Persentase total jam mati/kerusakan (downtime perbaikan mekanis) terhadap total jam kerja kalender yang dijadwalkan.</p>
+                                    </div>
+
+                                    <!-- 4. MTBF -->
+                                    <div class="kpi-formula-card">
+                                        <div class="kpi-formula-card-header">
+                                            <div class="kpi-formula-metric-name">
+                                                <strong>Mean Time Between Failures (MTBF)</strong>
+                                                <span class="kpi-formula-tag">Keandalan Perawatan</span>
+                                            </div>
+                                            <span class="prod-badge prod-badge-success">Target &ge; 100 Jam</span>
+                                        </div>
+                                        <div class="kpi-formula-code-box">
+                                            <span class="formula-eq">MTBF = </span>
+                                            <span class="formula-expr">W / Frekuensi Kerusakan</span>
+                                        </div>
+                                        <p class="kpi-formula-desc">Rata-rata selang waktu jam kerja di antara dua insiden breakdown untuk mengukur keandalan perawatan armada.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Section: Metrik Pendukung Tambahan (MA, EU, MTTR) -->
+                                <div class="kpi-modal-section-title" style="margin-top:20px;">
+                                    <i class="fa-solid fa-chart-pie"></i>
+                                    <span>Formula Tambahan & Metrik Keandalan Lanjutan</span>
+                                </div>
+
+                                <div class="kpi-formula-secondary-grid">
+                                    <div class="kpi-formula-secondary-card">
+                                        <div class="sec-card-header">
+                                            <strong>Mechanical Availability (MA)</strong>
+                                            <span class="prod-badge prod-badge-info">Target &ge; 85%</span>
+                                        </div>
+                                        <div class="sec-card-formula">MA = (W / (W + R)) &times; 100%</div>
+                                        <div class="sec-card-desc">Mengukur keandalan mekanis murni tanpa memperhitungkan variabel waktu standby operasional lapangan.</div>
+                                    </div>
+
+                                    <div class="kpi-formula-secondary-card">
+                                        <div class="sec-card-header">
+                                            <strong>Effective Utilization (EU)</strong>
+                                            <span class="prod-badge prod-badge-warning">Target &ge; 70%</span>
+                                        </div>
+                                        <div class="sec-card-formula">EU = (W / T) &times; 100%</div>
+                                        <div class="sec-card-desc">Persentase pemanfaatan jam kerja operasi unit sesungguhnya terhadap total kapasitas waktu kalender terjadwal.</div>
+                                    </div>
+
+                                    <div class="kpi-formula-secondary-card">
+                                        <div class="sec-card-header">
+                                            <strong>Mean Time To Repair (MTTR)</strong>
+                                            <span class="prod-badge prod-badge-danger">Target &le; 4.0 Jam</span>
+                                        </div>
+                                        <div class="sec-card-formula">MTTR = R / Frekuensi Perbaikan</div>
+                                        <div class="sec-card-desc">Rata-rata kecepatan dan efisiensi waktu mekanik dalam menyelesaikan perbaikan per insiden Work Order.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Section: Glosarium Notasi Variabel -->
+                                <div class="kpi-formula-legend-box">
+                                    <div class="kpi-legend-title">
+                                        <i class="fa-solid fa-book-bookmark"></i>
+                                        <strong>Glosarium Variabel & Sumber Data</strong>
+                                    </div>
+                                    <div class="kpi-legend-items">
+                                        <div class="kpi-legend-pill">
+                                            <span class="kpi-legend-var">W</span>
+                                            <span class="kpi-legend-label"><strong>Working Hours:</strong> Total jam operasi alat sesungguhnya (Telematics SMR).</span>
+                                        </div>
+                                        <div class="kpi-legend-pill">
+                                            <span class="kpi-legend-var">S</span>
+                                            <span class="kpi-legend-label"><strong>Standby Hours:</strong> Jam siap operasi namun tidak bekerja (idle / tidak ada operator).</span>
+                                        </div>
+                                        <div class="kpi-legend-pill">
+                                            <span class="kpi-legend-var">R</span>
+                                            <span class="kpi-legend-label"><strong>Repair Hours:</strong> Total jam downtime unit dalam perbaikan breakdown Work Order.</span>
+                                        </div>
+                                        <div class="kpi-legend-pill">
+                                            <span class="kpi-legend-var">T</span>
+                                            <span class="kpi-legend-label"><strong>Scheduled / Total Hours:</strong> Total alokasi jam terjadwal kalender (W + S + R).</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <p>W = jam operasi, S = jam standby, R = jam perbaikan WO, T = jam terjadwal. MA = W / (W + R) &times; 100%; EU = W / T &times; 100%; MTTR = R / frekuensi perbaikan selesai.</p>
-                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px">
-                                <label for="kpi-inspector-period">Periode</label><input id="kpi-inspector-period" type="month" value="2026-01">
-                                <label for="kpi-inspector-asset">Unit</label><select id="kpi-inspector-asset"><option value="">Seluruh unit sesuai akses</option></select>
-                                <button id="kpi-inspector-load" type="button" class="btn btn-primary">Periksa KPI</button>
+
+                            <div class="kpi-formula-modal-footer">
+                                <span class="kpi-formula-footer-note"><i class="fa-solid fa-circle-check" style="color:#16a34a; margin-right:5px;"></i> Seluruh formula terstandarisasi sesuai standar KPI PT Berau Rantau Abadi</span>
+                                <button type="button" class="btn btn-secondary" onclick="window.closeModal('modalKpiFormulaGuide')">Tutup Panduan</button>
                             </div>
-                            <div id="kpi-inspector-result" aria-live="polite" style="margin-top:12px">Pilih periode/unit lalu klik Periksa KPI.</div>
                         </div>
                     </div>
                 </div>
@@ -24286,6 +24439,15 @@
         if (targetId === "tab-lho-operation") loadLhoOperations();
         if (targetId === "tab-contracts") loadContracts();
       });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (
+        e.key === "Escape" &&
+        document.getElementById("modalKpiFormulaGuide")?.classList.contains("active")
+      ) {
+        window.closeModal("modalKpiFormulaGuide");
+      }
     });
   }
 
