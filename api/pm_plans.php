@@ -12,6 +12,9 @@ switch ($method) {
         $sql = "
             SELECT p.*, a.asset_code, a.category AS asset_category, a.make_model,
                    a.year_manufacture, a.serial_number, a.license_plate, a.hull_number, a.alias_name, l.location_name,
+                   a.current_operator_name, a.last_service_date AS asset_last_service_date, a.last_service_hm_km AS asset_last_service_hm_km,
+                   a.service_interval_val, a.service_interval_unit, a.daily_usage_coefficient,
+                   a.next_service_due_hm_km, a.next_service_estimated_date, a.service_manual_pdf_url,
                    (SELECT rpi.report_id
                     FROM report_pm_integrations rpi
                     WHERE rpi.pm_plan_id = p.pm_plan_id AND rpi.reversed_at IS NULL

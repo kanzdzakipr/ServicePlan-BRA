@@ -4012,6 +4012,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <div class="wo-field wo-field-span-2"><label for="nwo-issue">Uraian jenis trouble <span>*</span></label><textarea id="nwo-issue" rows="3" class="form-control" placeholder="Gejala, indikator panel, bunyi abnormal, atau komponen terdampak" required></textarea></div>
                         <div class="wo-field"><label for="nwo-root-cause">Dugaan penyebab</label><textarea id="nwo-root-cause" rows="3" class="form-control" placeholder="Isi jika penyebab awal sudah diketahui"></textarea></div>
                         <div class="wo-field"><label for="nwo-repair-action">Pekerjaan / tindakan mekanik</label><textarea id="nwo-repair-action" rows="3" class="form-control" placeholder="Pemeriksaan, penyetelan, perbaikan, atau penggantian komponen"></textarea></div>
+                        <div class="wo-field wo-field-span-2">
+                            <label for="nwo-parts-needed">Estimasi Suku Cadang / Material yang Bakal Digunakan</label>
+                            <textarea id="nwo-parts-needed" rows="2" class="form-control" placeholder="Tuliskan nama atau jenis part/oli/seal yang dibutuhkan mekanik (contoh: 1 set Seal Kit Cylinder Boom, 2 botol Minyak Rem DOT 4, Filter Oli 500H)"></textarea>
+                            <small style="color:var(--text-muted); font-size:0.75rem; margin-top:3px; display:block;">
+                                <i class="fa-solid fa-boxes-stacked" style="color:var(--primary);"></i> Uraian ini otomatis tersimpan sebagai catatan kebutuhan spare part WO dan siap diteruskan untuk pembuatan SPB ke logistik.
+                            </small>
+                        </div>
                     </div>
                     <div class="wo-mitigation-card" id="nwo-mitigation-card">
                         <div class="wo-mitigation-head">
