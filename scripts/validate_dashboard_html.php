@@ -14,8 +14,8 @@ if (preg_match_all('/<script [^>]*src=["\']([^"\']+)["\']/', $content, $m)) {
 }
 
 // Check for conflict markers in html
-if (strpos($content, '<<<<<<<') !== false || strpos($content, '=======') !== false || strpos($content, '>>>>>>>') !== false) {
-    echo "WARNING: Git conflict markers found in dashboard.html!\n";
+if (preg_match('/^(<{7}|={7}|>{7})(?: |$)/m', $content)) {
+    echo "WARNING: Git conflict markers found in dashboard.view.php!\n";
 } else {
-    echo "No Git conflict markers in dashboard.html.\n";
+    echo "No Git conflict markers in dashboard.view.php.\n";
 }

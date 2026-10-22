@@ -1,6 +1,21 @@
 -- Migration: Add warranty and chassis_number to assets
-ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `warranty` VARCHAR(100) DEFAULT NULL AFTER `make_model`;
-ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `chassis_number` VARCHAR(100) DEFAULT NULL AFTER `warranty`;
+DROP PROCEDURE IF EXISTS add_asset_warranty_chassis_column;
+DELIMITER $$
+CREATE PROCEDURE add_asset_warranty_chassis_column(IN col_name VARCHAR(64), IN column_ddl VARCHAR(500))
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'assets' AND column_name = col_name) THEN
+    SET @statement = CONCAT('ALTER TABLE assets ADD COLUMN ', column_ddl);
+    PREPARE stmt FROM @statement;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+  END IF;
+END$$
+DELIMITER ;
+
+CALL add_asset_warranty_chassis_column('warranty', 'warranty VARCHAR(100) DEFAULT NULL AFTER make_model');
+CALL add_asset_warranty_chassis_column('chassis_number', 'chassis_number VARCHAR(100) DEFAULT NULL AFTER warranty');
+DROP PROCEDURE IF EXISTS add_asset_warranty_chassis_column;
+
 
 UPDATE `assets` SET `warranty` = 'Warranty (Tidak Ada HM)', `chassis_number` = NULL WHERE `asset_id` = 'CS-41001';
 UPDATE `assets` SET `warranty` = 'Warranty (Tidak Ada HM)', `chassis_number` = 'MJEFM8JN2RJX25335' WHERE `asset_id` = 'DT-00001';
