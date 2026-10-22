@@ -43,6 +43,43 @@ if (!$asset) {
     ]);
 }
 
+$suppressedFields = [];
+$generatedModels = [
+    '22/01/2026',
+    'Bulldozer Caterpillar D6G / Shantui SD16',
+    'DOUBLE CABIN',
+    'DUMP TRUCK',
+    'Dump Truck Hino FM260JD / Mercedes Axor',
+    'Excavator Komatsu PC200-10M0 / CAT 320',
+    'FUEL TANK',
+    'MOBILE LABORATORY',
+    'Motor Grader XCMG GR135 MAX',
+    'PRIME MOVER',
+    'Reclaimer / Cement Spreader XCMG XLZ2303',
+    'Service Truck Crane',
+    'Toyota Hilux Double Cabin 4x4',
+    'Trado Heavy Hauler Mitsubishi FV 419 P / Hino',
+    'TRUCK MOUNTED CRANE',
+    'Truck Mounted Crane XCMG B 9435 XFY',
+    'Vibro Compactor Bomag BW211D-40SL / Sakai',
+    'WATER TANK',
+    'WATER TANK TRUCK',
+    'Water Truck Hino Dutro 130 HD / Isuzu',
+];
+if (in_array(trim((string) ($asset['make_model'] ?? '')), $generatedModels, true)) {
+    $asset['make_model'] = null;
+    $suppressedFields[] = 'make_model';
+}
+
+$seededGpsTimestamp = '2026-08-05 06:40:37';
+if (($asset['created_at'] ?? null) === $seededGpsTimestamp
+    && ($asset['gps_updated_at'] ?? null) === $seededGpsTimestamp) {
+    $asset['last_latitude'] = null;
+    $asset['last_longitude'] = null;
+    $asset['gps_updated_at'] = null;
+    $suppressedFields[] = 'coordinates';
+}
+
 $fetchAll = static function (PDO $db, string $sql, array $params): array {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
@@ -99,6 +136,11 @@ $allTires = $fetchAll($db,
             status_level, notes
      FROM tire_inspections
      WHERE asset_id = :asset_id
+       AND NOT (
+           COALESCE(tire_serial_no, '') REGEXP '^(BS|MI|GY|GT|MA)-1200R24-[0-9]+$'
+           AND inspected_by IS NULL
+           AND (notes IS NULL OR TRIM(notes) = '')
+       )
      ORDER BY inspected_at DESC, tire_inspection_id DESC",
     $params
 );
@@ -229,8 +271,11 @@ api_json_response(200, [
             'mtbf_hours' => $mtbfHours,
         ],
         'availability' => [
-            'oil_analysis' => 'Belum ada tabel atau sumber data PAP yang terhubung.',
-            'canbus' => 'Belum ada sumber RPM, suhu coolant, tekanan oli, dan tegangan alternator.',
+            'oil_analysis' => 'Data belum tersedia',
+            'canbus' => 'Data belum tersedia',
+        ],
+        'data_quality' => [
+            'suppressed_generated_fields' => $suppressedFields,
         ],
     ],
 ]);

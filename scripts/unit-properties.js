@@ -10,6 +10,16 @@
     let currentPropPayload = null;
     let previousViewName = 'dashboard';
     let propMapInstance = null;
+    const NO_DATA = 'Data belum tersedia';
+
+    function displayData(value) {
+        if (value === null || value === undefined || String(value).trim() === '') return NO_DATA;
+        const normalized = String(value).trim().toLowerCase();
+        if (['belum tersedia', 'belum ada pic', 'belum tercatat', 'unknown', '-'].includes(normalized)) {
+            return NO_DATA;
+        }
+        return String(value);
+    }
 
     /**
      * Escape HTML string helper
@@ -110,7 +120,7 @@
      * Format date string to user-friendly Indonesian format (DD MMM YYYY)
      */
     function formatDisplayDate(dateStr) {
-        if (!dateStr || dateStr === 'Belum tersedia') return 'Belum tersedia';
+        if (!dateStr || String(dateStr).toLowerCase() === 'belum tersedia') return NO_DATA;
         try {
             const d = new Date(dateStr.replace(' ', 'T'));
             if (isNaN(d.getTime())) return dateStr;
@@ -125,7 +135,7 @@
     }
 
     function formatDisplayDateTime(dateStr) {
-        if (!dateStr) return 'Belum tersedia';
+        if (!dateStr) return NO_DATA;
         const parsed = new Date(String(dateStr).replace(' ', 'T'));
         if (Number.isNaN(parsed.getTime())) return String(dateStr);
         return parsed.toLocaleString('id-ID', {
@@ -143,9 +153,9 @@
             const asset = payload.data || {};
             currentAssetOnboardingCache = asset;
             renderAssetOnboarding(asset);
-            const hull = asset.hull_number || asset.alias_name || '';
+            const hull = asset.hull_number || '';
             const hullEl = document.getElementById('propUnitHull');
-            if (hullEl) hullEl.textContent = hull || 'Belum tersedia';
+            if (hullEl) hullEl.textContent = displayData(hull);
         } catch (error) {
             console.warn('Gagal memuat data onboarding unit:', error);
         }
@@ -153,7 +163,7 @@
 
     function renderAssetOnboarding(asset) {
         if (!asset) return;
-        const show = value => value == null || value === '' ? 'Belum tersedia' : escapeHtml(value);
+        const show = value => escapeHtml(displayData(value));
         const operatorRows = Array.isArray(asset.operator_history) ? asset.operator_history : [];
         const serviceRows = Array.isArray(asset.service_history) ? asset.service_history : [];
         const photoRows = Array.isArray(asset.gallery_photos) ? asset.gallery_photos : [];
@@ -174,7 +184,7 @@
             } else {
                 docsHtml += `
                     <span class="prop-doc-link disabled" title="Dokumen STNK belum diunggah">
-                        <i class="fa-solid fa-file-shield"></i> STNK: <span class="prop-doc-muted-text">Belum tersedia</span>
+                        <i class="fa-solid fa-file-shield"></i> STNK: <span class="prop-doc-muted-text">${NO_DATA}</span>
                     </span>
                 `;
             }
@@ -190,7 +200,7 @@
             } else {
                 docsHtml += `
                     <span class="prop-doc-link disabled" title="Dokumen KIR belum diunggah">
-                        <i class="fa-solid fa-certificate"></i> KIR: <span class="prop-doc-muted-text">Belum tersedia</span>
+                        <i class="fa-solid fa-certificate"></i> KIR: <span class="prop-doc-muted-text">${NO_DATA}</span>
                     </span>
                 `;
             }
@@ -206,7 +216,7 @@
             } else {
                 docsHtml += `
                     <span class="prop-doc-link disabled" title="Dokumen SILO belum diunggah">
-                        <i class="fa-solid fa-file-contract"></i> SILO: <span class="prop-doc-muted-text">Belum tersedia</span>
+                        <i class="fa-solid fa-file-contract"></i> SILO: <span class="prop-doc-muted-text">${NO_DATA}</span>
                     </span>
                 `;
             }
@@ -223,7 +233,7 @@
             } else {
                 docsHtml += `
                     <span class="prop-doc-link disabled" title="Dokumen PDF JO belum diunggah">
-                        <i class="fa-solid fa-file-pdf"></i> PDF JO: <span class="prop-doc-muted-text">Belum tersedia</span>
+                        <i class="fa-solid fa-file-pdf"></i> PDF JO: <span class="prop-doc-muted-text">${NO_DATA}</span>
                     </span>
                 `;
             }
@@ -234,20 +244,20 @@
         // 2. Vitals Cards Onboarding (Operator, Servis Terakhir, Interval, Target, Estimasi)
         const opVal = document.getElementById('propVitalOperator');
         const opSub = document.getElementById('propVitalOperatorSub');
-        if (opVal) opVal.textContent = asset.current_operator_name || 'Belum tersedia';
+        if (opVal) opVal.textContent = displayData(asset.current_operator_name);
         if (opSub) {
             opSub.textContent = asset.operator_shift
                 ? `Shift ${asset.operator_shift}`
-                : (asset.current_operator_name ? 'Penugasan Aktif' : 'Belum Ditugaskan');
+                : (asset.current_operator_name ? 'Penugasan Aktif' : NO_DATA);
         }
 
         const srvVal = document.getElementById('propVitalLastService');
         const srvSub = document.getElementById('propVitalLastServiceSub');
-        if (srvVal) srvVal.textContent = asset.last_service_date ? formatDisplayDate(asset.last_service_date) : 'Belum tersedia';
+        if (srvVal) srvVal.textContent = asset.last_service_date ? formatDisplayDate(asset.last_service_date) : NO_DATA;
         if (srvSub) {
             srvSub.textContent = asset.last_service_hm_km != null
                 ? `${Number(asset.last_service_hm_km).toLocaleString('id-ID')} ${asset.service_interval_unit || 'HM'}`
-                : 'Belum tercatat';
+                : NO_DATA;
         }
 
         const intVal = document.getElementById('propVitalInterval');
@@ -255,7 +265,7 @@
         if (intVal) {
             intVal.textContent = asset.service_interval_val != null
                 ? `${Number(asset.service_interval_val).toLocaleString('id-ID')} ${asset.service_interval_unit || 'HM'}`
-                : 'Belum tersedia';
+                : NO_DATA;
         }
         if (intSub) intSub.textContent = 'Siklus Rutin PM';
 
@@ -264,17 +274,17 @@
         if (tgtVal) {
             tgtVal.textContent = asset.next_service_due_hm_km != null
                 ? `${Number(asset.next_service_due_hm_km).toLocaleString('id-ID')} ${asset.service_interval_unit || 'HM'}`
-                : 'Belum tersedia';
+                : NO_DATA;
         }
         if (tgtSub) tgtSub.textContent = 'Ambang Batas Jadwal PM';
 
         const estVal = document.getElementById('propVitalEstimate');
         const estSub = document.getElementById('propVitalEstimateSub');
-        if (estVal) estVal.textContent = asset.next_service_estimated_date ? formatDisplayDate(asset.next_service_estimated_date) : 'Belum tersedia';
+        if (estVal) estVal.textContent = asset.next_service_estimated_date ? formatDisplayDate(asset.next_service_estimated_date) : NO_DATA;
         if (estSub) {
             estSub.textContent = asset.daily_usage_coefficient != null
                 ? `Laju: ${asset.daily_usage_coefficient} ${asset.service_interval_unit || 'HM'}/hari`
-                : 'Kalkulasi Beban Operasi';
+                : NO_DATA;
         }
 
         // 3. Card Galeri Foto Unit (3x3 Layout di Sisi Kanan)
@@ -287,8 +297,8 @@
                 galleryContainer.innerHTML = `
                     <div class="prop-gallery-empty-state">
                         <div class="prop-gallery-empty-icon"><i class="fa-regular fa-image"></i></div>
-                        <div class="prop-gallery-empty-title">Tidak ada foto dokumentasi</div>
-                        <div class="prop-gallery-empty-desc">Belum ada foto unit yang diunggah untuk unit ini.</div>
+                        <div class="prop-gallery-empty-title">${NO_DATA}</div>
+                        <div class="prop-gallery-empty-desc">${NO_DATA}</div>
                     </div>
                 `;
             } else {
@@ -364,7 +374,7 @@
      * Trigger Rename Hull modal from Unit Properties
      */
     window.openPropRenameModal = function () {
-        const currentHull = currentAssetOnboardingCache?.hull_number || currentAssetOnboardingCache?.alias_name || '';
+        const currentHull = currentAssetOnboardingCache?.hull_number || '';
         if (typeof window.openRenameHullModal === 'function') {
             window.openRenameHullModal(currentPropUnitId, currentHull);
         }
@@ -490,7 +500,7 @@
         const actionBtnEl = document.getElementById('mpdActionBtn');
 
         if (titleEl) titleEl.textContent = `Dokumen: ${docType}`;
-        if (assetCodeEl) assetCodeEl.textContent = `${currentPropUnitId} (${currentAssetOnboardingCache?.hull_number || currentAssetOnboardingCache?.alias_name || 'Tanpa Lambung'})`;
+        if (assetCodeEl) assetCodeEl.textContent = `${currentPropUnitId} (${currentAssetOnboardingCache?.hull_number || NO_DATA})`;
         if (descEl) descEl.textContent = docName || `Dokumen legalitas ${docType}`;
 
         if (expiryBadgeEl) {
@@ -611,7 +621,11 @@
         if (tire) tire.innerHTML = '<div style="padding:22px; text-align:center; color:#64748b;">Memuat pemeriksaan ban...</div>';
         ['propGaugeRpm', 'propGaugeCoolant', 'propGaugeOilPress', 'propGaugeVolt'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.textContent = '—';
+            if (!el) return;
+            el.textContent = NO_DATA;
+            el.classList.add('prop-gauge-no-data');
+            const unit = el.nextElementSibling;
+            if (unit?.classList.contains('prop-gauge-unit')) unit.hidden = true;
         });
     }
 
@@ -642,15 +656,15 @@
         unitIdEls.forEach(el => el.textContent = asset.id || assetId);
 
         const modelEl = document.getElementById('propUnitModel');
-        if (modelEl) modelEl.textContent = asset.make_model || 'Belum tersedia';
+        if (modelEl) modelEl.textContent = displayData(asset.make_model);
 
         const plateEl = document.getElementById('propUnitPlate');
-        if (plateEl) plateEl.textContent = asset.license_plate || 'Belum tersedia';
+        if (plateEl) plateEl.textContent = displayData(asset.license_plate);
 
         const serialEl = document.getElementById('propUnitSerial');
-        if (serialEl) serialEl.textContent = asset.serial_number || 'Belum tersedia';
+        if (serialEl) serialEl.textContent = displayData(asset.serial_number);
         const hullEl = document.getElementById('propUnitHull');
-        if (hullEl) hullEl.textContent = asset.hull_number || asset.alias_name || 'Belum tersedia';
+        if (hullEl) hullEl.textContent = displayData(asset.hull_number);
 
         const iconBox = document.getElementById('propCategoryIcon');
         if (iconBox) {
@@ -665,7 +679,7 @@
         // Status Pill with Pulse
         const statusPill = document.getElementById('propUnitStatusPill');
         if (statusPill) {
-            const st = asset.status ? String(asset.status).toUpperCase() : 'BELUM TERSEDIA';
+            const st = asset.status ? String(asset.status).toUpperCase() : NO_DATA;
             let statusCls = 'operating';
             if (st === 'READY') statusCls = 'ready';
             else if (st === 'STANDBY') statusCls = 'standby';
@@ -679,20 +693,20 @@
         // Vitals
         const rawMeter = Number(asset.last_hm_km);
         const hasMeter = Number.isFinite(rawMeter) && rawMeter > 0;
-        const hmVal = hasMeter ? rawMeter.toLocaleString('id-ID') : 'Belum tersedia';
+        const hmVal = hasMeter ? rawMeter.toLocaleString('id-ID') : NO_DATA;
         const elVitalHm = document.getElementById('propVitalHm');
         if (elVitalHm) elVitalHm.textContent = hasMeter ? `${hmVal} HM/KM` : hmVal;
 
         const elVitalLoc = document.getElementById('propVitalLoc');
-        if (elVitalLoc) elVitalLoc.textContent = asset.location || asset.location_name || 'Belum tersedia';
+        if (elVitalLoc) elVitalLoc.textContent = displayData(asset.location || asset.location_name);
 
         const elVitalHealth = document.getElementById('propVitalHealth');
-        if (elVitalHealth) elVitalHealth.textContent = asset.health_score != null ? `${asset.health_score}%` : 'Belum tersedia';
+        if (elVitalHealth) elVitalHealth.textContent = asset.health_score != null ? `${asset.health_score}%` : NO_DATA;
 
         const elVitalNextService = document.getElementById('propVitalNextService');
         if (elVitalNextService) elVitalNextService.textContent = asset.next_service_due_hm_km != null
-            ? `${Number(asset.next_service_due_hm_km).toLocaleString('id-ID')} ${asset.service_interval_unit || 'HM'} · Est. ${asset.next_service_estimated_date || 'belum tersedia'}`
-            : 'Belum tersedia';
+            ? `${Number(asset.next_service_due_hm_km).toLocaleString('id-ID')} ${asset.service_interval_unit || 'HM'} · Est. ${asset.next_service_estimated_date || NO_DATA}`
+            : NO_DATA;
 
         // SECTION 1: Top Live Map & Telemetry CANbus
         renderTopLocationAndTelemetry(asset, payload);
@@ -735,16 +749,21 @@
         };
         Object.entries(gaugeValues).forEach(([id, value]) => {
             const el = document.getElementById(id);
-            if (el) el.textContent = value == null || value === '' ? '—' : value;
+            if (!el) return;
+            const missing = value == null || value === '';
+            el.textContent = missing ? NO_DATA : value;
+            el.classList.toggle('prop-gauge-no-data', missing);
+            const unit = el.nextElementSibling;
+            if (unit?.classList.contains('prop-gauge-unit')) unit.hidden = missing;
         });
 
         const tbGps = document.getElementById('propGpsLogsTableBody');
         if (tbGps) {
             tbGps.innerHTML = gpsLogs.length
                 ? gpsLogs.map(log => {
-                    const ignition = String(log.ignition_status || 'Belum tersedia');
+                    const ignition = displayData(log.ignition_status);
                     const badgeClass = ignition === 'ON' ? 'pass' : (ignition === 'IDLING' ? 'warning' : 'fail');
-                    const speed = log.speed_kmh == null ? 'Belum tersedia' : `${Number(log.speed_kmh).toLocaleString('id-ID')} km/h`;
+                    const speed = log.speed_kmh == null ? NO_DATA : `${Number(log.speed_kmh).toLocaleString('id-ID')} km/h`;
                     return `<tr>
                         <td><strong>${escapeHtml(formatDisplayDateTime(log.recorded_at))}</strong></td>
                         <td>${escapeHtml(log.latitude)}, ${escapeHtml(log.longitude)}</td>
@@ -752,7 +771,7 @@
                         <td><span class="p2h-badge ${badgeClass}">${escapeHtml(ignition)}</span></td>
                     </tr>`;
                 }).join('')
-                : emptyTableRow(4, 'Belum ada riwayat GPS untuk unit ini.');
+                : emptyTableRow(4, NO_DATA);
         }
     }
 
@@ -760,9 +779,9 @@
      * Render SECTION 2: Technical Specifications Listing (Non-Card Format)
      */
     function renderTechnicalSpecsListing(asset, calculated) {
-        const value = raw => raw == null || String(raw).trim() === '' ? 'Belum tersedia' : String(raw);
+        const value = raw => displayData(raw);
         const metric = raw => raw == null
-            ? 'Belum dapat dihitung'
+            ? NO_DATA
             : `${Number(raw).toLocaleString('id-ID', { maximumFractionDigits: 2 })} Jam`;
         const row = (leftIcon, leftLabel, leftValue, rightIcon, rightLabel, rightValue) => `
             <div class="prop-spec-row">
@@ -800,7 +819,7 @@
         }
 
         if (lat == null || lng == null) {
-            mapContainer.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#64748b; text-align:center; padding:24px;">Koordinat unit belum tersedia.</div>';
+            mapContainer.innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#64748b; text-align:center; padding:24px;">${NO_DATA}</div>`;
             return;
         }
 
@@ -836,7 +855,7 @@
             });
 
             L.marker([lat, lng], { icon: customIcon })
-                .bindPopup(`<strong>${escapeHtml(asset.asset_id || asset.id)}</strong><br>${escapeHtml(asset.make_model || 'Model belum tersedia')}<br>Lokasi: ${escapeHtml(asset.location_name || asset.raw_location_notes || 'Belum tersedia')}`)
+                .bindPopup(`<strong>${escapeHtml(asset.asset_id || asset.id)}</strong><br>${escapeHtml(displayData(asset.make_model))}<br>Lokasi: ${escapeHtml(displayData(asset.location_name || asset.raw_location_notes))}`)
                 .addTo(propMapInstance)
                 .openPopup();
 
@@ -855,12 +874,12 @@
         const pmPlans = Array.isArray(payload.pm_plans) ? payload.pm_plans : [];
         const workOrders = Array.isArray(payload.work_orders) ? payload.work_orders : [];
         const partUsage = Array.isArray(payload.part_usage) ? payload.part_usage : [];
-        const formatMeter = value => value == null ? 'Belum tersedia' : Number(value).toLocaleString('id-ID');
+        const formatMeter = value => value == null ? NO_DATA : Number(value).toLocaleString('id-ID');
         const formatMoney = value => value == null
-            ? 'Belum tersedia'
+            ? NO_DATA
             : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value));
         const statusBadge = status => {
-            const normalized = String(status || 'Belum tersedia');
+            const normalized = displayData(status);
             const upper = normalized.toUpperCase();
             const cls = ['CLOSED', 'COMPLETED'].includes(upper) ? 'pass'
                 : (['DUE_SOON', 'IN PROGRESS', 'WAITING PART', 'TESTING'].includes(upper) ? 'warning'
@@ -877,18 +896,18 @@
                     const delta = hasTarget && hasCurrent
                         ? Number(plan.target_due_hm) - Number(plan.current_smr)
                         : null;
-                    const deltaLabel = delta == null ? 'Belum dapat dihitung' : `${delta > 0 ? '+' : ''}${delta.toLocaleString('id-ID')} HM`;
+                    const deltaLabel = delta == null ? NO_DATA : `${delta > 0 ? '+' : ''}${delta.toLocaleString('id-ID')} HM`;
                     return `<tr>
                         <td><strong>PM ${escapeHtml(plan.interval_hm)} HM</strong></td>
                         <td>${escapeHtml(plan.interval_hm)} Jam</td>
-                        <td>${Number(plan.last_service_hm) > 0 ? `${formatMeter(plan.last_service_hm)} HM` : 'Belum tersedia'}</td>
-                        <td><strong>${hasTarget ? `${formatMeter(plan.target_due_hm)} HM` : 'Belum tersedia'}</strong></td>
+                        <td>${Number(plan.last_service_hm) > 0 ? `${formatMeter(plan.last_service_hm)} HM` : NO_DATA}</td>
+                        <td><strong>${hasTarget ? `${formatMeter(plan.target_due_hm)} HM` : NO_DATA}</strong></td>
                         <td>${escapeHtml(deltaLabel)}</td>
                         <td>${statusBadge(plan.status)}</td>
-                        <td>Belum tersedia</td>
+                        <td>${NO_DATA}</td>
                     </tr>`;
                 }).join('')
-                : emptyTableRow(7, 'Belum ada rencana PM yang terhubung ke unit ini.');
+                : emptyTableRow(7, NO_DATA);
         }
 
         const tbWoLive = document.getElementById('propWoTableBody');
@@ -897,34 +916,34 @@
                 ? workOrders.map(wo => {
                     const issue = wo.repair_action
                         ? `${wo.issue_description || ''} / Tindakan: ${wo.repair_action}`
-                        : (wo.issue_description || 'Belum tersedia');
-                    const downtime = wo.downtime_formatted || (wo.downtime_minutes == null ? 'Belum tersedia' : `${wo.downtime_minutes} menit`);
+                        : displayData(wo.issue_description);
+                    const downtime = wo.downtime_formatted || (wo.downtime_minutes == null ? NO_DATA : `${wo.downtime_minutes} menit`);
                     return `<tr>
                         <td><strong>${escapeHtml(wo.wo_id)}</strong></td>
-                        <td>${escapeHtml(wo.maintenance_type || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(displayData(wo.maintenance_type))}</td>
                         <td>${escapeHtml(issue)}</td>
-                        <td>${escapeHtml(wo.assigned_mechanic || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(displayData(wo.assigned_mechanic))}</td>
                         <td>${escapeHtml(downtime)}</td>
                         <td>${escapeHtml(formatMoney(wo.total_cost))}</td>
                         <td>${statusBadge(wo.status)}</td>
                     </tr>`;
                 }).join('')
-                : emptyTableRow(7, 'Belum ada Work Order yang terhubung ke unit ini.');
+                : emptyTableRow(7, NO_DATA);
         }
 
         const tbPartsLive = document.getElementById('propPartsTableBody');
         if (tbPartsLive) {
             tbPartsLive.innerHTML = partUsage.length
                 ? partUsage.map(item => `<tr>
-                    <td><code>${escapeHtml(item.part_number || 'Belum tersedia')}</code></td>
-                    <td>${escapeHtml(item.part_name || 'Belum tersedia')}</td>
-                    <td>${escapeHtml(item.category || 'Belum tersedia')}</td>
+                    <td><code>${escapeHtml(displayData(item.part_number))}</code></td>
+                    <td>${escapeHtml(displayData(item.part_name))}</td>
+                    <td>${escapeHtml(displayData(item.category))}</td>
                     <td>${escapeHtml(item.quantity)} ${escapeHtml(item.unit_measure || '')}</td>
-                    <td>Belum tersedia</td>
-                    <td>${escapeHtml(item.reference_number || 'Belum tersedia')}</td>
+                    <td>${NO_DATA}</td>
+                    <td>${escapeHtml(displayData(item.reference_number))}</td>
                     <td>${escapeHtml(formatDisplayDate(item.transaction_date))}</td>
                 </tr>`).join('')
-                : emptyTableRow(7, 'Belum ada konsumsi suku cadang dengan asset_id unit ini.');
+                : emptyTableRow(7, NO_DATA);
         }
     }
 
@@ -943,32 +962,32 @@
                 ? `<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(105px,1fr)); gap:10px; width:100%;">${tires.map(tire => {
                     const color = String(tire.condition_color || '').toUpperCase();
                     const cls = color === 'RED' ? 'danger' : (color === 'YELLOW' ? 'warning' : 'good');
-                    const pressure = Number(tire.air_pressure_psi) > 0 ? `${tire.air_pressure_psi} PSI` : '—';
-                    const tread = Number(tire.tread_depth_mm) > 0 ? `${tire.tread_depth_mm} mm` : '—';
+                    const pressure = Number(tire.air_pressure_psi) > 0 ? `${tire.air_pressure_psi} PSI` : NO_DATA;
+                    const tread = Number(tire.tread_depth_mm) > 0 ? `${tire.tread_depth_mm} mm` : NO_DATA;
                     return `<div class="prop-tire-badge ${cls}" title="Inspeksi ${escapeHtml(formatDisplayDateTime(tire.inspected_at))}">
                         <span class="tire-pos">${escapeHtml(tire.tire_position)}</span>
                         <span class="tire-psi">${escapeHtml(pressure)}</span>
                         <span class="tire-rtd">${escapeHtml(tread)}</span>
                     </div>`;
                 }).join('')}</div>`
-                : '<div style="padding:22px; text-align:center; color:#64748b;">Belum ada pemeriksaan ban untuk unit ini.</div>';
+                : `<div style="padding:22px; text-align:center; color:#64748b;">${NO_DATA}</div>`;
         }
 
         const tbPapLive = document.getElementById('propOilPapTableBody');
         if (tbPapLive) {
             tbPapLive.innerHTML = oilRows.length
                 ? oilRows.map(row => `<tr>
-                    <td>${escapeHtml(row.compartment || 'Belum tersedia')}</td>
+                    <td>${escapeHtml(displayData(row.compartment))}</td>
                     <td>${escapeHtml(formatDisplayDate(row.sample_date))}</td>
-                    <td>${escapeHtml(row.iron_fe ?? 'Belum tersedia')}</td>
-                    <td>${escapeHtml(row.copper_cu ?? 'Belum tersedia')}</td>
-                    <td>${escapeHtml(row.aluminium_al ?? 'Belum tersedia')}</td>
-                    <td>${escapeHtml(row.silicon_si ?? 'Belum tersedia')}</td>
-                    <td>${escapeHtml(row.viscosity ?? 'Belum tersedia')}</td>
-                    <td>${escapeHtml(row.status ?? 'Belum tersedia')}</td>
-                    <td>${escapeHtml(row.lab_diagnosis ?? 'Belum tersedia')}</td>
+                    <td>${escapeHtml(displayData(row.iron_fe))}</td>
+                    <td>${escapeHtml(displayData(row.copper_cu))}</td>
+                    <td>${escapeHtml(displayData(row.aluminium_al))}</td>
+                    <td>${escapeHtml(displayData(row.silicon_si))}</td>
+                    <td>${escapeHtml(displayData(row.viscosity))}</td>
+                    <td>${escapeHtml(displayData(row.status))}</td>
+                    <td>${escapeHtml(displayData(row.lab_diagnosis))}</td>
                 </tr>`).join('')
-                : emptyTableRow(9, 'Belum ada sumber data PAP yang terhubung ke unit ini.');
+                : emptyTableRow(9, NO_DATA);
         }
 
         const tbP2hLive = document.getElementById('propP2hTableBody');
@@ -978,15 +997,15 @@
                     const detail = inspection.payload || {};
                     return `<tr>
                         <td><strong>${escapeHtml(formatDisplayDateTime(inspection.inspection_date))}</strong></td>
-                        <td>${escapeHtml(detail.shift || detail.shiftName || 'Belum tersedia')}</td>
-                        <td>${escapeHtml(detail.operatorName || detail.operator || 'Belum tersedia')}</td>
-                        <td>${escapeHtml(inspection.overall_result || detail.status || 'Belum tersedia')}</td>
-                        <td>${escapeHtml(detail.tireCondition || detail.kondisiBan || 'Belum tersedia')}</td>
-                        <td>${escapeHtml(detail.leakage || detail.kebocoran || 'Belum tersedia')}</td>
-                        <td>${escapeHtml(inspection.findings_summary || detail.notes || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(displayData(detail.shift || detail.shiftName))}</td>
+                        <td>${escapeHtml(displayData(detail.operatorName || detail.operator))}</td>
+                        <td>${escapeHtml(displayData(inspection.overall_result || detail.status))}</td>
+                        <td>${escapeHtml(displayData(detail.tireCondition || detail.kondisiBan))}</td>
+                        <td>${escapeHtml(displayData(detail.leakage || detail.kebocoran))}</td>
+                        <td>${escapeHtml(displayData(inspection.findings_summary || detail.notes))}</td>
                     </tr>`;
                 }).join('')
-                : emptyTableRow(7, 'Belum ada inspeksi P2H yang terhubung ke unit ini.');
+                : emptyTableRow(7, NO_DATA);
         }
 
         const tbAccidentLive = document.getElementById('propAccidentTableBody');
@@ -995,20 +1014,20 @@
                 ? accidents.map(accident => {
                     const loss = accident.total_financial_loss ?? accident.estimated_repair_cost;
                     const lossLabel = loss == null || Number(loss) <= 0
-                        ? 'Belum tersedia'
+                        ? NO_DATA
                         : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(loss));
                     return `<tr>
                         <td><strong>${escapeHtml(accident.accident_id)}</strong></td>
                         <td>${escapeHtml(formatDisplayDateTime(accident.incident_datetime))}</td>
-                        <td>${escapeHtml(accident.location_name || 'Belum tersedia')}</td>
-                        <td>${escapeHtml(accident.operator_name || 'Belum tersedia')}</td>
-                        <td>${escapeHtml(accident.severity || 'Belum tersedia')}</td>
-                        <td>${escapeHtml(accident.chronology || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(displayData(accident.location_name))}</td>
+                        <td>${escapeHtml(displayData(accident.operator_name))}</td>
+                        <td>${escapeHtml(displayData(accident.severity))}</td>
+                        <td>${escapeHtml(displayData(accident.chronology))}</td>
                         <td>${escapeHtml(lossLabel)}</td>
-                        <td>${escapeHtml(accident.status || 'Belum tersedia')}</td>
+                        <td>${escapeHtml(displayData(accident.status))}</td>
                     </tr>`;
                 }).join('')
-                : emptyTableRow(8, 'Belum ada laporan insiden yang tercatat untuk unit ini; status Zero Accident tidak diasumsikan.');
+                : emptyTableRow(8, NO_DATA);
         }
     }
 

@@ -29,7 +29,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=20261018-admin-recap-1"></script>
-    <script src="scripts/unit-properties.js?v=20261022-db-1"></script>
+    <script src="scripts/unit-properties.js?v=20261022-db-3"></script>
 </head>
 
 <body>
@@ -2372,7 +2372,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <i class="fa-solid fa-chevron-right" style="font-size:0.65rem; color:#94a3b8;"></i>
                             <span>Properties Alat Berat</span>
                             <i class="fa-solid fa-chevron-right" style="font-size:0.65rem; color:#94a3b8;"></i>
-                            <strong class="prop-render-unit-id">DT-00049</strong>
+                            <strong class="prop-render-unit-id">Data belum tersedia</strong>
                         </div>
                     </div>
                     <div class="prop-top-actions">
@@ -2394,21 +2394,21 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             </div>
                             <div class="prop-unit-title">
                                 <h1>
-                                    <span class="prop-render-unit-id">DT-00049</span>
-                                    <span id="propUnitStatusPill" class="prop-status-pill operating">
-                                        <span class="prop-pulse-dot"></span> OPERATING
+                                    <span class="prop-render-unit-id">Data belum tersedia</span>
+                                    <span id="propUnitStatusPill" class="prop-status-pill">
+                                        <span class="prop-pulse-dot"></span> Data belum tersedia
                                     </span>
                                 </h1>
                                 <div class="unit-model-subtitle">
-                                    <span id="propUnitModel">Hino Ranger FM 280 JD</span> &bull; 
-                                    Plat: <strong id="propUnitPlate" style="color:#0f172a;">B 9104 ZYT</strong> &bull; 
-                                    SN: <code id="propUnitSerial" style="color:#475569;">HINO-49821A7C</code>
+                                    <span id="propUnitModel">Data belum tersedia</span> &bull;
+                                    Plat: <strong id="propUnitPlate" style="color:#0f172a;">Data belum tersedia</strong> &bull;
+                                    SN: <code id="propUnitSerial" style="color:#475569;">Data belum tersedia</code>
                                 </div>
                                 <div class="prop-hull-interactive-row">
                                     <span class="prop-hull-label">Nomor lambung:</span>
                                     <span class="prop-hull-interactive-group">
                                         <a href="javascript:void(0)" class="prop-hull-link" id="propUnitHullLink" onclick="window.openPropHullHistoryModal()" title="Klik untuk melihat riwayat nomor lambung">
-                                            <strong id="propUnitHull">Belum tersedia</strong>
+                                            <strong id="propUnitHull">Data belum tersedia</strong>
                                             <i class="fa-solid fa-clock-rotate-left prop-hull-history-badge-icon" title="Riwayat Nomor Lambung"></i>
                                         </a>
                                         <button type="button" class="prop-btn-icon-rename" id="btnPropRenameHull" onclick="window.openPropRenameModal()" title="Ubah / Rename Nomor Lambung">
@@ -2445,8 +2445,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                             <i class="fa-solid fa-clock-rotate-left"></i>
                                         </button>
                                     </div>
-                                    <div class="vital-val" id="propVitalOperator">Belum tersedia</div>
-                                    <div class="vital-sub" id="propVitalOperatorSub">Penugasan Aktif</div>
+                                    <div class="vital-val" id="propVitalOperator">Data belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalOperatorSub">Data belum tersedia</div>
                                 </div>
 
                                 <div class="prop-vital-cell" id="cardVitalLastService">
@@ -2456,32 +2456,32 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                             <i class="fa-solid fa-clock-rotate-left"></i>
                                         </button>
                                     </div>
-                                    <div class="vital-val" id="propVitalLastService">Belum tersedia</div>
-                                    <div class="vital-sub" id="propVitalLastServiceSub">Belum tercatat</div>
+                                    <div class="vital-val" id="propVitalLastService">Data belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalLastServiceSub">Data belum tersedia</div>
                                 </div>
 
                                 <div class="prop-vital-cell" id="cardVitalInterval">
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-arrows-rotate"></i> Interval Servis</div>
                                     </div>
-                                    <div class="vital-val" id="propVitalInterval">Belum tersedia</div>
-                                    <div class="vital-sub" id="propVitalIntervalSub">Siklus Rutin PM</div>
+                                    <div class="vital-val" id="propVitalInterval">Data belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalIntervalSub">Data belum tersedia</div>
                                 </div>
 
                                 <div class="prop-vital-cell" id="cardVitalNextTarget">
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-bullseye"></i> Target Berikutnya</div>
                                     </div>
-                                    <div class="vital-val" id="propVitalNextTarget">Belum tersedia</div>
-                                    <div class="vital-sub" id="propVitalNextTargetSub">Ambang Batas PM</div>
+                                    <div class="vital-val" id="propVitalNextTarget">Data belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalNextTargetSub">Data belum tersedia</div>
                                 </div>
 
                                 <div class="prop-vital-cell" id="cardVitalEstimate">
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-calendar-check"></i> Estimasi Servis</div>
                                     </div>
-                                    <div class="vital-val" id="propVitalEstimate">Belum tersedia</div>
-                                    <div class="vital-sub" id="propVitalEstimateSub">Kalkulasi Jam Operasi</div>
+                                    <div class="vital-val" id="propVitalEstimate">Data belum tersedia</div>
+                                    <div class="vital-sub" id="propVitalEstimateSub">Data belum tersedia</div>
                                 </div>
 
                                 <!-- Core Telemetry Vitals -->
@@ -2489,29 +2489,29 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-gauge-high"></i> Total Jam Kerja (HM)</div>
                                     </div>
-                                    <div class="vital-val" id="propVitalHm">34.500 HM</div>
-                                    <div class="vital-sub">SMR Engine Terbaca</div>
+                                    <div class="vital-val" id="propVitalHm">Data belum tersedia</div>
+                                    <div class="vital-sub">Data belum tersedia</div>
                                 </div>
                                 <div class="prop-vital-cell">
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-location-dot"></i> Posisi Terkini</div>
                                     </div>
-                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem;">Borrow Pit Harapan Baru</div>
-                                    <div class="vital-sub">Mining Sector Area</div>
+                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem;">Data belum tersedia</div>
+                                    <div class="vital-sub">Data belum tersedia</div>
                                 </div>
                                 <div class="prop-vital-cell">
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-heart-pulse"></i> Health Score</div>
                                     </div>
-                                    <div class="vital-val" id="propVitalHealth" style="color:#16a34a;">94%</div>
-                                    <div class="vital-sub">Kondisi Prima</div>
+                                    <div class="vital-val" id="propVitalHealth">Data belum tersedia</div>
+                                    <div class="vital-sub">Data belum tersedia</div>
                                 </div>
                                 <div class="prop-vital-cell">
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-clock"></i> Servis PM Berikut</div>
                                     </div>
-                                    <div class="vital-val" id="propVitalNextService" style="color:#0284c7; font-size:0.95rem;">PS 500 (120 HM lagi)</div>
-                                    <div class="vital-sub">Estimasi 6 Hari Kerja</div>
+                                    <div class="vital-val" id="propVitalNextService" style="font-size:0.95rem;">Data belum tersedia</div>
+                                    <div class="vital-sub">Data belum tersedia</div>
                                 </div>
                             </div>
                         </div>
@@ -2536,13 +2536,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                 <!-- SECTION 1: LIVE MAP & TELEMETRICS (PLACED AT TOP) -->
                 <div class="prop-section-heading">
-                    <i class="fa-solid fa-map-location-dot"></i> 1. Peta Live Telematika &amp; Status Operasional Lapangan
+                    <i class="fa-solid fa-map-location-dot"></i> 1. Peta Lokasi, Telematika &amp; Status Operasional Lapangan
                 </div>
                 <div class="prop-panel-grid-top-map">
                     <!-- Leaflet Live Map -->
                     <div class="prop-card">
                         <div class="prop-card-header">
-                            <h3><i class="fa-solid fa-map" style="color:#0284c7;"></i> Peta Real-Time Geofence Tambang</h3>
+                            <h3><i class="fa-solid fa-map" style="color:#0284c7;"></i> Peta Lokasi Unit</h3>
                         </div>
                         <div class="prop-card-body" style="padding:10px;">
                             <div id="propUnitMap"></div>
@@ -2554,28 +2554,28 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <!-- Live Telemetry CANbus Gauges -->
                         <div class="prop-card">
                             <div class="prop-card-header">
-                                <h3><i class="fa-solid fa-satellite-dish" style="color:#0284c7;"></i> Live Telemetri CANbus</h3>
+                                <h3><i class="fa-solid fa-satellite-dish" style="color:#0284c7;"></i> Telemetri CANbus</h3>
                             </div>
                             <div class="prop-card-body" style="padding:10px;">
                                 <div class="prop-telemetry-grid">
                                     <div class="prop-gauge-box">
                                         <div class="prop-gauge-icon"><i class="fa-solid fa-gauge"></i></div>
-                                        <div class="prop-gauge-val"><span id="propGaugeRpm">1650</span><span class="prop-gauge-unit">RPM</span></div>
+                                        <div class="prop-gauge-val"><span id="propGaugeRpm" class="prop-gauge-no-data">Data belum tersedia</span><span class="prop-gauge-unit" hidden>RPM</span></div>
                                         <div class="prop-gauge-title">Engine Speed</div>
                                     </div>
                                     <div class="prop-gauge-box">
                                         <div class="prop-gauge-icon" style="color:#ef4444;"><i class="fa-solid fa-temperature-high"></i></div>
-                                        <div class="prop-gauge-val"><span id="propGaugeCoolant">84</span><span class="prop-gauge-unit">&deg;C</span></div>
+                                        <div class="prop-gauge-val"><span id="propGaugeCoolant" class="prop-gauge-no-data">Data belum tersedia</span><span class="prop-gauge-unit" hidden>&deg;C</span></div>
                                         <div class="prop-gauge-title">Coolant Temp</div>
                                     </div>
                                     <div class="prop-gauge-box">
                                         <div class="prop-gauge-icon" style="color:#f59e0b;"><i class="fa-solid fa-oil-can"></i></div>
-                                        <div class="prop-gauge-val"><span id="propGaugeOilPress">4.2</span><span class="prop-gauge-unit">Bar</span></div>
+                                        <div class="prop-gauge-val"><span id="propGaugeOilPress" class="prop-gauge-no-data">Data belum tersedia</span><span class="prop-gauge-unit" hidden>Bar</span></div>
                                         <div class="prop-gauge-title">Oil Pressure</div>
                                     </div>
                                     <div class="prop-gauge-box">
                                         <div class="prop-gauge-icon" style="color:#16a34a;"><i class="fa-solid fa-bolt"></i></div>
-                                        <div class="prop-gauge-val"><span id="propGaugeVolt">27.6</span><span class="prop-gauge-unit">V</span></div>
+                                        <div class="prop-gauge-val"><span id="propGaugeVolt" class="prop-gauge-no-data">Data belum tersedia</span><span class="prop-gauge-unit" hidden>V</span></div>
                                         <div class="prop-gauge-title">Alternator</div>
                                     </div>
                                 </div>
@@ -2585,7 +2585,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <!-- GPS Logs & BAST Movements -->
                         <div class="prop-card">
                             <div class="prop-card-header">
-                                <h3><i class="fa-solid fa-route" style="color:#0284c7;"></i> Log Koordinat &amp; BAST Terkini</h3>
+                                <h3><i class="fa-solid fa-route" style="color:#0284c7;"></i> Log Koordinat Unit</h3>
                             </div>
                             <div class="prop-card-body" style="padding:0;">
                                 <table class="prop-table">
