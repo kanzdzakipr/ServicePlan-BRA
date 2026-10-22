@@ -10,6 +10,7 @@
     let currentPropPayload = null;
     let previousViewName = 'dashboard';
     let propMapInstance = null;
+    let incidentDetailTrigger = null;
     const NO_DATA = 'Data belum tersedia';
 
     function displayData(value) {
@@ -33,6 +34,38 @@
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
+
+    /** Open one database-backed safety incident in the compact detail modal. */
+    window.openPropIncidentDetail = function (rowIndex) {
+        const incidents = Array.isArray(currentPropPayload?.accidents) ? currentPropPayload.accidents : [];
+        const incident = incidents[Number(rowIndex)];
+        if (!incident) return;
+
+        incidentDetailTrigger = document.activeElement;
+        const values = {
+            mpiReportNumber: displayData(incident.accident_id),
+            mpiIncidentDate: formatDisplayDateTime(incident.incident_datetime || incident.report_date),
+            mpiLocation: displayData(incident.location_name),
+            mpiSeverity: displayData(incident.severity),
+            mpiChronology: displayData(incident.chronology)
+        };
+
+        Object.entries(values).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        });
+
+        if (typeof window.openModal === 'function') {
+            window.openModal('modalPropIncidentDetail');
+            window.setTimeout(() => document.getElementById('mpiCloseButton')?.focus(), 0);
+        }
+    };
+
+    document.addEventListener('click', event => {
+        const closeButton = event.target.closest('#modalPropIncidentDetail [onclick*="closeModal"]');
+        if (!closeButton || !incidentDetailTrigger) return;
+        window.setTimeout(() => incidentDetailTrigger?.focus(), 0);
+    });
 
     /** Find an existing asset only; never manufacture a fallback asset. */
     function getAssetData(assetId) {
@@ -612,7 +645,7 @@
             ['propGpsLogsTableBody', 4], ['propPmPlansTableBody', 7],
             ['propWoTableBody', 7], ['propPartsTableBody', 7],
             ['propOilPapTableBody', 9], ['propP2hTableBody', 7],
-            ['propAccidentTableBody', 8]
+            ['propAccidentTableBody', 4]
         ].forEach(([id, colspan]) => {
             const el = document.getElementById(id);
             if (el) el.innerHTML = emptyTableRow(colspan, 'Memuat data unit...');
@@ -637,7 +670,7 @@
             ['propGpsLogsTableBody', 4], ['propPmPlansTableBody', 7],
             ['propWoTableBody', 7], ['propPartsTableBody', 7],
             ['propOilPapTableBody', 9], ['propP2hTableBody', 7],
-            ['propAccidentTableBody', 8]
+            ['propAccidentTableBody', 4]
         ].forEach(([id, colspan]) => {
             const el = document.getElementById(id);
             if (el) el.innerHTML = emptyTableRow(colspan, message);
@@ -1043,23 +1076,16 @@
         const tbAccidentLive = document.getElementById('propAccidentTableBody');
         if (tbAccidentLive) {
             tbAccidentLive.innerHTML = accidents.length
-                ? accidents.map(accident => {
-                    const loss = accident.total_financial_loss ?? accident.estimated_repair_cost;
-                    const lossLabel = loss == null || Number(loss) <= 0
-                        ? NO_DATA
-                        : new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(loss));
+                ? accidents.map((accident, index) => {
+                    const reportNumber = displayData(accident.accident_id);
                     return `<tr>
-                        <td><strong>${escapeHtml(accident.accident_id)}</strong></td>
-                        <td>${escapeHtml(formatDisplayDateTime(accident.incident_datetime))}</td>
-                        <td>${escapeHtml(displayData(accident.location_name))}</td>
+                        <td><strong>${escapeHtml(reportNumber)}</strong></td>
+                        <td>${escapeHtml(formatDisplayDateTime(accident.incident_datetime || accident.report_date))}</td>
                         <td>${escapeHtml(displayData(accident.operator_name))}</td>
-                        <td>${escapeHtml(displayData(accident.severity))}</td>
-                        <td>${escapeHtml(displayData(accident.chronology))}</td>
-                        <td>${escapeHtml(lossLabel)}</td>
-                        <td>${escapeHtml(displayData(accident.status))}</td>
+                        <td><button type="button" class="prop-incident-detail-button" onclick="window.openPropIncidentDetail(${index})" aria-label="Lihat detail laporan ${escapeHtml(reportNumber)}"><i class="fa-solid fa-eye" aria-hidden="true"></i> Detail</button></td>
                     </tr>`;
                 }).join('')
-                : emptyTableRow(8, NO_DATA);
+                : emptyTableRow(4, NO_DATA);
         }
     }
 

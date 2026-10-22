@@ -2784,17 +2784,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <h3><i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;"></i> Log Insiden / Investigasi Keselamatan (TAR)</h3>
                         </div>
                         <div class="prop-card-body" style="padding:0;">
-                            <table class="prop-table">
+                            <table class="prop-table prop-incident-table">
                                 <thead>
                                     <tr>
                                         <th>No. Laporan</th>
                                         <th>Tanggal</th>
-                                        <th>Lokasi Kejadian</th>
                                         <th>Personel Terlibat</th>
-                                        <th>Severity</th>
-                                        <th>Kronologi Singkat</th>
-                                        <th>Kerugian</th>
-                                        <th>Status CAPA</th>
+                                        <th>Keterangan</th>
                                     </tr>
                                 </thead>
                                 <tbody id="propAccidentTableBody">
@@ -4580,6 +4576,41 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
                 <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; justify-content:flex-end;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalPropServiceHistory')">Tutup</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Detail Log Insiden / Investigasi Keselamatan Unit Properties -->
+        <div class="modal-overlay" id="modalPropIncidentDetail" role="dialog" aria-modal="true" aria-labelledby="mpiTitle" aria-describedby="mpiChronology" onclick="if (event.target === this) window.closeModal('modalPropIncidentDetail')">
+            <div class="modal-content prop-incident-modal">
+                <div class="prop-incident-modal-header">
+                    <div class="prop-incident-modal-heading">
+                        <span class="prop-incident-modal-icon" aria-hidden="true"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        <div>
+                            <h3 id="mpiTitle">Detail Insiden Keselamatan</h3>
+                            <p><strong id="mpiReportNumber">Data belum tersedia</strong><span aria-hidden="true"> &bull; </span><span id="mpiIncidentDate">Data belum tersedia</span></p>
+                        </div>
+                    </div>
+                    <button type="button" class="prop-incident-modal-close" id="mpiCloseButton" onclick="window.closeModal('modalPropIncidentDetail')" aria-label="Tutup detail insiden">&times;</button>
+                </div>
+                <div class="prop-incident-modal-body">
+                    <dl class="prop-incident-detail-grid">
+                        <div class="prop-incident-detail-item">
+                            <dt><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Lokasi Kejadian</dt>
+                            <dd id="mpiLocation">Data belum tersedia</dd>
+                        </div>
+                        <div class="prop-incident-detail-item">
+                            <dt><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> Severity</dt>
+                            <dd><span class="prop-incident-severity" id="mpiSeverity">Data belum tersedia</span></dd>
+                        </div>
+                        <div class="prop-incident-detail-item prop-incident-detail-chronology">
+                            <dt><i class="fa-solid fa-align-left" aria-hidden="true"></i> Kronologi Singkat</dt>
+                            <dd id="mpiChronology">Data belum tersedia</dd>
+                        </div>
+                    </dl>
+                </div>
+                <div class="prop-incident-modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeModal('modalPropIncidentDetail')">Tutup</button>
                 </div>
             </div>
         </div>
