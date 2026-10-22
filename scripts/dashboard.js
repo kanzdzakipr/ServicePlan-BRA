@@ -4449,6 +4449,7 @@
         if (byId('nwo-photo-preview')) byId('nwo-photo-preview').innerHTML = '';
         if (byId('nwo-trouble-at')) byId('nwo-trouble-at').value = inputDateTime();
         if (byId('nwo-started-at')) byId('nwo-started-at').value = inputDateTime();
+        if (byId('nwo-parts-needed')) byId('nwo-parts-needed').value = '';
         toggleMitigation(false);
         setMessage('');
     }
@@ -4495,6 +4496,7 @@
         const down = forcedOperation ? 'No' : text(byId('nwo-down')?.value || 'Yes');
         const rootCause = text(byId('nwo-root-cause')?.value);
         const repairAction = text(byId('nwo-repair-action')?.value);
+        const partsNeeded = text(byId('nwo-parts-needed')?.value);
         const mechanics = [...state.mechanics];
         const assignedTo = mechanics.length ? mechanics.join(', ') : 'Belum ada PIC';
         const currentHmKm = Number(hmValue);
@@ -4512,6 +4514,8 @@
             issue,
             rootCause,
             repairAction,
+            partsRequirement: partsNeeded ? 'REQUIRED' : 'UNASSESSED',
+            partsRequirementNote: partsNeeded,
             assignedTo,
             downtime: down === 'Yes' ? '0' : '-',
             equipmentType: text(byId('nwo-equipment-type')?.value),
@@ -4545,6 +4549,8 @@
             issue_description: issue,
             root_cause: rootCause,
             repair_action: repairAction,
+            parts_requirement: partsNeeded ? 'REQUIRED' : 'UNASSESSED',
+            parts_requirement_note: partsNeeded,
             hull_number: workOrder.hullNumber,
             equipment_type: workOrder.equipmentType,
             current_hm_km: currentHmKm,
@@ -5701,12 +5707,14 @@
         const asset = assetById(assetId);
         if (!asset) return;
         const selectedWo = workOrderById(woId)?.assetId === assetId ? woId : activeWorkOrders(assetId)[0]?.woId || '';
+        const woObj = workOrderById(selectedWo);
+        const woPartsNote = woObj?.partsRequirementNote || woObj?.parts_requirement_note || '';
         state.modal = {
             assetId,
             woId: selectedWo,
-            priority: workOrderById(selectedWo)?.priority === 'High' ? 'Critical' : 'Normal',
+            priority: woObj?.priority === 'High' ? 'Critical' : 'Normal',
             rtwImpact: asset.status === 'BREAKDOWN',
-            notes: '',
+            notes: woPartsNote,
             draft: recommendedItem ? [{ ...recommendedItem }] : []
         };
         render();
