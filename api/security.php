@@ -560,6 +560,7 @@ function api_route_permission(): ?string
     $routes = [
         'init.php' => 'dashboard.read',
         'assets.php' => $readWrite('assets.read', 'assets.write'),
+        'unit_properties.php' => 'assets.read',
         'asset_files.php' => $readWrite('assets.read', 'assets.write'),
         'work_orders.php' => $readWrite('work_orders.read', 'work_orders.write'),
         'work_order_document.php' => 'work_orders.read',
