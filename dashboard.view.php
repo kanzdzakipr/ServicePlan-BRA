@@ -29,7 +29,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=<?= filemtime(__DIR__ . '/scripts/dashboard.js') ?>"></script>
-    <script src="scripts/unit-properties.js?v=20261022-tire-blueprint-4"></script>
+    <script src="scripts/unit-properties.js?v=20261022-site-location-fallback-1"></script>
     <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>
 
@@ -2611,8 +2611,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 <div class="prop-panel-grid-top-map">
                     <!-- Leaflet Live Map -->
                     <div class="prop-card">
-                        <div class="prop-card-header">
+                        <div class="prop-card-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                             <h3><i class="fa-solid fa-map" style="color:#0284c7;"></i> Peta Lokasi Unit</h3>
+                            <div id="propMapStatusBadge"></div>
                         </div>
                         <div class="prop-card-body" style="padding:10px;">
                             <div id="propUnitMap"></div>
