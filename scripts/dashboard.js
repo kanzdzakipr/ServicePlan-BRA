@@ -4503,12 +4503,19 @@
         return window.masterPartsShared;
     }
 
+    function defaultPartEta() {
+        const d = new Date();
+        d.setHours(d.getHours() + 4);
+        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+        return local.toISOString().slice(0, 16);
+    }
+
     function renderNwoDraftRows() {
         const tbody = byId('nwo-spb-items');
         if (!tbody) return;
         const masterParts = getNwoMasterParts();
         if (!state.draft || !state.draft.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="sl-draft-empty">Belum ada draft item. Gunakan tombol Tambah Item.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="wo-parts-empty"><i class="fa-solid fa-box-open" style="font-size:1.3rem; color:#cbd5e1; display:block; margin-bottom:5px;"></i>Belum ada spare part yang di-request. Gunakan tombol Tambah Spare Part di bawah.</td></tr>';
             syncNwoPartsSummary();
             return;
         }
@@ -4519,31 +4526,34 @@
             const selectedValue = matchedPart ? matchedPart.partNumber : (isManual ? '__MANUAL__' : '');
 
             return `
-            <tr data-nwo-draft-row="${index}" data-sl-manual="${isManual ? 'true' : 'false'}">
+            <tr data-nwo-draft-row="${index}">
                 <td>
-                    <select class="sl-master-part-select" onchange="window.handleNwoMasterPartChange(${index}, this.value)" aria-label="Pilih Master Part">
-                        <option value="">Pilih Master Part...</option>
+                    <select class="form-control" onchange="window.handleNwoPartSelectChange(${index}, this.value)" aria-label="Pilih Suku Cadang" style="margin-bottom:6px; font-weight:600;">
+                        <option value="">-- Pilih dari Katalog Gudang --</option>
                         ${masterParts.map(part => `
                             <option value="${escapeText(part.partNumber)}" ${selectedValue === part.partNumber ? 'selected' : ''}>
-                                ${escapeText(part.partNumber)} · ${escapeText(part.description || 'Tanpa nama')} · stok ${part.stockQty} ${escapeText(part.uom)}
+                                ${escapeText(part.partNumber)} · ${escapeText(part.description || 'Tanpa nama')} (Stok: ${part.stockQty} ${escapeText(part.uom)})
                             </option>
                         `).join('')}
-                        <option value="__MANUAL__" ${selectedValue === '__MANUAL__' ? 'selected' : ''}>+ Part baru / input manual</option>
+                        <option value="__MANUAL__" ${selectedValue === '__MANUAL__' ? 'selected' : ''}>+ Part Baru / Input Manual</option>
                     </select>
-                    <input type="text" value="${escapeText(item.partNumber || '')}" placeholder="Part number" oninput="window.handleNwoDraftFieldChange(${index}, 'partNumber', this.value)" ${matchedPart && !isManual ? 'readonly' : ''}>
+                    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:6px;">
+                        <input type="text" class="form-control font-mono" value="${escapeText(item.partNumber || '')}" placeholder="Part Number" oninput="window.handleNwoPartFieldChange(${index}, 'partNumber', this.value)" ${matchedPart && !isManual ? 'readonly' : ''} style="font-size:0.75rem;">
+                        <input type="text" class="form-control" value="${escapeText(item.description || '')}" placeholder="Nama / Spesifikasi Spare Part" oninput="window.handleNwoPartFieldChange(${index}, 'description', this.value)" ${matchedPart && !isManual ? 'readonly' : ''} style="font-size:0.75rem;">
+                    </div>
                 </td>
                 <td>
-                    <input type="text" value="${escapeText(item.description || '')}" placeholder="Nama / spesifikasi part" oninput="window.handleNwoDraftFieldChange(${index}, 'description', this.value)" ${matchedPart && !isManual ? 'readonly' : ''}>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <input type="number" min="1" class="form-control font-mono" style="width:70px; text-align:center; font-weight:700;" value="${Number(item.qty) || 1}" oninput="window.handleNwoPartFieldChange(${index}, 'qty', this.value)">
+                        <input type="text" class="form-control" style="width:75px;" value="${escapeText(item.uom || 'pcs')}" placeholder="pcs" oninput="window.handleNwoPartFieldChange(${index}, 'uom', this.value)" ${matchedPart && !isManual ? 'readonly' : ''}>
+                    </div>
                 </td>
                 <td>
-                    <input type="number" min="1" value="${Number(item.qty) || 1}" oninput="window.handleNwoDraftFieldChange(${index}, 'qty', this.value)">
+                    <input type="datetime-local" class="form-control font-mono" value="${escapeText(item.eta || '')}" oninput="window.handleNwoPartFieldChange(${index}, 'eta', this.value)" title="Jam & Tanggal Spare Part Tiba" style="font-size:0.76rem;">
                 </td>
-                <td>
-                    <input type="text" value="${escapeText(item.uom || 'pcs')}" placeholder="pcs" oninput="window.handleNwoDraftFieldChange(${index}, 'uom', this.value)" ${matchedPart && !isManual ? 'readonly' : ''}>
-                </td>
-                <td style="text-align:center;">
-                    <button type="button" class="sl-remove-draft" onclick="window.removeNwoDraftItem(${index})" title="Hapus draft item">
-                        <i class="fa-solid fa-trash"></i>
+                <td style="text-align:center; vertical-align:middle;">
+                    <button type="button" class="wo-part-remove-btn" onclick="window.removeNwoPartRow(${index})" title="Hapus spare part ini">
+                        <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </td>
             </tr>`;
@@ -4557,22 +4567,32 @@
         const lines = valid.map(item => {
             const pn = item.partNumber ? ` (${item.partNumber})` : '';
             const tag = item.isManual ? ' [Luar Gudang/Manual]' : ' [Gudang]';
-            return `• ${item.qty || 1} ${item.uom || 'pcs'} - ${item.description || item.partNumber}${pn}${tag}`;
+            const etaFormatted = item.eta ? ` · Estimasi Tiba: ${item.eta.replace('T', ' ')}` : '';
+            return `• ${item.qty || 1} ${item.uom || 'pcs'} - ${item.description || item.partNumber}${pn}${tag}${etaFormatted}`;
         });
         const textarea = byId('nwo-parts-needed');
         if (textarea) textarea.value = lines.join('\n');
         const counter = byId('nwo-spb-counter');
-        if (counter) counter.textContent = `${valid.length} item tercatat`;
+        if (counter) counter.textContent = `${valid.length} spare part tercatat`;
     }
 
-    function addNwoDraftItem(prefill = {}) {
+    let lastAddRowTime = 0;
+    function addNwoPartRow(prefill = {}) {
+        const now = Date.now();
+        if (now - lastAddRowTime < 100 && (!prefill || typeof prefill !== 'object' || !prefill.partNumber)) {
+            return;
+        }
+        lastAddRowTime = now;
+
+        const p = (prefill && typeof prefill === 'object' && !(prefill instanceof Event)) ? prefill : {};
         if (!Array.isArray(state.draft)) state.draft = [];
         state.draft.push({
-            partNumber: prefill.partNumber || '',
-            description: prefill.description || '',
-            qty: Number(prefill.qty) || 1,
-            uom: prefill.uom || 'pcs',
-            isManual: Boolean(prefill.isManual)
+            partNumber: p.partNumber || '',
+            description: p.description || '',
+            qty: Number(p.qty) || 1,
+            uom: p.uom || 'pcs',
+            eta: p.eta || defaultPartEta(),
+            isManual: Boolean(p.isManual)
         });
         renderNwoDraftRows();
         const rows = document.querySelectorAll('#nwo-spb-items tr');
@@ -4580,7 +4600,7 @@
         lastRow?.querySelector('select')?.focus();
     }
 
-    function handleNwoMasterPartChange(index, selection) {
+    function handleNwoPartSelectChange(index, selection) {
         if (!state.draft || !state.draft[index]) return;
         if (selection === '__MANUAL__') {
             state.draft[index] = {
@@ -4588,6 +4608,7 @@
                 description: '',
                 qty: state.draft[index].qty || 1,
                 uom: 'pcs',
+                eta: state.draft[index].eta || defaultPartEta(),
                 isManual: true
             };
         } else if (!selection) {
@@ -4596,6 +4617,7 @@
                 description: '',
                 qty: state.draft[index].qty || 1,
                 uom: 'pcs',
+                eta: state.draft[index].eta || defaultPartEta(),
                 isManual: false
             };
         } else {
@@ -4607,6 +4629,7 @@
                     description: part.description,
                     qty: state.draft[index].qty || 1,
                     uom: part.uom,
+                    eta: state.draft[index].eta || defaultPartEta(),
                     stockQty: part.stockQty,
                     isManual: false
                 };
@@ -4615,13 +4638,13 @@
         renderNwoDraftRows();
         const row = document.querySelector(`tr[data-nwo-draft-row="${index}"]`);
         if (selection === '__MANUAL__') {
-            row?.querySelector('input[placeholder="Part number"]')?.focus();
+            row?.querySelector('input[placeholder="Part Number"]')?.focus();
         } else {
             row?.querySelector('input[type="number"]')?.focus();
         }
     }
 
-    function handleNwoDraftFieldChange(index, field, value) {
+    function handleNwoPartFieldChange(index, field, value) {
         if (!state.draft || !state.draft[index]) return;
         if (field === 'qty') {
             state.draft[index].qty = Math.max(1, Number(value) || 1);
@@ -4631,7 +4654,7 @@
         syncNwoPartsSummary();
     }
 
-    function removeNwoDraftItem(index) {
+    function removeNwoPartRow(index) {
         if (!state.draft || index < 0 || index >= state.draft.length) return;
         state.draft.splice(index, 1);
         renderNwoDraftRows();
@@ -4704,6 +4727,7 @@
                 description: item.description || item.partNumber || '',
                 qty: Math.max(1, Number(item.qty) || 1),
                 uom: item.uom || 'pcs',
+                eta: item.eta || null,
                 isManual: Boolean(item.isManual)
             }));
         const mechanics = [...state.mechanics];
@@ -4862,6 +4886,7 @@
                 if (byId('newWoForm')) byId('newWoForm').scrollTop = 0;
             }, 80);
         },
+        addPart: addNwoPartRow,
         submit
     };
     window.filterNewWOUnits = query => populateAssets(query);
@@ -4875,10 +4900,26 @@
         }
     };
     window.previewNewWOPhotos = previewPhotos;
-    window.addNwoDraftItem = addNwoDraftItem;
-    window.handleNwoMasterPartChange = handleNwoMasterPartChange;
-    window.handleNwoDraftFieldChange = handleNwoDraftFieldChange;
-    window.removeNwoDraftItem = removeNwoDraftItem;
+    window.addNwoPartRow = addNwoPartRow;
+    window.handleNwoPartSelectChange = handleNwoPartSelectChange;
+    window.handleNwoPartFieldChange = handleNwoPartFieldChange;
+    window.removeNwoPartRow = removeNwoPartRow;
+    window.addNwoDraftItem = addNwoPartRow;
+    window.handleNwoMasterPartChange = handleNwoPartSelectChange;
+    window.handleNwoDraftFieldChange = handleNwoPartFieldChange;
+    window.removeNwoDraftItem = removeNwoPartRow;
+
+    // Global document-level click delegation for robust button interaction
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!target) return;
+        const addBtn = target.closest('#nwo-btn-add-part, .wo-parts-add-btn');
+        if (addBtn) {
+            event.preventDefault();
+            event.stopPropagation();
+            addNwoPartRow();
+        }
+    }, true);
 })();
 
 // ============================================================================

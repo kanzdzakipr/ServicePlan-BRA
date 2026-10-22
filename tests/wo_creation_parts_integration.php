@@ -21,12 +21,12 @@ $testAssetId = $asset['asset_id'];
 $testWoId = 'WO-TEST-' . bin2hex(random_bytes(4));
 
 try {
-    // 2. Prepare WO data with parts items
+    // 2. Prepare WO data with parts items including ETA
     $partsItems = [
-        ['partNumber' => 'P-001-OIL', 'description' => 'Filter Oli Engine', 'qty' => 2, 'uom' => 'Pcs', 'isManual' => false],
-        ['partNumber' => '', 'description' => 'Baut Khusus 14mm Baja', 'qty' => 4, 'uom' => 'Pcs', 'isManual' => true]
+        ['partNumber' => 'P-001-OIL', 'description' => 'Filter Oli Engine', 'qty' => 2, 'uom' => 'Pcs', 'eta' => '2026-10-25T14:00', 'isManual' => false],
+        ['partNumber' => '', 'description' => 'Baut Khusus 14mm Baja', 'qty' => 4, 'uom' => 'Pcs', 'eta' => null, 'isManual' => true]
     ];
-    $partsNote = "• 2 Pcs - Filter Oli Engine (P-001-OIL) [Gudang]\n• 4 Pcs - Baut Khusus 14mm Baja [Luar Gudang/Manual]";
+    $partsNote = "• 2 Pcs - Filter Oli Engine (P-001-OIL) [Gudang] · Estimasi Tiba: 2026-10-25 14:00\n• 4 Pcs - Baut Khusus 14mm Baja [Luar Gudang/Manual]";
 
     $woData = [
         'wo_id' => $testWoId,

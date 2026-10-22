@@ -97,7 +97,9 @@ async function connectCdp(webSocketDebuggerUrl) {
             returnByValue: true,
         });
         if (result.exceptionDetails) {
-            throw new Error(result.exceptionDetails.text || 'Evaluasi JavaScript gagal.');
+            const desc = result.exceptionDetails.exception?.description || result.exceptionDetails.text || 'Evaluasi JavaScript gagal.';
+            console.error('Browser Exception Detail:', desc);
+            throw new Error(desc);
         }
         return result.result?.value;
     }

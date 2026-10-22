@@ -303,12 +303,14 @@ switch ($method) {
                 $pNum = trim((string) ($pItem['part_number'] ?? $pItem['partNumber'] ?? ''));
                 $pQty = max(1, (int) ($pItem['qty'] ?? 1));
                 $pUom = trim((string) ($pItem['uom'] ?? 'pcs')) ?: 'pcs';
+                $pEta = trim((string) ($pItem['eta'] ?? '')) ?: null;
                 if ($pDesc !== '' || $pNum !== '') {
                     $validPartsItems[] = [
                         'part_number' => $pNum,
                         'description' => $pDesc ?: $pNum,
                         'qty' => $pQty,
                         'uom' => $pUom,
+                        'eta' => $pEta,
                         'is_manual' => !empty($pItem['is_manual']) || !empty($pItem['isManual']),
                     ];
                 }
@@ -325,7 +327,8 @@ switch ($method) {
                     $lines = array_map(function($p) {
                         $pn = $p['part_number'] ? " ({$p['part_number']})" : '';
                         $tag = $p['is_manual'] ? ' [Luar Gudang/Manual]' : ' [Gudang]';
-                        return "• {$p['qty']} {$p['uom']} - {$p['description']}{$pn}{$tag}";
+                        $eta = !empty($p['eta']) ? ' · Estimasi Tiba: ' . str_replace('T', ' ', (string) $p['eta']) : '';
+                        return "• {$p['qty']} {$p['uom']} - {$p['description']}{$pn}{$tag}{$eta}";
                     }, $validPartsItems);
                     $partsNote = implode("\n", $lines);
                 }

@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-emergency-wo-date-tooltip-10">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=<?= filemtime(__DIR__ . '/scripts/dashboard.css') ?>">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -29,7 +29,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261018-admin-recap-1"></script>
+    <script src="scripts/dashboard.js?v=<?= filemtime(__DIR__ . '/scripts/dashboard.js') ?>"></script>
     <script src="scripts/unit-properties.js?v=20261022-db-3"></script>
     <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>
@@ -4040,43 +4040,42 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <div class="wo-field"><label for="nwo-root-cause">Dugaan penyebab</label><textarea id="nwo-root-cause" rows="3" class="form-control" placeholder="Isi jika penyebab awal sudah diketahui"></textarea></div>
                         <div class="wo-field"><label for="nwo-repair-action">Pekerjaan / tindakan mekanik</label><textarea id="nwo-repair-action" rows="3" class="form-control" placeholder="Pemeriksaan, penyetelan, perbaikan, atau penggantian komponen"></textarea></div>
                         <div class="wo-field wo-field-span-2">
-                            <div class="sl-modal-section sl-spb-builder" style="border: 1px solid #dbe4ef; border-radius: 8px; padding: 14px; background: #ffffff; margin-top: 4px;">
-                                <div class="sl-modal-section-heading" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                            <div class="wo-parts-section-card">
+                                <div class="wo-parts-section-header">
                                     <div>
-                                        <span class="sl-eyebrow" style="color:var(--primary); font-size:0.62rem; font-weight:750; letter-spacing:0.04em; text-transform:uppercase;">FORM P-1 &middot; SURAT PERMINTAAN BARANG</span>
-                                        <h3 style="font-size:1.05rem; font-weight:750; color:#0f172a; margin:2px 0;">Draft SPB Unit</h3>
-                                        <p style="font-size:0.75rem; color:#64748b; margin:0;">Setiap item baru akan masuk ke Approval dan tetap tertaut ke unit serta Work Order.</p>
+                                        <span class="wo-parts-kicker"><i class="fa-solid fa-boxes-stacked"></i> Kebutuhan Material & Logistik</span>
+                                        <h4 class="wo-parts-title">Spare Part yang Di-request</h4>
+                                        <p class="wo-parts-subtitle">Daftar suku cadang yang diminta untuk perbaikan unit, kuantitas kebutuhan, serta estimasi jam & tanggal kedatangan part di lokasi.</p>
                                     </div>
-                                    <span class="sl-form-code" style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-size:0.72rem; font-weight:700;"><i class="fa-solid fa-file-invoice"></i> P-1</span>
+                                    <span class="wo-parts-badge"><i class="fa-solid fa-truck-ramp-box"></i> Request Part</span>
                                 </div>
 
-                                <div class="table-responsive sl-draft-table-wrap">
-                                    <table id="nwo-spb-item-table" class="sl-draft-table" style="width:100%;">
+                                <div class="table-responsive wo-parts-table-wrap">
+                                    <table id="nwo-spb-item-table" class="wo-parts-table">
                                         <thead>
                                             <tr>
-                                                <th style="width:28%;">Master Part / Part Number</th>
-                                                <th style="width:42%;">Deskripsi / Spesifikasi</th>
-                                                <th style="width:12%;">Qty</th>
-                                                <th style="width:10%;">Satuan</th>
-                                                <th style="width:8%; text-align:center;">Aksi</th>
+                                                <th style="width:38%;">Spare Part yang Di-request</th>
+                                                <th style="width:20%;">Jumlah (Qty & Satuan)</th>
+                                                <th style="width:30%;">Jam & Tanggal Spare Part Tiba</th>
+                                                <th style="width:12%; text-align:center;">Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody id="nwo-spb-items">
-                                            <tr><td colspan="5" class="sl-draft-empty">Belum ada draft item. Gunakan tombol Tambah Item.</td></tr>
+                                            <tr><td colspan="4" class="wo-parts-empty"><i class="fa-solid fa-box-open" style="font-size:1.3rem; color:#cbd5e1; display:block; margin-bottom:5px;"></i>Belum ada spare part yang di-request. Gunakan tombol Tambah Spare Part di bawah.</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <div class="sl-master-part-help" style="margin-top:0;">
+                                <div class="wo-parts-help">
                                     <i class="fa-solid fa-circle-info"></i>
-                                    <span>Pilih Master Part agar part number, deskripsi, dan satuan terisi otomatis. Gunakan <strong>Part baru / input manual</strong> hanya jika item belum terdaftar; pengajuan SPB tidak otomatis menambahkannya ke Master Part.</span>
+                                    <span>Pilih part dari katalog gudang atau <strong>+ Part baru / input manual</strong>. Masukkan perkiraan jam & tanggal tiba part agar tim mekanik dapat menjadwalkan perbaikan dengan tepat.</span>
                                 </div>
 
-                                <div class="sl-draft-actions" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-                                    <button type="button" class="sl-add-item-button" onclick="window.addNwoDraftItem()" style="display:inline-flex; align-items:center; gap:6px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:7px 14px; font-size:0.78rem; font-weight:600; color:#1e293b; cursor:pointer;">
-                                        <i class="fa-solid fa-plus"></i> Tambah Item
+                                <div class="wo-parts-actions-bar">
+                                    <button type="button" class="btn btn-sm btn-outline-primary wo-parts-add-btn" id="nwo-btn-add-part" onclick="window.addNwoPartRow ? window.addNwoPartRow() : (window.NewWorkOrderForm && window.NewWorkOrderForm.addPart ? window.NewWorkOrderForm.addPart() : null)">
+                                        <i class="fa-solid fa-plus"></i> Tambah Spare Part
                                     </button>
-                                    <span id="nwo-spb-counter" style="font-size:0.75rem; color:#64748b; font-weight:600;">0 item tercatat</span>
+                                    <span id="nwo-spb-counter" class="wo-parts-counter">0 spare part tercatat</span>
                                 </div>
 
                                 <textarea id="nwo-parts-needed" style="display:none;"></textarea>
