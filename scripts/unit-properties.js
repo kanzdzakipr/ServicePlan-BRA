@@ -736,7 +736,7 @@
                 <tr>
                     <td><strong>BAST/MUT/2026/08/042</strong></td>
                     <td>14 Agu 2026</td>
-                    <td>Yard KM 12 &rarr; <strong>${escapeHtml(locName)}</strong></td>
+                    <td>Yard KM 12 &rarr; <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(locName)}', 'unit-properties'); return false;" title="Buka Detail Lembar Site ${escapeHtml(locName)}"><span class="site-name-text">${escapeHtml(locName)}</span> <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></td>
                     <td>Mobilisasi unit untuk overburden hauling.</td>
                     <td><span class="p2h-badge pass">Approved</span></td>
                 </tr>
