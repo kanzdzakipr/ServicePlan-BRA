@@ -597,6 +597,7 @@ function api_route_permission(): ?string
         'fuel_logs.php' => $readWrite('fuel.read', 'fuel.write'),
         'inspections.php' => $readWrite('inspections.read', 'inspections.write'),
         'logistics.php' => $readWrite('logistics.read', 'logistics.write'),
+        'spb_workflow.php' => $readWrite('reports.read', 'logistics.write'),
         'pm_plans.php' => $readWrite('pm.read', 'pm.write'),
         'pm.php' => $readWrite('pm.read', 'pm.write'),
         'calibrations.php' => 'pm.read',
