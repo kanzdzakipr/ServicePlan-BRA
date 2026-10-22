@@ -28,6 +28,8 @@ if ([string]::IsNullOrWhiteSpace($TargetDir)) {
 $destDir = [System.IO.Path]::GetFullPath($TargetDir)
 $sqlPath = Join-Path $srcDir "scripts\u646470441_ServicePlanBRA.sql"
 $migrationPaths = @(
+    (Join-Path $srcDir "scripts\migrate_revisi_3_work_order.sql"),
+    (Join-Path $srcDir "scripts\migrate_revisi_4_work_order_support.sql"),
     (Join-Path $srcDir "scripts\migrate_wo_fields_17102026.sql"),
     (Join-Path $srcDir "scripts\migrate_notification_recipients_17102026.sql"),
     (Join-Path $srcDir "scripts\migrate_asset_hull_history_17102026.sql"),
@@ -72,6 +74,9 @@ $possiblePaths = @(
 if ($possiblePaths.Count -gt 0) {
     $mysqlExe = $possiblePaths[0]
 }
+$phpExe = Get-ChildItem -Path (Join-Path $laragonRootPath 'bin\php') -Filter 'php.exe' -Recurse -ErrorAction SilentlyContinue |
+    Sort-Object FullName -Descending |
+    Select-Object -First 1 -ExpandProperty FullName
 
 Write-Host "============================================================================" -ForegroundColor Cyan
 Write-Host " ServicePlan-BRA Local Laragon Sync Utility" -ForegroundColor Cyan
@@ -159,6 +164,20 @@ if (-not $ImportDatabase) {
             }
         }
         Write-Host "Additive migrations verified." -ForegroundColor Green
+
+        $stockImportScript = Join-Path $srcDir 'scripts\import_stock_gudang.php'
+        if ($phpExe -and (Test-Path $stockImportScript)) {
+            $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+            & $phpExe $stockImportScript --apply | Out-Null
+            Write-Host "Stock gudang master parts verified (Batch 1)." -ForegroundColor Green
+        }
+
+        $tireSeedScript = Join-Path $srcDir 'scripts\seed_all_heavy_equipment_tires.php'
+        if ($phpExe -and (Test-Path $tireSeedScript)) {
+            $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+            & $phpExe $tireSeedScript | Out-Null
+            Write-Host "Heavy equipment tire specifications verified." -ForegroundColor Green
+        }
     }
 } elseif ($mysqlExe -and (Test-Path $mysqlExe)) {
     Write-Host "`n[2/4] Importing explicitly selected local MySQL database '$DbName'..." -ForegroundColor Cyan
@@ -246,6 +265,20 @@ if (-not $ImportDatabase) {
             throw "Database migration failed: $(Split-Path $migrationPath -Leaf)"
         }
         Write-Host "Applied: $(Split-Path $migrationPath -Leaf)" -ForegroundColor Green
+    }
+
+    $stockImportScript = Join-Path $srcDir 'scripts\import_stock_gudang.php'
+    if ($phpExe -and (Test-Path $stockImportScript)) {
+        $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+        & $phpExe $stockImportScript --apply | Out-Null
+        Write-Host "Stock gudang master parts verified (Batch 1)." -ForegroundColor Green
+    }
+
+    $tireSeedScript = Join-Path $srcDir 'scripts\seed_all_heavy_equipment_tires.php'
+    if ($phpExe -and (Test-Path $tireSeedScript)) {
+        $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+        & $phpExe $tireSeedScript | Out-Null
+        Write-Host "Heavy equipment tire specifications verified." -ForegroundColor Green
     }
 } else {
     throw 'MySQL executable tidak ditemukan untuk -ImportDatabase.'

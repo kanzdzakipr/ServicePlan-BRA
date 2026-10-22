@@ -4242,6 +4242,8 @@
         mechanics: [],
         photos: [],
         photoUrls: [],
+        parts: [],
+        draft: [],
         dropzoneReady: false
     };
 
@@ -4440,6 +4442,201 @@
         if (isActive && byId('nwo-down')) byId('nwo-down').value = 'No';
     }
 
+    function defaultFallbackParts() {
+        return [
+            { partNumber: 'P-001-OIL', description: 'Filter Oli Engine Komatsu PC200-10M0', category: 'Filter', uom: 'pcs', stockQty: 23 },
+            { partNumber: 'P-002-HYD', description: 'Selang Hidrolik 3/4 Inch (2 Meter)', category: 'Hydraulic', uom: 'pcs', stockQty: 12 },
+            { partNumber: 'P-003-BIT', description: 'Cutting Bit Grader XCMG GR135', category: 'Cutting Bit', uom: 'pcs', stockQty: 60 },
+            { partNumber: 'P-004-AIR', description: 'Air Filter Primary Hino Ranger FM280', category: 'Filter', uom: 'pcs', stockQty: 18 },
+            { partNumber: 'P-005-TIRE', description: 'Ban Radial 10.00-20 Dump Truck', category: 'Tire', uom: 'pcs', stockQty: 8 },
+            { partNumber: '23304-JAF30', description: 'Element Set Fuel Filter Hino', category: 'Filter', uom: 'pcs', stockQty: 15 },
+            { partNumber: '15613-JAA10', description: 'Element Oil Filter Hino FM260', category: 'Filter', uom: 'pcs', stockQty: 14 },
+            { partNumber: 'GRS-LITHIUM-EP2', description: 'Grease Chassis Lithium EP-2 (Pail 15Kg)', category: 'Lubricant', uom: 'can', stockQty: 10 },
+            { partNumber: 'BAT-95D31L', description: 'Aki GS Astra Maintenance Free 12V 80AH', category: 'Electrical', uom: 'pcs', stockQty: 6 }
+        ];
+    }
+
+    function getNwoMasterParts() {
+        if (typeof window.SpareLogistics?.getMasterParts === 'function') {
+            const list = window.SpareLogistics.getMasterParts();
+            if (Array.isArray(list) && list.length > 0) return list;
+        }
+        if (Array.isArray(window.masterPartsShared) && window.masterPartsShared.length > 0) {
+            return window.masterPartsShared;
+        }
+        return defaultFallbackParts();
+    }
+
+    async function ensureNwoMasterParts() {
+        if (typeof window.SpareLogistics?.loadMasterParts === 'function') {
+            try {
+                const parts = await window.SpareLogistics.loadMasterParts();
+                if (Array.isArray(parts) && parts.length > 0) {
+                    window.masterPartsShared = parts;
+                    return parts;
+                }
+            } catch (e) {
+                console.warn('SpareLogistics.loadMasterParts error, falling back:', e);
+            }
+        }
+        if (!window.masterPartsShared || !window.masterPartsShared.length) {
+            try {
+                const resp = await fetch('api/logistics.php?type=parts', { headers: { Accept: 'application/json' }, cache: 'no-store' });
+                const json = await resp.json();
+                if (json && json.status === 'success' && Array.isArray(json.data)) {
+                    window.masterPartsShared = json.data.map(p => ({
+                        id: String(p.part_id || p.id || ''),
+                        partNumber: String(p.part_number || p.partNumber || '').trim(),
+                        description: String(p.part_name || p.namaParts || p.description || '').trim(),
+                        category: String(p.category || 'General').trim(),
+                        uom: String(p.unit_measure || p.satuan || p.uom || 'pcs').trim() || 'pcs',
+                        stockQty: Number(p.stock_qty ?? p.stock) || 0
+                    }));
+                }
+            } catch (e) {
+                console.warn('Fetch parts failed, using fallback:', e);
+            }
+        }
+        if (!window.masterPartsShared || !window.masterPartsShared.length) {
+            window.masterPartsShared = defaultFallbackParts();
+        }
+        return window.masterPartsShared;
+    }
+
+    function renderNwoDraftRows() {
+        const tbody = byId('nwo-spb-items');
+        if (!tbody) return;
+        const masterParts = getNwoMasterParts();
+        if (!state.draft || !state.draft.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="sl-draft-empty">Belum ada draft item. Gunakan tombol Tambah Item.</td></tr>';
+            syncNwoPartsSummary();
+            return;
+        }
+
+        tbody.innerHTML = state.draft.map((item, index) => {
+            const matchedPart = masterParts.find(p => p.partNumber && p.partNumber.toLowerCase() === (item.partNumber || '').toLowerCase());
+            const isManual = Boolean(item.isManual || (item.partNumber && !matchedPart));
+            const selectedValue = matchedPart ? matchedPart.partNumber : (isManual ? '__MANUAL__' : '');
+
+            return `
+            <tr data-nwo-draft-row="${index}" data-sl-manual="${isManual ? 'true' : 'false'}">
+                <td>
+                    <select class="sl-master-part-select" onchange="window.handleNwoMasterPartChange(${index}, this.value)" aria-label="Pilih Master Part">
+                        <option value="">Pilih Master Part...</option>
+                        ${masterParts.map(part => `
+                            <option value="${escapeText(part.partNumber)}" ${selectedValue === part.partNumber ? 'selected' : ''}>
+                                ${escapeText(part.partNumber)} · ${escapeText(part.description || 'Tanpa nama')} · stok ${part.stockQty} ${escapeText(part.uom)}
+                            </option>
+                        `).join('')}
+                        <option value="__MANUAL__" ${selectedValue === '__MANUAL__' ? 'selected' : ''}>+ Part baru / input manual</option>
+                    </select>
+                    <input type="text" value="${escapeText(item.partNumber || '')}" placeholder="Part number" oninput="window.handleNwoDraftFieldChange(${index}, 'partNumber', this.value)" ${matchedPart && !isManual ? 'readonly' : ''}>
+                </td>
+                <td>
+                    <input type="text" value="${escapeText(item.description || '')}" placeholder="Nama / spesifikasi part" oninput="window.handleNwoDraftFieldChange(${index}, 'description', this.value)" ${matchedPart && !isManual ? 'readonly' : ''}>
+                </td>
+                <td>
+                    <input type="number" min="1" value="${Number(item.qty) || 1}" oninput="window.handleNwoDraftFieldChange(${index}, 'qty', this.value)">
+                </td>
+                <td>
+                    <input type="text" value="${escapeText(item.uom || 'pcs')}" placeholder="pcs" oninput="window.handleNwoDraftFieldChange(${index}, 'uom', this.value)" ${matchedPart && !isManual ? 'readonly' : ''}>
+                </td>
+                <td style="text-align:center;">
+                    <button type="button" class="sl-remove-draft" onclick="window.removeNwoDraftItem(${index})" title="Hapus draft item">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+
+        syncNwoPartsSummary();
+    }
+
+    function syncNwoPartsSummary() {
+        const valid = (state.draft || []).filter(item => Boolean(item.partNumber || item.description));
+        const lines = valid.map(item => {
+            const pn = item.partNumber ? ` (${item.partNumber})` : '';
+            const tag = item.isManual ? ' [Luar Gudang/Manual]' : ' [Gudang]';
+            return `• ${item.qty || 1} ${item.uom || 'pcs'} - ${item.description || item.partNumber}${pn}${tag}`;
+        });
+        const textarea = byId('nwo-parts-needed');
+        if (textarea) textarea.value = lines.join('\n');
+        const counter = byId('nwo-spb-counter');
+        if (counter) counter.textContent = `${valid.length} item tercatat`;
+    }
+
+    function addNwoDraftItem(prefill = {}) {
+        if (!Array.isArray(state.draft)) state.draft = [];
+        state.draft.push({
+            partNumber: prefill.partNumber || '',
+            description: prefill.description || '',
+            qty: Number(prefill.qty) || 1,
+            uom: prefill.uom || 'pcs',
+            isManual: Boolean(prefill.isManual)
+        });
+        renderNwoDraftRows();
+        const rows = document.querySelectorAll('#nwo-spb-items tr');
+        const lastRow = rows[rows.length - 1];
+        lastRow?.querySelector('select')?.focus();
+    }
+
+    function handleNwoMasterPartChange(index, selection) {
+        if (!state.draft || !state.draft[index]) return;
+        if (selection === '__MANUAL__') {
+            state.draft[index] = {
+                partNumber: '',
+                description: '',
+                qty: state.draft[index].qty || 1,
+                uom: 'pcs',
+                isManual: true
+            };
+        } else if (!selection) {
+            state.draft[index] = {
+                partNumber: '',
+                description: '',
+                qty: state.draft[index].qty || 1,
+                uom: 'pcs',
+                isManual: false
+            };
+        } else {
+            const masterParts = getNwoMasterParts();
+            const part = masterParts.find(p => p.partNumber === selection);
+            if (part) {
+                state.draft[index] = {
+                    partNumber: part.partNumber,
+                    description: part.description,
+                    qty: state.draft[index].qty || 1,
+                    uom: part.uom,
+                    stockQty: part.stockQty,
+                    isManual: false
+                };
+            }
+        }
+        renderNwoDraftRows();
+        const row = document.querySelector(`tr[data-nwo-draft-row="${index}"]`);
+        if (selection === '__MANUAL__') {
+            row?.querySelector('input[placeholder="Part number"]')?.focus();
+        } else {
+            row?.querySelector('input[type="number"]')?.focus();
+        }
+    }
+
+    function handleNwoDraftFieldChange(index, field, value) {
+        if (!state.draft || !state.draft[index]) return;
+        if (field === 'qty') {
+            state.draft[index].qty = Math.max(1, Number(value) || 1);
+        } else {
+            state.draft[index][field] = value;
+        }
+        syncNwoPartsSummary();
+    }
+
+    function removeNwoDraftItem(index) {
+        if (!state.draft || index < 0 || index >= state.draft.length) return;
+        state.draft.splice(index, 1);
+        renderNwoDraftRows();
+    }
+
     function resetForm() {
         byId('newWoForm')?.reset();
         state.mechanics = [];
@@ -4449,6 +4646,10 @@
         if (byId('nwo-photo-preview')) byId('nwo-photo-preview').innerHTML = '';
         if (byId('nwo-trouble-at')) byId('nwo-trouble-at').value = inputDateTime();
         if (byId('nwo-started-at')) byId('nwo-started-at').value = inputDateTime();
+        if (byId('nwo-parts-needed')) byId('nwo-parts-needed').value = '';
+        state.parts = [];
+        state.draft = [];
+        renderNwoDraftRows();
         toggleMitigation(false);
         setMessage('');
     }
@@ -4495,6 +4696,16 @@
         const down = forcedOperation ? 'No' : text(byId('nwo-down')?.value || 'Yes');
         const rootCause = text(byId('nwo-root-cause')?.value);
         const repairAction = text(byId('nwo-repair-action')?.value);
+        const partsNeeded = text(byId('nwo-parts-needed')?.value);
+        const partsItems = (state.draft || [])
+            .filter(item => Boolean(item.partNumber || item.description))
+            .map(item => ({
+                partNumber: item.partNumber || '',
+                description: item.description || item.partNumber || '',
+                qty: Math.max(1, Number(item.qty) || 1),
+                uom: item.uom || 'pcs',
+                isManual: Boolean(item.isManual)
+            }));
         const mechanics = [...state.mechanics];
         const assignedTo = mechanics.length ? mechanics.join(', ') : 'Belum ada PIC';
         const currentHmKm = Number(hmValue);
@@ -4512,6 +4723,9 @@
             issue,
             rootCause,
             repairAction,
+            partsRequirement: (partsItems.length > 0 || partsNeeded) ? 'REQUIRED' : 'UNASSESSED',
+            partsRequirementNote: partsNeeded,
+            partsItems: partsItems,
             assignedTo,
             downtime: down === 'Yes' ? '0' : '-',
             equipmentType: text(byId('nwo-equipment-type')?.value),
@@ -4545,6 +4759,9 @@
             issue_description: issue,
             root_cause: rootCause,
             repair_action: repairAction,
+            parts_requirement: (partsItems.length > 0 || partsNeeded) ? 'REQUIRED' : 'UNASSESSED',
+            parts_requirement_note: partsNeeded,
+            parts_items: partsItems,
             hull_number: workOrder.hullNumber,
             equipment_type: workOrder.equipmentType,
             current_hm_km: currentHmKm,
@@ -4603,6 +4820,7 @@
             if (Array.isArray(window.globalData?.work_orders)) {
                 window.globalData.work_orders.unshift({
                     ...workOrder,
+                    status: result?.data?.status || 'Open',
                     location,
                     downtime: down === 'Yes' ? '0 jam 00 menit' : '-',
                     reportedAt: troubleAt,
@@ -4615,7 +4833,9 @@
             if (typeof window.showView === 'function') {
                 window.showView(maintenanceType === 'Preventive' ? 'pm' : 'wo');
             }
-            showSuccessToast(`${woId} berhasil dibuat untuk ${selectedAssetId}.${photoWarning}`);
+            const spbNotice = result?.data?.createdSpbId ? ` (Draft SPB Unit #${result.data.createdSpbId} diterbitkan)` : '';
+            showSuccessToast(`${woId} berhasil dibuat untuk ${selectedAssetId}.${spbNotice}${photoWarning}`);
+            window.SpareLogistics?.loadDatabaseRecords?.();
             window.syncFleetState?.();
         } catch (error) {
             console.error('Error creating WO:', error);
@@ -4633,6 +4853,9 @@
             resetForm();
             populateAssets('', selectedAssetId);
             setupDropzone();
+            ensureNwoMasterParts().then(() => {
+                renderNwoDraftRows();
+            });
             window.openModal?.('modalNewWO');
             window.setTimeout(() => {
                 byId(selectedAssetId ? 'nwo-location' : 'nwo-unit-search')?.focus({ preventScroll: true });
@@ -4652,6 +4875,10 @@
         }
     };
     window.previewNewWOPhotos = previewPhotos;
+    window.addNwoDraftItem = addNwoDraftItem;
+    window.handleNwoMasterPartChange = handleNwoMasterPartChange;
+    window.handleNwoDraftFieldChange = handleNwoDraftFieldChange;
+    window.removeNwoDraftItem = removeNwoDraftItem;
 })();
 
 // ============================================================================
@@ -5183,7 +5410,7 @@
                     </div>
                 </td>
                 <td>${primaryWo
-                ? `<strong class="sl-wo-code">${escapeHtml(primaryWo.woId)}</strong><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(primaryWo.priority || 'Normal')}</small>`
+                ? `<button type="button" class="clickable-wo-link" onclick="openWoDetailModal('${escapeHtml(primaryWo.woId)}', '${escapeHtml(asset.id)}')"><i class="fa-solid fa-screwdriver-wrench"></i> ${escapeHtml(primaryWo.woId)}</button><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(primaryWo.priority || 'Normal')}</small>`
                 : '<span class="sl-empty-value">Tidak ada WO aktif</span>'}</td>
                 <td>
                     <div class="sl-item-counter ${hasParts ? summary.overall : 'muted'}">
@@ -5701,13 +5928,47 @@
         const asset = assetById(assetId);
         if (!asset) return;
         const selectedWo = workOrderById(woId)?.assetId === assetId ? woId : activeWorkOrders(assetId)[0]?.woId || '';
+        const woObj = workOrderById(selectedWo);
+        const woPartsNote = woObj?.partsRequirementNote || woObj?.parts_requirement_note || '';
+
+        let initialDraft = [];
+        if (recommendedItem) {
+            initialDraft = [{ ...recommendedItem }];
+        } else if (Array.isArray(woObj?.partsItems) && woObj.partsItems.length > 0) {
+            initialDraft = woObj.partsItems.map(p => ({
+                partNumber: p.partNumber || '',
+                description: p.description || '',
+                qty: Number(p.qty) || 1,
+                uom: (p.uom || 'Pcs').toLowerCase(),
+                isManual: Boolean(p.isCustom || !p.partNumber)
+            }));
+        } else if (woPartsNote) {
+            const lines = woPartsNote.split('\n');
+            const parsed = [];
+            for (const line of lines) {
+                const match = line.match(/^[•\-\*]?\s*(\d+)\s*([A-Za-z]+)\s*-\s*([^(\[]+)(?:\(([^)]+)\))?/);
+                if (match) {
+                    parsed.push({
+                        qty: Number(match[1]) || 1,
+                        uom: (match[2] || 'Pcs').toLowerCase(),
+                        description: match[3].trim(),
+                        partNumber: match[4] ? match[4].trim() : '',
+                        isManual: !match[4]
+                    });
+                }
+            }
+            if (parsed.length > 0) {
+                initialDraft = parsed;
+            }
+        }
+
         state.modal = {
             assetId,
             woId: selectedWo,
-            priority: workOrderById(selectedWo)?.priority === 'High' ? 'Critical' : 'Normal',
+            priority: woObj?.priority === 'High' ? 'Critical' : 'Normal',
             rtwImpact: asset.status === 'BREAKDOWN',
-            notes: '',
-            draft: recommendedItem ? [{ ...recommendedItem }] : []
+            notes: woPartsNote,
+            draft: initialDraft
         };
         render();
     }
@@ -6084,6 +6345,10 @@
         submitDraft,
         createProcurementReport,
         close: closeDetail,
+        getMasterParts() {
+            return masterParts;
+        },
+        loadMasterParts,
         getUnitCounter(assetId) {
             const summary = summaryForAsset(assetId);
             return { items: summary.itemCount, quantity: summary.requested, available: summary.available };

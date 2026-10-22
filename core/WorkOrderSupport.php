@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/CostLedger.php';
+
 final class WorkOrderSupport
 {
     public const PARTS_UNASSESSED = 'UNASSESSED';
@@ -180,11 +182,13 @@ final class WorkOrderSupport
         $workOrder = self::workOrder($db, $woId);
 
         $spb = $db->prepare(
-            'SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.urgency, pr.status, pr.notes,
+            'SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.requested_by, pr.urgency, pr.status, pr.notes,
                     pr.requested_at, COUNT(pri.id) AS item_count,
-                    COALESCE(SUM(pri.qty_requested), 0) AS total_quantity
+                    COALESCE(SUM(pri.qty_requested), 0) AS total_quantity,
+                    u.full_name AS requested_by_name
              FROM purchase_requests pr
              LEFT JOIN purchase_request_items pri ON pri.spb_id = pr.spb_id
+             LEFT JOIN users u ON u.user_id = pr.requested_by
              WHERE pr.wo_id = :wo_id
                AND (
                    NOT EXISTS (
@@ -196,10 +200,128 @@ final class WorkOrderSupport
                        WHERE active_link.spb_id = pr.spb_id AND active_link.reversed_at IS NULL
                    )
                )
-             GROUP BY pr.spb_id, pr.wo_id, pr.asset_id, pr.urgency, pr.status, pr.notes, pr.requested_at
+             GROUP BY pr.spb_id, pr.wo_id, pr.asset_id, pr.requested_by, pr.urgency, pr.status, pr.notes, pr.requested_at, u.full_name
              ORDER BY pr.requested_at DESC, pr.spb_id DESC'
         );
         $spb->execute([':wo_id' => $woId]);
+        $spbRows = $spb->fetchAll(PDO::FETCH_ASSOC);
+
+        $spbIds = array_column($spbRows, 'spb_id');
+        $spbItemsMap = [];
+        if (!empty($spbIds)) {
+            $inPlaceholders = implode(',', array_fill(0, count($spbIds), '?'));
+            $itemStmt = $db->prepare(
+                "SELECT pri.id, pri.spb_id, pri.part_number, pri.description, pri.qty_requested, pri.status,
+                        p.part_name, COALESCE(p.stock_qty, 0) AS current_stock, p.unit_measure, p.unit_cost
+                 FROM purchase_request_items pri
+                 LEFT JOIN parts p ON (p.part_number = pri.part_number OR p.part_name = pri.description)
+                 WHERE pri.spb_id IN ($inPlaceholders)
+                 ORDER BY pri.spb_id, pri.id"
+            );
+            $itemStmt->execute($spbIds);
+            while ($item = $itemStmt->fetch(PDO::FETCH_ASSOC)) {
+                $spbItemsMap[$item['spb_id']][] = [
+                    'id' => (string) $item['id'],
+                    'spbId' => (string) $item['spb_id'],
+                    'partNumber' => (string) $item['part_number'],
+                    'partName' => (string) ($item['part_name'] ?: $item['description']),
+                    'description' => (string) ($item['description'] ?? ''),
+                    'qtyRequested' => (int) $item['qty_requested'],
+                    'status' => (string) $item['status'],
+                    'currentStock' => (int) $item['current_stock'],
+                    'unit' => (string) ($item['unit_measure'] ?? 'PCS'),
+                    'unitCost' => (float) ($item['unit_cost'] ?? 0),
+                ];
+            }
+        }
+
+        // PPB (Purchase Orders) linked to this WO or its SPBs
+        $ppbStmt = $db->prepare(
+            'SELECT po.ppb_id, po.spb_id, po.wo_id, po.asset_id, po.vendor, po.project,
+                    po.quote_number, po.quote_date, po.delivery_due, po.delivery_location,
+                    po.subtotal, po.tax_amount, po.total_amount, po.status, po.created_at,
+                    u.full_name AS created_by_name
+             FROM purchase_orders po
+             LEFT JOIN users u ON u.user_id = po.created_by
+             WHERE po.wo_id = :wo_id OR po.spb_id IN (
+                 SELECT pr.spb_id FROM purchase_requests pr WHERE pr.wo_id = :wo_id_sub
+             )
+             ORDER BY po.created_at DESC, po.ppb_id DESC'
+        );
+        $ppbStmt->execute([':wo_id' => $woId, ':wo_id_sub' => $woId]);
+        $ppbRows = $ppbStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $ppbIds = array_column($ppbRows, 'ppb_id');
+        $ppbItemsMap = [];
+        if (!empty($ppbIds)) {
+            $inPpb = implode(',', array_fill(0, count($ppbIds), '?'));
+            $poiStmt = $db->prepare(
+                "SELECT poi.id, poi.ppb_id, poi.part_number, poi.description, poi.unit_measure,
+                        poi.quantity, poi.unit_price, poi.total_price, poi.notes
+                 FROM purchase_order_items poi
+                 WHERE poi.ppb_id IN ($inPpb)
+                 ORDER BY poi.ppb_id, poi.id"
+            );
+            $poiStmt->execute($ppbIds);
+            while ($poi = $poiStmt->fetch(PDO::FETCH_ASSOC)) {
+                $ppbItemsMap[$poi['ppb_id']][] = [
+                    'id' => (string) $poi['id'],
+                    'ppbId' => (string) $poi['ppb_id'],
+                    'partNumber' => (string) $poi['part_number'],
+                    'description' => (string) $poi['description'],
+                    'unit' => (string) $poi['unit_measure'],
+                    'quantity' => (int) $poi['quantity'],
+                    'unitPrice' => (float) $poi['unit_price'],
+                    'totalPrice' => (float) $poi['total_price'],
+                    'notes' => (string) ($poi['notes'] ?? ''),
+                ];
+            }
+        }
+
+        // Summary Procurement Pipeline
+        $totalSpb = count($spbRows);
+        $totalItems = 0;
+        $approvedItems = 0;
+        $orderedItems = 0;
+        $receivedItems = 0;
+        $pendingItems = 0;
+
+        foreach ($spbRows as $s) {
+            $items = $spbItemsMap[$s['spb_id']] ?? [];
+            foreach ($items as $it) {
+                $totalItems++;
+                $st = strtolower($it['status']);
+                if (str_contains($st, 'tiba') || str_contains($st, 'received') || str_contains($st, 'issued')) {
+                    $receivedItems++;
+                } elseif (str_contains($st, 'pesan') || str_contains($st, 'order') || str_contains($st, 'ppb')) {
+                    $orderedItems++;
+                } elseif (str_contains($st, 'setuju') || str_contains($st, 'approv')) {
+                    $approvedItems++;
+                } else {
+                    $pendingItems++;
+                }
+            }
+        }
+
+        $overallProcurementStatus = 'NO_PARTS';
+        if (($workOrder['parts_requirement'] ?? '') === 'REQUIRED') {
+            if ($totalSpb === 0) {
+                $overallProcurementStatus = 'NEED_SPB';
+            } elseif ($totalItems > 0 && $receivedItems >= $totalItems) {
+                $overallProcurementStatus = 'ALL_RECEIVED';
+            } elseif ($orderedItems > 0 || count($ppbRows) > 0) {
+                $overallProcurementStatus = 'ORDERED';
+            } elseif ($approvedItems > 0) {
+                $overallProcurementStatus = 'APPROVED';
+            } else {
+                $overallProcurementStatus = 'WAITING_APPROVAL';
+            }
+        } elseif (($workOrder['parts_requirement'] ?? '') === 'NOT_REQUIRED') {
+            $overallProcurementStatus = 'NOT_REQUIRED';
+        }
+
+        // Costs summary via CostLedger
+        $costs = CostLedger::getSummaryByWo($db, $woId);
 
         $services = $db->prepare(
             'SELECT service_request_id, wo_id, asset_id, service_type, provider_name,
@@ -230,20 +352,70 @@ final class WorkOrderSupport
             'workOrder' => [
                 'woId' => (string) $workOrder['wo_id'],
                 'assetId' => (string) $workOrder['asset_id'],
-                'partsRequirement' => (string) $workOrder['parts_requirement'],
+                'status' => (string) ($workOrder['status'] ?? 'Open'),
+                'priority' => (string) ($workOrder['priority'] ?? 'Normal'),
+                'maintenanceType' => (string) ($workOrder['maintenance_type'] ?? 'Corrective'),
+                'partsRequirement' => (string) ($workOrder['parts_requirement'] ?? 'UNASSESSED'),
                 'partsRequirementNote' => (string) ($workOrder['parts_requirement_note'] ?? ''),
+                'currentHmKm' => (float) ($workOrder['current_hm_km'] ?? 0),
+                'troubleAt' => (string) ($workOrder['trouble_at'] ?? ''),
+                'reportedAt' => (string) ($workOrder['reported_at'] ?? ''),
+                'repairStartedAt' => (string) ($workOrder['repair_started_at'] ?? ''),
+                'estimatedCompletionAt' => (string) ($workOrder['estimated_completion_at'] ?? ''),
+                'closedAt' => (string) ($workOrder['closed_at'] ?? ''),
+                'rawLocation' => (string) ($workOrder['raw_location'] ?? ''),
+                'issueDescription' => (string) ($workOrder['issue_description'] ?? ''),
+                'rootCause' => (string) ($workOrder['root_cause'] ?? ''),
+                'repairAction' => (string) ($workOrder['repair_action'] ?? ''),
+                'assignedMechanic' => (string) ($workOrder['assigned_mechanic'] ?? ''),
+                'assignedMechanics' => json_decode((string) ($workOrder['assigned_mechanics_json'] ?? '[]'), true) ?: [],
+                'beforePhotoUrl' => (string) ($workOrder['before_photo_url'] ?? ''),
+                'isForcedOperation' => (bool) ($workOrder['is_forced_operation'] ?? false),
+                'isDowntime' => (bool) ($workOrder['is_downtime'] ?? true),
+                'mitigationAction' => (string) ($workOrder['mitigation_action'] ?? ''),
             ],
             'purchaseRequests' => array_map(static fn(array $row): array => [
                 'spbId' => (string) $row['spb_id'],
                 'woId' => (string) $row['wo_id'],
                 'assetId' => (string) $row['asset_id'],
+                'requestedBy' => (string) ($row['requested_by_name'] ?? $row['requested_by']),
                 'urgency' => (string) $row['urgency'],
                 'status' => (string) $row['status'],
                 'notes' => (string) ($row['notes'] ?? ''),
                 'requestedAt' => (string) $row['requested_at'],
                 'itemCount' => (int) $row['item_count'],
                 'totalQuantity' => (int) $row['total_quantity'],
-            ], $spb->fetchAll(PDO::FETCH_ASSOC)),
+                'items' => $spbItemsMap[$row['spb_id']] ?? [],
+            ], $spbRows),
+            'purchaseOrders' => array_map(static fn(array $row): array => [
+                'ppbId' => (string) $row['ppb_id'],
+                'spbId' => (string) $row['spb_id'],
+                'woId' => (string) $row['wo_id'],
+                'assetId' => (string) $row['asset_id'],
+                'vendor' => (string) $row['vendor'],
+                'project' => (string) $row['project'],
+                'quoteNumber' => (string) ($row['quote_number'] ?? ''),
+                'quoteDate' => (string) ($row['quote_date'] ?? ''),
+                'deliveryDue' => (string) $row['delivery_due'],
+                'deliveryLocation' => (string) $row['delivery_location'],
+                'subtotal' => (float) $row['subtotal'],
+                'taxAmount' => (float) $row['tax_amount'],
+                'totalAmount' => (float) $row['total_amount'],
+                'status' => (string) $row['status'],
+                'createdAt' => (string) $row['created_at'],
+                'createdBy' => (string) ($row['created_by_name'] ?? ''),
+                'items' => $ppbItemsMap[$row['ppb_id']] ?? [],
+            ], $ppbRows),
+            'procurementPipeline' => [
+                'totalSpb' => $totalSpb,
+                'totalItems' => $totalItems,
+                'pendingItems' => $pendingItems,
+                'approvedItems' => $approvedItems,
+                'orderedItems' => $orderedItems,
+                'receivedItems' => $receivedItems,
+                'overallStatus' => $overallProcurementStatus,
+                'ppbCount' => count($ppbRows),
+            ],
             'partUsage' => array_map(static fn(array $row): array => [
                 'transactionId' => (int) $row['transaction_id'],
                 'date' => (string) $row['transaction_date'],
@@ -257,6 +429,7 @@ final class WorkOrderSupport
                 'assetId' => (string) $row['asset_id'],
             ], $usage->fetchAll(PDO::FETCH_ASSOC)),
             'serviceRequests' => array_map([self::class, 'mapServiceRequest'], $services->fetchAll(PDO::FETCH_ASSOC)),
+            'costs' => $costs,
         ];
     }
 
@@ -333,6 +506,25 @@ final class WorkOrderSupport
         );
         $stmt->execute([':note' => $note, ':wo_id' => $woId]);
         self::timeline($db, $woId, 'Kebutuhan part dicatat', $note, $actorId, $actorName);
+
+        // Auto transition WO to 'Waiting Part' if status is Open or In Progress
+        $currentStatus = (string) ($workOrder['status'] ?? 'Open');
+        if (in_array($currentStatus, ['Open', 'In Progress'], true)) {
+            $updWo = $db->prepare("UPDATE work_orders SET status = 'Waiting Part' WHERE wo_id = :wo_id");
+            $updWo->execute([':wo_id' => $woId]);
+            self::timeline(
+                $db,
+                $woId,
+                'Status otomatis: Waiting Part',
+                "Status WO dialihkan ke Waiting Part karena terdapat kebutuhan suku cadang aktif" . ($spbId ? " ({$spbId})" : "") . ".",
+                $actorId,
+                $actorName,
+                'Waiting Part',
+                $currentStatus,
+                'STATUS_CHANGE'
+            );
+        }
+
         self::notify(
             $db,
             'PART_REQUEST',
@@ -342,6 +534,48 @@ final class WorkOrderSupport
             (string) $workOrder['asset_id'],
             $spbId
         );
+    }
+
+    public static function checkAndResumeWorkOrder(PDO $db, string $woId, ?int $actorId, string $actorName): bool
+    {
+        $workOrder = self::workOrder($db, $woId);
+        if (($workOrder['status'] ?? '') !== 'Waiting Part') {
+            return false;
+        }
+
+        $pending = $db->prepare(
+            "SELECT COUNT(*) FROM purchase_requests
+             WHERE wo_id = :wo_id AND status NOT IN ('Issued', 'Closed', 'Cancelled')"
+        );
+        $pending->execute([':wo_id' => $woId]);
+        $pendingCount = (int) $pending->fetchColumn();
+
+        if ($pendingCount === 0) {
+            $upd = $db->prepare("UPDATE work_orders SET status = 'In Progress' WHERE wo_id = :wo_id");
+            $upd->execute([':wo_id' => $woId]);
+            self::timeline(
+                $db,
+                $woId,
+                'Status otomatis: In Progress',
+                'Status WO dikembalikan ke In Progress karena seluruh suku cadang telah siap/diterbitkan.',
+                $actorId,
+                $actorName,
+                'In Progress',
+                'Waiting Part',
+                'STATUS_CHANGE'
+            );
+            self::notify(
+                $db,
+                'WO_RESUMED',
+                "Work Order #{$woId} Siap Dikerjakan",
+                "Seluruh kebutuhan suku cadang untuk Work Order #{$woId} (Unit: {$workOrder['asset_id']}) telah siap. Pekerjaan dapat dilanjutkan.",
+                $woId,
+                (string) $workOrder['asset_id']
+            );
+            return true;
+        }
+
+        return false;
     }
 
     public static function createServiceRequest(
@@ -479,8 +713,7 @@ final class WorkOrderSupport
         $woId = trim($woId);
         if ($woId === '') throw new InvalidArgumentException('Work Order wajib dipilih.');
         $stmt = $db->prepare(
-            'SELECT wo_id, asset_id, parts_requirement, parts_requirement_note
-             FROM work_orders WHERE wo_id = :wo_id LIMIT 1'
+            'SELECT * FROM work_orders WHERE wo_id = :wo_id LIMIT 1'
         );
         $stmt->execute([':wo_id' => $woId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -508,15 +741,27 @@ final class WorkOrderSupport
         throw new RuntimeException('Gagal membuat nomor permintaan layanan yang unik.');
     }
 
-    private static function timeline(PDO $db, string $woId, string $title, string $description, ?int $actorId, string $actorName): void
-    {
+    private static function timeline(
+        PDO $db,
+        string $woId,
+        string $title,
+        string $description,
+        ?int $actorId,
+        string $actorName,
+        ?string $toStatus = null,
+        ?string $fromStatus = null,
+        string $eventType = 'DETAIL_UPDATE'
+    ): void {
         $stmt = $db->prepare(
             "INSERT INTO work_order_timeline
-             (wo_id, event_type, title, description, actor_user_id, actor_name)
-             VALUES (:wo_id, 'DETAIL_UPDATE', :title, :description, :actor_id, :actor_name)"
+             (wo_id, event_type, from_status, to_status, title, description, actor_user_id, actor_name)
+             VALUES (:wo_id, :event_type, :from_status, :to_status, :title, :description, :actor_id, :actor_name)"
         );
         $stmt->execute([
             ':wo_id' => $woId,
+            ':event_type' => $eventType,
+            ':from_status' => $fromStatus,
+            ':to_status' => $toStatus,
             ':title' => $title,
             ':description' => $description,
             ':actor_id' => $actorId,

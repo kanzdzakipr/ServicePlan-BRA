@@ -136,11 +136,6 @@ $allTires = $fetchAll($db,
             status_level, notes
      FROM tire_inspections
      WHERE asset_id = :asset_id
-       AND NOT (
-           COALESCE(tire_serial_no, '') REGEXP '^(BS|MI|GY|GT|MA)-1200R24-[0-9]+$'
-           AND inspected_by IS NULL
-           AND (notes IS NULL OR TRIM(notes) = '')
-       )
      ORDER BY inspected_at DESC, tire_inspection_id DESC",
     $params
 );
@@ -250,6 +245,30 @@ if (count($failureMeters) >= 2) {
         $mtbfHours = array_sum($intervals) / count($intervals);
     }
 }
+
+$asset['gallery_photos'] = $fetchAll($db,
+    "SELECT photo_id, photo_title, photo_angle, photo_url, uploaded_at
+     FROM asset_gallery_photos
+     WHERE asset_id = :asset_id
+     ORDER BY photo_id DESC",
+    $params
+);
+
+$asset['operator_history'] = $fetchAll($db,
+    "SELECT history_id, operator_name, start_date, end_date, shift_type, handover_notes
+     FROM asset_operator_history
+     WHERE asset_id = :asset_id
+     ORDER BY start_date DESC, history_id DESC",
+    $params
+);
+
+$asset['service_history'] = $fetchAll($db,
+    "SELECT service_log_id, service_sequence, service_date, service_hm_km, service_type, mechanic_pic, jo_report_number, notes
+     FROM asset_service_history
+     WHERE asset_id = :asset_id
+     ORDER BY service_date DESC, service_log_id DESC",
+    $params
+);
 
 api_json_response(200, [
     'status' => 'success',

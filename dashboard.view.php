@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261019-mon-filter-fix-1">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-emergency-wo-date-tooltip-10">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -30,7 +30,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=20261018-admin-recap-1"></script>
-    <script src="scripts/unit-properties.js?v=20261022-db-3"></script>
+    <script src="scripts/unit-properties.js?v=20261022-tire-blueprint-4"></script>
     <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>
 
@@ -128,7 +128,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             <div class="header-right">
                 <!-- Mobile Search Icon Toggle Button -->
                 <button type="button" class="btn-mobile-search-toggle" id="btnMobileSearchToggle"
-                    onclick="toggleMobileSearch(event)" title="Pencarian aset">
+                    onclick="toggleMobileSearch(event)" title="Pencarian Unit & WO" aria-label="Buka pencarian aset dan unit">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
 
@@ -400,20 +400,44 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </div>
                 </div>
 
-                <div class="dashboard-layout" style="margin-top: 20px;">
-                    <div class="panel">
+                <div class="dashboard-layout dashboard-data-layout" style="margin-top: 20px;">
+                    <div class="panel dashboard-data-panel dashboard-category-panel">
                         <div class="panel-header"><span><i class="fa-solid fa-list"></i> Unit per Kategori</span></div>
                         <div class="panel-body" style="padding: 0;">
-                            <div class="table-responsive">
-                                <table style="margin: 0; font-size: 0.85rem;">
+                            <div class="table-responsive dashboard-data-table-wrap">
+                                <table class="dashboard-data-table dashboard-category-table">
+                                    <colgroup>
+                                        <col class="col-category">
+                                        <col class="col-ready">
+                                        <col class="col-standby">
+                                        <col class="col-breakdown">
+                                        <col class="col-inspection">
+                                        <col class="col-total">
+                                    </colgroup>
                                     <thead>
                                         <tr>
-                                            <th style="white-space: nowrap;">Kategori</th>
-                                            <th style="text-align: center; color: #16a34a; white-space: nowrap;" title="Ready / Operating"><i class="fa-solid fa-circle-check"></i> Ready/Op</th>
-                                            <th style="text-align: center; color: #0284c7; white-space: nowrap;" title="Standby"><i class="fa-solid fa-pause-circle"></i> Standby</th>
-                                            <th style="text-align: center; color: #dc2626; white-space: nowrap;" title="Breakdown"><i class="fa-solid fa-triangle-exclamation"></i> Breakdown</th>
-                                            <th style="text-align: center; color: #d97706; white-space: nowrap;" title="Inspeksi / PM"><i class="fa-solid fa-clipboard-check"></i> Inspeksi</th>
-                                            <th style="text-align: center; white-space: nowrap;">Total</th>
+                                            <th>Kategori</th>
+                                            <th class="dashboard-status-heading">
+                                                <span class="dashboard-status-icon dashboard-status-ready" data-tooltip="Ready / OK" tabindex="0" role="img" aria-label="Ready / OK">
+                                                    <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                                                </span>
+                                            </th>
+                                            <th class="dashboard-status-heading">
+                                                <span class="dashboard-status-icon dashboard-status-standby" data-tooltip="Standby" tabindex="0" role="img" aria-label="Standby">
+                                                    <i class="fa-solid fa-circle-pause" aria-hidden="true"></i>
+                                                </span>
+                                            </th>
+                                            <th class="dashboard-status-heading">
+                                                <span class="dashboard-status-icon dashboard-status-breakdown" data-tooltip="Breakdown" tabindex="0" role="img" aria-label="Breakdown">
+                                                    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                                                </span>
+                                            </th>
+                                            <th class="dashboard-status-heading">
+                                                <span class="dashboard-status-icon dashboard-status-inspection" data-tooltip="Inspeksi / PM" tabindex="0" role="img" aria-label="Inspeksi / PM">
+                                                    <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
+                                                </span>
+                                            </th>
+                                            <th>Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="dashboardCategoryTable">
@@ -423,15 +447,32 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             </div>
                         </div>
                     </div>
-                    <div class="panel">
-                        <div class="panel-header"><a href="#work-order" class="dashboard-panel-link" onclick="event.preventDefault(); showView('wo');"><i class="fa-solid fa-clipboard-list"></i> Work Order Aktif (Terbaru)</a></div>
+                    <div class="panel dashboard-data-panel dashboard-work-order-panel">
+                        <div class="panel-header dashboard-wo-panel-header">
+                            <a href="#work-order" class="dashboard-panel-link" onclick="event.preventDefault(); showView('wo');"><i class="fa-solid fa-clipboard-list"></i> Work Order Aktif (Terbaru)</a>
+                            <label class="dashboard-wo-category-filter" for="dashboardWoCategoryFilter">
+                                <span>Jenis Unit</span>
+                                <span class="dashboard-wo-filter-control">
+                                    <i class="fa-solid fa-filter" aria-hidden="true"></i>
+                                    <select id="dashboardWoCategoryFilter" aria-label="Filter Work Order berdasarkan jenis unit" onchange="window.filterDashboardWoByCategory(this.value)">
+                                        <option value="ALL">Semua Jenis Unit</option>
+                                    </select>
+                                </span>
+                            </label>
+                        </div>
                         <div class="panel-body" style="padding: 0;">
-                            <div class="table-responsive dashboard-wo-scroll" id="dashboardWoScroll">
-                                <table style="margin: 0;">
+                            <div class="table-responsive dashboard-data-table-wrap dashboard-wo-scroll" id="dashboardWoScroll">
+                                <table class="dashboard-data-table dashboard-wo-table">
+                                    <colgroup>
+                                        <col class="col-wo-unit">
+                                        <col class="col-status">
+                                        <col class="col-priority">
+                                        <col class="col-mechanic">
+                                        <col class="col-downtime">
+                                    </colgroup>
                                     <thead>
                                         <tr>
-                                            <th>WO ID</th>
-                                            <th>Unit</th>
+                                            <th>Work Order / Unit</th>
                                             <th>Status</th>
                                             <th>Prioritas</th>
                                             <th>Mekanik</th>
@@ -2548,7 +2589,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                         <i class="fa-solid fa-camera"></i>
                                         <span>Galeri Foto Unit</span>
                                     </div>
-                                    <span class="prop-gallery-badge" id="propGalleryCount">0 Foto</span>
+                                    <div class="prop-gallery-header-actions">
+                                        <span class="prop-gallery-badge" id="propGalleryCount">0 Foto</span>
+                                        <button type="button" class="btn-prop-upload" id="btnPropUploadPhoto" onclick="window.triggerPropPhotoUpload()" title="Upload Foto Unit (Format: PNG, JPG, JPEG)">
+                                            <i class="fa-solid fa-plus"></i> <span>Upload</span>
+                                        </button>
+                                        <input type="file" id="propPhotoFileInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg" style="display:none;" onchange="window.handlePropPhotoSelected(this)">
+                                    </div>
                                 </div>
                                 <div class="prop-gallery-body" id="propGalleryContainer">
                                     <!-- Rendered dynamically via JS: 3x3 grid or empty state -->
@@ -4082,6 +4129,49 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <div class="wo-field wo-field-span-2"><label for="nwo-issue">Uraian jenis trouble <span>*</span></label><textarea id="nwo-issue" rows="3" class="form-control" placeholder="Gejala, indikator panel, bunyi abnormal, atau komponen terdampak" required></textarea></div>
                         <div class="wo-field"><label for="nwo-root-cause">Dugaan penyebab</label><textarea id="nwo-root-cause" rows="3" class="form-control" placeholder="Isi jika penyebab awal sudah diketahui"></textarea></div>
                         <div class="wo-field"><label for="nwo-repair-action">Pekerjaan / tindakan mekanik</label><textarea id="nwo-repair-action" rows="3" class="form-control" placeholder="Pemeriksaan, penyetelan, perbaikan, atau penggantian komponen"></textarea></div>
+                        <div class="wo-field wo-field-span-2">
+                            <div class="sl-modal-section sl-spb-builder" style="border: 1px solid #dbe4ef; border-radius: 8px; padding: 14px; background: #ffffff; margin-top: 4px;">
+                                <div class="sl-modal-section-heading" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                                    <div>
+                                        <span class="sl-eyebrow" style="color:var(--primary); font-size:0.62rem; font-weight:750; letter-spacing:0.04em; text-transform:uppercase;">FORM P-1 &middot; SURAT PERMINTAAN BARANG</span>
+                                        <h3 style="font-size:1.05rem; font-weight:750; color:#0f172a; margin:2px 0;">Draft SPB Unit</h3>
+                                        <p style="font-size:0.75rem; color:#64748b; margin:0;">Setiap item baru akan masuk ke Approval dan tetap tertaut ke unit serta Work Order.</p>
+                                    </div>
+                                    <span class="sl-form-code" style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-size:0.72rem; font-weight:700;"><i class="fa-solid fa-file-invoice"></i> P-1</span>
+                                </div>
+
+                                <div class="table-responsive sl-draft-table-wrap">
+                                    <table id="nwo-spb-item-table" class="sl-draft-table" style="width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:28%;">Master Part / Part Number</th>
+                                                <th style="width:42%;">Deskripsi / Spesifikasi</th>
+                                                <th style="width:12%;">Qty</th>
+                                                <th style="width:10%;">Satuan</th>
+                                                <th style="width:8%; text-align:center;">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="nwo-spb-items">
+                                            <tr><td colspan="5" class="sl-draft-empty">Belum ada draft item. Gunakan tombol Tambah Item.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="sl-master-part-help" style="margin-top:0;">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    <span>Pilih Master Part agar part number, deskripsi, dan satuan terisi otomatis. Gunakan <strong>Part baru / input manual</strong> hanya jika item belum terdaftar; pengajuan SPB tidak otomatis menambahkannya ke Master Part.</span>
+                                </div>
+
+                                <div class="sl-draft-actions" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+                                    <button type="button" class="sl-add-item-button" onclick="window.addNwoDraftItem()" style="display:inline-flex; align-items:center; gap:6px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:7px 14px; font-size:0.78rem; font-weight:600; color:#1e293b; cursor:pointer;">
+                                        <i class="fa-solid fa-plus"></i> Tambah Item
+                                    </button>
+                                    <span id="nwo-spb-counter" style="font-size:0.75rem; color:#64748b; font-weight:600;">0 item tercatat</span>
+                                </div>
+
+                                <textarea id="nwo-parts-needed" style="display:none;"></textarea>
+                            </div>
+                        </div>
                     </div>
                     <div class="wo-mitigation-card" id="nwo-mitigation-card">
                         <div class="wo-mitigation-head">
@@ -4132,6 +4222,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             </form>
         </div>
     </div>
+
+
 
     <!-- Modal Reject Approval -->
     <div class="modal-overlay" id="modalRejectApproval">
@@ -4205,85 +4297,301 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
             </div>
         </div>
-        <!-- Modal Detail Work Order 360&deg; -->
+        <!-- Modal Detail Work Order 360° Command Center -->
         <div class="modal-overlay" id="modalWoDetail">
-            <div class="modal-content" style="max-width: 650px; width: 95%;">
-                <div class="modal-header"
-                    style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
-                    <h2 style="margin: 0; font-size: 1.25rem;">
-                        <i class="fa-solid fa-screwdriver-wrench" style="color: var(--primary);"></i>
-                        Detail Work Order: <span id="modalWoId"></span>
-                    </h2>
-                    <button onclick="closeModal('modalWoDetail')"
-                        style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            <div class="modal-content wo-command-center-dialog">
+                <!-- Header -->
+                <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding:16px 22px; background:#f8fafc; flex-shrink:0;">
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <div style="width:36px; height:36px; border-radius:8px; background:rgba(0,123,255,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.15rem;">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                        </div>
+                        <div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <h2 style="margin:0; font-size:1.2rem; font-weight:700; color:#0f172a;">
+                                    Work Order: <span id="modalWoId"></span>
+                                </h2>
+                                <span id="modalWoStatusBadge"></span>
+                                <span id="modalWoPriorityBadge"></span>
+                            </div>
+                            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+                                <span id="modalWoUnitSubtitle">Memuat data unit...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('modalWoDetail')" style="border:none; background:none; font-size:1.6rem; color:#64748b; cursor:pointer; line-height:1; padding:4px 8px; border-radius:6px;" title="Tutup">&times;</button>
                 </div>
-                <div class="modal-body" style="padding: 20px;">
-                    <div
-                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; background: #f8f9fa; padding: 12px; border-radius: 8px; font-size: 0.88rem;">
-                        <div><strong>Unit ID:</strong> <span id="modalWoAsset"></span></div>
-                        <div><strong>Status:</strong> <span id="modalWoStatus"></span></div>
-                        <div><strong>Prioritas:</strong> <span id="modalWoPriority"></span></div>
-                        <div><strong>Downtime:</strong> <span id="modalWoDowntime"
-                                style="color:#dc3545; font-weight:bold;"></span></div>
-                        <div><strong>Jenis Pemeliharaan:</strong> <span id="modalWoMaintenanceType"></span></div>
-                        <div><strong>PIC Mekanik:</strong> <span id="modalWoMechanic"></span></div>
-                        <div><strong>Dilaporkan:</strong> <span id="modalWoReportedAt"></span></div>
-                        <div><strong>Mulai Dikerjakan:</strong> <span id="modalWoStartedAt"></span></div>
-                        <div><strong>Selesai:</strong> <span id="modalWoClosedAt"></span></div>
-                        <div><strong>Durasi Penanganan:</strong> <span id="modalWoDuration"></span></div>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="font-weight: bold; display: block; margin-bottom: 4px; font-size: 0.9rem;">Keluhan
-                            / Detail Kerusakan:</label>
-                        <div id="modalWoIssue"
-                            style="background: #fff; border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 0.88rem; line-height: 1.5; max-height: 140px; overflow-y: auto;">
+
+                <!-- Tab Navigation Bar -->
+                <div class="wo-detail-tabs-nav">
+                    <button type="button" class="wo-tab-btn active" onclick="switchWoDetailTab('tabWoInfo')">
+                        <i class="fa-solid fa-circle-info"></i> Informasi &amp; Diagnosa
+                    </button>
+                    <button type="button" class="wo-tab-btn" onclick="switchWoDetailTab('tabWoParts')">
+                        <i class="fa-solid fa-boxes-stacked"></i> Suku Cadang &amp; SPB 
+                        <span id="modalWoPartsTabBadge" class="badge bg-secondary" style="margin-left:4px; font-size:0.7rem;">0</span>
+                    </button>
+                    <button type="button" class="wo-tab-btn" onclick="switchWoDetailTab('tabWoServices')">
+                        <i class="fa-solid fa-wrench"></i> Layanan Workshop
+                        <span id="modalWoServicesTabBadge" class="badge bg-secondary" style="margin-left:4px; font-size:0.7rem;">0</span>
+                    </button>
+                    <button type="button" class="wo-tab-btn" onclick="switchWoDetailTab('tabWoCosts')">
+                        <i class="fa-solid fa-coins"></i> Biaya Perbaikan
+                        <span id="modalWoCostsTabBadge" class="badge bg-secondary" style="margin-left:4px; font-size:0.7rem;">0</span>
+                    </button>
+                    <button type="button" class="wo-tab-btn" onclick="switchWoDetailTab('tabWoTimeline')">
+                        <i class="fa-solid fa-timeline"></i> Timeline
+                    </button>
+                </div>
+
+                <!-- Tab Body Area (Scrollable) -->
+                <div class="modal-body" style="padding:0; flex:1 1 auto; overflow-y:auto; min-height:0; background:#ffffff;">
+                    <!-- TAB 1: Informasi & Diagnosa -->
+                    <div id="tabWoInfo" class="wo-tab-pane active" style="padding:20px;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:18px; background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px; font-size:0.86rem;">
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Unit Alat Berat</strong> <span id="modalWoAsset" style="font-weight:600;">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Status Pekerjaan</strong> <span id="modalWoStatus">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Tingkat Prioritas</strong> <span id="modalWoPriority">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Downtime Operasional</strong> <span id="modalWoDowntime" style="color:#dc2626; font-weight:700;">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Jenis Pemeliharaan</strong> <span id="modalWoMaintenanceType" style="font-weight:600;">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">HM / KM Aktual</strong> <span id="modalWoHmKm" style="font-weight:600;">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Lokasi Trouble</strong> <span id="modalWoLocation" style="font-weight:500;">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">PIC Mekanik</strong> <span id="modalWoMechanic" style="font-weight:600;">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Dilaporkan</strong> <span id="modalWoReportedAt">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Mulai Dikerjakan</strong> <span id="modalWoStartedAt">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Target Selesai</strong> <span id="modalWoEstimatedAt">-</span></div>
+                            <div><strong style="color:#64748b; font-size:0.78rem; display:block; text-transform:uppercase;">Selesai Ditutup</strong> <span id="modalWoClosedAt">-</span></div>
                         </div>
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:15px;">
-                        <div>
-                            <label style="font-weight:bold; display:block; margin-bottom:4px; font-size:0.9rem;">Penyebab Kerusakan:</label>
-                            <div id="modalWoRootCause" style="border:1px solid var(--border); padding:10px; border-radius:6px; font-size:0.88rem; min-height:52px;"></div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div style="background:#ffffff; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                                <label style="font-weight:700; display:block; margin-bottom:6px; font-size:0.86rem; color:#1e293b;">
+                                    <i class="fa-solid fa-triangle-exclamation" style="color:var(--warning);"></i> Keluhan / Kerusakan:
+                                </label>
+                                <div id="modalWoIssue" style="font-size:0.86rem; line-height:1.5; color:#334155; min-height:48px; white-space:pre-wrap;"></div>
+                            </div>
+                            <div style="background:#ffffff; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                                <label style="font-weight:700; display:block; margin-bottom:6px; font-size:0.86rem; color:#1e293b;">
+                                    <i class="fa-solid fa-magnifying-glass" style="color:var(--info);"></i> Penyebab Kerusakan (Root Cause):
+                                </label>
+                                <div id="modalWoRootCause" style="font-size:0.86rem; line-height:1.5; color:#334155; min-height:48px; white-space:pre-wrap;">-</div>
+                            </div>
                         </div>
-                        <div>
-                            <label style="font-weight:bold; display:block; margin-bottom:4px; font-size:0.9rem;">Tindakan Perbaikan Terakhir:</label>
-                            <div id="modalWoRepairAction" style="border:1px solid var(--border); padding:10px; border-radius:6px; font-size:0.88rem; min-height:52px;"></div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                            <div style="background:#ffffff; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                                <label style="font-weight:700; display:block; margin-bottom:6px; font-size:0.86rem; color:#1e293b;">
+                                    <i class="fa-solid fa-wrench" style="color:var(--success);"></i> Tindakan Perbaikan (Repair Action):
+                                </label>
+                                <div id="modalWoRepairAction" style="font-size:0.86rem; line-height:1.5; color:#334155; min-height:48px; white-space:pre-wrap;">-</div>
+                            </div>
+                            <div style="background:#ffffff; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                                <label style="font-weight:700; display:block; margin-bottom:6px; font-size:0.86rem; color:#1e293b;">
+                                    <i class="fa-solid fa-shield" style="color:#64748b;"></i> Tindakan Mitigasi / Operasi Paksa:
+                                </label>
+                                <div id="modalWoMitigationAction" style="font-size:0.86rem; line-height:1.5; color:#334155; min-height:48px; white-space:pre-wrap;">-</div>
+                            </div>
                         </div>
-                    </div>
-                    <div style="margin-bottom:15px;">
-                        <label style="font-weight:bold; display:block; margin-bottom:6px; font-size:0.9rem;">Timeline Penanganan:</label>
-                        <div id="modalWoTimeline" style="border-left:3px solid var(--primary); padding-left:12px; font-size:0.84rem;">
-                            <div style="color:var(--text-muted);">Memuat timeline...</div>
+
+                        <!-- Foto Trouble jika ada -->
+                        <div id="modalWoPhotoContainer" style="display:none; margin-top:14px; background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                            <label style="font-weight:700; display:block; margin-bottom:8px; font-size:0.86rem;">
+                                <i class="fa-solid fa-camera"></i> Foto Dokumentasi Sebelum / Trouble:
+                            </label>
+                            <img id="modalWoPhotoImg" src="" alt="Dokumentasi Work Order" style="max-height:220px; border-radius:6px; border:1px solid #cbd5e1; object-fit:contain; cursor:pointer;" onclick="window.open(this.src, '_blank')">
                         </div>
-                    </div>
-                    <!-- Revisi 9: Biaya Perbaikan Work Order (BR-09A) -->
-                    <div style="margin-bottom:15px; background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label style="font-weight:bold; font-size:0.88rem; margin:0;"><i class="fa-solid fa-coins" style="color:var(--warning);"></i> Biaya Perbaikan WO: <span id="modalWoCostTotal" style="color:var(--success); font-weight:700;">Rp 0</span></label>
-                            <button type="button" class="btn btn-sm btn-primary" id="modalWoAddCostBtn" style="padding:3px 8px; font-size:0.75rem;"><i class="fa-solid fa-plus"></i> Catat Biaya</button>
-                        </div>
-                        <div id="modalWoCostList" style="font-size:0.82rem; max-height:100px; overflow-y:auto;">
-                            <span class="text-muted">Memuat biaya...</span>
+
+                        <div id="modalWoFallbackNotice" style="display:none; background:#fff3cd; color:#856404; padding:10px 14px; border-radius:8px; font-size:0.84rem; margin-top:14px; border:1px solid #ffeeba;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Work Order ini dicatat langsung dari laporan insiden darurat. Silakan buat SPB atau cek histori unit.
                         </div>
                     </div>
 
-                    <div id="modalWoFallbackNotice"
-                        style="display:none; background:#fff3cd; color:#856404; padding:8px 12px; border-radius:6px; font-size:0.82rem; margin-bottom:15px;">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Work Order ini dicatat langsung dari laporan
-                        insiden darurat. Silakan buat SPB atau cek histori unit.
+                    <!-- TAB 2: Suku Cadang & SPB -->
+                    <div id="tabWoParts" class="wo-tab-pane" style="padding:20px;">
+                        <!-- Procurement Stepper Pipeline -->
+                        <div style="margin-bottom:16px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <strong style="font-size:0.88rem; color:#0f172a;"><i class="fa-solid fa-diagram-project" style="color:var(--primary);"></i> Jalur Pengadaan Suku Cadang (Procurement Pipeline)</strong>
+                                <span id="modalWoPipelineStatusBadge" class="badge bg-secondary">Memuat...</span>
+                            </div>
+                            <div class="procurement-stepper" id="modalWoPipelineStepper">
+                                <div class="procurement-step" id="stepSpb">
+                                    <div class="step-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                                    <span>SPB Dibuat</span>
+                                </div>
+                                <div class="procurement-step-line" id="lineSpbApprove"></div>
+                                <div class="procurement-step" id="stepApprove">
+                                    <div class="step-icon"><i class="fa-solid fa-check-double"></i></div>
+                                    <span>Approval</span>
+                                </div>
+                                <div class="procurement-step-line" id="lineApprovePpb"></div>
+                                <div class="procurement-step" id="stepPpb">
+                                    <div class="step-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+                                    <span>PO / PPB</span>
+                                </div>
+                                <div class="procurement-step-line" id="linePpbReceipt"></div>
+                                <div class="procurement-step" id="stepReceipt">
+                                    <div class="step-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                                    <span>Barang Tiba</span>
+                                </div>
+                                <div class="procurement-step-line" id="lineReceiptIssued"></div>
+                                <div class="procurement-step" id="stepIssued">
+                                    <div class="step-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                                    <span>Terpasang</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Decision & Action Bar -->
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                            <div>
+                                <span style="font-size:0.78rem; text-transform:uppercase; color:#64748b; font-weight:700; display:block;">Status Kebutuhan Suku Cadang</span>
+                                <span id="modalWoPartsReqStatus" style="font-weight:700; font-size:0.95rem;">-</span>
+                                <small id="modalWoPartsReqNote" style="display:block; color:#64748b; font-size:0.8rem; margin-top:2px;"></small>
+                            </div>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-primary" id="btnWoCreateSpb" style="padding:6px 14px; font-size:0.82rem;">
+                                    <i class="fa-solid fa-plus"></i> Buat SPB untuk WO Ini
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnWoMarkNoParts" style="padding:6px 14px; font-size:0.82rem;">
+                                    <i class="fa-solid fa-circle-check"></i> Konfirmasi Tanpa Part
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Daftar SPB Terkait -->
+                        <div style="margin-bottom:20px;">
+                            <h4 style="font-size:0.92rem; font-weight:700; margin-bottom:10px; color:#1e293b; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-list-check" style="color:var(--primary);"></i> Surat Permintaan Barang (SPB) Terkait WO
+                            </h4>
+                            <div id="modalWoSpbContainer">
+                                <div style="color:var(--text-muted); font-size:0.86rem; padding:12px; text-align:center;">Memuat daftar SPB...</div>
+                            </div>
+                        </div>
+
+                        <!-- Daftar PPB (Purchase Orders) Terkait -->
+                        <div style="margin-bottom:20px;">
+                            <h4 style="font-size:0.92rem; font-weight:700; margin-bottom:10px; color:#1e293b; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-cart-shopping" style="color:var(--info);"></i> Purchase Order (PPB) Terkait
+                            </h4>
+                            <div id="modalWoPpbContainer">
+                                <div style="color:var(--text-muted); font-size:0.86rem;">Belum ada Purchase Order (PPB).</div>
+                            </div>
+                        </div>
+
+                        <!-- Realisasi Pemakaian Part (Inventory OUT) -->
+                        <div>
+                            <h4 style="font-size:0.92rem; font-weight:700; margin-bottom:10px; color:#1e293b; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-arrow-right-from-bracket" style="color:var(--warning);"></i> Realisasi Pengeluaran Suku Cadang (Inventory OUT)
+                            </h4>
+                            <div id="modalWoUsageContainer">
+                                <div style="color:var(--text-muted); font-size:0.86rem;">Belum ada pengeluaran part tercatat untuk WO ini.</div>
+                            </div>
+                        </div>
                     </div>
-                    <div
-                        style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
-                        <label for="modalWoDocumentAlias">Tampilan dokumen</label>
-                        <select id="modalWoDocumentAlias" aria-label="Tampilan dokumen WO atau JO"><option value="WO">Work Order (WO)</option><option value="JO">Job Order (JO)</option></select>
-                        <button class="btn btn-secondary" id="modalWoPrintDocumentBtn" type="button" disabled>Cetak / PDF</button>
-                        <button class="btn btn-secondary" onclick="closeModal('modalWoDetail')"
-                            style="padding: 6px 14px;">Tutup</button>
-                        <button class="btn btn-primary" id="modalWoAssetBtn" style="padding: 6px 14px;"><i
-                                class="fa-solid fa-truck"></i> Detail Aset 360&deg;</button>
-                        <button class="btn btn-success" id="modalWoSpbBtn" style="padding: 6px 14px;"><i
-                                class="fa-solid fa-boxes-stacked"></i> Kebutuhan &amp; Layanan</button>
-                        <button class="btn btn-warning" id="modalWoCostBtn" style="padding: 6px 14px;"><i
-                                class="fa-solid fa-money-bill-wave"></i> Catat Biaya WO</button>
+
+                    <!-- TAB 3: Layanan Bengkel -->
+                    <div id="tabWoServices" class="wo-tab-pane" style="padding:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                            <strong style="font-size:0.92rem; color:#1e293b;"><i class="fa-solid fa-wrench" style="color:var(--primary);"></i> Layanan Workshop &amp; Vendor Eksternal</strong>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="toggleWoServiceForm()">
+                                <i class="fa-solid fa-plus"></i> Ajukan Layanan Bengkel
+                            </button>
+                        </div>
+
+                        <!-- Form Ajukan Layanan (Collapsible) -->
+                        <div id="woServiceFormCollapse" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:16px;">
+                            <h5 style="margin:0 0 10px; font-size:0.88rem; font-weight:700;">Pengajuan Layanan Perbaikan Baru</h5>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:10px;">
+                                <div>
+                                    <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Jenis Layanan</label>
+                                    <select id="modalWoServiceType" class="form-control" style="font-size:0.84rem;">
+                                        <option value="INTERNAL_WORKSHOP">Bengkel Internal</option>
+                                        <option value="EXTERNAL_WORKSHOP">Bengkel Eksternal</option>
+                                        <option value="FIELD_SERVICE">Layanan Lapangan (Field Service)</option>
+                                        <option value="SPECIALIST_VENDOR">Vendor Spesialis</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Prioritas</label>
+                                    <select id="modalWoServicePriority" class="form-control" style="font-size:0.84rem;">
+                                        <option value="Normal">Normal</option>
+                                        <option value="Urgent">Urgent</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Penyedia / Nama Bengkel</label>
+                                    <input id="modalWoServiceProvider" class="form-control" placeholder="Contoh: PT United Tractors" style="font-size:0.84rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">PIC / Petugas Ditunjuk</label>
+                                    <input id="modalWoServiceAssignee" class="form-control" placeholder="Nama teknisi / lead" style="font-size:0.84rem;">
+                                </div>
+                            </div>
+                            <div style="margin-bottom:10px;">
+                                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Deskripsi Pekerjaan <span class="text-danger">*</span></label>
+                                <textarea id="modalWoServiceDesc" class="form-control" rows="2" placeholder="Uraikan perbaikan/pekerjaan bengkel yang diminta..." style="font-size:0.84rem;"></textarea>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="toggleWoServiceForm()">Batal</button>
+                                <button type="button" class="btn btn-sm btn-success" onclick="submitModalWoServiceRequest()"><i class="fa-solid fa-paper-plane"></i> Kirim Permintaan Layanan</button>
+                            </div>
+                        </div>
+
+                        <!-- Service Request List -->
+                        <div id="modalWoServicesContainer">
+                            <div style="color:var(--text-muted); font-size:0.86rem; padding:12px; text-align:center;">Memuat data layanan bengkel...</div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Biaya Perbaikan -->
+                    <div id="tabWoCosts" class="wo-tab-pane" style="padding:20px;">
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                            <div>
+                                <span style="font-size:0.8rem; color:#64748b; font-weight:600; display:block; text-transform:uppercase;">Total Biaya Perbaikan (Realisasi Aktif)</span>
+                                <h3 id="modalWoCostTotalFormatted" style="margin:2px 0 0; font-size:1.6rem; font-weight:800; color:var(--success);">Rp 0</h3>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="modalWoAddCostBtn" style="padding:8px 16px; font-size:0.84rem;">
+                                <i class="fa-solid fa-plus"></i> Catat Transaksi Biaya
+                            </button>
+                        </div>
+
+                        <h4 style="font-size:0.92rem; font-weight:700; margin-bottom:12px; color:#1e293b;">
+                            <i class="fa-solid fa-receipt" style="color:var(--primary);"></i> Rincian Transaksi Biaya WO
+                        </h4>
+                        <div id="modalWoCostsContainer">
+                            <div style="color:var(--text-muted); font-size:0.86rem; padding:12px; text-align:center;">Memuat transaksi biaya...</div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: Timeline -->
+                    <div id="tabWoTimeline" class="wo-tab-pane" style="padding:20px;">
+                        <div id="modalWoTimeline" style="border-left:3px solid var(--primary); padding-left:14px; font-size:0.85rem; line-height:1.6;">
+                            <div style="color:var(--text-muted);">Memuat timeline penanganan...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding:12px 20px; background:#f8fafc; flex-shrink:0; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <label for="modalWoDocumentAlias" style="font-size:0.84rem; font-weight:600; margin:0;">Dokumen:</label>
+                        <select id="modalWoDocumentAlias" style="font-size:0.82rem; padding:4px 8px; border-radius:4px; border:1px solid #cbd5e1;">
+                            <option value="WO">Work Order (WO)</option>
+                            <option value="JO">Job Order (JO)</option>
+                        </select>
+                        <button class="btn btn-secondary btn-sm" id="modalWoPrintDocumentBtn" type="button" disabled style="padding:4px 10px; font-size:0.82rem;">
+                            <i class="fa-solid fa-print"></i> Cetak / PDF
+                        </button>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-outline-primary btn-sm" id="modalWoAssetBtn" style="padding:5px 12px; font-size:0.82rem;">
+                            <i class="fa-solid fa-truck"></i> Detail Aset 360&deg;
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="closeModal('modalWoDetail')" style="padding:5px 14px; font-size:0.82rem;">
+                            Tutup
+                        </button>
                     </div>
                 </div>
             </div>
@@ -4755,9 +5063,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 </div>
                 <div class="modal-footer" style="padding: 10px 18px; background:#0f172a; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
                     <span id="mplPhotoDate" style="font-size:0.75rem; color:#94a3b8;"></span>
-                    <a id="mplDownloadBtn" href="" target="_blank" class="btn btn-primary btn-sm" style="font-size:0.8rem; padding:4px 10px;">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Resolusi Penuh
-                    </a>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button type="button" class="btn btn-danger btn-sm" id="mplDeleteBtn" style="display:none; font-size:0.8rem; padding:4px 10px; background:#ef4444; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+                            <i class="fa-solid fa-trash"></i> Hapus Foto
+                        </button>
+                        <a id="mplDownloadBtn" href="" target="_blank" class="btn btn-primary btn-sm" style="font-size:0.8rem; padding:4px 10px;">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Resolusi Penuh
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -5598,31 +5911,426 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 };
             }
 
+            window.switchWoDetailTab = function (tabId) {
+                const modal = document.getElementById('modalWoDetail');
+                if (!modal) return;
+                modal.querySelectorAll('.wo-tab-btn').forEach(btn => {
+                    const match = btn.getAttribute('onclick')?.includes(tabId);
+                    btn.classList.toggle('active', !!match);
+                });
+                modal.querySelectorAll('.wo-tab-pane').forEach(pane => {
+                    pane.classList.toggle('active', pane.id === tabId);
+                });
+            };
+
+            window.toggleWoServiceForm = function () {
+                const form = document.getElementById('woServiceFormCollapse');
+                if (form) {
+                    form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+                }
+            };
+
+            window.submitModalWoServiceRequest = async function () {
+                const woId = document.getElementById('modalWoId')?.textContent?.trim() || '';
+                const serviceType = document.getElementById('modalWoServiceType')?.value || 'INTERNAL_WORKSHOP';
+                const priority = document.getElementById('modalWoServicePriority')?.value || 'Normal';
+                const providerName = document.getElementById('modalWoServiceProvider')?.value?.trim() || '';
+                const assignedTo = document.getElementById('modalWoServiceAssignee')?.value?.trim() || '';
+                const description = document.getElementById('modalWoServiceDesc')?.value?.trim() || '';
+
+                if (!woId) return alert('ID Work Order tidak valid.');
+                if (!description) return alert('Deskripsi perbaikan/pekerjaan bengkel wajib diisi.');
+
+                try {
+                    await requestWoSupport({
+                        action: 'create_service',
+                        woId,
+                        serviceType,
+                        priority,
+                        providerName,
+                        assignedTo,
+                        description
+                    });
+                    alert('Permintaan layanan workshop berhasil dikirim.');
+                    if (document.getElementById('modalWoServiceDesc')) document.getElementById('modalWoServiceDesc').value = '';
+                    if (document.getElementById('modalWoServiceProvider')) document.getElementById('modalWoServiceProvider').value = '';
+                    if (document.getElementById('modalWoServiceAssignee')) document.getElementById('modalWoServiceAssignee').value = '';
+                    window.toggleWoServiceForm();
+                    window.openWoDetailModal(woId);
+                } catch (err) {
+                    alert('Gagal mengirim permintaan layanan: ' + err.message);
+                }
+            };
+
+            window.updateModalWoServiceStatus = async function (serviceRequestId) {
+                const assignee = document.getElementById(`srvAssignee-${serviceRequestId}`)?.value.trim() || '';
+                const status = document.getElementById(`srvStatus-${serviceRequestId}`)?.value || '';
+                const woId = document.getElementById('modalWoId')?.textContent?.trim() || '';
+                try {
+                    await requestWoSupport({
+                        action: 'update_service_status',
+                        serviceRequestId,
+                        status,
+                        assignedTo: assignee
+                    });
+                    alert(`Status layanan ${serviceRequestId} berhasil diperbarui.`);
+                    if (woId) window.openWoDetailModal(woId);
+                } catch (e) {
+                    alert('Gagal memperbarui status: ' + e.message);
+                }
+            };
+
+            function renderWoCommandCenterSupport(wo, support) {
+                const pipeline = support.procurementPipeline || { overallStatus: 'NO_PARTS', totalSpb: 0, totalItems: 0, ordered: 0, received: 0 };
+                const statusBadge = document.getElementById('modalWoPipelineStatusBadge');
+                if (statusBadge) {
+                    const statusLabels = {
+                        NO_PARTS: 'Tanpa Kebutuhan Part',
+                        DRAFT: 'SPB Draf',
+                        SUBMITTED: 'SPB Diajukan',
+                        APPROVED: 'SPB Disetujui',
+                        ORDERED: 'Dalam Pemesanan (PO/PPB)',
+                        PARTIALLY_RECEIVED: 'Sebagian Diterima Gudang',
+                        RECEIVED: 'Barang Tiba di Gudang',
+                        ISSUED: 'Suku Cadang Dikeluarkan'
+                    };
+                    statusBadge.textContent = statusLabels[pipeline.overallStatus] || pipeline.overallStatus;
+                    statusBadge.className = `badge ${['RECEIVED', 'ISSUED'].includes(pipeline.overallStatus) ? 'bg-operating' : (['ORDERED', 'APPROVED'].includes(pipeline.overallStatus) ? 'bg-standby' : 'bg-secondary')}`;
+                }
+
+                const statusWeight = {
+                    NO_PARTS: 0,
+                    DRAFT: 1,
+                    SUBMITTED: 2,
+                    APPROVED: 3,
+                    ORDERED: 4,
+                    PARTIALLY_RECEIVED: 4.5,
+                    RECEIVED: 5,
+                    ISSUED: 6
+                }[pipeline.overallStatus] || 0;
+
+                const stepSpb = document.getElementById('stepSpb');
+                const lineSpbApprove = document.getElementById('lineSpbApprove');
+                const stepApprove = document.getElementById('stepApprove');
+                const lineApprovePpb = document.getElementById('lineApprovePpb');
+                const stepPpb = document.getElementById('stepPpb');
+                const linePpbReceipt = document.getElementById('linePpbReceipt');
+                const stepReceipt = document.getElementById('stepReceipt');
+                const lineReceiptIssued = document.getElementById('lineReceiptIssued');
+                const stepIssued = document.getElementById('stepIssued');
+
+                if (stepSpb) stepSpb.className = `procurement-step ${statusWeight >= 2 ? 'completed' : (statusWeight >= 1 ? 'active' : '')}`;
+                if (lineSpbApprove) lineSpbApprove.className = `procurement-step-line ${statusWeight >= 3 ? 'completed' : ''}`;
+                if (stepApprove) stepApprove.className = `procurement-step ${statusWeight >= 3 ? 'completed' : ''}`;
+                if (lineApprovePpb) lineApprovePpb.className = `procurement-step-line ${statusWeight >= 4 ? 'completed' : ''}`;
+                if (stepPpb) stepPpb.className = `procurement-step ${statusWeight >= 4 ? 'completed' : ''}`;
+                if (linePpbReceipt) linePpbReceipt.className = `procurement-step-line ${statusWeight >= 5 ? 'completed' : ''}`;
+                if (stepReceipt) stepReceipt.className = `procurement-step ${statusWeight >= 5 ? 'completed' : ''}`;
+                if (lineReceiptIssued) lineReceiptIssued.className = `procurement-step-line ${statusWeight >= 6 ? 'completed' : ''}`;
+                if (stepIssued) stepIssued.className = `procurement-step ${statusWeight >= 6 ? 'completed' : ''}`;
+
+                const reqStatusEl = document.getElementById('modalWoPartsReqStatus');
+                const reqNoteEl = document.getElementById('modalWoPartsReqNote');
+                const partsReq = support.workOrder?.partsRequirement || wo.partsRequirement || 'UNASSESSED';
+                const partsReqLabels = {
+                    UNASSESSED: '<span style="color:#64748b;"><i class="fa-solid fa-circle-question"></i> Belum Dinilai</span>',
+                    REQUIRED: '<span style="color:var(--danger);"><i class="fa-solid fa-circle-exclamation"></i> Memerlukan Suku Cadang</span>',
+                    NOT_REQUIRED: '<span style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> Tidak Memerlukan Suku Cadang</span>'
+                };
+                if (reqStatusEl) reqStatusEl.innerHTML = partsReqLabels[partsReq] || partsReq;
+                if (reqNoteEl) reqNoteEl.textContent = support.workOrder?.partsRequirementNote || '';
+
+                const btnCreateSpb = document.getElementById('btnWoCreateSpb');
+                const btnMarkNoParts = document.getElementById('btnWoMarkNoParts');
+                if (btnCreateSpb) {
+                    btnCreateSpb.onclick = () => {
+                        closeModal('modalWoDetail');
+                        openSpbForWo(wo.woId, wo.assetId);
+                    };
+                }
+                if (btnMarkNoParts) {
+                    btnMarkNoParts.onclick = async () => {
+                        const reason = prompt('Masukkan alasan perbaikan tidak memerlukan suku cadang:');
+                        if (!reason || !reason.trim()) return;
+                        try {
+                            await requestWoSupport({ action: 'mark_no_parts', woId: wo.woId, reason: reason.trim() });
+                            alert('Keputusan berhasil disimpan.');
+                            window.openWoDetailModal(wo.woId);
+                        } catch (e) {
+                            alert('Gagal: ' + e.message);
+                        }
+                    };
+                }
+
+                // SPB List
+                const spbContainer = document.getElementById('modalWoSpbContainer');
+                const spbTabBadge = document.getElementById('modalWoPartsTabBadge');
+                const purchaseRequests = Array.isArray(support.purchaseRequests) ? support.purchaseRequests : [];
+                if (spbTabBadge) spbTabBadge.textContent = purchaseRequests.length;
+
+                if (spbContainer) {
+                    if (!purchaseRequests.length) {
+                        spbContainer.innerHTML = `
+                            <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; padding:18px; text-align:center; color:var(--text-muted); font-size:0.86rem;">
+                                <i class="fa-solid fa-boxes-stacked" style="font-size:1.5rem; margin-bottom:6px; display:block; opacity:0.6;"></i>
+                                Belum ada Surat Permintaan Barang (SPB) yang diajukan untuk Work Order ini.
+                                <div style="margin-top:8px;">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="closeModal('modalWoDetail'); openSpbForWo('${escapeHtml(wo.woId)}', '${escapeHtml(wo.assetId)}')">
+                                        <i class="fa-solid fa-plus"></i> Buat SPB Sekarang
+                                    </button>
+                                </div>
+                            </div>`;
+                    } else {
+                        spbContainer.innerHTML = purchaseRequests.map(spb => {
+                            const items = Array.isArray(spb.items) ? spb.items : [];
+                            const itemsHtml = items.length ? `
+                                <div style="margin-top:10px; border-top:1px solid #e2e8f0; padding-top:8px;">
+                                    <table style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+                                        <thead>
+                                            <tr style="color:#64748b; text-align:left; border-bottom:1px solid #f1f5f9;">
+                                                <th style="padding:4px 6px;">Part Number</th>
+                                                <th style="padding:4px 6px;">Deskripsi Item</th>
+                                                <th style="padding:4px 6px; text-align:center;">Qty Minta</th>
+                                                <th style="padding:4px 6px; text-align:center;">Stok Gudang</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${items.map(item => {
+                                                const reqQty = Number(item.quantity || 0);
+                                                const stockQty = Number(item.currentStock || 0);
+                                                const isStockSufficient = stockQty >= reqQty;
+                                                const stockBadge = isStockSufficient
+                                                    ? `<span class="badge part-stock-badge-good"><i class="fa-solid fa-check"></i> Tersedia (${stockQty})</span>`
+                                                    : `<span class="badge part-stock-badge-low"><i class="fa-solid fa-triangle-exclamation"></i> Kurang (${stockQty})</span>`;
+                                                return `
+                                                    <tr style="border-bottom:1px solid #f8fafc;">
+                                                        <td style="padding:5px 6px; font-family:var(--font-mono); font-weight:600;">
+                                                            <a href="javascript:void(0)" class="clickable-part-link" onclick="closeModal('modalWoDetail'); showView('logistics', '', 'menu-logistics');">${escapeHtml(item.partNumber || '-')}</a>
+                                                        </td>
+                                                        <td style="padding:5px 6px;">${escapeHtml(item.partName || '-')}</td>
+                                                        <td style="padding:5px 6px; text-align:center; font-weight:600;">${reqQty} ${escapeHtml(item.unit || '')}</td>
+                                                        <td style="padding:5px 6px; text-align:center;">${stockBadge}</td>
+                                                    </tr>`;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>` : '';
+
+                            return `
+                                <div class="spb-card-item">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <strong style="color:var(--primary); font-size:0.92rem;">${escapeHtml(spb.spbId)}</strong>
+                                            <span class="badge ${['Issued', 'Closed'].includes(spb.status) ? 'bg-operating' : (['Approved', 'Process'].includes(spb.status) ? 'bg-standby' : 'bg-secondary')}">${escapeHtml(spb.status)}</span>
+                                            <span style="font-size:0.78rem; color:#64748b;">Diajukan: ${formatWoDateTime(spb.date || spb.createdAt)}</span>
+                                        </div>
+                                        <div style="font-size:0.8rem; color:#64748b;">
+                                            <span>${Number(spb.itemCount || 0)} Jenis Item &bull; ${Number(spb.totalQuantity || 0)} Total Qty</span>
+                                        </div>
+                                    </div>
+                                    ${spb.notes ? `<div style="font-size:0.82rem; color:#475569; margin-top:6px; background:#f1f5f9; padding:6px 10px; border-radius:4px;"><i class="fa-solid fa-note-sticky" style="color:#64748b; margin-right:4px;"></i>${escapeHtml(spb.notes)}</div>` : ''}
+                                    ${itemsHtml}
+                                </div>`;
+                        }).join('');
+                    }
+                }
+
+                // PPB List
+                const ppbContainer = document.getElementById('modalWoPpbContainer');
+                const purchaseOrders = Array.isArray(support.purchaseOrders) ? support.purchaseOrders : [];
+                if (ppbContainer) {
+                    if (!purchaseOrders.length) {
+                        ppbContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.84rem; padding:8px 0;">Belum ada Purchase Order (PPB) yang diterbitkan untuk SPB WO ini.</div>';
+                    } else {
+                        ppbContainer.innerHTML = purchaseOrders.map(ppb => `
+                            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:8px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                    <div>
+                                        <strong style="color:var(--info); font-size:0.88rem;">${escapeHtml(ppb.ppbId)}</strong>
+                                        <span class="badge ${ppb.status === 'Received' ? 'bg-operating' : 'bg-standby'}" style="margin-left:6px; font-size:0.72rem;">${escapeHtml(ppb.status)}</span>
+                                        <span style="font-size:0.78rem; color:#64748b; margin-left:8px;">SPB Ref: ${escapeHtml(ppb.spbId || '-')}</span>
+                                    </div>
+                                    <div style="font-size:0.82rem; font-weight:700; color:#0f172a;">
+                                        ${ppb.formattedTotalCost || `Rp ${Number(ppb.totalCost || 0).toLocaleString('id-ID')}`}
+                                    </div>
+                                </div>
+                                <div style="font-size:0.8rem; color:#64748b; margin-top:4px;">
+                                    Supplier/Vendor: <strong>${escapeHtml(ppb.supplierName || '-')}</strong> &bull; Estimasi Tiba: ${ppb.estimatedDeliveryDate || '-'}
+                                </div>
+                            </div>`).join('');
+                    }
+                }
+
+                // Part Usage List
+                const usageContainer = document.getElementById('modalWoUsageContainer');
+                const partUsage = Array.isArray(support.partUsage) ? support.partUsage : [];
+                if (usageContainer) {
+                    if (!partUsage.length) {
+                        usageContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.84rem; padding:8px 0;">Belum ada pengeluaran suku cadang fisik dari gudang (Inventory OUT) untuk WO ini.</div>';
+                    } else {
+                        usageContainer.innerHTML = `
+                            <table style="width:100%; border-collapse:collapse; font-size:0.82rem; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
+                                <thead>
+                                    <tr style="background:#f8fafc; color:#475569; text-align:left; border-bottom:1px solid #e2e8f0;">
+                                        <th style="padding:8px 10px;">Tanggal</th>
+                                        <th style="padding:8px 10px;">Part Number</th>
+                                        <th style="padding:8px 10px;">Nama Part</th>
+                                        <th style="padding:8px 10px; text-align:center;">Qty</th>
+                                        <th style="padding:8px 10px;">No. Referensi / BKB</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${partUsage.map(u => `
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:7px 10px; color:#64748b;">${escapeHtml(u.date || '-')}</td>
+                                            <td style="padding:7px 10px; font-family:var(--font-mono); font-weight:600;">${escapeHtml(u.partNumber || '-')}</td>
+                                            <td style="padding:7px 10px;">${escapeHtml(u.partName || '-')}</td>
+                                            <td style="padding:7px 10px; text-align:center; font-weight:700; color:var(--success);">${Number(u.quantity || 0)} ${escapeHtml(u.unit || '')}</td>
+                                            <td style="padding:7px 10px; font-size:0.78rem; color:#64748b;">${escapeHtml(u.referenceNumber || u.reportNumber || '-')}</td>
+                                        </tr>`).join('')}
+                                </tbody>
+                            </table>`;
+                    }
+                }
+
+                // Services List
+                const servicesContainer = document.getElementById('modalWoServicesContainer');
+                const servicesTabBadge = document.getElementById('modalWoServicesTabBadge');
+                const serviceRequests = Array.isArray(support.serviceRequests) ? support.serviceRequests : [];
+                if (servicesTabBadge) servicesTabBadge.textContent = serviceRequests.length;
+
+                if (servicesContainer) {
+                    if (!serviceRequests.length) {
+                        servicesContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.86rem; padding:18px; text-align:center; background:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1;">Belum ada pengajuan layanan bengkel/workshop untuk WO ini.</div>';
+                    } else {
+                        servicesContainer.innerHTML = serviceRequests.map(srv => {
+                            const transitions = {
+                                Submitted: ['Assigned', 'In Progress', 'Cancelled'],
+                                Assigned: ['In Progress', 'Completed', 'Cancelled'],
+                                'In Progress': ['Completed', 'Cancelled'],
+                                Completed: [],
+                                Cancelled: []
+                            }[srv.status] || [];
+
+                            const statusColors = {
+                                Submitted: 'bg-secondary',
+                                Assigned: 'bg-standby',
+                                'In Progress': 'bg-breakdown',
+                                Completed: 'bg-operating',
+                                Cancelled: 'bg-secondary'
+                            };
+
+                            const controls = transitions.length ? `
+                                <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center;">
+                                    <input id="srvAssignee-${escapeHtml(srv.serviceRequestId)}" class="form-control" style="flex:1; min-width:140px; font-size:0.8rem; padding:4px 8px;" value="${escapeHtml(srv.assignedTo || '')}" placeholder="PIC Teknisi">
+                                    <select id="srvStatus-${escapeHtml(srv.serviceRequestId)}" class="form-control" style="width:auto; font-size:0.8rem; padding:4px 8px;">
+                                        ${transitions.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}
+                                    </select>
+                                    <button class="btn btn-sm btn-primary" type="button" onclick="updateModalWoServiceStatus('${escapeHtml(srv.serviceRequestId)}')">Simpan</button>
+                                </div>` : '<div style="margin-top:6px; color:#64748b; font-size:0.78rem;"><i class="fa-solid fa-lock"></i> Layanan selesai / status final.</div>';
+
+                            return `
+                                <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:10px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <strong style="color:var(--primary); font-size:0.88rem;">${escapeHtml(srv.serviceRequestId)}</strong>
+                                            <span class="badge ${statusColors[srv.status] || 'bg-secondary'}" style="font-size:0.72rem;">${escapeHtml(srv.status)}</span>
+                                            <span class="badge bg-secondary" style="font-size:0.7rem;">${escapeHtml(woSupportTypeLabels[srv.serviceType] || srv.serviceType)}</span>
+                                        </div>
+                                        <span style="font-size:0.78rem; font-weight:600; color:${srv.priority === 'Emergency' ? '#dc2626' : '#2563eb'};">${escapeHtml(srv.priority)}</span>
+                                    </div>
+                                    <div style="font-size:0.84rem; color:#1e293b; line-height:1.4; margin-bottom:6px;">${escapeHtml(srv.description)}</div>
+                                    <div style="font-size:0.8rem; color:#64748b;">Penyedia: <strong>${escapeHtml(srv.providerName || '-')}</strong> &bull; PIC: <strong>${escapeHtml(srv.assignedTo || '-')}</strong></div>
+                                    ${controls}
+                                </div>`;
+                        }).join('');
+                    }
+                }
+
+                // Costs List
+                const costsContainer = document.getElementById('modalWoCostsContainer');
+                const costsTabBadge = document.getElementById('modalWoCostsTabBadge');
+                const totalFormattedEl = document.getElementById('modalWoCostTotalFormatted');
+                const addCostBtn = document.getElementById('modalWoAddCostBtn');
+
+                if (addCostBtn) {
+                    addCostBtn.onclick = () => openCostInputModal(wo.assetId, wo.woId);
+                }
+
+                const costsData = support.costs || {};
+                const costItems = Array.isArray(costsData.items) ? costsData.items : [];
+                if (costsTabBadge) costsTabBadge.textContent = costItems.length;
+                if (totalFormattedEl) totalFormattedEl.textContent = costsData.formattedTotalCost || 'Rp 0';
+
+                if (costsContainer) {
+                    if (!costItems.length) {
+                        costsContainer.innerHTML = `
+                            <div style="color:var(--text-muted); font-size:0.86rem; padding:18px; text-align:center; background:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1;">
+                                Belum ada transaksi biaya perbaikan yang dicatat untuk WO ini.
+                            </div>`;
+                    } else {
+                        costsContainer.innerHTML = `
+                            <table style="width:100%; border-collapse:collapse; font-size:0.82rem; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
+                                <thead>
+                                    <tr style="background:#f8fafc; color:#475569; text-align:left; border-bottom:1px solid #e2e8f0;">
+                                        <th style="padding:8px 10px;">Tanggal</th>
+                                        <th style="padding:8px 10px;">Kategori</th>
+                                        <th style="padding:8px 10px;">Kode Biaya</th>
+                                        <th style="padding:8px 10px;">Deskripsi Transaksi</th>
+                                        <th style="padding:8px 10px; text-align:right;">Nominal (Rp)</th>
+                                        <th style="padding:8px 10px;">No. Bukti</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${costItems.map(c => `
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:7px 10px; color:#64748b;">${escapeHtml(c.transactionDate || c.date || '-')}</td>
+                                            <td style="padding:7px 10px;"><span class="badge bg-secondary" style="font-size:0.7rem;">${escapeHtml(c.costCategory || c.category || '-')}</span></td>
+                                            <td style="padding:7px 10px; font-family:var(--font-mono); font-weight:600;">${escapeHtml(c.costCode || '-')}</td>
+                                            <td style="padding:7px 10px;">${escapeHtml(c.description || '-')}</td>
+                                            <td style="padding:7px 10px; text-align:right; font-weight:700; color:#0f172a;">${c.formattedAmount || `Rp ${Number(c.amount || 0).toLocaleString('id-ID')}`}</td>
+                                            <td style="padding:7px 10px; font-size:0.78rem; color:#64748b;">${escapeHtml(c.referenceNumber || '-')}</td>
+                                        </tr>`).join('')}
+                                </tbody>
+                            </table>`;
+                    }
+                }
+            }
+
             window.openWoDetailModal = async function (woId, fallbackAssetId, fallbackIssue) {
+                window.switchWoDetailTab('tabWoInfo');
+
                 const cachedWorkOrders = typeof globalData !== 'undefined' && Array.isArray(globalData?.work_orders)
                     ? globalData.work_orders
                     : [];
                 let wo = cachedWorkOrders.find(w => w.woId === woId) || null;
 
                 const modalWoId = document.getElementById('modalWoId');
+                const modalWoStatusBadge = document.getElementById('modalWoStatusBadge');
+                const modalWoPriorityBadge = document.getElementById('modalWoPriorityBadge');
+                const modalWoUnitSubtitle = document.getElementById('modalWoUnitSubtitle');
+
                 const modalWoAsset = document.getElementById('modalWoAsset');
                 const modalWoStatus = document.getElementById('modalWoStatus');
                 const modalWoPriority = document.getElementById('modalWoPriority');
                 const modalWoDowntime = document.getElementById('modalWoDowntime');
                 const modalWoIssue = document.getElementById('modalWoIssue');
                 const modalWoMaintenanceType = document.getElementById('modalWoMaintenanceType');
+                const modalWoHmKm = document.getElementById('modalWoHmKm');
+                const modalWoLocation = document.getElementById('modalWoLocation');
                 const modalWoMechanic = document.getElementById('modalWoMechanic');
                 const modalWoReportedAt = document.getElementById('modalWoReportedAt');
                 const modalWoStartedAt = document.getElementById('modalWoStartedAt');
+                const modalWoEstimatedAt = document.getElementById('modalWoEstimatedAt');
                 const modalWoClosedAt = document.getElementById('modalWoClosedAt');
                 const modalWoDuration = document.getElementById('modalWoDuration');
                 const modalWoRootCause = document.getElementById('modalWoRootCause');
                 const modalWoRepairAction = document.getElementById('modalWoRepairAction');
+                const modalWoMitigationAction = document.getElementById('modalWoMitigationAction');
                 const modalWoTimeline = document.getElementById('modalWoTimeline');
                 const noticeEl = document.getElementById('modalWoFallbackNotice');
 
                 const assetBtn = document.getElementById('modalWoAssetBtn');
-                const spbBtn = document.getElementById('modalWoSpbBtn');
                 const documentBtn = document.getElementById('modalWoPrintDocumentBtn');
                 const documentAlias = document.getElementById('modalWoDocumentAlias');
                 if (documentBtn) { documentBtn.disabled = true; documentBtn.onclick = null; }
@@ -5632,48 +6340,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const assetObj = allAssetsList.find(a => a.id === targetAssetId || a.asset_id === targetAssetId || a.asset_code === targetAssetId);
                 const ident = window.formatAssetIdentityDetails ? window.formatAssetIdentityDetails(assetObj || { id: targetAssetId }) : { unitId: targetAssetId || 'N/A', sn: 'Belum tersedia', plate: 'Belum tersedia' };
 
-                if (wo) {
-                    if (modalWoId) modalWoId.textContent = wo.woId;
-                    if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(ident.unitId)}</strong> <span style="font-size:0.82rem; color:var(--text-muted, #64748b); font-weight:normal; margin-left:6px;">(SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)})</span>`;
-                    if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge ${wo.status === 'Open' ? 'bg-breakdown' : wo.status === 'In Progress' ? 'bg-standby' : 'bg-operating'}">${escapeHtml(wo.status)}</span>`;
-                    if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge ${wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(wo.priority)}</span>`;
-                    if (modalWoDowntime) modalWoDowntime.textContent = wo.downtime || '0 jam 00 menit';
-                    if (modalWoIssue) modalWoIssue.textContent = wo.issue || 'Tidak ada deskripsi.';
-                    if (modalWoMaintenanceType) modalWoMaintenanceType.textContent = wo.maintenanceType || 'Corrective';
-                    if (modalWoMechanic) modalWoMechanic.textContent = wo.assignedTo || 'Belum ada PIC';
-                    if (modalWoReportedAt) modalWoReportedAt.textContent = formatWoDateTime(wo.reportedAt);
-                    if (modalWoStartedAt) modalWoStartedAt.textContent = formatWoDateTime(wo.repairStartedAt);
-                    if (modalWoClosedAt) modalWoClosedAt.textContent = formatWoDateTime(wo.closedAt);
-                    if (modalWoDuration) modalWoDuration.textContent = formatWoDuration(wo.handlingDurationMinutes);
-                    if (modalWoRootCause) modalWoRootCause.textContent = wo.rootCause || 'Belum dicatat.';
-                    if (modalWoRepairAction) modalWoRepairAction.textContent = wo.repairAction || 'Belum ada tindakan tercatat.';
-                    if (modalWoTimeline) modalWoTimeline.innerHTML = '<div style="color:var(--text-muted);">Memuat timeline...</div>';
-                    if (noticeEl) noticeEl.style.display = 'none';
-
-                    if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); openAssetModal(wo.assetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
-                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(wo.woId, wo.assetId); };
-                } else {
-                    // Fallback for emergency WOs created dynamically
-                    if (modalWoId) modalWoId.textContent = woId || 'WO-EMERGENCY';
-                    if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(ident.unitId)}</strong> <span style="font-size:0.82rem; color:var(--text-muted, #64748b); font-weight:normal; margin-left:6px;">(SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)})</span>`;
-                    if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge bg-breakdown">Open (Emergency)</span>`;
-                    if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge bg-breakdown">High Emergency</span>`;
-                    if (modalWoDowntime) modalWoDowntime.textContent = 'Dalam Penanganan Operasional';
-                    if (modalWoIssue) modalWoIssue.textContent = fallbackIssue || 'Penanganan darurat breakdown unit.';
-                    if (modalWoMaintenanceType) modalWoMaintenanceType.textContent = 'Emergency';
-                    if (modalWoMechanic) modalWoMechanic.textContent = 'Belum ada PIC';
-                    if (modalWoReportedAt) modalWoReportedAt.textContent = '-';
-                    if (modalWoStartedAt) modalWoStartedAt.textContent = '-';
-                    if (modalWoClosedAt) modalWoClosedAt.textContent = '-';
-                    if (modalWoDuration) modalWoDuration.textContent = '-';
-                    if (modalWoRootCause) modalWoRootCause.textContent = 'Belum dicatat.';
-                    if (modalWoRepairAction) modalWoRepairAction.textContent = 'Belum ada tindakan tercatat.';
-                    if (modalWoTimeline) modalWoTimeline.innerHTML = '<div style="color:var(--text-muted);">Timeline belum tersedia.</div>';
-                    if (noticeEl) noticeEl.style.display = 'block';
-
-                    if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); if (fallbackAssetId) openAssetModal(fallbackAssetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
-                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(woId, fallbackAssetId); };
-                }
+                if (modalWoId) modalWoId.textContent = woId || '-';
+                if (modalWoUnitSubtitle) modalWoUnitSubtitle.textContent = `Unit: ${ident.unitId} • SN: ${ident.sn} • Plat: ${ident.plate}`;
+                if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(ident.unitId)}</strong> <span style="font-size:0.82rem; color:var(--text-muted); font-weight:normal; margin-left:6px;">(SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)})</span>`;
+                if (modalWoIssue) modalWoIssue.textContent = wo ? (wo.issue || 'Tidak ada deskripsi.') : (fallbackIssue || 'Penanganan darurat breakdown unit.');
 
                 openModal('modalWoDetail');
 
@@ -5686,38 +6356,58 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (!response.ok || result.status !== 'success' || !result.data) {
                         throw new Error(result.message || 'Detail Work Order tidak tersedia.');
                     }
-                    const detail = normalizeWorkOrder(result.data);
+                    const rawData = result.data;
+                    const detail = normalizeWorkOrder(rawData);
+                    detail.support = rawData.support || null;
+
                     if (wo) Object.assign(wo, detail);
                     else wo = detail;
+
+                    const isEmergency = ['High', 'Emergency'].includes(detail.priority);
+                    const statusClass = detail.status === 'Open' ? 'bg-breakdown' : (detail.status === 'In Progress' ? 'bg-standby' : (detail.status === 'Waiting Part' ? 'bg-standby' : 'bg-operating'));
+                    if (modalWoStatusBadge) modalWoStatusBadge.innerHTML = `<span class="badge ${statusClass}">${escapeHtml(detail.status)}</span>`;
+                    if (modalWoPriorityBadge) modalWoPriorityBadge.innerHTML = `<span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(detail.priority)}</span>`;
+
                     if (modalWoId) modalWoId.textContent = detail.woId;
                     if (modalWoAsset) modalWoAsset.innerHTML = `<strong>${escapeHtml(detail.assetId)}</strong>`;
-                    if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge ${detail.status === 'Open' ? 'bg-breakdown' : detail.status === 'In Progress' ? 'bg-standby' : 'bg-operating'}">${escapeHtml(detail.status)}</span>`;
-                    if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge ${['High', 'Emergency'].includes(detail.priority) ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(detail.priority)}</span>`;
+                    if (modalWoStatus) modalWoStatus.innerHTML = `<span class="badge ${statusClass}">${escapeHtml(detail.status)}</span>`;
+                    if (modalWoPriority) modalWoPriority.innerHTML = `<span class="badge ${isEmergency ? 'bg-breakdown' : 'bg-operating'}">${escapeHtml(detail.priority)}</span>`;
                     if (modalWoDowntime) modalWoDowntime.textContent = detail.downtime || '0 jam 00 menit';
                     if (modalWoIssue) modalWoIssue.textContent = detail.issue || 'Tidak ada deskripsi.';
                     if (modalWoMaintenanceType) modalWoMaintenanceType.textContent = detail.maintenanceType;
+                    if (modalWoHmKm) modalWoHmKm.textContent = detail.currentHmKm ? `${Number(detail.currentHmKm).toLocaleString('id-ID')} HM/KM` : '-';
+                    if (modalWoLocation) modalWoLocation.textContent = detail.rawLocation || '-';
                     if (modalWoMechanic) modalWoMechanic.textContent = detail.assignedTo;
                     if (modalWoReportedAt) modalWoReportedAt.textContent = formatWoDateTime(detail.reportedAt);
                     if (modalWoStartedAt) modalWoStartedAt.textContent = formatWoDateTime(detail.repairStartedAt);
+                    if (modalWoEstimatedAt) modalWoEstimatedAt.textContent = formatWoDateTime(detail.estimatedCompletionAt);
                     if (modalWoClosedAt) modalWoClosedAt.textContent = formatWoDateTime(detail.closedAt);
                     if (modalWoDuration) modalWoDuration.textContent = formatWoDuration(detail.handlingDurationMinutes);
                     if (modalWoRootCause) modalWoRootCause.textContent = detail.rootCause || 'Belum dicatat.';
                     if (modalWoRepairAction) modalWoRepairAction.textContent = detail.repairAction || 'Belum ada tindakan tercatat.';
+                    if (modalWoMitigationAction) modalWoMitigationAction.textContent = detail.mitigationAction || '-';
                     if (modalWoTimeline) modalWoTimeline.innerHTML = renderWoTimeline(detail.timeline);
                     if (noticeEl) noticeEl.style.display = 'none';
+
+                    const photoContainer = document.getElementById('modalWoPhotoContainer');
+                    const photoImg = document.getElementById('modalWoPhotoImg');
+                    if (photoContainer && photoImg) {
+                        if (detail.beforePhotoUrl) {
+                            photoImg.src = detail.beforePhotoUrl;
+                            photoContainer.style.display = 'block';
+                        } else {
+                            photoContainer.style.display = 'none';
+                        }
+                    }
+
                     if (assetBtn) assetBtn.onclick = () => { closeModal('modalWoDetail'); openAssetModal(detail.assetId, 'BREAKDOWN', 'Heavy Equipment', 'Site Project'); };
-                    if (spbBtn) spbBtn.onclick = () => { closeModal('modalWoDetail'); openWoSupportModal(detail.woId, detail.assetId); };
                     if (documentBtn) {
                         documentBtn.disabled = false;
                         documentBtn.onclick = () => window.open(`api/work_order_document.php?id=${encodeURIComponent(detail.woId)}&doc_alias=${encodeURIComponent(documentAlias?.value || 'WO')}`, '_blank', 'noopener');
                     }
 
-                    // Revisi 9: Muat rincian biaya perbaikan WO & hubungkan tombol pencatatan biaya
-                    loadWoCosts(detail.woId, detail.assetId);
-                    const costBtn = document.getElementById('modalWoCostBtn');
-                    const addCostBtn = document.getElementById('modalWoAddCostBtn');
-                    if (costBtn) costBtn.onclick = () => { openCostInputModal(detail.assetId, detail.woId); };
-                    if (addCostBtn) addCostBtn.onclick = () => { openCostInputModal(detail.assetId, detail.woId); };
+                    renderWoCommandCenterSupport(detail, detail.support || {});
+
                 } catch (error) {
                     console.error('Detail Work Order gagal dimuat:', error);
                     if (modalWoTimeline) modalWoTimeline.innerHTML = `<div style="color:#dc3545;">${escapeHtml(error.message)}</div>`;
@@ -5725,8 +6415,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             async function loadWoCosts(woId, assetId) {
-                const totalEl = document.getElementById('modalWoCostTotal');
-                const listEl = document.getElementById('modalWoCostList');
+                const totalEl = document.getElementById('modalWoCostTotalFormatted') || document.getElementById('modalWoCostTotal');
+                const listEl = document.getElementById('modalWoCostsContainer') || document.getElementById('modalWoCostList');
+                const tabBadge = document.getElementById('modalWoCostsTabBadge');
                 if (totalEl) totalEl.textContent = 'Memuat...';
                 if (listEl) listEl.innerHTML = '<span class="text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Memuat rincian biaya WO...</span>';
 
@@ -5739,20 +6430,33 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (response.ok && result.status === 'success' && result.data) {
                         const costData = result.data;
                         if (totalEl) totalEl.textContent = costData.formattedTotalCost || 'Rp 0';
+                        if (tabBadge && Array.isArray(costData.items)) tabBadge.textContent = costData.items.length;
                         if (listEl) {
                             if (Array.isArray(costData.items) && costData.items.length > 0) {
-                                listEl.innerHTML = costData.items.map(it => `
-                                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding:5px 0;">
-                                        <div>
-                                            <strong>${escapeHtml(it.costCode)}</strong> - ${escapeHtml(it.description)}
-                                            <small style="color:var(--text-muted); display:block;">${escapeHtml(it.date)} | ${escapeHtml(it.vendor || '-')} | <span class="badge" style="background:#e2e8f0; color:#334155;">${escapeHtml(it.category)}</span></small>
-                                        </div>
-                                        <div style="text-align:right;">
-                                            <strong style="color:${it.isReversed ? '#94a3b8; text-decoration:line-through;' : 'var(--danger);'}">${escapeHtml(it.formattedAmount)}</strong>
-                                            ${it.isReversed ? '<span class="badge" style="background:#fee2e2; color:#b91c1c; display:block; font-size:0.7rem;">Dibatalkan</span>' : ''}
-                                        </div>
-                                    </div>
-                                `).join('');
+                                listEl.innerHTML = `
+                                    <table style="width:100%; border-collapse:collapse; font-size:0.82rem; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
+                                        <thead>
+                                            <tr style="background:#f8fafc; color:#475569; text-align:left; border-bottom:1px solid #e2e8f0;">
+                                                <th style="padding:8px 10px;">Tanggal</th>
+                                                <th style="padding:8px 10px;">Kategori</th>
+                                                <th style="padding:8px 10px;">Kode Biaya</th>
+                                                <th style="padding:8px 10px;">Deskripsi Transaksi</th>
+                                                <th style="padding:8px 10px; text-align:right;">Nominal (Rp)</th>
+                                                <th style="padding:8px 10px;">No. Bukti</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${costData.items.map(it => `
+                                                <tr style="border-bottom:1px solid #f1f5f9;">
+                                                    <td style="padding:7px 10px; color:#64748b;">${escapeHtml(it.transactionDate || it.date || '-')}</td>
+                                                    <td style="padding:7px 10px;"><span class="badge bg-secondary" style="font-size:0.7rem;">${escapeHtml(it.costCategory || it.category || '-')}</span></td>
+                                                    <td style="padding:7px 10px; font-family:var(--font-mono); font-weight:600;">${escapeHtml(it.costCode || '-')}</td>
+                                                    <td style="padding:7px 10px;">${escapeHtml(it.description || '-')}</td>
+                                                    <td style="padding:7px 10px; text-align:right; font-weight:700; color:${it.isReversed ? '#94a3b8; text-decoration:line-through;' : '#0f172a;'}">${escapeHtml(it.formattedAmount || `Rp ${Number(it.amount || 0).toLocaleString('id-ID')}`)}</td>
+                                                    <td style="padding:7px 10px; font-size:0.78rem; color:#64748b;">${escapeHtml(it.referenceNumber || '-')}</td>
+                                                </tr>`).join('')}
+                                        </tbody>
+                                    </table>`;
                             } else {
                                 listEl.innerHTML = '<span class="text-muted">Belum ada transaksi biaya perbaikan untuk Work Order ini.</span>';
                             }
@@ -6561,19 +7265,104 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 return wo?.assignedTo || wo?.assigned_mechanic || wo?.mechanic || 'Belum ada PIC';
             }
 
+            function formatWorkOrderSubmittedAt(wo) {
+                const rawValue = wo?.reportedAt ?? wo?.reported_at ?? wo?.troubleAt ?? wo?.trouble_at ?? null;
+                if (!rawValue) return 'Belum tercatat';
+                const parsed = new Date(String(rawValue).replace(' ', 'T'));
+                return Number.isNaN(parsed.getTime())
+                    ? String(rawValue)
+                    : parsed.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
+            }
+
+            function getDashboardWoDateTooltip() {
+                let tooltip = document.getElementById('dashboardWoDateTooltip');
+                if (tooltip) return tooltip;
+                tooltip = document.createElement('div');
+                tooltip.id = 'dashboardWoDateTooltip';
+                tooltip.className = 'dashboard-wo-date-tooltip';
+                tooltip.setAttribute('role', 'tooltip');
+                tooltip.setAttribute('aria-hidden', 'true');
+                tooltip.innerHTML = '<span>Tanggal pengajuan WO</span><strong></strong>';
+                document.body.appendChild(tooltip);
+                return tooltip;
+            }
+
+            window.showDashboardWoDateTooltip = function (trigger) {
+                if (!trigger) return;
+                const tooltip = getDashboardWoDateTooltip();
+                const value = trigger.dataset.submittedAt || 'Belum tercatat';
+                tooltip.querySelector('strong').textContent = value;
+                tooltip.classList.add('is-visible');
+                tooltip.setAttribute('aria-hidden', 'false');
+                trigger.setAttribute('aria-describedby', tooltip.id);
+
+                const triggerRect = trigger.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+                const viewportGap = 8;
+                const left = Math.min(
+                    window.innerWidth - tooltipRect.width - viewportGap,
+                    Math.max(viewportGap, triggerRect.left + (triggerRect.width - tooltipRect.width) / 2)
+                );
+                let top = triggerRect.bottom + 8;
+                if (top + tooltipRect.height > window.innerHeight - viewportGap) {
+                    top = triggerRect.top - tooltipRect.height - 8;
+                }
+                tooltip.style.left = `${Math.round(left)}px`;
+                tooltip.style.top = `${Math.round(Math.max(viewportGap, top))}px`;
+            };
+
+            window.hideDashboardWoDateTooltip = function (trigger) {
+                const tooltip = document.getElementById('dashboardWoDateTooltip');
+                if (!tooltip) return;
+                tooltip.classList.remove('is-visible');
+                tooltip.setAttribute('aria-hidden', 'true');
+                trigger?.removeAttribute('aria-describedby');
+            };
+
+            window.toggleAttentionIssue = function (button) {
+                const issueBlock = button?.closest('.attention-issue-summary');
+                if (!issueBlock) return;
+                const expanded = issueBlock.classList.toggle('is-expanded');
+                button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                button.innerHTML = expanded
+                    ? '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i><span>Tutup detail</span>'
+                    : '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span>Detail kendala</span>';
+            };
+
+            function updateAttentionIssueDisclosure(root = document) {
+                requestAnimationFrame(() => {
+                    root.querySelectorAll('.attention-issue-summary').forEach(issueBlock => {
+                        if (issueBlock.classList.contains('is-expanded')) return;
+                        const issueText = issueBlock.querySelector('.attention-issue-text');
+                        const toggle = issueBlock.querySelector('.attention-issue-toggle');
+                        if (!issueText || !toggle) return;
+                        toggle.hidden = issueText.scrollHeight <= issueText.clientHeight + 1;
+                    });
+                });
+            }
+
             function renderEmergencyWorkOrder(wo) {
                 const woIdEsc = escapeHtml(wo.woId);
                 const rawAssetId = wo.assetId || wo.unitId || '-';
-                const allAssetsList = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
-                const assetObj = allAssetsList.find(a => (a.id === rawAssetId || a.asset_id === rawAssetId || a.asset_code === rawAssetId));
-                const ident = window.formatAssetIdentityDetails
-                    ? window.formatAssetIdentityDetails(assetObj || { id: rawAssetId })
-                    : { unitId: rawAssetId, sn: 'Belum tersedia', plate: 'Belum tersedia' };
-                const assetIdEsc = escapeHtml(ident.unitId);
-                const targetUnitId = ident.unitId || rawAssetId;
                 const issueText = wo.issue || wo.description || 'Tidak ada deskripsi kerusakan.';
-                const issueShort = escapeHtml(issueText.length > 92 ? issueText.substring(0, 92) + '...' : issueText);
-                return `<li class="attention-item"><div class="attention-header"><div class="attention-title"><i class="fa-solid fa-fire attention-severity-icon" aria-hidden="true"></i><div class="attention-identity"><span class="attention-wo-badge">${woIdEsc}</span><span class="attention-asset-pill" title="Unit: ${assetIdEsc} | SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}"><a href="javascript:void(0)" class="unit-prop-hover-link" style="color:inherit; text-decoration:none;" onclick="window.openUnitProperties('${escapeHtml(targetUnitId)}'); return false;" title="Buka Properties Unit ${assetIdEsc}"><span class="unit-code-text">${assetIdEsc}</span><i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" style="font-size:0.7rem; margin-left:3px;" aria-hidden="true"></i></a><small style="opacity:0.85; margin-left:5px; font-weight:normal;">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</small></span></div></div><div class="attention-downtime" title="Durasi terhenti"><i class="fa-regular fa-clock" aria-hidden="true"></i> Down ${formatDowntime(wo)}</div></div><div class="attention-meta"><span><i class="fa-solid fa-user-gear" aria-hidden="true"></i><strong>Mekanik</strong> ${escapeHtml(getWorkOrderMechanic(wo))}</span></div><div class="attention-desc" title="${escapeHtml(issueText)}">${issueShort}</div><div class="attention-actions"><button class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buka detail Work Order"><i class="fa-solid fa-wrench" aria-hidden="true"></i> Detail WO</button><button class="attention-action-btn" onclick="window.openUnitProperties('${escapeHtml(targetUnitId)}')" title="Buka Properties Lengkap Unit"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Properties</button><button class="attention-action-btn" onclick="openAssetModal('${escapeHtml(rawAssetId)}', 'BREAKDOWN', 'Heavy Equipment', 'Site Project')" title="Lihat detail aset 360 derajat"><i class="fa-solid fa-truck" aria-hidden="true"></i> Aset 360&deg;</button><button class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buat permintaan sparepart"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Minta Part</button></div></li>`;
+                const issueEsc = escapeHtml(issueText);
+                const mechanicEsc = escapeHtml(getWorkOrderMechanic(wo));
+                const submittedAtEsc = escapeHtml(formatWorkOrderSubmittedAt(wo));
+                const downtimeEsc = escapeHtml(`Down ${formatDowntime(wo)}`);
+                return `<li class="attention-item attention-item-compact" aria-label="Work Order ${woIdEsc}">
+                    <div class="attention-priority-row">
+                        <span class="attention-wo-name"><i class="fa-solid fa-fire attention-severity-icon" aria-hidden="true"></i><strong>${woIdEsc}</strong></span>
+                        <span class="attention-issue-summary" title="${issueEsc}"><strong class="attention-issue-label">Kendala:</strong><span class="attention-issue-text">${issueEsc}</span><button type="button" class="attention-issue-toggle" aria-expanded="false" onclick="toggleAttentionIssue(this)" hidden><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span>Detail kendala</span></button></span>
+                        <span class="attention-downtime attention-downtime-strong" tabindex="0" data-submitted-at="${submittedAtEsc}" aria-label="${downtimeEsc}. Tanggal pengajuan WO: ${submittedAtEsc}" onmouseenter="showDashboardWoDateTooltip(this)" onmouseleave="hideDashboardWoDateTooltip(this)" onfocus="showDashboardWoDateTooltip(this)" onblur="hideDashboardWoDateTooltip(this)"><i class="fa-regular fa-clock" aria-hidden="true"></i><span>${downtimeEsc}</span></span>
+                    </div>
+                    <div class="attention-support-row">
+                        <span class="attention-mechanic-name" title="Mekanik: ${mechanicEsc}"><i class="fa-solid fa-user-gear" aria-label="Mekanik"></i><span>${mechanicEsc}</span></span>
+                        <span class="attention-compact-actions">
+                            <button type="button" class="attention-action-btn" onclick="openWoDetailView('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buka detail Work Order ${woIdEsc}"><i class="fa-solid fa-wrench" aria-hidden="true"></i><span>Detail WO</span></button>
+                            <button type="button" class="attention-action-btn btn-spb" onclick="openSpbForWo('${woIdEsc}', '${escapeHtml(rawAssetId)}')" title="Buat permintaan part untuk ${woIdEsc}"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i><span>Minta Part</span></button>
+                        </span>
+                    </div>
+                </li>`;
             }
 
             function loadNextEmergencyWoBatch() {
@@ -6588,6 +7377,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const nextItems = state.items.slice(state.rendered, state.rendered + EMERGENCY_WO_BATCH_SIZE);
                     loadingItem.remove();
                     state.list.insertAdjacentHTML('beforeend', nextItems.map(renderEmergencyWorkOrder).join(''));
+                    updateAttentionIssueDisclosure(state.list);
                     state.rendered += nextItems.length;
                     state.loading = false;
                     if (state.rendered < state.items.length) {
@@ -6612,6 +7402,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (attentionList.dataset.emergencyScrollBound !== 'true') {
                     attentionList.dataset.emergencyScrollBound = 'true';
                     attentionList.addEventListener('scroll', () => {
+                        hideDashboardWoDateTooltip();
                         if (attentionList.scrollTop + attentionList.clientHeight >= attentionList.scrollHeight - 24) {
                             attentionList.querySelector('.attention-load-more-hint')?.remove();
                             loadNextEmergencyWoBatch();
@@ -6621,31 +7412,48 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             }
 
             const DASHBOARD_WO_BATCH_SIZE = 10;
-            let dashboardWoState = { items: [], rendered: 0, loading: false, scroll: null };
+            let dashboardWoState = { allItems: [], items: [], rendered: 0, loading: false, scroll: null, selectedCategory: 'ALL' };
 
-            function renderDashboardWoRow(wo) {
-                const badgeColor = wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating';
-                const statColor = wo.status === 'Open' ? 'color: red;' : 'color: orange;';
+            function getDashboardWoContext(wo) {
                 const rawAssetId = wo.assetId || wo.unitId || '-';
-                const allAssetsList = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
-                const assetObj = allAssetsList.find(a => (a.id === rawAssetId || a.asset_id === rawAssetId || a.asset_code === rawAssetId));
+                const allAssetsList = typeof getAllAssets === 'function'
+                    ? getAllAssets()
+                    : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
+                const assetObj = allAssetsList.find(asset => (
+                    asset.id === rawAssetId
+                    || asset.asset_id === rawAssetId
+                    || asset.asset_code === rawAssetId
+                ));
                 const ident = window.formatAssetIdentityDetails
                     ? window.formatAssetIdentityDetails(assetObj || { id: rawAssetId })
                     : { unitId: rawAssetId, sn: 'Belum tersedia', plate: 'Belum tersedia' };
-                const targetUnitId = ident.unitId || rawAssetId;
-                return `<tr>
-                    <td><strong>${escapeHtml(wo.woId)}</strong></td>
-                    <td>
-                        <a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(targetUnitId)}'); return false;" title="Buka Properties Unit ${escapeHtml(targetUnitId)}">
-                            <span class="unit-code-text">${escapeHtml(ident.unitId)}</span>
+
+                return {
+                    rawAssetId,
+                    ident,
+                    targetUnitId: ident.unitId || rawAssetId,
+                    category: String(assetObj?.category || wo.category || wo.assetCategory || wo.equipmentType || 'Lainnya').trim() || 'Lainnya'
+                };
+            }
+
+            function renderDashboardWoRow(entry) {
+                const wo = entry.wo || entry;
+                const context = entry.context || getDashboardWoContext(wo);
+                const badgeColor = wo.priority === 'High' ? 'bg-breakdown' : 'bg-operating';
+                const statusText = wo.status || 'Open';
+                const statusClass = statusText === 'Open' ? 'is-open' : 'is-progress';
+                return `<tr class="dashboard-wo-row" data-category="${escapeHtml(context.category)}">
+                    <td class="dashboard-wo-unit">
+                        <div class="dashboard-wo-number">${escapeHtml(wo.woId)}</div>
+                        <a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(context.targetUnitId)}'); return false;" title="Buka Properties Unit ${escapeHtml(context.targetUnitId)}">
+                            <span class="unit-code-text">${escapeHtml(context.ident.unitId)}</span>
                             <i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" aria-hidden="true"></i>
                         </a>
-                        <div style="font-size:0.75rem; color:var(--text-muted, #64748b);">SN: ${escapeHtml(ident.sn)} | Plat: ${escapeHtml(ident.plate)}</div>
                     </td>
-                    <td><span style="font-weight:bold; ${statColor}">${escapeHtml(wo.status || 'Open')}</span></td>
-                    <td><span class="badge ${badgeColor}">${escapeHtml(wo.priority || 'Normal')}</span></td>
-                    <td>${escapeHtml(getWorkOrderMechanic(wo))}</td>
-                    <td>${escapeHtml(formatDowntime(wo))}</td>
+                    <td class="dashboard-wo-status"><span class="dashboard-wo-status-value ${statusClass}">${escapeHtml(statusText)}</span></td>
+                    <td class="dashboard-wo-priority"><span class="badge ${badgeColor}">${escapeHtml(wo.priority || 'Normal')}</span></td>
+                    <td class="dashboard-wo-mechanic">${escapeHtml(getWorkOrderMechanic(wo))}</td>
+                    <td class="dashboard-wo-downtime">${escapeHtml(formatDowntime(wo))}</td>
                 </tr>`;
             }
 
@@ -6656,7 +7464,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 state.loading = true;
                 const loadingRow = document.createElement('tr');
                 loadingRow.className = 'dashboard-wo-loading';
-                loadingRow.innerHTML = '<td colspan="6"><span class="attention-loading-bar"></span> Memuat 10 Work Order berikutnya...</td>';
+                loadingRow.innerHTML = '<td colspan="5"><span class="attention-loading-bar"></span> Memuat 10 Work Order berikutnya...</td>';
                 tbody.appendChild(loadingRow);
 
                 requestAnimationFrame(() => {
@@ -6668,23 +7476,64 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (state.rendered < state.items.length) {
                         const hintRow = document.createElement('tr');
                         hintRow.className = 'dashboard-wo-load-more-hint';
-                        hintRow.innerHTML = `<td colspan="6"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i> ${(state.items.length - state.rendered).toLocaleString('id-ID')} WO masih tersedia di bawah</td>`;
+                        hintRow.innerHTML = `<td colspan="5"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i> ${(state.items.length - state.rendered).toLocaleString('id-ID')} WO masih tersedia di bawah</td>`;
                         tbody.appendChild(hintRow);
                     }
                 });
             }
 
+            window.filterDashboardWoByCategory = function (category) {
+                const state = dashboardWoState;
+                const tbody = document.getElementById('dashboardWoTable');
+                if (!tbody || !state.scroll) return;
+
+                const availableCategories = new Set(state.allItems.map(entry => entry.category));
+                const selectedCategory = category === 'ALL' || availableCategories.has(category) ? category : 'ALL';
+                state.selectedCategory = selectedCategory;
+                state.items = selectedCategory === 'ALL'
+                    ? [...state.allItems]
+                    : state.allItems.filter(entry => entry.category === selectedCategory);
+                state.rendered = 0;
+                state.loading = false;
+                state.scroll.scrollTop = 0;
+                tbody.replaceChildren();
+
+                const filter = document.getElementById('dashboardWoCategoryFilter');
+                if (filter && filter.value !== selectedCategory) filter.value = selectedCategory;
+
+                if (!state.items.length) {
+                    const message = selectedCategory === 'ALL'
+                        ? 'Tidak ada Work Order aktif.'
+                        : `Tidak ada Work Order aktif untuk jenis unit ${selectedCategory}.`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="dashboard-wo-empty">${escapeHtml(message)}</td></tr>`;
+                    return;
+                }
+
+                loadNextDashboardWoBatch();
+            };
+
             function setupDashboardWoList(items) {
                 const scroll = document.getElementById('dashboardWoScroll');
                 const tbody = document.getElementById('dashboardWoTable');
                 if (!scroll || !tbody) return;
-                dashboardWoState = { items, rendered: 0, loading: false, scroll };
-                tbody.replaceChildren();
-                if (!items.length) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada Work Order aktif.</td></tr>';
-                    return;
+                const allItems = items.map((wo, originalIndex) => {
+                    const context = getDashboardWoContext(wo);
+                    return { wo, context, category: context.category, originalIndex };
+                });
+                const categories = [...new Set(allItems.map(entry => entry.category))]
+                    .sort((left, right) => left.localeCompare(right, 'id', { sensitivity: 'base', numeric: true }));
+                const filter = document.getElementById('dashboardWoCategoryFilter');
+                const previousSelection = filter?.value || 'ALL';
+
+                if (filter) {
+                    filter.replaceChildren(new Option('Semua Jenis Unit', 'ALL'));
+                    categories.forEach(category => filter.add(new Option(category, category)));
+                    filter.disabled = categories.length === 0;
                 }
-                loadNextDashboardWoBatch();
+
+                const selectedCategory = categories.includes(previousSelection) ? previousSelection : 'ALL';
+                dashboardWoState = { allItems, items: [], rendered: 0, loading: false, scroll, selectedCategory };
+                window.filterDashboardWoByCategory(selectedCategory);
                 if (scroll.dataset.dashboardWoScrollBound !== 'true') {
                     scroll.dataset.dashboardWoScrollBound = 'true';
                     scroll.addEventListener('scroll', () => {
@@ -6773,7 +7622,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (catTable) {
                     catTable.innerHTML = catArr.map(([cat, stats]) => `
                     <tr>
-                        <td style="display: flex; align-items: center; white-space: nowrap;">${getCategoryIcon(cat)} <button type="button" class="category-link" data-category="${escapeHtml(cat)}" onclick="openCategoryAssetModal(this.dataset.category)">${escapeHtml(cat)}</button></td>
+                        <td class="dashboard-category-name">${getCategoryIcon(cat)} <button type="button" class="category-link" data-category="${escapeHtml(cat)}" onclick="openCategoryAssetModal(this.dataset.category)">${escapeHtml(cat)}</button></td>
                         <td style="text-align: center; font-weight: 700; color: #16a34a;">${stats.readyOp}</td>
                         <td style="text-align: center; font-weight: 700; color: #0284c7;">${stats.standby}</td>
                         <td style="text-align: center; font-weight: 700; color: #dc2626;">${stats.breakdown}</td>
@@ -7358,6 +8207,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     : { unitId: rawAssetId || '-', sn: 'Belum tersedia', plate: 'Belum tersedia' };
                 const escapedAsset = escapeHtml(ident.unitId);
 
+                const partsReq = wo.partsRequirement || wo.parts_requirement || '';
+                const partsBadgeHtml = partsReq === 'REQUIRED'
+                    ? `<span class="badge kanban-part-badge" title="Pekerjaan memerlukan suku cadang / SPB"><i class="fa-solid fa-boxes-stacked"></i> Butuh Part</span>`
+                    : (statusKey === 'Waiting Part' ? `<span class="badge kanban-part-badge" style="background:#fffbeb; color:#b45309; border-color:#fde68a;" title="Menunggu kedatangan suku cadang"><i class="fa-solid fa-hourglass-half"></i> Waiting Part</span>` : '');
+
                 return `
                 <div class="kanban-card ${wo.priority}" 
                      id="wo-card-${escapeHtml(wo.woId)}" 
@@ -7384,6 +8238,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:flex; align-items:center; gap:5px;">
                         <i class="fa-solid fa-user-gear"></i> <span style="font-weight:600;">${escapeHtml(getWorkOrderMechanic(wo))}</span>
                     </div>
+                    ${partsBadgeHtml ? `<div style="margin-bottom:6px;">${partsBadgeHtml}</div>` : ''}
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:0.75rem;">
                         <span style="color:var(--text-muted); font-family:var(--font-mono);">
                             ${wo.downtime ? `<i class="fa-regular fa-clock" style="color:var(--danger);"></i> <strong style="color:var(--danger);">${escapeHtml(wo.downtime)}</strong>` : '<i class="fa-regular fa-clock"></i> Normal'}
@@ -7642,7 +8497,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         locSelect.dataset.requestedLocationId = String(assetObj.current_location_id);
                         locSelect.value = String(assetObj.current_location_id);
                     } else if (assetObj.location) {
-                        const matchedOpt = Array.from(locSelect.options).find(o => o.text.toLowerCase().includes((assetObj.location || '').toLowerCase()));
+                        const matchedOpt = Array.from(locSelect.options).find(option =>
+                            option.text.toLowerCase().includes((assetObj.location || '').toLowerCase())
+                        );
                         if (matchedOpt) locSelect.value = matchedOpt.value;
                     }
                 }

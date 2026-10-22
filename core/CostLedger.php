@@ -57,6 +57,10 @@ final class CostLedger
             KEY idx_cost_source (source_type, source_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
+        $count = (int) $db->query("SELECT COUNT(*) FROM asset_cost_transactions")->fetchColumn();
+        if ($count === 0) {
+            self::seedBaselineTransactions($db);
+        }
     }
 
     private static function seedBaselineTransactions(PDO $db): void

@@ -74,13 +74,63 @@ function Wait-JavaScript {
         if (Invoke-JavaScript -Expression $Expression) { return }
         Start-Sleep -Milliseconds 150
     } while ([DateTime]::UtcNow -lt $deadline)
-    throw "Timeout menunggu kondisi browser: $Expression"
+    $diagnostic = Invoke-JavaScript -Expression "JSON.stringify({ url: location.href, title: document.title, readyState: document.readyState, showView: typeof window.showView, viewCount: document.querySelectorAll('.view-section').length, inlineScriptErrors: Array.from(document.scripts).filter(script => !script.src).map((script, index) => { try { new Function(script.textContent + '\n//# sourceURL=dashboard-inline-' + index + '.js'); return null; } catch (error) { return { index, message: error.message, stack: error.stack }; } }).filter(Boolean), bodyText: (document.body?.innerText || '').slice(0, 240) })"
+    $scriptSource = Invoke-JavaScript -Expression "Array.from(document.scripts).filter(script => !script.src)[1]?.textContent || ''"
+    $compileResult = Invoke-Cdp -Method 'Runtime.compileScript' -Params @{ expression = $scriptSource; sourceURL = 'dashboard-inline-main.js'; persistScript = $false }
+    $compileDiagnostic = $compileResult.exceptionDetails | ConvertTo-Json -Compress -Depth 12
+    throw "Timeout menunggu kondisi browser: $Expression | Kondisi akhir: $diagnostic | Compile: $compileDiagnostic"
 }
 
 $auditExpression = @'
 (() => {
     const viewportWidth = document.documentElement.clientWidth;
     const activeView = document.querySelector('.view-section.active');
+    const dashboardWoScroll = document.getElementById('dashboardWoScroll');
+    const dashboardWoRows = dashboardWoScroll
+        ? Array.from(dashboardWoScroll.querySelectorAll('#dashboardWoTable > tr:not(.dashboard-wo-category-row):not(.dashboard-wo-loading):not(.dashboard-wo-load-more-hint)'))
+        : [];
+    const dashboardWoRect = dashboardWoScroll?.getBoundingClientRect();
+    const visibleDashboardWoRows = dashboardWoRect
+        ? dashboardWoRows.filter(row => {
+            const rect = row.getBoundingClientRect();
+            return rect.bottom > dashboardWoRect.top && rect.top < dashboardWoRect.bottom;
+        }).length
+        : 0;
+    const firstDashboardWoCell = dashboardWoRows[0]?.cells[0];
+    const firstWoNumber = firstDashboardWoCell?.querySelector('.dashboard-wo-number')?.getBoundingClientRect();
+    const firstWoUnit = firstDashboardWoCell?.querySelector('.unit-prop-hover-link')?.getBoundingClientRect();
+    const dashboardWo = dashboardWoScroll ? {
+        horizontalOverflow: Math.max(0, dashboardWoScroll.scrollWidth - dashboardWoScroll.clientWidth),
+        verticalOverflow: Math.max(0, dashboardWoScroll.scrollHeight - dashboardWoScroll.clientHeight),
+        visibleDataRows: visibleDashboardWoRows,
+        categoryFilterOptions: document.getElementById('dashboardWoCategoryFilter')?.options.length || 0,
+        categoryGroupRows: dashboardWoScroll.querySelectorAll('.dashboard-wo-category-row').length,
+        serialOrPlateVisible: dashboardWoRows.some(row => /(^|\s)(SN|Plat):/i.test(row.textContent || '')),
+        columnCount: dashboardWoScroll.querySelectorAll('thead th').length,
+        woAboveUnit: Boolean(firstWoNumber && firstWoUnit && firstWoNumber.top < firstWoUnit.top)
+    } : null;
+    const emergencyWoList = document.getElementById('attentionList');
+    const emergencyWoItems = emergencyWoList
+        ? Array.from(emergencyWoList.querySelectorAll(':scope > .attention-item-compact'))
+        : [];
+    const emergencyWoRect = emergencyWoList?.getBoundingClientRect();
+    const emergencyWo = emergencyWoList ? {
+        horizontalOverflow: Math.max(0, emergencyWoList.scrollWidth - emergencyWoList.clientWidth),
+        verticalOverflow: Math.max(0, emergencyWoList.scrollHeight - emergencyWoList.clientHeight),
+        renderedEntries: emergencyWoItems.length,
+        visibleEntries: emergencyWoRect ? emergencyWoItems.filter(item => {
+            const rect = item.getBoundingClientRect();
+            return rect.bottom > emergencyWoRect.top && rect.top < emergencyWoRect.bottom;
+        }).length : 0,
+        twoRowEntries: emergencyWoItems.filter(item => item.querySelector('.attention-priority-row') && item.querySelector('.attention-support-row')).length,
+        detailButtons: emergencyWoList.querySelectorAll('.attention-compact-actions button:not(.btn-spb)').length,
+        partButtons: emergencyWoList.querySelectorAll('.attention-compact-actions .btn-spb').length,
+        extraActions: Array.from(emergencyWoList.querySelectorAll('.attention-compact-actions button')).filter(button => /Properties|Aset 360/i.test(button.textContent || '')).length,
+        issueDetailButtons: emergencyWoList.querySelectorAll('.attention-issue-toggle:not([hidden])').length,
+        mechanicTextLabels: emergencyWoList.querySelectorAll('.attention-mechanic-name > strong').length,
+        mechanicValues: emergencyWoList.querySelectorAll('.attention-mechanic-name > span').length,
+        submittedDateTriggers: emergencyWoList.querySelectorAll('.attention-downtime-strong[data-submitted-at]').length
+    } : null;
     const localScroller = '.responsive-scroll-region, .mobile-table-scroll, .table-responsive, .table-container, .logistics-data-table-wrap, .cm-kpi-table-wrap, .cm-table-wrap, .pm-table-wrap, .pk-table-wrap, .hse-table-wrap, .prod-table-wrap, .p2h-table-wrap, .sl-table-wrap, .kanban-board, .settings-sidebar-nav, .asset-tabs, .report-view-tabs, .logistics-ledger-tabs, .cm-tabs, .pm-tabs, .pk-nav-tabs, .hse-nav-tabs, .prod-nav-tabs, .p2h-nav-tabs';
     const isVisible = element => {
         const style = getComputedStyle(element);
@@ -141,7 +191,9 @@ $auditExpression = @'
         unnamedControls: unnamedControls.slice(0, 15),
         tinyTargets: tinyTargets.slice(0, 15),
         unnamedControlCount: unnamedControls.length,
-        tinyTargetCount: tinyTargets.length
+        tinyTargetCount: tinyTargets.length,
+        dashboardWo,
+        emergencyWo
     };
 })()
 '@
@@ -209,6 +261,67 @@ try {
 
     $null = Invoke-Cdp -Method 'Page.navigate' -Params @{ url = ($BaseUrl.TrimEnd('/') + '/dashboard.php') }
     Wait-JavaScript -Expression "document.readyState === 'complete' && typeof window.showView === 'function' && document.querySelectorAll('.view-section').length >= 19" -TimeoutSeconds 30
+    Wait-JavaScript -Expression "document.querySelectorAll('#dashboardWoTable > tr').length > 0" -TimeoutSeconds 30
+
+    $dashboardFilterAudit = Invoke-JavaScript -AwaitPromise -Expression @'
+(async () => {
+    const filter = document.getElementById('dashboardWoCategoryFilter');
+    if (!filter || filter.options.length < 2) {
+        return { available: false, optionCount: filter?.options.length || 0, filteredRowsMatch: false, serialOrPlateHidden: false };
+    }
+    const targetCategory = filter.options[1].value;
+    filter.value = targetCategory;
+    filter.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const filteredRows = Array.from(document.querySelectorAll('#dashboardWoTable > .dashboard-wo-row'));
+    const result = {
+        available: true,
+        optionCount: filter.options.length,
+        targetCategory,
+        filteredRowCount: filteredRows.length,
+        filteredRowsMatch: filteredRows.length > 0 && filteredRows.every(row => row.dataset.category === targetCategory),
+        serialOrPlateHidden: filteredRows.every(row => !/(^|\s)(SN|Plat):/i.test(row.textContent || '')),
+        categoryGroupRows: document.querySelectorAll('#dashboardWoTable > .dashboard-wo-category-row').length
+    };
+    filter.value = 'ALL';
+    filter.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return result;
+})()
+'@
+
+    $dashboardEmergencyDisclosureAudit = Invoke-JavaScript -AwaitPromise -Expression @'
+(async () => {
+    const button = document.querySelector('#attentionList .attention-issue-toggle:not([hidden])');
+    if (!button) return { available: false, expands: false, collapses: false };
+    const issueText = button.closest('.attention-issue-summary')?.querySelector('.attention-issue-text');
+    if (!issueText) return { available: false, expands: false, collapses: false };
+    const collapsedHeight = issueText.clientHeight;
+    button.click();
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    const expandedHeight = issueText.clientHeight;
+    const expands = button.getAttribute('aria-expanded') === 'true' && expandedHeight > collapsedHeight;
+    button.click();
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    const downtimeTrigger = document.querySelector('#attentionList .attention-downtime-strong[data-submitted-at]');
+    window.showDashboardWoDateTooltip?.(downtimeTrigger);
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    const tooltip = document.getElementById('dashboardWoDateTooltip');
+    const tooltipRect = tooltip?.getBoundingClientRect();
+    const tooltipVisible = Boolean(tooltip?.classList.contains('is-visible'));
+    const tooltipHasDate = Boolean(tooltip?.textContent.includes('Tanggal pengajuan WO') && tooltip?.querySelector('strong')?.textContent.trim());
+    const tooltipInsideViewport = Boolean(tooltipRect && tooltipRect.left >= 0 && tooltipRect.top >= 0 && tooltipRect.right <= innerWidth && tooltipRect.bottom <= innerHeight);
+    window.hideDashboardWoDateTooltip?.(downtimeTrigger);
+    return {
+        available: true,
+        expands,
+        collapses: button.getAttribute('aria-expanded') === 'false' && issueText.clientHeight === collapsedHeight,
+        tooltipVisible,
+        tooltipHasDate,
+        tooltipInsideViewport
+    };
+})()
+'@
 
     $views = @('dashboard','monitoring','asset','wo','pm','reports','people','hse','productivity','inspection','uc','logistics','condition','fuel','biaya','approval','settings','archive','unit-properties')
     $tabButtonSelector = '.asset-tabs button, .asset-tabs .asset-tab, .report-view-tabs button, .logistics-ledger-tabs button, .cm-tabs button, .pm-tabs button, .pk-nav-tabs button, .hse-nav-tabs button, .prod-nav-tabs button, .p2h-nav-tabs button, .settings-sidebar-nav .settings-nav-item'
@@ -270,6 +383,38 @@ try {
             modalFailures = $modalFailures.Count
             widths = $Widths
         }
+        dashboardWorkOrder = @($results | Where-Object { $_.state -eq 'dashboard' } | ForEach-Object {
+            [pscustomobject]@{
+                width = $_.width
+                horizontalOverflow = $_.audit.dashboardWo.horizontalOverflow
+                verticalOverflow = $_.audit.dashboardWo.verticalOverflow
+                visibleDataRows = $_.audit.dashboardWo.visibleDataRows
+                categoryFilterOptions = $_.audit.dashboardWo.categoryFilterOptions
+                categoryGroupRows = $_.audit.dashboardWo.categoryGroupRows
+                serialOrPlateVisible = $_.audit.dashboardWo.serialOrPlateVisible
+                columnCount = $_.audit.dashboardWo.columnCount
+                woAboveUnit = $_.audit.dashboardWo.woAboveUnit
+            }
+        })
+        dashboardEmergencyWorkOrder = @($results | Where-Object { $_.state -eq 'dashboard' } | ForEach-Object {
+            [pscustomobject]@{
+                width = $_.width
+                horizontalOverflow = $_.audit.emergencyWo.horizontalOverflow
+                verticalOverflow = $_.audit.emergencyWo.verticalOverflow
+                renderedEntries = $_.audit.emergencyWo.renderedEntries
+                visibleEntries = $_.audit.emergencyWo.visibleEntries
+                twoRowEntries = $_.audit.emergencyWo.twoRowEntries
+                detailButtons = $_.audit.emergencyWo.detailButtons
+                partButtons = $_.audit.emergencyWo.partButtons
+                extraActions = $_.audit.emergencyWo.extraActions
+                issueDetailButtons = $_.audit.emergencyWo.issueDetailButtons
+                mechanicTextLabels = $_.audit.emergencyWo.mechanicTextLabels
+                mechanicValues = $_.audit.emergencyWo.mechanicValues
+                submittedDateTriggers = $_.audit.emergencyWo.submittedDateTriggers
+            }
+        })
+        dashboardFilter = $dashboardFilterAudit
+        dashboardEmergencyDisclosure = $dashboardEmergencyDisclosureAudit
         failures = @($failures | ForEach-Object {
             [pscustomobject]@{
                 width = $_.width
