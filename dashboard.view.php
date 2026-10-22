@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-dashboard-wo-grouped-2">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-dashboard-status-icons-3">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -409,12 +409,28 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                     </colgroup>
                                     <thead>
                                         <tr>
-                                            <th style="white-space: nowrap;">Kategori</th>
-                                            <th style="text-align: center; color: #16a34a; white-space: nowrap;" title="Ready / Operating"><i class="fa-solid fa-circle-check"></i> Ready/Op</th>
-                                            <th style="text-align: center; color: #0284c7; white-space: nowrap;" title="Standby"><i class="fa-solid fa-pause-circle"></i> Standby</th>
-                                            <th style="text-align: center; color: #dc2626; white-space: nowrap;" title="Breakdown"><i class="fa-solid fa-triangle-exclamation"></i> Breakdown</th>
-                                            <th style="text-align: center; color: #d97706; white-space: nowrap;" title="Inspeksi / PM"><i class="fa-solid fa-clipboard-check"></i> Inspeksi</th>
-                                            <th style="text-align: center; white-space: nowrap;">Total</th>
+                                            <th>Kategori</th>
+                                            <th class="dashboard-status-heading">
+                                                <span class="dashboard-status-icon dashboard-status-ready" data-tooltip="Ready / OK" tabindex="0" role="img" aria-label="Ready / OK">
+                                                    <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                                                </span>
+                                            </th>
+                                            <th class="dashboard-status-heading">
+                                                <span class="dashboard-status-icon dashboard-status-standby" data-tooltip="Standby" tabindex="0" role="img" aria-label="Standby">
+                                                    <i class="fa-solid fa-circle-pause" aria-hidden="true"></i>
+                                                </span>
+                                            </th>
+                                            <th class="dashboard-status-heading">
+                                                <span class="dashboard-status-icon dashboard-status-breakdown" data-tooltip="Breakdown" tabindex="0" role="img" aria-label="Breakdown">
+                                                    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                                                </span>
+                                            </th>
+                                            <th class="dashboard-status-heading">
+                                                <span class="dashboard-status-icon dashboard-status-inspection" data-tooltip="Inspeksi / PM" tabindex="0" role="img" aria-label="Inspeksi / PM">
+                                                    <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
+                                                </span>
+                                            </th>
+                                            <th>Total</th>
                                         </tr>
                                     </thead>
                                     <tbody id="dashboardCategoryTable">
