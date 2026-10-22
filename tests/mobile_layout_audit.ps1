@@ -85,6 +85,28 @@ $auditExpression = @'
 (() => {
     const viewportWidth = document.documentElement.clientWidth;
     const activeView = document.querySelector('.view-section.active');
+    const dashboardWoScroll = document.getElementById('dashboardWoScroll');
+    const dashboardWoRows = dashboardWoScroll
+        ? Array.from(dashboardWoScroll.querySelectorAll('#dashboardWoTable > tr:not(.dashboard-wo-category-row):not(.dashboard-wo-loading):not(.dashboard-wo-load-more-hint)'))
+        : [];
+    const dashboardWoRect = dashboardWoScroll?.getBoundingClientRect();
+    const visibleDashboardWoRows = dashboardWoRect
+        ? dashboardWoRows.filter(row => {
+            const rect = row.getBoundingClientRect();
+            return rect.bottom > dashboardWoRect.top && rect.top < dashboardWoRect.bottom;
+        }).length
+        : 0;
+    const firstDashboardWoCell = dashboardWoRows[0]?.cells[0];
+    const firstWoNumber = firstDashboardWoCell?.querySelector('.dashboard-wo-number')?.getBoundingClientRect();
+    const firstWoUnit = firstDashboardWoCell?.querySelector('.unit-prop-hover-link')?.getBoundingClientRect();
+    const dashboardWo = dashboardWoScroll ? {
+        horizontalOverflow: Math.max(0, dashboardWoScroll.scrollWidth - dashboardWoScroll.clientWidth),
+        verticalOverflow: Math.max(0, dashboardWoScroll.scrollHeight - dashboardWoScroll.clientHeight),
+        visibleDataRows: visibleDashboardWoRows,
+        categoryGroups: dashboardWoScroll.querySelectorAll('.dashboard-wo-category-row').length,
+        columnCount: dashboardWoScroll.querySelectorAll('thead th').length,
+        woAboveUnit: Boolean(firstWoNumber && firstWoUnit && firstWoNumber.top < firstWoUnit.top)
+    } : null;
     const localScroller = '.responsive-scroll-region, .mobile-table-scroll, .table-responsive, .table-container, .logistics-data-table-wrap, .cm-kpi-table-wrap, .cm-table-wrap, .pm-table-wrap, .pk-table-wrap, .hse-table-wrap, .prod-table-wrap, .p2h-table-wrap, .sl-table-wrap, .kanban-board, .settings-sidebar-nav, .asset-tabs, .report-view-tabs, .logistics-ledger-tabs, .cm-tabs, .pm-tabs, .pk-nav-tabs, .hse-nav-tabs, .prod-nav-tabs, .p2h-nav-tabs';
     const isVisible = element => {
         const style = getComputedStyle(element);
@@ -145,7 +167,8 @@ $auditExpression = @'
         unnamedControls: unnamedControls.slice(0, 15),
         tinyTargets: tinyTargets.slice(0, 15),
         unnamedControlCount: unnamedControls.length,
-        tinyTargetCount: tinyTargets.length
+        tinyTargetCount: tinyTargets.length,
+        dashboardWo
     };
 })()
 '@
@@ -213,6 +236,7 @@ try {
 
     $null = Invoke-Cdp -Method 'Page.navigate' -Params @{ url = ($BaseUrl.TrimEnd('/') + '/dashboard.php') }
     Wait-JavaScript -Expression "document.readyState === 'complete' && typeof window.showView === 'function' && document.querySelectorAll('.view-section').length >= 19" -TimeoutSeconds 30
+    Wait-JavaScript -Expression "document.querySelectorAll('#dashboardWoTable > tr').length > 0" -TimeoutSeconds 30
 
     $views = @('dashboard','monitoring','asset','wo','pm','reports','people','hse','productivity','inspection','uc','logistics','condition','fuel','biaya','approval','settings','archive','unit-properties')
     $tabButtonSelector = '.asset-tabs button, .asset-tabs .asset-tab, .report-view-tabs button, .logistics-ledger-tabs button, .cm-tabs button, .pm-tabs button, .pk-nav-tabs button, .hse-nav-tabs button, .prod-nav-tabs button, .p2h-nav-tabs button, .settings-sidebar-nav .settings-nav-item'
@@ -274,6 +298,17 @@ try {
             modalFailures = $modalFailures.Count
             widths = $Widths
         }
+        dashboardWorkOrder = @($results | Where-Object { $_.state -eq 'dashboard' } | ForEach-Object {
+            [pscustomobject]@{
+                width = $_.width
+                horizontalOverflow = $_.audit.dashboardWo.horizontalOverflow
+                verticalOverflow = $_.audit.dashboardWo.verticalOverflow
+                visibleDataRows = $_.audit.dashboardWo.visibleDataRows
+                categoryGroups = $_.audit.dashboardWo.categoryGroups
+                columnCount = $_.audit.dashboardWo.columnCount
+                woAboveUnit = $_.audit.dashboardWo.woAboveUnit
+            }
+        })
         failures = @($failures | ForEach-Object {
             [pscustomobject]@{
                 width = $_.width
