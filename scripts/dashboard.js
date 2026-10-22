@@ -3279,6 +3279,16 @@
         : `Hapus laporan lokal "${record.reportNumber}"Â?\n\nData ini belum tersimpan di server dan akan dihapus dari browser ini.`,
     );
     if (!confirmed) return;
+    let voidReason = null;
+    if (record.backend) {
+      voidReason = window.prompt("Tuliskan alasan pembatalan laporan (wajib, maksimal 500 karakter):");
+      if (voidReason === null) return;
+      voidReason = voidReason.trim();
+      if (!voidReason || voidReason.length > 500) {
+        showToast("Alasan pembatalan wajib diisi (maksimal 500 karakter).", true);
+        return;
+      }
+    }
     try {
       let successMessage = record.backend
         ? "Laporan berhasil dibatalkan (void)."
@@ -3288,6 +3298,7 @@
           method: "POST",
           body: JSON.stringify({
             action: "void",
+            reason: voidReason,
             clientKey: getReportClientKey(),
             reportId: record.id,
           }),

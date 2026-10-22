@@ -1,4 +1,4 @@
-# Checkpoint F0 — pengamanan manajemen pengguna
+udah p# Checkpoint F0 — pengamanan manajemen pengguna
 
 Status: **PASS untuk gate akses browser dua role menurut konfirmasi pengguna** (non-Administrator ditolak; Administrator dapat membuka daftar). Uji create/delete/toggle dan ganti password pada akun uji terisolasi masih **NOT TESTED**; ini bukan klaim seluruh skenario F0 lulus. Perubahan F0 hanya pada `api/security.php`, `api/users.php`, dan tes kebijakan `tests/f0_user_authorization.php`; tidak ada perubahan skema atau data.
 

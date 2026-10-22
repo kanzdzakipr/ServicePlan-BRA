@@ -192,8 +192,8 @@ final class WorkOrderSupport
              WHERE pr.wo_id = :wo_id
                AND (
                    NOT EXISTS (
-                       SELECT 1 FROM report_purchase_request_integrations owned
-                       WHERE owned.spb_id = pr.spb_id AND owned.owns_purchase_request = 1
+                       SELECT 1 FROM report_purchase_request_integrations report_link
+                       WHERE report_link.spb_id = pr.spb_id
                    )
                    OR EXISTS (
                        SELECT 1 FROM report_purchase_request_integrations active_link
