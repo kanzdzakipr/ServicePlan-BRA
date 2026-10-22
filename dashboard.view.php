@@ -29,7 +29,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=<?= filemtime(__DIR__ . '/scripts/dashboard.js') ?>"></script>
-    <script src="scripts/unit-properties.js?v=20261022-tire-blueprint-4"></script>
+    <script src="scripts/unit-properties.js?v=20261022-site-location-fallback-1"></script>
     <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>
 
@@ -2615,8 +2615,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 <div class="prop-panel-grid-top-map">
                     <!-- Leaflet Live Map -->
                     <div class="prop-card">
-                        <div class="prop-card-header">
+                        <div class="prop-card-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                             <h3><i class="fa-solid fa-map" style="color:#0284c7;"></i> Peta Lokasi Unit</h3>
+                            <div id="propMapStatusBadge"></div>
                         </div>
                         <div class="prop-card-body" style="padding:10px;">
                             <div id="propUnitMap"></div>
@@ -4236,25 +4237,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
 
 
-    <!-- Modal Reject Approval -->
-    <div class="modal-overlay" id="modalRejectApproval">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2>Tolak Dokumen: <span id="reject-doc-id"></span></h2>
-                <button onclick="closeModal('modalRejectApproval')"
-                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <div class="modal-body form-group">
-                <input type="hidden" id="reject-doc-row">
-                <label>Alasan Penolakan (Wajib)</label>
-                <textarea id="reject-reason" rows="3" class="form-control"
-                    placeholder="Tuliskan alasan penolakan..."></textarea>
-                <button class="btn btn-danger" onclick="submitRejectApproval()" style="width: 100%;">Tolak
-                    Dokumen</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal Tabulasi Detail Status Unit -->
     <div class="modal-overlay" id="modalStatusDetail">
         <div class="modal-content" style="max-width: 900px; width: 95%;">
@@ -5241,15 +5223,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             window.openSpbForWo = function (woId, assetId) {
-                showView('logistics', '', 'menu-logistics');
-                setTimeout(() => {
-                    if (window.SpareLogistics) {
-                        window.SpareLogistics.openForWorkOrder(woId, assetId);
-                        return;
-                    }
-                    const woSelect = document.getElementById('spb-wo-id');
-                    if (woSelect && woId) woSelect.value = woId;
-                }, 50);
+                if (window.SpareLogistics?.openFullSpbFormForWorkOrder?.(woId, assetId)) return;
+                if (!window.SpareLogistics?.openFullSpbFormForWorkOrder) {
+                    window.alert('Form SPB belum siap. Muat ulang halaman lalu coba lagi.');
+                }
             };
 
             const woSupportTypeLabels = {
@@ -6108,7 +6085,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                         </thead>
                                         <tbody>
                                             ${items.map(item => {
-                                                const reqQty = Number(item.quantity || 0);
+                                                const reqQty = Number(item.qtyRequested || 0);
                                                 const stockQty = Number(item.currentStock || 0);
                                                 const isStockSufficient = stockQty >= reqQty;
                                                 const stockBadge = isStockSufficient
@@ -6134,7 +6111,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                         <div style="display:flex; align-items:center; gap:8px;">
                                             <strong style="color:var(--primary); font-size:0.92rem;">${escapeHtml(spb.spbId)}</strong>
                                             <span class="badge ${['Issued', 'Closed'].includes(spb.status) ? 'bg-operating' : (['Approved', 'Process'].includes(spb.status) ? 'bg-standby' : 'bg-secondary')}">${escapeHtml(spb.status)}</span>
-                                            <span style="font-size:0.78rem; color:#64748b;">Diajukan: ${formatWoDateTime(spb.date || spb.createdAt)}</span>
+                                            <span style="font-size:0.78rem; color:#64748b;">Diajukan: ${formatWoDateTime(spb.requestedAt)}</span>
                                         </div>
                                         <div style="font-size:0.8rem; color:#64748b;">
                                             <span>${Number(spb.itemCount || 0)} Jenis Item &bull; ${Number(spb.totalQuantity || 0)} Total Qty</span>
@@ -9378,6 +9355,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const targetView = document.getElementById('view-' + viewName);
                 if (!targetView) return;
                 targetView.classList.add('active');
+                if (viewName === 'approval') window.loadSpbApprovalInbox?.();
 
                 const content = document.querySelector('.content');
                 if (content) content.scrollTop = 0;
@@ -11794,28 +11772,55 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 window.open('api/costs.php', '_blank');
             };
 
-            function approveDoc(btn) {
-                btn.parentElement.parentElement.remove();
-                alert('Dokumen disetujui.');
-            }
+            window.loadSpbApprovalInbox = async function () {
+                const tbody = document.getElementById('approval-list');
+                if (!tbody) return;
+                tbody.innerHTML = '<tr><td colspan="5">Memuat SPB dari database...</td></tr>';
+                try {
+                    const response = await fetch('api/spb_workflow.php', { cache: 'no-store' });
+                    const payload = await response.json();
+                    if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Gagal memuat approval.');
+                    const pending = payload.data.filter(item => item.status === 'Submitted');
+                    tbody.innerHTML = pending.length ? pending.map(item => `<tr>
+                        <td>${escapeHtml(item.spb_id)}</td><td>SPB Spare Part</td>
+                        <td>${escapeHtml(item.requester_name || 'Pengguna #' + item.requested_by)}</td>
+                        <td>${Number(item.item_count)} item · ${Number(item.total_quantity)} total qty · WO ${escapeHtml(item.wo_id)}</td>
+                        <td>${payload.canApprove ? `<button type="button" class="btn btn-success" data-spb-decision="approve" data-spb-id="${escapeHtml(item.spb_id)}">Setuju</button>
+                        <button type="button" class="btn btn-danger" data-spb-decision="reject" data-spb-id="${escapeHtml(item.spb_id)}">Tolak</button>` : 'Hanya lihat'}</td></tr>`).join('')
+                        : '<tr><td colspan="5">Tidak ada SPB menunggu persetujuan.</td></tr>';
+                } catch (error) {
+                    tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)} — data approval tidak tersedia.</td></tr>`;
+                }
+            };
 
-            function rejectDoc(btn, docId) {
-                document.getElementById('reject-doc-id').innerText = docId;
-                document.getElementById('reject-reason').value = '';
-                document.getElementById('reject-doc-row').value = Math.random().toString();
-                btn.parentElement.parentElement.setAttribute('data-id', document.getElementById('reject-doc-row').value);
-                openModal('modalRejectApproval');
-            }
-
-            function submitRejectApproval() {
-                const reason = document.getElementById('reject-reason').value;
-                if (!reason) return alert('Alasan penolakan wajib diisi!');
-                const rowId = document.getElementById('reject-doc-row').value;
-                const row = document.querySelector(`tr[data-id="${rowId}"]`);
-                if (row) row.remove();
-                closeModal('modalRejectApproval');
-                alert('Dokumen ditolak.');
-            }
+            document.getElementById('approval-list')?.addEventListener('click', async event => {
+                const button = event.target.closest('[data-spb-decision]');
+                if (!button) return;
+                const spbId = button.dataset.spbId;
+                const decision = button.dataset.spbDecision;
+                let reason = '';
+                if (decision === 'reject') {
+                    const entered = prompt(`Alasan menolak ${spbId}:`);
+                    if (entered === null) return;
+                    reason = entered.trim();
+                    if (!reason || reason.length > 500) return alert('Alasan penolakan wajib diisi, maksimal 500 karakter.');
+                } else if (!confirm(`Setujui SPB ${spbId}?`)) return;
+                button.disabled = true;
+                try {
+                    const response = await fetch('api/spb_workflow.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.APP_CSRF_TOKEN || '' },
+                        body: JSON.stringify({ spbId, decision, reason })
+                    });
+                    const payload = await response.json();
+                    if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Keputusan gagal disimpan.');
+                    await window.loadSpbApprovalInbox();
+                    alert(`SPB ${spbId} ${decision === 'approve' ? 'disetujui' : 'ditolak'} dan tercatat di database.`);
+                } catch (error) {
+                    alert(error.message);
+                    button.disabled = false;
+                }
+            });
 
             // ============================================================================
             // PENGATURAN SYSTEM & RBAC 10 ROLES OVERRIDE ENGINE
@@ -12821,41 +12826,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     }
                 }
 
-                const tbody = document.getElementById('approval-list');
-                if (tbody && tbody.innerHTML.trim() === '') {
-                    tbody.innerHTML = `
-                    <tr>
-                        <td>SPB-2026-07-101</td>
-                        <td>SPB Sparepart</td>
-                        <td>Foreman A</td>
-                        <td>Rp 7.500.000 (Filter Set)</td>
-                        <td>
-                            <button class="btn btn-success" style="padding: 5px 10px;" onclick="approveDoc(this)"><i class="fa-solid fa-check"></i></button>
-                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="rejectDoc(this, 'SPB-2026-07-101')"><i class="fa-solid fa-xmark"></i></button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>WO-26-892</td>
-                        <td>Work Order Major</td>
-                        <td>Maintenance Planner</td>
-                        <td>Est. Rp 25.000.000 (Overhaul)</td>
-                        <td>
-                            <button class="btn btn-success" style="padding: 5px 10px;" onclick="approveDoc(this)"><i class="fa-solid fa-check"></i></button>
-                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="rejectDoc(this, 'WO-26-892')"><i class="fa-solid fa-xmark"></i></button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>TAR-01/05/2026</td>
-                        <td>Rilis Unit Insiden</td>
-                        <td>HSE Head</td>
-                        <td>Insiden Moderate (CS-41001)</td>
-                        <td>
-                            <button class="btn btn-success" style="padding: 5px 10px;" onclick="approveDoc(this)"><i class="fa-solid fa-check"></i></button>
-                            <button class="btn btn-danger" style="padding: 5px 10px;" onclick="rejectDoc(this, 'TAR-01/05/2026')"><i class="fa-solid fa-xmark"></i></button>
-                        </td>
-                    </tr>
-                `;
-                }
             }
 
             function escapeHtml(unsafe) {

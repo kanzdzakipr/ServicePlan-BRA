@@ -943,18 +943,144 @@
     /**
      * Render SECTION 1: Top Live Map & Telemetry CANbus
      */
+    /**
+     * Resolve Unit Position: Exact GPS ping or Fallback to Site Location / Area Estimate
+     */
+    function resolveUnitPropertiesLocation(asset, payload) {
+        // 1. Check exact individual GPS logs (telemetry ping)
+        const gpsLogs = Array.isArray(payload?.gps_logs) ? payload.gps_logs : [];
+        const latestGps = gpsLogs[0] || null;
+        const rawLiveLat = latestGps?.latitude ?? asset?.last_latitude;
+        const rawLiveLng = latestGps?.longitude ?? asset?.last_longitude;
+        const liveLat = (rawLiveLat === null || rawLiveLat === undefined || rawLiveLat === '') ? NaN : Number(rawLiveLat);
+        const liveLng = (rawLiveLng === null || rawLiveLng === undefined || rawLiveLng === '') ? NaN : Number(rawLiveLng);
+
+        if (Number.isFinite(liveLat) && Number.isFinite(liveLng) && liveLat >= -90 && liveLat <= 90 && liveLng >= -180 && liveLng <= 180) {
+            return {
+                lat: liveLat,
+                lng: liveLng,
+                isEstimated: false,
+                source: 'GPS Live Individual',
+                siteName: asset?.location_name || asset?.location || 'Site Lapangan',
+                radius: null
+            };
+        }
+
+        // 2. Fallback to Site Center Coordinates from API (site_latitude, site_longitude)
+        const siteLat = (asset?.site_latitude === null || asset?.site_latitude === undefined || asset?.site_latitude === '') ? NaN : Number(asset.site_latitude);
+        const siteLng = (asset?.site_longitude === null || asset?.site_longitude === undefined || asset?.site_longitude === '') ? NaN : Number(asset.site_longitude);
+        const locName = String(asset?.location_name || asset?.location || asset?.raw_location_notes || '').trim() || 'Yard KM 12 Duri';
+
+        if (Number.isFinite(siteLat) && Number.isFinite(siteLng) && siteLat >= -90 && siteLat <= 90 && siteLng >= -180 && siteLng <= 180) {
+            return {
+                lat: siteLat,
+                lng: siteLng,
+                isEstimated: true,
+                source: `Estimasi Lokasi Site (${locName})`,
+                siteName: locName,
+                radius: 450
+            };
+        }
+
+        // 3. Fallback to Master Site Location Reference
+        const masterCoords = {
+            'Yard KM 12 Duri': { lat: 1.2854600, lng: 101.2185700, radius: 450, type: 'Main Operations Yard' },
+            'Yard Duri': { lat: 1.2854300, lng: 101.2185400, radius: 500, type: 'Operations Yard' },
+            'Workshop Bay KM 12': { lat: 1.2789000, lng: 101.2112000, radius: 400, type: 'Maintenance Workshop' },
+            'Borrow Pit Harapan Baru': { lat: 1.3124500, lng: 101.2451200, radius: 600, type: 'Borrow Pit' },
+            'Site Alpha Duri': { lat: 1.2991000, lng: 101.2311000, radius: 700, type: 'Pit Area' },
+            'Minas Field Project': { lat: 0.7321400, lng: 101.4421100, radius: 800, type: 'Project Site' },
+            'Site Celcin': { lat: 1.3012000, lng: 101.1984000, radius: 500, type: 'Borrow Pit' },
+            'Site Bangko': { lat: 1.7321000, lng: 100.8214000, radius: 700, type: 'Project Site' },
+            'Site NDD': { lat: 1.3054000, lng: 101.2215000, radius: 600, type: 'Project Site' },
+            'Yard Prabumulih': { lat: -3.4354200, lng: 104.2384500, radius: 650, type: 'Operations Yard' },
+            'PKB PEKANBARU Branch': { lat: 0.5070680, lng: 101.4477790, radius: 350, type: 'Branch Office' },
+            'Head Office Pekanbaru': { lat: 0.5070680, lng: 101.4477790, radius: 350, type: 'Branch Office' },
+            'PLB PALEMBANG Branch': { lat: -2.9760740, lng: 104.7754310, radius: 400, type: 'Branch Office' },
+            'Site Sunter Area Stadium': { lat: -6.1451200, lng: 106.8741500, radius: 500, type: 'Project Site' },
+            'MDN MEDAN Branch': { lat: 3.5951960, lng: 98.6722230, radius: 400, type: 'Branch Office' },
+            'SMG SEMARANG Rep Office': { lat: -6.9666670, lng: 110.4166640, radius: 300, type: 'Rep Office' }
+        };
+
+        if (masterCoords[locName]) {
+            const m = masterCoords[locName];
+            return {
+                lat: m.lat,
+                lng: m.lng,
+                isEstimated: true,
+                source: `Estimasi Lokasi Site (${locName})`,
+                siteName: locName,
+                radius: m.radius || 450
+            };
+        }
+
+        // 4. Pattern matching & Deterministic Anchor Offset
+        const lower = locName.toLowerCase();
+        let anchor = masterCoords['Yard KM 12 Duri'];
+        let matchedName = 'Yard KM 12 Duri';
+
+        if (lower.includes('km 12') || lower.includes('km12') || lower.includes('workshop')) {
+            anchor = masterCoords['Workshop Bay KM 12'];
+            matchedName = 'Workshop Bay KM 12';
+        } else if (lower.includes('harapan baru') || lower.includes('bropit') || lower.includes('b.pit')) {
+            anchor = masterCoords['Borrow Pit Harapan Baru'];
+            matchedName = 'Borrow Pit Harapan Baru';
+        } else if (lower.includes('prabumulih')) {
+            anchor = masterCoords['Yard Prabumulih'];
+            matchedName = 'Yard Prabumulih';
+        } else if (lower.includes('minas')) {
+            anchor = masterCoords['Minas Field Project'];
+            matchedName = 'Minas Field Project';
+        } else if (lower.includes('sunter')) {
+            anchor = masterCoords['Site Sunter Area Stadium'];
+            matchedName = 'Site Sunter Area Stadium';
+        } else if (lower.includes('pekanbaru')) {
+            anchor = masterCoords['PKB PEKANBARU Branch'];
+            matchedName = 'PKB PEKANBARU Branch';
+        } else if (lower.includes('palembang')) {
+            anchor = masterCoords['PLB PALEMBANG Branch'];
+            matchedName = 'PLB PALEMBANG Branch';
+        } else if (lower.includes('bangko')) {
+            anchor = masterCoords['Site Bangko'];
+            matchedName = 'Site Bangko';
+        } else if (lower.includes('ndd')) {
+            anchor = masterCoords['Site NDD'];
+            matchedName = 'Site NDD';
+        } else if (lower.includes('celcin')) {
+            anchor = masterCoords['Site Celcin'];
+            matchedName = 'Site Celcin';
+        }
+
+        let hash = 2166136261;
+        const seedStr = (locName + '_' + (asset?.asset_id || asset?.id || ''));
+        for (let i = 0; i < seedStr.length; i++) {
+            hash ^= seedStr.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+        }
+        hash = hash >>> 0;
+        const angle = (hash % 360) * Math.PI / 180;
+        const offsetDist = 0.0015 + ((hash >>> 8) % 25) / 10000;
+        const cosLat = Math.max(0.3, Math.cos(anchor.lat * Math.PI / 180));
+
+        return {
+            lat: anchor.lat + Math.sin(angle) * offsetDist,
+            lng: anchor.lng + Math.cos(angle) * offsetDist / cosLat,
+            isEstimated: true,
+            source: `Estimasi Area Site (${locName || matchedName})`,
+            siteName: locName || matchedName,
+            radius: anchor.radius || 450
+        };
+    }
+
+    /**
+     * Render SECTION 1: Top Live Map & Telemetry CANbus
+     */
     function renderTopLocationAndTelemetry(asset, payload) {
         const gpsLogs = Array.isArray(payload.gps_logs) ? payload.gps_logs : [];
-        const latestGps = gpsLogs[0] || null;
-        const rawLat = latestGps?.latitude ?? asset.last_latitude;
-        const rawLng = latestGps?.longitude ?? asset.last_longitude;
-        const lat = rawLat == null || rawLat === '' ? NaN : Number(rawLat);
-        const lng = rawLng == null || rawLng === '' ? NaN : Number(rawLng);
-        const hasCoordinate = Number.isFinite(lat) && Number.isFinite(lng);
+        const posInfo = resolveUnitPropertiesLocation(asset, payload);
 
         setTimeout(() => initPropertiesMap(
-            hasCoordinate ? lat : null,
-            hasCoordinate ? lng : null,
+            posInfo,
             asset,
             gpsLogs
         ), 100);
@@ -990,7 +1116,9 @@
                         <td><span class="p2h-badge ${badgeClass}">${escapeHtml(ignition)}</span></td>
                     </tr>`;
                 }).join('')
-                : emptyTableRow(4, NO_DATA);
+                : emptyTableRow(4, posInfo.isEstimated
+                    ? `Telemetri GPS individual belum aktif - posisi peta menggunakan estimasi radius area site (${escapeHtml(posInfo.siteName)})`
+                    : NO_DATA);
         }
 
         // BAST Movements History Table
@@ -1057,7 +1185,7 @@
     /**
      * Leaflet Map Initializer for Properties
      */
-    function initPropertiesMap(lat, lng, asset, gpsLogs) {
+    function initPropertiesMap(posInfo, asset, gpsLogs) {
         const mapContainer = document.getElementById('propUnitMap');
         if (!mapContainer || typeof window.L === 'undefined') return;
 
@@ -1070,9 +1198,19 @@
             propMapInstance = null;
         }
 
-        if (lat == null || lng == null) {
+        if (!posInfo || !Number.isFinite(posInfo.lat) || !Number.isFinite(posInfo.lng)) {
             mapContainer.innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#64748b; text-align:center; padding:24px;">${NO_DATA}</div>`;
             return;
+        }
+
+        const { lat, lng, isEstimated, siteName, radius } = posInfo;
+        const badgeContainer = document.getElementById('propMapStatusBadge');
+        if (badgeContainer) {
+            if (isEstimated) {
+                badgeContainer.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:12px; background:#fef3c7; color:#b45309; border:1px solid #fde68a;" title="Telemetri GPS individual belum aktif. Lokasi diproyeksikan dari estimasi radius operasional site."><i class="fa-solid fa-location-crosshairs"></i> Estimasi Area: ${escapeHtml(siteName)}</span>`;
+            } else {
+                badgeContainer.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:12px; background:#dcfce7; color:#15803d; border:1px solid #bbf7d0;" title="Koordinat diterima dari telemetri GPS aktual"><i class="fa-solid fa-satellite-dish"></i> GPS Live Individual</span>`;
+            }
         }
 
         try {
@@ -1080,34 +1218,76 @@
             propMapInstance = L.map('propUnitMap', {
                 zoomControl: true,
                 attributionControl: false
-            }).setView([lat, lng], 14);
+            }).setView([lat, lng], isEstimated ? 14 : 15);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19
             }).addTo(propMapInstance);
 
-            const trailPoints = (gpsLogs || [])
-                .map(log => [Number(log.latitude), Number(log.longitude)])
-                .filter(point => Number.isFinite(point[0]) && Number.isFinite(point[1]))
-                .reverse();
-            if (trailPoints.length > 1) {
-                L.polyline(trailPoints, { color: '#0284c7', weight: 4, opacity: 0.8 }).addTo(propMapInstance);
+            if (isEstimated && radius) {
+                L.circle([lat, lng], {
+                    radius: radius,
+                    color: '#d97706',
+                    fillColor: '#f59e0b',
+                    fillOpacity: 0.12,
+                    weight: 2,
+                    dashArray: '5, 5'
+                }).addTo(propMapInstance).bindTooltip(`Estimasi Radius Area Site: ${escapeHtml(siteName)} (&plusmn;${radius}m)`, { sticky: true });
             }
 
-            // Marker for Current Unit Position
+            if (!isEstimated) {
+                const trailPoints = (gpsLogs || [])
+                    .map(log => [Number(log.latitude), Number(log.longitude)])
+                    .filter(point => Number.isFinite(point[0]) && Number.isFinite(point[1]))
+                    .reverse();
+                if (trailPoints.length > 1) {
+                    L.polyline(trailPoints, { color: '#0284c7', weight: 4, opacity: 0.8 }).addTo(propMapInstance);
+                }
+            }
+
+            const markerBg = isEstimated ? '#d97706' : '#0284c7';
+            const markerIcon = isEstimated ? 'fa-location-crosshairs' : 'fa-truck-front';
+            const markerLabel = isEstimated ? ' <span style="font-size:9px; background:rgba(0,0,0,0.28); padding:1px 5px; border-radius:3px; margin-left:3px;">ESTIMASI SITE</span>' : '';
+
             const customIcon = L.divIcon({
                 className: 'prop-map-unit-marker',
                 html: `
-                    <div style="background:#0284c7; color:#fff; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; font-family:'JetBrains Mono',monospace; box-shadow:0 3px 8px rgba(0,0,0,0.3); border:2px solid #fff; white-space:nowrap; display:flex; align-items:center; gap:4px;">
-                        <i class="fa-solid fa-truck-front"></i> ${escapeHtml(asset.asset_id || asset.id)}
+                    <div style="background:${markerBg}; color:#fff; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; font-family:'JetBrains Mono',monospace; box-shadow:0 3px 8px rgba(0,0,0,0.3); border:2px solid #fff; white-space:nowrap; display:flex; align-items:center; gap:4px;">
+                        <i class="fa-solid ${markerIcon}"></i> ${escapeHtml(asset.asset_id || asset.id)}${markerLabel}
                     </div>
                 `,
-                iconSize: [80, 30],
-                iconAnchor: [40, 15]
+                iconSize: [isEstimated ? 130 : 80, 30],
+                iconAnchor: [isEstimated ? 65 : 40, 15]
             });
 
+            const popupHtml = `
+                <div style="font-family:sans-serif; min-width:220px; font-size:12px; line-height:1.45;">
+                    <div style="font-weight:800; font-size:13px; color:#0f172a; margin-bottom:5px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                        <span>${escapeHtml(asset.asset_id || asset.id)}</span>
+                        <span style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; ${isEstimated ? 'background:#fef3c7; color:#92400e; border:1px solid #fde68a;' : 'background:#dcfce7; color:#166534;'}">
+                            ${isEstimated ? '<i class="fa-solid fa-compass"></i> Estimasi Site' : '<i class="fa-solid fa-satellite-dish"></i> GPS Aktif'}
+                        </span>
+                    </div>
+                    <div style="color:#475569; margin-bottom:3px;"><strong>Model:</strong> ${escapeHtml(displayData(asset.make_model))}</div>
+                    <div style="color:#475569; margin-bottom:3px;"><strong>Site / Lokasi:</strong> ${escapeHtml(siteName)}</div>
+                    <div style="color:#475569; margin-bottom:6px;"><strong>Status:</strong> <span style="font-weight:700;">${escapeHtml(asset.status || 'READY')}</span></div>
+                    ${isEstimated ? `
+                        <div style="font-size:10.5px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; padding:6px 8px; color:#64748b; margin-bottom:6px;">
+                            <i class="fa-solid fa-circle-info" style="color:#f59e0b;"></i> Telemetri GPS eksak unit belum aktif. Titik koordinat diproyeksikan dari <b>estimasi radius operasional site ${escapeHtml(siteName)}</b>.
+                        </div>
+                    ` : `
+                        <div style="font-size:10.5px; color:#15803d; margin-bottom:6px;"><i class="fa-solid fa-circle-check"></i> Posisi diperoleh dari telemetri GPS live.</div>
+                    `}
+                    <div style="display:flex; justify-content:flex-end;">
+                        <a href="https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#0284c7; text-decoration:none; font-weight:600;">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Google Maps
+                        </a>
+                    </div>
+                </div>
+            `;
+
             L.marker([lat, lng], { icon: customIcon })
-                .bindPopup(`<strong>${escapeHtml(asset.asset_id || asset.id)}</strong><br>${escapeHtml(displayData(asset.make_model))}<br>Lokasi: ${escapeHtml(displayData(asset.location_name || asset.raw_location_notes))}`)
+                .bindPopup(popupHtml)
                 .addTo(propMapInstance)
                 .openPopup();
 

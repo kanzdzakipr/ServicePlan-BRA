@@ -251,11 +251,20 @@ switch ($method) {
                     throw new DomainException('Asset SPB tidak sesuai dengan asset pada Work Order.');
                 }
 
-                $existingRequest = $db->prepare('SELECT asset_id, wo_id FROM purchase_requests WHERE spb_id = :spb_id LIMIT 1');
+                $voidedNumber = $db->prepare('SELECT 1 FROM spb_void_audit WHERE spb_id = :spb_id LIMIT 1');
+                $voidedNumber->execute([':spb_id' => $spbId]);
+                if ($voidedNumber->fetchColumn()) {
+                    throw new DomainException('Nomor SPB pernah di-void dan tidak boleh dipakai ulang.');
+                }
+
+                $existingRequest = $db->prepare('SELECT asset_id, wo_id, status FROM purchase_requests WHERE spb_id = :spb_id LIMIT 1 FOR UPDATE');
                 $existingRequest->execute([':spb_id' => $spbId]);
                 $existingHeader = $existingRequest->fetch(PDO::FETCH_ASSOC);
                 if ($existingHeader) {
                     api_require_asset_access($db, (string) $existingHeader['asset_id']);
+                    if (!in_array((string) $existingHeader['status'], ['Draft', 'Submitted'], true)) {
+                        throw new DomainException('SPB yang sudah diproses tidak boleh ditimpa melalui pengajuan baru.');
+                    }
                     if (
                         !hash_equals((string) $existingHeader['asset_id'], $assetId)
                         || !hash_equals((string) $existingHeader['wo_id'], $woId)

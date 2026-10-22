@@ -2906,6 +2906,7 @@
     });
     renderCatalog();
     renderHistory();
+    loadSpbDocuments();
     syncBackendHistory();
 
     const queryRoute = new URLSearchParams(window.location.search).get("view");
@@ -3008,6 +3009,7 @@
     }
     if (showHistory) {
       renderHistory();
+      loadSpbDocuments();
       syncBackendHistory();
     }
     if (showImport) {
@@ -3131,12 +3133,113 @@
     document.body.classList.remove("guide-modal-open");
   }
 
+  let spbDocuments = [];
+  let canVoidSpbDocuments = false;
+
+  async function loadSpbDocuments() {
+    try {
+      const response = await fetch("api/spb_workflow.php", { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success" || !Array.isArray(payload.data)) {
+        throw new Error(payload.message || "Daftar SPB tidak tersedia.");
+      }
+      spbDocuments = payload.data;
+      canVoidSpbDocuments = payload.canVoid === true;
+      renderHistory();
+    } catch (error) {
+      spbDocuments = [];
+      canVoidSpbDocuments = false;
+      showToast(`Daftar SPB dari database tidak tersedia: ${error.message}`, true);
+    }
+  }
+
+  function spbDisplayStatus(spb) {
+    const current = String(spb?.status || "");
+    if (current === "Draft" && spb?.approval_status === "REJECTED") return "Rejected";
+    if (current === "Submitted") return "Menunggu Approval";
+    return current || "Status tidak tersedia";
+  }
+
+  async function viewSpbDocument(spbId) {
+    const schema = formSchemas.find((item) => item.id === "spb");
+    if (!schema) return showToast("Template SPB tidak tersedia.", true);
+    try {
+      const response = await fetch(`api/spb_workflow.php?spb_id=${encodeURIComponent(spbId)}`, { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success" || !payload.data) {
+        throw new Error(payload.message || "Detail SPB tidak tersedia.");
+      }
+      const spb = payload.data;
+      const rows = (spb.items || []).map((item) => ({
+        nama: item.description || item.part_number,
+        spesifikasi: item.part_number,
+        satuan: item.unit_measure || "PCS",
+        jumlah: Number(item.qty_requested) || 0,
+        keterangan: spb.notes || "",
+        status: item.status || "Diajukan",
+      }));
+      renderPreview(rows, {
+        schema,
+        draft: {
+          fields: {
+            nomor_spb: spb.spb_id,
+            nomor_wo: spb.wo_id,
+            kode_unit: spb.asset_id,
+            tanggal: String(spb.requested_at || "").slice(0, 10),
+            urgensi: spb.urgency,
+            lokasi: spb.location_name || "-",
+            project: spb.location_name || "-",
+            kepada: "Bagian Logistik",
+            perusahaan: "PT Bina Rekayasa Anugerah",
+          },
+          rows,
+        },
+        createdAt: spb.requested_at,
+        targetId: "historyPrintArea",
+        finalized: false,
+        documentStatus: spbDisplayStatus(spb),
+      });
+    } catch (error) {
+      showToast(`SPB gagal dibuka: ${error.message}`, true);
+    }
+  }
+
+  async function voidOperationalSpb(spbId) {
+    if (!window.confirm(`Void SPB ${spbId}? SPB akan dilepas dari menu operasional. Jejak dan alasan pembatalan tetap disimpan.`)) return;
+    const reason = window.prompt("Alasan void SPB (wajib, maksimal 500 karakter):");
+    if (reason === null) return;
+    const normalizedReason = reason.trim();
+    if (!normalizedReason || normalizedReason.length > 500) {
+      showToast("Alasan void wajib diisi (maksimal 500 karakter).", true);
+      return;
+    }
+    try {
+      const response = await fetch("api/spb_workflow.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": window.APP_CSRF_TOKEN || "" },
+        body: JSON.stringify({ action: "void", spbId, reason: normalizedReason }),
+      });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success") throw new Error(payload.message || "Void SPB gagal.");
+      document.getElementById("historyPrintArea")?.replaceChildren();
+      await loadSpbDocuments();
+      window.loadSpbApprovalInbox?.();
+      showToast(`SPB ${spbId} berhasil di-void.`);
+    } catch (error) {
+      showToast(error.message || "Void SPB gagal.", true);
+    }
+  }
+
   function renderHistory() {
     const list = document.getElementById("historyList");
     if (!list) return;
     const records = readHistory();
+    const reportIds = new Set(records.map((record) => record.id));
+    const externalSpbs = spbDocuments.filter((spb) =>
+      !spb.source_report_id || !reportIds.has(spb.source_report_id),
+    );
     const count = document.getElementById("reportHistoryCount");
-    if (count) count.textContent = records.length;
+    if (count) count.textContent = records.length + externalSpbs.length;
     const query = (document.getElementById("historySearch")?.value || "")
       .trim()
       .toLocaleLowerCase("id");
@@ -3145,8 +3248,11 @@
         .toLocaleLowerCase("id")
         .includes(query),
     );
+    const filteredSpbs = externalSpbs.filter((spb) =>
+      `${spb.spb_id} ${spb.wo_id} ${spb.asset_id} SPB`.toLocaleLowerCase("id").includes(query),
+    );
 
-    list.innerHTML = filtered.length
+    list.innerHTML = filtered.length || filteredSpbs.length
       ? `
             <div class="history-table-wrap">
                 <table class="history-table">
@@ -3155,6 +3261,7 @@
                         <th>Nomor laporan</th>
                         <th>Jenis laporan</th>
                         <th>Item</th>
+                        <th>Status approval</th>
                         <th>Aksi</th>
                     </tr></thead>
                     <tbody>
@@ -3166,6 +3273,7 @@
                                 <td>${escapeHtml(record.reportNumber)}</td>
                                 <td><span class="history-code">${escapeHtml(record.code)}</span>${escapeHtml(record.title)}</td>
                                 <td>${record.draft.rows.filter(isRowPopulated).length}</td>
+                                <td>—</td>
                                 <td>
                                     <div class="history-actions">
                                         <button type="button" data-history-view="${escapeHtml(record.id)}"><i class="fa-regular fa-eye"></i> Lihat/Cetak</button>
@@ -3177,6 +3285,18 @@
                         `,
                           )
                           .join("")}
+                        ${filteredSpbs.map((spb) => `
+                            <tr>
+                                <td><strong>${escapeHtml(formatDateTime(spb.requested_at))}</strong><small>${escapeHtml(spb.wo_id)} / ${escapeHtml(spb.asset_id)}</small></td>
+                                <td>${escapeHtml(spb.spb_id)}</td>
+                                <td><span class="history-code">P-1</span>${spb.source_report_id ? "SPB dari Form" : "SPB dari WO / Logistik"}</td>
+                                <td>${Number(spb.item_count) || 0} item / ${Number(spb.total_quantity) || 0} qty</td>
+                                <td>${spb.source_report_id ? "—" : escapeHtml(spbDisplayStatus(spb))}</td>
+                                <td><div class="history-actions">
+                                    <button type="button" data-spb-print="${escapeHtml(spb.spb_id)}"><i class="fa-regular fa-eye"></i> Lihat/Cetak</button>
+                                    ${spb.source_report_id ? '<span title="Void melalui laporan Form asal">Void via Form</span>' : canVoidSpbDocuments ? `<button type="button" class="danger" data-spb-void="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-ban"></i> Void</button>` : ""}
+                                </div></td>
+                            </tr>`).join("")}
                     </tbody>
                 </table>
             </div>
@@ -3184,8 +3304,8 @@
       : `
             <div class="report-empty history-empty">
                 <i class="fa-solid fa-box-archive"></i>
-                <strong>${records.length ? "Riwayat tidak ditemukan" : "Belum ada laporan final"}</strong>
-                <p>${records.length ? "Ubah kata kunci pencarian." : "Isi form lalu gunakan tombol Simpan Laporan untuk membuat riwayat."}</p>
+                <strong>${records.length || externalSpbs.length ? "Riwayat tidak ditemukan" : "Belum ada laporan final"}</strong>
+                <p>${records.length || externalSpbs.length ? "Ubah kata kunci pencarian." : "Isi form lalu gunakan tombol Simpan Laporan untuk membuat riwayat."}</p>
             </div>
         `;
 
@@ -3203,6 +3323,12 @@
       button.addEventListener("click", () =>
         deleteSavedReport(button.dataset.historyDelete),
       );
+    });
+    list.querySelectorAll("[data-spb-print]").forEach((button) => {
+      button.addEventListener("click", () => viewSpbDocument(button.dataset.spbPrint));
+    });
+    list.querySelectorAll("[data-spb-void]").forEach((button) => {
+      button.addEventListener("click", () => voidOperationalSpb(button.dataset.spbVoid));
     });
   }
 
@@ -3279,6 +3405,16 @@
         : `Hapus laporan lokal "${record.reportNumber}"Â?\n\nData ini belum tersimpan di server dan akan dihapus dari browser ini.`,
     );
     if (!confirmed) return;
+    let voidReason = null;
+    if (record.backend) {
+      voidReason = window.prompt("Tuliskan alasan pembatalan laporan (wajib, maksimal 500 karakter):");
+      if (voidReason === null) return;
+      voidReason = voidReason.trim();
+      if (!voidReason || voidReason.length > 500) {
+        showToast("Alasan pembatalan wajib diisi (maksimal 500 karakter).", true);
+        return;
+      }
+    }
     try {
       let successMessage = record.backend
         ? "Laporan berhasil dibatalkan (void)."
@@ -3288,6 +3424,7 @@
           method: "POST",
           body: JSON.stringify({
             action: "void",
+            reason: voidReason,
             clientKey: getReportClientKey(),
             reportId: record.id,
           }),
@@ -3320,6 +3457,7 @@
         preview.innerHTML = "";
       }
       renderHistory();
+      loadSpbDocuments();
       showToast(successMessage);
     } catch (error) {
       showToast("Laporan gagal dihapus. Silakan coba kembali.", true);
@@ -5320,6 +5458,7 @@
                     <span>${escapeHtml(schema.code)} · DOKUMEN TERKENDALI</span>
                     <h1>${escapeHtml(schema.title)}</h1>
                     <div class="print-document-number">Nomor: ${escapeHtml(reportNumber)}</div>
+                    ${options.documentStatus ? `<div class="print-document-number">Status: ${escapeHtml(options.documentStatus)}</div>` : ""}
                 </div>
                 <div class="print-meta">
                     ${schema.fields
@@ -7648,11 +7787,8 @@
         return `
             <tr data-sl-draft-row="${index}" data-sl-manual="${isManual ? "true" : "false"}">
                 <td>
-                    <select class="sl-master-part-select" data-sl-master-part data-index="${index}" aria-label="Pilih Master Part">
-                        <option value="">Pilih Master Part...</option>
-                        ${masterParts.map((part) => `<option value="${escapeHtml(part.partNumber)}" ${selectedValue === part.partNumber ? "selected" : ""}>${escapeHtml(part.partNumber)} · ${escapeHtml(part.description || "Tanpa nama")} · stok ${part.stockQty} ${escapeHtml(part.uom)}</option>`).join("")}
-                        <option value="__MANUAL__" ${selectedValue === "__MANUAL__" ? "selected" : ""}>+ Part baru / input manual</option>
-                    </select>
+                    <input class="sl-master-part-select" type="search" list="sl-part-suggestions-${index}" data-sl-master-part data-index="${index}" value="${escapeHtml(selectedValue === "__MANUAL__" ? "" : selectedValue)}" placeholder="Ketik nomor atau nama part..." autocomplete="off" aria-label="Cari Master Part">
+                    <datalist id="sl-part-suggestions-${index}">${masterParts.map((part) => `<option value="${escapeHtml(`${part.partNumber} — ${part.description || "Tanpa nama"}`)}" label="${escapeHtml(`Stok ${part.stockQty} ${part.uom}`)}"></option>`).join("")}</datalist>
                     <input type="text" value="${escapeHtml(item.partNumber || "")}" placeholder="Part number" data-sl-draft-field="partNumber" data-index="${index}" ${matchedPart && !isManual ? "readonly" : ""}>
                 </td>
                 <td><input type="text" value="${escapeHtml(item.description || "")}" placeholder="Nama / spesifikasi part" data-sl-draft-field="description" data-index="${index}" ${matchedPart && !isManual ? "readonly" : ""}></td>
@@ -7817,7 +7953,18 @@
 
   function applyMasterPart(index, selection) {
     if (!state.modal?.draft[index]) return;
-    if (selection === "__MANUAL__") {
+    const query = String(selection || "").trim().toLowerCase();
+    const matches = masterParts.filter((part) =>
+      part.partNumber.toLowerCase() === query ||
+      `${part.partNumber} — ${part.description || "Tanpa nama"}`.toLowerCase() === query ||
+      String(part.description || "").toLowerCase() === query,
+    );
+    const selected = matches.length === 1 ? matches[0] : null;
+    if (!selected && query) {
+      window.alert("Pilih part dari daftar saran. Untuk part baru, kosongkan pencarian lalu isi part number dan deskripsi manual.");
+      return;
+    }
+    if (!selected) {
       state.modal.draft[index] = {
         partNumber: "",
         description: "",
@@ -7826,7 +7973,7 @@
         isManual: true,
       };
     } else {
-      const part = masterParts.find((item) => item.partNumber === selection);
+      const part = selected;
       if (!part) return;
       state.modal.draft[index] = {
         partNumber: part.partNumber,
@@ -7924,6 +8071,38 @@
     openForAsset(resolvedAssetId, woId, recommended);
   }
 
+  function openFullSpbFormForWorkOrder(woId, assetId) {
+    const reports = window.FleetReportForms;
+    if (!reports?.importDraft) return false;
+    if (reports.getDraftState("spb")?.hasData &&
+        !window.confirm("Draft Form SPB yang tersimpan akan diganti dengan data WO ini. Lanjutkan?")) return false;
+    openForWorkOrder(woId, assetId);
+    const draft = state.modal;
+    if (!draft) return false;
+    const asset = assetById(draft.assetId);
+    const wo = workOrderById(woId);
+    const fields = {
+      nomor_wo: woId,
+      kode_unit: asset?.id || draft.assetId,
+      lokasi: asset?.location || "",
+      project: wo?.project || asset?.project || "",
+      tanggal: new Date().toLocaleDateString("en-CA"),
+      urgensi: draft.priority === "Critical" || draft.priority === "Urgent" ? "Emergency" : "Normal",
+    };
+    const rows = draft.draft.length ? draft.draft.map((item) => ({
+      nama: item.description || "",
+      spesifikasi: item.partNumber || "",
+      satuan: item.uom || "pcs",
+      jumlah: Number(item.qty) || 1,
+      keterangan: "",
+      status: "Diajukan",
+    })) : [{}];
+    closeDetail();
+    window.showView?.("reports", "", "menu-reports");
+    reports.importDraft({ schemaId: "spb", fields, rows }, { replace: true });
+    return true;
+  }
+
   function closeDetail() {
     state.modal = null;
     document.body.classList.remove("sl-modal-open");
@@ -7945,24 +8124,6 @@
         isManual: row.dataset.slManual === "true",
       };
     });
-  }
-
-  function addApprovalRow(request) {
-    const tbody = document.getElementById("approval-list");
-    if (!tbody || tbody.querySelector(`[data-sl-approval="${request.spbId}"]`))
-      return;
-    const row = document.createElement("tr");
-    row.dataset.slApproval = request.spbId;
-    row.innerHTML = `
-            <td><strong class="font-mono" style="color:var(--primary);">${escapeHtml(request.spbId)}</strong></td>
-            <td>SPB Spare Part · <strong class="font-mono">${escapeHtml(shortCode(request.assetId))}</strong></td>
-            <td>Maintenance / Logistik</td>
-            <td>${request.lines.length} item · <span class="font-mono">${escapeHtml(request.woId || "Belum terkait WO")}</span></td>
-            <td>
-                <button class="btn btn-sm btn-success" style="padding:3px 8px; border-radius:2px;" onclick="approveDoc(this)" title="Approve Request"><i class="fa-solid fa-check"></i> Setuju</button>
-                <button class="btn btn-sm btn-danger" style="padding:3px 8px; border-radius:2px;" onclick="rejectDoc(this, '${escapeHtml(request.spbId)}')" title="Reject Request"><i class="fa-solid fa-xmark"></i> Tolak</button>
-            </td>`;
-    tbody.prepend(row);
   }
 
   async function submitDraft() {
@@ -8031,7 +8192,7 @@
     try {
       const response = await fetch("api/logistics.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": window.APP_CSRF_TOKEN || "" },
         body: JSON.stringify({ records: newRecords }),
       });
       const resData = await response.json();
@@ -8055,7 +8216,7 @@
     }
     persist();
     closeDetail();
-    addApprovalRow(request);
+    window.loadSpbApprovalInbox?.();
     notify(
       `${spbId} dibuat dan dokumen masuk ke Approval (Database terupdate).`,
     );
@@ -8345,6 +8506,7 @@
     },
     openForAsset,
     openForWorkOrder,
+    openFullSpbFormForWorkOrder,
     addDraftItem,
     addRecommendedItem(domain) {
       return addDraftItem(draftFromDomain(domain));

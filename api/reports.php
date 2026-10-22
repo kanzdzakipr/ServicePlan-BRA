@@ -1,6 +1,7 @@
 <?php
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
+require_once dirname(__DIR__) . '/core/ReportVoidPolicy.php';
 
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
@@ -460,7 +461,11 @@ try {
     if ($action === 'void') {
         api_require_permission('reports.approve');
         $reportId = trim((string)($input['reportId'] ?? ''));
-        $reason = trim((string)($input['reason'] ?? ''));
+        try {
+            $reason = ReportVoidPolicy::reason($input['reason'] ?? null);
+        } catch (InvalidArgumentException $e) {
+            reportReply('error', null, $e->getMessage(), 422);
+        }
         $db->beginTransaction();
         try {
             $ownerScope = api_report_owner_scope_clause('report_records', 'void_owner_id');

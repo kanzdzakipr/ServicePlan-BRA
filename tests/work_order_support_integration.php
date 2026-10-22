@@ -119,6 +119,22 @@ try {
         supportAssert(str_contains($error->getMessage(), 'SPB aktif'), 'active SPB blocks contradictory no-part decision');
     }
 
+    $templateId = $db->query('SELECT template_id FROM report_templates ORDER BY template_id LIMIT 1')->fetchColumn();
+    if (!$templateId) throw new RuntimeException('Template laporan uji tidak tersedia.');
+    $reportId = sprintf('%s-%s-4%s-a%s-%s', substr($suffix, 0, 8), substr($suffix, 0, 4), substr($suffix, 0, 3), substr($suffix, 0, 3), str_pad($suffix, 12, '0'));
+    $db->prepare("INSERT INTO report_records (report_id, template_id, client_key, status, field_data)
+                  VALUES (:report_id, :template_id, :client_key, 'VOID', '{}')")
+        ->execute([':report_id' => $reportId, ':template_id' => $templateId, ':client_key' => 'QA-SUP-' . $suffix]);
+    $db->prepare("INSERT INTO report_purchase_request_integrations
+                  (report_id, spb_id, asset_id, owns_purchase_request, applied_payload, reversed_at)
+                  VALUES (:report_id, :spb_id, :asset_id, 0, '{}', NOW())")
+        ->execute([':report_id' => $reportId, ':spb_id' => $spbId, ':asset_id' => $asset]);
+    $overview = WorkOrderSupport::overview($db, $woId);
+    supportAssert(count($overview['purchaseRequests']) === 0, 'SPB with reversed report link is absent from active WO detail');
+    $spbStillExists = $db->prepare('SELECT COUNT(*) FROM purchase_requests WHERE spb_id = :spb_id');
+    $spbStillExists->execute([':spb_id' => $spbId]);
+    supportAssert((int) $spbStillExists->fetchColumn() === 1, 'reversed SPB remains in database history');
+
     $timelineCount = $db->prepare('SELECT COUNT(*) FROM work_order_timeline WHERE wo_id = :wo_id');
     $timelineCount->execute([':wo_id' => $woId]);
     supportAssert((int) $timelineCount->fetchColumn() >= 5, 'part and service actions are recorded in the WO timeline');

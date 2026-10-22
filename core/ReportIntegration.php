@@ -5,6 +5,13 @@ final class ReportIntegration
 {
     public static function ensureTables(PDO $db): void
     {
+        $db->exec("CREATE TABLE IF NOT EXISTS spb_void_audit (
+            spb_id VARCHAR(50) PRIMARY KEY,
+            reason VARCHAR(500) NOT NULL,
+            snapshot_json LONGTEXT NOT NULL,
+            voided_by INT NOT NULL,
+            voided_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         $db->exec("CREATE TABLE IF NOT EXISTS inventory_transactions (
             transaction_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             report_id CHAR(36) NOT NULL,
@@ -2730,6 +2737,12 @@ final class ReportIntegration
             throw new DomainException('SPB harus memiliki sedikitnya satu barang yang diminta.');
         }
         usort($items, static fn(array $left, array $right): int => strcmp($left['id'], $right['id']));
+
+        $voidedNumber = $db->prepare('SELECT 1 FROM spb_void_audit WHERE spb_id = :spb_id LIMIT 1');
+        $voidedNumber->execute([':spb_id' => $spbId]);
+        if ($voidedNumber->fetchColumn()) {
+            throw new DomainException("Nomor {$spbId} pernah di-void dan tidak boleh dipakai ulang.");
+        }
 
         $snapshot = [
             'header' => [
