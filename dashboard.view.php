@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="assets/logogram-pt-bina-rekayasa-anugrah.png">
-    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-dashboard-status-icons-3">
+    <link rel="stylesheet" href="scripts/dashboard.css?v=20261022-search-btn-fix-1">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -128,7 +128,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             <div class="header-right">
                 <!-- Mobile Search Icon Toggle Button -->
                 <button type="button" class="btn-mobile-search-toggle" id="btnMobileSearchToggle"
-                    onclick="toggleMobileSearch(event)" title="Pencarian aset">
+                    onclick="toggleMobileSearch(event)" title="Pencarian Unit & WO" aria-label="Buka pencarian aset dan unit">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
 

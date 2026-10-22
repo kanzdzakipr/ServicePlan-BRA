@@ -15718,7 +15718,7 @@ body.sl-modal-open {
 }
 
 /* ==========================================================================
-   SYSTEM NOTIFICATION BELL & DROPDOWN PANEL (TACTICAL TELEMETRY STYLING)
+   HEADER ACTIONS: SEARCH TOGGLE & SYSTEM NOTIFICATION BELL
    ========================================================================== */
 .notification-wrapper {
     position: relative;
@@ -15726,7 +15726,8 @@ body.sl-modal-open {
     align-items: center;
 }
 
-.btn-notification-bell {
+.btn-notification-bell,
+.btn-mobile-search-toggle {
     position: relative;
     background: #ffffff;
     border: 1px solid #cbd5e1;
@@ -15739,15 +15740,30 @@ body.sl-modal-open {
     justify-content: center;
     font-size: 1.05rem;
     cursor: pointer;
+    padding: 0;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
-.btn-notification-bell:hover {
+.btn-notification-bell:hover,
+.btn-mobile-search-toggle:hover {
     background: #f8fafc;
     border-color: #007bff;
     color: #007bff;
     transform: translateY(-1px);
+}
+
+.btn-notification-bell:active,
+.btn-mobile-search-toggle:active {
+    transform: translateY(0);
+}
+
+.btn-notification-bell:focus-visible,
+.btn-mobile-search-toggle:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
 }
 
 .notification-badge {
@@ -18201,6 +18217,16 @@ body.sl-modal-open {
 
     .btn-mobile-search-toggle {
         display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #1e293b !important;
+        border-radius: 8px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+        padding: 0 !important;
+        font-size: 0.95rem !important;
+        cursor: pointer !important;
     }
 
     .btn-sidebar-toggle,
