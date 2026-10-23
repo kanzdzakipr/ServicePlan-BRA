@@ -1,0 +1,1705 @@
+[
+    {
+        "asset_id": "DT-00001",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "SYAFRI",
+        "frequency": 1,
+        "all_operators": [
+            "SYAFRI"
+        ],
+        "evidence_date": "2026-01-06",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00003",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9109 ZYT",
+        "serial_number": null,
+        "primary_operator": "RIO KURNIAWAN",
+        "frequency": 3,
+        "all_operators": [
+            "RIO KURNIAWAN"
+        ],
+        "evidence_date": "2025-12-27",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00004",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9112 ZYT",
+        "serial_number": null,
+        "primary_operator": "ERICK",
+        "frequency": 3,
+        "all_operators": [
+            "ERICK"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00005",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9113 ZYT",
+        "serial_number": null,
+        "primary_operator": "ALI UDIN SAGALA",
+        "frequency": 3,
+        "all_operators": [
+            "ALI UDIN SAGALA"
+        ],
+        "evidence_date": "2025-12-30",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00006",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9118 ZYT",
+        "serial_number": null,
+        "primary_operator": "SYAWALUDDIN",
+        "frequency": 1,
+        "all_operators": [
+            "SYAWALUDDIN"
+        ],
+        "evidence_date": "2026-01-12",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00008",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9115 ZYT",
+        "serial_number": null,
+        "primary_operator": "RICO SAPUTRA",
+        "frequency": 2,
+        "all_operators": [
+            "RICO SAPUTRA"
+        ],
+        "evidence_date": "2025-12-27",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00009",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9116 ZYT",
+        "serial_number": null,
+        "primary_operator": "FADLIL DINIL HAQ",
+        "frequency": 1,
+        "all_operators": [
+            "FADLIL DINIL HAQ"
+        ],
+        "evidence_date": "2026-01-06",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00010",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9117 ZYT",
+        "serial_number": null,
+        "primary_operator": "ATIK MUZAKI",
+        "frequency": 1,
+        "all_operators": [
+            "ATIK MUZAKI"
+        ],
+        "evidence_date": "2026-01-17",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00011",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9120 ZYT",
+        "serial_number": null,
+        "primary_operator": "BUYUNG KAPRI",
+        "frequency": 4,
+        "all_operators": [
+            "BUYUNG KAPRI"
+        ],
+        "evidence_date": "2025-12-30",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00012",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9121 ZYT",
+        "serial_number": null,
+        "primary_operator": "RAHMAT N. NAIN",
+        "frequency": 3,
+        "all_operators": [
+            "RAHMAT N. NAIN"
+        ],
+        "evidence_date": "2025-12-27",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00013",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9122 ZYT",
+        "serial_number": null,
+        "primary_operator": "WALUYO (WAJAH LUGU BUAYO)",
+        "frequency": 1,
+        "all_operators": [
+            "WALUYO (WAJAH LUGU BUAYO)"
+        ],
+        "evidence_date": "2026-01-09",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00014",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9123 ZYT",
+        "serial_number": null,
+        "primary_operator": "SABAM",
+        "frequency": 2,
+        "all_operators": [
+            "SABAM"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00015",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9124 ZYT",
+        "serial_number": null,
+        "primary_operator": "DEDEK ILHAM ARIFIN",
+        "frequency": 1,
+        "all_operators": [
+            "DEDEK ILHAM ARIFIN"
+        ],
+        "evidence_date": "2026-01-14",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00016",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9125 ZYT",
+        "serial_number": null,
+        "primary_operator": "SARDI",
+        "frequency": 3,
+        "all_operators": [
+            "SARDI"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00017",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9126 ZYT",
+        "serial_number": null,
+        "primary_operator": "SAHRUL BAHRI",
+        "frequency": 3,
+        "all_operators": [
+            "SAHRUL BAHRI"
+        ],
+        "evidence_date": "2025-12-24",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00019",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9128 ZYT",
+        "serial_number": null,
+        "primary_operator": "KARDIMAN SARAGIH",
+        "frequency": 1,
+        "all_operators": [
+            "KARDIMAN SARAGIH"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00021",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9130 ZYT",
+        "serial_number": null,
+        "primary_operator": "ABDUL RAIS",
+        "frequency": 2,
+        "all_operators": [
+            "ABDUL RAIS"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00022",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9131 ZYT",
+        "serial_number": null,
+        "primary_operator": "EKO FRANS SATRIA",
+        "frequency": 2,
+        "all_operators": [
+            "EKO FRANS SATRIA"
+        ],
+        "evidence_date": "2026-01-14",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00023",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9132 ZYT",
+        "serial_number": null,
+        "primary_operator": "PAWITNO",
+        "frequency": 3,
+        "all_operators": [
+            "PAWITNO"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00024",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9133 ZYT",
+        "serial_number": null,
+        "primary_operator": "RONSON HUTABARAT",
+        "frequency": 1,
+        "all_operators": [
+            "RONSON HUTABARAT"
+        ],
+        "evidence_date": "2026-01-17",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00025",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9134 ZYT",
+        "serial_number": null,
+        "primary_operator": "NOVA RIZAL",
+        "frequency": 1,
+        "all_operators": [
+            "NOVA RIZAL"
+        ],
+        "evidence_date": "2026-01-10",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00026",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9135 ZYT",
+        "serial_number": null,
+        "primary_operator": "DEDI SANTIAJI",
+        "frequency": 3,
+        "all_operators": [
+            "DEDI SANTIAJI"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00027",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9136 ZYT",
+        "serial_number": null,
+        "primary_operator": "ANDIKA",
+        "frequency": 1,
+        "all_operators": [
+            "ANDIKA"
+        ],
+        "evidence_date": "2025-12-24",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00028",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9137 ZYT",
+        "serial_number": null,
+        "primary_operator": "AHMAD RAFIK HASIBUAN",
+        "frequency": 2,
+        "all_operators": [
+            "AHMAD RAFIK HASIBUAN"
+        ],
+        "evidence_date": "2026-01-14",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00029",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9138 ZYT",
+        "serial_number": null,
+        "primary_operator": "MARSENI",
+        "frequency": 2,
+        "all_operators": [
+            "MARSENI"
+        ],
+        "evidence_date": "2026-01-14",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00030",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9139 ZYT",
+        "serial_number": null,
+        "primary_operator": "ZULKIFLI",
+        "frequency": 1,
+        "all_operators": [
+            "ZULKIFLI"
+        ],
+        "evidence_date": "2026-01-12",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00031",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Hino Ranger FM 260 JD",
+        "license_plate": "BG8976IX",
+        "serial_number": null,
+        "primary_operator": "IGNASIUS GS LUMBAN TOBING",
+        "frequency": 6,
+        "all_operators": [
+            "IGNASIUS GS LUMBAN TOBING"
+        ],
+        "evidence_date": "2025-12-30",
+        "evidence_count": 6,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00032",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BG 8976 IX",
+        "serial_number": null,
+        "primary_operator": "DEDY HALOMOAN",
+        "frequency": 2,
+        "all_operators": [
+            "DEDY HALOMOAN"
+        ],
+        "evidence_date": "2026-01-13",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00034",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "AGUS DEDI",
+        "frequency": 1,
+        "all_operators": [
+            "AGUS DEDI"
+        ],
+        "evidence_date": "2025-12-24",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00035",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 8621 QU",
+        "serial_number": null,
+        "primary_operator": "RICHO SAMUEL dt vendor",
+        "frequency": 2,
+        "all_operators": [
+            "RICHO SAMUEL dt vendor"
+        ],
+        "evidence_date": "2025-12-29",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00037",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9139 ZYT",
+        "serial_number": null,
+        "primary_operator": "HARTONO",
+        "frequency": 1,
+        "all_operators": [
+            "HARTONO"
+        ],
+        "evidence_date": "2025-12-23",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00038",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9079 ZYT",
+        "serial_number": null,
+        "primary_operator": "KHAIZUL",
+        "frequency": 2,
+        "all_operators": [
+            "KHAIZUL"
+        ],
+        "evidence_date": "2026-01-10",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00039",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9080 ZYT",
+        "serial_number": null,
+        "primary_operator": "SUPRIYANTO",
+        "frequency": 2,
+        "all_operators": [
+            "SUPRIYANTO"
+        ],
+        "evidence_date": "2026-01-15",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00040",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9081 ZYT",
+        "serial_number": null,
+        "primary_operator": "ZAHAR",
+        "frequency": 2,
+        "all_operators": [
+            "ZAHAR"
+        ],
+        "evidence_date": "2025-12-31",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00041",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9082 ZYT",
+        "serial_number": null,
+        "primary_operator": "JOKO SATRIO",
+        "frequency": 2,
+        "all_operators": [
+            "JOKO SATRIO"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00042",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9089 ZYT",
+        "serial_number": null,
+        "primary_operator": "DODI KANDRAYANI",
+        "frequency": 1,
+        "all_operators": [
+            "DODI KANDRAYANI"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00043",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9091 ZYT",
+        "serial_number": null,
+        "primary_operator": "JANTO MAROLOAN TUA P.",
+        "frequency": 2,
+        "all_operators": [
+            "JANTO MAROLOAN TUA P."
+        ],
+        "evidence_date": "2026-01-09",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00044",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9092 ZYT",
+        "serial_number": null,
+        "primary_operator": "JONSON",
+        "frequency": 2,
+        "all_operators": [
+            "JONSON",
+            "JONSON RWI"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 3,
+        "is_multi_driver": true
+    },
+    {
+        "asset_id": "DT-00045",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9093 ZYT",
+        "serial_number": null,
+        "primary_operator": "WAHYU PURNOMO",
+        "frequency": 3,
+        "all_operators": [
+            "WAHYU PURNOMO"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00046",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9094 ZYT",
+        "serial_number": null,
+        "primary_operator": "RIA IRAWAN",
+        "frequency": 3,
+        "all_operators": [
+            "RIA IRAWAN"
+        ],
+        "evidence_date": "2025-12-18",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00047",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9102 ZYT",
+        "serial_number": null,
+        "primary_operator": "SUPRIYANTO HASIBUAN",
+        "frequency": 3,
+        "all_operators": [
+            "SUPRIYANTO HASIBUAN"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00048",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9103 ZYT",
+        "serial_number": null,
+        "primary_operator": "AFRYANDI",
+        "frequency": 1,
+        "all_operators": [
+            "AFRYANDI"
+        ],
+        "evidence_date": "2026-01-07",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00049",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Hino Ranger FM 280 JD",
+        "license_plate": "B 9104 ZYT",
+        "serial_number": null,
+        "primary_operator": "SOFYAN",
+        "frequency": 4,
+        "all_operators": [
+            "SOFYAN"
+        ],
+        "evidence_date": "2026-01-15",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00050",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9105 ZYT",
+        "serial_number": null,
+        "primary_operator": "SOBIRIN",
+        "frequency": 6,
+        "all_operators": [
+            "SOBIRIN"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 6,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00052",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Hino Ranger FM 260 JD",
+        "license_plate": "B 9642 KYW",
+        "serial_number": null,
+        "primary_operator": "SUPRIYADI SAGALA",
+        "frequency": 8,
+        "all_operators": [
+            "SUPRIYADI SAGALA"
+        ],
+        "evidence_date": "2025-12-22",
+        "evidence_count": 8,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00053",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9644 KYW",
+        "serial_number": null,
+        "primary_operator": "Ahmad Rivaldi P",
+        "frequency": 3,
+        "all_operators": [
+            "Ahmad Rivaldi P"
+        ],
+        "evidence_date": "2025-12-23",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00054",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9683 KYW",
+        "serial_number": null,
+        "primary_operator": "SAHRUL",
+        "frequency": 6,
+        "all_operators": [
+            "SAHRUL"
+        ],
+        "evidence_date": "2025-12-23",
+        "evidence_count": 6,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00055",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9701 PYW",
+        "serial_number": null,
+        "primary_operator": "KLIWON",
+        "frequency": 4,
+        "all_operators": [
+            "KLIWON"
+        ],
+        "evidence_date": "2025-12-30",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00056",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9892 PYW",
+        "serial_number": null,
+        "primary_operator": "OJAHAN WESLEY",
+        "frequency": 7,
+        "all_operators": [
+            "OJAHAN WESLEY"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 7,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00057",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9914 JYT",
+        "serial_number": null,
+        "primary_operator": "MUSANI FADLI",
+        "frequency": 8,
+        "all_operators": [
+            "MUSANI FADLI"
+        ],
+        "evidence_date": "2025-12-27",
+        "evidence_count": 8,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00058",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "B 9973 BIS",
+        "serial_number": null,
+        "primary_operator": "SUWARDI",
+        "frequency": 4,
+        "all_operators": [
+            "SUWARDI",
+            "SUWARDI MATING BOARD"
+        ],
+        "evidence_date": "2025-12-26",
+        "evidence_count": 5,
+        "is_multi_driver": true
+    },
+    {
+        "asset_id": "DT-00059",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BG 8163 NJ",
+        "serial_number": null,
+        "primary_operator": "AHMAD NIRWANSYAH",
+        "frequency": 3,
+        "all_operators": [
+            "AHMAD NIRWANSYAH"
+        ],
+        "evidence_date": "2025-12-16",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00061",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BG 8367 IJ",
+        "serial_number": null,
+        "primary_operator": "CHANDRA BUDI",
+        "frequency": 5,
+        "all_operators": [
+            "CHANDRA BUDI"
+        ],
+        "evidence_date": "2025-12-25",
+        "evidence_count": 5,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00062",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BG 8638 NI",
+        "serial_number": null,
+        "primary_operator": "ARFIANSYAH",
+        "frequency": 3,
+        "all_operators": [
+            "ARFIANSYAH"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00063",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BG 8639 NI",
+        "serial_number": null,
+        "primary_operator": "RICO SAPUTRA",
+        "frequency": 4,
+        "all_operators": [
+            "RICO SAPUTRA"
+        ],
+        "evidence_date": "2025-12-26",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00064",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BG 8640 NI",
+        "serial_number": null,
+        "primary_operator": "PADLI",
+        "frequency": 4,
+        "all_operators": [
+            "PADLI"
+        ],
+        "evidence_date": "2025-12-18",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00065",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BG 8641 NI",
+        "serial_number": null,
+        "primary_operator": "SYAHFITRA WAHYUDI",
+        "frequency": 3,
+        "all_operators": [
+            "SYAHFITRA WAHYUDI"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00071",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "DT 8126 JE",
+        "serial_number": null,
+        "primary_operator": "IRFAN",
+        "frequency": 2,
+        "all_operators": [
+            "IRFAN"
+        ],
+        "evidence_date": "2025-12-24",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00072",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "DT 8669 KE",
+        "serial_number": null,
+        "primary_operator": "RIZKY RAHMADANDI",
+        "frequency": 4,
+        "all_operators": [
+            "RIZKY RAHMADANDI"
+        ],
+        "evidence_date": "2025-12-22",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00073",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "DT 8973 IE",
+        "serial_number": null,
+        "primary_operator": "SUPRIANTO, J",
+        "frequency": 3,
+        "all_operators": [
+            "SUPRIANTO, J"
+        ],
+        "evidence_date": "2025-12-24",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-00074",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "Z 9109 AB",
+        "serial_number": null,
+        "primary_operator": "ERDI MANTO PANJAITAN",
+        "frequency": 6,
+        "all_operators": [
+            "ERDI MANTO PANJAITAN"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 6,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04001",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9174 NU",
+        "serial_number": null,
+        "primary_operator": "HERMANSYAH BATUBARA",
+        "frequency": 4,
+        "all_operators": [
+            "HERMANSYAH BATUBARA"
+        ],
+        "evidence_date": "2026-01-10",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04012",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9944 JO",
+        "serial_number": null,
+        "primary_operator": "ADE CANDRA",
+        "frequency": 2,
+        "all_operators": [
+            "ADE CANDRA"
+        ],
+        "evidence_date": "2025-12-24",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04024",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9285 JO",
+        "serial_number": null,
+        "primary_operator": "ROMI EFENDI",
+        "frequency": 7,
+        "all_operators": [
+            "ROMI EFENDI"
+        ],
+        "evidence_date": "2025-12-30",
+        "evidence_count": 7,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04025",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9398 JO",
+        "serial_number": null,
+        "primary_operator": "SISWOYO EKO PUTRO",
+        "frequency": 4,
+        "all_operators": [
+            "SISWOYO EKO PUTRO"
+        ],
+        "evidence_date": "2025-12-30",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04029",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9819 QO",
+        "serial_number": null,
+        "primary_operator": "INTRA SAPUTRA",
+        "frequency": 2,
+        "all_operators": [
+            "INTRA SAPUTRA"
+        ],
+        "evidence_date": "2025-12-20",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04030",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9510 QO",
+        "serial_number": null,
+        "primary_operator": "M. ADE SATRIA",
+        "frequency": 4,
+        "all_operators": [
+            "M. ADE SATRIA"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04032",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BG 8976 IX",
+        "serial_number": null,
+        "primary_operator": "HERMAN SYAHPUTRA",
+        "frequency": 2,
+        "all_operators": [
+            "HERMAN SYAHPUTRA",
+            "DEDY HALOMOAN"
+        ],
+        "evidence_date": "2025-12-22",
+        "evidence_count": 3,
+        "is_multi_driver": true
+    },
+    {
+        "asset_id": "DT-04036",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9949 JO",
+        "serial_number": null,
+        "primary_operator": "MOSES SILABAN",
+        "frequency": 3,
+        "all_operators": [
+            "MOSES SILABAN"
+        ],
+        "evidence_date": "2025-12-27",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04037",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9666 JO",
+        "serial_number": null,
+        "primary_operator": "M ADE SATRIA",
+        "frequency": 1,
+        "all_operators": [
+            "M ADE SATRIA"
+        ],
+        "evidence_date": "2025-12-23",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04038",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9296 JO",
+        "serial_number": null,
+        "primary_operator": "HENDRYCO FHERMY",
+        "frequency": 3,
+        "all_operators": [
+            "HENDRYCO FHERMY"
+        ],
+        "evidence_date": "2025-12-23",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04040",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9509 QO",
+        "serial_number": null,
+        "primary_operator": "HERMANSAH",
+        "frequency": 2,
+        "all_operators": [
+            "HERMANSAH",
+            "HERMANSYAH"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 4,
+        "is_multi_driver": true
+    },
+    {
+        "asset_id": "DT-04042",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9287 JO",
+        "serial_number": null,
+        "primary_operator": "M. DHANI",
+        "frequency": 6,
+        "all_operators": [
+            "M. DHANI"
+        ],
+        "evidence_date": "2025-12-27",
+        "evidence_count": 6,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04044",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9244 NU",
+        "serial_number": null,
+        "primary_operator": "ARDIKA SUGAMA BARUS",
+        "frequency": 5,
+        "all_operators": [
+            "ARDIKA SUGAMA BARUS"
+        ],
+        "evidence_date": "2025-12-27",
+        "evidence_count": 5,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DT-04048",
+        "hull_number": null,
+        "category": "Dump Truck",
+        "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+        "license_plate": "BM 9951 JO",
+        "serial_number": null,
+        "primary_operator": "DIPPOS SINAGA",
+        "frequency": 5,
+        "all_operators": [
+            "DIPPOS SINAGA"
+        ],
+        "evidence_date": "2025-12-31",
+        "evidence_count": 5,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DZ-00001",
+        "hull_number": null,
+        "category": "Bulldozer",
+        "make_model": "Bulldozer Caterpillar D6G \/ Shantui SD16",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "JAILANI",
+        "frequency": 1,
+        "all_operators": [
+            "JAILANI"
+        ],
+        "evidence_date": "2025-12-22",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DZ-00002",
+        "hull_number": null,
+        "category": "Bulldozer",
+        "make_model": "Caterpillar D6G 2XL",
+        "license_plate": null,
+        "serial_number": "P6G01656",
+        "primary_operator": "VERDINAN SIMANJUNTAK",
+        "frequency": 2,
+        "all_operators": [
+            "VERDINAN SIMANJUNTAK"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DZ-00003",
+        "hull_number": null,
+        "category": "Bulldozer",
+        "make_model": "Bulldozer Caterpillar D6G \/ Shantui SD16",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "AGUSTIAWAN",
+        "frequency": 1,
+        "all_operators": [
+            "AGUSTIAWAN"
+        ],
+        "evidence_date": "2026-01-10",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "DZ-00006",
+        "hull_number": null,
+        "category": "Bulldozer",
+        "make_model": "Bulldozer Caterpillar D6G \/ Shantui SD16",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "PUTRA",
+        "frequency": 2,
+        "all_operators": [
+            "PUTRA"
+        ],
+        "evidence_date": "2026-01-13",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00001",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": "Komatsu PC200-10M0 CE",
+        "license_plate": null,
+        "serial_number": "C51502",
+        "primary_operator": "NOVRANDI GULTOM",
+        "frequency": 1,
+        "all_operators": [
+            "NOVRANDI GULTOM"
+        ],
+        "evidence_date": "2025-12-31",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00003",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+        "license_plate": "ar 320 GC",
+        "serial_number": null,
+        "primary_operator": "ADI SANTOSO",
+        "frequency": 3,
+        "all_operators": [
+            "ADI SANTOSO"
+        ],
+        "evidence_date": "2025-12-22",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00004",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+        "license_plate": "ar 320 D",
+        "serial_number": null,
+        "primary_operator": "HERMAN",
+        "frequency": 4,
+        "all_operators": [
+            "HERMAN"
+        ],
+        "evidence_date": "2025-12-29",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00005",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "DAUD",
+        "frequency": 1,
+        "all_operators": [
+            "DAUD"
+        ],
+        "evidence_date": "2026-01-02",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00007",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": null,
+        "license_plate": "CC 600 V",
+        "serial_number": null,
+        "primary_operator": "Manalu (Managua)",
+        "frequency": 1,
+        "all_operators": [
+            "Manalu (Managua)",
+            "UMAR SOLEH"
+        ],
+        "evidence_date": "2025-12-22",
+        "evidence_count": 2,
+        "is_multi_driver": true
+    },
+    {
+        "asset_id": "EXC-00008",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "M. HUTAPEA",
+        "frequency": 4,
+        "all_operators": [
+            "M. HUTAPEA"
+        ],
+        "evidence_date": "2026-01-09",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00009",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+        "license_plate": null,
+        "serial_number": "C51503",
+        "primary_operator": "INDRA",
+        "frequency": 1,
+        "all_operators": [
+            "INDRA"
+        ],
+        "evidence_date": "2026-01-10",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00011",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+        "license_plate": null,
+        "serial_number": "SYW01364",
+        "primary_operator": "SAHRUL",
+        "frequency": 2,
+        "all_operators": [
+            "SAHRUL"
+        ],
+        "evidence_date": "2026-01-14",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00012",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+        "license_plate": null,
+        "serial_number": "C51502",
+        "primary_operator": "JUNTAK",
+        "frequency": 4,
+        "all_operators": [
+            "JUNTAK",
+            "HERMAN GP"
+        ],
+        "evidence_date": "2025-12-23",
+        "evidence_count": 5,
+        "is_multi_driver": true
+    },
+    {
+        "asset_id": "EXC-00018",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": null,
+        "license_plate": "BA 9016 QU",
+        "serial_number": null,
+        "primary_operator": "FINKY",
+        "frequency": 2,
+        "all_operators": [
+            "FINKY"
+        ],
+        "evidence_date": "2026-01-13",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00019",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": null,
+        "license_plate": "BM 7680 TU",
+        "serial_number": null,
+        "primary_operator": "NANDA HAJI SAPUTRA",
+        "frequency": 2,
+        "all_operators": [
+            "NANDA HAJI SAPUTRA"
+        ],
+        "evidence_date": "2026-01-18",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "EXC-00022",
+        "hull_number": null,
+        "category": "Excavator",
+        "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+        "license_plate": null,
+        "serial_number": "DBCH1801",
+        "primary_operator": "SUPRIONO ROAD &",
+        "frequency": 1,
+        "all_operators": [
+            "SUPRIONO ROAD &"
+        ],
+        "evidence_date": "2025-12-30",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "FBT-00003",
+        "hull_number": null,
+        "category": "Trado",
+        "make_model": "Trado Heavy Hauler Mitsubishi FV 419 P \/ Hino",
+        "license_plate": "B 9012 ZEH",
+        "serial_number": null,
+        "primary_operator": "SUPRAYET NO",
+        "frequency": 1,
+        "all_operators": [
+            "SUPRAYET NO"
+        ],
+        "evidence_date": "2025-12-29",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "MG-00005",
+        "hull_number": null,
+        "category": "Motor Grader",
+        "make_model": "Motor Grader XCMG GR135 MAX",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "HERMAN",
+        "frequency": 2,
+        "all_operators": [
+            "HERMAN"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "PF-00001",
+        "hull_number": null,
+        "category": "Vibro Compactor",
+        "make_model": "Vibro Bomag Pad Foot BW 211D-40SL",
+        "license_plate": null,
+        "serial_number": "961884301016",
+        "primary_operator": "HENDI SAPIKA",
+        "frequency": 1,
+        "all_operators": [
+            "HENDI SAPIKA",
+            "HENDI SEPIKA"
+        ],
+        "evidence_date": "2025-12-24",
+        "evidence_count": 2,
+        "is_multi_driver": true
+    },
+    {
+        "asset_id": "PF-00002",
+        "hull_number": null,
+        "category": "Vibro Compactor",
+        "make_model": "Vibro Compactor Bomag BW211D-40SL \/ Sakai",
+        "license_plate": "BW 211 D",
+        "serial_number": null,
+        "primary_operator": "SUPRI",
+        "frequency": 1,
+        "all_operators": [
+            "SUPRI"
+        ],
+        "evidence_date": "2025-12-24",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "PF-00004",
+        "hull_number": null,
+        "category": "Vibro Compactor",
+        "make_model": "Vibro Compactor Bomag BW211D-40SL \/ Sakai",
+        "license_plate": null,
+        "serial_number": "961884301614",
+        "primary_operator": "YOPI",
+        "frequency": 2,
+        "all_operators": [
+            "YOPI"
+        ],
+        "evidence_date": "2025-12-29",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "PF-00010",
+        "hull_number": null,
+        "category": "Vibro Compactor",
+        "make_model": "Vibro Compactor Bomag BW211D-40SL \/ Sakai",
+        "license_plate": null,
+        "serial_number": "961582391716",
+        "primary_operator": "HENDI SAPIKA \/M. HASBI",
+        "frequency": 2,
+        "all_operators": [
+            "HENDI SAPIKA \/M. HASBI"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "PF-00012",
+        "hull_number": null,
+        "category": "Vibro Compactor",
+        "make_model": "Vibro Compactor Bomag BW211D-40SL \/ Sakai",
+        "license_plate": null,
+        "serial_number": "961582391661",
+        "primary_operator": "NASIPRO NABABAN",
+        "frequency": 3,
+        "all_operators": [
+            "NASIPRO NABABAN"
+        ],
+        "evidence_date": "2025-12-29",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "PF-00015",
+        "hull_number": null,
+        "category": "Vibro Compactor",
+        "make_model": "Vibro Compactor Bomag BW211D-40SL \/ Sakai",
+        "license_plate": "BW 211 D",
+        "serial_number": null,
+        "primary_operator": "ALFIAN",
+        "frequency": 4,
+        "all_operators": [
+            "ALFIAN"
+        ],
+        "evidence_date": "2025-12-29",
+        "evidence_count": 4,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "PF-41001",
+        "hull_number": null,
+        "category": "Vibro Compactor",
+        "make_model": "Vibro Compactor Bomag BW211D-40SL \/ Sakai",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "RWI",
+        "frequency": 1,
+        "all_operators": [
+            "RWI"
+        ],
+        "evidence_date": "2026-01-19",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "PM-00004",
+        "hull_number": null,
+        "category": "Prime Mover",
+        "make_model": "PRIME MOVER",
+        "license_plate": "KT 9287 KU",
+        "serial_number": null,
+        "primary_operator": "ABDUL ARIFIN",
+        "frequency": 2,
+        "all_operators": [
+            "ABDUL ARIFIN"
+        ],
+        "evidence_date": "2025-12-29",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "PM-41002",
+        "hull_number": null,
+        "category": "Prime Mover",
+        "make_model": "",
+        "license_plate": "BM 8371 cu",
+        "serial_number": null,
+        "primary_operator": "RWI",
+        "frequency": 1,
+        "all_operators": [
+            "RWI"
+        ],
+        "evidence_date": "2026-01-12",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "RM-00002",
+        "hull_number": null,
+        "category": "Reclaimer Spreader",
+        "make_model": "Reclaimer \/ Cement Spreader XCMG XLZ2303",
+        "license_plate": null,
+        "serial_number": null,
+        "primary_operator": "RWI",
+        "frequency": 1,
+        "all_operators": [
+            "RWI"
+        ],
+        "evidence_date": "2026-01-09",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "RM-41001",
+        "hull_number": null,
+        "category": "Reclaimer Spreader",
+        "make_model": "Reclaimer \/ Cement Spreader XCMG XLZ2303",
+        "license_plate": "UG 2303 KJR",
+        "serial_number": null,
+        "primary_operator": "RWI",
+        "frequency": 1,
+        "all_operators": [
+            "RWI"
+        ],
+        "evidence_date": "2026-01-14",
+        "evidence_count": 1,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "TMC-00001",
+        "hull_number": null,
+        "category": "Other",
+        "make_model": "Truck Mounted Crane XCMG B 9435 XFY",
+        "license_plate": "B 9008 ZIN",
+        "serial_number": null,
+        "primary_operator": "HADI",
+        "frequency": 2,
+        "all_operators": [
+            "HADI"
+        ],
+        "evidence_date": "2025-12-31",
+        "evidence_count": 2,
+        "is_multi_driver": false
+    },
+    {
+        "asset_id": "WT-00001",
+        "hull_number": null,
+        "category": "Water Truck",
+        "make_model": "Water Truck Hino Dutro 130 HD \/ Isuzu",
+        "license_plate": "B 9018 KFA",
+        "serial_number": null,
+        "primary_operator": "GILANG FIRMANSYAH",
+        "frequency": 3,
+        "all_operators": [
+            "GILANG FIRMANSYAH"
+        ],
+        "evidence_date": "2026-01-20",
+        "evidence_count": 3,
+        "is_multi_driver": false
+    }
+]

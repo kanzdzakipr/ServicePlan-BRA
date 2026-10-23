@@ -1,0 +1,662 @@
+{
+    "total_matched_assets": 19,
+    "single_operator_assets": 19,
+    "multi_operator_assets": 0,
+    "matched_data": {
+        "DZ-00002": {
+            "asset": {
+                "asset_id": "DZ-00002",
+                "asset_code": "DZ-00002",
+                "hull_number": null,
+                "category": "Bulldozer",
+                "make_model": "Caterpillar D6G 2XL",
+                "serial_number": "P6G01656",
+                "license_plate": null,
+                "current_operator_name": null
+            },
+            "operators": {
+                "VERDINAN SIMANJUNTAK": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 49,
+                    "raw_unit": "DZ-00002 SN P6G01656",
+                    "base_code": "DZ-00002",
+                    "plate": "P6G",
+                    "hull": "",
+                    "operator": "VERDINAN SIMANJUNTAK",
+                    "status": "READY",
+                    "raw_line": "1    DZ-00002 SN P6G01656                VERDINAN SIMANJUNTAK                 READY    09\/12\/2025   09\/12\/2025 08.00   02\/01\/2026   02\/01\/2026 11.16   24,00        579 jam 16 menit   STUCK ENGINE. Mati total, Over heat, minyak di Nozzle sudah bercampur air, packing   Darmawan                                        Dari Lokasi Minas           29\/12\/2025 20\/12\/2025 : Trouble shooting"
+                }
+            ]
+        },
+        "DT-04048": {
+            "asset": {
+                "asset_id": "DT-04048",
+                "asset_code": "DT-04048",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": "BM 9951 JO",
+                "current_operator_name": null
+            },
+            "operators": {
+                "DIPPOS SINAGA": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 226,
+                    "raw_unit": "DT-04048",
+                    "base_code": "DT-04048",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "DIPPOS SINAGA",
+                    "status": "READY",
+                    "raw_line": "13    DT-04048                           DIPPOS SINAGA                        READY       05\/12\/2025   05\/12\/2025 08.00   05\/12\/2025   05\/12\/2025 11.22   0,00          3 jam 22 menit    PERGANTIAN SHOCK ABSORBER 2 PCS                                  Afriyandi                                              Bropit Harapan Baru"
+                }
+            ]
+        },
+        "DT-04032": {
+            "asset": {
+                "asset_id": "DT-04032",
+                "asset_code": "DT-04032",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": "BG 8976 IX",
+                "current_operator_name": null
+            },
+            "operators": {
+                "HERMAN SYAHPUTRA": 2
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 322,
+                    "raw_unit": "DT-04032",
+                    "base_code": "DT-04032",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "HERMAN SYAHPUTRA",
+                    "status": "READY",
+                    "raw_line": "28    DT-04032                         HERMAN SYAHPUTRA                    READY    22\/12\/2025   22\/12\/2025 17.09   23\/12\/2025   23\/12\/2025 16.49   0,99       831 jam 41 menit   Tambah oli hidrolik.                                                                     Rejeki Siregar. Soleh                               BROPIT HARAPAN                       22\/12\/2025 : Tambah oli hidrolik"
+                },
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 696,
+                    "raw_unit": "DT-04032",
+                    "base_code": "DT-04032",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "HERMAN SYAHPUTRA",
+                    "status": "READY",
+                    "raw_line": "143 DT-04032                     HERMAN SYAHPUTRA                      READY         07\/01\/2026   07\/01\/2026 08.00   07\/01\/2026   07\/01\/2026 09.18    0,00          1 jam 18 menit    Ganti sambungan slang.1 bh                                                                     Joni Septian            87488          Bropit Harapan baru"
+                }
+            ]
+        },
+        "DZ-00001": {
+            "asset": {
+                "asset_id": "DZ-00001",
+                "asset_code": "DZ-00001",
+                "hull_number": null,
+                "category": "Bulldozer",
+                "make_model": "Bulldozer Caterpillar D6G \/ Shantui SD16",
+                "serial_number": null,
+                "license_plate": null,
+                "current_operator_name": null
+            },
+            "operators": {
+                "JAILANI": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 324,
+                    "raw_unit": "DZ-00001",
+                    "base_code": "DZ-00001",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "JAILANI",
+                    "status": "READY",
+                    "raw_line": "29    DZ-00001                         JAILANI                             READY    22\/12\/2025   22\/12\/2025 18.00   22\/12\/2025   22\/12\/2025 18.43   0,03       830 jam 50 menit   Filter Solar sdh kotor . Pergantian Filter Solar                                         Joni Septian                           1743,5       LOC 3 Q - 19 B"
+                }
+            ]
+        },
+        "EXC-00012": {
+            "asset": {
+                "asset_id": "EXC-00012",
+                "asset_code": "EXC-00012",
+                "hull_number": null,
+                "category": "Excavator",
+                "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+                "serial_number": "C51502",
+                "license_plate": null,
+                "current_operator_name": null
+            },
+            "operators": {
+                "WUR EW GP": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 334,
+                    "raw_unit": "EX-00012- PC 200                 HERMAN",
+                    "base_code": "EX-00012",
+                    "plate": "PC200HER",
+                    "hull": "",
+                    "operator": "WUR EW GP",
+                    "status": "READY",
+                    "raw_line": "32    EX-00012- PC 200                 HERMAN                WUR EW GP     READY    23\/12\/2025   23\/12\/2025 08.30   23\/12\/2025   23\/12\/2025 09.05   0,02       816 jam 20 menit   TAMBAH OLI ENGINE 2,5 LT. KLAKSON TIDAK BUNYI                                            Operator, Inspektor                     5125        Loc ; 4 Q - 32 B"
+                }
+            ]
+        },
+        "DT-00035": {
+            "asset": {
+                "asset_id": "DT-00035",
+                "asset_code": "DT-00035",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": "BM 8621 QU",
+                "current_operator_name": null
+            },
+            "operators": {
+                "dt vendor": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 416,
+                    "raw_unit": "DT-00035 - BM 8621 QU      RICHO SAMUEL",
+                    "base_code": "DT-00035",
+                    "plate": "BM8621QU",
+                    "hull": "",
+                    "operator": "dt vendor",
+                    "status": "READY",
+                    "raw_line": "44    DT-00035 - BM 8621 QU      RICHO SAMUEL          dt vendor      READY      24\/12\/2025   24\/12\/2025 10.00   24\/12\/2025   24\/12\/2025 10.45   0,00       0 jam 45 menit    Ganti selang minyak rem belakang                                                         Rejeki Siregar                                 B.Pit Harapan Baru"
+                }
+            ]
+        },
+        "DT-00073": {
+            "asset": {
+                "asset_id": "DT-00073",
+                "asset_code": "DT-00073",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": "DT 8973 IE",
+                "current_operator_name": null
+            },
+            "operators": {
+                "SUPRIANTO, J": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 421,
+                    "raw_unit": "DT-00073 - DT8973IE",
+                    "base_code": "DT-00073",
+                    "plate": "DT8973IE",
+                    "hull": "",
+                    "operator": "SUPRIANTO, J",
+                    "status": "READY",
+                    "raw_line": "46    DT-00073 - DT8973IE        SUPRIANTO, J                         READY      24\/12\/2025   24\/12\/2025 09.00   24\/12\/2025   24\/12\/2025 12.00   0,00       3 jam 00 menit    Perbaikan\/penggantian Trouble engine mounting                                            Wagiman"
+                }
+            ]
+        },
+        "PF-00002": {
+            "asset": {
+                "asset_id": "PF-00002",
+                "asset_code": "PF-00002",
+                "hull_number": null,
+                "category": "Vibro Compactor",
+                "make_model": "Vibro Compactor Bomag BW211D-40SL \/ Sakai",
+                "serial_number": null,
+                "license_plate": "BW 211 D",
+                "current_operator_name": null
+            },
+            "operators": {
+                "SUPRI": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 429,
+                    "raw_unit": "PF-0002",
+                    "base_code": "PF-0002",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "SUPRI",
+                    "status": "READY",
+                    "raw_line": "51    PF-0002                    SUPRI                                READY      24\/12\/2025   24\/12\/2025 15.00   24\/12\/2025   24\/12\/2025 16.19   0,00       1 jam 19 menit    Trouble ; Alat Low Power                                                                 Darmawan                                       Loc ; 4 Q - 21 E"
+                }
+            ]
+        },
+        "DT-04042": {
+            "asset": {
+                "asset_id": "DT-04042",
+                "asset_code": "DT-04042",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": "BM 9287 JO",
+                "current_operator_name": null
+            },
+            "operators": {
+                "M. DHANI": 4
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 432,
+                    "raw_unit": "DT-04042 - BM 9287 JO",
+                    "base_code": "DT-04042",
+                    "plate": "BM9287JO",
+                    "hull": "",
+                    "operator": "M. DHANI",
+                    "status": "READY",
+                    "raw_line": "52    DT-04042 - BM 9287 JO      M. DHANI                             READY      24\/12\/2025   24\/12\/2025 15.00   25\/12\/2025   25\/12\/2025 15.54   1,00      24 jam 54 menit    Penggantian mounting engine                                                              Rejeki Siregar                                 Bropit Harapan Baru               24\/12\/2025 Pemeriksaan dan pembongkaran mounting engine"
+                },
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 527,
+                    "raw_unit": "DT-04042 - BM 9287 JO",
+                    "base_code": "DT-04042",
+                    "plate": "BM9287JO",
+                    "hull": "",
+                    "operator": "M. DHANI",
+                    "status": "READY",
+                    "raw_line": "65    DT-04042 - BM 9287 JO         M. DHANI                                      READY      27\/12\/2025   27\/12\/2025 10.00   30\/12\/2025   30\/12\/2025 15.21   3,00       77 jam 21 menit    Peraikan kunci ombeng. Overheat, mounting engine rusak lagi                         Soleh, Uska                             14832        Bropit Harapan Baru"
+                },
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 670,
+                    "raw_unit": "DT-04042 - BM 9287 JO",
+                    "base_code": "DT-04042",
+                    "plate": "BM9287JO",
+                    "hull": "",
+                    "operator": "M. DHANI",
+                    "status": "READY",
+                    "raw_line": "126   DT-04042 - BM 9287 JO      M. DHANI                              READY         06\/01\/2026   06\/01\/2026 10.00   06\/01\/2026   06\/01\/2026 11.21    0,00          1 jam 21 menit    Sleang radiator lepas.                                                          Joni Septian                           74908          Bropit Harapan Baru"
+                },
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 736,
+                    "raw_unit": "DT-04042 - BM 9287 JO",
+                    "base_code": "DT-04042",
+                    "plate": "BM9287JO",
+                    "hull": "",
+                    "operator": "M. DHANI",
+                    "status": "READY",
+                    "raw_line": "160 DT-04042 - BM 9287 JO                M. DHANI                                     READY      08\/01\/2026   08\/01\/2026 10.00   08\/01\/2026   08\/01\/2026 10.45   0,00        0 jam 45 menit    pengelasan pengunci ombeng                                                                           Soleh Al Muzakar           75160      Bropit Harapan baru"
+                }
+            ]
+        },
+        "DT-00034": {
+            "asset": {
+                "asset_id": "DT-00034",
+                "asset_code": "DT-00034",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": null,
+                "current_operator_name": null
+            },
+            "operators": {
+                "AGUS DEDI": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 434,
+                    "raw_unit": "DT-00034",
+                    "base_code": "DT-00034",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "AGUS DEDI",
+                    "status": "READY",
+                    "raw_line": "53    DT-00034                   AGUS DEDI                            READY      24\/12\/2025   24\/12\/2025 16.00   24\/12\/2025   24\/12\/2025 18.50   0,00       2 jam 50 menit    Baut roda patah 8 pcs                                                                    Darmawan - Rejeki Siregar -                    Lok. HO                           24\/12\/2025 Lembur malam pemasangan baut roda di ho"
+                }
+            ]
+        },
+        "DT-00012": {
+            "asset": {
+                "asset_id": "DT-00012",
+                "asset_code": "DT-00012",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": "B 9121 ZYT",
+                "current_operator_name": null
+            },
+            "operators": {
+                "RAHMAT N. NAIN": 2
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 530,
+                    "raw_unit": "DT-00012 - B 9121 ZYT",
+                    "base_code": "DT-00012",
+                    "plate": "B9121ZYT",
+                    "hull": "",
+                    "operator": "RAHMAT N. NAIN",
+                    "status": "READY",
+                    "raw_line": "67    DT-00012 - B 9121 ZYT         RAHMAT N. NAIN                                READY      27\/12\/2025   27\/12\/2025 09.00   27\/12\/2025   27\/12\/2025 11.00   0,00        2 jam 00 menit    STEL\/TONJOK KLOS BAWAH                                                              Daniel Sitepu                          23216         YARD KM 12                        27\/12\/25 selesai pekerjaan setel tojok kelos bawah"
+                },
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 782,
+                    "raw_unit": "DT-00012 - B 9121 ZYT",
+                    "base_code": "DT-00012",
+                    "plate": "B9121ZYT",
+                    "hull": "",
+                    "operator": "RAHMAT N. NAIN",
+                    "status": "READY",
+                    "raw_line": "190 DT-00012 - B 9121 ZYT                RAHMAT N. NAIN                               READY      09\/01\/2026   09\/01\/2026 13.00   09\/01\/2026   09\/01\/2026 13.30   0,00        0 jam 30 menit    REGREASING, PEMBERSIHAN SARINGAN UDARA                                                        Daniel Sitepu, Urwatul Uska       240004"
+                }
+            ]
+        },
+        "EXC-00001": {
+            "asset": {
+                "asset_id": "EXC-00001",
+                "asset_code": "EXC-00001",
+                "hull_number": null,
+                "category": "Excavator",
+                "make_model": "Komatsu PC200-10M0 CE",
+                "serial_number": "C51502",
+                "license_plate": null,
+                "current_operator_name": null
+            },
+            "operators": {
+                "NOVRANDI GULTOM": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 580,
+                    "raw_unit": "EX-00001",
+                    "base_code": "EX-00001",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "NOVRANDI GULTOM",
+                    "status": "READY",
+                    "raw_line": "95    EX-00001                      NOVRANDI GULTOM                               READY      31\/12\/2025   31\/12\/2025 13.25   31\/12\/2025   31\/12\/2025 13.50   0,00        0 jam 25 menit    Pemberian Grease ke Operator                                                        Inspektor                                            Bropit Harapan Baru"
+                }
+            ]
+        },
+        "DT-00043": {
+            "asset": {
+                "asset_id": "DT-00043",
+                "asset_code": "DT-00043",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": "B 9091 ZYT",
+                "current_operator_name": null
+            },
+            "operators": {
+                "JANTO MAROLOAN TUA P.": 2
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 605,
+                    "raw_unit": "DT-00043 - B9091ZYT",
+                    "base_code": "DT-00043",
+                    "plate": "B9091ZYT",
+                    "hull": "",
+                    "operator": "JANTO MAROLOAN TUA P.",
+                    "status": "READY",
+                    "raw_line": "103   DT-00043 - B9091ZYT        JANTO MAROLOAN TUA P.                 READY         02\/01\/2026   02\/01\/2026 11.00   02\/01\/2026   02\/01\/2026 12.43    0,00          1 jam 43 menit    Perbaikan Sparkboard                                                            Darmawan Hendrik                       58546          MInas"
+                },
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 790,
+                    "raw_unit": "DT-00043 - B9091ZYT",
+                    "base_code": "DT-00043",
+                    "plate": "B9091ZYT",
+                    "hull": "",
+                    "operator": "JANTO MAROLOAN TUA P.",
+                    "status": "READY",
+                    "raw_line": "195   DT-00043 - B9091ZYT                JANTO MAROLOAN TUA P.                        READY      09\/01\/2026   09\/01\/2026 13.30   09\/01\/2026   09\/01\/2026 14.12   0,00        0 jam 42 menit    menyetel V-Belt AC                                                                           Afriyandi, Firlanda D. Saribu                 MINAS"
+                }
+            ]
+        },
+        "EXC-00008": {
+            "asset": {
+                "asset_id": "EXC-00008",
+                "asset_code": "EXC-00008",
+                "hull_number": null,
+                "category": "Excavator",
+                "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+                "serial_number": null,
+                "license_plate": null,
+                "current_operator_name": null
+            },
+            "operators": {
+                "M. HUTAPEA": 3
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 607,
+                    "raw_unit": "EX-00008 - C01531",
+                    "base_code": "EX-00008",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "M. HUTAPEA",
+                    "status": "READY",
+                    "raw_line": "105   EX-00008 - C01531          M. HUTAPEA                            READY         02\/01\/2026   02\/01\/2026 14.25   02\/01\/2026   02\/01\/2026 15.37    0,00          1 jam 12 menit    Service Berkala                                                                 Darmawan, Hendrik                       9629          MINAS"
+                },
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 612,
+                    "raw_unit": "EX-00008 - C01531",
+                    "base_code": "EX-00008",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "M. HUTAPEA",
+                    "status": "INSPEKSI",
+                    "raw_line": "107 EX-00008 - C01531            M. HUTAPEA                           INSPEKSI       03\/01\/2026   03\/01\/2026 08.46                                    23,37        552 jam 04 menit   Pada sealr arm bucket ada rembesan                                              Darmawan, Hendrik                                     MINAS"
+                },
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 688,
+                    "raw_unit": "EX-00008 - C01531",
+                    "base_code": "EX-00008",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "M. HUTAPEA",
+                    "status": "READY",
+                    "raw_line": "137 EX-00008 - C01531            M. HUTAPEA                            READY         06\/01\/2026   06\/01\/2026 11.00   06\/01\/2026   06\/01\/2026 12.00    0,00          1 jam 00 menit    Penggantian filter oli                                                          Afriyandi, Firlanda                     9653          MINAS"
+                }
+            ]
+        },
+        "EXC-00011": {
+            "asset": {
+                "asset_id": "EXC-00011",
+                "asset_code": "EXC-00011",
+                "hull_number": null,
+                "category": "Excavator",
+                "make_model": "Excavator Komatsu PC200-10M0 \/ CAT 320",
+                "serial_number": "SYW01364",
+                "license_plate": null,
+                "current_operator_name": null
+            },
+            "operators": {
+                "SAHRUL": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 620,
+                    "raw_unit": "EX-00011",
+                    "base_code": "EX-00011",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "SAHRUL",
+                    "status": "READY",
+                    "raw_line": "109 EX-00011                     SAHRUL                               READY -        03\/01\/2026   03\/01\/2026 11.27   03\/01\/2026   03\/01\/2026 13.08    0,00          1 jam 41 menit    Pabrikasi bracket lampu rotary                                                  Darmawan                                              HO"
+                }
+            ]
+        },
+        "DT-00001": {
+            "asset": {
+                "asset_id": "DT-00001",
+                "asset_code": "DT-00001",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": null,
+                "current_operator_name": null
+            },
+            "operators": {
+                "SYAFRI": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 674,
+                    "raw_unit": "DT-00001",
+                    "base_code": "DT-00001",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "SYAFRI",
+                    "status": "READY",
+                    "raw_line": "130   DT-00001                   SYAFRI                                READY         06\/01\/2026   06\/01\/2026 10.43   06\/01\/2026   06\/01\/2026 11.46    0,00          1 jam 03 menit    Pengelasan underround belakang                                                  Soleh Al Muzakar                       23118          Bropit harpaan baru"
+                }
+            ]
+        },
+        "MG-00005": {
+            "asset": {
+                "asset_id": "MG-00005",
+                "asset_code": "MG-00005",
+                "hull_number": null,
+                "category": "Motor Grader",
+                "make_model": "Motor Grader XCMG GR135 MAX",
+                "serial_number": null,
+                "license_plate": null,
+                "current_operator_name": null
+            },
+            "operators": {
+                "HERMAN": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 690,
+                    "raw_unit": "MG-00005",
+                    "base_code": "MG-00005",
+                    "plate": "",
+                    "hull": "",
+                    "operator": "HERMAN",
+                    "status": "READY",
+                    "raw_line": "139 MG-00005                     HERMAN                                READY         06\/01\/2026   06\/01\/2026 15.25   12\/01\/2026   12\/01\/2026 14.45    6,00         143 jam 20 menit   Penambahan oli hidrolik 5 ltr. Control Valve Bocor                              Koko, Mekanik Freeelance                              Bropit Harapan baru               12\/01\/2026 : Perbaikan control valve Mekanik freelance KOKo"
+                }
+            ]
+        },
+        "FBT-31001": {
+            "asset": {
+                "asset_id": "FBT-31001",
+                "asset_code": "FBT-31001",
+                "hull_number": null,
+                "category": "Trado",
+                "make_model": "Trado Heavy Hauler Mitsubishi FV 419 P \/ Hino",
+                "serial_number": null,
+                "license_plate": "BM 8442 NU",
+                "current_operator_name": null
+            },
+            "operators": {
+                "MATING BOARD": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 890,
+                    "raw_unit": "FBT-31001 - BM 8442 NU",
+                    "base_code": "FBT-31001",
+                    "plate": "BM8442NU",
+                    "hull": "",
+                    "operator": "MATING BOARD",
+                    "status": "INSPEKSI",
+                    "raw_line": "226 FBT-31001 - BM 8442 NU                                  MATING BOARD     INSPEKSI   10\/01\/2026   10\/01\/2026 08.00   12\/01\/2026   12\/01\/2026 19.25     2,00           59 jam 25 menit        1~ Merubah dimensi tinggi\/renda pada Underround Safety Samping kanan dan kiri.             Suwardi, Hendrik, Afriyandi                     WORKSHOP - YARD                       11\/01\/2026"
+                }
+            ]
+        },
+        "DT-00058": {
+            "asset": {
+                "asset_id": "DT-00058",
+                "asset_code": "DT-00058",
+                "hull_number": null,
+                "category": "Dump Truck",
+                "make_model": "Dump Truck Hino FM260JD \/ Mercedes Axor",
+                "serial_number": null,
+                "license_plate": "B 9973 BIS",
+                "current_operator_name": null
+            },
+            "operators": {
+                "MATING BOARD": 1
+            },
+            "evidence": [
+                {
+                    "section": "Breakdown Report",
+                    "line_num": 995,
+                    "raw_unit": "DT-00058 - B 9973 BIS          SUWARDI",
+                    "base_code": "DT-00058",
+                    "plate": "B9973BIS",
+                    "hull": "",
+                    "operator": "MATING BOARD",
+                    "status": "READY",
+                    "raw_line": "265   DT-00058 - B 9973 BIS          SUWARDI                     MATING BOARD     READY     13\/01\/2026   13\/01\/2026 09.00   13\/01\/2026   13\/01\/2026 16.24   0,00       7 jam 24 menit    Perbaikan selang minyak solar.                                                                   Darmawan                                       YARD KM 12"
+                }
+            ]
+        }
+    },
+    "unmatched_records": [
+        {
+            "section": "Breakdown Report",
+            "line_num": 522,
+            "raw_unit": "PM-00001",
+            "base_code": "PM-00001",
+            "plate": "",
+            "hull": "",
+            "operator": "SUPYRAYETNO",
+            "status": "READY",
+            "raw_line": "63    PM-00001                      SUPYRAYETNO                                   READY      26\/12\/2025   26\/12\/2025 15.00   26\/12\/2025   26\/12\/2025 16.23   0,00        1 jam 23 menit    Penggantian 1 bh.songket jek lamdor loboy..                                         Joni Septian                                         YARD KM 12"
+        },
+        {
+            "section": "Breakdown Report",
+            "line_num": 727,
+            "raw_unit": "SD-00002 - 961582391716",
+            "base_code": "SD-00002",
+            "plate": "",
+            "hull": "",
+            "operator": "HENDI SAPIKA \/M. HASBI",
+            "status": "READY",
+            "raw_line": "153   SD-00002 - 961582391716            HENDI SAPIKA \/M. HASBI                       READY      07\/01\/2026   07\/01\/2026 13.00   07\/01\/2026   07\/01\/2026 14.15   0,00        1 jam 15 menit    Alat low power, Proses Perbaikan Oleh Mekanik dan Pencucian Filter Solar                               Joni Septian              1179      NDD"
+        },
+        {
+            "section": "Breakdown Report",
+            "line_num": 1117,
+            "raw_unit": "WL-31001 - AS5512759",
+            "base_code": "WL-31001",
+            "plate": "",
+            "hull": "",
+            "operator": "MATING BOARD",
+            "status": "READY",
+            "raw_line": "309   WL-31001 - AS5512759                                          MATING BOARD    READY      17\/01\/2026   17\/01\/2026 09.00   17\/01\/2026   17\/01\/2026 09.30     0,00            0 jam 30 menit             Regreasing                                                                                              Hendrico                             YARD KM 12"
+        }
+    ]
+}

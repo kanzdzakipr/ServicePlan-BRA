@@ -39,7 +39,8 @@ $migrationPaths = @(
     # F3b adds the required columns without overwriting user-maintained data.
     (Join-Path $srcDir "scripts\migrate_f3b_asset_schema_location_23102026.sql"),
     (Join-Path $srcDir "scripts\migrate_asset_registration_fields_22102026.sql"),
-    (Join-Path $srcDir "scripts\migrate_location_coordinates_22102026.sql")
+    (Join-Path $srcDir "scripts\migrate_location_coordinates_22102026.sql"),
+    (Join-Path $srcDir "scripts\migrate_populate_asset_pics_jan2026.sql")
 )
 
 if (-not (Test-Path -LiteralPath $laragonRootPath -PathType Container) -or
