@@ -6812,7 +6812,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     let rawId = (rawAsset.id || rawAsset.asset_id || '').trim();
                     if (!rawId) return;
 
-                    let cleanId = extractCleanAssetId(rawId);
+                    // Records enriched from api/assets.php carry the canonical
+                    // database key in asset_id. Preserve it verbatim; parsing is
+                    // only for legacy display strings that mix an ID with SN/
+                    // plate metadata. Otherwise IDs such as QA-F3C-BROWSER are
+                    // truncated to "QA" and later fail server-side access checks.
+                    let cleanId = rawAsset.asset_id
+                        ? String(rawAsset.asset_id).trim()
+                        : extractCleanAssetId(rawId);
                     let serialNumber = rawAsset.serialNumber || '';
                     let plateNumber = rawAsset.plateNumber || '';
 

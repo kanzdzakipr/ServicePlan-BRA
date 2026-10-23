@@ -1,6 +1,14 @@
 # Panduan Pengujian F3c — HSE Hold dan Release Aset
 
-Status implementasi: **siap diuji di browser** pada Laragon2.
+Status implementasi: **PASS berdasarkan konfirmasi pengguna pada 23 Oktober 2026**.
+
+## Hasil verifikasi pengguna
+
+- Unit QA dapat dipilih menggunakan ID kanonis `QA-F3C-BROWSER`.
+- Lokasi dan operator terisi dari Master Asset; operator dipilih dari daftar untuk mengurangi salah ketik.
+- Alur Moderate berhasil mengubah status `STANDBY -> ACCIDENT_HOLD -> STANDBY` setelah release.
+- Laporan, status hold/release, refresh browser, dan pemulihan status dinyatakan lulus.
+- Setelah pengujian disetujui, unit QA dan seluruh data HSE terkait dihapus sehingga data kembali ke kondisi sebelum pengujian.
 
 ## Perbaikan
 
@@ -43,15 +51,18 @@ Gunakan satu unit uji yang aman dan catat status awalnya.
 - HTTP Laragon2: create Moderate, hold, release, pemulihan status, dan audit trail PASS.
 - Sisa aset/insiden QA: 0.
 
-## Data lama yang belum diubah
+## Data lama yang tidak diubah
 
-Dua insiden lama tercatat `is_unit_locked = 1`, tetapi status asetnya `BREAKDOWN`:
-
-- `01/ACC/BRA/DURI/2026` — `CS-41001` — Moderate.
-- `02/ACC/BRA/YARD/2026` — `DT-00052` — Minor.
-
-Data tersebut tidak direkonsiliasi otomatis. Khusus insiden Minor, keputusan bisnis diperlukan apakah lock lama harus ditutup sebagai koreksi data atau tetap dipertahankan karena keadaan saat kejadian.
+Kondisi sebelum pengujian dipulihkan pada 23 Oktober 2026. Laporan uji `03/ACC/BRA/SITE/2026` yang waktu kejadiannya tanggal 23 Oktober dihapus. Laporan lama `01/ACC/BRA/DURI/2026` kembali `Reported`/locked dan aset `CS-41001` kembali `ACCIDENT_HOLD`. Laporan `02/ACC/BRA/YARD/2026` untuk `DT-00052` tetap `Reported`/locked.
 
 Backup sebelum migrasi tersedia di:
 
 `C:\laragon2\www\ServicePlan-BRA\backup-f3c-hse-20261023\assets_accidents_before.sql`
+
+Backup cleanup data QA tersedia di:
+
+`C:\laragon2\backups\ServicePlan-BRA\qa-f3c-cleanup-20261023-171309`
+
+Backup sebelum pemulihan `CS-41001` dan penghapusan laporan tanggal 23 Oktober tersedia di:
+
+`C:\laragon2\backups\ServicePlan-BRA\cs-41001-restore-20261023-171706`
