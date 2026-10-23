@@ -43,11 +43,17 @@ Temuan ini adalah ringkasan audit, **bukan** klaim bahwa semua skenario telah di
 
 ### F2 — Siklus transaksi WO → SPB/part/stok → laporan → biaya
 
+Status 23 Oktober 2026: **PASS fungsional / selesai untuk dilanjutkan**. Alur browser dan autofill disetujui pengguna; 124 pemeriksaan otomatis serta rekonsiliasi database lulus. Cakupan lintas seluruh role/lokasi dan perangkat tetap dibawa ke regression gate F6, bukan dianggap gugur.
+
 1. Selesaikan invariant WO close/void, tautan SPB aktif vs void, reservasi/penerimaan/pengeluaran part, dan finalisasi/void laporan. Setiap perubahan stok/biaya mempunyai referensi sumber unik, transaksi, dan reversal idempoten.
 2. Hilangkan mock/fallback operasional dari laporan dan menu hilir. Data contoh hanya boleh tampil di mode demo berlabel jelas.
 3. Gate per subalur kecil: satu ID uji dapat ditelusuri UI → API → tabel → menu lain, kemudian void/reversal mengembalikan saldo/total tanpa menghapus audit. Role/lokasi lain ditolak dan refresh tetap konsisten.
 
 ### F3 — Master Asset → PM, pemeriksaan, dan HSE
+
+Status F3a 23 Oktober 2026: **IMPLEMENTED / menunggu uji browser**. Form tambah dan edit Master Asset kini menyediakan konfigurasi PM lengkap dan Forecast membaca sumber tersebut. Saat baseline diperiksa, `0/282` aset memiliki konfigurasi PM sehingga seluruh unit memang harus tampil belum diatur sampai data resmi diisi.
+
+Status F3b 23 Oktober 2026: **IMPLEMENTED / menunggu uji browser**. Bukti data menunjukkan seluruh 87 referensi yatim mengarah ke lokasi ID 15 dengan catatan `WUR EW Project`/`WUR EW`, sehingga lokasi tersebut dipulihkan secara aditif sebagai `WUR EW Project`. Skema registrasi Master Asset juga diselaraskan tanpa reseed data: 11 kolom API tersedia, 87 aset tetap terhubung, dan referensi lokasi yatim turun dari 87 menjadi 0. Audit otomatis F3b lulus 18/18; integrasi onboarding lulus 46/46; smoke UI PM lulus 16/16.
 
 1. Jadwal/interval PM disimpan melalui Master Asset; PM forecast memakai data tersebut dan menandai unit tanpa konfigurasi sebagai `belum diatur`, bukan mengarang jadwal.
 2. Rekonsiliasi lokasi aset yatim dan validasi ID lokasi saat edit/migrasi. Hubungkan pemeriksaan/P2H dan HSE hold/release ke status aset dengan aturan prioritas yang eksplisit.

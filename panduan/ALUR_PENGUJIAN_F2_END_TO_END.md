@@ -1,6 +1,14 @@
 # Alur pengujian F2 — WO, SPB, stok, laporan, biaya
 
-Status awal: **panduan uji, bukan hasil PASS**. Jalankan berurutan: F2c → konfirmasi hasil → F2d → konfirmasi hasil → F2e. Gunakan `http://serviceplan-bra.test/` pada Laragon2. Jangan impor dump, reset database, menjalankan sinkronisasi penuh, atau mengubah SPB/WO milik pengguna lain.
+Status 23 Oktober 2026: **PASS fungsional disetujui pengguna** untuk alur browser dan autofill. Regression otomatis serta rekonsiliasi database juga lulus; uji lintas role/lokasi menyeluruh tetap menjadi bagian regression gate akhir F6. Gunakan `http://serviceplan-bra.test/` pada Laragon2. Jangan impor dump, reset database, menjalankan sinkronisasi penuh, atau mengubah SPB/WO milik pengguna lain.
+
+## Hasil penutupan F2
+
+- Pengguna menyetujui alur browser F2 dan autofill PPB, BHW-IN, BHW-OUT, BAPP, serta Monitoring Pengadaan pada 23 Oktober 2026.
+- Tiga belas berkas regression menghasilkan **124 pemeriksaan lulus** untuk WO/SPB, approval/void SPB, SPPU, PPB/PO, approval/pembatalan PO dan biaya, BAPP, BHW-IN/OUT, kirim/terima internal, monitoring pengadaan, serta alasan void.
+- Seluruh fixture pengujian memakai transaksi rollback; pemeriksaan pascates menunjukkan data QA sementara tidak tersisa.
+- Rekonsiliasi baca-saja database Laragon2: stok negatif `0`, biaya PO aktif ganda `0`, PO disetujui tanpa biaya `0`, PO batal dengan biaya aktif `0`, item PO di luar SPB `0`, transaksi stok yatim `0`, dan transaksi stok aktif pada laporan VOID `0`.
+- Status ini menutup acceptance fungsional F2. Matriks keamanan lintas seluruh role/lokasi dan regression desktop/mobile tetap tidak boleh dihilangkan dari release gate F6.
 
 ## Persiapan bersama (sebelum membuat data)
 
@@ -39,6 +47,27 @@ Aturan terbaru: SPB harus `Approved` sebelum PPB/PO dibuat. PPB/PO wajib memakai
 2. Buka **BHW-IN**, pilih `SPB sumber barang`. Item dan saldo awal master part muncul. Isi jumlah yang benar-benar diterima, nomor bukti, dan kolom wajib lain. **BHW-OUT** melakukan hal serupa, termasuk WO/unit; isi jumlah yang benar-benar dikeluarkan. Pemilihan SPB sendiri tidak boleh mengubah stok database.
 3. Klik **Tambah baris** untuk barang lain dan pastikan baris otomatis tidak hilang. Untuk PPB, barang baru wajib ditambahkan/revisi dahulu pada SPB; finalisasi PPB akan menolak part atau jumlah di luar SPB. Untuk BHW-IN, part baru boleh dicatat sesuai validasi master; BHW-OUT mensyaratkan part sudah ada di master stok.
 4. Ubah jumlah/harga manual, simpan draft, refresh, lalu buka ulang. Pastikan perubahan tidak ditimpa oleh auto-fill. Pilih SPB lain: aplikasi harus meminta konfirmasi sebelum mengganti baris lama.
+
+### Matriks form yang menarik barang dari dokumen lain
+
+Audit seluruh template form menemukan lima alur yang memang memiliki dokumen transaksi sumber. Dropdown master seperti aset, WO, lokasi, personel, dan part tetap mengisi identitas/referensi saja; dropdown tersebut bukan sumber daftar barang.
+
+| Form tujuan | Dokumen sumber yang dipilih | Data barang yang ditarik otomatis | Tetap diisi pengguna |
+|---|---|---|---|
+| PPB | SPB berstatus `Approved`/`Ordered` | Nama, part number/SC, satuan, qty | Vendor, penawaran, harga, batas/tempat penyerahan |
+| BHW-IN | SPB berstatus `Approved`/`Ordered`/`Issued` | Part number, nama, satuan, saldo awal, nomor SPB | Qty yang benar-benar diterima, BAPB, asal, keterangan |
+| BHW-OUT | SPB berstatus `Approved`/`Ordered`/`Issued` | Part number, nama, satuan, stok, WO, unit | Qty yang benar-benar keluar, bukti kirim, tujuan, keterangan |
+| BAPP | PO berstatus `Approved`/`Ordered` | Seluruh item PO, satuan, qty order, vendor, tanggal PO | Kondisi baik/rusak/kurang, faktur, kendaraan, alamat |
+| Monitoring Pengadaan | SPB yang dipilih pada kolom `No SPB` | Satu baris per item SPB: tanggal, WO, unit, nama, part number, qty, satuan, status awal | Waktu proses/tiba, kendala, tindakan, dampak RTW, kesimpulan |
+
+Aturan pengujian bersama:
+
+1. Pilih dokumen sumber pada form yang masih kosong; seluruh item harus muncul tanpa simpan/finalisasi lebih dulu.
+2. Bila dokumen berisi lebih dari satu item, jumlah baris hasil harus sama dengan jumlah item sumber.
+3. Isi satu baris secara manual, lalu pilih dokumen sumber lain. Pilih **Batal** pada konfirmasi; nomor sumber, vendor/tanggal terkait, dan seluruh baris lama harus tetap sama.
+4. Ulangi dan pilih **OK**; baris lama diganti oleh seluruh item sumber. Tombol **Tambah baris** tetap dapat dipakai untuk melengkapi data sesuai aturan bisnis form.
+5. Simpan draft, refresh, dan buka ulang. Data hasil tarik dan dokumen sumber harus tetap ada serta tidak dimuat ganda.
+6. Memilih dokumen sumber saja tidak boleh mengubah stok, status SPB/PO, biaya, atau tabel transaksi. Perubahan database bisnis baru boleh terjadi saat laporan difinalkan.
 
 Jangan gunakan PO `11 / Dept-Equip / 11 / 2026` sebagai fixture baru: pada 23 Oktober 2026 pengguna sengaja membatalkannya karena item PO tidak cocok dengan SPB; statusnya `Cancelled` dan biaya Rp44.400.000 sudah reversed. Buat SPB dan PPB baru berawalan `QA-F2-` untuk pengujian lanjutan.
 

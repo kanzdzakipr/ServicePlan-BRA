@@ -60,9 +60,14 @@ final class AssetOnboarding
         if ($unit !== '' && !in_array($unit, ['HM', 'KM'], true)) throw new InvalidArgumentException('Jenis meter harus HM atau KM.');
         $coefficient = self::nonNegative($data['daily_usage_coefficient'] ?? null, 'Pemakaian per hari', true);
         if ($coefficient !== null && $coefficient > 100000) throw new InvalidArgumentException('Pemakaian per hari terlalu besar.');
-        if (($lastDate !== null || $lastMeter !== null || $interval !== null || $coefficient !== null)
+        $hasSchedule = $lastDate !== null || $lastMeter !== null || $interval !== null || $coefficient !== null;
+        if ($hasSchedule
             && ($lastDate === null || $lastMeter === null || $interval === null || $unit === '' || $coefficient === null)) {
             throw new InvalidArgumentException('Tanggal dan meter servis terakhir, interval, jenis meter, serta pemakaian harian harus diisi bersama.');
+        }
+        if (!$hasSchedule) $unit = '';
+        if ($lastMeter !== null && $lastMeter > $currentMeter) {
+            throw new InvalidArgumentException('Meter unit saat ini tidak boleh lebih kecil dari meter servis terakhir.');
         }
         $target = $lastMeter !== null ? $lastMeter + $interval : null;
         $estimate = null;

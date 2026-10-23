@@ -41,6 +41,18 @@ foreach ([
 
 $empty = AssetOnboarding::fields([], 0);
 check($empty['next_service_due_hm_km'] === null, 'Unit tanpa data PM tidak boleh diberi target rekaan.');
+check($empty['service_interval_unit'] === null, 'Unit tanpa data PM tidak boleh diberi jenis meter rekaan.');
+try {
+    AssetOnboarding::fields([
+        'last_service_date' => '2026-10-17',
+        'last_service_hm_km' => '1200',
+        'service_interval_val' => '250',
+        'service_interval_unit' => 'HM',
+        'daily_usage_coefficient' => '10',
+    ], 1100);
+    throw new RuntimeException('Meter servis yang melebihi meter unit diterima.');
+} catch (InvalidArgumentException $expected) {
+}
 $history = AssetOnboarding::history([
     ['date' => '2026-04-01', 'meter' => '1000', 'type' => 'PS 500'],
     ['date' => '2026-01-01', 'meter' => '750', 'type' => 'PS 250'],

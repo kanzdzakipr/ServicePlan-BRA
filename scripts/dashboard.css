@@ -21939,6 +21939,17 @@ body.sl-modal-open {
     letter-spacing: -0.01em;
 }
 
+.asset-registration-section-note {
+    margin: -7px 0 15px;
+    padding: 9px 11px;
+    border-left: 3px solid #0284c7;
+    border-radius: 0 6px 6px 0;
+    background: #f0f9ff;
+    color: #475569;
+    font-size: 0.74rem;
+    line-height: 1.5;
+}
+
 .asset-registration-step {
     display: inline-grid;
     width: 27px;

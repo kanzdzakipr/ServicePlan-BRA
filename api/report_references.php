@@ -61,7 +61,7 @@ try {
         'issue' => (string) ($row['issue_description'] ?? ''),
     ], $workOrderStatement->fetchAll(PDO::FETCH_ASSOC));
 
-    $purchaseRequestSql = "SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.urgency, pr.status,
+    $purchaseRequestSql = "SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.urgency, pr.status, pr.requested_at,
                                   a.asset_code, l.location_name
                            FROM purchase_requests pr
                            INNER JOIN assets a ON a.asset_id = pr.asset_id
@@ -79,6 +79,7 @@ try {
         'location' => (string) ($row['location_name'] ?? ''),
         'urgency' => (string) $row['urgency'],
         'status' => (string) $row['status'],
+        'requestedAt' => (string) ($row['requested_at'] ?? ''),
         'items' => [],
     ], $purchaseRequestStatement->fetchAll(PDO::FETCH_ASSOC));
     $requestIndex = [];

@@ -1976,6 +1976,11 @@
     }
     if (kind === "purchaseOrders") {
       return reportReferences.purchaseOrders
+        .filter(
+          (order) =>
+            activeSchema?.id !== "bapp" ||
+            ["Approved", "Ordered"].includes(order.status),
+        )
         .map(
           (order) =>
             `<option value="${escapeHtml(order.id)}">${escapeHtml([order.vendor, order.spbId, order.assetId, order.status].filter(Boolean).join(" · "))}</option>`,
@@ -2577,11 +2582,70 @@
       const request = findReferencePurchaseRequest(control.value);
       if (!request) return;
       if (control.dataset.row != null) {
-        const row = activeDraft?.rows?.[Number(control.dataset.row)];
+        const rowIndex = Number(control.dataset.row);
+        const row = activeDraft?.rows?.[rowIndex];
         if (row) {
-          row.nomor_spb = request.id;
-          row.nomor_jo = request.workOrderId;
-          row.id_unit = request.assetId;
+          if (activeSchema?.id === "procurement-monitoring" && request.items?.length) {
+            const previousSpb = String(row._sourceSpbId || "");
+            if (previousSpb === request.id) return;
+            const hasExistingMonitoringData = Object.entries(row).some(
+              ([key, value]) =>
+                !key.startsWith("_") &&
+                key !== "nomor_spb" &&
+                key !== "nomor" &&
+                String(value ?? "").trim() !== "",
+            );
+            if (
+              hasExistingMonitoringData &&
+              !confirm(`Ganti baris monitoring ini dengan ${request.items.length} barang dari SPB ${request.id}?`)
+            ) {
+              row.nomor_spb = previousSpb;
+              control.value = previousSpb;
+              return;
+            }
+            const statusMap = {
+              Draft: "Menunggu Approval",
+              Submitted: "Menunggu Approval",
+              Approved: "Disetujui",
+              Ordered: "Dipesan",
+              Issued: "Diserahkan",
+              Rejected: "Dibatalkan",
+              Cancelled: "Dibatalkan",
+            };
+            const processFields = {
+              tanggal_disetujui: row.tanggal_disetujui || "",
+              jam_proses: row.jam_proses || "",
+              tanggal_tiba: row.tanggal_tiba || "",
+              jam_tiba: row.jam_tiba || "",
+              uraian_kendala: row.uraian_kendala || "",
+              aksi_perbaikan: row.aksi_perbaikan || "",
+              kesimpulan_akhir: row.kesimpulan_akhir || "",
+            };
+            const mappedRows = request.items.map((item, itemIndex) => ({
+              nomor: "",
+              _sourceSpbId: request.id,
+              nomor_spb: request.id,
+              tanggal_spb: String(request.requestedAt || "").slice(0, 10),
+              nomor_jo: request.workOrderId,
+              id_unit: request.assetId,
+              nama_spare_part: item.name,
+              part_number: item.partNumber,
+              qty: String(item.quantity),
+              satuan: item.unit,
+              status_pengadaan: statusMap[request.status] || "Menunggu Approval",
+              ...(itemIndex === 0 ? processFields : {}),
+            }));
+            activeDraft.rows.splice(rowIndex, 1, ...mappedRows);
+            activeDraft.rows.forEach((item, index) => {
+              item.nomor = String(index + 1);
+              calculateRow(item);
+            });
+            showToast(`${mappedRows.length} barang dari SPB ${request.id} dimuat ke Monitoring Pengadaan.`);
+          } else {
+            row.nomor_spb = request.id;
+            row.nomor_jo = request.workOrderId;
+            row.id_unit = request.assetId;
+          }
           renderRows();
         }
         return;
@@ -2596,8 +2660,15 @@
     if (kind === "purchaseOrders") {
       const order = findReferencePurchaseOrder(control.value);
       if (!order) return;
-      setAutomatedField("pengirim", order.vendor);
-      if (order.quoteDate) setAutomatedField("tanggal_po", order.quoteDate);
+      if (
+        activeSchema?.id === "bapp" &&
+        !["Approved", "Ordered"].includes(order.status)
+      ) {
+        control.value = String(activeDraft.sourcePurchaseOrderId || "");
+        activeDraft.fields.nomor_po = control.value;
+        showToast(`PO ${order.id} belum disetujui atau sudah tidak dapat diterima.`, true);
+        return;
+      }
       const rowsAreEmpty = (activeDraft?.rows || []).every(
         (row) =>
           !Object.entries(row || {}).some(
@@ -2605,7 +2676,24 @@
               key !== "_evidence" && String(value ?? "").trim() !== "",
           ),
       );
-      if (activeSchema?.id === "bapp" && rowsAreEmpty && order.items?.length) {
+      const shouldReplaceBappRows =
+        activeSchema?.id !== "bapp" ||
+        rowsAreEmpty ||
+        !order.items?.length ||
+        confirm(`Ganti baris BAPP yang sudah diisi dengan ${order.items.length} barang dari PO ${order.id}?`);
+      if (!shouldReplaceBappRows) {
+        const previousPo = String(activeDraft.sourcePurchaseOrderId || "");
+        activeDraft.fields.nomor_po = previousPo;
+        control.value = previousPo;
+        return;
+      }
+      setAutomatedField("pengirim", order.vendor);
+      if (order.quoteDate) setAutomatedField("tanggal_po", order.quoteDate);
+      if (
+        activeSchema?.id === "bapp" &&
+        order.items?.length &&
+        shouldReplaceBappRows
+      ) {
         activeDraft.rows = order.items.map((item) => {
           const part = reportReferences.parts.find(
             (candidate) =>
@@ -2622,7 +2710,9 @@
             keterangan: `PPB ${order.id} · ${item.partNumber}`,
           };
         });
+        activeDraft.sourcePurchaseOrderId = order.id;
         renderRows();
+        showToast(`${order.items.length} barang dari PO ${order.id} dimuat ke BAPP. Isi jumlah baik, rusak, dan kurang.`);
       }
       return;
     }
@@ -4603,6 +4693,17 @@
       window.history.replaceState(null, "", `#reports/${formId}`);
     }
     activeDraft = loadDraft(activeSchema);
+    if (["ppb", "bhw-in", "bhw-out"].includes(activeSchema.id)) {
+      activeDraft.sourceSpbId ??= activeDraft.fields.nomor_spb || "";
+    }
+    if (activeSchema.id === "bapp") {
+      activeDraft.sourcePurchaseOrderId ??= activeDraft.fields.nomor_po || "";
+    }
+    if (activeSchema.id === "procurement-monitoring") {
+      activeDraft.rows.forEach((row) => {
+        row._sourceSpbId ??= row.nomor_spb || "";
+      });
+    }
     const openedUpdatedAt = activeDraft.updatedAt || null;
     calculateAllRows();
 

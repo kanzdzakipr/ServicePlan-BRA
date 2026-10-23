@@ -3996,10 +3996,30 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </div>
                 </section>
 
-                <section class="asset-registration-section" aria-labelledby="newAssetLegalTitle">
+                <section class="asset-registration-section" aria-labelledby="newAssetPmTitle">
                     <div class="asset-registration-section-heading">
                         <div>
                             <span class="asset-registration-step">03</span>
+                            <h3 id="newAssetPmTitle">Konfigurasi Preventive Maintenance</h3>
+                        </div>
+                        <span class="asset-registration-optional">Opsional · isi satu paket</span>
+                    </div>
+                    <p class="asset-registration-section-note">Data ini menjadi satu-satunya sumber jadwal pada menu Preventive Maintenance. Jika mulai diisi, meter saat ini, tanggal dan meter servis terakhir, interval, jenis meter, serta pemakaian harian wajib lengkap.</p>
+                    <div class="asset-registration-grid">
+                        <label class="asset-registration-field"><span>Meter unit saat ini</span><input id="na-current-meter" type="number" min="0" step="0.1" class="form-control" placeholder="Contoh: 1250"></label>
+                        <label class="asset-registration-field"><span>Tanggal servis terakhir</span><input id="na-last-service-date" type="date" class="form-control"></label>
+                        <label class="asset-registration-field"><span>Meter servis terakhir</span><input id="na-last-service-hm" type="number" min="0" step="0.1" class="form-control" placeholder="Contoh: 1000"></label>
+                        <label class="asset-registration-field"><span>Interval servis</span><input id="na-service-interval" type="number" min="1" step="1" class="form-control" placeholder="Contoh: 250"></label>
+                        <label class="asset-registration-field"><span>Jenis meter</span><select id="na-service-unit" class="form-control"><option value="HM">HM</option><option value="KM">KM</option></select></label>
+                        <label class="asset-registration-field"><span>Pemakaian rata-rata per hari</span><input id="na-daily-rate" type="number" min="0.01" step="0.01" class="form-control" placeholder="Contoh: 10"></label>
+                        <label class="asset-registration-field asset-registration-field-wide"><span>Riwayat servis sebelumnya</span><textarea id="na-service-history" rows="3" class="form-control" placeholder="Satu baris: YYYY-MM-DD,meter,jenis&#10;Contoh: 2026-01-10,750,PM 250"></textarea><small>Maksimal 30 baris; data terbaru/servis terakhir tetap diisi pada kolom di atas.</small></label>
+                    </div>
+                </section>
+
+                <section class="asset-registration-section" aria-labelledby="newAssetLegalTitle">
+                    <div class="asset-registration-section-heading">
+                        <div>
+                            <span class="asset-registration-step">04</span>
                             <h3 id="newAssetLegalTitle">Legalitas dan Dokumentasi</h3>
                         </div>
                         <span class="asset-registration-optional">Opsional</span>
@@ -4182,10 +4202,29 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </div>
                 </section>
 
-                <section class="asset-registration-section" aria-labelledby="editAssetLegalTitle">
+                <section class="asset-registration-section" aria-labelledby="editAssetPmTitle">
                     <div class="asset-registration-section-heading">
                         <div>
                             <span class="asset-registration-step">03</span>
+                            <h3 id="editAssetPmTitle">Konfigurasi Preventive Maintenance</h3>
+                        </div>
+                        <span class="asset-registration-auto-id"><i class="fa-solid fa-link"></i> Sumber jadwal PM</span>
+                    </div>
+                    <p class="asset-registration-section-note">Perubahan di sini langsung menjadi sumber Forecast PM setelah disimpan. Kosongkan seluruh paket bila jadwal unit memang belum ditetapkan.</p>
+                    <div class="asset-registration-grid">
+                        <label class="asset-registration-field"><span>Meter unit saat ini</span><input id="ea-current-meter" type="number" min="0" step="0.1" class="form-control"></label>
+                        <label class="asset-registration-field"><span>Tanggal servis terakhir</span><input id="ea-last-service-date" type="date" class="form-control"></label>
+                        <label class="asset-registration-field"><span>Meter servis terakhir</span><input id="ea-last-service-hm" type="number" min="0" step="0.1" class="form-control"></label>
+                        <label class="asset-registration-field"><span>Interval servis</span><input id="ea-service-interval" type="number" min="1" step="1" class="form-control"></label>
+                        <label class="asset-registration-field"><span>Jenis meter</span><select id="ea-service-unit" class="form-control"><option value="HM">HM</option><option value="KM">KM</option></select></label>
+                        <label class="asset-registration-field"><span>Pemakaian rata-rata per hari</span><input id="ea-daily-rate" type="number" min="0.01" step="0.01" class="form-control"></label>
+                    </div>
+                </section>
+
+                <section class="asset-registration-section" aria-labelledby="editAssetLegalTitle">
+                    <div class="asset-registration-section-heading">
+                        <div>
+                            <span class="asset-registration-step">04</span>
                             <h3 id="editAssetLegalTitle">Legalitas dan Dokumentasi</h3>
                         </div>
                         <span class="asset-registration-optional">Opsional</span>
@@ -8829,6 +8868,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 const fieldValues = {
+                    'ea-current-meter': assetObj.last_hm_km,
+                    'ea-last-service-date': String(assetObj.last_service_date || '').slice(0, 10),
+                    'ea-last-service-hm': assetObj.last_service_hm_km,
+                    'ea-service-interval': assetObj.service_interval_val,
+                    'ea-service-unit': assetObj.service_interval_unit || 'HM',
+                    'ea-daily-rate': assetObj.daily_usage_coefficient,
                     'ea-stnk': assetObj.legal_stnk_expiry,
                     'ea-kir': assetObj.legal_kir_expiry,
                     'ea-silo': assetObj.legal_silo_expiry
@@ -9432,7 +9477,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         asset_age: assetAge ? parseInt(assetAge, 10) : null,
                         chassis_number: chassisNumber || null,
                         current_location_id: locId ? parseInt(locId, 10) : null,
-                        last_hm_km: 0.0,
+                        last_hm_km: document.getElementById('na-current-meter')?.value || 0,
                         ...onboardingInput,
                         historical_services: historicalServices
                     };
@@ -9483,7 +9528,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             current_location_id: locId ? parseInt(locId, 10) : null,
                             location: locName,
                             location_name: locName,
-                            last_hm_km: 0.0,
+                            last_hm_km: Number(document.getElementById('na-current-meter')?.value || 0),
                             lastUpdate: 'Baru saja',
                             statusSource: 'Master Asset',
                             statusReference: 'Registrasi unit baru',
@@ -9496,7 +9541,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         window.currentAssetData.unshift(newAsset);
 
                         // Reset input fields
-                        for (const field of ['na-model','na-asset-code','na-capacity','na-dealer','na-year','na-age','na-sn','na-dump-identity','na-hull','na-position','na-invoice-location','na-stnk-location','na-bpkb-location','na-chassis','na-vehicle-type','na-operator','na-operator-start','na-operator-shift','na-last-service-date','na-last-service-hm','na-service-interval','na-daily-rate','na-stnk','na-kir','na-silo','na-photos','na-service-pdf','na-service-history']) {
+                        for (const field of ['na-model','na-asset-code','na-capacity','na-dealer','na-year','na-age','na-sn','na-dump-identity','na-hull','na-position','na-invoice-location','na-stnk-location','na-bpkb-location','na-chassis','na-vehicle-type','na-operator','na-operator-start','na-operator-shift','na-current-meter','na-last-service-date','na-last-service-hm','na-service-interval','na-daily-rate','na-stnk','na-kir','na-silo','na-photos','na-service-pdf','na-service-history']) {
                             const el = document.getElementById(field);
                             if (el) el.value = '';
                         }
@@ -9608,6 +9653,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         operational_position: position || null,
                         asset_age: assetAge ? parseInt(assetAge, 10) : null,
                         current_location_id: locId ? parseInt(locId, 10) : null,
+                        last_hm_km: document.getElementById('ea-current-meter')?.value || 0,
+                        last_service_date: document.getElementById('ea-last-service-date')?.value || null,
+                        last_service_hm_km: document.getElementById('ea-last-service-hm')?.value || null,
+                        service_interval_val: document.getElementById('ea-service-interval')?.value || null,
+                        service_interval_unit: document.getElementById('ea-service-unit')?.value || null,
+                        daily_usage_coefficient: document.getElementById('ea-daily-rate')?.value || null,
                         legal_stnk_expiry: document.getElementById('ea-stnk').value || null,
                         legal_kir_expiry: document.getElementById('ea-kir').value || null,
                         legal_silo_expiry: document.getElementById('ea-silo').value || null
@@ -9666,6 +9717,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 item.invoice_location = payload.invoice_location;
                             }
                             item.current_location_id = payload.current_location_id;
+                            item.last_hm_km = Number(payload.last_hm_km || 0);
+                            item.last_service_date = payload.last_service_date;
+                            item.last_service_hm_km = payload.last_service_hm_km == null ? null : Number(payload.last_service_hm_km);
+                            item.service_interval_val = payload.service_interval_val == null ? null : Number(payload.service_interval_val);
+                            item.service_interval_unit = payload.service_interval_unit;
+                            item.daily_usage_coefficient = payload.daily_usage_coefficient == null ? null : Number(payload.daily_usage_coefficient);
                             item.location = locName;
                             item.location_name = locName;
                             for (const field of ['legal_stnk_expiry','legal_kir_expiry','legal_silo_expiry']) item[field] = payload[field];
