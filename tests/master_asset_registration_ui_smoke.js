@@ -56,6 +56,8 @@ async function main() {
     const behaviorEnd = view.indexOf('window.uploadAssetAttachment = async function', behaviorStart);
     const tableStart = view.indexOf('<div class="table-responsive master-asset-table-scroll dashboard-wo-scroll">');
     const tableClose = view.indexOf('</table>', tableStart);
+    const printModalStart = view.indexOf('<div class="modal-overlay" id="modalMasterAssetPrint">');
+    const printModalEnd = view.indexOf('<div class="modal-overlay" id="modalAssetLegalDocuments">', printModalStart);
     const assetBehaviorStart = view.indexOf('window.renderAssetTableBody = function()');
     const assetBehaviorEnd = view.indexOf('window.openRenameHullModal = function', assetBehaviorStart);
     if (modalStart < 0 || modalEnd < 0 || behaviorStart < 0 || behaviorEnd < 0) {
@@ -67,11 +69,13 @@ async function main() {
     if (!view.includes('<table class="table" id="assetTable">') || !view.includes('<th>No.</th>') || !view.includes('${rowIndex + 1}')) {
         throw new Error('Nomor urut otomatis tabel Master Asset tidak ditemukan.');
     }
-    if (tableStart < 0 || tableClose < 0 || assetBehaviorStart < 0 || assetBehaviorEnd < 0) throw new Error('Struktur tabel Master Asset tidak ditemukan.');
+    if (tableStart < 0 || tableClose < 0 || printModalStart < 0 || printModalEnd < 0 || assetBehaviorStart < 0 || assetBehaviorEnd < 0) throw new Error('Struktur tabel atau modal cetak Master Asset tidak ditemukan.');
     if (!view.includes('Cetak Laporan Master Asset') || !view.includes('<th>Serial Number</th><th>Pelat Kendaraan</th>')
         || !view.includes('<th>Usia</th>') || !view.includes('openAssetLegalDocuments')
         || !view.includes("assets/logo-pt-bina-rekayasa-anugrah.png")
-        || !view.includes('class="page-footer"') || !view.includes('class="report-title"><h1>Laporan Master Asset</h1>')) {
+        || !view.includes('class="page-footer"') || !view.includes('class="report-title"><h1>Laporan Master Asset</h1>')
+        || !view.includes('id="masterAssetPrintUseCategory"') || !view.includes('id="masterAssetPrintUseStatus"')
+        || !view.includes('id="masterAssetPrintUseSite"') || !view.includes('window.getMasterAssetPrintFilteredAssets = function()')) {
         throw new Error('Fitur laporan landscape atau popup legalitas/dokumentasi belum lengkap.');
     }
     const reportSource = view.slice(view.indexOf('window.printMasterAssetReport = function()'), view.indexOf('window.openRenameHullModal = function'));
@@ -183,15 +187,45 @@ async function main() {
         if (mobileColumns !== 1) throw new Error(`Layout mobile seharusnya satu kolom, aktual ${mobileColumns}.`);
 
         await cdp.send('Emulation.setDeviceMetricsOverride', { width: 820, height: 844, deviceScaleFactor: 1, mobile: false }, sessionId);
-        const tableHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style></head><body><section id="view-asset" class="view-section active" style="display:block">${view.slice(tableStart, tableClose + 8)}</section></body></html>`;
+        const tableHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style></head><body><section id="view-asset" class="view-section active" style="display:block">${view.slice(tableStart, tableClose + 8)}</section>${view.slice(printModalStart, printModalEnd)}</body></html>`;
         await cdp.send('Page.setDocumentContent', { frameId: frameTree.frameTree.frame.id, html: tableHtml }, sessionId);
-        await cdp.evaluate(sessionId, `window.escapeHtml = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'); window.openAssetActionCalloutFromElement = () => {}; window.openUnitProperties = () => {}; window.openSiteProperties = () => {}; window.openEditAssetModal = () => {}; window.openRenameHullModal = () => {}; window.formatAssetIdentityDetails = asset => ({ unitId: asset.id, hull: asset.hull_number, model: asset.make_model, year: String(asset.year_manufacture), sn: asset.serial_number, plate: asset.license_plate }); window.getAssetCompleteness = () => ({ isComplete: true, missing: [] }); window.getAssetStatusBadge = status => '<span class="badge">' + status + '</span>'; window.masterAssetFilters = { id:'', hull:'', model:'', sn:'', warranty:'', chassis:'', category:'', location:'', completeness:'', status:'', query3Param:'' }; window.masterAssetSort = { col:null, dir:'asc' };`);
+        await cdp.evaluate(sessionId, `window.escapeHtml = value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'); window.openModal = id => { document.getElementById(id).style.display = 'flex'; }; window.closeModal = id => { document.getElementById(id).style.display = 'none'; }; window.openAssetActionCalloutFromElement = () => {}; window.openUnitProperties = () => {}; window.openSiteProperties = () => {}; window.openEditAssetModal = () => {}; window.openRenameHullModal = () => {}; window.formatAssetIdentityDetails = asset => ({ unitId: asset.id, hull: asset.hull_number, model: asset.make_model, year: String(asset.year_manufacture), sn: asset.serial_number, plate: asset.license_plate }); window.getAssetCompleteness = () => ({ isComplete: true, missing: [] }); window.getAssetStatusBadge = status => '<span class="badge">' + status + '</span>'; window.masterAssetFilters = { id:'', hull:'', model:'', sn:'', warranty:'', chassis:'', category:'', location:'', completeness:'', status:'', query3Param:'' }; window.masterAssetSort = { col:null, dir:'asc' };`);
         await cdp.evaluate(sessionId, view.slice(assetBehaviorStart, assetBehaviorEnd));
         const groupedRow = await cdp.evaluate(sessionId, `(async () => { const sample = { id:'DT-001', asset_code:'UNIT-DT-001', hull_number:'DT-001', make_model:'Dump Truck', year_manufacture:2022, asset_age:4, capacity:'20 ton', serial_number:'SN-001', license_plate:'B 1234 XY', chassis_number:'CH-001', category:'Dump Truck', warranty:'Aktif', project_name:'Project A', location:'Site A', operational_position:'Pit 1', status:'READY' }; window.currentAssetData = Array.from({length:8}, (_, index) => ({...sample, id:'DT-' + String(index + 1).padStart(3, '0')})); window.renderAssetTableBody(); await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); const row = document.querySelector('#assetTableBody tr'); const viewport = document.querySelector('.master-asset-table-scroll'); const visibleRows = Array.from(document.querySelectorAll('#assetTableBody tr')).filter(item => item.getBoundingClientRect().top < viewport.getBoundingClientRect().bottom - 1).length; const edit = row.querySelector('.asset-row-actions .btn-primary'); return { cells: row.children.length, text: row.textContent, visibleRows, editText: edit.textContent.trim(), editBackground: getComputedStyle(edit).backgroundColor, printHasSeparateIdentity: window.printMasterAssetReport.toString().includes('<th>Serial Number</th><th>Pelat Kendaraan</th>'), printHasNewFields: window.printMasterAssetReport.toString().includes('<th>Kode Unit</th>') && window.printMasterAssetReport.toString().includes('<th>Kapasitas</th>') && window.printMasterAssetReport.toString().includes('<th>Status Warranty</th>') }; })()`);
         if (groupedRow.cells !== 9 || !groupedRow.text.includes('Usia') || !groupedRow.text.includes('4 tahun') || !groupedRow.text.includes('UNIT-DT-001') || !groupedRow.text.includes('20 ton') || !groupedRow.text.includes('Aktif') || !groupedRow.text.includes('Dokumen')
             || groupedRow.visibleRows < 1 || groupedRow.visibleRows > 5 || groupedRow.editText !== 'Edit'
             || groupedRow.editBackground === 'rgb(255, 255, 255)' || !groupedRow.printHasSeparateIdentity || !groupedRow.printHasNewFields) {
             throw new Error(`Baris tabel terkelompok atau laporan cetak tidak sesuai: ${JSON.stringify(groupedRow)}`);
+        }
+        const printFilters = await cdp.evaluate(sessionId, `(() => {
+            window.currentAssetData = [
+                { id:'EX-001', category:'Excavator', status:'READY', location:'Site A' },
+                { id:'EX-002', category:'Excavator', status:'BREAKDOWN', location:'Site A' },
+                { id:'DT-001', category:'Dump Truck', status:'READY', location:'Site B' },
+                { id:'EX-003', category:'Excavator', status:'READY', location:'Site B' }
+            ];
+            window.openMasterAssetPrintDialog();
+            document.querySelector('input[name="masterAssetPrintScope"][value="filtered"]').checked = true;
+            document.getElementById('masterAssetPrintUseCategory').checked = true;
+            document.getElementById('masterAssetPrintUseStatus').checked = true;
+            document.getElementById('masterAssetPrintUseSite').checked = true;
+            document.getElementById('masterAssetPrintCategory').value = 'Excavator';
+            document.getElementById('masterAssetPrintStatus').value = 'READY';
+            document.getElementById('masterAssetPrintSite').value = 'Site B';
+            window.updateMasterAssetPrintFilters();
+            const combined = window.getMasterAssetPrintFilteredAssets().map(asset => asset.id);
+            const combinedCount = document.getElementById('masterAssetPrintFilteredCount').textContent;
+            const panelVisible = !document.getElementById('masterAssetPrintFilters').hidden;
+            const submitEnabled = !document.getElementById('masterAssetPrintSubmit').disabled;
+            document.getElementById('masterAssetPrintUseSite').checked = false;
+            window.updateMasterAssetPrintFilters();
+            const withoutSite = window.getMasterAssetPrintFilteredAssets().map(asset => asset.id);
+            return { combined, combinedCount, panelVisible, submitEnabled, withoutSite };
+        })()`);
+        if (JSON.stringify(printFilters.combined) !== JSON.stringify(['EX-003'])
+            || printFilters.combinedCount !== '1 unit sesuai filter' || !printFilters.panelVisible || !printFilters.submitEnabled
+            || JSON.stringify(printFilters.withoutSite) !== JSON.stringify(['EX-001', 'EX-003'])) {
+            throw new Error(`Filter cetak prioritas tidak sesuai: ${JSON.stringify(printFilters)}`);
         }
         const tableLayout = await cdp.evaluate(sessionId, `(() => {
             const body = document.getElementById('assetTableBody');
