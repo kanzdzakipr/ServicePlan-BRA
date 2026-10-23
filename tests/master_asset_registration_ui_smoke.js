@@ -74,6 +74,16 @@ async function main() {
         || !view.includes('class="page-footer"') || !view.includes('class="report-title"><h1>Laporan Master Asset</h1>')) {
         throw new Error('Fitur laporan landscape atau popup legalitas/dokumentasi belum lengkap.');
     }
+    const reportSource = view.slice(view.indexOf('window.printMasterAssetReport = function()'), view.indexOf('window.openRenameHullModal = function'));
+    const reportColumnWidths = Array.from(reportSource.matchAll(/<col style="width:([0-9.]+)%">/g), match => Number(match[1]));
+    const reportColumnWidthTotal = reportColumnWidths.reduce((total, width) => total + width, 0);
+    if (!reportSource.includes('class="table-viewport"') || !reportSource.includes('@page { size: A4 landscape; margin: 5mm; }')
+        || !reportSource.includes('body { width:min(297mm, 100%); min-height:210mm;')
+        || !reportSource.includes('body { width:auto; min-height:0; margin:0; padding:0; box-shadow:none; }')
+        || !reportSource.includes('td:nth-child(7) { white-space:normal; overflow-wrap:break-word; }')
+        || reportColumnWidths.length !== 18 || Math.abs(reportColumnWidthTotal - 100) > 0.001) {
+        throw new Error(`Layout A4 landscape Master Asset tidak valid: margin wajib 5 mm, ${reportColumnWidths.length} kolom, total lebar ${reportColumnWidthTotal}%.`);
+    }
 
     const chrome = spawn(chromePath, [
         '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',

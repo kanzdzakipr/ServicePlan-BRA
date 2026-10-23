@@ -8262,9 +8262,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     complete: assets.filter(asset => window.getAssetCompleteness(asset).isComplete).length
                 };
                 reportWindow.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Laporan Master Asset</title><style>
-                    @page { size: A4 landscape; margin: 9mm 8mm 14mm; }
+                    @page { size: A4 landscape; margin: 5mm; }
                     * { box-sizing: border-box; }
-                    body { margin: 0; padding-bottom:8mm; color: #172033; font-family: Arial, Helvetica, sans-serif; font-size: 7pt; }
+                    html { min-height:100%; background:#e9eef4; }
+                    body { width:min(297mm, 100%); min-height:210mm; margin:0 auto; padding:5mm; color:#172033; background:#fff; box-shadow:0 2mm 8mm rgba(23,58,99,.14); font-family:Arial, Helvetica, sans-serif; font-size:7pt; }
                     .report-head { display:grid; grid-template-columns:1fr 1.4fr 1fr; align-items:center; gap:6mm; border-bottom:0.7mm solid #173a63; padding-bottom:3mm; margin-bottom:3mm; }
                     .brand { display:flex; align-items:center; gap:3mm; min-width:0; }
                     .brand img { width:28mm; height:15mm; object-fit:contain; object-position:left center; }
@@ -8278,20 +8279,22 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     .summary-item { padding:1.6mm 2mm; border:0.25mm solid #c8d3df; background:#f5f8fb; }
                     .summary-item span { display:block; color:#64748b; font-size:6pt; text-transform:uppercase; letter-spacing:.04em; }
                     .summary-item b { display:block; margin-top:.5mm; color:#172b45; font-size:8.5pt; }
-                    table { width:100%; border-collapse:collapse; table-layout:fixed; }
-                    thead { display:table-header-group; } tr { break-inside:avoid; page-break-inside:avoid; }
-                    th, td { border:0.25mm solid #b9c5d4; padding:1.35mm 1.15mm; text-align:left; vertical-align:top; overflow-wrap:anywhere; line-height:1.25; }
-                    th { background:#dfe8f2; color:#172b45; font-size:6.4pt; text-transform:uppercase; font-weight:700; }
+                    .table-viewport { width:100%; overflow-x:auto; }
+                    table { width:100%; height:auto; border-collapse:collapse; table-layout:fixed; }
+                    thead { display:table-header-group; }
+                    tr, th, td { height:auto; }
+                    th, td { border:0.25mm solid #b9c5d4; padding:1.1mm .85mm; text-align:left; vertical-align:top; overflow-wrap:break-word; word-break:normal; line-height:1.2; }
+                    th { background:#dfe8f2; color:#172b45; font-size:6pt; text-transform:uppercase; font-weight:700; }
+                    td { font-size:6.2pt; }
                     tbody tr:nth-child(even) { background:#f5f7fa; }
-                    th:nth-child(1), td:nth-child(1) { width:3%; } th:nth-child(2), td:nth-child(2) { width:6%; } th:nth-child(3), td:nth-child(3) { width:6%; }
-                    th:nth-child(4), td:nth-child(4) { width:8%; } th:nth-child(5), td:nth-child(5) { width:6%; } th:nth-child(6), td:nth-child(6) { width:4%; }
-                    th:nth-child(7), td:nth-child(7) { width:4%; } th:nth-child(8), td:nth-child(8) { width:8%; } th:nth-child(9), td:nth-child(9) { width:7%; }
-                    th:nth-child(10), td:nth-child(10) { width:9%; } th:nth-child(11), td:nth-child(11) { width:6%; } th:nth-child(12), td:nth-child(12) { width:7%; }
-                    th:nth-child(13), td:nth-child(13) { width:7%; } th:nth-child(14), td:nth-child(14) { width:6%; } th:nth-child(15), td:nth-child(15) { width:5%; } th:nth-child(16), td:nth-child(16) { width:8%; }
+                    th:nth-child(1), td:nth-child(1), th:nth-child(7) { white-space:nowrap; }
+                    td:nth-child(7) { white-space:normal; overflow-wrap:break-word; }
+                    td:nth-child(2), td:nth-child(3), td:nth-child(4), td:nth-child(10), td:nth-child(11), td:nth-child(12) { overflow-wrap:anywhere; }
                     .print-actions { position:sticky; top:0; z-index:2; margin-bottom:4mm; padding:2mm; text-align:right; background:#fff; } button { border:0; border-radius:3px; background:#0b73d9; color:white; padding:2.5mm 4mm; font-weight:bold; cursor:pointer; }
                     .page-footer { position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-between; gap:5mm; padding-top:1.5mm; border-top:0.2mm solid #cbd5e1; color:#64748b; font-size:6.2pt; background:#fff; }
-                    @media print { .print-actions { display:none; } body { padding-bottom:0; } }
-                </style></head><body><div class="print-actions"><button onclick="window.print()">Cetak / Simpan PDF</button></div><header class="report-head"><div class="brand"><img src="${text(logoUrl)}" alt="Logo PT Bina Rekayasa Anugrah"><div><strong>PT Bina Rekayasa Anugrah</strong><small>Equipment &amp; Maintenance</small></div></div><div class="report-title"><h1>Laporan Master Asset</h1><p>${scope === 'filtered' ? 'Hasil filter Master Asset' : 'Seluruh unit aktif Master Asset'}</p></div><div class="meta"><strong>${assets.length} unit</strong>Data aktif yang dilaporkan</div></header><section class="report-summary"><div class="summary-item"><span>Total unit</span><b>${reportStats.total}</b></div><div class="summary-item"><span>Ready</span><b>${reportStats.ready}</b></div><div class="summary-item"><span>Operating</span><b>${reportStats.operating}</b></div><div class="summary-item"><span>Breakdown / inspeksi</span><b>${reportStats.breakdown}</b></div><div class="summary-item"><span>Data lengkap</span><b>${reportStats.complete}</b></div></section><table><thead><tr><th>No.</th><th>Asset ID</th><th>Kode Unit</th><th>No. Lambung</th><th>Nama Aset</th><th>Dealer / Tipe</th><th>Tahun</th><th>Usia</th><th>Kapasitas</th><th>Serial Number</th><th>Pelat Kendaraan</th><th>Nomor Rangka</th><th>Kategori</th><th>Project</th><th>Lokasi / Posisi</th><th>Status</th><th>Status Warranty</th><th>Kelengkapan</th></tr></thead><tbody>${rows}</tbody></table><footer class="page-footer"><span>Dicetak: ${text(printedAt)}</span><span>Master Asset · PT Bina Rekayasa Anugrah · Legalitas dan dokumentasi tersedia di aplikasi web</span></footer></body></html>`);
+                    @media screen and (max-width:1200px) { .table-viewport { border-right:0.25mm solid #b9c5d4; } table { min-width:1180px; } }
+                    @media print { html { background:#fff; } .print-actions { display:none; } body { width:auto; min-height:0; margin:0; padding:0; box-shadow:none; } .table-viewport { overflow:visible; } tr { break-inside:avoid; page-break-inside:avoid; } }
+                </style></head><body><div class="print-actions"><button onclick="window.print()">Cetak / Simpan PDF</button></div><header class="report-head"><div class="brand"><img src="${text(logoUrl)}" alt="Logo PT Bina Rekayasa Anugrah"><div><strong>PT Bina Rekayasa Anugrah</strong><small>Equipment &amp; Maintenance</small></div></div><div class="report-title"><h1>Laporan Master Asset</h1><p>${scope === 'filtered' ? 'Hasil filter Master Asset' : 'Seluruh unit aktif Master Asset'}</p></div><div class="meta"><strong>${assets.length} unit</strong>Data aktif yang dilaporkan</div></header><section class="report-summary"><div class="summary-item"><span>Total unit</span><b>${reportStats.total}</b></div><div class="summary-item"><span>Ready</span><b>${reportStats.ready}</b></div><div class="summary-item"><span>Operating</span><b>${reportStats.operating}</b></div><div class="summary-item"><span>Breakdown / inspeksi</span><b>${reportStats.breakdown}</b></div><div class="summary-item"><span>Data lengkap</span><b>${reportStats.complete}</b></div></section><div class="table-viewport"><table><colgroup><col style="width:2%"><col style="width:5%"><col style="width:5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:5.5%"><col style="width:3%"><col style="width:3.5%"><col style="width:5%"><col style="width:7.5%"><col style="width:5.5%"><col style="width:7.5%"><col style="width:5.5%"><col style="width:5.5%"><col style="width:6%"><col style="width:5%"><col style="width:5.5%"><col style="width:10%"></colgroup><thead><tr><th>No.</th><th>Asset ID</th><th>Kode Unit</th><th>No. Lambung</th><th>Nama Aset</th><th>Dealer / Tipe</th><th>Tahun</th><th>Usia</th><th>Kapasitas</th><th>Serial Number</th><th>Pelat Kendaraan</th><th>Nomor Rangka</th><th>Kategori</th><th>Project</th><th>Lokasi / Posisi</th><th>Status</th><th>Status Warranty</th><th>Kelengkapan</th></tr></thead><tbody>${rows}</tbody></table></div><footer class="page-footer"><span>Dicetak: ${text(printedAt)}</span><span>Master Asset · PT Bina Rekayasa Anugrah · Legalitas dan dokumentasi tersedia di aplikasi web</span></footer></body></html>`);
                 reportWindow.document.close();
                 closeModal('modalMasterAssetPrint');
             };
