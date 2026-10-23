@@ -75,6 +75,8 @@ Status F4 23 Oktober 2026: **IMPLEMENTED / Tes Otomatis Lulus (26/26), siap diuj
 
 ### F5 — Archive, notifikasi, dan pengaturan operasional
 
+Status F5 23 Oktober 2026: **IMPLEMENTED / Tes Otomatis Lulus (28/28), siap diuji di browser**. DDL runtime `archived_items` telah dipindahkan ke migrasi resmi [scripts/migrate_f5_archive_settings_schema_23102026.sql](file:///c:/Users/LENOVO/ServicePlan-BRA/scripts/migrate_f5_archive_settings_schema_23102026.sql), audit trail arsip/restore persisten pada tabel `archive_audit_trail`, penambahan fail-closed failure banner saat penanda arsip gagal termuat, penyertaan token CSRF pada seluruh mutasi notifikasi (`MARK_READ`, `MARK_ALL_READ`, `CREATE`), serta implementasi tabel & API `operational_settings` ([api/settings.php](file:///c:/Users/LENOVO/ServicePlan-BRA/api/settings.php)) yang menggantikan pesan sukses palsu/`localStorage`.
+
 1. Pindahkan DDL `archived_items` dari GET API ke migrasi. Tambah audit aktor/waktu/alasan pada arsip dan restore, serta fail-closed atau indikator kegagalan ketika penanda arsip tidak termuat.
 2. Tambah CSRF pada POST notifikasi UI; uji penerima, badge, mark-read, mark-all-read, dan tautan target lintas role/lokasi.
 3. Jadikan pengaturan yang benar-benar diperlukan sebagai tabel/API tervalidasi; panel yang belum operasional diberi label nonaktif. Pisahkan manajemen user dari matriks izin persisten dan hapus pesan sukses palsu.

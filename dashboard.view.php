@@ -5,6 +5,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     header('Location: index.html?reason=session', true, 302);
     exit;
 }
+
+$settingsMap = [];
+try {
+    $stSettings = $db->query("SELECT setting_key, setting_value FROM operational_settings");
+    if ($stSettings) {
+        while ($sRow = $stSettings->fetch(PDO::FETCH_ASSOC)) {
+            $settingsMap[$sRow['setting_key']] = $sRow['setting_value'];
+        }
+    }
+} catch (Throwable $t) {
+    // Graceful fallback if operational_settings table is not yet migrated
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -1942,7 +1954,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <i class="fa-solid fa-shield-halved"></i>
                             <div>
                                 <strong>Manajemen Hak Akses</strong>
-                                <small>Matrix 10 User Roles x 16 Modul</small>
+                                <small>Tinjauan Matriks & Manajemen User</small>
                             </div>
                         </div>
                         <div class="settings-nav-item" onclick="switchSettingsTab('threshold', this)">
@@ -1956,14 +1968,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <i class="fa-solid fa-location-dot"></i>
                             <div>
                                 <strong>Master Site & Yard Project</strong>
-                                <small>Lokasi Duri, Pit, Prabumulih</small>
+                                <small><span class="badge badge-warning" style="font-size:0.7rem; padding:1px 5px;">Read-Only</span> Master Lokasi</small>
                             </div>
                         </div>
                         <div class="settings-nav-item" onclick="switchSettingsTab('category', this)">
                             <i class="fa-solid fa-tags"></i>
                             <div>
                                 <strong>Kategori & Job Standard Rates</strong>
-                                <small>Klasifikasi Part A/B/C & Outsource</small>
+                                <small><span class="badge badge-secondary" style="font-size:0.7rem; padding:1px 5px;">Referensi</span> Klasifikasi Standar</small>
                             </div>
                         </div>
                         <div class="settings-nav-item" onclick="switchSettingsTab('template', this)">
@@ -1977,7 +1989,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <i class="fa-solid fa-lock"></i>
                             <div>
                                 <strong>Keamanan & Audit Trail Log</strong>
-                                <small>Session Timeout & Access Trail</small>
+                                <small>Session Timeout & Audit Log</small>
                             </div>
                         </div>
                     </div>
@@ -1999,6 +2011,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                         <!-- Panel 1: Hak Akses RBAC (10 Roles x 16 Modul Matrix) -->
                         <div id="settings-rbac" class="settings-panel" style="display:none;">
+                            <div style="background:#eff6ff; border:1px solid #bfdbfe; border-left:4px solid #0284c7; border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:0.82rem; color:#1e40af;">
+                                <i class="fa-solid fa-circle-info"></i> <strong>Otorisasi Terpusat Server:</strong> Kebijakan hak akses modul ditegakkan oleh lapisan keamanan backend (<code>api/security.php</code>). Matriks di bawah ini merupakan visualisasi standar perizinan 10 Peran. Pengelolaan akun pengguna per role dikelola persisten di database via tombol <strong>Daftar Pengguna</strong> pada masing-masing peran.
+                            </div>
                             <div
                                 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
                                 <div>
@@ -2074,28 +2089,28 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">SLA Tiket WO dari Unit Down
                                         (Menit)</label>
-                                    <input type="number" id="cfg-sla-wo" class="form-control" value="30">
+                                    <input type="number" id="cfg-sla-wo" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_sla_wo'] ?? '30'), ENT_QUOTES, 'UTF-8') ?>">
                                     <small style="color:var(--text-muted);">Target respon maksimal mekanik setelah P2H
                                         merah</small>
                                 </div>
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Batas Merah Aus Ban / Tread Limit
                                         (mm)</label>
-                                    <input type="number" id="cfg-tire-red" class="form-control" value="3.2" step="0.1">
+                                    <input type="number" id="cfg-tire-red" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_tire_red'] ?? '3.2'), ENT_QUOTES, 'UTF-8') ?>" step="0.1">
                                     <small style="color:var(--text-muted);">Tread depth di bawah nilai ini dianggap
                                         kritis</small>
                                 </div>
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Batas HM Warning PM Due Soon
                                         (HM)</label>
-                                    <input type="number" id="cfg-pm-warning" class="form-control" value="50">
+                                    <input type="number" id="cfg-pm-warning" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_pm_warning'] ?? '50'), ENT_QUOTES, 'UTF-8') ?>">
                                     <small style="color:var(--text-muted);">Peringatan PM otomatis muncul H-50
                                         HM</small>
                                 </div>
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Toleransi % Anomali Konsumsi BBM
                                         (%)</label>
-                                    <input type="number" id="cfg-fuel-anomali" class="form-control" value="15.0"
+                                    <input type="number" id="cfg-fuel-anomali" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_fuel_anomali'] ?? '15.0'), ENT_QUOTES, 'UTF-8') ?>"
                                         step="0.1">
                                     <small style="color:var(--text-muted);">LPH/KPL di luar toleransi memicu alarm
                                         sounding</small>
@@ -2103,7 +2118,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Telematika Komtrax Idling Alarm
                                         Limit (%)</label>
-                                    <input type="number" id="cfg-idling-limit" class="form-control" value="50.0"
+                                    <input type="number" id="cfg-idling-limit" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_idling_limit'] ?? '50.0'), ENT_QUOTES, 'UTF-8') ?>"
                                         step="1.0">
                                     <small style="color:var(--text-muted);">Persentase engine idling dianggap pemborosan
                                         solar</small>
@@ -2111,7 +2126,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Safety Stock Minimum Cutting Bit
                                         (Pieces)</label>
-                                    <input type="number" id="cfg-cuttingbit-safety" class="form-control" value="380">
+                                    <input type="number" id="cfg-cuttingbit-safety" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_cuttingbit_safety'] ?? '380'), ENT_QUOTES, 'UTF-8') ?>">
                                     <small style="color:var(--text-muted);">Persediaan 20% unit RM XCMG
                                         BRR-RM-4101</small>
                                 </div>
@@ -2124,13 +2139,15 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                         <!-- Panel 3: Master Site & Yard Project -->
                         <div id="settings-location" class="settings-panel" style="display:none;">
+                            <div style="background:#fefce8; border:1px solid #fef08a; border-left:4px solid #ca8a04; border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:0.82rem; color:#854d0e;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Panel Nonaktif:</strong> Master Site & Yard Project saat ini dikelola terpusat pada tabel master sistem (<code>locations</code>). Form mutasi lokasi mandiri sedang dinonaktifkan untuk menjaga integritas relasi inventaris alat berat.
+                            </div>
                             <div
                                 style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                                 <h3 style="margin:0; font-size:1.1rem; color:var(--text-dark);"><i
                                         class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Master Site
                                     Project & Base Camp Armada</h3>
-                                <button class="btn btn-secondary" onclick="alert('Form Tambah Lokasi Baru dibuka.')"><i
-                                        class="fa-solid fa-plus"></i> Tambah Lokasi</button>
+                                <span class="badge badge-warning" style="font-size:0.78rem;">Read-Only</span>
                             </div>
                             <div
                                 style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px;">
@@ -2195,6 +2212,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                         <!-- Panel 4: Kategori & Standard Rates -->
                         <div id="settings-category" class="settings-panel" style="display:none;">
+                            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #64748b; border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:0.82rem; color:#334155;">
+                                <i class="fa-solid fa-book"></i> <strong>Panel Referensi Standard:</strong> Tarif dan klasifikasi di bawah ini merupakan pedoman standar operasional BRA. Penyesuaian harga riil tercatat pada transaksi Purchase Order dan kontrak vendor terkait.
+                            </div>
                             <h3 style="margin-bottom:15px; font-size:1.1rem; color:var(--text-dark);"><i
                                     class="fa-solid fa-tags" style="color:var(--primary);"></i> Klasifikasi Sparepart &
                                 Standard Job Rates</h3>
@@ -2245,19 +2265,23 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Prefix Penomoran Work Order
                                         (WO)</label>
-                                    <input type="text" class="form-control" value="WO-BRA-YYYYMM-XXXX">
+                                    <input type="text" id="cfg-wo-prefix" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_wo_prefix'] ?? 'WO-BRA-YYYYMM-XXXX'), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Prefix Penomoran Purchase Order
                                         (PO)</label>
-                                    <input type="text" class="form-control" value="PO-BRA-YYYY-XXXX">
+                                    <input type="text" id="cfg-po-prefix" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_po_prefix'] ?? 'PO-BRA-YYYY-XXXX'), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
                                 <div class="form-group" style="grid-column:1 / -1;">
                                     <label style="font-weight:600; font-size:0.85rem;">Nama Perusahaan & Header Kop
                                         Surat</label>
-                                    <input type="text" class="form-control"
-                                        value="PT BINA REKAYASA ANUGERAH - Departemen Equipment & Maintenance">
+                                    <input type="text" id="cfg-company-header" class="form-control"
+                                        value="<?= htmlspecialchars((string) ($settingsMap['cfg_company_header'] ?? 'PT BINA REKAYASA ANUGERAH - Departemen Equipment & Maintenance'), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
+                            </div>
+                            <div style="margin-top:15px;">
+                                <button class="btn btn-primary" onclick="saveAllSettings()"><i
+                                        class="fa-solid fa-check"></i> Simpan Konfigurasi Template</button>
                             </div>
                         </div>
 
@@ -2271,17 +2295,22 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Idle Session Timeout
                                         (Menit)</label>
-                                    <input type="number" class="form-control" value="30">
+                                    <input type="number" id="cfg-idle-timeout" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_idle_timeout'] ?? '30'), ENT_QUOTES, 'UTF-8') ?>">
                                 </div>
                                 <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Frekuensi Automatic Backup
                                         Database</label>
-                                    <select class="form-control">
-                                        <option selected>Setiap Hari (00:00 WIB)</option>
-                                        <option>Setiap 12 Jam</option>
-                                        <option>Setiap Minggu</option>
+                                    <?php $curBackup = (string) ($settingsMap['cfg_backup_frequency'] ?? 'Setiap Hari (00:00 WIB)'); ?>
+                                    <select id="cfg-backup-frequency" class="form-control">
+                                        <option value="Setiap Hari (00:00 WIB)" <?= $curBackup === 'Setiap Hari (00:00 WIB)' ? 'selected' : '' ?>>Setiap Hari (00:00 WIB)</option>
+                                        <option value="Setiap 12 Jam" <?= $curBackup === 'Setiap 12 Jam' ? 'selected' : '' ?>>Setiap 12 Jam</option>
+                                        <option value="Setiap Minggu" <?= $curBackup === 'Setiap Minggu' ? 'selected' : '' ?>>Setiap Minggu</option>
                                     </select>
                                 </div>
+                            </div>
+                            <div style="margin-top:15px;">
+                                <button class="btn btn-primary" onclick="saveAllSettings()"><i
+                                        class="fa-solid fa-check"></i> Simpan Parameter Keamanan</button>
                             </div>
                             <div style="margin-top:15px; border-top:1px solid #e2e8f0; padding-top:12px;">
                                 <strong style="font-size:0.85rem; color:var(--text-dark);"><i
@@ -7349,6 +7378,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         if (globalData.accidents) {
                             globalData.accidents.forEach(a => { if (archivedAccidents.has(String(a.docNo).trim())) a.isArchived = true; });
                         }
+                    } else {
+                        console.warn("PERINGATAN: Penanda data arsip gagal dimuat dari server.");
+                        window.archiveDataLoadFailed = true;
+                        const banner = document.createElement("div");
+                        banner.id = "archive-load-warning-banner";
+                        banner.style.cssText = "background:#fee2e2; border-bottom:1px solid #ef4444; color:#b91c1c; padding:8px 16px; font-size:0.85rem; font-weight:600; text-align:center; position:sticky; top:0; z-index:9999;";
+                        banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Peringatan Sistem: Penanda data arsip gagal disinkronkan dari server. Beberapa data arsip mungkin tampil dalam register utama.';
+                        document.body.prepend(banner);
                     }
 
                     window.globalData = globalData;
@@ -9986,6 +10023,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (!activeSettingsTab && typeof window.switchSettingsTab === 'function') {
                         window.switchSettingsTab('rbac');
                     }
+                    if (typeof window.loadOperationalSettings === 'function') {
+                        window.loadOperationalSettings();
+                    }
                 }
             }
 
@@ -12583,6 +12623,10 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                 if (tabName === 'rbac') {
                     window.renderRbacMatrix(currentActiveRoleIndex);
+                } else if (tabName === 'threshold' || tabName === 'template' || tabName === 'security') {
+                    if (typeof window.loadOperationalSettings === 'function') {
+                        window.loadOperationalSettings();
+                    }
                 }
             };
 
@@ -12773,20 +12817,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     }).join('') + `</tbody>`;
 
                 tableEl.innerHTML = tableHtml;
-            };
-
-            window.saveAllSettings = function () {
-                if (window.FleetRBAC && !window.FleetRBAC.hasAccess('settings', 'O')) {
-                    alert("Akses Ditolak: Hanya Administrator yang berhak menyimpan konfigurasi sistem.");
-                    return;
-                }
-                try {
-                    localStorage.setItem('fleetmonitor_rbac_custom_matrix', JSON.stringify(activeRbacRolesData));
-                } catch (e) {
-                    console.error('Gagal menyimpan RBAC ke localStorage:', e);
-                }
-                if (window.FleetRBAC) window.FleetRBAC.applyUIPermissions();
-                alert('Seluruh konfigurasi sistem (RBAC 10 Roles, Threshold SLA, Site Project & Security) berhasil disimpan!');
             };
 
             // ==========================================
@@ -13426,10 +13456,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     alert('Gagal terhubung ke server.');
                 }
             };
-
-            function saveSettings() {
-                alert('Konfigurasi sistem berhasil disimpan.');
-            }
 
             function initNewViews() {
                 if (window.ConditionMonitoring) {

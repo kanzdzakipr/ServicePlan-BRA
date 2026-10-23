@@ -29971,17 +29971,21 @@ document.addEventListener("click", function (e) {
 // ==========================================
 
 window.archiveData = async function (type, id) {
-  if (!confirm("Apakah Anda yakin ingin memindahkan data ini ke Archive?"))
-    return;
+  const reasonPrompt = prompt("Apakah Anda yakin ingin memindahkan data ini ke Archive?\n\nMasukkan alasan pengarsipan (opsional):", "");
+  if (reasonPrompt === null) return; // User cancelled
+  const reason = reasonPrompt.trim() || "Diarsipkan melalui sistem";
 
   try {
     const res = await fetch("api/archive.php", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, id, action: "archive" }),
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": window.APP_CSRF_TOKEN || ""
+      },
+      body: JSON.stringify({ type, id, action: "archive", reason }),
     });
     const data = await res.json();
-    if (data.status !== "success") {
+    if (!res.ok || data.status !== "success") {
       alert("Gagal mengarsipkan: " + (data.message || "Unknown error"));
       return;
     }
@@ -30020,16 +30024,21 @@ window.archiveData = async function (type, id) {
 };
 
 window.restoreData = async function (type, id) {
-  if (!confirm("Kembalikan data ini dari Archive ke tampilan utama?")) return;
+  const reasonPrompt = prompt("Kembalikan data ini dari Archive ke tampilan utama?\n\nMasukkan alasan pemulihan (opsional):", "");
+  if (reasonPrompt === null) return; // User cancelled
+  const reason = reasonPrompt.trim() || "Dipulihkan ke operasional aktif";
 
   try {
     const res = await fetch("api/archive.php", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, id, action: "restore" }),
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": window.APP_CSRF_TOKEN || ""
+      },
+      body: JSON.stringify({ type, id, action: "restore", reason }),
     });
     const data = await res.json();
-    if (data.status !== "success") {
+    if (!res.ok || data.status !== "success") {
       alert("Gagal mengembalikan data: " + (data.message || "Unknown error"));
       return;
     }
@@ -30433,7 +30442,10 @@ window.renderArchiveTables = function () {
       // Sync to MySQL API
       fetch("api/notifications.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": window.APP_CSRF_TOKEN || ""
+        },
         body: JSON.stringify({ action: "MARK_READ", notification_id: id }),
       })
         .then(fetchNotificationsFromApi)
@@ -30449,7 +30461,10 @@ window.renderArchiveTables = function () {
     // Sync to MySQL API
     fetch("api/notifications.php", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": window.APP_CSRF_TOKEN || ""
+      },
       body: JSON.stringify({ action: "MARK_ALL_READ" }),
     })
       .then(fetchNotificationsFromApi)
@@ -30489,7 +30504,10 @@ window.renderArchiveTables = function () {
     // Show only notifications accepted and scoped by the server.
     fetch("api/notifications.php", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": window.APP_CSRF_TOKEN || ""
+      },
       body: JSON.stringify({
         action: "CREATE",
         menu_name: newNotif.menu,
@@ -30700,6 +30718,135 @@ window.renderArchiveTables = function () {
   ) {
     updateBadge();
     fetchNotificationsFromApi();
+  }
+})();
+
+// =============================================================================
+// OPERATIONAL SETTINGS PERSISTENCE & API SYNC (Batch F5)
+// =============================================================================
+(function initOperationalSettings() {
+  async function ensureAppCsrf() {
+    if (window.APP_CSRF_TOKEN) return window.APP_CSRF_TOKEN;
+    if (typeof window.getCsrfToken === "function") {
+      try {
+        const t = await window.getCsrfToken();
+        if (t) return t;
+      } catch (e) {}
+    }
+    try {
+      const res = await fetch("api/auth.php", { cache: "no-store" });
+      const json = await res.json();
+      if (json && json.csrf_token) {
+        window.APP_CSRF_TOKEN = json.csrf_token;
+        return json.csrf_token;
+      }
+    } catch (e) {}
+    return "";
+  }
+
+  async function loadOperationalSettings() {
+    try {
+      const res = await fetch("api/settings.php", { cache: "no-store" });
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.status !== "success" || !json.settings) return;
+      const s = json.settings;
+
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val !== undefined && val !== null) el.value = val;
+      };
+
+      setVal("cfg-sla-wo", s.cfg_sla_wo);
+      setVal("cfg-tire-red", s.cfg_tire_red);
+      setVal("cfg-pm-warning", s.cfg_pm_warning);
+      setVal("cfg-fuel-anomali", s.cfg_fuel_anomali);
+      setVal("cfg-idling-limit", s.cfg_idling_limit);
+      setVal("cfg-cuttingbit-safety", s.cfg_cuttingbit_safety);
+      setVal("cfg-idle-timeout", s.cfg_idle_timeout);
+      setVal("cfg-backup-frequency", s.cfg_backup_frequency);
+      setVal("cfg-wo-prefix", s.cfg_wo_prefix);
+      setVal("cfg-po-prefix", s.cfg_po_prefix);
+      setVal("cfg-company-header", s.cfg_company_header);
+    } catch (err) {
+      console.warn("Gagal memuat konfigurasi operasional:", err);
+    }
+  }
+
+  window.saveSettings = async function () {
+    const payload = {
+      cfg_sla_wo: document.getElementById("cfg-sla-wo")?.value,
+      cfg_tire_red: document.getElementById("cfg-tire-red")?.value,
+      cfg_pm_warning: document.getElementById("cfg-pm-warning")?.value,
+      cfg_fuel_anomali: document.getElementById("cfg-fuel-anomali")?.value,
+      cfg_idling_limit: document.getElementById("cfg-idling-limit")?.value,
+      cfg_cuttingbit_safety: document.getElementById("cfg-cuttingbit-safety")?.value,
+    };
+
+    try {
+      const csrf = await ensureAppCsrf();
+      const res = await fetch("api/settings.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+        },
+        body: JSON.stringify({ settings: payload }),
+      });
+      const json = await res.json();
+      if (res.ok && json.status === "success") {
+        alert("Parameter Threshold & SLA berhasil disimpan ke database.");
+        await loadOperationalSettings();
+      } else {
+        alert("Gagal menyimpan parameter: " + (json.message || "Akses ditolak."));
+      }
+    } catch (err) {
+      alert("Terjadi kesalahan jaringan saat menyimpan parameter.");
+    }
+  };
+
+  window.saveAllSettings = async function () {
+    const payload = {
+      cfg_sla_wo: document.getElementById("cfg-sla-wo")?.value,
+      cfg_tire_red: document.getElementById("cfg-tire-red")?.value,
+      cfg_pm_warning: document.getElementById("cfg-pm-warning")?.value,
+      cfg_fuel_anomali: document.getElementById("cfg-fuel-anomali")?.value,
+      cfg_idling_limit: document.getElementById("cfg-idling-limit")?.value,
+      cfg_cuttingbit_safety: document.getElementById("cfg-cuttingbit-safety")?.value,
+      cfg_idle_timeout: document.getElementById("cfg-idle-timeout")?.value,
+      cfg_backup_frequency: document.getElementById("cfg-backup-frequency")?.value,
+      cfg_wo_prefix: document.getElementById("cfg-wo-prefix")?.value,
+      cfg_po_prefix: document.getElementById("cfg-po-prefix")?.value,
+      cfg_company_header: document.getElementById("cfg-company-header")?.value,
+    };
+
+    try {
+      const csrf = await ensureAppCsrf();
+      const res = await fetch("api/settings.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+        },
+        body: JSON.stringify({ settings: payload }),
+      });
+      const json = await res.json();
+      if (res.ok && json.status === "success") {
+        alert("Seluruh konfigurasi operasional sistem (Threshold, Template, & Keamanan) berhasil disimpan ke database.");
+        await loadOperationalSettings();
+      } else {
+        alert("Gagal menyimpan konfigurasi: " + (json.message || "Akses ditolak."));
+      }
+    } catch (err) {
+      alert("Terjadi kesalahan jaringan saat menyimpan konfigurasi.");
+    }
+  };
+
+  window.loadOperationalSettings = loadOperationalSettings;
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadOperationalSettings);
+  } else {
+    loadOperationalSettings();
   }
 })();
 

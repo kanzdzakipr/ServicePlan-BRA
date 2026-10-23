@@ -615,6 +615,7 @@ function api_route_permission(): ?string
         'report_references.php' => 'reports.read',
         'administration_recap.php' => 'reports.read',
         'archive.php' => $readWrite('archive.read', 'archive.write'),
+        'settings.php' => $readWrite('dashboard.read', 'dashboard.read'),
         // POST also supports self-service password changes. Action-level checks
         // in users.php restrict every other operation to administrators.
         'users.php' => $readWrite('users.manage', 'dashboard.read'),
