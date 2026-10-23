@@ -51,11 +51,13 @@ Status 23 Oktober 2026: **PASS fungsional / selesai untuk dilanjutkan**. Alur br
 
 ### F3 — Master Asset → PM, pemeriksaan, dan HSE
 
-Status F3a 23 Oktober 2026: **IMPLEMENTED / menunggu uji browser**. Form tambah dan edit Master Asset kini menyediakan konfigurasi PM lengkap dan Forecast membaca sumber tersebut. Saat baseline diperiksa, `0/282` aset memiliki konfigurasi PM sehingga seluruh unit memang harus tampil belum diatur sampai data resmi diisi.
+Status F3 keseluruhan 23 Oktober 2026: **PASS berdasarkan konfirmasi pengguna untuk F3a, F3b, dan F3c**.
+
+Status F3a 23 Oktober 2026: **PASS berdasarkan konfirmasi pengguna**. Form tambah dan edit Master Asset menyediakan konfigurasi PM lengkap, nilai bertahan setelah refresh, dan Forecast membaca sumber tersebut. Aset tanpa konfigurasi tetap tampil belum diatur sampai data resmi diisi.
 
 Status F3b 23 Oktober 2026: **PASS berdasarkan konfirmasi pengguna**. Bukti data menunjukkan seluruh 87 referensi yatim mengarah ke lokasi ID 15 dengan catatan `WUR EW Project`/`WUR EW`, sehingga lokasi tersebut dipulihkan secara aditif sebagai `WUR EW Project`. Skema registrasi Master Asset juga diselaraskan tanpa reseed data: 11 kolom API tersedia, 87 aset tetap terhubung, dan referensi lokasi yatim turun dari 87 menjadi 0. Temuan uji browser menunjukkan posisi sudah persisten di DB tetapi sempat dibuang saat payload API lengkap digabungkan dengan data ringkas dashboard; pemetaan refresh dikoreksi dan pengisian lokasi/posisi setelah refresh telah disetujui pengguna. Audit otomatis F3b lulus 18/18; integrasi onboarding lulus 46/46; smoke UI PM/refresh lulus 17/17.
 
-Status F3c 23 Oktober 2026: **IMPLEMENTED / menunggu uji browser**. Hold/release HSE kini persisten, transaksional, teraudit, idempoten, mematuhi beberapa hold aktif, dan memulihkan status sebelum hold tanpa menimpa perubahan status yang lebih baru. Integrasi transaksi lulus 8/8, regresi P2H 14/14, regresi MDE-02 12/12, serta HTTP Laragon2 membuktikan `STANDBY → ACCIDENT_HOLD → STANDBY` dan cleanup QA. Dua insiden lama yang locked tetapi asetnya BREAKDOWN ditandai untuk rekonsiliasi manual, bukan diubah otomatis.
+Status F3c 23 Oktober 2026: **PASS berdasarkan konfirmasi pengguna**. Hold/release HSE persisten, transaksional, teraudit, idempoten, mematuhi beberapa hold aktif, dan memulihkan status sebelum hold tanpa menimpa perubahan status yang lebih baru. Integrasi transaksi lulus 8/8, regresi P2H 14/14, regresi MDE-02 12/12, serta pengujian Laragon2 membuktikan `STANDBY -> ACCIDENT_HOLD -> STANDBY`. Seluruh data QA telah dibersihkan setelah pengujian. Laporan uji `03/ACC/BRA/SITE/2026` dengan waktu kejadian 23 Oktober dihapus, laporan lama `01/ACC/BRA/DURI/2026` dipulihkan menjadi locked, dan `CS-41001` dikembalikan ke `ACCIDENT_HOLD`.
 
 1. Jadwal/interval PM disimpan melalui Master Asset; PM forecast memakai data tersebut dan menandai unit tanpa konfigurasi sebagai `belum diatur`, bukan mengarang jadwal.
 2. Rekonsiliasi lokasi aset yatim dan validasi ID lokasi saat edit/migrasi. Hubungkan pemeriksaan/P2H dan HSE hold/release ke status aset dengan aturan prioritas yang eksplisit.

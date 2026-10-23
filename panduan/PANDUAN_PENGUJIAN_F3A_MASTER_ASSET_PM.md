@@ -1,6 +1,13 @@
 # Panduan Pengujian F3a — Master Asset sebagai sumber jadwal PM
 
-Status: **tes otomatis lulus, menunggu verifikasi browser pengguna**.
+Status: **PASS berdasarkan konfirmasi pengguna pada 23 Oktober 2026**.
+
+## Hasil verifikasi
+
+- Konfigurasi PM dapat diubah dari Master Asset.
+- Nilai tetap tersimpan setelah refresh.
+- Forecast Preventive Maintenance membaca konfigurasi dari Master Asset.
+- Pengujian otomatis dan pengujian browser pengguna dinyatakan lulus.
 
 ## Tujuan
 
