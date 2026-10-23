@@ -559,13 +559,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             <div id="view-asset" class="view-section">
                 <div
                     style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
-                    <div>
-                        <h1 class="page-title" style="margin-bottom:4px;"><i class="fa-solid fa-cubes"
-                                style="color:var(--primary);"></i> Master Asset Armada</h1>
-                        <p style="color:var(--text-muted); font-size:0.88rem; margin:0;">
-                            Inventarisasi & Monitoring Status Efektif Armada Alat Berat (48 Unit Terdaftar)
-                        </p>
-                    </div>
+                    <h1 class="page-title" style="margin:0;">Master Asset Armada</h1>
                     <div>
                         <button class="btn btn-primary" onclick="openModal('modalNewAsset')"><i
                                 class="fa-solid fa-plus"></i> Registrasi Unit Baru</button>

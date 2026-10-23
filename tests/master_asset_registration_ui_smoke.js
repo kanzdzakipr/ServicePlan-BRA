@@ -69,6 +69,11 @@ async function main() {
     if (!view.includes('<table class="table" id="assetTable">') || !view.includes('<th>No.</th>') || !view.includes('${rowIndex + 1}')) {
         throw new Error('Nomor urut otomatis tabel Master Asset tidak ditemukan.');
     }
+    const masterAssetHeading = view.slice(view.indexOf('<!-- VIEW: MASTER ASSET -->'), view.indexOf('<!-- Synchronized Master Asset Telemetry Strip -->'));
+    if (!masterAssetHeading.includes('<h1 class="page-title" style="margin:0;">Master Asset Armada</h1>')
+        || masterAssetHeading.includes('fa-cubes') || masterAssetHeading.includes('Inventarisasi & Monitoring Status Efektif Armada Alat Berat')) {
+        throw new Error('Header Master Asset belum menggunakan judul clean tanpa ikon dan subjudul inventarisasi.');
+    }
     if (tableStart < 0 || tableClose < 0 || printModalStart < 0 || printModalEnd < 0 || assetBehaviorStart < 0 || assetBehaviorEnd < 0) throw new Error('Struktur tabel atau modal cetak Master Asset tidak ditemukan.');
     if (!view.includes('Cetak Laporan Master Asset') || !view.includes('<th>Serial Number</th><th>Pelat Kendaraan</th>')
         || !view.includes('<th>Usia</th>') || !view.includes('openAssetLegalDocuments')
