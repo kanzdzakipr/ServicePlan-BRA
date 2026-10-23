@@ -1,0 +1,1056 @@
+{
+    "metadata": {
+        "extracted_at": "2026-10-23 09:04:39",
+        "total_db_assets": 283,
+        "total_rekap_rows": 345,
+        "match_auto_count": 151,
+        "match_review_count": 15,
+        "conflict_count": 5,
+        "new_candidates_count": 174,
+        "no_evidence_count": 120
+    },
+    "pilot_10_units": [
+        {
+            "rekap": {
+                "row_num": "4",
+                "source_row_index": 4,
+                "nama_asset": "Bomag Smooth Drum Compactor  BW211D-40",
+                "dealer": "United Tractors",
+                "tahun": "2022",
+                "raw_sn_plate": "961884301945",
+                "tokens": [
+                    {
+                        "raw": "961884301945",
+                        "clean": "961884301945",
+                        "compact": "961884301945",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "Warranty - 3000",
+                "kapasitas": "138 HP / 103 kW",
+                "kode_unit": "SD 05",
+                "lambung": "SD-00004",
+                "project": "WUR EW",
+                "lokasi": "INFIELD",
+                "status": "AKTIF",
+                "kategori_clean": "VIBROROLLER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "PF-00011",
+                "asset_code": "PF-00011",
+                "hull_number": null,
+                "category": "Vibro Compactor",
+                "make_model": "Vibro Compactor Bomag BW211D-40SL / Sakai",
+                "year_manufacture": 2023,
+                "serial_number": "961884301945",
+                "license_plate": null,
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 104,
+                "status": "BREAKDOWN",
+                "is_active": 1
+            },
+            "score": 100,
+            "proposed_diff": {
+                "hull_number": {
+                    "current": null,
+                    "proposed": "SD 05",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "United Tractors",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "138 HP / 103 kW",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "WUR EW",
+                    "source": "REKAP 2026"
+                }
+            }
+        },
+        {
+            "rekap": {
+                "row_num": "5",
+                "source_row_index": 5,
+                "nama_asset": "Bomag Smooth Drum BW211D-40",
+                "dealer": "United Tractors",
+                "tahun": "2022",
+                "raw_sn_plate": "961884302060",
+                "tokens": [
+                    {
+                        "raw": "961884302060",
+                        "clean": "961884302060",
+                        "compact": "961884302060",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "Warranty - 3000",
+                "kapasitas": "138 HP / 103 kW",
+                "kode_unit": "SD 06",
+                "lambung": "VIBRO BW BRA-06",
+                "project": "RWI",
+                "lokasi": "YARD DURI",
+                "status": "STANDBY",
+                "kategori_clean": "VIBROROLLER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "SUP-00009",
+                "asset_code": "SUP-00009",
+                "hull_number": null,
+                "category": "Other",
+                "make_model": "Bomag Smooth Drum BW211D-40 (United Tractors)",
+                "year_manufacture": 2022,
+                "serial_number": "961884302060",
+                "license_plate": "VIBRO BW BRA-06",
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 12,
+                "status": "STANDBY",
+                "is_active": 1
+            },
+            "score": 100,
+            "proposed_diff": {
+                "hull_number": {
+                    "current": null,
+                    "proposed": "SD 06",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "United Tractors",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "138 HP / 103 kW",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "RWI",
+                    "source": "REKAP 2026"
+                }
+            }
+        },
+        {
+            "rekap": {
+                "row_num": "6",
+                "source_row_index": 6,
+                "nama_asset": "Bomag Pad Foot Compactor  BW211D-40",
+                "dealer": "United Tractors",
+                "tahun": "2022",
+                "raw_sn_plate": "961884301016",
+                "tokens": [
+                    {
+                        "raw": "961884301016",
+                        "clean": "961884301016",
+                        "compact": "961884301016",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "tidak waranty",
+                "kapasitas": "138 HP / 103 kW",
+                "kode_unit": "PF 01",
+                "lambung": "VIBRO BW BRA-02",
+                "project": "KENDARI",
+                "lokasi": "KENDARI",
+                "status": "AKTIF",
+                "kategori_clean": "VIBROROLLER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "PF-00001",
+                "asset_code": "PF-00001",
+                "hull_number": null,
+                "category": "Vibro Compactor",
+                "make_model": "Vibro Bomag Pad Foot BW 211D-40SL",
+                "year_manufacture": 2024,
+                "serial_number": "961884301016",
+                "license_plate": null,
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 1,
+                "status": "BREAKDOWN",
+                "is_active": 1
+            },
+            "score": 100,
+            "proposed_diff": {
+                "hull_number": {
+                    "current": null,
+                    "proposed": "PF 01",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "United Tractors",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "138 HP / 103 kW",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "KENDARI",
+                    "source": "REKAP 2026"
+                }
+            }
+        },
+        {
+            "rekap": {
+                "row_num": "7",
+                "source_row_index": 7,
+                "nama_asset": "Bomag Pad Foot Compactor  BW211D-40",
+                "dealer": "United Tractors",
+                "tahun": "2022",
+                "raw_sn_plate": "961884301614",
+                "tokens": [
+                    {
+                        "raw": "961884301614",
+                        "clean": "961884301614",
+                        "compact": "961884301614",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "Warranty - 3000",
+                "kapasitas": "138 HP / 103 kW",
+                "kode_unit": "PF 02",
+                "lambung": "PF-00004",
+                "project": "WUR EW",
+                "lokasi": "NDD",
+                "status": "AKTIF",
+                "kategori_clean": "VIBROROLLER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "PF-00004",
+                "asset_code": "PF-00004",
+                "hull_number": null,
+                "category": "Vibro Compactor",
+                "make_model": "Vibro Compactor Bomag BW211D-40SL / Sakai",
+                "year_manufacture": 2023,
+                "serial_number": "961884301614",
+                "license_plate": null,
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 164,
+                "status": "BREAKDOWN",
+                "is_active": 1
+            },
+            "score": 185,
+            "proposed_diff": {
+                "hull_number": {
+                    "current": null,
+                    "proposed": "PF 02",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "United Tractors",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "138 HP / 103 kW",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "WUR EW",
+                    "source": "REKAP 2026"
+                }
+            }
+        },
+        {
+            "rekap": {
+                "row_num": "8",
+                "source_row_index": 8,
+                "nama_asset": "Bomag Pad Foot Compactor  BW211D-40SL",
+                "dealer": "United Tractors",
+                "tahun": "2022",
+                "raw_sn_plate": "961582391152",
+                "tokens": [
+                    {
+                        "raw": "961582391152",
+                        "clean": "961582391152",
+                        "compact": "961582391152",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "tidak waranty",
+                "kapasitas": "138 HP / 103 kW",
+                "kode_unit": "PF 03",
+                "lambung": "PF-00003",
+                "project": "WUR EW",
+                "lokasi": "YARD DURI",
+                "status": "STANDBY",
+                "kategori_clean": "VIBROROLLER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "PF-00003",
+                "asset_code": "PF-00003",
+                "hull_number": null,
+                "category": "Vibro Compactor",
+                "make_model": "Vibro Compactor Bomag BW211D-40SL / Sakai",
+                "year_manufacture": 2023,
+                "serial_number": "961582391152",
+                "license_plate": null,
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 11,
+                "status": "BREAKDOWN",
+                "is_active": 1
+            },
+            "score": 185,
+            "proposed_diff": {
+                "hull_number": {
+                    "current": null,
+                    "proposed": "PF 03",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "United Tractors",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "138 HP / 103 kW",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "WUR EW",
+                    "source": "REKAP 2026"
+                }
+            }
+        },
+        {
+            "rekap": {
+                "row_num": "12",
+                "source_row_index": 12,
+                "nama_asset": "Bomag Smooth Drum Compactor  BW211D-40SL",
+                "dealer": "United Tractors",
+                "tahun": "2024",
+                "raw_sn_plate": "961582391661",
+                "tokens": [
+                    {
+                        "raw": "961582391661",
+                        "clean": "961582391661",
+                        "compact": "961582391661",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "voucher parts ut",
+                "kapasitas": "138 HP / 103 kW",
+                "kode_unit": "SD 09",
+                "lambung": "SD-00005",
+                "project": "WUR EW",
+                "lokasi": "MESO",
+                "status": "AKTIF",
+                "kategori_clean": "VIBROROLLER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "PF-00012",
+                "asset_code": "PF-00012",
+                "hull_number": null,
+                "category": "Vibro Compactor",
+                "make_model": "Vibro Compactor Bomag BW211D-40SL / Sakai",
+                "year_manufacture": 2023,
+                "serial_number": "961582391661",
+                "license_plate": null,
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 11,
+                "status": "BREAKDOWN",
+                "is_active": 1
+            },
+            "score": 100,
+            "proposed_diff": {
+                "hull_number": {
+                    "current": null,
+                    "proposed": "SD 09",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "United Tractors",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "138 HP / 103 kW",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "WUR EW",
+                    "source": "REKAP 2026"
+                }
+            }
+        },
+        {
+            "rekap": {
+                "row_num": "15",
+                "source_row_index": 15,
+                "nama_asset": "Bomag Smooth Drum Compactor  BW211D-40 SL",
+                "dealer": "United Tractors",
+                "tahun": "2024",
+                "raw_sn_plate": "961582391716",
+                "tokens": [
+                    {
+                        "raw": "961582391716",
+                        "clean": "961582391716",
+                        "compact": "961582391716",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "voucher parts ut",
+                "kapasitas": "138 HP / 103 kW",
+                "kode_unit": "SD 10",
+                "lambung": "SD-00002",
+                "project": "WUR EW",
+                "lokasi": "NDD",
+                "status": "AKTIF",
+                "kategori_clean": "VIBROROLLER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "PF-00010",
+                "asset_code": "PF-00010",
+                "hull_number": null,
+                "category": "Vibro Compactor",
+                "make_model": "Vibro Compactor Bomag BW211D-40SL / Sakai",
+                "year_manufacture": 2023,
+                "serial_number": "961582391716",
+                "license_plate": null,
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 164,
+                "status": "BREAKDOWN",
+                "is_active": 1
+            },
+            "score": 100,
+            "proposed_diff": {
+                "hull_number": {
+                    "current": null,
+                    "proposed": "SD 10",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "United Tractors",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "138 HP / 103 kW",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "WUR EW",
+                    "source": "REKAP 2026"
+                }
+            }
+        },
+        {
+            "rekap": {
+                "row_num": "1",
+                "source_row_index": 21,
+                "nama_asset": "MOTOR GRADER CAT 120 K",
+                "dealer": "Trakindo",
+                "tahun": "2013",
+                "raw_sn_plate": "SZN01229",
+                "tokens": [
+                    {
+                        "raw": "SZN01229",
+                        "clean": "SZN01229",
+                        "compact": "SZN01229",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "tidak waranty",
+                "kapasitas": "120 HP",
+                "kode_unit": "GR 1",
+                "lambung": "MG-00005",
+                "project": "WUR EW",
+                "lokasi": "B.PIT HARAPAN BARU",
+                "status": "AKTIF",
+                "kategori_clean": "MOTOR GRADER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "MG-00005",
+                "asset_code": "MG-00005",
+                "hull_number": null,
+                "category": "Motor Grader",
+                "make_model": "Motor Grader XCMG GR135 MAX",
+                "year_manufacture": 2023,
+                "serial_number": null,
+                "license_plate": null,
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 3,
+                "status": "BREAKDOWN",
+                "is_active": 1
+            },
+            "score": 95,
+            "proposed_diff": {
+                "serial_number": {
+                    "current": null,
+                    "proposed": "SZN01229",
+                    "source": "REKAP 2026"
+                },
+                "hull_number": {
+                    "current": null,
+                    "proposed": "GR 1",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "Trakindo",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "120 HP",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "WUR EW",
+                    "source": "REKAP 2026"
+                }
+            }
+        },
+        {
+            "rekap": {
+                "row_num": "1",
+                "source_row_index": 29,
+                "nama_asset": "Bulldozer Caterpillar D6G",
+                "dealer": "trakindo",
+                "tahun": "2006",
+                "raw_sn_plate": "P6G00163",
+                "tokens": [
+                    {
+                        "raw": "P6G00163",
+                        "clean": "P6G00163",
+                        "compact": "P6G00163",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "tidak waranty",
+                "kapasitas": "160 HP",
+                "kode_unit": "Dozer 01",
+                "lambung": "BRA-01",
+                "project": "Yard Palembang",
+                "lokasi": "Yard Palembang",
+                "status": "STANDBY",
+                "kategori_clean": "BULLDOZER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "DZ-00010",
+                "asset_code": "DZ-00010",
+                "hull_number": null,
+                "category": "Bulldozer",
+                "make_model": "Bulldozer Caterpillar D6G (Trakindo)",
+                "year_manufacture": 2006,
+                "serial_number": "P6G00163",
+                "license_plate": "DZ-00010",
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 2,
+                "status": "STANDBY",
+                "is_active": 1
+            },
+            "score": 110,
+            "proposed_diff": {
+                "hull_number": {
+                    "current": null,
+                    "proposed": "Dozer 01",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "trakindo",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "160 HP",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "Yard Palembang",
+                    "source": "REKAP 2026"
+                }
+            }
+        },
+        {
+            "rekap": {
+                "row_num": "2",
+                "source_row_index": 30,
+                "nama_asset": "Bulldozer Caterpillar D6G  2XL",
+                "dealer": "trakindo",
+                "tahun": "2012",
+                "raw_sn_plate": "P6G01656",
+                "tokens": [
+                    {
+                        "raw": "P6G01656",
+                        "clean": "P6G01656",
+                        "compact": "P6G01656",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "tidak waranty",
+                "kapasitas": "160 HP",
+                "kode_unit": "Dozer 03",
+                "lambung": "DZ-00002",
+                "project": "DUMAI",
+                "lokasi": "DUMAI",
+                "status": "AKTIF",
+                "kategori_clean": "BULLDOZER",
+                "matched_asset_id": null
+            },
+            "asset": {
+                "asset_id": "DZ-00002",
+                "asset_code": "DZ-00002",
+                "hull_number": null,
+                "category": "Bulldozer",
+                "make_model": "Caterpillar D6G 2XL",
+                "year_manufacture": 2024,
+                "serial_number": "P6G01656",
+                "license_plate": null,
+                "previous_license_plate": null,
+                "chassis_number": null,
+                "dealer": null,
+                "capacity": null,
+                "project_name": null,
+                "operational_position": null,
+                "current_location_id": 11,
+                "status": "BREAKDOWN",
+                "is_active": 1
+            },
+            "score": 195,
+            "proposed_diff": {
+                "hull_number": {
+                    "current": null,
+                    "proposed": "Dozer 03",
+                    "source": "REKAP 2026"
+                },
+                "dealer": {
+                    "current": null,
+                    "proposed": "trakindo",
+                    "source": "REKAP 2026"
+                },
+                "capacity": {
+                    "current": null,
+                    "proposed": "160 HP",
+                    "source": "REKAP 2026"
+                },
+                "project_name": {
+                    "current": null,
+                    "proposed": "DUMAI",
+                    "source": "REKAP 2026"
+                }
+            }
+        }
+    ],
+    "conflicts": [
+        {
+            "type": "AMBIGUOUS_REKAP_ROW",
+            "rekap": {
+                "row_num": "15",
+                "source_row_index": 55,
+                "nama_asset": "Excavator PC 200-10 MO",
+                "dealer": "United Tractors",
+                "tahun": "2022",
+                "raw_sn_plate": "C51502",
+                "tokens": [
+                    {
+                        "raw": "C51502",
+                        "clean": "C51502",
+                        "compact": "C51502",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "Warranty - 6000",
+                "kapasitas": "138 HP / 1.0 M3",
+                "kode_unit": "Exca 20",
+                "lambung": "EXC-00007",
+                "project": "WUR EW",
+                "lokasi": "MESO",
+                "status": "AKTIF",
+                "kategori_clean": "EXCAVATOR",
+                "matched_asset_id": null
+            },
+            "candidate_assets": [
+                {
+                    "asset_id": "EXC-00001",
+                    "asset_code": "EXC-00001",
+                    "hull_number": null,
+                    "category": "Excavator",
+                    "make_model": "Komatsu PC200-10M0 CE",
+                    "year_manufacture": 2024,
+                    "serial_number": "C51502",
+                    "license_plate": null,
+                    "previous_license_plate": null,
+                    "chassis_number": null,
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 6,
+                    "status": "OPERATING",
+                    "is_active": 1
+                },
+                {
+                    "asset_id": "EXC-00012",
+                    "asset_code": "EXC-00012",
+                    "hull_number": null,
+                    "category": "Excavator",
+                    "make_model": "Excavator Komatsu PC200-10M0 / CAT 320",
+                    "year_manufacture": 2023,
+                    "serial_number": "C51502",
+                    "license_plate": null,
+                    "previous_license_plate": null,
+                    "chassis_number": null,
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 59,
+                    "status": "BREAKDOWN",
+                    "is_active": 1
+                }
+            ],
+            "score": 100
+        },
+        {
+            "type": "AMBIGUOUS_REKAP_ROW",
+            "rekap": {
+                "row_num": "17",
+                "source_row_index": 57,
+                "nama_asset": "Excavator PC 200-10 MO",
+                "dealer": "United Tractors",
+                "tahun": "2024",
+                "raw_sn_plate": "DBCH1801",
+                "tokens": [
+                    {
+                        "raw": "DBCH1801",
+                        "clean": "DBCH1801",
+                        "compact": "DBCH1801",
+                        "type": "SN_OR_CHASSIS"
+                    }
+                ],
+                "warranty": "Warranty - 4000",
+                "kapasitas": "138 HP / 1.0 M3",
+                "kode_unit": "Exca 22",
+                "lambung": "EXC-00012",
+                "project": "WUR EW",
+                "lokasi": "INFIELD",
+                "status": "AKTIF",
+                "kategori_clean": "EXCAVATOR",
+                "matched_asset_id": null
+            },
+            "candidate_assets": [
+                {
+                    "asset_id": "EXC-00017",
+                    "asset_code": "EXC-00017",
+                    "hull_number": null,
+                    "category": "Excavator",
+                    "make_model": "Excavator Komatsu PC200-10M0 / CAT 320",
+                    "year_manufacture": 2023,
+                    "serial_number": "DBCH1801",
+                    "license_plate": null,
+                    "previous_license_plate": null,
+                    "chassis_number": null,
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 365,
+                    "status": "BREAKDOWN",
+                    "is_active": 1
+                },
+                {
+                    "asset_id": "EXC-00022",
+                    "asset_code": "EXC-00022",
+                    "hull_number": null,
+                    "category": "Excavator",
+                    "make_model": "Excavator Komatsu PC200-10M0 / CAT 320",
+                    "year_manufacture": 2023,
+                    "serial_number": "DBCH1801",
+                    "license_plate": null,
+                    "previous_license_plate": null,
+                    "chassis_number": null,
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 12,
+                    "status": "BREAKDOWN",
+                    "is_active": 1
+                }
+            ],
+            "score": 100
+        },
+        {
+            "type": "AMBIGUOUS_REKAP_ROW",
+            "rekap": {
+                "row_num": "1",
+                "source_row_index": 191,
+                "nama_asset": "Truck Box Isuzu NMR 81",
+                "dealer": "",
+                "tahun": "2023",
+                "raw_sn_plate": "B 9096 ZYT",
+                "tokens": [
+                    {
+                        "raw": "B 9096 ZYT",
+                        "clean": "B 9096 ZYT",
+                        "compact": "B9096ZYT",
+                        "type": "PLATE"
+                    }
+                ],
+                "warranty": "",
+                "kapasitas": "8 M3",
+                "kode_unit": "DT 44",
+                "lambung": "ML-41001",
+                "project": "RWI",
+                "lokasi": "YARD",
+                "status": "AKTIF",
+                "kategori_clean": "WATER TANK",
+                "matched_asset_id": null
+            },
+            "candidate_assets": [
+                {
+                    "asset_id": "EXC-00006",
+                    "asset_code": "EXC-00006",
+                    "hull_number": null,
+                    "category": "Excavator",
+                    "make_model": null,
+                    "year_manufacture": 2023,
+                    "serial_number": null,
+                    "license_plate": "B 9096 ZYT",
+                    "previous_license_plate": null,
+                    "chassis_number": "MHCNMR81HPJ117832",
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 12,
+                    "status": "BREAKDOWN",
+                    "is_active": 1
+                },
+                {
+                    "asset_id": "ML-00002",
+                    "asset_code": "ML-00002",
+                    "hull_number": null,
+                    "category": "Other",
+                    "make_model": "MOBILE LABORATORY",
+                    "year_manufacture": 2022,
+                    "serial_number": null,
+                    "license_plate": "B 9096 ZYT",
+                    "previous_license_plate": null,
+                    "chassis_number": "MHCNMR81HPJ117832",
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 12,
+                    "status": "OPERATING",
+                    "is_active": 1
+                }
+            ],
+            "score": 95
+        },
+        {
+            "type": "AMBIGUOUS_REKAP_ROW",
+            "rekap": {
+                "row_num": "1",
+                "source_row_index": 196,
+                "nama_asset": "PRIMOVER MERCEDES-BENZ AXOR 4928 T",
+                "dealer": "",
+                "tahun": "2019",
+                "raw_sn_plate": "KT 9287 KU",
+                "tokens": [
+                    {
+                        "raw": "KT 9287 KU",
+                        "clean": "KT 9287 KU",
+                        "compact": "KT9287KU",
+                        "type": "PLATE"
+                    }
+                ],
+                "warranty": "",
+                "kapasitas": "276 HP",
+                "kode_unit": "PM 03",
+                "lambung": "PM-00002",
+                "project": "WUR EW",
+                "lokasi": "YARD",
+                "status": "AKTIF",
+                "kategori_clean": "FLATDECK",
+                "matched_asset_id": null
+            },
+            "candidate_assets": [
+                {
+                    "asset_id": "FBT-00008",
+                    "asset_code": "FBT-00008",
+                    "hull_number": null,
+                    "category": "Trado",
+                    "make_model": "Trado Heavy Hauler Mitsubishi FV 419 P / Hino",
+                    "year_manufacture": 2023,
+                    "serial_number": null,
+                    "license_plate": "KT 9287 KU",
+                    "previous_license_plate": null,
+                    "chassis_number": null,
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 12,
+                    "status": "BREAKDOWN",
+                    "is_active": 1
+                },
+                {
+                    "asset_id": "PM-00004",
+                    "asset_code": "PM-00004",
+                    "hull_number": null,
+                    "category": "Prime Mover",
+                    "make_model": "PRIME MOVER",
+                    "year_manufacture": 2022,
+                    "serial_number": null,
+                    "license_plate": "KT 9287 KU",
+                    "previous_license_plate": null,
+                    "chassis_number": null,
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 15,
+                    "status": "OPERATING",
+                    "is_active": 1
+                }
+            ],
+            "score": 95
+        },
+        {
+            "type": "AMBIGUOUS_REKAP_ROW",
+            "rekap": {
+                "row_num": "50",
+                "source_row_index": 271,
+                "nama_asset": "TOYOTA HILUX",
+                "dealer": "",
+                "tahun": "2022",
+                "raw_sn_plate": "B9123ZBA",
+                "tokens": [
+                    {
+                        "raw": "B9123ZBA",
+                        "clean": "B 9123 ZBA",
+                        "compact": "B9123ZBA",
+                        "type": "PLATE"
+                    }
+                ],
+                "warranty": "",
+                "kapasitas": "SANTO",
+                "kode_unit": "",
+                "lambung": "",
+                "project": "RWI",
+                "lokasi": "",
+                "status": "AKTIF",
+                "kategori_clean": "TOTAL STATION DAN WATER PASS",
+                "matched_asset_id": null
+            },
+            "candidate_assets": [
+                {
+                    "asset_id": "LV-00030",
+                    "asset_code": "LV-00030",
+                    "hull_number": null,
+                    "category": "Light Vehicle",
+                    "make_model": "DOUBLE CABIN",
+                    "year_manufacture": 2022,
+                    "serial_number": null,
+                    "license_plate": "B 9123 ZBA",
+                    "previous_license_plate": null,
+                    "chassis_number": "MR0KB8CD9N1136128",
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 12,
+                    "status": "OPERATING",
+                    "is_active": 1
+                },
+                {
+                    "asset_id": "LV-00051",
+                    "asset_code": "LV-00051",
+                    "hull_number": null,
+                    "category": "Light Vehicle",
+                    "make_model": "Toyota Hilux Double Cabin 4x4",
+                    "year_manufacture": 2023,
+                    "serial_number": null,
+                    "license_plate": "B 9123 ZBA",
+                    "previous_license_plate": null,
+                    "chassis_number": "MR0KB8CD9N1136128",
+                    "dealer": null,
+                    "capacity": null,
+                    "project_name": null,
+                    "operational_position": null,
+                    "current_location_id": 12,
+                    "status": "BREAKDOWN",
+                    "is_active": 1
+                }
+            ],
+            "score": 95
+        }
+    ]
+}
