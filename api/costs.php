@@ -101,10 +101,14 @@ if (!defined('API_SKIP_ROUTING')) {
                 ]);
             }
 
-            $scopeStmt = $db->prepare('SELECT asset_id, wo_id FROM asset_cost_transactions WHERE transaction_id = :id LIMIT 1');
+            $scopeStmt = $db->prepare('SELECT asset_id, wo_id, source_type FROM asset_cost_transactions WHERE transaction_id = :id LIMIT 1');
             $scopeStmt->execute([':id' => $transactionId]);
             $scopeRow = $scopeStmt->fetch(PDO::FETCH_ASSOC);
             if (!$scopeRow) api_json_response(404, ['status' => 'error', 'code' => 'OBJECT_NOT_FOUND', 'message' => 'Objek tidak ditemukan atau tidak dapat diakses.']);
+            if ($scopeRow['source_type'] !== 'MANUAL') {
+                api_json_response(409, ['status' => 'error', 'code' => 'SOURCE_OWNED',
+                    'message' => 'Biaya otomatis hanya dapat dibatalkan melalui dokumen sumbernya.']);
+            }
             api_require_asset_access($db, (string) $scopeRow['asset_id']);
             if ($scopeRow['wo_id'] !== null) api_require_work_order_access($db, (string) $scopeRow['wo_id']);
 
@@ -125,6 +129,11 @@ if (!defined('API_SKIP_ROUTING')) {
         }
 
         // Action: Create cost transaction
+        if (isset($payload['source_type']) && $payload['source_type'] !== 'MANUAL') {
+            api_json_response(422, ['status' => 'error', 'code' => 'INVALID_SOURCE_TYPE',
+                'message' => 'Sumber biaya otomatis tidak boleh dikirim dari formulir biaya manual.']);
+        }
+        $payload['source_type'] = 'MANUAL';
         $assetId = trim((string)($payload['asset_id'] ?? ''));
         if ($assetId !== '') {
             api_require_asset_access($db, $assetId);

@@ -11,13 +11,16 @@ if(!$context||!$part){echo "SKIP: prerequisite data unavailable.\n";exit(0);}
 $suffix=strtoupper(substr(bin2hex(random_bytes(8)),0,12));$spbId='QA-SPB-'.$suffix;$reportId='91919191-9191-4919-8919-'.$suffix;$report2='92929292-9292-4929-8929-'.$suffix;$date=(new DateTimeImmutable('today'))->format('Y-m-d');
 $db->beginTransaction();
 try{
- $db->prepare("INSERT INTO purchase_requests(spb_id,wo_id,asset_id,requested_by,urgency,status,requested_at) VALUES(:spb,:wo,:asset,1,'Normal','Submitted',NOW())")->execute([':spb'=>$spbId,':wo'=>$context['wo_id'],':asset'=>$context['asset_id']]);
+ $db->prepare("INSERT INTO purchase_requests(spb_id,wo_id,asset_id,requested_by,urgency,status,requested_at) VALUES(:spb,:wo,:asset,1,'Normal','Approved',NOW())")->execute([':spb'=>$spbId,':wo'=>$context['wo_id'],':asset'=>$context['asset_id']]);
  $db->prepare("INSERT INTO purchase_request_items(id,spb_id,part_number,description,qty_requested,status) VALUES(:id,:spb,:part,:description,2,'Menunggu Approval')")->execute([':id'=>'QA-PRI-'.$suffix,':spb'=>$spbId,':part'=>$part['part_number'],':description'=>$part['part_name']]);
  $db->prepare("INSERT INTO report_templates(template_key,code,title,version,schema_json,is_active) VALUES(:k,'P-3','QA PPB',1,'{}',1)")->execute([':k'=>'qa-ppb-'.strtolower($suffix)]);$template=(int)$db->lastInsertId();
  $insertReport=$db->prepare("INSERT INTO report_records(report_id,template_id,client_key,report_number,status,source_method,field_data,draft_data,standardized_payload,has_pending_attachments,created_by,finalized_at,final_number_key) VALUES(:id,:template,:client,:number,'FINAL','form','{}','{}','{}',0,1,NOW(),:final)");
  $makeReport=static function(string $id,string $number)use($insertReport,$template):void{$insertReport->execute([':id'=>$id,':template'=>$template,':client'=>'qa-client-'.strtolower($number),':number'=>$number,':final'=>'ppb|'.strtolower($number)]);};
  $fields=['nomor_ppb'=>'QA-PPB-'.$suffix,'nomor_spb'=>$spbId,'kepada'=>'PT QA Vendor','project'=>'QA Project','nomor_penawaran'=>'Q-'.$suffix,'tanggal_penawaran'=>$date,'batas_penyerahan'=>(new DateTimeImmutable('+7 days'))->format('Y-m-d'),'tempat_penyerahan'=>'Workshop QA'];
  $price=max(1000,(float)$part['unit_cost']);$rows=[['nama'=>$part['part_name'],'sc'=>$part['part_number'],'satuan'=>$part['unit_measure'],'jumlah'=>'2','harga'=>(string)$price,'total'=>(string)($price*2),'keterangan'=>'QA']];
+ $db->prepare("UPDATE purchase_requests SET status='Submitted' WHERE spb_id=:spb")->execute([':spb'=>$spbId]);
+ try{ReportIntegration::applyFinal($db,'ppb','97979797-9797-4979-8979-'.$suffix,$fields,$rows,1);ppbAssert(false,'unapproved SPB must not create PO');}catch(DomainException $e){ppbAssert(str_contains($e->getMessage(),'harus disetujui'),'unapproved SPB is rejected');}
+ $db->prepare("UPDATE purchase_requests SET status='Approved' WHERE spb_id=:spb")->execute([':spb'=>$spbId]);
  $before=(int)$db->query('SELECT COUNT(*) FROM purchase_orders')->fetchColumn();$makeReport($reportId,$fields['nomor_ppb']);
  $result=ReportIntegration::applyFinal($db,'ppb',$reportId,$fields,$rows,1);
  ppbAssert($result['applied']&&$result['itemCount']===1,'final PPB creates one order item');
@@ -33,5 +36,8 @@ try{
  $fields2=[...$fields,'nomor_ppb'=>'QA-PPB-P-'.$suffix];$makeReport($report2,$fields2['nomor_ppb']);ReportIntegration::applyFinal($db,'ppb',$report2,$fields2,$rows,1);
  $db->prepare("UPDATE purchase_orders SET status='Ordered' WHERE ppb_id=:id")->execute([':id'=>$fields2['nomor_ppb']]);$void2=ReportIntegration::reverseFinal($db,$report2,1);$order->execute([':id'=>$fields2['nomor_ppb']]);ppbAssert($void2['purchaseOrderPreservedCount']===1&&(bool)$order->fetch(),'void preserves processed PPB');
  $badRows=$rows;$badRows[0]['total']='1';try{ReportIntegration::applyFinal($db,'ppb','94949494-9494-4949-8949-'.$suffix,[...$fields,'nomor_ppb'=>'QA-BAD2-'.$suffix],$badRows,1);ppbAssert(false,'invalid line total must be rejected');}catch(DomainException $e){ppbAssert(str_contains($e->getMessage(),'jumlah harga'),'invalid line total is rejected');}
+ $other=$db->prepare('SELECT part_number,part_name,unit_measure FROM parts WHERE part_number<>:part ORDER BY part_id LIMIT 1');$other->execute([':part'=>$part['part_number']]);$otherPart=$other->fetch();
+ if($otherPart){$wrong=[['nama'=>$otherPart['part_name'],'sc'=>$otherPart['part_number'],'satuan'=>$otherPart['unit_measure'],'jumlah'=>'1','harga'=>(string)$price,'total'=>(string)$price]];try{ReportIntegration::applyFinal($db,'ppb','95959595-9595-4959-8959-'.$suffix,[...$fields,'nomor_ppb'=>'QA-BAD-PART-'.$suffix],$wrong,1);ppbAssert(false,'unrequested part must be rejected');}catch(DomainException $e){ppbAssert(str_contains($e->getMessage(),'tidak tercatat pada SPB'),'unrequested part is rejected');}}
+ $tooMany=$rows;$tooMany[0]['jumlah']='3';$tooMany[0]['total']=(string)($price*3);try{ReportIntegration::applyFinal($db,'ppb','96969696-9696-4969-8969-'.$suffix,[...$fields,'nomor_ppb'=>'QA-BAD-QTY-'.$suffix],$tooMany,1);ppbAssert(false,'overordered quantity must be rejected');}catch(DomainException $e){ppbAssert(str_contains($e->getMessage(),'melebihi permintaan SPB'),'overordered quantity is rejected');}
  echo "\nPPB integration tests: {$passed} passed.\n";
 }finally{if($db->inTransaction())$db->rollBack();}

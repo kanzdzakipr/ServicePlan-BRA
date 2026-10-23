@@ -216,7 +216,7 @@ function api_verify_csrf(): void
     $provided = (string) ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
     $expected = (string) ($_SESSION['_csrf'] ?? '');
     if ($provided === '' || $expected === '' || !hash_equals($expected, $provided)) {
-        api_json_response(419, [
+        api_json_response(403, [
             'status' => 'error',
             'code' => 'CSRF_INVALID',
             'message' => 'Token keamanan tidak valid atau telah kedaluwarsa.',
@@ -598,6 +598,7 @@ function api_route_permission(): ?string
         'inspections.php' => $readWrite('inspections.read', 'inspections.write'),
         'logistics.php' => $readWrite('logistics.read', 'logistics.write'),
         'spb_workflow.php' => $readWrite('reports.read', 'logistics.write'),
+        'purchase_order_approval.php' => $readWrite('reports.read', 'logistics.write'),
         'pm_plans.php' => $readWrite('pm.read', 'pm.write'),
         'pm.php' => $readWrite('pm.read', 'pm.write'),
         'calibrations.php' => 'pm.read',

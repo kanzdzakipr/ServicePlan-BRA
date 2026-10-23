@@ -2117,7 +2117,7 @@ final class ReportIntegration
         if (!$order) {
             throw new DomainException("PPB/PO {$ppbId} tidak ditemukan.");
         }
-        if (in_array($order['status'], ['Received', 'Cancelled'], true)) {
+        if (!in_array($order['status'], ['Approved', 'Ordered'], true)) {
             throw new DomainException("PPB/PO {$ppbId} berstatus {$order['status']} dan tidak dapat menerima BAPP baru.");
         }
 
@@ -2388,6 +2388,16 @@ final class ReportIntegration
             if((int)$itemRow['qty_requested']!==$quantity)throw new DomainException("Qty part {$partNumber} pada baris {$line} tidak sesuai dengan SPB {$spbId}.");
             $order=$db->prepare('SELECT po.ppb_id,po.status FROM purchase_orders po INNER JOIN purchase_order_items poi ON poi.ppb_id=po.ppb_id WHERE po.spb_id=:spb_id AND poi.part_number=:part_number ORDER BY po.created_at DESC LIMIT 1 FOR UPDATE');$order->execute([':spb_id'=>$spbId,':part_number'=>$partNumber]);$orderRow=$order->fetch(PDO::FETCH_ASSOC)?:null;
             $appliedRequest=$requestStatusMap[$status];$appliedOrder=$orderRow?$orderStatusMap[$status]:null;
+            if ($orderRow && $appliedOrder !== $orderRow['status']) {
+                $allowed = match ($orderRow['status']) {
+                    'Approved' => ['Ordered', 'Received'],
+                    'Ordered' => ['Received'],
+                    default => [],
+                };
+                if (!in_array($appliedOrder, $allowed, true)) {
+                    throw new DomainException("Status PO {$orderRow['ppb_id']} hanya boleh maju sesudah persetujuan resmi; gunakan Approval untuk keputusan atau pembatalan.");
+                }
+            }
             $db->prepare('UPDATE purchase_requests SET status=:status WHERE spb_id=:spb_id')->execute([':status'=>$appliedRequest,':spb_id'=>$spbId]);
             if (in_array($appliedRequest, ['Issued', 'Closed'], true)) {
                 require_once __DIR__ . '/WorkOrderSupport.php';
@@ -2450,6 +2460,9 @@ final class ReportIntegration
         if ($request['status'] === 'Closed' || in_array($request['wo_status'], ['Closed', 'Cancelled'], true)) {
             throw new DomainException("SPB {$spbId} atau Work Order terkait sudah ditutup.");
         }
+        if (!in_array($request['status'], ['Approved', 'Ordered'], true)) {
+            throw new DomainException("SPB {$spbId} harus disetujui sebelum PPB/PO dibuat.");
+        }
 
         $items = [];
         $subtotal = 0.0;
@@ -2505,6 +2518,26 @@ final class ReportIntegration
         $orderStatement->execute([':ppb_id' => $ppbId]);
         $order = $orderStatement->fetch(PDO::FETCH_ASSOC);
         $ownsOrder = !$order;
+        if ($ownsOrder) {
+            $requested = $db->prepare('SELECT COALESCE(SUM(qty_requested),0) FROM purchase_request_items WHERE spb_id=:spb AND part_number=:part');
+            $ordered = $db->prepare("SELECT COALESCE(SUM(poi.quantity),0) FROM purchase_order_items poi
+                INNER JOIN purchase_orders po ON po.ppb_id=poi.ppb_id
+                WHERE po.spb_id=:spb AND poi.part_number=:part AND po.status <> 'Cancelled'");
+            $newQuantities = [];
+            foreach ($items as $item) {
+                $partNumber = (string)$item['part_number'];
+                $newQuantities[$partNumber] = ($newQuantities[$partNumber] ?? 0) + (int)$item['quantity'];
+            }
+            foreach ($newQuantities as $partNumber => $newQuantity) {
+                $requested->execute([':spb'=>$spbId, ':part'=>$partNumber]);
+                $requestedQuantity = (int)$requested->fetchColumn();
+                if ($requestedQuantity < 1) throw new DomainException("Part {$partNumber} tidak tercatat pada SPB {$spbId}.");
+                $ordered->execute([':spb'=>$spbId, ':part'=>$partNumber]);
+                if ((int)$ordered->fetchColumn() + $newQuantity > $requestedQuantity) {
+                    throw new DomainException("Jumlah PO untuk part {$partNumber} melebihi permintaan SPB ({$requestedQuantity}).");
+                }
+            }
+        }
         if ($order) {
             $orderItems = $db->prepare('SELECT id, ppb_id, part_number, description, unit_measure, quantity, unit_price, total_price, notes FROM purchase_order_items WHERE ppb_id = :ppb_id ORDER BY id FOR UPDATE');
             $orderItems->execute([':ppb_id' => $ppbId]);

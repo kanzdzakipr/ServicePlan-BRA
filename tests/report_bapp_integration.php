@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
+require_once dirname(__DIR__) . '/core/PurchaseOrderApproval.php';
 
 $dsn = (string) (getenv('REPORT_TEST_DSN') ?: 'mysql:host=127.0.0.1;port=3306;dbname=u646470441_ServicePlanBRA;charset=utf8mb4');
 try {
@@ -17,6 +18,7 @@ try {
 }
 
 ReportIntegration::ensureTables($db);
+PurchaseOrderApproval::ensureAuditTable($db);
 $passed = 0;
 function bappAssert(bool $condition, string $message): void
 {
@@ -56,7 +58,7 @@ try {
     $db->prepare(
         "INSERT INTO purchase_requests
          (spb_id, wo_id, asset_id, requested_by, urgency, status, requested_at)
-         VALUES (:spb, :wo, :asset, 1, 'Normal', 'Submitted', NOW())"
+         VALUES (:spb, :wo, :asset, 1, 'Normal', 'Approved', NOW())"
     )->execute([':spb' => $spbId, ':wo' => $context['wo_id'], ':asset' => $context['asset_id']]);
     $db->prepare(
         "INSERT INTO purchase_request_items
@@ -93,6 +95,7 @@ try {
         ':description' => $part['part_name'],
         ':unit' => $part['unit_measure'],
     ]);
+    PurchaseOrderApproval::decide($db, $ppbId, 1, 'approve');
 
     $db->prepare(
         "INSERT INTO report_templates
@@ -220,8 +223,8 @@ try {
     )->fetch();
     bappAssert(
         (int) $db->query('SELECT stock_qty FROM parts WHERE part_id = ' . (int) $part['part_id'])->fetchColumn() === $stockBefore
-        && $statuses['order_status'] === 'Submitted'
-        && $statuses['request_status'] === 'Submitted'
+        && $statuses['order_status'] === 'Approved'
+        && $statuses['request_status'] === 'Approved'
         && $statuses['item_status'] === 'Menunggu Approval',
         'voiding all BAPP reports restores stock and original statuses'
     );

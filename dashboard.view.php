@@ -12197,19 +12197,57 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const payload = await response.json();
                     if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Gagal memuat approval.');
                     const pending = payload.data.filter(item => item.status === 'Submitted');
-                    tbody.innerHTML = pending.length ? pending.map(item => `<tr>
+                    const poResponse = await fetch('api/purchase_order_approval.php', { cache: 'no-store' });
+                    const poPayload = await poResponse.json();
+                    if (!poResponse.ok || poPayload.status !== 'success') throw new Error(poPayload.message || 'Gagal memuat PO.');
+                    const pendingPo = poPayload.data.filter(item => ['Submitted', 'Approved'].includes(item.status));
+                    const spbRows = pending.map(item => `<tr>
                         <td>${escapeHtml(item.spb_id)}</td><td>SPB Spare Part</td>
                         <td>${escapeHtml(item.requester_name || 'Pengguna #' + item.requested_by)}</td>
                         <td>${Number(item.item_count)} item · ${Number(item.total_quantity)} total qty · WO ${escapeHtml(item.wo_id)}</td>
                         <td>${payload.canApprove ? `<button type="button" class="btn btn-success" data-spb-decision="approve" data-spb-id="${escapeHtml(item.spb_id)}">Setuju</button>
-                        <button type="button" class="btn btn-danger" data-spb-decision="reject" data-spb-id="${escapeHtml(item.spb_id)}">Tolak</button>` : 'Hanya lihat'}</td></tr>`).join('')
-                        : '<tr><td colspan="5">Tidak ada SPB menunggu persetujuan.</td></tr>';
+                        <button type="button" class="btn btn-danger" data-spb-decision="reject" data-spb-id="${escapeHtml(item.spb_id)}">Tolak</button>` : 'Hanya lihat'}</td></tr>`).join('');
+                    const poRows = pendingPo.map(item => `<tr>
+                        <td>${escapeHtml(item.ppb_id)}</td><td>PO / PPB</td>
+                        <td>${escapeHtml(item.vendor || '-')}</td>
+                        <td>${escapeHtml(item.status)} · SPB ${escapeHtml(item.spb_id)} · WO ${escapeHtml(item.wo_id)} · Rp ${Number(item.total_amount).toLocaleString('id-ID')}</td>
+                        <td>${poPayload.canApprove ? (item.status === 'Submitted' ? `<button type="button" class="btn btn-success" data-po-decision="approve" data-po-id="${escapeHtml(item.ppb_id)}">Setuju</button>
+                        <button type="button" class="btn btn-danger" data-po-decision="reject" data-po-id="${escapeHtml(item.ppb_id)}">Tolak</button>`
+                        : `<button type="button" class="btn btn-danger" data-po-decision="cancel" data-po-id="${escapeHtml(item.ppb_id)}">Batalkan PO &amp; biaya</button>`) : 'Hanya lihat'}</td></tr>`).join('');
+                    tbody.innerHTML = spbRows + poRows || '<tr><td colspan="5">Tidak ada SPB atau PO menunggu persetujuan.</td></tr>';
                 } catch (error) {
                     tbody.innerHTML = `<tr><td colspan="5">${escapeHtml(error.message)} — data approval tidak tersedia.</td></tr>`;
                 }
             };
 
             document.getElementById('approval-list')?.addEventListener('click', async event => {
+                const poButton = event.target.closest('[data-po-decision]');
+                if (poButton) {
+                    const ppbId = poButton.dataset.poId;
+                    const decision = poButton.dataset.poDecision;
+                    let reason = '';
+                    if (decision === 'reject' || decision === 'cancel') {
+                        const entered = prompt(`Alasan ${decision === 'cancel' ? 'membatalkan' : 'menolak'} PO ${ppbId}:`);
+                        if (entered === null) return;
+                        reason = entered.trim();
+                        if (!reason || reason.length > 500) return alert('Alasan penolakan wajib diisi (maksimal 500 karakter).');
+                    } else if (!confirm(`Setujui PO ${ppbId} dan catat biaya pembelian?`)) return;
+                    poButton.disabled = true;
+                    try {
+                        const response = await fetch('api/purchase_order_approval.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.APP_CSRF_TOKEN || '' },
+                            body: JSON.stringify({ ppbId, decision, reason })
+                        });
+                        const result = await response.json();
+                        if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Keputusan PO gagal.');
+                        await window.loadSpbApprovalInbox();
+                    } catch (error) {
+                        alert(error.message);
+                        poButton.disabled = false;
+                    }
+                    return;
+                }
                 const button = event.target.closest('[data-spb-decision]');
                 if (!button) return;
                 const spbId = button.dataset.spbId;

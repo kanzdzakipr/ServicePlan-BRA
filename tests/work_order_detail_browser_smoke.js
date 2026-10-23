@@ -150,6 +150,19 @@ async function main() {
         await cdp.send('Page.navigate', { url: `${baseUrl}/dashboard.php` });
         await loaded;
         await waitForCondition(cdp, "typeof window.openWoDetailModal === 'function' && typeof window.showView === 'function'");
+        if (process.env.F2_PO_ONLY === '1') {
+            await cdp.evaluate("showView('approval')");
+            await waitForCondition(cdp, "document.getElementById('approval-list')?.textContent?.includes('PO / PPB')");
+            const poUi = await cdp.evaluate(`(() => ({
+                rows: document.querySelectorAll('#approval-list tr').length,
+                decisions: document.querySelectorAll('#approval-list [data-po-decision]').length,
+                text: document.getElementById('approval-list')?.textContent?.trim().slice(0, 180) || ''
+            }))()`);
+            if (!poUi.rows || !poUi.text.includes('PO / PPB')) throw new Error('PO tidak tampak di Approval Inbox.');
+            console.log(`PASS: PO tampil pada Approval Inbox; rows=${poUi.rows}, tombol keputusan=${poUi.decisions}.`);
+            cdp.socket.close();
+            return;
+        }
         await cdp.evaluate("showView('wo')");
         await waitForCondition(cdp, "Boolean(document.querySelector('.kanban-card[data-wo-id] button[title=\"Buka detail Work Order\"]'))");
 
