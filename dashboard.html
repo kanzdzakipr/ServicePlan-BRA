@@ -5694,6 +5694,7 @@
                     const payload = {
                         wo_id: woId,
                         status: targetStatus,
+                        target_unit_status: unitStatus,
                         assigned_mechanic: mechanic,
                         issue_description: `${wo.issue || ''} | [Log ${mechanic}]: ${actionLog}`
                     };
@@ -5735,8 +5736,8 @@
 
                             closeModal('modalWoStatusConfirm');
 
-                            // Synchronize state and update all UI views instantly
-                            window.syncFleetState();
+                            // Synchronize state and update all UI views instantly with targeted IDs
+                            window.syncFleetState({ assetId: assetId, workOrderId: woId });
 
                             const movedCard = document.getElementById(`wo-card-${woId}`);
                             if (movedCard) {

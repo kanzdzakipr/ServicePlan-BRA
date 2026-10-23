@@ -660,6 +660,103 @@ switch ($method) {
                     ':current_hm_km' => $ticket['current_hm_km'],
                     ':asset_id' => (string) $current['asset_id'],
                 ]);
+            } else {
+                // Reconcile asset status on status transition (e.g. Closing WO or explicit unit status)
+                $currentAssetSt = strtoupper(trim((string) ($asset['status'] ?? '')));
+                $activeWosStmt = $db->prepare("
+                    SELECT COUNT(*), COALESCE(SUM(CASE WHEN is_downtime = 1 THEN 1 ELSE 0 END), 0) AS downtime_count
+                    FROM work_orders 
+                    WHERE asset_id = :asset_id AND wo_id != :wo_id 
+                      AND status IN ('Open', 'In Progress', 'Waiting Part', 'Testing')
+                ");
+                $activeWosStmt->execute([':asset_id' => (string) $current['asset_id'], ':wo_id' => $id]);
+                $remaining = $activeWosStmt->fetch(PDO::FETCH_ASSOC);
+                $remainingActiveWos = (int) ($remaining['COUNT(*)'] ?? 0);
+                $remainingDowntimeWos = (int) ($remaining['downtime_count'] ?? 0);
+
+                if ($newStatus === 'Closed') {
+                    if ($remainingActiveWos === 0) {
+                        $targetAssetStatus = isset($data['target_unit_status']) 
+                            ? asset_normalize_status((string) $data['target_unit_status'])
+                            : (isset($data['unit_status']) ? asset_normalize_status((string) $data['unit_status']) : 'READY');
+                        if (!in_array($targetAssetStatus, ASSET_STATUSES, true)) {
+                            $targetAssetStatus = 'READY';
+                        }
+                        if (!in_array($currentAssetSt, ['ACCIDENT_HOLD', 'INACTIVE'], true)) {
+                            $db->prepare("UPDATE assets SET status = :st WHERE asset_id = :aid")
+                               ->execute([':st' => $targetAssetStatus, ':aid' => (string) $current['asset_id']]);
+                        }
+                    } else {
+                        // Other WOs are still active on this asset
+                        $retainedStatus = $remainingDowntimeWos > 0 ? 'BREAKDOWN' : 'STANDBY';
+                        if (!in_array($currentAssetSt, ['ACCIDENT_HOLD', 'INACTIVE'], true)) {
+                            $db->prepare("UPDATE assets SET status = :st WHERE asset_id = :aid")
+                               ->execute([':st' => $retainedStatus, ':aid' => (string) $current['asset_id']]);
+                        }
+                    }
+
+                    // PM Completion Integration: update PM interval & service history if maintenance_type is Preventive
+                    $maintType = (string) ($params[':maintenance_type'] ?? $current['maintenance_type'] ?? '');
+                    if ($maintType === 'Preventive') {
+                        $currentServiceHm = (float) ($current['current_hm_km'] ?? $asset['last_hm_km'] ?? 0);
+                        if ($currentServiceHm <= 0) $currentServiceHm = (float) ($asset['last_hm_km'] ?? 0);
+                        $intervalVal = (float) ($asset['service_interval_val'] ?? 250);
+                        if ($intervalVal <= 0) $intervalVal = 250.0;
+                        $dailyCoeff = (float) ($asset['daily_usage_coefficient'] ?? 8.0);
+                        if ($dailyCoeff <= 0) $dailyCoeff = 8.0;
+
+                        $nextDueHm = $currentServiceHm + $intervalVal;
+                        $daysToNext = $intervalVal / $dailyCoeff;
+                        $estDate = date('Y-m-d', strtotime('+' . max(1, round($daysToNext)) . ' days'));
+
+                        $db->prepare("
+                            UPDATE assets 
+                            SET last_service_date = CURDATE(),
+                                last_service_hm_km = :service_hm,
+                                last_hm_km = GREATEST(COALESCE(last_hm_km, 0), :service_hm_current),
+                                next_service_due_hm_km = :next_due,
+                                next_service_estimated_date = :est_date
+                            WHERE asset_id = :aid
+                        ")->execute([
+                            ':service_hm' => $currentServiceHm,
+                            ':service_hm_current' => $currentServiceHm,
+                            ':next_due' => $nextDueHm,
+                            ':est_date' => $estDate,
+                            ':aid' => (string) $current['asset_id']
+                        ]);
+
+                        $seqStmt = $db->prepare('SELECT COALESCE(MAX(service_sequence), 0) + 1 FROM asset_service_history WHERE asset_id = :id');
+                        $seqStmt->execute([':id' => (string) $current['asset_id']]);
+                        $nextSeq = (int) $seqStmt->fetchColumn();
+
+                        $db->prepare('
+                            INSERT INTO asset_service_history 
+                            (asset_id, service_sequence, service_date, service_hm_km, service_type, mechanic_pic, jo_report_number, notes)
+                            VALUES (:aid, :seq, CURDATE(), :hm, :stype, :pic, :jo, :notes)
+                        ')->execute([
+                            ':aid' => (string) $current['asset_id'],
+                            ':seq' => $nextSeq,
+                            ':hm' => $currentServiceHm,
+                            ':stype' => 'Preventive Maintenance (WO)',
+                            ':pic' => $mergedMechanic,
+                            ':jo' => $id,
+                            ':notes' => $action !== '' ? $action : ($mergedRootCause ?: 'PM selesai via Work Order')
+                        ]);
+
+                        $db->prepare("
+                            UPDATE pm_plans 
+                            SET status = 'COMPLETED',
+                                planner_note = CONCAT(COALESCE(planner_note, ''), ' | Selesai via WO #', :wo_id)
+                            WHERE asset_id = :aid AND status IN ('PLANNED', 'DUE_SOON', 'OVERDUE')
+                        ")->execute([':wo_id' => $id, ':aid' => (string) $current['asset_id']]);
+                    }
+                } elseif (isset($data['target_unit_status']) || isset($data['unit_status'])) {
+                    $targetAssetStatus = asset_normalize_status((string) ($data['target_unit_status'] ?? $data['unit_status']));
+                    if (in_array($targetAssetStatus, ASSET_STATUSES, true) && !in_array($currentAssetSt, ['ACCIDENT_HOLD', 'INACTIVE'], true)) {
+                        $db->prepare("UPDATE assets SET status = :st WHERE asset_id = :aid")
+                           ->execute([':st' => $targetAssetStatus, ':aid' => (string) $current['asset_id']]);
+                    }
+                }
             }
 
             $action = trim((string) ($data['repair_action'] ?? ''));

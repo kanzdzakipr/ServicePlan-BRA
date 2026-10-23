@@ -6013,6 +6013,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const payload = {
                     wo_id: woId,
                     status: targetStatus,
+                    target_unit_status: unitStatus,
                     assigned_mechanic: mechanic,
                     root_cause: rootCause,
                     repair_action: actionLog,
@@ -6058,8 +6059,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                         closeModal('modalWoStatusConfirm');
 
-                        // Synchronize state and update all UI views instantly
-                        window.syncFleetState();
+                        // Synchronize state and update all UI views instantly with targeted IDs
+                        window.syncFleetState({ assetId: assetId, workOrderId: woId });
 
                         const movedCard = document.getElementById(`wo-card-${woId}`);
                         if (movedCard) {
@@ -7108,6 +7109,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 initAssetView(scopedData.assets);
                 initWorkOrderView(scopedData.work_orders);
                 if (globalData.costs) initBiayaView(globalData.costs);
+                if (typeof initNewViews === 'function') initNewViews();
             };
 
             window.syncFleetState = function (options = {}) {
@@ -9878,14 +9880,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 return window.NewWorkOrderForm.submit();
             }
 
-            function refreshAllViews() {
-                initDashboard(globalData);
-                initMonitoringView(globalData.assets);
-                initAssetView(globalData.assets);
-                initWorkOrderView(globalData.work_orders);
-                initNewViews();
-            }
-
             function toggleSidebar() {
                 document.body.classList.toggle('sidebar-collapsed');
                 const isCollapsed = document.body.classList.contains('sidebar-collapsed');
@@ -9955,6 +9949,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
                 if (viewName === 'condition' && window.ConditionMonitoring) {
                     window.ConditionMonitoring.refresh();
+                }
+                if (viewName === 'pm' && window.PreventiveMaintenance?.refresh) {
+                    window.PreventiveMaintenance.refresh();
                 }
                 if (viewName === 'logistics' && window.SpareLogistics) {
                     window.SpareLogistics.refresh();
