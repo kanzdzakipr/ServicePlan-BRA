@@ -64,6 +64,14 @@ try {
     f3cAssert($releaseSecond['remainingLocks'] === 0 && $releaseSecond['restoredStatus'] === 'OPERATING' && $row === 'OPERATING', 'Final release restores pre-hold status');
     f3cAssert(AccidentWorkflow::release($db, $secondId, $userId, 'Retry release')['alreadyReleased'] === true, 'Repeated release is idempotent');
 
+    $legacyId = 'QA-LEG-' . $suffix;
+    AccidentWorkflow::record($db, [...$base, 'docNo' => $legacyId, 'severity' => 'Moderate'], $userId);
+    $db->prepare('UPDATE accidents SET asset_status_before_hold = NULL WHERE accident_id = :id')
+        ->execute([':id' => $legacyId]);
+    $legacyRelease = AccidentWorkflow::release($db, $legacyId, $userId, 'Legacy hold completed');
+    $row = $db->query("SELECT status FROM assets WHERE asset_id = " . $db->quote($assetId))->fetchColumn();
+    f3cAssert($legacyRelease['restoredStatus'] === 'OPERATING' && $row === 'OPERATING', 'Legacy hold restores the last proven pre-hold status');
+
     $laterId = 'QA-LATER-' . $suffix;
     AccidentWorkflow::record($db, [...$base, 'docNo' => $laterId, 'severity' => 'Moderate'], $userId);
     $db->prepare("UPDATE assets SET status = 'BREAKDOWN' WHERE asset_id = :id")->execute([':id' => $assetId]);

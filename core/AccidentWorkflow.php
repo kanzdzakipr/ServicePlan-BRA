@@ -154,7 +154,26 @@ final class AccidentWorkflow
         $remainingLocks = (int) $otherLocks->fetchColumn();
         $restoredStatus = null;
         if ($remainingLocks === 0) {
-            $candidate = strtoupper((string) ($accident['asset_status_before_hold'] ?? 'READY'));
+            $candidate = strtoupper(trim((string) ($accident['asset_status_before_hold'] ?? '')));
+            // Legacy accidents predate asset_status_before_hold. Recover the
+            // last proven pre-hold state from another accident on the same
+            // asset before falling back to READY.
+            if (!in_array($candidate, self::RESTORABLE_STATUSES, true)) {
+                $history = $db->prepare(
+                    "SELECT asset_status_before_hold FROM accidents
+                     WHERE asset_id = :asset
+                       AND accident_id <> :accident_id
+                       AND asset_status_before_hold IS NOT NULL
+                       AND asset_status_before_hold <> 'ACCIDENT_HOLD'
+                     ORDER BY COALESCE(locked_at, incident_datetime) DESC LIMIT 1"
+                );
+                $history->execute([
+                    ':asset' => $accident['asset_id'],
+                    ':accident_id' => $accidentId,
+                ]);
+                $historicalStatus = $history->fetchColumn();
+                $candidate = $historicalStatus === false ? 'READY' : strtoupper((string) $historicalStatus);
+            }
             $restoredStatus = in_array($candidate, self::RESTORABLE_STATUSES, true) ? $candidate : 'READY';
             $restore = $db->prepare(
                 "UPDATE assets SET status = :status
