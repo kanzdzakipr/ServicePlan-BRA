@@ -7864,19 +7864,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (statusKey === 'READY' || statusKey === 'OPERATING') {
                     let opReadyAssets = scopedAssets.filter(a => a.status === 'READY' || a.status === 'OPERATING');
 
-                    // Assign realistic OPERATING vs READY tag for demonstration if all are labeled READY
-                    opReadyAssets.forEach((a, idx) => {
-                        if (!a.subStatus) {
-                            a.subStatus = (idx % 3 === 0) ? 'READY' : 'OPERATING';
-                        }
-                    });
-
                     currentBaseOpReadyList = opReadyAssets;
                     currentOpReadySubFilter = 'ALL';
 
                     const totalAll = opReadyAssets.length;
-                    const totalOp = opReadyAssets.filter(a => (a.subStatus || a.status) === 'OPERATING').length;
-                    const totalRd = opReadyAssets.filter(a => (a.subStatus || a.status) === 'READY').length;
+                    const totalOp = opReadyAssets.filter(a => (a.status || a.subStatus) === 'OPERATING').length;
+                    const totalRd = opReadyAssets.filter(a => (a.status || a.subStatus) === 'READY').length;
 
                     document.getElementById('countSubAll').textContent = totalAll;
                     document.getElementById('countSubOperating').textContent = totalOp;
@@ -7930,9 +7923,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
                 let filtered = currentBaseOpReadyList;
                 if (subKey === 'OPERATING') {
-                    filtered = currentBaseOpReadyList.filter(a => (a.subStatus || a.status) === 'OPERATING');
+                    filtered = currentBaseOpReadyList.filter(a => (a.status || a.subStatus) === 'OPERATING');
                 } else if (subKey === 'READY') {
-                    filtered = currentBaseOpReadyList.filter(a => (a.subStatus || a.status) === 'READY');
+                    filtered = currentBaseOpReadyList.filter(a => (a.status || a.subStatus) === 'READY');
                 }
 
                 currentStatusDetailList = filtered;
@@ -7951,7 +7944,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 tbody.innerHTML = assets.map(asset => {
                     const parsed = window.parseAssetId ? window.parseAssetId(asset.id) : { unitId: asset.id, snPlat: '-' };
                     const targetUnitId = parsed.unitId || asset.id;
-                    const effStat = asset.subStatus || asset.status;
+                    const effStat = asset.status || asset.subStatus;
                     const badge = window.getAssetStatusBadge(effStat);
 
                     return `
