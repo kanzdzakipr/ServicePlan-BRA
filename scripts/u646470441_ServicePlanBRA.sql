@@ -113,6 +113,9 @@ CREATE TABLE `archived_items` (
   `item_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `item_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `archived_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `archived_by_user_id` int DEFAULT NULL,
+  `archived_by_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`item_type`,`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -124,6 +127,79 @@ CREATE TABLE `archived_items` (
 LOCK TABLES `archived_items` WRITE;
 /*!40000 ALTER TABLE `archived_items` DISABLE KEYS */;
 /*!40000 ALTER TABLE `archived_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `archive_audit_trail`
+--
+
+DROP TABLE IF EXISTS `archive_audit_trail`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `archive_audit_trail` (
+  `audit_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `item_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `item_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `actor_user_id` int DEFAULT NULL,
+  `actor_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`audit_id`),
+  KEY `idx_aat_item` (`item_type`,`item_id`),
+  KEY `idx_aat_actor` (`actor_user_id`),
+  KEY `idx_aat_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `archive_audit_trail`
+--
+
+LOCK TABLES `archive_audit_trail` WRITE;
+/*!40000 ALTER TABLE `archive_audit_trail` DISABLE KEYS */;
+/*!40000 ALTER TABLE `archive_audit_trail` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `operational_settings`
+--
+
+DROP TABLE IF EXISTS `operational_settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `operational_settings` (
+  `setting_key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `setting_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `category` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'general',
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_by_user_id` int DEFAULT NULL,
+  `updated_by_name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_key`),
+  KEY `idx_setting_category` (`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `operational_settings`
+--
+
+LOCK TABLES `operational_settings` WRITE;
+/*!40000 ALTER TABLE `operational_settings` DISABLE KEYS */;
+INSERT INTO `operational_settings` (`setting_key`, `setting_value`, `category`, `description`) VALUES
+('cfg_sla_wo', '30', 'threshold', 'SLA Tiket WO dari Unit Down (Menit)'),
+('cfg_tire_red', '3.2', 'threshold', 'Batas Merah Aus Ban / Tread Limit (mm)'),
+('cfg_pm_warning', '50', 'threshold', 'Batas HM Warning PM Due Soon (HM)'),
+('cfg_fuel_anomali', '15.0', 'threshold', 'Toleransi % Anomali Konsumsi BBM (%)'),
+('cfg_idling_limit', '50.0', 'threshold', 'Telematika Komtrax Idling Alarm Limit (%)'),
+('cfg_cuttingbit_safety', '380', 'threshold', 'Safety Stock Minimum Cutting Bit (Pieces)'),
+('cfg_idle_timeout', '30', 'security', 'Idle Session Timeout (Menit)'),
+('cfg_backup_frequency', 'Setiap Hari (00:00 WIB)', 'security', 'Frekuensi Automatic Backup Database'),
+('cfg_wo_prefix', 'WO-BRA-YYYYMM-XXXX', 'template', 'Prefix Penomoran Work Order (WO)'),
+('cfg_po_prefix', 'PO-BRA-YYYY-XXXX', 'template', 'Prefix Penomoran Purchase Order (PO)'),
+('cfg_company_header', 'PT BINA REKAYASA ANUGERAH - Departemen Equipment & Maintenance', 'template', 'Nama Perusahaan & Header Kop Surat');
+/*!40000 ALTER TABLE `operational_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --

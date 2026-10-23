@@ -21945,7 +21945,26 @@
                         <h2><i class="fa-solid fa-users-gear text-primary"></i> Manajemen People, Performa & KPI Tim Maintenance</h2>
                         <p>Integrasi terpadu Penilaian Head of Equipment, Produktivitas Mekanik, Evaluasi Planner, dan Audit Lembur SPL</p>
                     </div>
-                    <button class="btn btn-primary" onclick="window.exportKPIReport()"><i class="fa-solid fa-download"></i> Ekspor Laporan KPI</button>
+                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <label for="selKpiPeriod" style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin:0;"><i class="fa-regular fa-calendar"></i> Periode:</label>
+                            <select id="selKpiPeriod" class="form-control" style="width:auto; font-weight:700; padding:6px 14px; font-size:0.88rem; border-radius:8px; border:1px solid #cbd5e1; background:var(--bg-surface); cursor:pointer;" aria-label="Pilih Periode KPI">
+                                <option value="2026-01" selected>Januari 2026</option>
+                                <option value="2026-02">Februari 2026</option>
+                                <option value="2026-03">Maret 2026</option>
+                                <option value="2026-04">April 2026</option>
+                                <option value="2026-05">Mei 2026</option>
+                                <option value="2026-06">Juni 2026</option>
+                                <option value="2026-07">Juli 2026</option>
+                                <option value="2026-08">Agustus 2026</option>
+                                <option value="2026-09">September 2026</option>
+                                <option value="2026-10">Oktober 2026</option>
+                                <option value="2026-11">November 2026</option>
+                                <option value="2026-12">Desember 2026</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="window.exportKPIReport()"><i class="fa-solid fa-download"></i> Ekspor Laporan KPI</button>
+                    </div>
                 </div>
 
                 <!-- Nav Tabs -->
@@ -22392,8 +22411,25 @@
 
                     <!-- Attendance Leaderboard Table -->
                     <div class="pk-panel">
-                        <div class="pk-panel-header">
-                            <span><i class="fa-solid fa-list-ol"></i> Rekapitulasi Jam Lembur & Absensi Personel (Januari 2026)</span>
+                        <div class="pk-panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <span id="lblAttendancePeriodTitle"><i class="fa-solid fa-list-ol"></i> Rekapitulasi Jam Lembur & Absensi Personel (Januari 2026)</span>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <label for="selAttendancePeriod" style="font-size:0.82rem; margin:0; font-weight:600;"><i class="fa-regular fa-calendar"></i> Periode Lembur:</label>
+                                <select id="selAttendancePeriod" class="form-control" style="width:auto; font-weight:600; padding:4px 8px; font-size:0.82rem; border-radius:6px;" aria-label="Pilih Periode Lembur">
+                                    <option value="2026-01" selected>Januari 2026</option>
+                                    <option value="2026-02">Februari 2026</option>
+                                    <option value="2026-03">Maret 2026</option>
+                                    <option value="2026-04">April 2026</option>
+                                    <option value="2026-05">Mei 2026</option>
+                                    <option value="2026-06">Juni 2026</option>
+                                    <option value="2026-07">Juli 2026</option>
+                                    <option value="2026-08">Agustus 2026</option>
+                                    <option value="2026-09">September 2026</option>
+                                    <option value="2026-10">Oktober 2026</option>
+                                    <option value="2026-11">November 2026</option>
+                                    <option value="2026-12">Desember 2026</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="pk-panel-body no-padding">
                             <div class="table-responsive">
@@ -22447,6 +22483,22 @@
         const targetContent = document.getElementById(targetId);
         if (targetContent) targetContent.classList.add("active");
       });
+    });
+
+    function handlePeriodChange(newPeriod) {
+      const selKpi = document.getElementById("selKpiPeriod");
+      const selAtt = document.getElementById("selAttendancePeriod");
+      if (selKpi && selKpi.value !== newPeriod) selKpi.value = newPeriod;
+      if (selAtt && selAtt.value !== newPeriod) selAtt.value = newPeriod;
+      loadHeadKPIFromBackend(newPeriod);
+      renderOvertimeAttendance();
+    }
+
+    document.getElementById("selKpiPeriod")?.addEventListener("change", (e) => {
+      handlePeriodChange(e.target.value);
+    });
+    document.getElementById("selAttendancePeriod")?.addEventListener("change", (e) => {
+      handlePeriodChange(e.target.value);
     });
   }
 
@@ -23218,10 +23270,23 @@
     const tbody = document.getElementById("tbAttendanceBody");
     if (!tbody) return;
 
+    const activePeriod = document.getElementById("selAttendancePeriod")?.value 
+                      || document.getElementById("selKpiPeriod")?.value 
+                      || "2026-01";
+
+    const headerTitle = document.getElementById("lblAttendancePeriodTitle");
+    if (headerTitle) {
+      const monthNames = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      const parts = activePeriod.split("-");
+      const mIdx = parseInt(parts[1] || "1", 10);
+      const label = `${monthNames[mIdx] || parts[1]} ${parts[0]}`;
+      headerTitle.innerHTML = `<i class="fa-solid fa-list-ol"></i> Rekapitulasi Jam Lembur & Absensi Personel (${label})`;
+    }
+
     try {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Memuat rekapitulasi lembur resmi dari SPL...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Memuat rekapitulasi lembur resmi dari SPL (${activePeriod})...</td></tr>`;
       const resp = await fetch(
-        "api/people_kpi.php?action=overtime_leaderboard&period=2026-01",
+        `api/people_kpi.php?action=overtime_leaderboard&period=${encodeURIComponent(activePeriod)}`,
         { cache: "no-store" },
       );
       const res = await resp.json();
@@ -23238,9 +23303,9 @@
               <td colspan="8" style="text-align:center; padding:32px 16px; color:var(--text-muted);">
                   <div style="display:inline-flex; flex-direction:column; align-items:center; gap:8px;">
                       <i class="fa-solid fa-clipboard-user" style="font-size:2rem; color:#94a3b8;"></i>
-                      <strong style="color:var(--text-main); font-size:1rem;">Belum Ada Dokumen Lembur / SPL Terverifikasi</strong>
+                      <strong style="color:var(--text-main); font-size:1rem;">Belum Ada Dokumen Lembur / SPL Terverifikasi pada periode ${escapeHtml(activePeriod)}</strong>
                       <span style="font-size:0.85rem; max-width:520px; line-height:1.4;">
-                          ${escapeHtml(res?.message || "Akumulasi jam lembur dan absensi dihitung secara otomatis dari Surat Perintah Lembur (SPL) resmi yang telah disetujui. Saat ini belum ada data lembur resmi di periode ini.")}
+                          ${escapeHtml(res?.message || `Akumulasi jam lembur dan absensi dihitung secara otomatis dari Surat Perintah Lembur (SPL) resmi yang telah disetujui. Saat ini belum ada data lembur resmi pada periode ${activePeriod}.`)}
                       </span>
                   </div>
               </td>

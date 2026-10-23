@@ -4938,8 +4938,13 @@
                         </div>
                         <div style="font-size: 0.85rem; color: #3730a3; font-weight:600;">
                             Perubahan Status: <span class="badge bg-draft" id="woConfirmFromStatus"></span> <i
-                                class="fa-solid fa-arrow-right"></i> <span class="badge bg-progress"
-                                id="woConfirmToStatus"></span>
+                                class="fa-solid fa-arrow-right"></i> 
+                            <select id="woConfirmToStatus" class="form-control" style="display:inline-block; width:auto; padding: 2px 24px 2px 8px; font-size: 0.85rem; height: auto; border-radius: 12px; font-weight: bold; background-color: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe;" onchange="window.updateWoConfirmAutofill?.()">
+                                <option value="Open">Open</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Waiting Part">Waiting Part</option>
+                                <option value="Closed">Closed</option>
+                            </select>
                         </div>
                     </div>
 
@@ -4950,6 +4955,18 @@
                         <option value="Soleh (Hydraulic Specialist)">Soleh (Hydraulic Specialist)</option>
                         <option value="Darmawan (Electrical Mechanic)">Darmawan (Electrical Mechanic)</option>
                         <option value="Regar (Junior Mechanic)">Regar (Junior Mechanic)</option>
+                    </select>
+
+                    <label style="font-weight:bold;">Penyebab Kerusakan <span style="color:#dc3545;">*</span></label>
+                    <textarea id="woConfirmRootCause" rows="2" class="form-control"
+                        placeholder="Wajib diisi sebelum WO ditutup" style="margin-bottom: 12px;"></textarea>
+
+                    <label style="font-weight:bold;">Jenis Pemeliharaan</label>
+                    <select id="woConfirmMaintenanceType" class="form-control" style="margin-bottom: 12px;">
+                        <option value="Corrective">Corrective</option>
+                        <option value="Preventive">Preventive</option>
+                        <option value="Inspection">Inspection</option>
+                        <option value="Emergency">Emergency</option>
                     </select>
 
                     <label style="font-weight:bold;">Tindakan Perbaikan & Kelengkapan Sparepart</label>
@@ -5694,11 +5711,13 @@
 
                 window.submitWoStatusChange = async function () {
                     const woId = document.getElementById('woConfirmId').value;
-                    const targetStatus = document.getElementById('woConfirmTargetStatus').value;
+                    const targetStatus = document.getElementById('woConfirmToStatus')?.value || document.getElementById('woConfirmTargetStatus')?.value;
                     const assetId = document.getElementById('woConfirmAssetId').value;
                     const mechanic = document.getElementById('woConfirmMechanic').value;
                     const actionLog = document.getElementById('woConfirmAction').value;
                     const unitStatus = document.getElementById('woConfirmUnitStatus').value;
+                    const rootCause = (document.getElementById('woConfirmRootCause')?.value || '').trim();
+                    const maintenanceType = document.getElementById('woConfirmMaintenanceType')?.value || 'Corrective';
 
                     if (!globalData || !Array.isArray(globalData.work_orders)) return;
 
@@ -5709,12 +5728,20 @@
                     }
 
                     const previousStatus = wo.status;
+                    if (targetStatus === 'Closed' && !rootCause) {
+                        alert('Penyebab kerusakan wajib diisi sebelum Work Order ditutup.');
+                        document.getElementById('woConfirmRootCause')?.focus();
+                        return;
+                    }
+
                     const payload = {
                         wo_id: woId,
                         status: targetStatus,
                         target_unit_status: unitStatus,
                         assigned_mechanic: mechanic,
-                        issue_description: `${wo.issue || ''} | [Log ${mechanic}]: ${actionLog}`
+                        root_cause: rootCause,
+                        repair_action: actionLog,
+                        maintenance_type: maintenanceType
                     };
 
                     try {
@@ -5729,6 +5756,9 @@
                             wo.status = targetStatus;
                             wo.lastUpdate = new Date().toISOString();
                             wo.assignedTo = mechanic;
+                            wo.rootCause = rootCause;
+                            wo.repairAction = actionLog;
+                            wo.maintenanceType = maintenanceType;
                             wo.statusHistory = Array.isArray(wo.statusHistory) ? wo.statusHistory : [];
                             wo.statusHistory.unshift({
                                 fromStatus: previousStatus,
@@ -5737,7 +5767,6 @@
                                 action: actionLog,
                                 updatedAt: wo.lastUpdate
                             });
-                            if (actionLog) wo.issue = payload.issue_description;
 
                             // Tempatkan WO terbaru di urutan pertama agar perpindahannya langsung
                             // terlihat, termasuk pada kolom Closed yang berisi ratusan card.
@@ -5749,7 +5778,8 @@
 
                             // Sync integrated status for Asset & Monitoring Unit
                             if (assetId && globalData.assets) {
-                                setIntegratedAssetStatus(assetId, unitStatus, 'Work Order', woId, actionLog);
+                                const updatedAsset = setIntegratedAssetStatus(assetId, unitStatus, 'Work Order', woId, actionLog);
+                                if (updatedAsset) updatedAsset.syncExpectedStatus = unitStatus;
                             }
 
                             closeModal('modalWoStatusConfirm');

@@ -39,7 +39,11 @@ final class AssetSearch
                            a.status, a.current_location_id, l.location_name
                     FROM assets a
                     LEFT JOIN locations l ON l.location_id = a.current_location_id
-                    WHERE (' . implode(' OR ', $conditions) . ')';
+                    WHERE (' . implode(' OR ', $conditions) . ')
+                      AND NOT EXISTS (
+                          SELECT 1 FROM archived_items arc 
+                          WHERE arc.item_type = \'asset\' AND arc.item_id = a.asset_id
+                      )';
             if ($scope['sql'] !== '') $sql .= ' AND (' . $scope['sql'] . ')';
             $sql .= ' ORDER BY a.asset_code, a.asset_id LIMIT ' . self::MAX_RESULTS;
             $stmt = $db->prepare($sql);

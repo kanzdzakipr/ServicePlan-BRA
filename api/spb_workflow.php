@@ -94,6 +94,36 @@ if (strtolower(trim((string) ($input['action'] ?? ''))) === 'void') {
         api_json_response(500, ['status' => 'error', 'message' => 'SPB gagal di-void.']);
     }
 }
+
+$action = strtolower(trim((string) ($input['action'] ?? '')));
+if ($action === 'issue_parts' || $action === 'issue') {
+    api_require_permission('logistics.write');
+    $spbId = trim((string) ($input['spbId'] ?? $input['spb_id'] ?? ''));
+    $items = (array) ($input['items'] ?? []);
+    try {
+        $db->beginTransaction();
+        $currentUser = api_current_user();
+        $actorId = (int) ($currentUser['id'] ?? 0);
+        $actorName = trim((string) ($currentUser['full_name'] ?? $currentUser['username'] ?? 'User Logistik'));
+        $result = SpbWorkflow::issueParts(
+            $db, $spbId, $items, $actorId, $actorName,
+            static fn(string $assetId) => api_require_asset_access($db, $assetId)
+        );
+        $db->commit();
+        api_json_response(200, ['status' => 'success', 'data' => $result]);
+    } catch (InvalidArgumentException | DomainException | OutOfBoundsException $error) {
+        if ($db->inTransaction()) $db->rollBack();
+        api_json_response(
+            $error instanceof InvalidArgumentException ? 422 : ($error instanceof OutOfBoundsException ? 404 : 409),
+            ['status' => 'error', 'message' => $error->getMessage()]
+        );
+    } catch (Throwable $error) {
+        if ($db->inTransaction()) $db->rollBack();
+        error_log('SPB issue parts failed: ' . $error->getMessage());
+        api_json_response(500, ['status' => 'error', 'message' => 'Pengeluaran barang SPB gagal: ' . $error->getMessage()]);
+    }
+}
+
 AuthMiddleware::checkAccess('approval', 'A');
 if (!SpbWorkflow::canApproveRoles((array) (api_current_user()['roles'] ?? []))) {
     api_json_response(403, ['status' => 'error', 'message' => 'Role ini tidak berwenang memutuskan SPB.']);

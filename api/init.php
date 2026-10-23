@@ -27,8 +27,12 @@ try {
                         a.last_hm_km, a.last_latitude, a.last_longitude, a.gps_updated_at,
                         a.last_update_timestamp
                  FROM assets a
-                 LEFT JOIN locations l ON l.location_id = a.current_location_id";
-    if ($assetScope['sql'] !== '') $assetSql .= " WHERE " . $assetScope['sql'];
+                 LEFT JOIN locations l ON l.location_id = a.current_location_id
+                 WHERE NOT EXISTS (
+                     SELECT 1 FROM archived_items arc 
+                     WHERE arc.item_type = 'asset' AND arc.item_id = a.asset_id
+                 )";
+    if ($assetScope['sql'] !== '') $assetSql .= " AND (" . $assetScope['sql'] . ")";
     $stmtAssets = $db->prepare($assetSql);
     $stmtAssets->execute($assetScope['params']);
     $dbAssets = $stmtAssets->fetchAll();

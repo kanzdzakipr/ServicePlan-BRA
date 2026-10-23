@@ -19,7 +19,17 @@ switch ($method) {
                 INNER JOIN assets a ON a.asset_id = i.asset_id
                 LEFT JOIN report_inspection_integrations rii ON rii.inspection_id = i.inspection_id
                 WHERE i.payload_json IS NOT NULL
-                  AND (rii.integration_id IS NULL OR rii.reversed_at IS NULL)";
+                  AND (rii.integration_id IS NULL OR rii.reversed_at IS NULL)
+                  AND NOT EXISTS (
+                      SELECT 1 FROM archived_items arc 
+                      WHERE (arc.item_type = 'p2h' OR arc.item_type = 'inspection')
+                        AND (arc.item_id = CAST(i.inspection_id AS CHAR)
+                             OR arc.item_id = JSON_UNQUOTE(JSON_EXTRACT(i.payload_json, '$.id')))
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1 FROM archived_items arc
+                      WHERE arc.item_type = 'asset' AND arc.item_id = a.asset_id
+                  )";
         if ($scope['sql'] !== '') $sql .= " AND " . $scope['sql'];
         $sql .= " ORDER BY i.inspection_date DESC LIMIT 300";
         $stmt = $db->prepare($sql);

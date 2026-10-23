@@ -78,8 +78,12 @@ switch ($method) {
             $sql = "SELECT a.*, l.location_name as location_name 
                     FROM assets a 
                     LEFT JOIN locations l ON a.current_location_id = l.location_id
-                    WHERE a.asset_id = :id";
-            if ($scope['sql'] !== '') $sql .= " AND " . $scope['sql'];
+                    WHERE a.asset_id = :id
+                      AND NOT EXISTS (
+                          SELECT 1 FROM archived_items arc 
+                          WHERE arc.item_type = 'asset' AND arc.item_id = a.asset_id
+                      )";
+            if ($scope['sql'] !== '') $sql .= " AND (" . $scope['sql'] . ")";
             $stmt = $db->prepare($sql);
             $stmt->execute(array_merge([':id' => (string) $_GET['id']], $scope['params']));
             $row = $stmt->fetch();
@@ -103,8 +107,12 @@ switch ($method) {
         } else {
             $sql = "SELECT a.*, l.location_name as location_name 
                     FROM assets a 
-                    LEFT JOIN locations l ON a.current_location_id = l.location_id";
-            if ($scope['sql'] !== '') $sql .= " WHERE " . $scope['sql'];
+                    LEFT JOIN locations l ON a.current_location_id = l.location_id
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM archived_items arc 
+                        WHERE arc.item_type = 'asset' AND arc.item_id = a.asset_id
+                    )";
+            if ($scope['sql'] !== '') $sql .= " AND (" . $scope['sql'] . ")";
             $sql .= " ORDER BY a.created_at DESC, a.asset_id ASC";
             $stmt = $db->prepare($sql);
             $stmt->execute($scope['params']);

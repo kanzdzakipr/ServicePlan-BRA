@@ -100,6 +100,46 @@ if ($method === 'GET') {
             unset($r);
         }
 
+        // Calculate actual operational figures from work_orders for this period
+        $woStatsStmt = $db->prepare("
+            SELECT 
+                COUNT(*) AS total_wo,
+                COALESCE(SUM(CASE WHEN status = 'Closed' THEN 1 ELSE 0 END), 0) AS closed_wo,
+                COALESCE(AVG(CASE WHEN status = 'Closed' AND downtime_minutes > 0 THEN downtime_minutes ELSE NULL END), 0) AS avg_downtime_minutes,
+                COALESCE(SUM(CASE WHEN maintenance_type = 'Preventive' AND status = 'Closed' THEN 1 ELSE 0 END), 0) AS pm_completed,
+                COALESCE(SUM(CASE WHEN maintenance_type = 'Preventive' THEN 1 ELSE 0 END), 0) AS pm_total
+            FROM work_orders
+            WHERE reported_at LIKE :period_like
+        ");
+        $woStatsStmt->execute([':period_like' => "{$period}%"]);
+        $woStats = $woStatsStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        $closedWo = (int) ($woStats['closed_wo'] ?? 0);
+        $totalWo = (int) ($woStats['total_wo'] ?? 0);
+        $rtwPct = $totalWo > 0 ? round(($closedWo / $totalWo) * 100, 1) : 100.0;
+        $avgDowntimeHours = round(((float) ($woStats['avg_downtime_minutes'] ?? 0)) / 60, 1);
+        $pmTotal = (int) ($woStats['pm_total'] ?? 0);
+        $pmCompleted = (int) ($woStats['pm_completed'] ?? 0);
+        $pmCompliancePct = $pmTotal > 0 ? round(($pmCompleted / $pmTotal) * 100, 1) : 100.0;
+
+        if ($isNewDraft) {
+            foreach ($rows as &$r) {
+                $indNo = (int) ($r['indicator_no'] ?? 0);
+                if ($indNo === 1) { // % Unit Selesai ≤ Target RTW
+                    $r['score_val'] = $rtwPct >= 90 ? 5 : ($rtwPct >= 80 ? 4 : ($rtwPct >= 70 ? 3 : 2));
+                    $r['audit_notes'] = "Realisasi RTW: {$rtwPct}% ({$closedWo} selesai dari {$totalWo} WO periode {$period})";
+                } elseif ($indNo === 2) { // Rata-rata Downtime per Unit
+                    $r['score_val'] = $avgDowntimeHours <= 24 ? 5 : ($avgDowntimeHours <= 48 ? 4 : ($avgDowntimeHours <= 72 ? 3 : 2));
+                    $r['audit_notes'] = "Rata-rata downtime periode {$period}: {$avgDowntimeHours} jam/unit ({$closedWo} WO selesai)";
+                } elseif ($indNo === 3) { // Kepatuhan PM Tepat Waktu
+                    $r['score_val'] = $pmCompliancePct >= 95 ? 5 : ($pmCompliancePct >= 90 ? 4 : ($pmCompliancePct >= 80 ? 3 : 2));
+                    $r['audit_notes'] = "Kepatuhan PM: {$pmCompliancePct}% ({$pmCompleted} selesai dari {$pmTotal} PM periode {$period})";
+                }
+                $r['weighted_score'] = round(($r['score_val'] * (float) $r['weight_pct']) / 5, 2);
+            }
+            unset($r);
+        }
+
         // Calculate weighted scores & summary
         $totalScore = 0;
         $totalWeight = 0.0;
@@ -141,6 +181,16 @@ if ($method === 'GET') {
                 'approved_by_name' => $approvedByName,
                 'approved_at' => $approvedAt,
                 'approval_notes' => $approvalNotes,
+            ],
+            'real_metrics' => [
+                'period' => $period,
+                'total_wo' => $totalWo,
+                'closed_wo' => $closedWo,
+                'rtw_pct' => $rtwPct,
+                'avg_downtime_hours' => $avgDowntimeHours,
+                'pm_total' => $pmTotal,
+                'pm_completed' => $pmCompleted,
+                'pm_compliance_pct' => $pmCompliancePct,
             ],
             'indicators' => $rows
         ]);

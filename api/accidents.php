@@ -11,8 +11,16 @@ if ($method === 'GET') {
     $scope = api_location_scope_clause('a', 'accident_location_id');
     $sql = "SELECT ac.*, l.location_name FROM accidents ac
             INNER JOIN assets a ON a.asset_id = ac.asset_id
-            LEFT JOIN locations l ON l.location_id = ac.location_id";
-    if ($scope['sql'] !== '') $sql .= ' WHERE ' . $scope['sql'];
+            LEFT JOIN locations l ON l.location_id = ac.location_id
+            WHERE NOT EXISTS (
+                SELECT 1 FROM archived_items arc 
+                WHERE arc.item_type = 'accident' AND arc.item_id = ac.accident_id
+            )
+            AND NOT EXISTS (
+                SELECT 1 FROM archived_items arc 
+                WHERE arc.item_type = 'asset' AND arc.item_id = a.asset_id
+            )";
+    if ($scope['sql'] !== '') $sql .= ' AND ' . $scope['sql'];
     $sql .= ' ORDER BY ac.incident_datetime DESC, ac.accident_id DESC LIMIT 300';
     $stmt = $db->prepare($sql);
     $stmt->execute($scope['params']);
