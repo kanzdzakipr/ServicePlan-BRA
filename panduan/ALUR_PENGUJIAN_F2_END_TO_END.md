@@ -33,6 +33,13 @@ Gate F2c: langkah positif/negatif yang relevan cocok di UI, HTTP, dan DB; role/l
 
 Aturan terbaru: SPB harus `Approved` sebelum PPB/PO dibuat. PPB/PO wajib memakai part yang sama dengan SPB dan total qty PO aktif per part tidak boleh melebihi qty SPB. SPPU belum membukukan biaya. PO `Submitted` muncul di **Approval**; hanya approver yang berwenang dapat menyetujuinya. Saat Approved, menu **Biaya** harus menampilkan tepat satu transaksi `PO_APPROVED` senilai total PO. Tombol **Batalkan PO & biaya** hanya untuk PO Approved yang belum menerima barang; alasan wajib, status menjadi `Cancelled`, dan biaya otomatis menjadi reversed. Nomor PO yang dibatalkan tidak boleh dipakai ulang. Monitoring pengadaan maupun BAPP tidak boleh melewati approval PO ini.
 
+### Uji pengisian barang otomatis dari SPB
+
+1. Buka **Laporan & Form → PPB**, pilih `Nomor SPB` yang Approved. Semua item SPB harus muncul sebagai baris: nama, part number, satuan, dan qty. Harga tetap kosong; isi harga penawaran sendiri. Jangan gunakan nomor PPB yang sudah pernah dibatalkan.
+2. Buka **BHW-IN**, pilih `SPB sumber barang`. Item dan saldo awal master part muncul. Isi jumlah yang benar-benar diterima, nomor bukti, dan kolom wajib lain. **BHW-OUT** melakukan hal serupa, termasuk WO/unit; isi jumlah yang benar-benar dikeluarkan. Pemilihan SPB sendiri tidak boleh mengubah stok database.
+3. Klik **Tambah baris** untuk barang lain dan pastikan baris otomatis tidak hilang. Untuk PPB, barang baru wajib ditambahkan/revisi dahulu pada SPB; finalisasi PPB akan menolak part atau jumlah di luar SPB. Untuk BHW-IN, part baru boleh dicatat sesuai validasi master; BHW-OUT mensyaratkan part sudah ada di master stok.
+4. Ubah jumlah/harga manual, simpan draft, refresh, lalu buka ulang. Pastikan perubahan tidak ditimpa oleh auto-fill. Pilih SPB lain: aplikasi harus meminta konfirmasi sebelum mengganti baris lama.
+
 Jangan gunakan PO `11 / Dept-Equip / 11 / 2026` sebagai fixture baru: pada 23 Oktober 2026 pengguna sengaja membatalkannya karena item PO tidak cocok dengan SPB; statusnya `Cancelled` dan biaya Rp44.400.000 sudah reversed. Buat SPB dan PPB baru berawalan `QA-F2-` untuk pengujian lanjutan.
 
 Jalankan hanya setelah F2c disetujui dan alur PO/stok untuk data QA disepakati. Periksa apakah modul memang menyediakan aksi yang diperlukan; jangan menyusun transaksi SQL manual untuk menutup kekurangan UI.

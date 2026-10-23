@@ -301,6 +301,7 @@
         field("job_kontrak", "Job kontrak"),
         field("project", "Project", "text", true),
         field("tanggal", "Tanggal laporan", "date", true),
+        field("nomor_spb", "SPB sumber barang"),
       ],
       tableTitle: "Transaksi penerimaan barang",
       calculation: "warehouseIn",
@@ -335,6 +336,7 @@
         field("job_kontrak", "Job kontrak"),
         field("project", "Project", "text", true),
         field("tanggal", "Tanggal laporan", "date", true),
+        field("nomor_spb", "SPB sumber barang"),
       ],
       tableTitle: "Transaksi pengeluaran barang",
       calculation: "warehouseOut",
@@ -1865,8 +1867,9 @@
       return "assets";
     if (/^(nomor_wo|wo_id|nomor_jo)$/.test(key)) return "workOrders";
     if (
-      ["ppb", "procurement-monitoring"].includes(activeSchema?.id) &&
-      key === "nomor_spb"
+      key === "nomor_spb" &&
+      (["ppb", "procurement-monitoring"].includes(activeSchema?.id) ||
+        (!isTableColumn && ["bhw-in", "bhw-out"].includes(activeSchema?.id)))
     )
       return "purchaseRequests";
     if (activeSchema?.id === "bapp" && key === "nomor_po")
@@ -1958,7 +1961,13 @@
         .join("");
     }
     if (kind === "purchaseRequests") {
+      const allowedStatuses = activeSchema?.id === "ppb"
+        ? ["Approved", "Ordered"]
+        : ["bhw-in", "bhw-out"].includes(activeSchema?.id)
+          ? ["Approved", "Ordered", "Issued"]
+          : null;
       return reportReferences.purchaseRequests
+        .filter((request) => !allowedStatuses || allowedStatuses.includes(request.status))
         .map(
           (request) =>
             `<option value="${escapeHtml(request.id)}">${escapeHtml([request.workOrderId, request.assetId, request.location, request.status].filter(Boolean).join(" Â· "))}</option>`,
@@ -2449,6 +2458,87 @@
     setAutomatedField("konfirmasi", partner.contact);
   }
 
+  function populateReportItemsFromSpb(request, control) {
+    if (!["ppb", "bhw-in", "bhw-out"].includes(activeSchema?.id)) return;
+    const previousSpb = String(activeDraft.sourceSpbId || "");
+    const restorePrevious = () => {
+      activeDraft.fields.nomor_spb = previousSpb;
+      control.value = previousSpb;
+    };
+    if (previousSpb === request.id) return;
+    const allowedStatuses = activeSchema.id === "ppb"
+      ? ["Approved", "Ordered"]
+      : ["Approved", "Ordered", "Issued"];
+    if (!allowedStatuses.includes(request.status)) {
+      restorePrevious();
+      showToast(`SPB ${request.id} belum disetujui atau sudah tidak dapat digunakan.`, true);
+      return;
+    }
+    if (!request.items?.length) {
+      restorePrevious();
+      showToast(`SPB ${request.id} belum memiliki barang yang bisa dimuat.`, true);
+      return;
+    }
+    const populatedRows = (activeDraft.rows || []).filter((row) =>
+      Object.entries(row || {}).some(
+        ([key, value]) =>
+          !key.startsWith("_") &&
+          !calculatedRowKeys.has(key) &&
+          String(value ?? "").trim() !== "",
+      ),
+    );
+    if (
+      populatedRows.length &&
+      !confirm(`Ganti ${populatedRows.length} baris yang sudah diisi dengan barang dari SPB ${request.id}? Baris lama akan diganti; salin dulu data yang ingin dipertahankan.`)
+    ) {
+      restorePrevious();
+      return;
+    }
+    activeDraft.rows = request.items.map((item) => {
+      const master = reportReferences.parts.find(
+        (part) => String(part.number).toLowerCase() === String(item.partNumber).toLowerCase(),
+      );
+      const common = {
+        part_number: item.partNumber,
+        nama: master?.name || item.name,
+        satuan: master?.unit || item.unit,
+      };
+      if (activeSchema.id === "ppb") {
+        return {
+          nama: common.nama,
+          sc: common.part_number,
+          satuan: common.satuan,
+          jumlah: String(item.quantity),
+          harga: "",
+          keterangan: `Dari SPB ${request.id}`,
+        };
+      }
+      if (activeSchema.id === "bhw-in") {
+        return {
+          ...common,
+          tanggal: activeDraft.fields.tanggal || "",
+          nomor_spb: request.id,
+          jumlah: "",
+          saldo_lalu: master?.stock != null ? String(master.stock) : "",
+        };
+      }
+      return {
+        ...common,
+        tanggal: activeDraft.fields.tanggal || "",
+        nomor_jo: request.workOrderId,
+        id_unit: request.assetId,
+        persediaan: master?.stock != null ? String(master.stock) : "",
+        diberikan: "",
+      };
+    });
+    activeDraft.sourceSpbId = request.id;
+    calculateAllRows();
+    renderRows();
+    showToast(
+      `${request.items.length} barang dimuat dari SPB ${request.id}. Lengkapi kolom kosong; tombol Tambah baris tetap tersedia.${activeSchema.id === "ppb" ? " Barang tambahan harus dimasukkan ke SPB lebih dulu sebelum PPB difinalkan." : ""}`,
+    );
+  }
+
   function applyReportReferenceSelection(control) {
     const kind = control?.dataset?.referenceKind || "";
     if (kind.startsWith("calibrationInstrument")) {
@@ -2500,6 +2590,7 @@
         setAutomatedField("project", request.location);
         setAutomatedField("tempat_penyerahan", request.location);
       }
+      populateReportItemsFromSpb(request, control);
       return;
     }
     if (kind === "purchaseOrders") {

@@ -79,7 +79,36 @@ try {
         'location' => (string) ($row['location_name'] ?? ''),
         'urgency' => (string) $row['urgency'],
         'status' => (string) $row['status'],
+        'items' => [],
     ], $purchaseRequestStatement->fetchAll(PDO::FETCH_ASSOC));
+    $requestIndex = [];
+    foreach ($purchaseRequests as $index => $request) $requestIndex[$request['id']] = $index;
+    if ($requestIndex !== []) {
+        $itemSql = "SELECT pri.spb_id, pri.part_number, pri.description, pri.qty_requested,
+                           COALESCE(p.part_name, pri.description) AS part_name,
+                           COALESCE(p.unit_measure, 'PCS') AS unit_measure,
+                           p.stock_qty
+                    FROM purchase_request_items pri
+                    INNER JOIN purchase_requests pr ON pr.spb_id = pri.spb_id
+                    INNER JOIN assets a ON a.asset_id = pr.asset_id
+                    LEFT JOIN parts p ON p.part_number = pri.part_number
+                    WHERE pr.status <> 'Closed'";
+        if ($workOrderScope['sql'] !== '') $itemSql .= ' AND ' . $workOrderScope['sql'];
+        $itemSql .= ' ORDER BY pri.spb_id, pri.id';
+        $itemStatement = $db->prepare($itemSql);
+        $itemStatement->execute($workOrderScope['params']);
+        foreach ($itemStatement->fetchAll(PDO::FETCH_ASSOC) as $item) {
+            $index = $requestIndex[(string)$item['spb_id']] ?? null;
+            if ($index === null) continue;
+            $purchaseRequests[$index]['items'][] = [
+                'partNumber' => (string)$item['part_number'],
+                'name' => (string)$item['part_name'],
+                'unit' => (string)$item['unit_measure'],
+                'quantity' => (int)$item['qty_requested'],
+                'stock' => $item['stock_qty'] !== null ? (int)$item['stock_qty'] : null,
+            ];
+        }
+    }
 
     $purchaseOrderSql = "SELECT po.ppb_id, po.spb_id, po.wo_id, po.asset_id, po.vendor,
                                 po.project, po.quote_date, po.delivery_due, po.delivery_location,
