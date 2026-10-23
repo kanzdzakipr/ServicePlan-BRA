@@ -2,9 +2,32 @@
 -- Migration: Populate Heavy Equipment PIC (Operators) from January 2026 Report
 -- Generated: 2026-10-23 09:34:47
 -- Total Assets: 106 units
+--
+-- This data migration is deliberately one-shot. The Laragon sync script runs
+-- additive migrations on every preserved-database sync, so a durable marker is
+-- required to prevent duplicate operator-history rows and to avoid replacing a
+-- PIC that a user may have edited after the initial import.
 -- ============================================================================
 
-START TRANSACTION;
+CREATE TABLE IF NOT EXISTS `app_data_migrations` (
+  `migration_key` VARCHAR(191) NOT NULL,
+  `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`migration_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP PROCEDURE IF EXISTS `apply_asset_pics_jan2026`;
+DELIMITER $$
+CREATE PROCEDURE `apply_asset_pics_jan2026`()
+pic_migration: BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM `app_data_migrations`
+    WHERE `migration_key` = 'populate_asset_pics_jan2026_v1'
+  ) THEN
+    LEAVE pic_migration;
+  END IF;
+
+  START TRANSACTION;
 
 -- Asset: DT-00001 (Dump Truck - Dump Truck Hino FM260JD / Mercedes Axor)
 UPDATE `assets` SET `current_operator_name` = 'SYAFRI' WHERE `asset_id` = 'DT-00001';
@@ -314,7 +337,7 @@ UPDATE `asset_operator_history` SET `end_date` = '2025-12-26' WHERE `asset_id` =
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
 VALUES ('DT-00058', 'SUWARDI', '2025-12-26', NULL, 'Shift 1 (Utama)', 'Sumber: Laporan Divisi Equipment Januari 2026 (tercatat 4x)', NOW());
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
-VALUES ('DT-00058', 'SUWARDI MATING BOARD', '2026-01-01', '2025-12-26', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
+VALUES ('DT-00058', 'SUWARDI MATING BOARD', '2025-12-26', '2025-12-26', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
 
 -- Asset: DT-00059 (Dump Truck - Dump Truck Hino FM260JD / Mercedes Axor)
 UPDATE `assets` SET `current_operator_name` = 'AHMAD NIRWANSYAH' WHERE `asset_id` = 'DT-00059';
@@ -418,7 +441,7 @@ UPDATE `asset_operator_history` SET `end_date` = '2025-12-22' WHERE `asset_id` =
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
 VALUES ('DT-04032', 'HERMAN SYAHPUTRA', '2025-12-22', NULL, 'Shift 1 (Utama)', 'Sumber: Laporan Divisi Equipment Januari 2026 (tercatat 2x)', NOW());
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
-VALUES ('DT-04032', 'DEDY HALOMOAN', '2026-01-01', '2025-12-22', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
+VALUES ('DT-04032', 'DEDY HALOMOAN', '2025-12-22', '2025-12-22', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
 
 -- Asset: DT-04036 (Dump Truck - Dump Truck Hino FM260JD / Mercedes Axor)
 UPDATE `assets` SET `current_operator_name` = 'MOSES SILABAN' WHERE `asset_id` = 'DT-04036';
@@ -518,7 +541,7 @@ UPDATE `asset_operator_history` SET `end_date` = '2025-12-22' WHERE `asset_id` =
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
 VALUES ('EXC-00007', 'Manalu (Managua)', '2025-12-22', NULL, 'Shift 1 (Utama)', 'Sumber: Laporan Divisi Equipment Januari 2026 (tercatat 1x)', NOW());
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
-VALUES ('EXC-00007', 'UMAR SOLEH', '2026-01-01', '2025-12-22', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
+VALUES ('EXC-00007', 'UMAR SOLEH', '2025-12-22', '2025-12-22', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
 
 -- Asset: EXC-00008 (Excavator - Excavator Komatsu PC200-10M0 / CAT 320)
 UPDATE `assets` SET `current_operator_name` = 'M. HUTAPEA' WHERE `asset_id` = 'EXC-00008';
@@ -544,7 +567,7 @@ UPDATE `asset_operator_history` SET `end_date` = '2025-12-23' WHERE `asset_id` =
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
 VALUES ('EXC-00012', 'JUNTAK', '2025-12-23', NULL, 'Shift 1 (Utama)', 'Sumber: Laporan Divisi Equipment Januari 2026 (tercatat 4x)', NOW());
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
-VALUES ('EXC-00012', 'HERMAN GP', '2026-01-01', '2025-12-23', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
+VALUES ('EXC-00012', 'HERMAN GP', '2025-12-23', '2025-12-23', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
 
 -- Asset: EXC-00018 (Excavator - )
 UPDATE `assets` SET `current_operator_name` = 'FINKY' WHERE `asset_id` = 'EXC-00018';
@@ -582,7 +605,7 @@ UPDATE `asset_operator_history` SET `end_date` = '2025-12-24' WHERE `asset_id` =
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
 VALUES ('PF-00001', 'HENDI SAPIKA', '2025-12-24', NULL, 'Shift 1 (Utama)', 'Sumber: Laporan Divisi Equipment Januari 2026 (tercatat 1x)', NOW());
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
-VALUES ('PF-00001', 'HENDI SEPIKA', '2026-01-01', '2025-12-24', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
+VALUES ('PF-00001', 'HENDI SEPIKA', '2025-12-24', '2025-12-24', 'Rotasi / Shift Cadangan', 'Tercatat dalam Laporan Operasional/Breakdown Divisi Equipment Januari 2026', NOW());
 
 -- Asset: PF-00002 (Vibro Compactor - Vibro Compactor Bomag BW211D-40SL / Sakai)
 UPDATE `assets` SET `current_operator_name` = 'SUPRI' WHERE `asset_id` = 'PF-00002';
@@ -656,4 +679,12 @@ UPDATE `asset_operator_history` SET `end_date` = '2026-01-20' WHERE `asset_id` =
 INSERT INTO `asset_operator_history` (`asset_id`, `operator_name`, `start_date`, `end_date`, `shift_type`, `handover_notes`, `created_at`)
 VALUES ('WT-00001', 'GILANG FIRMANSYAH', '2026-01-20', NULL, 'Shift 1 (Utama)', 'Sumber: Laporan Divisi Equipment Januari 2026 (tercatat 3x)', NOW());
 
-COMMIT;
+  INSERT INTO `app_data_migrations` (`migration_key`)
+  VALUES ('populate_asset_pics_jan2026_v1');
+
+  COMMIT;
+END$$
+DELIMITER ;
+
+CALL `apply_asset_pics_jan2026`();
+DROP PROCEDURE `apply_asset_pics_jan2026`;
