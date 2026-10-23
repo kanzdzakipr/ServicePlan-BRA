@@ -12,6 +12,8 @@
     let siteMapInstance = null;
     let siteUnitsCache = [];
     let siteMarkersGroup = null;
+    let siteCurrentSiteCache = null;
+    let siteMapDisplayMode = 'auto'; // 'auto' | 'compact' | 'detail'
 
     /**
      * Master Site Locations Reference (Mining Sectors, Yards, Workshops & Branches)
@@ -499,80 +501,22 @@
                 dashArray: '5, 5'
             }).bindPopup(`<strong>Geofence Perimeter: ${escapeHtml(site.name)}</strong><br>Radius Operasi: ${site.radius} Meter<br>Wilayah: ${escapeHtml(site.region)}`).addTo(siteMapInstance);
 
+            siteCurrentSiteCache = site;
+            siteUnitsCache = units;
+
             // Create markers feature group
             siteMarkersGroup = L.featureGroup().addTo(siteMapInstance);
 
-            // Place markers for each unit at this site
-            units.forEach((unit, idx) => {
-                const uId = unit.id || unit.asset_id || `UNIT-${idx + 1}`;
-                const hash = crc32(uId);
-                const st = (unit.status || 'READY').toUpperCase();
+            // Render markers based on zoom / display mode
+            renderSiteMapMarkers();
 
-                // Compute spatial position
-                let lat = parseFloat(unit.last_latitude);
-                let lng = parseFloat(unit.last_longitude);
-
-                if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) {
-                    // Position within geofence radius circle around site center
-                    const angle = (idx * (360 / Math.max(units.length, 1))) * (Math.PI / 180);
-                    const distRatio = 0.2 + ((hash % 60) / 100) * 0.7; // 20% to 90% radius
-                    const maxDegOffset = (site.radius / 111320) * distRatio;
-                    lat = site.lat + (Math.sin(angle) * maxDegOffset);
-                    lng = site.lng + (Math.cos(angle) * maxDegOffset);
-                }
-
-                let statusClass = 'ready';
-                if (st === 'OPERATING') statusClass = 'operating';
-                else if (st === 'STANDBY') statusClass = 'standby';
-                else if (st === 'BREAKDOWN') statusClass = 'breakdown';
-                else if (st === 'ACCIDENT HOLD') statusClass = 'accident';
-
-                let iconSymbol = 'fa-truck-front';
-                const cat = (unit.category || '').toLowerCase();
-                if (cat.includes('excavator')) iconSymbol = 'fa-person-digging';
-                else if (cat.includes('grader')) iconSymbol = 'fa-road';
-                else if (cat.includes('compactor') || cat.includes('vibro')) iconSymbol = 'fa-compact-disc';
-                else if (cat.includes('dozer')) iconSymbol = 'fa-tractor';
-
-                const markerHtml = `
-                    <div class="site-unit-marker-pin ${statusClass}" title="${escapeHtml(uId)} (${st})">
-                        <i class="fa-solid ${iconSymbol}"></i> ${escapeHtml(uId)}
-                    </div>
-                `;
-
-                const customMarkerIcon = L.divIcon({
-                    className: 'site-map-unit-marker',
-                    html: markerHtml,
-                    iconSize: [84, 28],
-                    iconAnchor: [42, 14]
-                });
-
-                const popupHtml = `
-                    <div style="font-family:'Inter',sans-serif; min-width:210px;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
-                            <strong style="color:#0f172a; font-size:1.05rem; font-family:'JetBrains Mono',monospace;">${escapeHtml(uId)}</strong>
-                            <span class="site-unit-status-badge ${statusClass}" style="font-size:0.68rem;">${escapeHtml(st)}</span>
-                        </div>
-                        <div style="font-size:0.82rem; color:#475569; margin-bottom:3px;">
-                            <i class="fa-solid fa-truck" style="color:#0284c7; width:16px;"></i> ${escapeHtml(unit.make_model || unit.category || 'Heavy Equipment')}
-                        </div>
-                        <div style="font-size:0.82rem; color:#475569; margin-bottom:3px;">
-                            <i class="fa-solid fa-gauge-high" style="color:#0284c7; width:16px;"></i> Total: <strong>${unit.last_hm_km ? Number(unit.last_hm_km).toLocaleString('id-ID') : '-'} HM</strong>
-                        </div>
-                        <div style="font-size:0.82rem; color:#475569; margin-bottom:8px;">
-                            <i class="fa-solid fa-id-card" style="color:#0284c7; width:16px;"></i> Plat: <strong>${escapeHtml(unit.license_plate || '-')}</strong>
-                        </div>
-                        <div style="display:flex; gap:6px; margin-top:8px;">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="window.openUnitProperties('${escapeHtml(uId)}')" style="width:100%; font-size:0.75rem; padding:4px 8px; font-weight:700;">
-                                <i class="fa-solid fa-sliders"></i> Buka Properties Unit
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                const marker = L.marker([lat, lng], { icon: customMarkerIcon }).bindPopup(popupHtml);
-                siteMarkersGroup.addLayer(marker);
+            // Zoom listener: compact when zoomed out, expand to detailed unit pins when zoomed in
+            siteMapInstance.on('zoomend', function () {
+                renderSiteMapMarkers();
+                updateMapModeToggleUI();
             });
+
+            window.siteMapInstance = siteMapInstance;
 
             // Update Geofence box details
             const elCenterCoord = document.getElementById('siteGeofenceCenter');
@@ -589,6 +533,259 @@
             console.warn('Site map init error:', err);
         }
     }
+
+    /**
+     * Helper to determine heavy equipment icon based on category distribution
+     */
+    function getGroupEquipmentIcon(catCounts) {
+        let topCat = '';
+        let topCount = 0;
+        for (const [cat, cnt] of Object.entries(catCounts)) {
+            if (cnt > topCount) { topCount = cnt; topCat = cat; }
+        }
+        const catLower = (topCat || '').toLowerCase();
+        if (catLower.includes('excavator')) return 'fa-person-digging';
+        if (catLower.includes('grader')) return 'fa-road';
+        if (catLower.includes('compactor') || catLower.includes('vibro')) return 'fa-compact-disc';
+        if (catLower.includes('dozer')) return 'fa-tractor';
+        return 'fa-truck-front';
+    }
+
+    /**
+     * Render site markers: either compact status clusters (zoom out) or detail pins (zoom in)
+     */
+    function renderSiteMapMarkers() {
+        if (!siteMapInstance || !siteMarkersGroup || !siteCurrentSiteCache) return;
+        siteMarkersGroup.clearLayers();
+
+        const site = siteCurrentSiteCache;
+        const units = siteUnitsCache || [];
+        if (!units.length) return;
+
+        const currentZoom = siteMapInstance.getZoom();
+        // Compact saat skala diperkecil ke zoom <= 14 (overview/regional geofence skala kecil), detail saat zoom >= 15
+        const isCompact = (siteMapDisplayMode === 'compact') || (siteMapDisplayMode === 'auto' && currentZoom <= 14);
+
+        if (isCompact) {
+            renderCompactStatusClusters(site, units);
+        } else {
+            renderDetailUnitMarkers(site, units);
+        }
+    }
+
+    /**
+     * Compact View: Group units by status with heavy equipment logo and unit count
+     */
+    function renderCompactStatusClusters(site, units) {
+        const statusGroups = {};
+        units.forEach(unit => {
+            const rawStatus = (unit.status || 'READY').toUpperCase().trim();
+            let statusKey = 'READY';
+            let statusClass = 'ready';
+            if (rawStatus === 'OPERATING') {
+                statusKey = 'OPERATING';
+                statusClass = 'operating';
+            } else if (rawStatus === 'STANDBY') {
+                statusKey = 'STANDBY';
+                statusClass = 'standby';
+            } else if (rawStatus === 'BREAKDOWN') {
+                statusKey = 'BREAKDOWN';
+                statusClass = 'breakdown';
+            } else if (rawStatus.includes('ACCIDENT')) {
+                statusKey = 'ACCIDENT';
+                statusClass = 'accident';
+            } else {
+                statusKey = 'READY';
+                statusClass = 'ready';
+            }
+
+            if (!statusGroups[statusKey]) {
+                statusGroups[statusKey] = {
+                    key: statusKey,
+                    class: statusClass,
+                    units: [],
+                    catCounts: {}
+                };
+            }
+            statusGroups[statusKey].units.push(unit);
+            const cat = (unit.category || 'Dump Truck').trim();
+            statusGroups[statusKey].catCounts[cat] = (statusGroups[statusKey].catCounts[cat] || 0) + 1;
+        });
+
+        const groupKeys = Object.keys(statusGroups);
+        const totalGroups = groupKeys.length;
+
+        groupKeys.forEach((key, sIdx) => {
+            const group = statusGroups[key];
+            const iconSymbol = getGroupEquipmentIcon(group.catCounts);
+
+            // Compute position: distribute neatly inside geofence perimeter
+            let clusterLat = site.lat;
+            let clusterLng = site.lng;
+            if (totalGroups > 1) {
+                const angle = (sIdx * (360 / totalGroups) - 90) * (Math.PI / 180);
+                const offsetMeters = Math.min(site.radius * 0.35, 140);
+                const maxDegOffset = offsetMeters / 111320;
+                clusterLat = site.lat + (Math.sin(angle) * maxDegOffset);
+                clusterLng = site.lng + (Math.cos(angle) * (maxDegOffset / Math.cos(site.lat * Math.PI / 180)));
+            }
+
+            const clusterHtml = `
+                <div class="site-status-cluster-pin ${group.class}" title="${escapeHtml(group.key)}: ${group.units.length} Unit (Klik untuk rincian)">
+                    <span class="cluster-pin-icon"><i class="fa-solid ${iconSymbol}"></i></span>
+                    <span class="cluster-pin-count">${group.units.length}</span>
+                    <span class="cluster-pin-label">${escapeHtml(group.key)}</span>
+                </div>
+            `;
+
+            const customMarkerIcon = L.divIcon({
+                className: 'site-map-unit-marker',
+                html: clusterHtml,
+                iconSize: null
+            });
+
+            const catSummaryList = Object.entries(group.catCounts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([cat, cnt]) => `<strong>${cnt}</strong> ${escapeHtml(cat)}`)
+                .join(' &bull; ');
+
+            const unitChips = group.units.slice(0, 45).map(u => {
+                const uId = u.id || u.asset_id;
+                return `<span class="site-cluster-unit-chip" onclick="window.openUnitProperties('${escapeHtml(uId)}')" title="Buka Properties Unit ${escapeHtml(uId)}">${escapeHtml(uId)}</span>`;
+            }).join('');
+            const remainingText = group.units.length > 45 ? `<span style="font-size:10px; color:#64748b; padding:2px;">+${group.units.length - 45} lainnya</span>` : '';
+
+            const clusterPopupHtml = `
+                <div style="font-family:'Inter',sans-serif; min-width:240px; max-width:285px; padding:2px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid ${iconSymbol}"></i>
+                            <strong style="color:#0f172a; font-size:1.0rem;">${group.units.length} Unit ${escapeHtml(group.key)}</strong>
+                        </div>
+                        <span class="site-unit-status-badge ${group.class}" style="font-size:0.68rem;">${escapeHtml(group.key)}</span>
+                    </div>
+                    <div style="font-size:0.78rem; color:#475569; margin-bottom:8px; line-height:1.4;">
+                        ${catSummaryList}
+                    </div>
+                    <div style="font-size:0.75rem; font-weight:700; color:#334155; margin-bottom:4px;">Daftar Unit di Site:</div>
+                    <div style="max-height:120px; overflow-y:auto; margin-bottom:10px; display:flex; flex-wrap:wrap; gap:4px; padding:2px;">
+                        ${unitChips}
+                        ${remainingText}
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="if(window.siteMapInstance){ window.siteMapInstance.setView([${site.lat}, ${site.lng}], 16); }" style="width:100%; font-size:0.75rem; padding:5px 8px; font-weight:700;">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i> Zoom In ke Detail Unit (${group.units.length})
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const marker = L.marker([clusterLat, clusterLng], { icon: customMarkerIcon }).bindPopup(clusterPopupHtml);
+            siteMarkersGroup.addLayer(marker);
+        });
+    }
+
+    /**
+     * Detail View: Render each individual unit pin
+     */
+    function renderDetailUnitMarkers(site, units) {
+        units.forEach((unit, idx) => {
+            const uId = unit.id || unit.asset_id || `UNIT-${idx + 1}`;
+            const hash = crc32(uId);
+            const st = (unit.status || 'READY').toUpperCase();
+
+            // Compute spatial position
+            let lat = parseFloat(unit.last_latitude);
+            let lng = parseFloat(unit.last_longitude);
+
+            if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) {
+                const angle = (idx * (360 / Math.max(units.length, 1))) * (Math.PI / 180);
+                const distRatio = 0.2 + ((hash % 60) / 100) * 0.7;
+                const maxDegOffset = (site.radius / 111320) * distRatio;
+                lat = site.lat + (Math.sin(angle) * maxDegOffset);
+                lng = site.lng + (Math.cos(angle) * maxDegOffset);
+            }
+
+            let statusClass = 'ready';
+            if (st === 'OPERATING') statusClass = 'operating';
+            else if (st === 'STANDBY') statusClass = 'standby';
+            else if (st === 'BREAKDOWN') statusClass = 'breakdown';
+            else if (st === 'ACCIDENT HOLD') statusClass = 'accident';
+
+            let iconSymbol = 'fa-truck-front';
+            const cat = (unit.category || '').toLowerCase();
+            if (cat.includes('excavator')) iconSymbol = 'fa-person-digging';
+            else if (cat.includes('grader')) iconSymbol = 'fa-road';
+            else if (cat.includes('compactor') || cat.includes('vibro')) iconSymbol = 'fa-compact-disc';
+            else if (cat.includes('dozer')) iconSymbol = 'fa-tractor';
+
+            const markerHtml = `
+                <div class="site-unit-marker-pin ${statusClass}" title="${escapeHtml(uId)} (${st})">
+                    <i class="fa-solid ${iconSymbol}"></i> ${escapeHtml(uId)}
+                </div>
+            `;
+
+            const customMarkerIcon = L.divIcon({
+                className: 'site-map-unit-marker',
+                html: markerHtml,
+                iconSize: [84, 28],
+                iconAnchor: [42, 14]
+            });
+
+            const popupHtml = `
+                <div style="font-family:'Inter',sans-serif; min-width:210px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">
+                        <strong style="color:#0f172a; font-size:1.05rem; font-family:'JetBrains Mono',monospace;">${escapeHtml(uId)}</strong>
+                        <span class="site-unit-status-badge ${statusClass}" style="font-size:0.68rem;">${escapeHtml(st)}</span>
+                    </div>
+                    <div style="font-size:0.82rem; color:#475569; margin-bottom:3px;">
+                        <i class="fa-solid fa-truck" style="color:#0284c7; width:16px;"></i> ${escapeHtml(unit.make_model || unit.category || 'Heavy Equipment')}
+                    </div>
+                    <div style="font-size:0.82rem; color:#475569; margin-bottom:3px;">
+                        <i class="fa-solid fa-gauge-high" style="color:#0284c7; width:16px;"></i> Total: <strong>${unit.last_hm_km ? Number(unit.last_hm_km).toLocaleString('id-ID') : '-'} HM</strong>
+                    </div>
+                    <div style="font-size:0.82rem; color:#475569; margin-bottom:8px;">
+                        <i class="fa-solid fa-id-card" style="color:#0284c7; width:16px;"></i> Plat: <strong>${escapeHtml(unit.license_plate || '-')}</strong>
+                    </div>
+                    <div style="display:flex; gap:6px; margin-top:8px;">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="window.openUnitProperties('${escapeHtml(uId)}')" style="width:100%; font-size:0.75rem; padding:4px 8px; font-weight:700;">
+                            <i class="fa-solid fa-sliders"></i> Buka Properties Unit
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const marker = L.marker([lat, lng], { icon: customMarkerIcon }).bindPopup(popupHtml);
+            siteMarkersGroup.addLayer(marker);
+        });
+    }
+
+    /**
+     * Update active state of map mode toggle buttons
+     */
+    function updateMapModeToggleUI() {
+        const btnAuto = document.getElementById('btnSiteMapModeAuto');
+        const btnCompact = document.getElementById('btnSiteMapModeCompact');
+        const btnDetail = document.getElementById('btnSiteMapModeDetail');
+        if (!btnAuto || !btnCompact || !btnDetail) return;
+
+        btnAuto.classList.toggle('active', siteMapDisplayMode === 'auto');
+        btnCompact.classList.toggle('active', siteMapDisplayMode === 'compact');
+        btnDetail.classList.toggle('active', siteMapDisplayMode === 'detail');
+
+        if (siteMapDisplayMode === 'auto' && siteMapInstance) {
+            const z = siteMapInstance.getZoom();
+            btnAuto.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left"></i> Auto (${z <= 14 ? 'Ringkas' : 'Detail'})`;
+        } else if (btnAuto) {
+            btnAuto.innerHTML = `<i class="fa-solid fa-arrows-split-up-and-left"></i> Auto`;
+        }
+    }
+
+    window.setSiteMapDisplayMode = function (mode) {
+        siteMapDisplayMode = mode;
+        updateMapModeToggleUI();
+        renderSiteMapMarkers();
+    };
 
     /**
      * Render Fleet Distribution by Category

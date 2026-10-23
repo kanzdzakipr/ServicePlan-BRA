@@ -20,7 +20,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="scripts/dashboard.css?v=<?= filemtime(__DIR__ . '/scripts/dashboard.css') ?>">
     <link rel="stylesheet" href="scripts/unit-properties.css?v=20261023-vital-link-1">
-    <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
+    <link rel="stylesheet" href="scripts/site-properties.css?v=20261023-cluster-2">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
     <script>window.APP_CSRF_TOKEN = '<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>';</script>
     <script src="scripts/auth-client.js?v=20260809-1"></script>
@@ -30,7 +30,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=<?= filemtime(__DIR__ . '/scripts/dashboard.js') ?>"></script>
     <script src="scripts/unit-properties.js?v=20261023-vital-link-1"></script>
-    <script src="scripts/site-properties.js?v=20261022-1"></script>
+    <script src="scripts/site-properties.js?v=20261023-cluster-2"></script>
 </head>
 
 <body>
@@ -2976,9 +2976,16 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 <div class="site-panel-grid-top-map">
                     <!-- Leaflet Map Container -->
                     <div class="site-card">
-                        <div class="site-card-header">
-                            <h3><i class="fa-solid fa-map" style="color:#0284c7;"></i> Peta Geofence Site &amp; Sebaran Unit Real-Time</h3>
-                            <span style="font-size:0.75rem; color:#64748b;"><i class="fa-solid fa-circle-info"></i> Klik marker unit untuk rincian cepat</span>
+                        <div class="site-card-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <h3><i class="fa-solid fa-map" style="color:#0284c7;"></i> Peta Geofence Site &amp; Sebaran Unit Real-Time</h3>
+                                <span style="font-size:0.75rem; color:#64748b;"><i class="fa-solid fa-circle-info"></i> Klik marker untuk rincian</span>
+                            </div>
+                            <div class="site-map-mode-toggle" id="siteMapModeToggleContainer">
+                                <button type="button" class="btn-map-mode active" id="btnSiteMapModeAuto" onclick="window.setSiteMapDisplayMode('auto')" title="Mode Otomatis (Ringkas saat zoom out, detail saat zoom in)"><i class="fa-solid fa-arrows-split-up-and-left"></i> Auto</button>
+                                <button type="button" class="btn-map-mode" id="btnSiteMapModeCompact" onclick="window.setSiteMapDisplayMode('compact')" title="Tampilan Ringkas (Logo Alat &amp; Status)"><i class="fa-solid fa-layer-group"></i> Ringkas</button>
+                                <button type="button" class="btn-map-mode" id="btnSiteMapModeDetail" onclick="window.setSiteMapDisplayMode('detail')" title="Tampilan Detail (Semua Pin Unit)"><i class="fa-solid fa-location-dot"></i> Detail</button>
+                            </div>
                         </div>
                         <div class="site-card-body" style="padding:10px;">
                             <div id="siteLocationMap"></div>
