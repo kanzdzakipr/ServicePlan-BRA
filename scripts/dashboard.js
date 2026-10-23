@@ -23109,9 +23109,10 @@
                                 <div class="hse-form-grid">
                                     <div class="hse-form-group">
                                         <label>Pilih Unit Alat Berat</label>
-                                        <select id="incAssetId" class="hse-form-control">
+                                        <select id="incAssetId" class="hse-form-control" onchange="window.autofillHseAssetDetails(this.value)">
                                             <!-- Populated via JS -->
                                         </select>
+                                        <small id="incAssetAutofillHint" style="display:block; margin-top:5px; color:var(--text-muted);">Lokasi dan operator akan diisi dari Master Asset.</small>
                                     </div>
                                     <div class="hse-form-group">
                                         <label>Tanggal & Jam Kejadian</label>
@@ -23126,7 +23127,10 @@
                                 <div class="hse-form-grid">
                                     <div class="hse-form-group">
                                         <label>Nama Operator / Driver</label>
-                                        <input type="text" id="incOperator" placeholder="Nama operator saat kejadian" class="hse-form-control">
+                                        <select id="incOperator" class="hse-form-control" required>
+                                            <option value="">Pilih operator dari Master Asset</option>
+                                        </select>
+                                        <small style="display:block; margin-top:5px; color:var(--text-muted);">Daftar diambil dari PIC aktif agar penulisan nama konsisten.</small>
                                     </div>
                                     <div class="hse-form-group">
                                         <label>Masa Kerja Operator</label>
@@ -23377,11 +23381,69 @@
     if (!select || !window.globalData || !window.globalData.assets) return;
     select.innerHTML = window.globalData.assets
       .map(
-        (a) =>
-          `<option value="${a.id}">${a.id} (${a.category}) - Status: ${a.status}</option>`,
+        (a) => {
+          const canonicalId = String(a.asset_id || a.id || "").trim();
+          return `<option value="${escapeHtml(canonicalId)}">${escapeHtml(canonicalId)} (${escapeHtml(a.category || "-")}) - Status: ${escapeHtml(a.status || "-")}</option>`;
+        },
       )
       .join("");
+    window.autofillHseAssetDetails(select.value);
   }
+
+  function populateHseOperatorSelect(preferredOperator = "") {
+    const select = document.getElementById("incOperator");
+    if (!select) return;
+    const operators = Array.from(
+      new Set(
+        (Array.isArray(window.globalData?.assets) ? window.globalData.assets : [])
+          .map((asset) => String(asset.current_operator_name || "").trim())
+          .filter(Boolean),
+      ),
+    ).sort((left, right) => left.localeCompare(right, "id", { sensitivity: "base" }));
+
+    select.innerHTML = [
+      '<option value="">Pilih operator dari Master Asset</option>',
+      ...operators.map(
+        (operator) =>
+          `<option value="${escapeHtml(operator)}">${escapeHtml(operator)}</option>`,
+      ),
+    ].join("");
+    select.value = operators.includes(preferredOperator)
+      ? preferredOperator
+      : "";
+  }
+
+  window.autofillHseAssetDetails = function (assetId) {
+    const assets = Array.isArray(window.globalData?.assets)
+      ? window.globalData.assets
+      : [];
+    const asset = assets.find(
+      (item) =>
+        String(item.asset_id || item.id || "") === String(assetId || ""),
+    );
+    const locationInput = document.getElementById("incLocation");
+    const hint = document.getElementById("incAssetAutofillHint");
+    if (!asset) {
+      if (locationInput) locationInput.value = "";
+      populateHseOperatorSelect();
+      if (hint) hint.textContent = "Data unit tidak ditemukan pada Master Asset.";
+      return;
+    }
+
+    const location = String(
+      asset.location_name || asset.location || asset.raw_location_notes || "",
+    ).trim();
+    const operator = String(asset.current_operator_name || "").trim();
+    if (locationInput) locationInput.value = location;
+    populateHseOperatorSelect(operator);
+    if (hint) {
+      const filled = [
+        location ? `lokasi: ${location}` : "lokasi belum tersedia",
+        operator ? `operator: ${operator}` : "PIC/operator belum tersedia",
+      ];
+      hint.textContent = `Autofill Master Asset — ${filled.join("; ")}. Lokasi dapat disesuaikan; operator dipilih dari daftar PIC terdaftar.`;
+    }
+  };
 
   // =========================================================================
   // 4. STEPPER & MODAL CONTROLLERS
@@ -23390,7 +23452,15 @@
   window.openNewIncidentModal = function () {
     currentStep = 1;
     updateStepVisibility();
+    const form = document.getElementById("formIncident");
+    if (form) form.reset();
     populateAssetSelect();
+    const datetimeInput = document.getElementById("incDatetime");
+    if (datetimeInput && !datetimeInput.value) {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      datetimeInput.value = now.toISOString().slice(0, 16);
+    }
     const overlay = document.getElementById("modalIncidentReport");
     if (overlay) overlay.classList.add("active");
   };
@@ -23404,7 +23474,19 @@
     if (direction === 1) {
       // Validation step 1
       if (currentStep === 1) {
-        const chronology = document.getElementById("incChronology").value;
+        const assetId = document.getElementById("incAssetId").value;
+        const datetime = document.getElementById("incDatetime").value;
+        const location = document.getElementById("incLocation").value.trim();
+        const operator = document.getElementById("incOperator").value;
+        const chronology = document.getElementById("incChronology").value.trim();
+        if (!assetId)
+          return alert("Mohon pilih unit alat berat terlebih dahulu.");
+        if (!datetime)
+          return alert("Mohon isi tanggal dan jam kejadian.");
+        if (!location)
+          return alert("Mohon isi lokasi kejadian.");
+        if (!operator)
+          return alert("Mohon pilih operator dari daftar PIC Master Asset.");
         if (!chronology)
           return alert("Mohon isi uraian kronologi kejadian terlebih dahulu.");
       }
@@ -23447,12 +23529,9 @@
 
   window.submitIncidentForm = function () {
     const assetId = document.getElementById("incAssetId").value;
-    const datetime =
-      document.getElementById("incDatetime").value || "2026-07-25 09:00";
-    const location =
-      document.getElementById("incLocation").value || "Site Project";
-    const operator =
-      document.getElementById("incOperator").value || "Driver Operasional";
+    const datetime = document.getElementById("incDatetime").value;
+    const location = document.getElementById("incLocation").value.trim();
+    const operator = document.getElementById("incOperator").value;
     const tenure = document.getElementById("incTenure").value || "1 Tahun";
     const severity = document.getElementById("incSeverity").value;
     const chronology = document.getElementById("incChronology").value;
@@ -23485,7 +23564,10 @@
       "Safety briefing ulang operator.";
 
     const docNo = `0${getAccidentLogs().length + 1}/ACC/BRA/SITE/2026`;
-    const codeOnly = assetId.split(" ")[0];
+    const selectedAsset = (window.globalData?.assets || []).find(
+      (item) => String(item.asset_id || item.id || "") === assetId,
+    );
+    const codeOnly = String(selectedAsset?.asset_id || assetId).trim();
 
     const isLocked = severity === "Moderate" || severity === "Critical";
 
