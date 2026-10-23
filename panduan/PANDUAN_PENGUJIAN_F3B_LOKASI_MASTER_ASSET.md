@@ -9,6 +9,7 @@ Status implementasi: **siap diuji di browser** pada Laragon2.
 - Sebanyak 87 aset WUR EW kembali mempunyai relasi lokasi yang valid.
 - Sinkronisasi tidak lagi menjalankan migrasi lama yang menimpa nilai warranty dan nomor rangka.
 - Migrasi baru bersifat aditif dan idempoten; menjalankannya ulang tidak menambah lokasi duplikat.
+- Data lengkap dari `api/assets.php` sekarang digabungkan kembali saat dashboard dimuat; posisi operasional dan field registrasi/PM tidak lagi hilang dari tampilan setelah refresh.
 
 ## Alur uji browser
 
@@ -35,7 +36,7 @@ Status implementasi: **siap diuji di browser** pada Laragon2.
 
 - `tests/f3b_asset_schema_location_audit.php`: 18 pemeriksaan, termasuk penulisan data uji dalam transaksi yang selalu di-rollback.
 - `tests/batch_b_master_asset_onboarding_integration.php`: 46 pemeriksaan integrasi dan pembersihan data uji.
-- `tests/master_asset_pm_edit_ui_smoke.js`: 16 pemeriksaan UI konfigurasi PM.
+- `tests/master_asset_pm_edit_ui_smoke.js`: 17 pemeriksaan UI konfigurasi PM dan pemetaan ulang data setelah refresh.
 - Basis data sesudah migrasi: 282 aset, 35 lokasi, 87 aset WUR EW, dan 0 referensi lokasi yatim.
 
 Backup sebelum migrasi tersedia di:

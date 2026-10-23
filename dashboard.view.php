@@ -7263,7 +7263,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             if (!databaseAsset) return asset;
                             return {
                                 ...asset,
-                                location: asset.location || databaseAsset.location_name || databaseAsset.raw_location_notes || '',
+                                // api/init.php only returns the compact dashboard shape.
+                                // Keep the database record authoritative for every Master
+                                // Asset field so edited values survive a page refresh.
+                                ...databaseAsset,
+                                id: asset.id || databaseAsset.asset_id,
+                                location: databaseAsset.location_name || asset.location || databaseAsset.raw_location_notes || '',
                                 location_name: databaseAsset.location_name || '',
                                 current_location_id: databaseAsset.current_location_id ?? asset.current_location_id,
                                 last_latitude: databaseAsset.last_latitude ?? asset.last_latitude,
