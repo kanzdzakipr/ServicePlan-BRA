@@ -32,7 +32,7 @@ ReportIntegration::ensureTables($db);
 $asset = $db->query(
     "SELECT asset_id, status, last_hm_km
      FROM assets
-     WHERE category = 'Excavator' AND status NOT IN ('ACCIDENT_HOLD', 'INACTIVE')
+     WHERE category = 'Excavator' AND status NOT IN ('ACCIDENT_HOLD', 'INACTIVE', 'BREAKDOWN')
      ORDER BY asset_id LIMIT 1"
 )->fetch(PDO::FETCH_ASSOC);
 if (!$asset) {

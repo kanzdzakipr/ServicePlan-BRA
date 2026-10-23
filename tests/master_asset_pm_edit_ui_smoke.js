@@ -46,5 +46,10 @@ check(
   view.includes("window.PreventiveMaintenance?.refresh"),
   "Forecast PM dimuat ulang setelah Master Asset disimpan",
 );
+check(
+  view.includes("...databaseAsset") &&
+    view.includes("id: asset.id || databaseAsset.asset_id"),
+  "refresh Master Asset mempertahankan seluruh field API database",
+);
 
 process.stdout.write(`\nMaster Asset PM edit UI smoke: ${passed} passed.\n`);

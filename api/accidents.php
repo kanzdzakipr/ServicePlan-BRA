@@ -1,102 +1,112 @@
 <?php
+declare(strict_types=1);
+
 require_once 'db.php';
+require_once dirname(__DIR__) . '/core/AccidentWorkflow.php';
+
 $db = Database::getInstance();
-$method = $_SERVER['REQUEST_METHOD'];
+$method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
-// Auto-add payload_json column if missing
+if ($method === 'GET') {
+    $scope = api_location_scope_clause('a', 'accident_location_id');
+    $sql = "SELECT ac.*, l.location_name FROM accidents ac
+            INNER JOIN assets a ON a.asset_id = ac.asset_id
+            LEFT JOIN locations l ON l.location_id = ac.location_id";
+    if ($scope['sql'] !== '') $sql .= ' WHERE ' . $scope['sql'];
+    $sql .= ' ORDER BY ac.incident_datetime DESC, ac.accident_id DESC LIMIT 300';
+    $stmt = $db->prepare($sql);
+    $stmt->execute($scope['params']);
+    $results = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $payload = json_decode((string) ($row['payload_json'] ?? ''), true);
+        if (!is_array($payload)) $payload = [];
+        $payload = array_replace($payload, [
+            'docNo' => (string) $row['accident_id'],
+            'reportDate' => (string) $row['report_date'],
+            'incidentDate' => (string) $row['incident_datetime'],
+            'unitCode' => (string) $row['asset_id'],
+            'location' => (string) ($payload['location'] ?? $row['location_name'] ?? ''),
+            'operatorName' => (string) ($row['operator_name'] ?? ''),
+            'operatorTenure' => (string) ($row['operator_tenure'] ?? ''),
+            'chronology' => (string) $row['chronology'],
+            'severity' => (string) $row['severity'],
+            'isUnitLocked' => (bool) $row['is_unit_locked'],
+            'status' => (string) $row['status'],
+            'releasedAt' => $row['released_at'],
+            'releasedBy' => $row['released_by'],
+            'releaseReason' => $row['release_reason'],
+        ]);
+        if (!isset($payload['environment']) || !is_array($payload['environment'])) {
+            $payload['environment'] = [
+                'weather' => (string) ($row['weather'] ?? ''),
+                'roadCondition' => (string) ($row['road_condition'] ?? ''),
+                'lighting' => (string) ($row['lighting_condition'] ?? ''),
+            ];
+        }
+        if (!isset($payload['impact']) || !is_array($payload['impact'])) {
+            $payload['impact'] = [
+                'physicalDamage' => (string) ($row['physical_damage'] ?? ''),
+                'estimatedRepairCost' => (float) $row['estimated_repair_cost'],
+                'estimatedDowntimeDays' => (int) $row['estimated_downtime_days'],
+                'totalFinancialImpact' => (float) $row['total_financial_loss'],
+            ];
+        }
+        $results[] = $payload;
+    }
+    api_json_response(200, ['status' => 'success', 'data' => $results]);
+}
+
+if (!in_array($method, ['POST', 'PUT'], true)) {
+    header('Allow: GET, POST, PUT');
+    api_json_response(405, ['status' => 'error', 'code' => 'METHOD_NOT_ALLOWED', 'message' => 'Metode tidak didukung.']);
+}
+
+$input = json_decode((string) file_get_contents('php://input'), true);
+if (!is_array($input)) {
+    api_json_response(422, ['status' => 'error', 'code' => 'INVALID_PAYLOAD', 'message' => 'Payload tidak valid.']);
+}
+
 try {
-    $db->exec("ALTER TABLE accidents ADD COLUMN payload_json JSON NULL AFTER is_unit_locked");
-} catch (PDOException $e) {
-    // Ignore error if column already exists
+    $db->beginTransaction();
+    if ($method === 'PUT') {
+        if (($input['action'] ?? '') !== 'release') {
+            throw new DomainException('Aksi HSE tidak valid.');
+        }
+        $accidentId = trim((string) ($input['accident_id'] ?? ''));
+        $assetLookup = $db->prepare('SELECT asset_id FROM accidents WHERE accident_id = :id LIMIT 1');
+        $assetLookup->execute([':id' => $accidentId]);
+        $assetId = $assetLookup->fetchColumn();
+        if ($assetId === false) {
+            if ($db->inTransaction()) $db->rollBack();
+            api_json_response(404, ['status' => 'error', 'code' => 'NOT_FOUND', 'message' => 'Laporan insiden tidak ditemukan.']);
+        }
+        api_require_asset_access($db, (string) $assetId);
+        $result = AccidentWorkflow::release(
+            $db,
+            $accidentId,
+            (int) api_current_user()['id'],
+            (string) ($input['reason'] ?? '')
+        );
+        $db->commit();
+        api_json_response(200, ['status' => 'success', 'message' => 'Hold unit berhasil dirilis.', 'data' => $result]);
+    }
+
+    $records = array_is_list($input) ? $input : [$input];
+    if ($records === []) throw new DomainException('Tidak ada laporan insiden yang dikirim.');
+    $saved = [];
+    foreach ($records as $record) {
+        if (!is_array($record)) throw new DomainException('Format laporan insiden tidak valid.');
+        api_require_asset_access($db, (string) ($record['unitCode'] ?? ''));
+        $saved[] = AccidentWorkflow::record($db, $record, (int) api_current_user()['id']);
+    }
+    $db->commit();
+    api_json_response(201, ['status' => 'success', 'message' => 'Laporan insiden tersimpan.', 'data' => $saved]);
+} catch (DomainException $error) {
+    if ($db->inTransaction()) $db->rollBack();
+    $code = str_contains($error->getMessage(), 'sudah digunakan') ? 409 : 422;
+    api_json_response($code, ['status' => 'error', 'code' => 'HSE_VALIDATION_FAILED', 'message' => $error->getMessage()]);
+} catch (Throwable $error) {
+    if ($db->inTransaction()) $db->rollBack();
+    error_log('Accident workflow failed: ' . $error->getMessage());
+    api_json_response(500, ['status' => 'error', 'code' => 'HSE_SAVE_FAILED', 'message' => 'Proses HSE gagal disimpan.']);
 }
-
-switch ($method) {
-    case 'GET':
-        $scope = api_location_scope_clause('a', 'accident_location_id');
-        $sql = "SELECT ac.payload_json FROM accidents ac
-                INNER JOIN assets a ON a.asset_id = ac.asset_id
-                WHERE ac.payload_json IS NOT NULL";
-        if ($scope['sql'] !== '') $sql .= " AND " . $scope['sql'];
-        $sql .= " ORDER BY ac.incident_datetime DESC LIMIT 100";
-        $stmt = $db->prepare($sql);
-        $stmt->execute($scope['params']);
-        $results = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $parsed = json_decode($row['payload_json'], true);
-            if ($parsed) $results[] = $parsed;
-        }
-        echo json_encode(["status" => "success", "data" => $results]);
-        break;
-
-    case 'POST':
-        $input = json_decode(file_get_contents('php://input'), true);
-        if (!$input) {
-            echo json_encode(["status" => "error", "message" => "No data provided"]);
-            break;
-        }
-
-        try {
-            $db->beginTransaction();
-            // Using REPLACE so we can safely overwrite when updating existing incidents
-            $stmt = $db->prepare("REPLACE INTO accidents (accident_id, asset_id, report_date, incident_datetime, operator_name, chronology, severity, payload_json) 
-                                  VALUES (:id, :asset, :rdate, :idate, :operator, :chronology, :severity, :payload)");
-            
-            // Accept either single object or array
-            $accidents = isset($input[0]) ? $input : [$input];
-            
-            foreach ($accidents as $acc) {
-                // Map the frontend structure
-                $id = $acc['docNo'] ?? ('ACC-' . time());
-                
-                // asset_id MUST exist in `assets` table because of FOREIGN KEY
-                // The frontend passes `unitCode` as "CS-41001", but the asset_id might be "CS-41001"
-                $asset = $acc['unitCode'] ?? '';
-                api_require_asset_access($db, (string) $asset);
-
-                $existingAccident = $db->prepare('SELECT asset_id FROM accidents WHERE accident_id = :id LIMIT 1');
-                $existingAccident->execute([':id' => $id]);
-                $existingAssetId = $existingAccident->fetchColumn();
-                if ($existingAssetId !== false) {
-                    api_require_asset_access($db, (string) $existingAssetId);
-                    if (!hash_equals((string) $existingAssetId, (string) $asset)) {
-                        api_json_response(409, [
-                            'status' => 'error',
-                            'code' => 'OBJECT_ID_CONFLICT',
-                            'message' => 'Nomor laporan sudah digunakan oleh objek lain.',
-                        ]);
-                    }
-                }
-                
-                $rDate = $acc['reportDate'] ?? date('Y-m-d');
-                $iDate = $acc['incidentDate'] ?? date('Y-m-d H:i:s');
-                $operator = $acc['operatorName'] ?? '';
-                $chronology = $acc['chronology'] ?? '';
-                $severity = $acc['severity'] ?? 'Minor';
-                if (!in_array($severity, ['Minor', 'Moderate', 'Critical'])) $severity = 'Minor';
-
-                $stmt->execute([
-                    ':id' => $id,
-                    ':asset' => $asset,
-                    ':rdate' => $rDate,
-                    ':idate' => $iDate,
-                    ':operator' => $operator,
-                    ':chronology' => $chronology,
-                    ':severity' => $severity,
-                    ':payload' => json_encode($acc)
-                ]);
-            }
-
-            $db->commit();
-            echo json_encode(["status" => "success", "message" => "Accident records saved to database"]);
-        } catch (Exception $e) {
-            $db->rollBack();
-            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
-        }
-        break;
-
-    default:
-        http_response_code(405);
-        echo json_encode(["status" => "error", "message" => "Method not allowed"]);
-        break;
-}
-?>
