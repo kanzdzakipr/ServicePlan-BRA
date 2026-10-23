@@ -2030,6 +2030,14 @@ UNLOCK TABLES;
 -- Migration: Add warranty and chassis_number to assets
 ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `warranty` VARCHAR(100) DEFAULT NULL AFTER `make_model`;
 ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `chassis_number` VARCHAR(100) DEFAULT NULL AFTER `warranty`;
+ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `dealer` VARCHAR(150) DEFAULT NULL AFTER `chassis_number`;
+ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `project_name` VARCHAR(150) DEFAULT NULL AFTER `dealer`;
+ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `operational_position` VARCHAR(150) DEFAULT NULL AFTER `project_name`;
+ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `invoice_location` VARCHAR(150) DEFAULT NULL AFTER `operational_position`;
+ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `stnk_location` VARCHAR(150) DEFAULT NULL AFTER `invoice_location`;
+ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `bpkb_location` VARCHAR(150) DEFAULT NULL AFTER `stnk_location`;
+ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `vehicle_type` VARCHAR(100) DEFAULT NULL AFTER `bpkb_location`;
+ALTER TABLE `assets` ADD COLUMN IF NOT EXISTS `asset_age` SMALLINT UNSIGNED DEFAULT NULL AFTER `vehicle_type`;
 
 UPDATE `assets` SET `warranty` = 'Warranty (Tidak Ada HM)', `chassis_number` = NULL WHERE `asset_id` = 'CS-41001';
 UPDATE `assets` SET `warranty` = 'Warranty (Tidak Ada HM)', `chassis_number` = 'MJEFM8JN2RJX25335' WHERE `asset_id` = 'DT-00001';

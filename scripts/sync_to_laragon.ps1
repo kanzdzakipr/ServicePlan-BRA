@@ -36,6 +36,7 @@ $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_asset_onboarding_17102026.sql"),
     (Join-Path $srcDir "scripts\migrate_asset_search_indexes_17102026.sql"),
     (Join-Path $srcDir "scripts\migrate_asset_warranty_chassis_22102026.sql"),
+    (Join-Path $srcDir "scripts\migrate_asset_registration_fields_22102026.sql"),
     (Join-Path $srcDir "scripts\migrate_location_coordinates_22102026.sql")
 )
 

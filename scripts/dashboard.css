@@ -21796,6 +21796,378 @@ body.sl-modal-open {
     scrollbar-color: #cbd5e1 transparent;
 }
 
+/* Master Asset: registration form */
+#modalNewAsset {
+    padding: 24px;
+}
+
+#modalNewAsset .asset-registration-modal {
+    width: min(920px, 100%);
+    max-width: 920px;
+    max-height: calc(100dvh - 48px);
+    overflow: hidden;
+    border: 1px solid #dbe3ec;
+    border-radius: 12px;
+    box-shadow: 0 24px 70px rgba(15, 45, 75, 0.22);
+}
+
+#modalNewAsset .modal-header {
+    align-items: flex-start;
+    padding: 20px 24px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+#modalNewAsset .modal-header > div {
+    display: block;
+    min-width: 0;
+}
+
+#modalNewAsset .modal-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 3px 0 4px;
+    color: #0f172a;
+    font-size: 1.3rem;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+}
+
+#modalNewAsset .modal-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.asset-registration-eyebrow {
+    color: var(--primary);
+    font-size: 0.67rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.asset-registration-close {
+    display: grid;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: #475569;
+    cursor: pointer;
+    font-size: 1.45rem;
+    line-height: 1;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.asset-registration-close:hover {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.asset-registration-close:active {
+    transform: scale(0.96);
+}
+
+.asset-registration-close:focus-visible,
+#modalNewAsset .form-control:focus-visible,
+#modalNewAsset .btn:focus-visible {
+    outline: 3px solid rgba(2, 132, 199, 0.22);
+    outline-offset: 2px;
+}
+
+#modalNewAsset .asset-registration-body {
+    max-height: calc(100dvh - 152px);
+    overflow-y: auto;
+    padding: 20px 24px 24px;
+    background: #f8fafc;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.asset-registration-section {
+    margin-bottom: 14px;
+    padding: 18px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    background: #ffffff;
+}
+
+.asset-registration-type-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.72fr);
+    gap: 18px;
+    align-items: end;
+}
+
+.asset-registration-type-section .asset-registration-section-heading {
+    margin: 0;
+}
+
+.asset-registration-type-field {
+    margin: 0;
+}
+
+.asset-registration-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.asset-registration-section-heading > div {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.asset-registration-section-heading h3 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 0.92rem;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+}
+
+.asset-registration-step {
+    display: inline-grid;
+    width: 27px;
+    height: 27px;
+    place-items: center;
+    border-radius: 6px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 0.68rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.asset-registration-auto-id,
+.asset-registration-mode,
+.asset-registration-optional {
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.asset-registration-auto-id i {
+    margin-right: 4px;
+    color: #0284c7;
+}
+
+.asset-registration-mode {
+    padding: 4px 7px;
+    border: 1px solid #bae6fd;
+    border-radius: 5px;
+    background: #f0f9ff;
+    color: #0369a1;
+}
+
+.asset-registration-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+.asset-registration-field-wide {
+    grid-column: span 2;
+}
+
+.asset-registration-field {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+}
+
+.asset-registration-field > span:first-child {
+    color: #334155;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.asset-registration-field > span b {
+    color: var(--danger);
+}
+
+#modalNewAsset .form-control {
+    width: 100%;
+    min-height: 40px;
+    border-color: #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.82rem;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+#modalNewAsset .form-control:hover {
+    border-color: #94a3b8;
+}
+
+#modalNewAsset .form-control:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+}
+
+#modalNewAsset .form-control[readonly] {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.asset-registration-age-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #f1f5f9;
+}
+
+#modalNewAsset .asset-registration-age-control .form-control {
+    min-height: 38px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.asset-registration-age-control > span {
+    padding: 0 12px;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 650;
+}
+
+.asset-registration-legal-grid,
+.asset-registration-upload-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.asset-registration-upload-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 14px;
+}
+
+.asset-registration-upload {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.asset-registration-upload > span {
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 750;
+}
+
+.asset-registration-upload > span i {
+    margin-right: 5px;
+    color: #0284c7;
+}
+
+.asset-registration-upload small {
+    color: #64748b;
+    font-size: 0.68rem;
+    line-height: 1.4;
+}
+
+.asset-registration-photo-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.asset-registration-photo-preview:empty {
+    display: none;
+}
+
+.asset-registration-error {
+    display: none;
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border: 1px solid #fecaca;
+    border-radius: 7px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.asset-registration-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    padding-top: 4px;
+}
+
+#modalNewAsset [data-form-variant][hidden] {
+    display: none !important;
+}
+
+@media (max-width: 720px) {
+    #modalNewAsset {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    #modalNewAsset .asset-registration-modal {
+        max-height: 96dvh;
+        border-radius: 12px 12px 0 0;
+    }
+
+    #modalNewAsset .modal-header {
+        padding: 17px 18px 15px;
+    }
+
+    #modalNewAsset .asset-registration-body {
+        max-height: calc(96dvh - 104px);
+        padding: 14px 14px 20px;
+    }
+
+    .asset-registration-type-section,
+    .asset-registration-grid,
+    .asset-registration-legal-grid,
+    .asset-registration-upload-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .asset-registration-field-wide {
+        grid-column: auto;
+    }
+
+    .asset-registration-section {
+        padding: 15px;
+    }
+
+    .asset-registration-auto-id {
+        white-space: normal;
+    }
+
+    .asset-registration-actions .btn {
+        flex: 1 1 0;
+        justify-content: center;
+    }
+}
+
 @media (max-width: 1200px) {
     .executive-service-table-scroll,
     .table-responsive.executive-service-table-scroll {

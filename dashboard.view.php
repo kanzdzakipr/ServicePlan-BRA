@@ -679,6 +679,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <table class="table">
                                 <thead id="assetTableHeader">
                                     <tr>
+                                        <th style="width:54px; text-align:center;">No.</th>
                                         <th onclick="window.sortMasterAsset('id')" style="cursor:pointer">Asset ID / Kode <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('hull')" style="cursor:pointer">Nomor Lambung <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('model')" style="cursor:pointer">Merek & Tahun <i class="fa-solid fa-sort"></i></th>
@@ -692,6 +693,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                         <th style="text-align:center; min-width: 90px;">Aksi</th>
                                     </tr>
                                     <tr class="asset-filter-row" style="background: #f8fafc;">
+                                        <th aria-label="Nomor urut otomatis"></th>
                                         <th style="padding: 4px 8px;"><input type="text" id="filterAssetId" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter ID..." onkeyup="window.filterMasterAsset('id', this.value)"></th>
                                         <th style="padding: 4px 8px;"><input type="text" id="filterAssetHull" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Lambung..." onkeyup="window.filterMasterAsset('hull', this.value)"></th>
                                         <th style="padding: 4px 8px;"><input type="text" id="filterAssetModel" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Merek/Tahun..." onkeyup="window.filterMasterAsset('model', this.value)"></th>
@@ -3828,29 +3830,28 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
     <!-- Modal Tambah Aset -->
     <div class="modal-overlay" id="modalNewAsset">
-        <div class="modal-content" style="max-width: 760px; max-height:90vh; overflow-y:auto;">
+        <div class="modal-content asset-registration-modal">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-plus-circle text-primary"></i> Registrasi Unit Aset Baru</h2>
-                <button onclick="closeModal('modalNewAsset')"
-                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <div class="modal-body form-group">
-                <div style="font-size:0.78rem; color:#1e293b; background:#f0fdf4; border:1px solid #bbf7d0; padding:10px 14px; border-radius:6px; margin-bottom:14px; line-height:1.4;">
-                    <i class="fa-solid fa-circle-info" style="color:var(--success);"></i> <strong>Standar Identitas Tim Brian:</strong> Setiap unit wajib memiliki identitas konsisten. Data yang belum tersedia (misal SN/plat belum terbit) akan otomatis ditandai <em>Belum tersedia</em> agar dapat ditindaklanjuti.
+                <div>
+                    <span class="asset-registration-eyebrow">Master Asset</span>
+                    <h2><i class="fa-solid fa-circle-plus text-primary"></i> Registrasi Unit Aset Baru</h2>
+                    <p>Catat identitas, penempatan, dan dokumen unit dalam satu formulir.</p>
                 </div>
-                
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Kode Unit Permanen <span style="color:var(--danger)">*</span></label>
-                        <input type="text" id="na-id" placeholder="Misal: EXC-00099" class="form-control" required>
+                <button type="button" class="asset-registration-close" onclick="closeModal('modalNewAsset')"
+                    aria-label="Tutup formulir registrasi">&times;</button>
+            </div>
+            <div class="modal-body asset-registration-body">
+                <section class="asset-registration-section asset-registration-type-section" aria-labelledby="newAssetTypeTitle">
+                    <div class="asset-registration-section-heading">
+                        <div>
+                            <span class="asset-registration-step">01</span>
+                            <h3 id="newAssetTypeTitle">Pilih tipe aset</h3>
+                        </div>
+                        <span class="asset-registration-auto-id"><i class="fa-solid fa-wand-magic-sparkles"></i> ID unit dibuat otomatis</span>
                     </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Nomor Lambung Proyek (opsional)</label>
-                        <input type="text" id="na-hull" placeholder="Nomor fisik di alat" class="form-control" maxlength="100">
-                    </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Kategori Aset <span style="color:var(--danger)">*</span></label>
-                        <select id="na-cat" class="form-control">
+                    <label class="asset-registration-field asset-registration-type-field">
+                        <span>Tipe aset <b>*</b></span>
+                        <select id="na-cat" class="form-control" onchange="window.updateNewAssetFormLayout()" required>
                             <option value="Excavator">Excavator</option>
                             <option value="Bulldozer">Bulldozer</option>
                             <option value="Dump Truck">Dump Truck</option>
@@ -3863,81 +3864,126 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <option value="Trado">Trado</option>
                             <option value="Other">Other</option>
                         </select>
-                    </div>
-                </div>
+                    </label>
+                </section>
 
-                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Merek & Model Spesifik</label>
-                        <input type="text" id="na-model" placeholder="Misal: Komatsu PC200-10M0 CE" class="form-control">
+                <section class="asset-registration-section" aria-labelledby="newAssetDataTitle">
+                    <div class="asset-registration-section-heading">
+                        <div>
+                            <span class="asset-registration-step">02</span>
+                            <h3 id="newAssetDataTitle">Data utama unit</h3>
+                        </div>
+                        <span id="na-form-mode" class="asset-registration-mode">Formulir umum</span>
                     </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Tahun Pembuatan</label>
-                        <input type="number" id="na-year" placeholder="Misal: 2024" min="1970" max="2099" class="form-control">
-                    </div>
-                </div>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Nomor Seri (Serial Number / SN)</label>
-                        <input type="text" id="na-sn" placeholder="Misal: C51502 (SN Chasis/Pabrik)" class="form-control">
-                    </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Nomor Pelat Kendaraan</label>
-                        <input type="text" id="na-plate" placeholder="Misal: BM 9012 RWI (Jika ada)" class="form-control">
-                    </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Garansi (Warranty)</label>
-                        <input type="text" id="na-warranty" placeholder="Misal: 0 HM, 3000 HM, dsb" class="form-control">
-                    </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Nomor Rangka (Chassis Number)</label>
-                        <input type="text" id="na-chassis" placeholder="Nomor Rangka Kendaraan" class="form-control">
-                    </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Lokasi Operasional / Site</label>
+                    <div class="asset-registration-grid">
+                        <label class="asset-registration-field asset-registration-field-wide">
+                            <span>Nama aset <b>*</b></span>
+                            <input type="text" id="na-model" placeholder="Contoh: Komatsu PC200-10M0 CE" class="form-control" required>
+                        </label>
+                        <label class="asset-registration-field" data-form-variant="general">
+                            <span>Dealer</span>
+                            <input type="text" id="na-dealer" placeholder="Nama dealer atau cabang" class="form-control">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Tahun <b>*</b></span>
+                            <input type="number" id="na-year" placeholder="2026" min="1970" max="2099" class="form-control" oninput="window.updateNewAssetAge()" required>
+                        </label>
+                        <label class="asset-registration-field" data-form-variant="general">
+                            <span>Serial number</span>
+                            <input type="text" id="na-sn" placeholder="Nomor seri pabrikan" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-form-variant="dump">
+                            <span>Serial number / pelat kendaraan</span>
+                            <input type="text" id="na-dump-identity" placeholder="Nomor seri atau pelat kendaraan" class="form-control">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span id="na-hull-label">Nomor lambung aktual</span>
+                            <input type="text" id="na-hull" placeholder="Kode fisik yang terpasang pada unit" class="form-control" maxlength="100">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Project</span>
                         <select id="na-loc" class="form-control">
-                            <option value="">Memuat lokasi dari database...</option>
-                        </select>
+                                <option value="">Memuat daftar project...</option>
+                            </select>
+                        </label>
+                        <label class="asset-registration-field">
+                            <span id="na-position-label">Lokasi</span>
+                            <input type="text" id="na-position" placeholder="Lokasi atau posisi aktual unit" class="form-control">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Status</span>
+                            <select id="na-status" class="form-control">
+                                <option value="READY">READY - Siap Operasi</option>
+                                <option value="OPERATING">OPERATING - Sedang Operasi</option>
+                                <option value="STANDBY">STANDBY - Cadangan</option>
+                                <option value="INSPEKSI">INSPEKSI - Pengecekan</option>
+                                <option value="BREAKDOWN">BREAKDOWN - Perbaikan</option>
+                            </select>
+                        </label>
+                        <label class="asset-registration-field" data-form-variant="general">
+                            <span>Lokasi invoice</span>
+                            <input type="text" id="na-invoice-location" placeholder="Tempat penyimpanan invoice" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-form-variant="dump">
+                            <span>Lokasi STNK</span>
+                            <input type="text" id="na-stnk-location" placeholder="Tempat penyimpanan STNK" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-form-variant="dump">
+                            <span>Lokasi BPKB</span>
+                            <input type="text" id="na-bpkb-location" placeholder="Tempat penyimpanan BPKB" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-form-variant="dump">
+                            <span>Nomor rangka</span>
+                            <input type="text" id="na-chassis" placeholder="Nomor rangka kendaraan" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-form-variant="dump">
+                            <span>Tipe</span>
+                            <input type="text" id="na-vehicle-type" placeholder="Contoh: FM280JD (6x4)" class="form-control">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Usia</span>
+                            <div class="asset-registration-age-control">
+                                <input type="number" id="na-age" min="0" max="100" placeholder="Otomatis" class="form-control" readonly>
+                                <span>tahun</span>
+                            </div>
+                        </label>
                     </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Status Operasional Awal</label>
-                        <select id="na-status" class="form-control">
-                            <option value="READY">READY - Siap Operasi</option>
-                            <option value="OPERATING">OPERATING - Langsung Operasi</option>
-                            <option value="STANDBY">STANDBY - Cadangan</option>
-                            <option value="INSPEKSI">INSPEKSI - Pengecekan PM</option>
-                            <option value="BREAKDOWN">BREAKDOWN - Perbaikan</option>
-                        </select>
+                </section>
+
+                <section class="asset-registration-section" aria-labelledby="newAssetLegalTitle">
+                    <div class="asset-registration-section-heading">
+                        <div>
+                            <span class="asset-registration-step">03</span>
+                            <h3 id="newAssetLegalTitle">Legalitas dan Dokumentasi</h3>
+                        </div>
+                        <span class="asset-registration-optional">Opsional</span>
                     </div>
-                </div>
+                    <div class="asset-registration-legal-grid">
+                        <label class="asset-registration-field"><span>STNK berlaku sampai</span><input id="na-stnk" type="date" class="form-control"></label>
+                        <label class="asset-registration-field"><span>KIR berlaku sampai</span><input id="na-kir" type="date" class="form-control"></label>
+                        <label class="asset-registration-field"><span>SILO berlaku sampai</span><input id="na-silo" type="date" class="form-control"></label>
+                    </div>
+                    <div class="asset-registration-upload-grid">
+                        <label class="asset-registration-upload">
+                            <span><i class="fa-regular fa-image"></i> Foto unit</span>
+                            <small>JPEG, PNG, atau WebP · maks. 5 MB per foto</small>
+                            <input id="na-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="form-control" onchange="window.previewAssetPhotos(this.files)">
+                        </label>
+                        <label class="asset-registration-upload">
+                            <span><i class="fa-regular fa-file-pdf"></i> PDF JO servis</span>
+                            <small>Dokumen PDF · maks. 10 MB</small>
+                            <input id="na-service-pdf" type="file" accept="application/pdf" class="form-control">
+                        </label>
+                    </div>
+                    <div id="na-photo-preview" class="asset-registration-photo-preview"></div>
+                </section>
 
-                <div style="margin-bottom:14px;">
-                    <label style="font-weight:600; font-size:0.8rem;">Meter Operasional Awal (HM / KM)</label>
-                    <input type="number" id="na-hm" placeholder="0.00" step="0.1" value="0.00" class="form-control">
-                </div>
+                <div id="na-error-alert" class="asset-registration-error" role="alert"></div>
 
-                <h3 style="font-size:0.95rem;margin:18px 0 10px;">Legalitas dan Dokumentasi</h3>
-                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;">
-                    <label>STNK berlaku sampai<input id="na-stnk" type="date" class="form-control"></label>
-                    <label>KIR berlaku sampai<input id="na-kir" type="date" class="form-control"></label>
-                    <label>SILO berlaku sampai<input id="na-silo" type="date" class="form-control"></label>
-                </div>
-                <label>Foto unit (JPEG/PNG/WebP, maks. 5 MB per foto)<input id="na-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="form-control" onchange="window.previewAssetPhotos(this.files)"></label>
-                <div id="na-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;"></div>
-                <label>PDF JO servis (maks. 10 MB)<input id="na-service-pdf" type="file" accept="application/pdf" class="form-control"></label>
-
-                <div id="na-error-alert" style="display:none; color:var(--danger); background:#fef2f2; border:1px solid #fecaca; padding:8px 12px; border-radius:4px; font-size:0.8rem; margin-bottom:12px;"></div>
-
-                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <div class="asset-registration-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modalNewAsset')">Batal</button>
-                    <button type="button" class="btn btn-primary" id="btnSubmitNewAsset" onclick="submitNewAsset()"><i class="fa-solid fa-save"></i> Simpan Unit Aset</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitNewAsset" onclick="submitNewAsset()"><i class="fa-solid fa-floppy-disk"></i> Simpan unit aset</button>
                 </div>
             </div>
         </div>
@@ -5179,6 +5225,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const el = document.getElementById(id);
                 if (el) {
                     if (id === 'modalNewAsset' || id === 'modalEditAsset') window.loadAssetLocations();
+                    if (id === 'modalNewAsset') window.updateNewAssetFormLayout();
                     // Overlay yang berada di dalam view tersembunyi tetap berukuran 0x0
                     // walaupun memakai position:fixed. Pindahkan ke body sebelum dibuka.
                     if (el.classList.contains('modal-overlay') && el.parentElement !== document.body) {
@@ -7989,11 +8036,11 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 if (assets.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 25px; color: var(--text-muted);"><i class="fa-solid fa-filter" style="margin-right:6px;"></i> Tidak ada unit yang cocok dengan filter kelengkapan/pencarian saat ini.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding: 25px; color: var(--text-muted);"><i class="fa-solid fa-filter" style="margin-right:6px;"></i> Tidak ada unit yang cocok dengan filter kelengkapan/pencarian saat ini.</td></tr>';
                     return;
                 }
 
-                tbody.innerHTML = assets.slice(0, 100).map(asset => {
+                tbody.innerHTML = assets.slice(0, 100).map((asset, rowIndex) => {
                     const ident = window.formatAssetIdentityDetails(asset);
                     const compl = window.getAssetCompleteness(asset);
                     const badge = window.getAssetStatusBadge(asset.status);
@@ -8034,6 +8081,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         onclick="openAssetActionCalloutFromElement(event, this)" 
                         style="cursor:pointer;" 
                         title="Klik 1x untuk membuka Opsi Aksi Integrasi Unit ${escapeHtml(asset.id)}">
+                        <td style="text-align:center; color:var(--text-muted); font-variant-numeric:tabular-nums;">${rowIndex + 1}</td>
                         <td onclick="event.stopPropagation();">
                             <a href="javascript:void(0)" 
                                class="unit-prop-hover-link" 
@@ -8825,24 +8873,6 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             function openModal(id) { window.openModal(id); }
             function closeModal(id) { window.closeModal(id); }
 
-            window.updateAssetServiceEstimate = function() {
-                const last = Number(document.getElementById('na-last-service-hm')?.value);
-                const interval = Number(document.getElementById('na-service-interval')?.value);
-                const current = Number(document.getElementById('na-hm')?.value);
-                const daily = Number(document.getElementById('na-daily-rate')?.value);
-                const output = document.getElementById('na-service-estimate');
-                if (!output) return;
-                if (!document.getElementById('na-last-service-date')?.value || !Number.isFinite(last) || interval <= 0 || daily <= 0) {
-                    output.textContent = 'Target dan estimasi: belum tersedia';
-                    return;
-                }
-                const target = last + interval;
-                const days = Math.max(0, Math.ceil((target - current) / daily));
-                const estimate = new Date();
-                estimate.setDate(estimate.getDate() + days);
-                output.textContent = `Target ${target.toLocaleString('id-ID')} ${document.getElementById('na-service-unit').value}; estimasi ${estimate.toLocaleDateString('id-ID')} (${days} hari dari sekarang). Nilai final dihitung server.`;
-            };
-
             window.previewAssetPhotos = function(files) {
                 const target = document.getElementById('na-photo-preview');
                 if (!target) return;
@@ -8859,6 +8889,36 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
             };
 
+            window.updateNewAssetAge = function() {
+                const yearInput = document.getElementById('na-year');
+                const ageInput = document.getElementById('na-age');
+                if (!yearInput || !ageInput) return;
+                const year = Number.parseInt(yearInput.value, 10);
+                const currentYear = new Date().getFullYear();
+                ageInput.value = Number.isInteger(year) && year >= 1970 && year <= currentYear
+                    ? String(currentYear - year)
+                    : '';
+            };
+
+            window.updateNewAssetFormLayout = function() {
+                const category = document.getElementById('na-cat')?.value || '';
+                const isDumpTruck = category === 'Dump Truck';
+                document.querySelectorAll('#modalNewAsset [data-form-variant]').forEach(field => {
+                    const visible = field.dataset.formVariant === (isDumpTruck ? 'dump' : 'general');
+                    field.hidden = !visible;
+                    field.querySelectorAll('input, select, textarea').forEach(control => {
+                        control.disabled = !visible;
+                    });
+                });
+                const mode = document.getElementById('na-form-mode');
+                const hullLabel = document.getElementById('na-hull-label');
+                const positionLabel = document.getElementById('na-position-label');
+                if (mode) mode.textContent = isDumpTruck ? 'Khusus Dump Truck' : 'Formulir umum';
+                if (hullLabel) hullLabel.textContent = isDumpTruck ? 'Kode aktual' : 'Nomor lambung aktual';
+                if (positionLabel) positionLabel.textContent = isDumpTruck ? 'Posisi' : 'Lokasi';
+                window.updateNewAssetAge();
+            };
+
             window.uploadAssetAttachment = async function(assetId, kind, file) {
                 const form = new FormData();
                 form.append('asset_id', assetId);
@@ -8872,45 +8932,48 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             };
 
             async function submitNewAsset() {
-                const id = document.getElementById('na-id').value.trim();
                 const cat = document.getElementById('na-cat').value.trim();
                 const model = document.getElementById('na-model').value.trim();
                 const year = document.getElementById('na-year').value.trim();
-                const sn = document.getElementById('na-sn').value.trim();
-                const plate = document.getElementById('na-plate').value.trim();
-                const warranty = document.getElementById('na-warranty') ? document.getElementById('na-warranty').value.trim() : '0 HM';
+                const isDumpTruck = cat === 'Dump Truck';
+                const sn = isDumpTruck
+                    ? document.getElementById('na-dump-identity').value.trim()
+                    : document.getElementById('na-sn').value.trim();
+                const dealer = document.getElementById('na-dealer')?.value.trim() || '';
                 const chassisNumber = document.getElementById('na-chassis') ? document.getElementById('na-chassis').value.trim() : '';
+                const vehicleType = document.getElementById('na-vehicle-type')?.value.trim() || '';
+                const position = document.getElementById('na-position')?.value.trim() || '';
+                const invoiceLocation = document.getElementById('na-invoice-location')?.value.trim() || '';
+                const stnkLocation = document.getElementById('na-stnk-location')?.value.trim() || '';
+                const bpkbLocation = document.getElementById('na-bpkb-location')?.value.trim() || '';
+                const assetAge = document.getElementById('na-age')?.value.trim() || '';
                 const locSelect = document.getElementById('na-loc');
                 const locId = locSelect ? locSelect.value : '';
-                const locName = locSelect && locSelect.selectedIndex >= 0 ? locSelect.options[locSelect.selectedIndex].text : 'Yard';
+                const locName = locId && locSelect && locSelect.selectedIndex >= 0 ? locSelect.options[locSelect.selectedIndex].text : '';
                 const status = document.getElementById('na-status').value.trim();
-                const hm = document.getElementById('na-hm').value.trim();
                 const errAlert = document.getElementById('na-error-alert');
                 const submitBtn = document.getElementById('btnSubmitNewAsset');
 
                 if (errAlert) { errAlert.style.display = 'none'; errAlert.textContent = ''; }
 
-                if (!id) {
+                if (!model) {
                     if (errAlert) {
-                        errAlert.textContent = 'Kode unit permanen wajib diisi.';
+                        errAlert.textContent = 'Nama aset wajib diisi.';
                         errAlert.style.display = 'block';
-                    } else {
-                        alert('Kode unit permanen wajib diisi.');
                     }
+                    document.getElementById('na-model')?.focus();
                     return;
                 }
 
-                if (year) {
-                    const parsedYear = parseInt(year, 10);
-                    if (isNaN(parsedYear) || parsedYear < 1970 || parsedYear > 2099) {
-                        if (errAlert) {
-                            errAlert.textContent = 'Tahun pembuatan harus berupa angka antara 1970 dan 2099.';
-                            errAlert.style.display = 'block';
-                        } else {
-                            alert('Tahun pembuatan harus valid (1970-2099).');
-                        }
-                        return;
+                const parsedYear = parseInt(year, 10);
+                const currentYear = new Date().getFullYear();
+                if (!year || isNaN(parsedYear) || parsedYear < 1970 || parsedYear > currentYear) {
+                    if (errAlert) {
+                        errAlert.textContent = `Tahun harus berupa angka antara 1970 dan ${currentYear}.`;
+                        errAlert.style.display = 'block';
                     }
+                    document.getElementById('na-year')?.focus();
+                    return;
                 }
 
                 if (submitBtn) {
@@ -8943,20 +9006,25 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         })
                         : [];
                     const payload = {
-                        asset_id: id,
-                        asset_code: id,
                         hull_number: document.getElementById('na-hull')?.value.trim() || null,
                         category: cat,
                         type: 'Heavy Equipment',
                         status: status || 'READY',
                         make_model: model || null,
-                        year_manufacture: year ? parseInt(year, 10) : null,
+                        year_manufacture: parsedYear,
                         serial_number: sn || null,
-                        license_plate: plate || null,
-                        warranty: warranty || '0 HM',
+                        license_plate: null,
+                        dealer: dealer || null,
+                        project_name: locName || null,
+                        operational_position: position || null,
+                        invoice_location: invoiceLocation || null,
+                        stnk_location: stnkLocation || null,
+                        bpkb_location: bpkbLocation || null,
+                        vehicle_type: vehicleType || null,
+                        asset_age: assetAge ? parseInt(assetAge, 10) : null,
                         chassis_number: chassisNumber || null,
                         current_location_id: locId ? parseInt(locId, 10) : null,
-                        last_hm_km: hm ? parseFloat(hm) : 0.0,
+                        last_hm_km: 0.0,
                         ...onboardingInput,
                         historical_services: historicalServices
                     };
@@ -8970,34 +9038,42 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const result = await response.json();
 
                     if (response.ok && result.status === 'success') {
+                        const savedAssetId = result.data.asset_id;
                         const uploadErrors = [];
                         for (const file of photoFiles) {
-                            try { await window.uploadAssetAttachment(id, 'photo', file); }
+                            try { await window.uploadAssetAttachment(savedAssetId, 'photo', file); }
                             catch (error) { uploadErrors.push(`${file.name}: ${error.message}`); }
                         }
                         if (pdfFile) {
-                            try { await window.uploadAssetAttachment(id, 'pdf', pdfFile); }
+                            try { await window.uploadAssetAttachment(savedAssetId, 'pdf', pdfFile); }
                             catch (error) { uploadErrors.push(`${pdfFile.name}: ${error.message}`); }
                         }
                         const newAsset = {
-                            id: id,
-                            asset_id: id,
-                            asset_code: id,
+                            id: savedAssetId,
+                            asset_id: savedAssetId,
+                            asset_code: result.data.asset_code || savedAssetId,
                             hull_number: document.getElementById('na-hull')?.value.trim() || null,
                             ...result.data.onboarding,
                             type: 'Heavy Equipment',
                             category: cat,
                             status: status || 'READY',
                             make_model: model || null,
-                            year_manufacture: year ? parseInt(year, 10) : null,
+                            year_manufacture: parsedYear,
                             serial_number: sn || null,
-                            license_plate: plate || null,
-                            warranty: warranty || '0 HM',
+                            license_plate: null,
+                            dealer: dealer || null,
+                            project_name: locName || null,
+                            operational_position: position || null,
+                            invoice_location: invoiceLocation || null,
+                            stnk_location: stnkLocation || null,
+                            bpkb_location: bpkbLocation || null,
+                            vehicle_type: vehicleType || null,
+                            asset_age: assetAge ? parseInt(assetAge, 10) : null,
                             chassis_number: chassisNumber || null,
                             current_location_id: locId ? parseInt(locId, 10) : null,
                             location: locName,
                             location_name: locName,
-                            last_hm_km: hm ? parseFloat(hm) : 0.0,
+                            last_hm_km: 0.0,
                             lastUpdate: 'Baru saja',
                             statusSource: 'Master Asset',
                             statusReference: 'Registrasi unit baru',
@@ -9010,26 +9086,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         window.currentAssetData.unshift(newAsset);
 
                         // Reset input fields
-                        document.getElementById('na-id').value = '';
-                        document.getElementById('na-model').value = '';
-                        document.getElementById('na-year').value = '';
-                        document.getElementById('na-sn').value = '';
-                        document.getElementById('na-plate').value = '';
-                        if (document.getElementById('na-warranty')) document.getElementById('na-warranty').value = '';
-                        if (document.getElementById('na-chassis')) document.getElementById('na-chassis').value = '';
-                        document.getElementById('na-hm').value = '0.00';
-                        for (const field of ['na-hull','na-operator','na-operator-start','na-operator-shift','na-last-service-date','na-last-service-hm','na-service-interval','na-daily-rate','na-stnk','na-kir','na-silo','na-photos','na-service-pdf','na-service-history']) {
+                        for (const field of ['na-model','na-dealer','na-year','na-age','na-sn','na-dump-identity','na-hull','na-position','na-invoice-location','na-stnk-location','na-bpkb-location','na-chassis','na-vehicle-type','na-operator','na-operator-start','na-operator-shift','na-last-service-date','na-last-service-hm','na-service-interval','na-daily-rate','na-stnk','na-kir','na-silo','na-photos','na-service-pdf','na-service-history']) {
                             const el = document.getElementById(field);
                             if (el) el.value = '';
                         }
-                        document.getElementById('na-photo-preview').replaceChildren();
+                        document.getElementById('na-photo-preview')?.replaceChildren();
 
                         closeModal('modalNewAsset');
                         initAssetView(globalData.assets);
                         if (typeof rebuildFleetSummary === 'function') rebuildFleetSummary();
                         if (typeof window.syncFleetState === 'function') window.syncFleetState();
                         if (window.PreventiveMaintenance?.refresh) window.PreventiveMaintenance.refresh();
-                        alert(uploadErrors.length ? `Unit '${id}' tersimpan, tetapi unggahan berikut gagal dan perlu dicoba lagi: ${uploadErrors.join('; ')}` : `Unit aset '${id}' berhasil didaftarkan ke database.`);
+                        alert(uploadErrors.length ? `Unit '${savedAssetId}' tersimpan, tetapi unggahan berikut gagal dan perlu dicoba lagi: ${uploadErrors.join('; ')}` : `Unit aset '${savedAssetId}' berhasil didaftarkan ke database.`);
                     } else {
                         const msg = result.message || 'Gagal menyimpan aset ke database.';
                         if (errAlert) {
@@ -9042,15 +9110,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 } catch (error) {
                     console.error('Error saving asset:', error);
                     if (errAlert) {
-                        errAlert.textContent = 'Terjadi kesalahan koneksi atau server saat menyimpan aset.';
+                        errAlert.textContent = error?.message || 'Terjadi kesalahan koneksi atau server saat menyimpan aset.';
                         errAlert.style.display = 'block';
-                    } else {
-                        alert('Terjadi kesalahan jaringan atau server saat menyimpan aset');
                     }
                 } finally {
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Simpan Unit Aset';
+                        submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan unit aset';
                     }
                 }
             }

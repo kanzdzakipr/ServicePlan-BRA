@@ -11,6 +11,43 @@ require_once dirname(__DIR__) . '/core/AssetIdentity.php';
 require_once dirname(__DIR__) . '/core/AssetOnboarding.php';
 require_once dirname(__DIR__) . '/core/AssetSearch.php';
 
+function generate_asset_identifier(PDO $db, string $category): string
+{
+    $prefixes = [
+        'Excavator' => 'EXC',
+        'Bulldozer' => 'DZ',
+        'Dump Truck' => 'DT',
+        'Motor Grader' => 'MG',
+        'Vibro Compactor' => 'PF',
+        'Water Truck' => 'WT',
+        'Prime Mover' => 'PM',
+        'Light Vehicle' => 'LV',
+        'Reclaimer Spreader' => 'RM',
+        'Trado' => 'TRD',
+        'Other' => 'AST',
+    ];
+    $prefix = $prefixes[$category] ?? 'AST';
+    $stmt = $db->prepare('SELECT asset_id FROM assets WHERE asset_id LIKE :prefix');
+    $stmt->execute([':prefix' => $prefix . '-%']);
+    $largest = 0;
+    foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $existingId) {
+        if (preg_match('/^' . preg_quote($prefix, '/') . '-(\d+)$/', (string) $existingId, $matches)) {
+            $largest = max($largest, (int) $matches[1]);
+        }
+    }
+    return sprintf('%s-%05d', $prefix, $largest + 1);
+}
+
+function nullable_asset_text(array $data, string $key, int $maxLength): ?string
+{
+    $value = trim((string) ($data[$key] ?? ''));
+    if ($value === '' || $value === '-') return null;
+    if (mb_strlen($value, 'UTF-8') > $maxLength) {
+        throw new InvalidArgumentException("Nilai {$key} maksimal {$maxLength} karakter.");
+    }
+    return $value;
+}
+
 switch ($method) {
     case 'GET':
         AuthMiddleware::checkAccess('asset', 'R');
@@ -87,9 +124,13 @@ switch ($method) {
             api_json_response(422, ['status' => 'error', 'code' => 'INVALID_PAYLOAD', 'message' => 'Payload JSON tidak valid.']);
         }
 
+        $category = trim((string) ($data['category'] ?? 'Other'));
+        if (!in_array($category, ASSET_CATEGORIES, true)) $category = 'Other';
+
         $assetId = trim((string) ($data['asset_id'] ?? ''));
-        if ($assetId === '' || strlen($assetId) < 2) {
-            api_json_response(422, ['status' => 'error', 'code' => 'VALIDATION_ERROR', 'message' => 'Kode unit permanen wajib diisi minimal 2 karakter.']);
+        if ($assetId === '') $assetId = generate_asset_identifier($db, $category);
+        if (strlen($assetId) < 2) {
+            api_json_response(422, ['status' => 'error', 'code' => 'VALIDATION_ERROR', 'message' => 'ID unit tidak valid.']);
         }
 
         $assetCode = trim((string) ($data['asset_code'] ?? $assetId));
@@ -162,19 +203,13 @@ switch ($method) {
         $makeModel = trim((string) ($data['make_model'] ?? ''));
         $makeModelValue = ($makeModel !== '' && $makeModel !== '-') ? $makeModel : null;
 
-        // 6. Validasi Kategori
-        $category = trim((string) ($data['category'] ?? 'Other'));
-        if (!in_array($category, ASSET_CATEGORIES, true)) {
-            $category = 'Other';
-        }
-
-        // 7. Validasi Status
+        // 6. Validasi Status
         $status = asset_normalize_status((string) ($data['status'] ?? 'READY'));
         if (!in_array($status, ASSET_STATUSES, true)) {
             $status = 'READY';
         }
 
-        // 8. Validasi Lokasi & Scope
+        // 7. Validasi Lokasi & Scope
         $targetLocationId = null;
         if (isset($data['current_location_id']) && $data['current_location_id'] !== '' && $data['current_location_id'] !== null) {
             $targetLocationId = (int) $data['current_location_id'];
@@ -195,6 +230,20 @@ switch ($method) {
         $type = trim((string) ($data['type'] ?? 'Heavy Equipment'));
         $lastHmKm = isset($data['last_hm_km']) ? max(0.0, (float) $data['last_hm_km']) : 0.00;
         try {
+            $registrationFields = [
+                'dealer' => nullable_asset_text($data, 'dealer', 150),
+                'project_name' => nullable_asset_text($data, 'project_name', 150),
+                'operational_position' => nullable_asset_text($data, 'operational_position', 150),
+                'invoice_location' => nullable_asset_text($data, 'invoice_location', 150),
+                'stnk_location' => nullable_asset_text($data, 'stnk_location', 150),
+                'bpkb_location' => nullable_asset_text($data, 'bpkb_location', 150),
+                'vehicle_type' => nullable_asset_text($data, 'vehicle_type', 100),
+            ];
+            $ageInput = $data['asset_age'] ?? null;
+            $assetAge = ($ageInput === null || $ageInput === '')
+                ? ($yearValue !== null ? max(0, (int) date('Y') - $yearValue) : null)
+                : filter_var($ageInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 100]]);
+            if ($assetAge === false) throw new InvalidArgumentException('Usia aset harus berupa angka antara 0 dan 100 tahun.');
             $onboarding = AssetOnboarding::fields($data, $lastHmKm);
             $historicalServices = AssetOnboarding::history($data['historical_services'] ?? []);
             foreach ($historicalServices as $historical) {
@@ -212,7 +261,8 @@ switch ($method) {
                 INSERT INTO assets (
                     asset_id, asset_code, hull_number, alias_name, serial_number, license_plate,
                     make_model, year_manufacture, type, category, status,
-                    warranty, chassis_number,
+                    warranty, chassis_number, dealer, project_name, operational_position,
+                    invoice_location, stnk_location, bpkb_location, vehicle_type, asset_age,
                     current_location_id, last_hm_km, is_active,
                     current_operator_name, last_service_date, last_service_hm_km,
                     service_interval_val, service_interval_unit, daily_usage_coefficient,
@@ -221,7 +271,8 @@ switch ($method) {
                 ) VALUES (
                     :id, :code, :hull, :alias, :sn, :plate,
                     :make_model, :year, :type, :cat, :status,
-                    :warranty, :chassis,
+                    :warranty, :chassis, :dealer, :project_name, :position,
+                    :invoice_location, :stnk_location, :bpkb_location, :vehicle_type, :asset_age,
                     :loc_id, :hm, 1,
                     :operator, :service_date, :service_meter,
                     :interval_val, :interval_unit, :daily_rate,
@@ -245,6 +296,14 @@ switch ($method) {
                 ':status' => $status,
                 ':warranty' => $warrantyVal,
                 ':chassis' => $chassisVal,
+                ':dealer' => $registrationFields['dealer'],
+                ':project_name' => $registrationFields['project_name'],
+                ':position' => $registrationFields['operational_position'],
+                ':invoice_location' => $registrationFields['invoice_location'],
+                ':stnk_location' => $registrationFields['stnk_location'],
+                ':bpkb_location' => $registrationFields['bpkb_location'],
+                ':vehicle_type' => $registrationFields['vehicle_type'],
+                ':asset_age' => $assetAge,
                 ':loc_id' => $targetLocationId,
                 ':hm' => $lastHmKm,
                 ':operator' => $onboarding['current_operator_name'],
@@ -287,7 +346,15 @@ switch ($method) {
                     "category" => $category,
                     "status" => $status,
                     "current_location_id" => $targetLocationId,
-                    "last_hm_km" => $lastHmKm
+                    "last_hm_km" => $lastHmKm,
+                    "dealer" => $registrationFields['dealer'],
+                    "project_name" => $registrationFields['project_name'],
+                    "operational_position" => $registrationFields['operational_position'],
+                    "invoice_location" => $registrationFields['invoice_location'],
+                    "stnk_location" => $registrationFields['stnk_location'],
+                    "bpkb_location" => $registrationFields['bpkb_location'],
+                    "vehicle_type" => $registrationFields['vehicle_type'],
+                    "asset_age" => $assetAge
                 ]
             ]);
         } catch (Throwable $e) {
