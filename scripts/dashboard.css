@@ -21100,11 +21100,12 @@ body.sl-modal-open {
         flex-direction: column;
         align-items: stretch;
     }
-    .wo-part-qty-wrap, .wo-part-uom-wrap {
+    .wo-part-qty-wrap,
+    .wo-part-uom-wrap {
         width: 100%;
         flex: 1 1 100%;
     }
-}
+
     #modalNewWO {
         align-items: stretch;
         padding: 0;
@@ -22589,7 +22590,7 @@ body.sl-modal-open {
 }
 
 .master-asset-print-dialog {
-    width: min(92vw, 560px);
+    width: min(92vw, 680px);
 }
 
 .master-asset-print-description {
@@ -22622,6 +22623,101 @@ body.sl-modal-open {
 .master-asset-print-option small {
     margin-top: 3px;
     color: #64748b;
+}
+
+.master-asset-print-filters {
+    margin: -1px 0 12px;
+    padding: 14px;
+    border: 1px solid #bae6fd;
+    border-top: 0;
+    border-radius: 0 0 8px 8px;
+    background: #f8fbfe;
+}
+
+.master-asset-print-filters[hidden] {
+    display: none;
+}
+
+.master-asset-print-filter-heading strong,
+.master-asset-print-filter-heading small {
+    display: block;
+}
+
+.master-asset-print-filter-heading strong {
+    color: #172033;
+    font-size: .84rem;
+}
+
+.master-asset-print-filter-heading small {
+    margin-top: 2px;
+    color: #64748b;
+    font-size: .76rem;
+}
+
+.master-asset-print-filter-grid {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.master-asset-print-filter-row {
+    display: grid;
+    grid-template-columns: 18px 86px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.master-asset-print-filter-row > span {
+    color: #334155;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.master-asset-print-filter-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #0284c7;
+}
+
+.master-asset-print-filter-row select {
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    font-size: .8rem;
+}
+
+.master-asset-print-filter-row select:disabled {
+    color: #94a3b8;
+    background: #eef2f6;
+    cursor: not-allowed;
+}
+
+.master-asset-print-filter-note {
+    margin: 10px 0 0;
+    color: #b45309;
+    font-size: .75rem;
+    line-height: 1.4;
+}
+
+.master-asset-print-filter-note.is-ready {
+    color: #0369a1;
+}
+
+#masterAssetPrintSubmit:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+    .master-asset-print-filter-row {
+        grid-template-columns: 18px minmax(0, 1fr);
+    }
+
+    .master-asset-print-filter-row select {
+        grid-column: 2;
+    }
 }
 
 .asset-legal-documents-modal {
@@ -22795,5 +22891,8 @@ body.sl-modal-open {
     }
 }
 
-
+#toggleMasterAssetAdvanced:hover {
+    color: #0369a1 !important;
+    text-decoration: underline !important;
+}
 

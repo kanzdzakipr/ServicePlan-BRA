@@ -559,13 +559,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             <div id="view-asset" class="view-section">
                 <div
                     style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
-                    <div>
-                        <h1 class="page-title" style="margin-bottom:4px;"><i class="fa-solid fa-cubes"
-                                style="color:var(--primary);"></i> Master Asset Armada</h1>
-                        <p style="color:var(--text-muted); font-size:0.88rem; margin:0;">
-                            Inventarisasi & Monitoring Status Efektif Armada Alat Berat (48 Unit Terdaftar)
-                        </p>
-                    </div>
+                    <h1 class="page-title" style="margin:0;">Master Asset Armada</h1>
                     <div>
                         <button class="btn btn-primary" onclick="openModal('modalNewAsset')"><i
                                 class="fa-solid fa-plus"></i> Registrasi Unit Baru</button>
@@ -652,10 +646,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
                         <span><i class="fa-solid fa-list-check"></i> Daftar Unit Armada & Linkage Sistem
                             Integrasi</span>
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <div style="font-size:0.8rem; color:var(--text-muted);">
-                                <i class="fa-solid fa-link"></i> Klik 1x pada unit atau tombol Aksi untuk membuka popup integrasi modul (360&deg;, P2H, WO, Condition, Edit, Arsip)
-                            </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
                             <button class="btn btn-sm btn-primary" onclick="window.openMasterAssetPrintDialog()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
                             <button class="btn btn-sm"
                                 style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;"
@@ -664,33 +655,40 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         </div>
                     </div>
                     <div class="panel-body">
-                        <!-- Quick Search Simultan 3 Parameter (Kode Unit, Nomor Lambung, Serial/Plat) -->
-                        <div class="asset-3param-search" style="margin-bottom: 16px;">
+                        <!-- Master Asset Filter & Search Container -->
+                        <div class="master-asset-filter-wrapper" style="border: 1px solid #dbe3ec; border-radius: 8px; background: #f8fafc; padding: 10px 12px; margin-bottom: 14px;">
+                            <!-- Top Bar: Search Input + Advanced Link + Reset Button (Icon Only) -->
                             <div style="position: relative; display: flex; align-items: center; gap: 10px;">
                                 <div style="position: relative; flex: 1;">
                                     <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 0.95rem;"></i>
-                                    <input type="text" id="asset3ParamSearch" class="form-control" style="padding-left: 40px; padding-right: 130px; height: 42px; font-size: 0.88rem; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #fff;" placeholder="Pencarian Simultan 3 Parameter: Kode Unit, Nomor Lambung Aktual, atau Serial Number / Plat..." oninput="window.filterMasterAsset3Param(this.value)">
-                                    <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.72rem; font-weight: 600; color: #0284c7; background: #e0f2fe; padding: 3px 8px; border-radius: 4px; pointer-events: none;"><i class="fa-solid fa-bolt"></i> 3-Param Search</span>
+                                    <input type="text" id="asset3ParamSearch" class="form-control" style="padding-left: 40px; padding-right: 14px; height: 40px; font-size: 0.88rem; border-radius: 6px; border: 1.5px solid #cbd5e1; background: #fff;" placeholder="Pencarian..." oninput="window.filterMasterAsset3Param(this.value)">
                                 </div>
-                                <button type="button" class="btn btn-sm" onclick="window.resetMasterAssetFilters()" style="height: 42px; padding: 0 16px; background: #f8fafc; border: 1.5px solid #cbd5e1; color: #475569;" title="Reset Semua Filter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                                <a href="javascript:void(0)" id="toggleMasterAssetAdvanced" onclick="window.toggleMasterAssetAdvanced()" style="font-size: 0.84rem; font-weight: 600; color: #0284c7; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; padding: 6px 8px; cursor: pointer;" title="Tampilkan / Sembunyikan Filter Spesifik">
+                                    <span>Advanced</span>
+                                    <i class="fa-solid fa-chevron-down" id="iconMasterAssetAdvanced" style="font-size: 0.72rem; transition: transform 0.2s ease;"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm" onclick="window.resetMasterAssetFilters()" style="height: 40px; width: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #ffffff; border: 1.5px solid #cbd5e1; color: #475569; border-radius: 6px;" title="Reset Semua Filter"><i class="fa-solid fa-rotate-left"></i></button>
                             </div>
-                        </div>
 
-                        <div class="master-asset-filterbar" aria-label="Filter Master Asset">
-                            <input type="text" id="filterAssetId" class="form-control" placeholder="Asset ID" oninput="window.filterMasterAsset('id', this.value)">
-                            <input type="text" id="filterAssetHull" class="form-control" placeholder="Nomor lambung" oninput="window.filterMasterAsset('hull', this.value)">
-                            <input type="text" id="filterAssetModel" class="form-control" placeholder="Nama aset / tahun" oninput="window.filterMasterAsset('model', this.value)">
-                            <input type="text" id="filterAssetSn" class="form-control" placeholder="SN / pelat" oninput="window.filterMasterAsset('sn', this.value)">
-                            <input type="text" id="filterAssetWarranty" class="form-control" placeholder="Garansi" oninput="window.filterMasterAsset('warranty', this.value)">
-                            <input type="text" id="filterAssetChassis" class="form-control" placeholder="Nomor rangka" oninput="window.filterMasterAsset('chassis', this.value)">
-                            <select id="filterAssetCat" class="form-control" onchange="window.filterMasterAsset('category', this.value)">
-                                <option value="">Semua kategori</option><option value="Excavator">Excavator</option><option value="Bulldozer">Bulldozer</option><option value="Dump Truck">Dump Truck</option><option value="Compactor">Compactor</option><option value="Motor Grader">Motor Grader</option><option value="Wheel Loader">Wheel Loader</option><option value="Light Vehicle">Light Vehicle</option><option value="Water Truck">Water Truck</option><option value="Prime Mover">Prime Mover</option><option value="Trado">Trado</option><option value="Other">Other</option>
-                            </select>
-                            <select id="filterAssetLoc" class="form-control" onchange="window.filterMasterAsset('location', this.value)">
-                                <option value="">Semua lokasi</option><option value="Borrow Pit">Borrow Pit</option><option value="Site Celcin">Site Celcin</option><option value="Yard">Yard</option><option value="Workshop">Workshop</option><option value="Site Alpha">Site Alpha</option><option value="Minas">Minas Field</option>
-                            </select>
-                            <select id="filterAssetComp" class="form-control" onchange="window.filterMasterAsset('completeness', this.value)"><option value="">Semua kelengkapan</option><option value="complete">Lengkap</option><option value="incomplete">Belum lengkap</option></select>
-                            <select id="filterAssetStat" class="form-control" onchange="window.filterMasterAsset('status', this.value)"><option value="">Semua status</option><option value="READY">READY</option><option value="OPERATING">OPERATING</option><option value="STANDBY">STANDBY</option><option value="BREAKDOWN">BREAKDOWN</option><option value="INSPEKSI">INSPEKSI</option><option value="ACCIDENT_HOLD">ACCIDENT HOLD</option></select>
+                            <!-- Dropdown / Collapsible Specific Filters (5x2) -->
+                            <div id="masterAssetAdvancedFilters" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+                                <div class="master-asset-filterbar" style="margin: 0; padding: 0; border: none; background: transparent;" aria-label="Filter Spesifik Master Asset">
+                                    <input type="text" id="filterAssetId" class="form-control" placeholder="Asset ID" oninput="window.filterMasterAsset('id', this.value)">
+                                    <input type="text" id="filterAssetHull" class="form-control" placeholder="Nomor lambung" oninput="window.filterMasterAsset('hull', this.value)">
+                                    <input type="text" id="filterAssetModel" class="form-control" placeholder="Nama aset / tahun" oninput="window.filterMasterAsset('model', this.value)">
+                                    <input type="text" id="filterAssetSn" class="form-control" placeholder="SN / pelat" oninput="window.filterMasterAsset('sn', this.value)">
+                                    <input type="text" id="filterAssetWarranty" class="form-control" placeholder="Garansi" oninput="window.filterMasterAsset('warranty', this.value)">
+                                    <input type="text" id="filterAssetChassis" class="form-control" placeholder="Nomor rangka" oninput="window.filterMasterAsset('chassis', this.value)">
+                                    <select id="filterAssetCat" class="form-control" onchange="window.filterMasterAsset('category', this.value)">
+                                        <option value="">Semua kategori</option><option value="Excavator">Excavator</option><option value="Bulldozer">Bulldozer</option><option value="Dump Truck">Dump Truck</option><option value="Compactor">Compactor</option><option value="Motor Grader">Motor Grader</option><option value="Wheel Loader">Wheel Loader</option><option value="Light Vehicle">Light Vehicle</option><option value="Water Truck">Water Truck</option><option value="Prime Mover">Prime Mover</option><option value="Trado">Trado</option><option value="Other">Other</option>
+                                    </select>
+                                    <select id="filterAssetLoc" class="form-control" onchange="window.filterMasterAsset('location', this.value)">
+                                        <option value="">Semua lokasi</option><option value="Borrow Pit">Borrow Pit</option><option value="Site Celcin">Site Celcin</option><option value="Yard">Yard</option><option value="Workshop">Workshop</option><option value="Site Alpha">Site Alpha</option><option value="Minas">Minas Field</option>
+                                    </select>
+                                    <select id="filterAssetComp" class="form-control" onchange="window.filterMasterAsset('completeness', this.value)"><option value="">Semua kelengkapan</option><option value="complete">Lengkap</option><option value="incomplete">Belum lengkap</option></select>
+                                    <select id="filterAssetStat" class="form-control" onchange="window.filterMasterAsset('status', this.value)"><option value="">Semua status</option><option value="READY">READY</option><option value="OPERATING">OPERATING</option><option value="STANDBY">STANDBY</option><option value="BREAKDOWN">BREAKDOWN</option><option value="INSPEKSI">INSPEKSI</option><option value="ACCIDENT_HOLD">ACCIDENT HOLD</option></select>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="table-responsive master-asset-table-scroll dashboard-wo-scroll">
@@ -3812,11 +3810,35 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
             </div>
             <div class="modal-body">
                 <p class="master-asset-print-description">Laporan menggunakan format A4 landscape. Serial Number dan pelat kendaraan dicetak pada kolom terpisah, termasuk usia setiap unit.</p>
-                <label class="master-asset-print-option"><input type="radio" name="masterAssetPrintScope" value="all" checked><span><strong>Seluruh Master Asset</strong><small id="masterAssetPrintAllCount">Semua unit aktif</small></span></label>
-                <label class="master-asset-print-option"><input type="radio" name="masterAssetPrintScope" value="filtered"><span><strong>Hasil filter saat ini</strong><small id="masterAssetPrintFilteredCount">Unit yang tampil setelah filter</small></span></label>
+                <label class="master-asset-print-option"><input type="radio" name="masterAssetPrintScope" value="all" checked onchange="window.updateMasterAssetPrintFilters()"><span><strong>Seluruh Master Asset</strong><small id="masterAssetPrintAllCount">Semua unit aktif</small></span></label>
+                <label class="master-asset-print-option"><input type="radio" name="masterAssetPrintScope" value="filtered" onchange="window.updateMasterAssetPrintFilters()"><span><strong>Hasil filter saat ini</strong><small id="masterAssetPrintFilteredCount">Pilih filter laporan</small></span></label>
+                <section class="master-asset-print-filters" id="masterAssetPrintFilters" aria-label="Pilihan filter laporan" hidden>
+                    <div class="master-asset-print-filter-heading">
+                        <strong>Filter prioritas</strong>
+                        <small>Centang filter yang ingin digunakan, lalu pilih nilainya.</small>
+                    </div>
+                    <div class="master-asset-print-filter-grid">
+                        <label class="master-asset-print-filter-row">
+                            <input type="checkbox" id="masterAssetPrintUseCategory" onchange="window.updateMasterAssetPrintFilters()">
+                            <span>Kategori</span>
+                            <select id="masterAssetPrintCategory" class="form-control" aria-label="Pilih kategori laporan" onchange="window.updateMasterAssetPrintFilters()" disabled><option value="">Pilih kategori</option></select>
+                        </label>
+                        <label class="master-asset-print-filter-row">
+                            <input type="checkbox" id="masterAssetPrintUseStatus" onchange="window.updateMasterAssetPrintFilters()">
+                            <span>Status</span>
+                            <select id="masterAssetPrintStatus" class="form-control" aria-label="Pilih status laporan" onchange="window.updateMasterAssetPrintFilters()" disabled><option value="">Pilih status</option></select>
+                        </label>
+                        <label class="master-asset-print-filter-row">
+                            <input type="checkbox" id="masterAssetPrintUseSite" onchange="window.updateMasterAssetPrintFilters()">
+                            <span>Site</span>
+                            <select id="masterAssetPrintSite" class="form-control" aria-label="Pilih site laporan" onchange="window.updateMasterAssetPrintFilters()" disabled><option value="">Pilih site</option></select>
+                        </label>
+                    </div>
+                    <p class="master-asset-print-filter-note" id="masterAssetPrintFilterNote">Pilih minimal satu filter untuk melanjutkan.</p>
+                </section>
                 <div class="asset-registration-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modalMasterAssetPrint')">Batal</button>
-                    <button type="button" class="btn btn-primary" onclick="window.printMasterAssetReport()"><i class="fa-solid fa-print"></i> Buka Pratinjau Cetak</button>
+                    <button type="button" class="btn btn-primary" id="masterAssetPrintSubmit" onclick="window.printMasterAssetReport()"><i class="fa-solid fa-print"></i> Buka Pratinjau Cetak</button>
                 </div>
             </div>
         </div>
@@ -8053,6 +8075,17 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 window.renderAssetTableBody();
             };
 
+            window.toggleMasterAssetAdvanced = function() {
+                const el = document.getElementById('masterAssetAdvancedFilters');
+                const icon = document.getElementById('iconMasterAssetAdvanced');
+                if (!el) return;
+                const isHidden = el.style.display === 'none' || getComputedStyle(el).display === 'none';
+                el.style.display = isHidden ? 'block' : 'none';
+                if (icon) {
+                    icon.className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+                }
+            };
+
             window.resetMasterAssetFilters = function() {
                 window.masterAssetFilters = { id: '', hull: '', model: '', sn: '', warranty: '', chassis: '', category: '', location: '', completeness: '', status: '', query3Param: '' };
                 const ids = ['filterAssetId', 'filterAssetHull', 'filterAssetModel', 'filterAssetSn', 'filterAssetWarranty', 'filterAssetChassis', 'asset3ParamSearch'];
@@ -8170,7 +8203,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <td><div class="asset-cell-line"><span>SN</span><b class="asset-mono">${shown(ident.sn)}</b></div><div class="asset-cell-line"><span>Pelat</span><b class="asset-mono">${shown(ident.plate)}</b></div><div class="asset-cell-line"><span>Rangka</span><b class="asset-mono">${shown(asset.chassis_number || asset.chassis)}</b></div></td>
                         <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(asset.warranty || 'Belum diketahui')}</span></td>
                         <td onclick="event.stopPropagation();">
-                            <div class="asset-cell-line"><span>Project</span><b>${shown(asset.project_name || asset.location)}</b></div><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || '')}', 'asset'); return false;"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
+                            <div class="asset-cell-line"><span>Project</span><b><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || asset.project_name || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || asset.project_name || '')}"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.project_name || asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></b></div><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
                         </td>
                         <td><div class="asset-condition-stack">${badge}${compl.isComplete ? '<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Lengkap</span>' : `<span class="badge badge-warning" title="${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum lengkap</span><small>Kurang: ${escapeHtml(compl.missing.join(', '))}</small>`}</div></td>
                         <td onclick="event.stopPropagation();"><button type="button" class="btn btn-sm asset-document-button" onclick="window.openAssetLegalDocuments('${escapeHtml(asset.id)}')" title="Cek legalitas dan dokumentasi unit"><i class="fa-solid fa-folder-open"></i><span>Dokumen</span></button></td>
@@ -8222,18 +8255,86 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 
             window.openMasterAssetPrintDialog = function() {
                 const all = window.currentAssetData || [];
-                const filtered = window.filteredMasterAssetData || all;
                 const allCount = document.getElementById('masterAssetPrintAllCount');
-                const filteredCount = document.getElementById('masterAssetPrintFilteredCount');
                 if (allCount) allCount.textContent = `${all.length} unit aktif`;
-                if (filteredCount) filteredCount.textContent = `${filtered.length} unit sesuai filter`;
+                const optionSets = {
+                    masterAssetPrintCategory: [...new Set(all.map(asset => String(asset.category || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id')),
+                    masterAssetPrintStatus: [...new Set(all.map(asset => String(asset.subStatus || asset.status || '').trim().replaceAll('_', ' ')).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id')),
+                    masterAssetPrintSite: [...new Set(all.map(asset => String(asset.location || asset.project_name || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'))
+                };
+                Object.entries(optionSets).forEach(([id, values]) => {
+                    const select = document.getElementById(id);
+                    if (!select) return;
+                    const previous = select.value;
+                    const placeholder = id === 'masterAssetPrintCategory' ? 'Pilih kategori' : id === 'masterAssetPrintStatus' ? 'Pilih status' : 'Pilih site';
+                    select.innerHTML = `<option value="">${placeholder}</option>${values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('')}`;
+                    if (values.includes(previous)) select.value = previous;
+                });
+                window.updateMasterAssetPrintFilters();
                 openModal('modalMasterAssetPrint');
+            };
+
+            window.getMasterAssetPrintSelection = function() {
+                const definitions = [
+                    { key: 'category', checkbox: 'masterAssetPrintUseCategory', select: 'masterAssetPrintCategory', label: 'Kategori' },
+                    { key: 'status', checkbox: 'masterAssetPrintUseStatus', select: 'masterAssetPrintStatus', label: 'Status' },
+                    { key: 'site', checkbox: 'masterAssetPrintUseSite', select: 'masterAssetPrintSite', label: 'Site' }
+                ];
+                return definitions.map(definition => ({
+                    ...definition,
+                    active: Boolean(document.getElementById(definition.checkbox)?.checked),
+                    value: String(document.getElementById(definition.select)?.value || '').trim()
+                }));
+            };
+
+            window.getMasterAssetPrintFilteredAssets = function() {
+                const all = window.currentAssetData || [];
+                const activeFilters = window.getMasterAssetPrintSelection().filter(filter => filter.active);
+                if (!activeFilters.length || activeFilters.some(filter => !filter.value)) return [];
+                const normalized = value => String(value || '').trim().replaceAll('_', ' ').toLocaleLowerCase('id');
+                return all.filter(asset => activeFilters.every(filter => {
+                    if (filter.key === 'category') return normalized(asset.category) === normalized(filter.value);
+                    if (filter.key === 'status') return normalized(asset.subStatus || asset.status) === normalized(filter.value);
+                    return normalized(asset.location || asset.project_name) === normalized(filter.value);
+                }));
+            };
+
+            window.updateMasterAssetPrintFilters = function() {
+                const scope = document.querySelector('input[name="masterAssetPrintScope"]:checked')?.value || 'all';
+                const isFiltered = scope === 'filtered';
+                const panel = document.getElementById('masterAssetPrintFilters');
+                const count = document.getElementById('masterAssetPrintFilteredCount');
+                const note = document.getElementById('masterAssetPrintFilterNote');
+                const submit = document.getElementById('masterAssetPrintSubmit');
+                if (panel) panel.hidden = !isFiltered;
+                const selections = window.getMasterAssetPrintSelection();
+                selections.forEach(filter => {
+                    const select = document.getElementById(filter.select);
+                    if (select) select.disabled = !filter.active;
+                });
+                if (!isFiltered) {
+                    if (submit) submit.disabled = false;
+                    return;
+                }
+                const active = selections.filter(filter => filter.active);
+                const incomplete = active.some(filter => !filter.value);
+                const assets = (!active.length || incomplete) ? [] : window.getMasterAssetPrintFilteredAssets();
+                if (count) count.textContent = !active.length ? 'Pilih minimal satu filter' : incomplete ? 'Lengkapi pilihan filter' : `${assets.length} unit sesuai filter`;
+                if (note) {
+                    note.textContent = !active.length
+                        ? 'Pilih minimal satu filter untuk melanjutkan.'
+                        : incomplete
+                            ? 'Pilih nilai pada setiap filter yang dicentang.'
+                            : `${active.map(filter => `${filter.label}: ${filter.value}`).join(' · ')} · ${assets.length} unit`;
+                    note.classList.toggle('is-ready', active.length > 0 && !incomplete && assets.length > 0);
+                }
+                if (submit) submit.disabled = !active.length || incomplete || assets.length === 0;
             };
 
             window.printMasterAssetReport = function() {
                 const scope = document.querySelector('input[name="masterAssetPrintScope"]:checked')?.value || 'all';
                 const all = window.currentAssetData || [];
-                const assets = scope === 'filtered' ? (window.filteredMasterAssetData || all) : all;
+                const assets = scope === 'filtered' ? window.getMasterAssetPrintFilteredAssets() : all;
                 if (!assets.length) {
                     alert('Tidak ada data Master Asset untuk dicetak.');
                     return;
@@ -8261,10 +8362,14 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     breakdown: assets.filter(asset => ['BREAKDOWN', 'INSPEKSI'].includes(String(asset.status || '').toUpperCase())).length,
                     complete: assets.filter(asset => window.getAssetCompleteness(asset).isComplete).length
                 };
+                const reportScopeLabel = scope === 'filtered'
+                    ? `Filter: ${window.getMasterAssetPrintSelection().filter(filter => filter.active).map(filter => `${filter.label} = ${filter.value}`).join(' · ')}`
+                    : 'Seluruh unit aktif Master Asset';
                 reportWindow.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Laporan Master Asset</title><style>
-                    @page { size: A4 landscape; margin: 9mm 8mm 14mm; }
+                    @page { size: A4 landscape; margin: 5mm; }
                     * { box-sizing: border-box; }
-                    body { margin: 0; padding-bottom:8mm; color: #172033; font-family: Arial, Helvetica, sans-serif; font-size: 7pt; }
+                    html { min-height:100%; background:#e9eef4; }
+                    body { width:min(297mm, 100%); min-height:210mm; margin:0 auto; padding:5mm; color:#172033; background:#fff; box-shadow:0 2mm 8mm rgba(23,58,99,.14); font-family:Arial, Helvetica, sans-serif; font-size:7pt; }
                     .report-head { display:grid; grid-template-columns:1fr 1.4fr 1fr; align-items:center; gap:6mm; border-bottom:0.7mm solid #173a63; padding-bottom:3mm; margin-bottom:3mm; }
                     .brand { display:flex; align-items:center; gap:3mm; min-width:0; }
                     .brand img { width:28mm; height:15mm; object-fit:contain; object-position:left center; }
@@ -8278,20 +8383,22 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     .summary-item { padding:1.6mm 2mm; border:0.25mm solid #c8d3df; background:#f5f8fb; }
                     .summary-item span { display:block; color:#64748b; font-size:6pt; text-transform:uppercase; letter-spacing:.04em; }
                     .summary-item b { display:block; margin-top:.5mm; color:#172b45; font-size:8.5pt; }
-                    table { width:100%; border-collapse:collapse; table-layout:fixed; }
-                    thead { display:table-header-group; } tr { break-inside:avoid; page-break-inside:avoid; }
-                    th, td { border:0.25mm solid #b9c5d4; padding:1.35mm 1.15mm; text-align:left; vertical-align:top; overflow-wrap:anywhere; line-height:1.25; }
-                    th { background:#dfe8f2; color:#172b45; font-size:6.4pt; text-transform:uppercase; font-weight:700; }
+                    .table-viewport { width:100%; overflow-x:auto; }
+                    table { width:100%; height:auto; border-collapse:collapse; table-layout:fixed; }
+                    thead { display:table-header-group; }
+                    tr, th, td { height:auto; }
+                    th, td { border:0.25mm solid #b9c5d4; padding:1.1mm .85mm; text-align:left; vertical-align:top; overflow-wrap:break-word; word-break:normal; line-height:1.2; }
+                    th { background:#dfe8f2; color:#172b45; font-size:6pt; text-transform:uppercase; font-weight:700; }
+                    td { font-size:6.2pt; }
                     tbody tr:nth-child(even) { background:#f5f7fa; }
-                    th:nth-child(1), td:nth-child(1) { width:3%; } th:nth-child(2), td:nth-child(2) { width:6%; } th:nth-child(3), td:nth-child(3) { width:6%; }
-                    th:nth-child(4), td:nth-child(4) { width:8%; } th:nth-child(5), td:nth-child(5) { width:6%; } th:nth-child(6), td:nth-child(6) { width:4%; }
-                    th:nth-child(7), td:nth-child(7) { width:4%; } th:nth-child(8), td:nth-child(8) { width:8%; } th:nth-child(9), td:nth-child(9) { width:7%; }
-                    th:nth-child(10), td:nth-child(10) { width:9%; } th:nth-child(11), td:nth-child(11) { width:6%; } th:nth-child(12), td:nth-child(12) { width:7%; }
-                    th:nth-child(13), td:nth-child(13) { width:7%; } th:nth-child(14), td:nth-child(14) { width:6%; } th:nth-child(15), td:nth-child(15) { width:5%; } th:nth-child(16), td:nth-child(16) { width:8%; }
+                    th:nth-child(1), td:nth-child(1), th:nth-child(7) { white-space:nowrap; }
+                    td:nth-child(7) { white-space:normal; overflow-wrap:break-word; }
+                    td:nth-child(2), td:nth-child(3), td:nth-child(4), td:nth-child(10), td:nth-child(11), td:nth-child(12) { overflow-wrap:anywhere; }
                     .print-actions { position:sticky; top:0; z-index:2; margin-bottom:4mm; padding:2mm; text-align:right; background:#fff; } button { border:0; border-radius:3px; background:#0b73d9; color:white; padding:2.5mm 4mm; font-weight:bold; cursor:pointer; }
                     .page-footer { position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-between; gap:5mm; padding-top:1.5mm; border-top:0.2mm solid #cbd5e1; color:#64748b; font-size:6.2pt; background:#fff; }
-                    @media print { .print-actions { display:none; } body { padding-bottom:0; } }
-                </style></head><body><div class="print-actions"><button onclick="window.print()">Cetak / Simpan PDF</button></div><header class="report-head"><div class="brand"><img src="${text(logoUrl)}" alt="Logo PT Bina Rekayasa Anugrah"><div><strong>PT Bina Rekayasa Anugrah</strong><small>Equipment &amp; Maintenance</small></div></div><div class="report-title"><h1>Laporan Master Asset</h1><p>${scope === 'filtered' ? 'Hasil filter Master Asset' : 'Seluruh unit aktif Master Asset'}</p></div><div class="meta"><strong>${assets.length} unit</strong>Data aktif yang dilaporkan</div></header><section class="report-summary"><div class="summary-item"><span>Total unit</span><b>${reportStats.total}</b></div><div class="summary-item"><span>Ready</span><b>${reportStats.ready}</b></div><div class="summary-item"><span>Operating</span><b>${reportStats.operating}</b></div><div class="summary-item"><span>Breakdown / inspeksi</span><b>${reportStats.breakdown}</b></div><div class="summary-item"><span>Data lengkap</span><b>${reportStats.complete}</b></div></section><table><thead><tr><th>No.</th><th>Asset ID</th><th>Kode Unit</th><th>No. Lambung</th><th>Nama Aset</th><th>Dealer / Tipe</th><th>Tahun</th><th>Usia</th><th>Kapasitas</th><th>Serial Number</th><th>Pelat Kendaraan</th><th>Nomor Rangka</th><th>Kategori</th><th>Project</th><th>Lokasi / Posisi</th><th>Status</th><th>Status Warranty</th><th>Kelengkapan</th></tr></thead><tbody>${rows}</tbody></table><footer class="page-footer"><span>Dicetak: ${text(printedAt)}</span><span>Master Asset · PT Bina Rekayasa Anugrah · Legalitas dan dokumentasi tersedia di aplikasi web</span></footer></body></html>`);
+                    @media screen and (max-width:1200px) { .table-viewport { border-right:0.25mm solid #b9c5d4; } table { min-width:1180px; } }
+                    @media print { html { background:#fff; } .print-actions { display:none; } body { width:auto; min-height:0; margin:0; padding:0; box-shadow:none; } .table-viewport { overflow:visible; } tr { break-inside:avoid; page-break-inside:avoid; } }
+                </style></head><body><div class="print-actions"><button onclick="window.print()">Cetak / Simpan PDF</button></div><header class="report-head"><div class="brand"><img src="${text(logoUrl)}" alt="Logo PT Bina Rekayasa Anugrah"><div><strong>PT Bina Rekayasa Anugrah</strong><small>Equipment &amp; Maintenance</small></div></div><div class="report-title"><h1>Laporan Master Asset</h1><p>${text(reportScopeLabel)}</p></div><div class="meta"><strong>${assets.length} unit</strong>Data aktif yang dilaporkan</div></header><section class="report-summary"><div class="summary-item"><span>Total unit</span><b>${reportStats.total}</b></div><div class="summary-item"><span>Ready</span><b>${reportStats.ready}</b></div><div class="summary-item"><span>Operating</span><b>${reportStats.operating}</b></div><div class="summary-item"><span>Breakdown / inspeksi</span><b>${reportStats.breakdown}</b></div><div class="summary-item"><span>Data lengkap</span><b>${reportStats.complete}</b></div></section><div class="table-viewport"><table><colgroup><col style="width:2%"><col style="width:5%"><col style="width:5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:5.5%"><col style="width:3%"><col style="width:3.5%"><col style="width:5%"><col style="width:7.5%"><col style="width:5.5%"><col style="width:7.5%"><col style="width:5.5%"><col style="width:5.5%"><col style="width:6%"><col style="width:5%"><col style="width:5.5%"><col style="width:10%"></colgroup><thead><tr><th>No.</th><th>Asset ID</th><th>Kode Unit</th><th>No. Lambung</th><th>Nama Aset</th><th>Dealer / Tipe</th><th>Tahun</th><th>Usia</th><th>Kapasitas</th><th>Serial Number</th><th>Pelat Kendaraan</th><th>Nomor Rangka</th><th>Kategori</th><th>Project</th><th>Lokasi / Posisi</th><th>Status</th><th>Status Warranty</th><th>Kelengkapan</th></tr></thead><tbody>${rows}</tbody></table></div><footer class="page-footer"><span>Dicetak: ${text(printedAt)}</span><span>Master Asset · PT Bina Rekayasa Anugrah · Legalitas dan dokumentasi tersedia di aplikasi web</span></footer></body></html>`);
                 reportWindow.document.close();
                 closeModal('modalMasterAssetPrint');
             };
