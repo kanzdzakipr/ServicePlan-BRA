@@ -652,10 +652,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
                         <span><i class="fa-solid fa-list-check"></i> Daftar Unit Armada & Linkage Sistem
                             Integrasi</span>
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <div style="font-size:0.8rem; color:var(--text-muted);">
-                                <i class="fa-solid fa-link"></i> Klik 1x pada unit atau tombol Aksi untuk membuka popup integrasi modul (360&deg;, P2H, WO, Condition, Edit, Arsip)
-                            </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
                             <button class="btn btn-sm btn-primary" onclick="window.openMasterAssetPrintDialog()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
                             <button class="btn btn-sm"
                                 style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;"
@@ -664,33 +661,40 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         </div>
                     </div>
                     <div class="panel-body">
-                        <!-- Quick Search Simultan 3 Parameter (Kode Unit, Nomor Lambung, Serial/Plat) -->
-                        <div class="asset-3param-search" style="margin-bottom: 16px;">
+                        <!-- Master Asset Filter & Search Container -->
+                        <div class="master-asset-filter-wrapper" style="border: 1px solid #dbe3ec; border-radius: 8px; background: #f8fafc; padding: 10px 12px; margin-bottom: 14px;">
+                            <!-- Top Bar: Search Input + Advanced Link + Reset Button (Icon Only) -->
                             <div style="position: relative; display: flex; align-items: center; gap: 10px;">
                                 <div style="position: relative; flex: 1;">
                                     <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 0.95rem;"></i>
-                                    <input type="text" id="asset3ParamSearch" class="form-control" style="padding-left: 40px; padding-right: 130px; height: 42px; font-size: 0.88rem; border-radius: 8px; border: 1.5px solid #cbd5e1; background: #fff;" placeholder="Pencarian Simultan 3 Parameter: Kode Unit, Nomor Lambung Aktual, atau Serial Number / Plat..." oninput="window.filterMasterAsset3Param(this.value)">
-                                    <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.72rem; font-weight: 600; color: #0284c7; background: #e0f2fe; padding: 3px 8px; border-radius: 4px; pointer-events: none;"><i class="fa-solid fa-bolt"></i> 3-Param Search</span>
+                                    <input type="text" id="asset3ParamSearch" class="form-control" style="padding-left: 40px; padding-right: 14px; height: 40px; font-size: 0.88rem; border-radius: 6px; border: 1.5px solid #cbd5e1; background: #fff;" placeholder="Pencarian..." oninput="window.filterMasterAsset3Param(this.value)">
                                 </div>
-                                <button type="button" class="btn btn-sm" onclick="window.resetMasterAssetFilters()" style="height: 42px; padding: 0 16px; background: #f8fafc; border: 1.5px solid #cbd5e1; color: #475569;" title="Reset Semua Filter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+                                <a href="javascript:void(0)" id="toggleMasterAssetAdvanced" onclick="window.toggleMasterAssetAdvanced()" style="font-size: 0.84rem; font-weight: 600; color: #0284c7; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; padding: 6px 8px; cursor: pointer;" title="Tampilkan / Sembunyikan Filter Spesifik">
+                                    <span>Advanced</span>
+                                    <i class="fa-solid fa-chevron-down" id="iconMasterAssetAdvanced" style="font-size: 0.72rem; transition: transform 0.2s ease;"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm" onclick="window.resetMasterAssetFilters()" style="height: 40px; width: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #ffffff; border: 1.5px solid #cbd5e1; color: #475569; border-radius: 6px;" title="Reset Semua Filter"><i class="fa-solid fa-rotate-left"></i></button>
                             </div>
-                        </div>
 
-                        <div class="master-asset-filterbar" aria-label="Filter Master Asset">
-                            <input type="text" id="filterAssetId" class="form-control" placeholder="Asset ID" oninput="window.filterMasterAsset('id', this.value)">
-                            <input type="text" id="filterAssetHull" class="form-control" placeholder="Nomor lambung" oninput="window.filterMasterAsset('hull', this.value)">
-                            <input type="text" id="filterAssetModel" class="form-control" placeholder="Nama aset / tahun" oninput="window.filterMasterAsset('model', this.value)">
-                            <input type="text" id="filterAssetSn" class="form-control" placeholder="SN / pelat" oninput="window.filterMasterAsset('sn', this.value)">
-                            <input type="text" id="filterAssetWarranty" class="form-control" placeholder="Garansi" oninput="window.filterMasterAsset('warranty', this.value)">
-                            <input type="text" id="filterAssetChassis" class="form-control" placeholder="Nomor rangka" oninput="window.filterMasterAsset('chassis', this.value)">
-                            <select id="filterAssetCat" class="form-control" onchange="window.filterMasterAsset('category', this.value)">
-                                <option value="">Semua kategori</option><option value="Excavator">Excavator</option><option value="Bulldozer">Bulldozer</option><option value="Dump Truck">Dump Truck</option><option value="Compactor">Compactor</option><option value="Motor Grader">Motor Grader</option><option value="Wheel Loader">Wheel Loader</option><option value="Light Vehicle">Light Vehicle</option><option value="Water Truck">Water Truck</option><option value="Prime Mover">Prime Mover</option><option value="Trado">Trado</option><option value="Other">Other</option>
-                            </select>
-                            <select id="filterAssetLoc" class="form-control" onchange="window.filterMasterAsset('location', this.value)">
-                                <option value="">Semua lokasi</option><option value="Borrow Pit">Borrow Pit</option><option value="Site Celcin">Site Celcin</option><option value="Yard">Yard</option><option value="Workshop">Workshop</option><option value="Site Alpha">Site Alpha</option><option value="Minas">Minas Field</option>
-                            </select>
-                            <select id="filterAssetComp" class="form-control" onchange="window.filterMasterAsset('completeness', this.value)"><option value="">Semua kelengkapan</option><option value="complete">Lengkap</option><option value="incomplete">Belum lengkap</option></select>
-                            <select id="filterAssetStat" class="form-control" onchange="window.filterMasterAsset('status', this.value)"><option value="">Semua status</option><option value="READY">READY</option><option value="OPERATING">OPERATING</option><option value="STANDBY">STANDBY</option><option value="BREAKDOWN">BREAKDOWN</option><option value="INSPEKSI">INSPEKSI</option><option value="ACCIDENT_HOLD">ACCIDENT HOLD</option></select>
+                            <!-- Dropdown / Collapsible Specific Filters (5x2) -->
+                            <div id="masterAssetAdvancedFilters" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+                                <div class="master-asset-filterbar" style="margin: 0; padding: 0; border: none; background: transparent;" aria-label="Filter Spesifik Master Asset">
+                                    <input type="text" id="filterAssetId" class="form-control" placeholder="Asset ID" oninput="window.filterMasterAsset('id', this.value)">
+                                    <input type="text" id="filterAssetHull" class="form-control" placeholder="Nomor lambung" oninput="window.filterMasterAsset('hull', this.value)">
+                                    <input type="text" id="filterAssetModel" class="form-control" placeholder="Nama aset / tahun" oninput="window.filterMasterAsset('model', this.value)">
+                                    <input type="text" id="filterAssetSn" class="form-control" placeholder="SN / pelat" oninput="window.filterMasterAsset('sn', this.value)">
+                                    <input type="text" id="filterAssetWarranty" class="form-control" placeholder="Garansi" oninput="window.filterMasterAsset('warranty', this.value)">
+                                    <input type="text" id="filterAssetChassis" class="form-control" placeholder="Nomor rangka" oninput="window.filterMasterAsset('chassis', this.value)">
+                                    <select id="filterAssetCat" class="form-control" onchange="window.filterMasterAsset('category', this.value)">
+                                        <option value="">Semua kategori</option><option value="Excavator">Excavator</option><option value="Bulldozer">Bulldozer</option><option value="Dump Truck">Dump Truck</option><option value="Compactor">Compactor</option><option value="Motor Grader">Motor Grader</option><option value="Wheel Loader">Wheel Loader</option><option value="Light Vehicle">Light Vehicle</option><option value="Water Truck">Water Truck</option><option value="Prime Mover">Prime Mover</option><option value="Trado">Trado</option><option value="Other">Other</option>
+                                    </select>
+                                    <select id="filterAssetLoc" class="form-control" onchange="window.filterMasterAsset('location', this.value)">
+                                        <option value="">Semua lokasi</option><option value="Borrow Pit">Borrow Pit</option><option value="Site Celcin">Site Celcin</option><option value="Yard">Yard</option><option value="Workshop">Workshop</option><option value="Site Alpha">Site Alpha</option><option value="Minas">Minas Field</option>
+                                    </select>
+                                    <select id="filterAssetComp" class="form-control" onchange="window.filterMasterAsset('completeness', this.value)"><option value="">Semua kelengkapan</option><option value="complete">Lengkap</option><option value="incomplete">Belum lengkap</option></select>
+                                    <select id="filterAssetStat" class="form-control" onchange="window.filterMasterAsset('status', this.value)"><option value="">Semua status</option><option value="READY">READY</option><option value="OPERATING">OPERATING</option><option value="STANDBY">STANDBY</option><option value="BREAKDOWN">BREAKDOWN</option><option value="INSPEKSI">INSPEKSI</option><option value="ACCIDENT_HOLD">ACCIDENT HOLD</option></select>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="table-responsive master-asset-table-scroll dashboard-wo-scroll">
@@ -8053,6 +8057,17 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 window.renderAssetTableBody();
             };
 
+            window.toggleMasterAssetAdvanced = function() {
+                const el = document.getElementById('masterAssetAdvancedFilters');
+                const icon = document.getElementById('iconMasterAssetAdvanced');
+                if (!el) return;
+                const isHidden = el.style.display === 'none' || getComputedStyle(el).display === 'none';
+                el.style.display = isHidden ? 'block' : 'none';
+                if (icon) {
+                    icon.className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+                }
+            };
+
             window.resetMasterAssetFilters = function() {
                 window.masterAssetFilters = { id: '', hull: '', model: '', sn: '', warranty: '', chassis: '', category: '', location: '', completeness: '', status: '', query3Param: '' };
                 const ids = ['filterAssetId', 'filterAssetHull', 'filterAssetModel', 'filterAssetSn', 'filterAssetWarranty', 'filterAssetChassis', 'asset3ParamSearch'];
@@ -8170,7 +8185,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <td><div class="asset-cell-line"><span>SN</span><b class="asset-mono">${shown(ident.sn)}</b></div><div class="asset-cell-line"><span>Pelat</span><b class="asset-mono">${shown(ident.plate)}</b></div><div class="asset-cell-line"><span>Rangka</span><b class="asset-mono">${shown(asset.chassis_number || asset.chassis)}</b></div></td>
                         <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(asset.warranty || 'Belum diketahui')}</span></td>
                         <td onclick="event.stopPropagation();">
-                            <div class="asset-cell-line"><span>Project</span><b>${shown(asset.project_name || asset.location)}</b></div><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || '')}', 'asset'); return false;"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
+                            <div class="asset-cell-line"><span>Project</span><b><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || asset.project_name || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || asset.project_name || '')}"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.project_name || asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></b></div><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
                         </td>
                         <td><div class="asset-condition-stack">${badge}${compl.isComplete ? '<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Lengkap</span>' : `<span class="badge badge-warning" title="${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum lengkap</span><small>Kurang: ${escapeHtml(compl.missing.join(', '))}</small>`}</div></td>
                         <td onclick="event.stopPropagation();"><button type="button" class="btn btn-sm asset-document-button" onclick="window.openAssetLegalDocuments('${escapeHtml(asset.id)}')" title="Cek legalitas dan dokumentasi unit"><i class="fa-solid fa-folder-open"></i><span>Dokumen</span></button></td>

@@ -21100,11 +21100,12 @@ body.sl-modal-open {
         flex-direction: column;
         align-items: stretch;
     }
-    .wo-part-qty-wrap, .wo-part-uom-wrap {
+    .wo-part-qty-wrap,
+    .wo-part-uom-wrap {
         width: 100%;
         flex: 1 1 100%;
     }
-}
+
     #modalNewWO {
         align-items: stretch;
         padding: 0;
@@ -22795,5 +22796,8 @@ body.sl-modal-open {
     }
 }
 
-
+#toggleMasterAssetAdvanced:hover {
+    color: #0369a1 !important;
+    text-decoration: underline !important;
+}
 
