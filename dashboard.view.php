@@ -19,7 +19,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="stylesheet" href="scripts/dashboard.css?v=<?= filemtime(__DIR__ . '/scripts/dashboard.css') ?>">
-    <link rel="stylesheet" href="scripts/unit-properties.css?v=20261017-1">
+    <link rel="stylesheet" href="scripts/unit-properties.css?v=20261023-vital-link-1">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261022-1">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
     <script>window.APP_CSRF_TOKEN = '<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>';</script>
@@ -29,7 +29,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="scripts/dashboard.js?v=<?= filemtime(__DIR__ . '/scripts/dashboard.js') ?>"></script>
-    <script src="scripts/unit-properties.js?v=20261022-site-location-fallback-1"></script>
+    <script src="scripts/unit-properties.js?v=20261023-vital-link-1"></script>
     <script src="scripts/site-properties.js?v=20261022-1"></script>
 </head>
 
@@ -2477,9 +2477,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <div class="prop-vital-cell" id="cardVitalOperator">
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-user-gear"></i> Operator Saat Ini</div>
-                                        <button type="button" class="btn-vital-history" onclick="window.openPropOperatorHistoryModal()" title="Lihat Riwayat Penugasan Operator">
+                                        <a href="javascript:void(0)" class="vital-history-link" onclick="window.openPropOperatorHistoryModal()" title="Lihat Riwayat Penugasan Operator">
                                             <i class="fa-solid fa-clock-rotate-left"></i>
-                                        </button>
+                                        </a>
                                     </div>
                                     <div class="vital-val" id="propVitalOperator">Data belum tersedia</div>
                                     <div class="vital-sub" id="propVitalOperatorSub">Data belum tersedia</div>
@@ -2488,9 +2488,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <div class="prop-vital-cell" id="cardVitalLastService">
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-wrench"></i> Servis Terakhir</div>
-                                        <button type="button" class="btn-vital-history" onclick="window.openPropServiceHistoryModal()" title="Lihat Riwayat Perawatan & Servis">
+                                        <a href="javascript:void(0)" class="vital-history-link" onclick="window.openPropServiceHistoryModal()" title="Lihat Riwayat Perawatan & Servis">
                                             <i class="fa-solid fa-clock-rotate-left"></i>
-                                        </button>
+                                        </a>
                                     </div>
                                     <div class="vital-val" id="propVitalLastService">Data belum tersedia</div>
                                     <div class="vital-sub" id="propVitalLastServiceSub">Data belum tersedia</div>
@@ -2531,12 +2531,12 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                                 <div class="prop-vital-cell" id="cardVitalLocation">
                                     <div class="vital-label-row">
                                         <div class="vital-label"><i class="fa-solid fa-location-dot"></i> Posisi Terkini</div>
-                                        <button type="button" class="btn-vital-history" onclick="window.openSiteProperties(document.getElementById('propVitalLoc').textContent, 'unit-properties')" title="Buka Detail Lembar Properties Site Ini">
+                                        <a href="javascript:void(0)" class="vital-history-link" onclick="window.openSiteProperties(document.getElementById('propVitalLoc').textContent.trim(), 'unit-properties')" title="Buka Detail Lembar Properties Site Ini">
                                             <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                        </button>
+                                        </a>
                                     </div>
                                     <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem; cursor:pointer;" onclick="window.openSiteProperties(this.textContent.trim(), 'unit-properties')" title="Klik untuk membuka lembar properties site ini">Data belum tersedia</div>
-                                    <div class="vital-sub">Mining Sector Area · <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties(document.getElementById('propVitalLoc').textContent.trim(), 'unit-properties')" style="font-size:0.7rem; color:var(--primary, #0284c7); padding:0;"><span class="site-name-text">Lihat Peta &amp; Unit Site &rarr;</span></a></div>
+                                    <div class="vital-sub" id="propVitalLocSub">Mining Sector Area</div>
                                 </div>
                                 <div class="prop-vital-cell">
                                     <div class="vital-label-row">

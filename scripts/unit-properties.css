@@ -415,6 +415,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
+    white-space: nowrap;
 }
 
 .prop-vital-cell .vital-val {
@@ -431,27 +432,38 @@
     margin-top: 1px;
 }
 
+.vital-history-link,
 .btn-vital-history {
-    width: 22px;
-    height: 22px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #e2e8f0;
-    border: none;
-    border-radius: 4px;
-    color: #475569;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    color: #0284c7 !important;
     cursor: pointer;
-    font-size: 0.72rem;
-    padding: 0;
-    transition: all 0.18s ease;
+    font-size: 0.85rem;
+    padding: 0 2px;
+    width: auto !important;
+    height: auto !important;
+    line-height: 1;
+    text-decoration: none;
+    transition: color 0.15s ease, transform 0.15s ease;
+    flex-shrink: 0;
+    box-shadow: none !important;
 }
 
+.vital-history-link:hover,
 .btn-vital-history:hover {
-    background: #0284c7;
-    color: #ffffff;
-    transform: scale(1.1);
-    box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3);
+    color: #0369a1 !important;
+    transform: scale(1.15);
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.vital-history-link:active,
+.btn-vital-history:active {
+    transform: scale(0.95);
 }
 
 /* Card Galeri Unit 3x3 (Kolom Kanan) */
@@ -1451,3 +1463,63 @@
 .prop-toast.prop-toast-error i {
     color: #f87171;
 }
+
+/* --- Map Marker & Popup Info Popover --- */
+.leaflet-popup-content-wrapper {
+    overflow: visible !important;
+}
+
+.prop-map-info-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.prop-map-info-btn {
+    color: #d97706;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 50%;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.prop-map-info-btn:hover,
+.prop-map-info-btn:focus-visible {
+    transform: scale(1.18);
+    color: #b45309;
+    outline: none;
+}
+
+.prop-map-info-popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 1000;
+    width: 230px;
+    background: #1e293b;
+    color: #f8fafc;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.45;
+    padding: 8px 10px;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prop-map-info-wrapper:hover .prop-map-info-popover,
+.prop-map-info-wrapper:focus-within .prop-map-info-popover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+

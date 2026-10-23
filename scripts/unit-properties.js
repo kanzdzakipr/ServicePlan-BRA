@@ -918,6 +918,10 @@
 
         const elVitalLoc = document.getElementById('propVitalLoc');
         if (elVitalLoc) elVitalLoc.textContent = displayData(asset.location || asset.location_name);
+        const elVitalLocSub = document.getElementById('propVitalLocSub');
+        if (elVitalLocSub) {
+            elVitalLocSub.textContent = displayData(asset.location_region || asset.region || asset.location_type || 'Mining Sector Area');
+        }
 
         const elVitalHealth = document.getElementById('propVitalHealth');
         if (elVitalHealth) elVitalHealth.textContent = asset.health_score != null ? `${asset.health_score}%` : NO_DATA;
@@ -1247,37 +1251,47 @@
 
             const markerBg = isEstimated ? '#d97706' : '#0284c7';
             const markerIcon = isEstimated ? 'fa-location-crosshairs' : 'fa-truck-front';
-            const markerLabel = isEstimated ? ' <span style="font-size:9px; background:rgba(0,0,0,0.28); padding:1px 5px; border-radius:3px; margin-left:3px;">ESTIMASI SITE</span>' : '';
 
             const customIcon = L.divIcon({
                 className: 'prop-map-unit-marker',
                 html: `
                     <div style="background:${markerBg}; color:#fff; padding:4px 8px; border-radius:6px; font-weight:800; font-size:11px; font-family:'JetBrains Mono',monospace; box-shadow:0 3px 8px rgba(0,0,0,0.3); border:2px solid #fff; white-space:nowrap; display:flex; align-items:center; gap:4px;">
-                        <i class="fa-solid ${markerIcon}"></i> ${escapeHtml(asset.asset_id || asset.id)}${markerLabel}
+                        <i class="fa-solid ${markerIcon}"></i> ${escapeHtml(asset.asset_id || asset.id)}
                     </div>
                 `,
-                iconSize: [isEstimated ? 130 : 80, 30],
-                iconAnchor: [isEstimated ? 65 : 40, 15]
+                iconSize: [80, 30],
+                iconAnchor: [40, 15]
             });
 
             const popupHtml = `
-                <div style="font-family:sans-serif; min-width:220px; font-size:12px; line-height:1.45;">
-                    <div style="font-weight:800; font-size:13px; color:#0f172a; margin-bottom:5px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                <div style="font-family:sans-serif; min-width:230px; font-size:12px; line-height:1.45; padding-top:2px;">
+                    <div style="font-weight:800; font-size:13px; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between; gap:8px; padding-right:12px;">
                         <span>${escapeHtml(asset.asset_id || asset.id)}</span>
-                        <span style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; ${isEstimated ? 'background:#fef3c7; color:#92400e; border:1px solid #fde68a;' : 'background:#dcfce7; color:#166534;'}">
-                            ${isEstimated ? '<i class="fa-solid fa-compass"></i> Estimasi Site' : '<i class="fa-solid fa-satellite-dish"></i> GPS Aktif'}
-                        </span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            ${isEstimated ? `
+                                <div class="prop-map-info-wrapper">
+                                    <span class="prop-map-info-btn" role="button" tabindex="0" title="Telemetri GPS eksak unit belum aktif. Titik koordinat diproyeksikan dari estimasi radius operasional site ${escapeHtml(siteName)}." aria-label="Informasi Estimasi Site">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                    </span>
+                                    <div class="prop-map-info-popover">
+                                        <div style="font-weight:700; color:#fbbf24; margin-bottom:3px; display:flex; align-items:center; gap:4px;">
+                                            <i class="fa-solid fa-compass"></i> Estimasi Radius Site
+                                        </div>
+                                        Telemetri GPS eksak unit belum aktif. Titik koordinat diproyeksikan dari estimasi radius operasional site <b>${escapeHtml(siteName)}</b>.
+                                    </div>
+                                </div>
+                            ` : ''}
+                            <span style="font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; ${isEstimated ? 'background:#fef3c7; color:#92400e; border:1px solid #fde68a;' : 'background:#dcfce7; color:#166534;'}">
+                                ${isEstimated ? '<i class="fa-solid fa-compass"></i> Estimasi Site' : '<i class="fa-solid fa-satellite-dish"></i> GPS Aktif'}
+                            </span>
+                        </div>
                     </div>
                     <div style="color:#475569; margin-bottom:3px;"><strong>Model:</strong> ${escapeHtml(displayData(asset.make_model))}</div>
                     <div style="color:#475569; margin-bottom:3px;"><strong>Site / Lokasi:</strong> ${escapeHtml(siteName)}</div>
                     <div style="color:#475569; margin-bottom:6px;"><strong>Status:</strong> <span style="font-weight:700;">${escapeHtml(asset.status || 'READY')}</span></div>
-                    ${isEstimated ? `
-                        <div style="font-size:10.5px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; padding:6px 8px; color:#64748b; margin-bottom:6px;">
-                            <i class="fa-solid fa-circle-info" style="color:#f59e0b;"></i> Telemetri GPS eksak unit belum aktif. Titik koordinat diproyeksikan dari <b>estimasi radius operasional site ${escapeHtml(siteName)}</b>.
-                        </div>
-                    ` : `
+                    ${!isEstimated ? `
                         <div style="font-size:10.5px; color:#15803d; margin-bottom:6px;"><i class="fa-solid fa-circle-check"></i> Posisi diperoleh dari telemetri GPS live.</div>
-                    `}
+                    ` : ''}
                     <div style="display:flex; justify-content:flex-end;">
                         <a href="https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; color:#0284c7; text-decoration:none; font-weight:600;">
                             <i class="fa-solid fa-arrow-up-right-from-square"></i> Google Maps
