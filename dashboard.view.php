@@ -656,6 +656,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <div style="font-size:0.8rem; color:var(--text-muted);">
                                 <i class="fa-solid fa-link"></i> Klik 1x pada unit atau tombol Aksi untuk membuka popup integrasi modul (360&deg;, P2H, WO, Condition, Edit, Arsip)
                             </div>
+                            <button class="btn btn-sm btn-primary" onclick="window.openMasterAssetPrintDialog()"><i class="fa-solid fa-print"></i> Cetak Laporan</button>
                             <button class="btn btn-sm"
                                 style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;"
                                 onclick="showView('archive'); window.switchArchiveTab('asset');"><i
@@ -675,79 +676,47 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             </div>
                         </div>
 
-                        <div class="table-responsive">
-                            <table class="table">
+                        <div class="master-asset-filterbar" aria-label="Filter Master Asset">
+                            <input type="text" id="filterAssetId" class="form-control" placeholder="Asset ID" oninput="window.filterMasterAsset('id', this.value)">
+                            <input type="text" id="filterAssetHull" class="form-control" placeholder="Nomor lambung" oninput="window.filterMasterAsset('hull', this.value)">
+                            <input type="text" id="filterAssetModel" class="form-control" placeholder="Nama aset / tahun" oninput="window.filterMasterAsset('model', this.value)">
+                            <input type="text" id="filterAssetSn" class="form-control" placeholder="SN / pelat" oninput="window.filterMasterAsset('sn', this.value)">
+                            <input type="text" id="filterAssetWarranty" class="form-control" placeholder="Garansi" oninput="window.filterMasterAsset('warranty', this.value)">
+                            <input type="text" id="filterAssetChassis" class="form-control" placeholder="Nomor rangka" oninput="window.filterMasterAsset('chassis', this.value)">
+                            <select id="filterAssetCat" class="form-control" onchange="window.filterMasterAsset('category', this.value)">
+                                <option value="">Semua kategori</option><option value="Excavator">Excavator</option><option value="Bulldozer">Bulldozer</option><option value="Dump Truck">Dump Truck</option><option value="Compactor">Compactor</option><option value="Motor Grader">Motor Grader</option><option value="Wheel Loader">Wheel Loader</option><option value="Light Vehicle">Light Vehicle</option><option value="Water Truck">Water Truck</option><option value="Prime Mover">Prime Mover</option><option value="Trado">Trado</option><option value="Other">Other</option>
+                            </select>
+                            <select id="filterAssetLoc" class="form-control" onchange="window.filterMasterAsset('location', this.value)">
+                                <option value="">Semua lokasi</option><option value="Borrow Pit">Borrow Pit</option><option value="Site Celcin">Site Celcin</option><option value="Yard">Yard</option><option value="Workshop">Workshop</option><option value="Site Alpha">Site Alpha</option><option value="Minas">Minas Field</option>
+                            </select>
+                            <select id="filterAssetComp" class="form-control" onchange="window.filterMasterAsset('completeness', this.value)"><option value="">Semua kelengkapan</option><option value="complete">Lengkap</option><option value="incomplete">Belum lengkap</option></select>
+                            <select id="filterAssetStat" class="form-control" onchange="window.filterMasterAsset('status', this.value)"><option value="">Semua status</option><option value="READY">READY</option><option value="OPERATING">OPERATING</option><option value="STANDBY">STANDBY</option><option value="BREAKDOWN">BREAKDOWN</option><option value="INSPEKSI">INSPEKSI</option><option value="ACCIDENT_HOLD">ACCIDENT HOLD</option></select>
+                        </div>
+
+                        <div class="table-responsive master-asset-table-scroll dashboard-wo-scroll">
+                            <table class="table" id="assetTable">
+                                <colgroup>
+                                    <col class="asset-col-number">
+                                    <col class="asset-col-unit">
+                                    <col class="asset-col-detail">
+                                    <col class="asset-col-identity">
+                                    <col class="asset-col-warranty">
+                                    <col class="asset-col-placement">
+                                    <col class="asset-col-condition">
+                                    <col class="asset-col-documents">
+                                    <col class="asset-col-actions">
+                                </colgroup>
                                 <thead id="assetTableHeader">
                                     <tr>
-                                        <th style="width:54px; text-align:center;">No.</th>
-                                        <th onclick="window.sortMasterAsset('id')" style="cursor:pointer">Asset ID / Kode <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('hull')" style="cursor:pointer">Nomor Lambung <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('model')" style="cursor:pointer">Merek & Tahun <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('sn')" style="cursor:pointer">SN & Plat Kendaraan <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('warranty')" style="cursor:pointer">GARANSI <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('chassis')" style="cursor:pointer">NO. RANGKA <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('category')" style="cursor:pointer">Kategori <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('location')" style="cursor:pointer">Lokasi Aktif <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('completeness')" style="cursor:pointer">Kelengkapan Data <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('status')" style="cursor:pointer">Status Efektif <i class="fa-solid fa-sort"></i></th>
-                                        <th style="text-align:center; min-width: 90px;">Aksi</th>
-                                    </tr>
-                                    <tr class="asset-filter-row" style="background: #f8fafc;">
-                                        <th aria-label="Nomor urut otomatis"></th>
-                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetId" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter ID..." onkeyup="window.filterMasterAsset('id', this.value)"></th>
-                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetHull" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Lambung..." onkeyup="window.filterMasterAsset('hull', this.value)"></th>
-                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetModel" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Merek/Tahun..." onkeyup="window.filterMasterAsset('model', this.value)"></th>
-                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetSn" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter SN/Plat..." onkeyup="window.filterMasterAsset('sn', this.value)"></th>
-                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetWarranty" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter Garansi..." onkeyup="window.filterMasterAsset('warranty', this.value)"></th>
-                                        <th style="padding: 4px 8px;"><input type="text" id="filterAssetChassis" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" placeholder="Filter No. Rangka..." onkeyup="window.filterMasterAsset('chassis', this.value)"></th>
-                                        <th style="padding: 4px 8px;">
-                                            <select id="filterAssetCat" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('category', this.value)">
-                                                <option value="">Semua</option>
-                                                <option value="Excavator">Excavator</option>
-                                                <option value="Bulldozer">Bulldozer</option>
-                                                <option value="Dump Truck">Dump Truck</option>
-                                                <option value="Compactor">Compactor</option>
-                                                <option value="Motor Grader">Motor Grader</option>
-                                                <option value="Wheel Loader">Wheel Loader</option>
-                                                <option value="Light Vehicle">Light Vehicle</option>
-                                                <option value="Water Truck">Water Truck</option>
-                                                <option value="Prime Mover">Prime Mover</option>
-                                                <option value="Trado">Trado</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                        </th>
-                                        <th style="padding: 4px 8px;">
-                                            <select id="filterAssetLoc" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('location', this.value)">
-                                                <option value="">Semua</option>
-                                                <option value="Borrow Pit">Borrow Pit</option>
-                                                <option value="Site Celcin">Site Celcin</option>
-                                                <option value="Yard">Yard</option>
-                                                <option value="Workshop">Workshop</option>
-                                                <option value="Site Alpha">Site Alpha</option>
-                                                <option value="Minas">Minas Field</option>
-                                            </select>
-                                        </th>
-                                        <th style="padding: 4px 8px;">
-                                            <select id="filterAssetComp" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('completeness', this.value)">
-                                                <option value="">Semua</option>
-                                                <option value="complete">Lengkap</option>
-                                                <option value="incomplete">Belum Lengkap</option>
-                                            </select>
-                                        </th>
-                                        <th style="padding: 4px 8px;">
-                                            <select id="filterAssetStat" class="form-control" style="font-size:0.75rem; padding: 2px 6px; height: 26px;" onchange="window.filterMasterAsset('status', this.value)">
-                                                <option value="">Semua</option>
-                                                <option value="READY">READY</option>
-                                                <option value="OPERATING">OPERATING</option>
-                                                <option value="STANDBY">STANDBY</option>
-                                                <option value="BREAKDOWN">BREAKDOWN</option>
-                                                <option value="INSPEKSI">INSPEKSI</option>
-                                                <option value="ACCIDENT_HOLD">ACCIDENT HOLD</option>
-                                            </select>
-                                        </th>
-                                        <th style="padding: 4px 8px; text-align:center;">
-                                            <button type="button" class="btn btn-sm btn-secondary" onclick="window.resetMasterAssetFilters()" style="padding: 2px 6px; font-size: 0.7rem; border-radius:3px;" title="Reset Filter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
-                                        </th>
+                                        <th>No.</th>
+                                        <th onclick="window.sortMasterAsset('id')" style="cursor:pointer">Identitas Unit <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('model')" style="cursor:pointer">Detail Aset <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('sn')" style="cursor:pointer">Identitas Kendaraan <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('warranty')" style="cursor:pointer">Garansi <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('location')" style="cursor:pointer">Penempatan <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('status')" style="cursor:pointer">Kondisi Data <i class="fa-solid fa-sort"></i></th>
+                                        <th>Dokumen</th>
+                                        <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="assetTableBody">
@@ -3828,8 +3797,38 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
         </div>
     </div>
 
+    <div class="modal-overlay" id="modalMasterAssetPrint">
+        <div class="modal-content master-asset-print-dialog">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-print"></i> Cetak Laporan Master Asset</h2>
+                <button type="button" class="asset-registration-close" onclick="closeModal('modalMasterAssetPrint')" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="master-asset-print-description">Laporan menggunakan format A4 landscape. Serial Number dan pelat kendaraan dicetak pada kolom terpisah, termasuk usia setiap unit.</p>
+                <label class="master-asset-print-option"><input type="radio" name="masterAssetPrintScope" value="all" checked><span><strong>Seluruh Master Asset</strong><small id="masterAssetPrintAllCount">Semua unit aktif</small></span></label>
+                <label class="master-asset-print-option"><input type="radio" name="masterAssetPrintScope" value="filtered"><span><strong>Hasil filter saat ini</strong><small id="masterAssetPrintFilteredCount">Unit yang tampil setelah filter</small></span></label>
+                <div class="asset-registration-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalMasterAssetPrint')">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="window.printMasterAssetReport()"><i class="fa-solid fa-print"></i> Buka Pratinjau Cetak</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalAssetLegalDocuments">
+        <div class="modal-content asset-legal-documents-modal">
+            <div class="modal-header">
+                <div><h2><i class="fa-solid fa-folder-open"></i> Legalitas & Dokumentasi</h2><p id="assetLegalDocumentsSubtitle">Master Asset</p></div>
+                <button type="button" class="asset-registration-close" onclick="closeModal('modalAssetLegalDocuments')" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="modal-body" id="assetLegalDocumentsBody">
+                <div class="asset-document-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data legalitas dan dokumentasi...</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Tambah Aset -->
-    <div class="modal-overlay" id="modalNewAsset">
+    <div class="modal-overlay asset-registration-overlay" id="modalNewAsset">
         <div class="modal-content asset-registration-modal">
             <div class="modal-header">
                 <div>
@@ -3880,6 +3879,23 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         <label class="asset-registration-field asset-registration-field-wide">
                             <span>Nama aset <b>*</b></span>
                             <input type="text" id="na-model" placeholder="Contoh: Komatsu PC200-10M0 CE" class="form-control" required>
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Kode Unit</span>
+                            <input type="text" id="na-asset-code" placeholder="Contoh: DT-00152" class="form-control" maxlength="50">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Status Warranty</span>
+                            <select id="na-warranty" class="form-control">
+                                <option value="Belum diketahui">Belum diketahui</option>
+                                <option value="Aktif">Aktif</option>
+                                <option value="Tidak ada warranty">Tidak ada warranty</option>
+                                <option value="Kedaluwarsa">Kedaluwarsa</option>
+                            </select>
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Kapasitas</span>
+                            <input type="text" id="na-capacity" placeholder="Contoh: 20 ton, 1,2 m³, atau 10.000 liter" class="form-control" maxlength="100">
                         </label>
                         <label class="asset-registration-field" data-form-variant="general">
                             <span>Dealer</span>
@@ -3990,24 +4006,31 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
     </div>
 
     <!-- Modal Edit Aset -->
-    <div class="modal-overlay" id="modalEditAsset">
-        <div class="modal-content" style="max-width: 650px;">
+    <div class="modal-overlay asset-registration-overlay" id="modalEditAsset">
+        <div class="modal-content asset-registration-modal">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-pen-to-square text-primary"></i> Edit Data Unit: <span id="ea-id-label"></span></h2>
-                <button onclick="closeModal('modalEditAsset')"
-                    style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            <div class="modal-body form-group">
-                <input type="hidden" id="ea-id">
-                
-                <div style="font-size:0.78rem; color:#1e293b; background:#f8fafc; border:1px solid #e2e8f0; padding:10px 14px; border-radius:6px; margin-bottom:14px; line-height:1.4;">
-                    <i class="fa-solid fa-pen" style="color:var(--primary);"></i> <strong>Perbarui Identitas Unit:</strong> Lengkapi informasi Serial Number (SN), Nomor Pelat, Merek/Model, dan Tahun untuk memenuhi kelengkapan data inventaris aset.
+                <div>
+                    <span class="asset-registration-eyebrow">Master Asset</span>
+                    <h2><i class="fa-solid fa-pen-to-square text-primary"></i> Edit Data Unit: <span id="ea-id-label"></span></h2>
+                    <p>Perbarui identitas, penempatan, perawatan, dan legalitas unit.</p>
                 </div>
+                <button type="button" class="asset-registration-close" onclick="closeModal('modalEditAsset')"
+                    aria-label="Tutup formulir edit">&times;</button>
+            </div>
+            <div class="modal-body asset-registration-body">
+                <input type="hidden" id="ea-id">
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Kategori Aset</label>
-                        <select id="ea-cat" class="form-control">
+                <section class="asset-registration-section asset-registration-type-section" aria-labelledby="editAssetTypeTitle">
+                    <div class="asset-registration-section-heading">
+                        <div>
+                            <span class="asset-registration-step">01</span>
+                            <h3 id="editAssetTypeTitle">Tipe aset</h3>
+                        </div>
+                        <span class="asset-registration-auto-id"><i class="fa-solid fa-fingerprint"></i> ID unit tetap</span>
+                    </div>
+                    <label class="asset-registration-field asset-registration-type-field">
+                        <span>Tipe aset <b>*</b></span>
+                        <select id="ea-cat" class="form-control" onchange="window.updateEditAssetFormLayout()" required>
                             <option value="Excavator">Excavator</option>
                             <option value="Bulldozer">Bulldozer</option>
                             <option value="Dump Truck">Dump Truck</option>
@@ -4020,84 +4043,150 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             <option value="Trado">Trado</option>
                             <option value="Other">Other</option>
                         </select>
-                    </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Status Efektif</label>
-                        <select id="ea-status" class="form-control">
-                            <option value="READY">READY - Siap Operasi</option>
-                            <option value="OPERATING">OPERATING - Sedang Beroperasi</option>
-                            <option value="STANDBY">STANDBY - Cadangan</option>
-                            <option value="INSPEKSI">INSPEKSI - Pengecekan PM</option>
-                            <option value="BREAKDOWN">BREAKDOWN - Perbaikan</option>
-                            <option value="ACCIDENT_HOLD">ACCIDENT HOLD - Tahan Investigasi</option>
-                        </select>
-                    </div>
-                </div>
+                    </label>
+                </section>
 
-                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Merek & Model Spesifik</label>
-                        <input type="text" id="ea-model" placeholder="Misal: Komatsu PC200-10M0 CE" class="form-control">
+                <section class="asset-registration-section" aria-labelledby="editAssetDataTitle">
+                    <div class="asset-registration-section-heading">
+                        <div>
+                            <span class="asset-registration-step">02</span>
+                            <h3 id="editAssetDataTitle">Data utama unit</h3>
+                        </div>
+                        <span id="ea-form-mode" class="asset-registration-mode">Formulir umum</span>
                     </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Tahun Pembuatan</label>
-                        <input type="number" id="ea-year" placeholder="Misal: 2024" min="1970" max="2099" class="form-control">
-                    </div>
-                </div>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Nomor Seri (SN)</label>
-                        <input type="text" id="ea-sn" placeholder="Nomor Seri Pabrik/Chasis" class="form-control">
+                    <div class="asset-registration-grid">
+                        <label class="asset-registration-field asset-registration-field-wide">
+                            <span>Nama aset <b>*</b></span>
+                            <input type="text" id="ea-model" placeholder="Contoh: Komatsu PC200-10M0 CE" class="form-control" required>
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Kode Unit</span>
+                            <input type="text" id="ea-asset-code" class="form-control" readonly aria-describedby="ea-asset-code-help">
+                            <small id="ea-asset-code-help">Kode unit adalah identitas permanen.</small>
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Status Warranty</span>
+                            <select id="ea-warranty" class="form-control">
+                                <option value="Belum diketahui">Belum diketahui</option>
+                                <option value="Aktif">Aktif</option>
+                                <option value="Tidak ada warranty">Tidak ada warranty</option>
+                                <option value="Kedaluwarsa">Kedaluwarsa</option>
+                            </select>
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Kapasitas</span>
+                            <input type="text" id="ea-capacity" placeholder="Contoh: 20 ton, 1,2 m³, atau 10.000 liter" class="form-control" maxlength="100">
+                        </label>
+                        <label class="asset-registration-field" data-edit-form-variant="general">
+                            <span>Dealer</span>
+                            <input type="text" id="ea-dealer" placeholder="Nama dealer atau cabang" class="form-control">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Tahun <b>*</b></span>
+                            <input type="number" id="ea-year" placeholder="2026" min="1970" max="2099" class="form-control" oninput="window.updateEditAssetAge()" required>
+                        </label>
+                        <label class="asset-registration-field" data-edit-form-variant="general">
+                            <span>Serial number</span>
+                            <input type="text" id="ea-sn" placeholder="Nomor seri pabrikan" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-edit-form-variant="dump">
+                            <span>Serial number / pelat kendaraan</span>
+                            <input type="text" id="ea-dump-identity" placeholder="Nomor seri atau pelat kendaraan" class="form-control">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span id="ea-hull-label">Nomor lambung aktual</span>
+                            <div class="asset-registration-field-action">
+                                <input type="text" id="ea-hull" class="form-control" readonly aria-describedby="ea-hull-help">
+                                <button type="button" onclick="window.openEditAssetHullRename()" title="Ubah melalui riwayat nomor lambung"><i class="fa-solid fa-pen"></i></button>
+                            </div>
+                            <small id="ea-hull-help">Perubahan kode disimpan dalam riwayat identitas unit.</small>
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Project</span>
+                            <select id="ea-loc" class="form-control">
+                                <option value="">Memuat daftar project...</option>
+                            </select>
+                        </label>
+                        <label class="asset-registration-field">
+                            <span id="ea-position-label">Lokasi</span>
+                            <input type="text" id="ea-position" placeholder="Lokasi atau posisi aktual unit" class="form-control">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Status</span>
+                            <select id="ea-status" class="form-control">
+                                <option value="READY">READY - Siap Operasi</option>
+                                <option value="OPERATING">OPERATING - Sedang Operasi</option>
+                                <option value="STANDBY">STANDBY - Cadangan</option>
+                                <option value="INSPEKSI">INSPEKSI - Pengecekan</option>
+                                <option value="BREAKDOWN">BREAKDOWN - Perbaikan</option>
+                                <option value="ACCIDENT_HOLD">ACCIDENT HOLD - Tahan Investigasi</option>
+                            </select>
+                        </label>
+                        <label class="asset-registration-field" data-edit-form-variant="general">
+                            <span>Lokasi invoice</span>
+                            <input type="text" id="ea-invoice-location" placeholder="Tempat penyimpanan invoice" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-edit-form-variant="dump">
+                            <span>Lokasi STNK</span>
+                            <input type="text" id="ea-stnk-location" placeholder="Tempat penyimpanan STNK" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-edit-form-variant="dump">
+                            <span>Lokasi BPKB</span>
+                            <input type="text" id="ea-bpkb-location" placeholder="Tempat penyimpanan BPKB" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-edit-form-variant="dump">
+                            <span>Nomor rangka</span>
+                            <input type="text" id="ea-chassis" placeholder="Nomor rangka kendaraan" class="form-control">
+                        </label>
+                        <label class="asset-registration-field" data-edit-form-variant="dump">
+                            <span>Tipe</span>
+                            <input type="text" id="ea-vehicle-type" placeholder="Contoh: FM280JD (6x4)" class="form-control">
+                        </label>
+                        <label class="asset-registration-field">
+                            <span>Usia</span>
+                            <div class="asset-registration-age-control">
+                                <input type="number" id="ea-age" min="0" max="100" placeholder="Otomatis" class="form-control" readonly>
+                                <span>tahun</span>
+                            </div>
+                        </label>
                     </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Nomor Pelat Kendaraan</label>
-                        <input type="text" id="ea-plate" placeholder="Nomor Pelat Kendaraan" class="form-control">
-                    </div>
-                </div>
+                </section>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Garansi (Warranty)</label>
-                        <input type="text" id="ea-warranty" placeholder="Misal: 0 HM, 3000 HM, dsb" class="form-control">
+                <section class="asset-registration-section" aria-labelledby="editAssetLegalTitle">
+                    <div class="asset-registration-section-heading">
+                        <div>
+                            <span class="asset-registration-step">03</span>
+                            <h3 id="editAssetLegalTitle">Legalitas dan Dokumentasi</h3>
+                        </div>
+                        <span class="asset-registration-optional">Opsional</span>
                     </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Nomor Rangka (Chassis Number)</label>
-                        <input type="text" id="ea-chassis" placeholder="Nomor Rangka Kendaraan" class="form-control">
+                    <div class="asset-registration-legal-grid">
+                        <label class="asset-registration-field"><span>STNK berlaku sampai</span><input id="ea-stnk" type="date" class="form-control"></label>
+                        <label class="asset-registration-field"><span>KIR berlaku sampai</span><input id="ea-kir" type="date" class="form-control"></label>
+                        <label class="asset-registration-field"><span>SILO berlaku sampai</span><input id="ea-silo" type="date" class="form-control"></label>
                     </div>
-                </div>
+                    <div id="ea-document-status" class="asset-registration-document-status" aria-live="polite">Memuat dokumentasi unit...</div>
+                    <div class="asset-registration-upload-grid">
+                        <label class="asset-registration-upload">
+                            <span><i class="fa-regular fa-image"></i> Tambah / ganti foto unit</span>
+                            <small>JPEG atau PNG · maks. 5 MB per foto</small>
+                            <input id="ea-photos" type="file" accept="image/jpeg,image/png" multiple class="form-control" onchange="window.previewEditAssetPhotos(this.files)">
+                        </label>
+                        <label class="asset-registration-upload">
+                            <span><i class="fa-regular fa-file-pdf"></i> Ganti PDF JO servis</span>
+                            <small>Dokumen baru menggantikan PDF lama · maks. 10 MB</small>
+                            <input id="ea-service-pdf" type="file" accept="application/pdf" class="form-control">
+                        </label>
+                    </div>
+                    <div id="ea-photo-preview" class="asset-registration-photo-preview"></div>
+                </section>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Lokasi Operasional / Site</label>
-                        <select id="ea-loc" class="form-control">
-                            <option value="">Memuat lokasi dari database...</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-weight:600; font-size:0.8rem;">Meter Operasional (HM / KM)</label>
-                        <input type="number" id="ea-hm" placeholder="0.00" step="0.1" class="form-control">
-                    </div>
-                </div>
+                <div id="ea-error-alert" class="asset-registration-error" role="alert"></div>
 
-                <div id="ea-error-alert" style="display:none; color:var(--danger); background:#fef2f2; border:1px solid #fecaca; padding:8px 12px; border-radius:4px; font-size:0.8rem; margin-bottom:12px;"></div>
-                <h3 style="font-size:0.95rem;margin:16px 0 10px;">Operator, servis, dan legalitas</h3>
-                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
-                    <label>Operator saat ini<input id="ea-operator" class="form-control" maxlength="150"></label>
-                    <label>Mulai bertugas jika operator berubah<input id="ea-operator-start" type="date" class="form-control"></label>
-                    <label>Waktu servis terakhir<input id="ea-last-service-date" type="datetime-local" class="form-control"></label>
-                    <label>Meter servis terakhir<input id="ea-last-service-hm" type="number" min="0" step="0.01" class="form-control"></label>
-                    <label>Interval servis<input id="ea-service-interval" type="number" min="1" step="1" class="form-control"></label>
-                    <label>Jenis meter<select id="ea-service-unit" class="form-control"><option value="HM">HM</option><option value="KM">KM</option></select></label>
-                    <label>Pemakaian per hari<input id="ea-daily-rate" type="number" min="0.01" step="0.01" class="form-control"></label>
-                    <label>STNK berlaku sampai<input id="ea-stnk" type="date" class="form-control"></label>
-                    <label>KIR berlaku sampai<input id="ea-kir" type="date" class="form-control"></label>
-                    <label>SILO berlaku sampai<input id="ea-silo" type="date" class="form-control"></label>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <div class="asset-registration-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modalEditAsset')">Batal</button>
-                    <button type="button" class="btn btn-primary" id="btnSubmitEditAsset" onclick="submitEditAsset()"><i class="fa-solid fa-check"></i> Simpan Perubahan</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitEditAsset" onclick="submitEditAsset()"><i class="fa-solid fa-floppy-disk"></i> Simpan perubahan</button>
                 </div>
             </div>
         </div>
@@ -5226,6 +5315,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 if (el) {
                     if (id === 'modalNewAsset' || id === 'modalEditAsset') window.loadAssetLocations();
                     if (id === 'modalNewAsset') window.updateNewAssetFormLayout();
+                    if (id === 'modalEditAsset') window.updateEditAssetFormLayout();
                     // Overlay yang berada di dalam view tersembunyi tetap berukuran 0x0
                     // walaupun memakai position:fixed. Pindahkan ke body sebelum dibuka.
                     if (el.classList.contains('modal-overlay') && el.parentElement !== document.body) {
@@ -5247,13 +5337,24 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         const select = document.getElementById(id);
                         if (!select) continue;
                         const chosen = id === 'na-loc' ? '' : (select.dataset.requestedLocationId || select.value);
+                        const requestedProjectName = id === 'ea-loc' ? (select.dataset.requestedProjectName || '') : '';
                         select.replaceChildren();
                         const blank = document.createElement('option'); blank.value = ''; blank.textContent = 'Pilih lokasi'; select.appendChild(blank);
                         for (const location of result.data) {
                             const option = document.createElement('option'); option.value = String(location.location_id); option.textContent = location.location_name; select.appendChild(option);
                         }
-                        select.value = chosen && Array.from(select.options).some(option => option.value === chosen) ? chosen : '';
-                        if (id === 'ea-loc') delete select.dataset.requestedLocationId;
+                        if (chosen && Array.from(select.options).some(option => option.value === chosen)) {
+                            select.value = chosen;
+                        } else if (requestedProjectName) {
+                            const matched = Array.from(select.options).find(option => option.textContent.trim().toLowerCase() === requestedProjectName.trim().toLowerCase());
+                            select.value = matched?.value || '';
+                        } else {
+                            select.value = '';
+                        }
+                        if (id === 'ea-loc') {
+                            delete select.dataset.requestedLocationId;
+                            delete select.dataset.requestedProjectName;
+                        }
                     }
                 } catch (error) { console.warn('Referensi lokasi gagal dimuat:', error); }
             };
@@ -8035,8 +8136,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     });
                 }
 
+                window.filteredMasterAssetData = assets.slice();
                 if (assets.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding: 25px; color: var(--text-muted);"><i class="fa-solid fa-filter" style="margin-right:6px;"></i> Tidak ada unit yang cocok dengan filter kelengkapan/pencarian saat ini.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" class="master-asset-empty"><i class="fa-solid fa-filter"></i> Tidak ada unit yang cocok dengan filter atau pencarian saat ini.</td></tr>';
                     return;
                 }
 
@@ -8044,34 +8146,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const ident = window.formatAssetIdentityDetails(asset);
                     const compl = window.getAssetCompleteness(asset);
                     const badge = window.getAssetStatusBadge(asset.status);
-
-                    const snDisplay = ident.sn !== 'Belum tersedia' 
-                        ? `<strong style="font-family:var(--font-mono); color:var(--text-main); font-size:0.8rem;">${escapeHtml(ident.sn)}</strong>` 
-                        : `<span style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">Belum tersedia</span>`;
-                    
-                    const plateDisplay = ident.plate !== 'Belum tersedia' 
-                        ? `<span style="font-family:var(--font-mono); font-weight:600; font-size:0.78rem; color:#0369a1; background:#f0f9ff; padding:1px 5px; border-radius:3px;">${escapeHtml(ident.plate)}</span>` 
-                        : `<span style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">Belum tersedia</span>`;
-
-                    const modelDisplay = ident.model !== 'Belum tersedia'
-                        ? `<div style="font-weight:600; font-size:0.82rem; color:var(--text-main);">${escapeHtml(ident.model)}</div><div style="font-size:0.72rem; color:var(--text-muted);">Tahun: ${escapeHtml(ident.year)}</div>`
-                        : `<span style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">Belum tersedia</span>`;
-
-                    const garansiDisplay = (asset.warranty && asset.warranty !== '0 HM')
-                        ? `<span class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; font-weight:700; font-family:var(--font-mono); font-size:0.75rem; white-space:nowrap;"><i class="fa-solid fa-shield-halved" style="margin-right:3px;"></i>${escapeHtml(asset.warranty)}</span>`
-                        : `<span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted); font-weight:600;">${escapeHtml(asset.warranty || '0 HM')}</span>`;
-
-                    const chassisDisplay = (asset.chassis_number && asset.chassis_number !== '-')
-                        ? `<span style="font-family:var(--font-mono); font-weight:600; font-size:0.75rem; color:#1e293b; background:#f1f5f9; padding:2px 6px; border-radius:4px; border:1px solid #e2e8f0; display:inline-block; letter-spacing:0.3px; white-space:nowrap;">${escapeHtml(asset.chassis_number)}</span>`
-                        : `<span style="color:var(--text-muted); font-size:0.75rem; font-style:italic;">-</span>`;
-
-                    const complBadge = compl.isComplete
-                        ? `<span class="badge badge-success" style="font-size:0.72rem; padding:3px 8px; border-radius:4px;"><i class="fa-solid fa-circle-check"></i> Lengkap</span>`
-                        : `<span class="badge badge-warning" style="font-size:0.72rem; padding:3px 8px; border-radius:4px;" title="Belum lengkap: ${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum Lengkap</span><div style="font-size:0.68rem; color:var(--danger); margin-top:2px;">Kurang: ${escapeHtml(compl.missing.slice(0, 2).join(', '))}${compl.missing.length > 2 ? ' +' + (compl.missing.length - 2) : ''}</div>`;
-
-                    const hullBadge = ident.hull !== '-' 
-                        ? `<span class="badge" style="background:#fef3c7; color:#92400e; font-weight:700; font-family:var(--font-mono); font-size:0.8rem; border:1px solid #fde68a;">${escapeHtml(ident.hull)}</span>`
-                        : `<span style="color:#94a3b8; font-style:italic; font-size:0.75rem;">Belum ada</span>`;
+                    const calculatedAge = asset.asset_age ?? ((Number(ident.year) >= 1970) ? Math.max(0, new Date().getFullYear() - Number(ident.year)) : null);
+                    const shown = value => value && value !== '-' && value !== 'Belum tersedia' ? escapeHtml(value) : '<em>Belum tersedia</em>';
 
                     return `
                     <tr data-asset-id="${escapeHtml(asset.id)}"
@@ -8081,51 +8157,18 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         onclick="openAssetActionCalloutFromElement(event, this)" 
                         style="cursor:pointer;" 
                         title="Klik 1x untuk membuka Opsi Aksi Integrasi Unit ${escapeHtml(asset.id)}">
-                        <td style="text-align:center; color:var(--text-muted); font-variant-numeric:tabular-nums;">${rowIndex + 1}</td>
+                        <td style="color:var(--text-muted); font-variant-numeric:tabular-nums;">${rowIndex + 1}</td>
+                        <td onclick="event.stopPropagation();"><a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(ident.unitId)}'); return false;"><strong class="unit-code-text">${escapeHtml(asset.id || asset.asset_id || ident.unitId)}</strong><i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon"></i></a><div class="asset-cell-line"><span>Kode</span><b>${shown(asset.asset_code)}</b></div><div class="asset-cell-line"><span>Lambung</span><b>${shown(ident.hull)}</b><button type="button" class="asset-inline-action" onclick="event.stopPropagation(); window.openRenameHullModal('${escapeHtml(asset.id)}', '${escapeHtml(ident.hull)}')" title="Ubah nomor lambung"><i class="fa-solid fa-pen"></i></button></div></td>
+                        <td><strong>${shown(ident.model)}</strong><div class="asset-cell-line"><span>Tahun</span><b>${shown(ident.year)}</b></div><div class="asset-cell-line"><span>Usia</span><b>${calculatedAge === null ? 'Belum tersedia' : `${calculatedAge} tahun`}</b></div><div class="asset-cell-line"><span>Kapasitas</span><b>${shown(asset.capacity)}</b></div><span class="asset-cell-tag">${escapeHtml(asset.category || 'Other')}</span></td>
+                        <td><div class="asset-cell-line"><span>SN</span><b class="asset-mono">${shown(ident.sn)}</b></div><div class="asset-cell-line"><span>Pelat</span><b class="asset-mono">${shown(ident.plate)}</b></div><div class="asset-cell-line"><span>Rangka</span><b class="asset-mono">${shown(asset.chassis_number || asset.chassis)}</b></div></td>
+                        <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(asset.warranty || 'Belum diketahui')}</span></td>
                         <td onclick="event.stopPropagation();">
-                            <a href="javascript:void(0)" 
-                               class="unit-prop-hover-link" 
-                               onclick="window.openUnitProperties('${escapeHtml(ident.unitId)}'); return false;" 
-                               title="Buka Properties Unit ${escapeHtml(ident.unitId)}">
-                                <span class="unit-code-text" style="font-weight:700; color:var(--primary);">${escapeHtml(ident.unitId)}</span>
-                                <i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon" aria-hidden="true"></i>
-                            </a>
+                            <div class="asset-cell-line"><span>Project</span><b>${shown(asset.project_name || asset.location)}</b></div><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || '')}', 'asset'); return false;"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
                         </td>
-                        <td>
-                            <div style="display:flex; align-items:center; gap:5px;">
-                                ${hullBadge}
-                                <button type="button" class="btn btn-xs" onclick="event.stopPropagation(); window.openRenameHullModal('${escapeHtml(asset.id)}', '${escapeHtml(ident.hull)}')" style="padding:1px 5px; font-size:0.68rem; background:#fff; border:1px solid #cbd5e1; border-radius:3px; cursor:pointer;" title="Rename Nomor Lambung Aktual"><i class="fa-solid fa-pen"></i></button>
-                            </div>
-                        </td>
-                        <td>
-                            ${modelDisplay}
-                        </td>
-                        <td>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">SN: ${snDisplay}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Plat: ${plateDisplay}</div>
-                        </td>
-                        <td>
-                            ${garansiDisplay}
-                        </td>
-                        <td>
-                            ${chassisDisplay}
-                        </td>
-                        <td>
-                            <span class="badge badge-info" style="font-size:0.72rem;">${escapeHtml(asset.category || 'Other')}</span>
-                        </td>
+                        <td><div class="asset-condition-stack">${badge}${compl.isComplete ? '<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Lengkap</span>' : `<span class="badge badge-warning" title="${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum lengkap</span><small>Kurang: ${escapeHtml(compl.missing.join(', '))}</small>`}</div></td>
+                        <td onclick="event.stopPropagation();"><button type="button" class="btn btn-sm asset-document-button" onclick="window.openAssetLegalDocuments('${escapeHtml(asset.id)}')" title="Cek legalitas dan dokumentasi unit"><i class="fa-solid fa-folder-open"></i><span>Dokumen</span></button></td>
                         <td onclick="event.stopPropagation();">
-                            <a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || '')}">
-                                <i class="fa-solid fa-location-dot site-loc-pin-icon" style="color:var(--primary); margin-right:4px;"></i>
-                                <span class="site-name-text">${escapeHtml(asset.location || 'Belum tersedia')}</span>
-                                <i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon" aria-hidden="true"></i>
-                            </a>
-                        </td>
-                        <td>
-                            ${complBadge}
-                        </td>
-                        <td>${badge}</td>
-                        <td style="text-align:center;" onclick="event.stopPropagation();">
-                            <div style="display:inline-flex; gap:4px;">
+                            <div class="asset-row-actions">
                                 <button type="button" class="btn btn-sm btn-primary" onclick="window.openEditAssetModal('${escapeHtml(asset.id)}')" style="padding:3px 7px; font-size:0.72rem; border-radius:3px;" title="Edit & Lengkapi Data Unit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
                                 <button type="button" class="btn btn-sm" onclick="openAssetActionCalloutFromElement(event, this.closest('tr'))" style="background:#f1f5f9; color:#475569; padding:3px 6px; font-size:0.72rem; border-radius:3px;" title="Menu Aksi Lainnya"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                             </div>
@@ -8133,6 +8176,117 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     </tr>
                     `;
                 }).join('');
+            };
+
+            window.openAssetLegalDocuments = async function(assetId) {
+                const subtitle = document.getElementById('assetLegalDocumentsSubtitle');
+                const body = document.getElementById('assetLegalDocumentsBody');
+                if (subtitle) subtitle.textContent = assetId || 'Master Asset';
+                if (body) body.innerHTML = '<div class="asset-document-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data legalitas dan dokumentasi...</div>';
+                openModal('modalAssetLegalDocuments');
+                try {
+                    const response = await fetch(`api/assets.php?id=${encodeURIComponent(assetId)}`, { cache: 'no-store' });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Data tidak dapat dimuat.');
+                    const asset = result.data || {};
+                    const photos = Array.isArray(asset.gallery_photos) ? asset.gallery_photos : [];
+                    const formatDate = value => value ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Belum tersedia';
+                    const legalItems = [
+                        ['STNK berlaku sampai', asset.legal_stnk_expiry],
+                        ['KIR berlaku sampai', asset.legal_kir_expiry],
+                        ['SILO berlaku sampai', asset.legal_silo_expiry]
+                    ];
+                    body.innerHTML = `
+                        <section class="asset-legal-summary">
+                            ${legalItems.map(([label, value]) => `<div><span>${label}</span><strong>${formatDate(value)}</strong></div>`).join('')}
+                        </section>
+                        <section class="asset-document-section">
+                            <div class="asset-document-section-heading"><div><h3>Foto unit</h3><p>${photos.length} foto tersimpan</p></div><button type="button" class="btn btn-sm" onclick="closeModal('modalAssetLegalDocuments'); window.openEditAssetModal('${escapeHtml(assetId)}')"><i class="fa-solid fa-pen-to-square"></i> Kelola dokumentasi</button></div>
+                            <div class="asset-document-gallery">${photos.length ? photos.map(photo => `<a href="api/asset_files.php?kind=photo&amp;photo_id=${encodeURIComponent(photo.photo_id)}" target="_blank" rel="noopener"><img src="api/asset_files.php?kind=photo&amp;photo_id=${encodeURIComponent(photo.photo_id)}" alt="${escapeHtml(photo.photo_title || 'Foto unit')}"><span>${escapeHtml(photo.photo_title || 'Foto unit')}</span></a>`).join('') : '<div class="asset-document-empty-state"><i class="fa-regular fa-images"></i> Belum ada foto unit.</div>'}</div>
+                        </section>
+                        <section class="asset-document-section">
+                            <div class="asset-document-section-heading"><div><h3>Dokumen PDF</h3><p>Dokumen JO servis unit</p></div></div>
+                            ${asset.service_manual_pdf_url ? `<a class="asset-document-pdf-link" href="api/asset_files.php?kind=pdf&amp;asset_id=${encodeURIComponent(assetId)}" target="_blank" rel="noopener"><i class="fa-regular fa-file-pdf"></i><span><strong>Buka PDF JO servis</strong><small>Dokumen tersimpan</small></span><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : '<div class="asset-document-empty-state"><i class="fa-regular fa-file-pdf"></i> Belum ada PDF JO servis.</div>'}
+                        </section>`;
+                } catch (error) {
+                    if (body) body.innerHTML = `<div class="asset-document-error"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(error?.message || 'Data legalitas dan dokumentasi gagal dimuat.')}</div>`;
+                }
+            };
+
+            window.openMasterAssetPrintDialog = function() {
+                const all = window.currentAssetData || [];
+                const filtered = window.filteredMasterAssetData || all;
+                const allCount = document.getElementById('masterAssetPrintAllCount');
+                const filteredCount = document.getElementById('masterAssetPrintFilteredCount');
+                if (allCount) allCount.textContent = `${all.length} unit aktif`;
+                if (filteredCount) filteredCount.textContent = `${filtered.length} unit sesuai filter`;
+                openModal('modalMasterAssetPrint');
+            };
+
+            window.printMasterAssetReport = function() {
+                const scope = document.querySelector('input[name="masterAssetPrintScope"]:checked')?.value || 'all';
+                const all = window.currentAssetData || [];
+                const assets = scope === 'filtered' ? (window.filteredMasterAssetData || all) : all;
+                if (!assets.length) {
+                    alert('Tidak ada data Master Asset untuk dicetak.');
+                    return;
+                }
+                const reportWindow = window.open('', '_blank');
+                if (!reportWindow) {
+                    alert('Popup pratinjau diblokir browser. Izinkan popup lalu coba lagi.');
+                    return;
+                }
+                reportWindow.opener = null;
+                const text = value => escapeHtml(value === null || value === undefined || value === '' || value === '-' ? 'Belum tersedia' : String(value));
+                const rows = assets.map((asset, index) => {
+                    const ident = window.formatAssetIdentityDetails(asset);
+                    const compl = window.getAssetCompleteness(asset);
+                    const age = asset.asset_age ?? ((Number(ident.year) >= 1970) ? Math.max(0, new Date().getFullYear() - Number(ident.year)) : null);
+                    const status = String(asset.subStatus || asset.status || 'Belum tersedia').replaceAll('_', ' ');
+                    return `<tr><td>${index + 1}</td><td>${text(asset.id || asset.asset_id)}</td><td>${text(asset.asset_code)}</td><td>${text(ident.hull)}</td><td>${text(ident.model)}</td><td>${text(asset.dealer || asset.vehicle_type)}</td><td>${text(ident.year)}</td><td>${age === null ? 'Belum tersedia' : `${age} tahun`}</td><td>${text(asset.capacity)}</td><td>${text(ident.sn)}</td><td>${text(ident.plate)}</td><td>${text(asset.chassis_number || asset.chassis)}</td><td>${text(asset.category)}</td><td>${text(asset.project_name)}</td><td>${text(asset.location || asset.operational_position)}</td><td>${text(status)}</td><td>${text(asset.warranty || 'Belum diketahui')}</td><td>${compl.isComplete ? 'Lengkap' : `Kurang: ${text(compl.missing.join(', '))}`}</td></tr>`;
+                }).join('');
+                const printedAt = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Bangkok', dateStyle: 'long', timeStyle: 'short' });
+                const logoUrl = new URL('assets/logo-pt-bina-rekayasa-anugrah.png', window.location.href).href;
+                const reportStats = {
+                    total: assets.length,
+                    ready: assets.filter(asset => String(asset.status || '').toUpperCase() === 'READY').length,
+                    operating: assets.filter(asset => String(asset.status || '').toUpperCase() === 'OPERATING').length,
+                    breakdown: assets.filter(asset => ['BREAKDOWN', 'INSPEKSI'].includes(String(asset.status || '').toUpperCase())).length,
+                    complete: assets.filter(asset => window.getAssetCompleteness(asset).isComplete).length
+                };
+                reportWindow.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Laporan Master Asset</title><style>
+                    @page { size: A4 landscape; margin: 9mm 8mm 14mm; }
+                    * { box-sizing: border-box; }
+                    body { margin: 0; padding-bottom:8mm; color: #172033; font-family: Arial, Helvetica, sans-serif; font-size: 7pt; }
+                    .report-head { display:grid; grid-template-columns:1fr 1.4fr 1fr; align-items:center; gap:6mm; border-bottom:0.7mm solid #173a63; padding-bottom:3mm; margin-bottom:3mm; }
+                    .brand { display:flex; align-items:center; gap:3mm; min-width:0; }
+                    .brand img { width:28mm; height:15mm; object-fit:contain; object-position:left center; }
+                    .brand strong { display:block; color:#102a4c; font-size:8pt; line-height:1.2; }
+                    .brand small { display:block; margin-top:1mm; color:#64748b; font-size:6.5pt; }
+                    .report-title { text-align:center; }
+                    h1 { margin:0; font-size:16pt; line-height:1.15; color:#102a4c; letter-spacing:.01em; }
+                    .report-title p { margin-top:1mm; color:#526174; font-size:7pt; }
+                    .meta { text-align:right; font-size:7pt; color:#526174; } .meta strong { display:block; color:#172033; font-size:9pt; }
+                    .report-summary { display:grid; grid-template-columns:repeat(5, 1fr); gap:1.5mm; margin-bottom:3mm; }
+                    .summary-item { padding:1.6mm 2mm; border:0.25mm solid #c8d3df; background:#f5f8fb; }
+                    .summary-item span { display:block; color:#64748b; font-size:6pt; text-transform:uppercase; letter-spacing:.04em; }
+                    .summary-item b { display:block; margin-top:.5mm; color:#172b45; font-size:8.5pt; }
+                    table { width:100%; border-collapse:collapse; table-layout:fixed; }
+                    thead { display:table-header-group; } tr { break-inside:avoid; page-break-inside:avoid; }
+                    th, td { border:0.25mm solid #b9c5d4; padding:1.35mm 1.15mm; text-align:left; vertical-align:top; overflow-wrap:anywhere; line-height:1.25; }
+                    th { background:#dfe8f2; color:#172b45; font-size:6.4pt; text-transform:uppercase; font-weight:700; }
+                    tbody tr:nth-child(even) { background:#f5f7fa; }
+                    th:nth-child(1), td:nth-child(1) { width:3%; } th:nth-child(2), td:nth-child(2) { width:6%; } th:nth-child(3), td:nth-child(3) { width:6%; }
+                    th:nth-child(4), td:nth-child(4) { width:8%; } th:nth-child(5), td:nth-child(5) { width:6%; } th:nth-child(6), td:nth-child(6) { width:4%; }
+                    th:nth-child(7), td:nth-child(7) { width:4%; } th:nth-child(8), td:nth-child(8) { width:8%; } th:nth-child(9), td:nth-child(9) { width:7%; }
+                    th:nth-child(10), td:nth-child(10) { width:9%; } th:nth-child(11), td:nth-child(11) { width:6%; } th:nth-child(12), td:nth-child(12) { width:7%; }
+                    th:nth-child(13), td:nth-child(13) { width:7%; } th:nth-child(14), td:nth-child(14) { width:6%; } th:nth-child(15), td:nth-child(15) { width:5%; } th:nth-child(16), td:nth-child(16) { width:8%; }
+                    .print-actions { position:sticky; top:0; z-index:2; margin-bottom:4mm; padding:2mm; text-align:right; background:#fff; } button { border:0; border-radius:3px; background:#0b73d9; color:white; padding:2.5mm 4mm; font-weight:bold; cursor:pointer; }
+                    .page-footer { position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-between; gap:5mm; padding-top:1.5mm; border-top:0.2mm solid #cbd5e1; color:#64748b; font-size:6.2pt; background:#fff; }
+                    @media print { .print-actions { display:none; } body { padding-bottom:0; } }
+                </style></head><body><div class="print-actions"><button onclick="window.print()">Cetak / Simpan PDF</button></div><header class="report-head"><div class="brand"><img src="${text(logoUrl)}" alt="Logo PT Bina Rekayasa Anugrah"><div><strong>PT Bina Rekayasa Anugrah</strong><small>Equipment &amp; Maintenance</small></div></div><div class="report-title"><h1>Laporan Master Asset</h1><p>${scope === 'filtered' ? 'Hasil filter Master Asset' : 'Seluruh unit aktif Master Asset'}</p></div><div class="meta"><strong>${assets.length} unit</strong>Data aktif yang dilaporkan</div></header><section class="report-summary"><div class="summary-item"><span>Total unit</span><b>${reportStats.total}</b></div><div class="summary-item"><span>Ready</span><b>${reportStats.ready}</b></div><div class="summary-item"><span>Operating</span><b>${reportStats.operating}</b></div><div class="summary-item"><span>Breakdown / inspeksi</span><b>${reportStats.breakdown}</b></div><div class="summary-item"><span>Data lengkap</span><b>${reportStats.complete}</b></div></section><table><thead><tr><th>No.</th><th>Asset ID</th><th>Kode Unit</th><th>No. Lambung</th><th>Nama Aset</th><th>Dealer / Tipe</th><th>Tahun</th><th>Usia</th><th>Kapasitas</th><th>Serial Number</th><th>Pelat Kendaraan</th><th>Nomor Rangka</th><th>Kategori</th><th>Project</th><th>Lokasi / Posisi</th><th>Status</th><th>Status Warranty</th><th>Kelengkapan</th></tr></thead><tbody>${rows}</tbody></table><footer class="page-footer"><span>Dicetak: ${text(printedAt)}</span><span>Master Asset · PT Bina Rekayasa Anugrah · Legalitas dan dokumentasi tersedia di aplikasi web</span></footer></body></html>`);
+                reportWindow.document.close();
+                closeModal('modalMasterAssetPrint');
             };
 
             window.openRenameHullModal = function(assetId, currentHull) {
@@ -8520,6 +8674,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 document.getElementById('ea-model').value = (assetObj.make_model && assetObj.make_model !== '-') ? assetObj.make_model : '';
+                document.getElementById('ea-asset-code').value = assetObj.asset_code || assetObj.id || '';
+                document.getElementById('ea-warranty').value = ['Aktif', 'Tidak ada warranty', 'Kedaluwarsa'].includes(assetObj.warranty) ? assetObj.warranty : 'Belum diketahui';
+                document.getElementById('ea-capacity').value = assetObj.capacity || '';
                 document.getElementById('ea-year').value = (assetObj.year_manufacture && parseInt(assetObj.year_manufacture, 10) >= 1970) ? assetObj.year_manufacture : '';
                 
                 let snVal = (assetObj.serial_number && assetObj.serial_number !== '-') ? assetObj.serial_number : '';
@@ -8528,9 +8685,19 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (parsed && parsed.snPlat && parsed.snPlat !== '-') snVal = parsed.snPlat;
                 }
                 document.getElementById('ea-sn').value = snVal;
-
-                document.getElementById('ea-plate').value = (assetObj.license_plate && assetObj.license_plate !== '-') ? assetObj.license_plate : '';
-                if (document.getElementById('ea-warranty')) document.getElementById('ea-warranty').value = assetObj.warranty || '0 HM';
+                const plateVal = (assetObj.license_plate && assetObj.license_plate !== '-') ? assetObj.license_plate : '';
+                const dumpIdentity = document.getElementById('ea-dump-identity');
+                if (dumpIdentity) {
+                    dumpIdentity.value = plateVal || snVal;
+                    dumpIdentity.dataset.identityKind = plateVal ? 'license_plate' : 'serial_number';
+                }
+                document.getElementById('ea-hull').value = assetObj.hull_number || assetObj.alias_name || '';
+                document.getElementById('ea-dealer').value = assetObj.dealer || '';
+                document.getElementById('ea-position').value = assetObj.operational_position || assetObj.raw_location_notes || '';
+                document.getElementById('ea-invoice-location').value = assetObj.invoice_location || '';
+                document.getElementById('ea-stnk-location').value = assetObj.stnk_location || '';
+                document.getElementById('ea-bpkb-location').value = assetObj.bpkb_location || '';
+                document.getElementById('ea-vehicle-type').value = assetObj.vehicle_type || '';
                 if (document.getElementById('ea-chassis')) document.getElementById('ea-chassis').value = (assetObj.chassis_number && assetObj.chassis_number !== '-') ? assetObj.chassis_number : '';
 
                 const locSelect = document.getElementById('ea-loc');
@@ -8538,28 +8705,27 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     if (assetObj.current_location_id) {
                         locSelect.dataset.requestedLocationId = String(assetObj.current_location_id);
                         locSelect.value = String(assetObj.current_location_id);
-                    } else if (assetObj.location) {
+                    } else if (assetObj.project_name || assetObj.location) {
+                        locSelect.dataset.requestedProjectName = assetObj.project_name || assetObj.location;
                         const matchedOpt = Array.from(locSelect.options).find(option =>
-                            option.text.toLowerCase().includes((assetObj.location || '').toLowerCase())
+                            option.text.toLowerCase().includes((assetObj.project_name || assetObj.location || '').toLowerCase())
                         );
                         if (matchedOpt) locSelect.value = matchedOpt.value;
                     }
                 }
 
-                document.getElementById('ea-hm').value = assetObj.last_hm_km !== undefined ? assetObj.last_hm_km : '0.00';
                 const fieldValues = {
-                    'ea-operator': assetObj.current_operator_name,
-                    'ea-last-service-date': assetObj.last_service_date ? String(assetObj.last_service_date).replace(' ', 'T').slice(0, 16) : '',
-                    'ea-last-service-hm': assetObj.last_service_hm_km,
-                    'ea-service-interval': assetObj.service_interval_val,
-                    'ea-service-unit': assetObj.service_interval_unit || 'HM',
-                    'ea-daily-rate': assetObj.daily_usage_coefficient,
                     'ea-stnk': assetObj.legal_stnk_expiry,
                     'ea-kir': assetObj.legal_kir_expiry,
                     'ea-silo': assetObj.legal_silo_expiry
                 };
                 Object.entries(fieldValues).forEach(([key, value]) => { const field = document.getElementById(key); if (field) field.value = value ?? ''; });
-                document.getElementById('ea-operator-start').value = '';
+                for (const id of ['ea-photos', 'ea-service-pdf']) {
+                    const input = document.getElementById(id);
+                    if (input) input.value = '';
+                }
+                document.getElementById('ea-photo-preview')?.replaceChildren();
+                window.updateEditAssetFormLayout();
 
                 const errAlert = document.getElementById('ea-error-alert');
                 if (errAlert) {
@@ -8568,6 +8734,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
 
                 openModal('modalEditAsset');
+                window.loadEditAssetDocuments(assetObj.id);
             };
 
             function openAssetModal(id, status, category, location, fromModal = null, targetTab = 'ringkasan') {
@@ -8889,6 +9056,89 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 }
             };
 
+            window.previewEditAssetPhotos = function(files) {
+                const target = document.getElementById('ea-photo-preview');
+                if (!target) return;
+                target.replaceChildren();
+                for (const file of Array.from(files || [])) {
+                    const image = document.createElement('img');
+                    image.alt = `Foto baru: ${file.name}`;
+                    image.title = file.name;
+                    const url = URL.createObjectURL(file);
+                    image.src = url;
+                    image.onload = () => URL.revokeObjectURL(url);
+                    target.appendChild(image);
+                }
+            };
+
+            window.loadEditAssetDocuments = async function(assetId) {
+                const status = document.getElementById('ea-document-status');
+                if (!status || !assetId) return;
+                status.textContent = 'Memuat dokumentasi unit...';
+                try {
+                    const response = await fetch(`api/assets.php?id=${encodeURIComponent(assetId)}`, { cache: 'no-store' });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Dokumentasi tidak dapat dimuat.');
+                    const asset = result.data || {};
+                    status.replaceChildren();
+                    const heading = document.createElement('div');
+                    heading.className = 'asset-registration-document-heading';
+                    heading.textContent = 'Dokumentasi saat ini';
+                    status.appendChild(heading);
+                    const items = document.createElement('div');
+                    items.className = 'asset-registration-current-files';
+                    for (const photo of Array.isArray(asset.gallery_photos) ? asset.gallery_photos : []) {
+                        const card = document.createElement('div');
+                        card.className = 'asset-registration-current-photo';
+                        const image = document.createElement('img');
+                        image.src = `api/asset_files.php?kind=photo&photo_id=${encodeURIComponent(photo.photo_id)}`;
+                        image.alt = photo.photo_title || 'Foto unit';
+                        const remove = document.createElement('button');
+                        remove.type = 'button';
+                        remove.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+                        remove.setAttribute('aria-label', `Hapus ${photo.photo_title || 'foto unit'}`);
+                        remove.title = 'Hapus foto';
+                        remove.onclick = () => window.deleteEditAssetPhoto(assetId, photo.photo_id);
+                        card.append(image, remove);
+                        items.appendChild(card);
+                    }
+                    if (asset.service_manual_pdf_url) {
+                        const pdf = document.createElement('a');
+                        pdf.className = 'asset-registration-current-pdf';
+                        pdf.href = `api/asset_files.php?kind=pdf&asset_id=${encodeURIComponent(assetId)}`;
+                        pdf.target = '_blank';
+                        pdf.rel = 'noopener';
+                        pdf.innerHTML = '<i class="fa-regular fa-file-pdf"></i><span>PDF JO servis saat ini</span><i class="fa-solid fa-arrow-up-right-from-square"></i>';
+                        items.appendChild(pdf);
+                    }
+                    if (!items.children.length) {
+                        const empty = document.createElement('span');
+                        empty.className = 'asset-registration-document-empty';
+                        empty.textContent = 'Belum ada foto atau PDF tersimpan.';
+                        items.appendChild(empty);
+                    }
+                    status.appendChild(items);
+                } catch (error) {
+                    status.textContent = error?.message || 'Dokumentasi tidak dapat dimuat.';
+                }
+            };
+
+            window.deleteEditAssetPhoto = async function(assetId, photoId) {
+                if (!confirm('Hapus foto ini dari dokumentasi unit?')) return;
+                try {
+                    const response = await fetch(`api/asset_files.php?photo_id=${encodeURIComponent(photoId)}`, { method: 'DELETE' });
+                    const result = await response.json();
+                    if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Foto gagal dihapus.');
+                    await window.loadEditAssetDocuments(assetId);
+                } catch (error) {
+                    const alertBox = document.getElementById('ea-error-alert');
+                    if (alertBox) {
+                        alertBox.textContent = error?.message || 'Foto gagal dihapus.';
+                        alertBox.style.display = 'block';
+                    }
+                }
+            };
+
             window.updateNewAssetAge = function() {
                 const yearInput = document.getElementById('na-year');
                 const ageInput = document.getElementById('na-age');
@@ -8919,6 +9169,44 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 window.updateNewAssetAge();
             };
 
+            window.updateEditAssetAge = function() {
+                const yearInput = document.getElementById('ea-year');
+                const ageInput = document.getElementById('ea-age');
+                if (!yearInput || !ageInput) return;
+                const year = Number.parseInt(yearInput.value, 10);
+                const currentYear = new Date().getFullYear();
+                ageInput.value = Number.isInteger(year) && year >= 1970 && year <= currentYear
+                    ? String(currentYear - year)
+                    : '';
+            };
+
+            window.updateEditAssetFormLayout = function() {
+                const category = document.getElementById('ea-cat')?.value || '';
+                const isDumpTruck = category === 'Dump Truck';
+                document.querySelectorAll('#modalEditAsset [data-edit-form-variant]').forEach(field => {
+                    const visible = field.dataset.editFormVariant === (isDumpTruck ? 'dump' : 'general');
+                    field.hidden = !visible;
+                    field.querySelectorAll('input, select, textarea').forEach(control => {
+                        control.disabled = !visible;
+                    });
+                });
+                const mode = document.getElementById('ea-form-mode');
+                const hullLabel = document.getElementById('ea-hull-label');
+                const positionLabel = document.getElementById('ea-position-label');
+                if (mode) mode.textContent = isDumpTruck ? 'Khusus Dump Truck' : 'Formulir umum';
+                if (hullLabel) hullLabel.textContent = isDumpTruck ? 'Kode aktual' : 'Nomor lambung aktual';
+                if (positionLabel) positionLabel.textContent = isDumpTruck ? 'Posisi' : 'Lokasi';
+                window.updateEditAssetAge();
+            };
+
+            window.openEditAssetHullRename = function() {
+                const assetId = document.getElementById('ea-id')?.value || '';
+                const hull = document.getElementById('ea-hull')?.value || '';
+                if (!assetId) return;
+                closeModal('modalEditAsset');
+                window.openRenameHullModal(assetId, hull);
+            };
+
             window.uploadAssetAttachment = async function(assetId, kind, file) {
                 const form = new FormData();
                 form.append('asset_id', assetId);
@@ -8947,6 +9235,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const stnkLocation = document.getElementById('na-stnk-location')?.value.trim() || '';
                 const bpkbLocation = document.getElementById('na-bpkb-location')?.value.trim() || '';
                 const assetAge = document.getElementById('na-age')?.value.trim() || '';
+                const assetCode = document.getElementById('na-asset-code')?.value.trim() || '';
+                const warranty = document.getElementById('na-warranty')?.value || 'Belum diketahui';
+                const capacity = document.getElementById('na-capacity')?.value.trim() || '';
                 const locSelect = document.getElementById('na-loc');
                 const locId = locSelect ? locSelect.value : '';
                 const locName = locId && locSelect && locSelect.selectedIndex >= 0 ? locSelect.options[locSelect.selectedIndex].text : '';
@@ -9006,10 +9297,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         })
                         : [];
                     const payload = {
+                        asset_code: assetCode || null,
                         hull_number: document.getElementById('na-hull')?.value.trim() || null,
                         category: cat,
                         type: 'Heavy Equipment',
                         status: status || 'READY',
+                        warranty: warranty,
+                        capacity: capacity || null,
                         make_model: model || null,
                         year_manufacture: parsedYear,
                         serial_number: sn || null,
@@ -9057,6 +9351,8 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                             type: 'Heavy Equipment',
                             category: cat,
                             status: status || 'READY',
+                            warranty: warranty,
+                            capacity: capacity || null,
                             make_model: model || null,
                             year_manufacture: parsedYear,
                             serial_number: sn || null,
@@ -9086,7 +9382,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         window.currentAssetData.unshift(newAsset);
 
                         // Reset input fields
-                        for (const field of ['na-model','na-dealer','na-year','na-age','na-sn','na-dump-identity','na-hull','na-position','na-invoice-location','na-stnk-location','na-bpkb-location','na-chassis','na-vehicle-type','na-operator','na-operator-start','na-operator-shift','na-last-service-date','na-last-service-hm','na-service-interval','na-daily-rate','na-stnk','na-kir','na-silo','na-photos','na-service-pdf','na-service-history']) {
+                        for (const field of ['na-model','na-asset-code','na-capacity','na-dealer','na-year','na-age','na-sn','na-dump-identity','na-hull','na-position','na-invoice-location','na-stnk-location','na-bpkb-location','na-chassis','na-vehicle-type','na-operator','na-operator-start','na-operator-shift','na-last-service-date','na-last-service-hm','na-service-interval','na-daily-rate','na-stnk','na-kir','na-silo','na-photos','na-service-pdf','na-service-history']) {
                             const el = document.getElementById(field);
                             if (el) el.value = '';
                         }
@@ -9127,35 +9423,57 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 const status = document.getElementById('ea-status').value.trim();
                 const model = document.getElementById('ea-model').value.trim();
                 const year = document.getElementById('ea-year').value.trim();
-                const sn = document.getElementById('ea-sn').value.trim();
-                const plate = document.getElementById('ea-plate').value.trim();
-                const warranty = document.getElementById('ea-warranty') ? document.getElementById('ea-warranty').value.trim() : '0 HM';
+                const isDumpTruck = cat === 'Dump Truck';
+                const generalSerial = document.getElementById('ea-sn')?.value.trim() || '';
+                const dumpIdentityInput = document.getElementById('ea-dump-identity');
+                const dumpIdentity = dumpIdentityInput?.value.trim() || '';
+                const dumpIdentityKind = dumpIdentityInput?.dataset.identityKind === 'license_plate' ? 'license_plate' : 'serial_number';
                 const chassisNumber = document.getElementById('ea-chassis') ? document.getElementById('ea-chassis').value.trim() : '';
+                const dealer = document.getElementById('ea-dealer')?.value.trim() || '';
+                const position = document.getElementById('ea-position')?.value.trim() || '';
+                const invoiceLocation = document.getElementById('ea-invoice-location')?.value.trim() || '';
+                const stnkLocation = document.getElementById('ea-stnk-location')?.value.trim() || '';
+                const bpkbLocation = document.getElementById('ea-bpkb-location')?.value.trim() || '';
+                const vehicleType = document.getElementById('ea-vehicle-type')?.value.trim() || '';
+                const assetAge = document.getElementById('ea-age')?.value.trim() || '';
+                const warranty = document.getElementById('ea-warranty')?.value || 'Belum diketahui';
+                const capacity = document.getElementById('ea-capacity')?.value.trim() || '';
                 const locSelect = document.getElementById('ea-loc');
                 const locId = locSelect ? locSelect.value : '';
-                const locName = locSelect && locSelect.selectedIndex >= 0 ? locSelect.options[locSelect.selectedIndex].text : '';
-                const hm = document.getElementById('ea-hm').value.trim();
+                const locName = locId && locSelect && locSelect.selectedIndex >= 0 ? locSelect.options[locSelect.selectedIndex].text : '';
                 const errAlert = document.getElementById('ea-error-alert');
                 const submitBtn = document.getElementById('btnSubmitEditAsset');
+                const photoFiles = Array.from(document.getElementById('ea-photos')?.files || []);
+                const pdfFile = document.getElementById('ea-service-pdf')?.files?.[0] || null;
 
                 if (errAlert) { errAlert.style.display = 'none'; errAlert.textContent = ''; }
 
                 if (!id) {
-                    alert('ID unit tidak valid.');
+                    if (errAlert) {
+                        errAlert.textContent = 'ID unit tidak valid.';
+                        errAlert.style.display = 'block';
+                    }
                     return;
                 }
 
-                if (year) {
-                    const parsedYear = parseInt(year, 10);
-                    if (isNaN(parsedYear) || parsedYear < 1970 || parsedYear > 2099) {
-                        if (errAlert) {
-                            errAlert.textContent = 'Tahun pembuatan harus berupa angka antara 1970 dan 2099.';
-                            errAlert.style.display = 'block';
-                        } else {
-                            alert('Tahun pembuatan harus valid (1970-2099).');
-                        }
-                        return;
+                if (!model) {
+                    if (errAlert) {
+                        errAlert.textContent = 'Nama aset wajib diisi.';
+                        errAlert.style.display = 'block';
                     }
+                    document.getElementById('ea-model')?.focus();
+                    return;
+                }
+
+                const parsedYear = parseInt(year, 10);
+                const currentYear = new Date().getFullYear();
+                if (!year || isNaN(parsedYear) || parsedYear < 1970 || parsedYear > currentYear) {
+                    if (errAlert) {
+                        errAlert.textContent = `Tahun harus berupa angka antara 1970 dan ${currentYear}.`;
+                        errAlert.style.display = 'block';
+                    }
+                    document.getElementById('ea-year')?.focus();
+                    return;
                 }
 
                 if (submitBtn) {
@@ -9168,25 +9486,29 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         asset_id: id,
                         category: cat,
                         status: status,
+                        warranty: warranty,
+                        capacity: capacity || null,
                         make_model: model,
-                        year_manufacture: year ? parseInt(year, 10) : null,
-                        serial_number: sn,
-                        license_plate: plate,
-                        warranty: warranty || '0 HM',
-                        chassis_number: chassisNumber || null,
+                        year_manufacture: parsedYear,
+                        project_name: locName || null,
+                        operational_position: position || null,
+                        asset_age: assetAge ? parseInt(assetAge, 10) : null,
                         current_location_id: locId ? parseInt(locId, 10) : null,
-                        last_hm_km: hm ? parseFloat(hm) : 0.0,
-                        current_operator_name: document.getElementById('ea-operator').value.trim() || null,
-                        operator_start_date: document.getElementById('ea-operator-start').value || null,
-                        last_service_date: document.getElementById('ea-last-service-date').value || null,
-                        last_service_hm_km: document.getElementById('ea-last-service-hm').value || null,
-                        service_interval_val: document.getElementById('ea-service-interval').value || null,
-                        service_interval_unit: document.getElementById('ea-service-unit').value,
-                        daily_usage_coefficient: document.getElementById('ea-daily-rate').value || null,
                         legal_stnk_expiry: document.getElementById('ea-stnk').value || null,
                         legal_kir_expiry: document.getElementById('ea-kir').value || null,
                         legal_silo_expiry: document.getElementById('ea-silo').value || null
                     };
+                    if (isDumpTruck) {
+                        payload[dumpIdentityKind] = dumpIdentity || null;
+                        payload.stnk_location = stnkLocation || null;
+                        payload.bpkb_location = bpkbLocation || null;
+                        payload.vehicle_type = vehicleType || null;
+                        payload.chassis_number = chassisNumber || null;
+                    } else {
+                        payload.serial_number = generalSerial || null;
+                        payload.dealer = dealer || null;
+                        payload.invoice_location = invoiceLocation || null;
+                    }
 
                     const response = await fetch('api/assets.php', {
                         method: 'PUT',
@@ -9197,21 +9519,42 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                     const result = await response.json();
 
                     if (response.ok && result.status === 'success') {
+                        const uploadErrors = [];
+                        for (const file of photoFiles) {
+                            try { await window.uploadAssetAttachment(id, 'photo', file); }
+                            catch (error) { uploadErrors.push(`${file.name}: ${error.message}`); }
+                        }
+                        if (pdfFile) {
+                            try { await window.uploadAssetAttachment(id, 'pdf', pdfFile); }
+                            catch (error) { uploadErrors.push(`${pdfFile.name}: ${error.message}`); }
+                        }
                         const updateTarget = (item) => {
                             if (!item) return;
                             item.category = cat;
                             item.status = status;
+                            item.warranty = warranty;
+                            item.capacity = capacity || null;
                             item.syncExpectedStatus = status;
                             item.make_model = model || null;
-                            item.year_manufacture = year ? parseInt(year, 10) : null;
-                            item.serial_number = sn || null;
-                            item.license_plate = plate || null;
-                            item.warranty = warranty || '0 HM';
-                            item.chassis_number = chassisNumber || null;
-                            if (locId) item.current_location_id = parseInt(locId, 10);
-                            if (locName) item.location = locName;
-                            item.last_hm_km = hm ? parseFloat(hm) : 0.0;
-                            for (const field of ['current_operator_name','last_service_date','last_service_hm_km','service_interval_val','service_interval_unit','daily_usage_coefficient','legal_stnk_expiry','legal_kir_expiry','legal_silo_expiry']) item[field] = payload[field];
+                            item.year_manufacture = parsedYear;
+                            if (isDumpTruck) item[dumpIdentityKind] = dumpIdentity || null;
+                            else item.serial_number = generalSerial || null;
+                            item.project_name = payload.project_name;
+                            item.operational_position = payload.operational_position;
+                            item.asset_age = payload.asset_age;
+                            if (isDumpTruck) {
+                                item.stnk_location = payload.stnk_location;
+                                item.bpkb_location = payload.bpkb_location;
+                                item.vehicle_type = payload.vehicle_type;
+                                item.chassis_number = payload.chassis_number;
+                            } else {
+                                item.dealer = payload.dealer;
+                                item.invoice_location = payload.invoice_location;
+                            }
+                            item.current_location_id = payload.current_location_id;
+                            item.location = locName;
+                            item.location_name = locName;
+                            for (const field of ['legal_stnk_expiry','legal_kir_expiry','legal_silo_expiry']) item[field] = payload[field];
                             item.lastUpdate = 'Baru saja';
                         };
 
@@ -9229,7 +9572,9 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                         if (typeof rebuildFleetSummary === 'function') rebuildFleetSummary();
                         if (typeof window.syncFleetState === 'function') window.syncFleetState();
                         if (window.PreventiveMaintenance?.refresh) window.PreventiveMaintenance.refresh();
-                        alert(`Data identitas unit '${id}' berhasil diperbarui.`);
+                        alert(uploadErrors.length
+                            ? `Data unit '${id}' tersimpan, tetapi unggahan berikut gagal: ${uploadErrors.join('; ')}`
+                            : `Data identitas dan dokumentasi unit '${id}' berhasil diperbarui.`);
                     } else {
                         const msg = result.message || 'Gagal memperbarui data unit.';
                         if (errAlert) {
@@ -9242,15 +9587,13 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
                 } catch (error) {
                     console.error('Error updating asset:', error);
                     if (errAlert) {
-                        errAlert.textContent = 'Terjadi kesalahan koneksi atau server saat memperbarui aset.';
+                        errAlert.textContent = error?.message || 'Terjadi kesalahan koneksi atau server saat memperbarui aset.';
                         errAlert.style.display = 'block';
-                    } else {
-                        alert('Terjadi kesalahan jaringan atau server saat memperbarui aset');
                     }
                 } finally {
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan Perubahan';
+                        submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan perubahan';
                     }
                 }
             }

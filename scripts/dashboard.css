@@ -21796,12 +21796,12 @@ body.sl-modal-open {
     scrollbar-color: #cbd5e1 transparent;
 }
 
-/* Master Asset: registration form */
-#modalNewAsset {
+/* Master Asset: registration and edit forms */
+.asset-registration-overlay {
     padding: 24px;
 }
 
-#modalNewAsset .asset-registration-modal {
+.asset-registration-overlay .asset-registration-modal {
     width: min(920px, 100%);
     max-width: 920px;
     max-height: calc(100dvh - 48px);
@@ -21811,19 +21811,19 @@ body.sl-modal-open {
     box-shadow: 0 24px 70px rgba(15, 45, 75, 0.22);
 }
 
-#modalNewAsset .modal-header {
+.asset-registration-overlay .modal-header {
     align-items: flex-start;
     padding: 20px 24px 18px;
     border-bottom: 1px solid #e2e8f0;
     background: #ffffff;
 }
 
-#modalNewAsset .modal-header > div {
+.asset-registration-overlay .modal-header > div {
     display: block;
     min-width: 0;
 }
 
-#modalNewAsset .modal-header h2 {
+.asset-registration-overlay .modal-header h2 {
     display: flex;
     align-items: center;
     gap: 9px;
@@ -21834,7 +21834,7 @@ body.sl-modal-open {
     letter-spacing: -0.025em;
 }
 
-#modalNewAsset .modal-header p {
+.asset-registration-overlay .modal-header p {
     margin: 0;
     color: #64748b;
     font-size: 0.82rem;
@@ -21877,13 +21877,13 @@ body.sl-modal-open {
 }
 
 .asset-registration-close:focus-visible,
-#modalNewAsset .form-control:focus-visible,
-#modalNewAsset .btn:focus-visible {
+.asset-registration-overlay .form-control:focus-visible,
+.asset-registration-overlay .btn:focus-visible {
     outline: 3px solid rgba(2, 132, 199, 0.22);
     outline-offset: 2px;
 }
 
-#modalNewAsset .asset-registration-body {
+.asset-registration-overlay .asset-registration-body {
     max-height: calc(100dvh - 152px);
     overflow-y: auto;
     padding: 20px 24px 24px;
@@ -22001,7 +22001,7 @@ body.sl-modal-open {
     color: var(--danger);
 }
 
-#modalNewAsset .form-control {
+.asset-registration-overlay .form-control {
     width: 100%;
     min-height: 40px;
     border-color: #cbd5e1;
@@ -22012,16 +22012,16 @@ body.sl-modal-open {
     transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 
-#modalNewAsset .form-control:hover {
+.asset-registration-overlay .form-control:hover {
     border-color: #94a3b8;
 }
 
-#modalNewAsset .form-control:focus {
+.asset-registration-overlay .form-control:focus {
     border-color: #0284c7;
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
 }
 
-#modalNewAsset .form-control[readonly] {
+.asset-registration-overlay .form-control[readonly] {
     background: #f1f5f9;
     color: #475569;
 }
@@ -22036,7 +22036,7 @@ body.sl-modal-open {
     background: #f1f5f9;
 }
 
-#modalNewAsset .asset-registration-age-control .form-control {
+.asset-registration-overlay .asset-registration-age-control .form-control {
     min-height: 38px;
     border: 0;
     border-radius: 0;
@@ -22048,6 +22048,47 @@ body.sl-modal-open {
     color: #64748b;
     font-size: 0.75rem;
     font-weight: 650;
+}
+
+.asset-registration-field > small {
+    color: #64748b;
+    font-size: 0.67rem;
+    line-height: 1.4;
+}
+
+.asset-registration-field-action {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40px;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #f1f5f9;
+}
+
+.asset-registration-overlay .asset-registration-field-action .form-control {
+    min-height: 38px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.asset-registration-field-action button {
+    border: 0;
+    border-left: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0369a1;
+    cursor: pointer;
+    transition: background-color 180ms ease, color 180ms ease;
+}
+
+.asset-registration-field-action button:hover {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.asset-registration-field-action button:focus-visible {
+    outline: 3px solid rgba(2, 132, 199, 0.22);
+    outline-offset: -3px;
 }
 
 .asset-registration-legal-grid,
@@ -22100,6 +22141,90 @@ body.sl-modal-open {
     display: none;
 }
 
+.asset-registration-photo-preview img {
+    width: 90px;
+    height: 70px;
+    object-fit: cover;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+
+.asset-registration-document-status {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: .75rem;
+}
+
+.asset-registration-document-heading {
+    margin-bottom: 8px;
+    color: #334155;
+    font-size: .78rem;
+    font-weight: 750;
+}
+
+.asset-registration-current-files {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 9px;
+}
+
+.asset-registration-current-photo {
+    position: relative;
+    width: 90px;
+    height: 70px;
+}
+
+.asset-registration-current-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+
+.asset-registration-current-photo button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 25px;
+    height: 25px;
+    border: 0;
+    border-radius: 5px;
+    background: rgba(127, 29, 29, .92);
+    color: #fff;
+    cursor: pointer;
+}
+
+.asset-registration-current-photo button:hover {
+    background: #991b1b;
+}
+
+.asset-registration-current-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 9px 11px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: #334155;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.asset-registration-current-pdf:hover {
+    border-color: #0284c7;
+    color: #0369a1;
+}
+
+.asset-registration-document-empty {
+    font-style: italic;
+}
+
 .asset-registration-error {
     display: none;
     margin: 0 0 14px;
@@ -22119,26 +22244,27 @@ body.sl-modal-open {
     padding-top: 4px;
 }
 
-#modalNewAsset [data-form-variant][hidden] {
+.asset-registration-overlay [data-form-variant][hidden],
+.asset-registration-overlay [data-edit-form-variant][hidden] {
     display: none !important;
 }
 
 @media (max-width: 720px) {
-    #modalNewAsset {
+    .asset-registration-overlay {
         align-items: flex-end;
         padding: 0;
     }
 
-    #modalNewAsset .asset-registration-modal {
+    .asset-registration-overlay .asset-registration-modal {
         max-height: 96dvh;
         border-radius: 12px 12px 0 0;
     }
 
-    #modalNewAsset .modal-header {
+    .asset-registration-overlay .modal-header {
         padding: 17px 18px 15px;
     }
 
-    #modalNewAsset .asset-registration-body {
+    .asset-registration-overlay .asset-registration-body {
         max-height: calc(96dvh - 104px);
         padding: 14px 14px 20px;
     }
@@ -22181,6 +22307,491 @@ body.sl-modal-open {
     .executive-service-table-scroll .executive-service-table th,
     .executive-service-table-scroll .executive-service-table td {
         padding: 9px 5px;
+    }
+}
+
+/* Master Asset table: bounded vertical scroll, fixed header, and full-width columns. */
+#view-asset .master-asset-table-scroll {
+    width: 100%;
+    max-width: 100%;
+    height: clamp(430px, 48vh, 520px) !important;
+    min-height: 430px !important;
+    max-height: 520px !important;
+    overflow-x: clip !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+    border-radius: var(--radius-md);
+    position: relative;
+    contain: layout paint;
+}
+
+#view-asset #assetTable {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: Arial, "Segoe UI", sans-serif;
+    font-size: .79rem;
+    line-height: 1.4;
+}
+
+#assetTable .asset-col-number { width: 3%; }
+#assetTable .asset-col-unit { width: 13%; }
+#assetTable .asset-col-detail { width: 15%; }
+#assetTable .asset-col-identity { width: 17%; }
+#assetTable .asset-col-warranty { width: 9%; }
+#assetTable .asset-col-placement { width: 15%; }
+#assetTable .asset-col-condition { width: 12%; }
+#assetTable .asset-col-documents { width: 10%; }
+#assetTable .asset-col-actions { width: 6%; }
+
+#assetTableHeader {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+}
+
+#assetTable th,
+#assetTable td {
+    box-sizing: border-box;
+    padding: 9px 7px;
+    text-align: left !important;
+    vertical-align: top;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+#assetTableBody tr {
+    min-height: 96px;
+}
+
+#assetTableBody td {
+    height: 96px;
+}
+
+#assetTableBody td > strong,
+#assetTableBody .unit-code-text {
+    display: inline-block;
+    color: #0f172a;
+    font-family: Arial, "Segoe UI", sans-serif;
+    font-size: .8rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+#assetTableHeader tr:first-child th {
+    background: #f1f5f9;
+    color: #334155;
+    font-size: .72rem;
+    line-height: 1.25;
+    box-shadow: inset 0 -1px 0 #cbd5e1;
+}
+
+#assetTableHeader .asset-filter-row th {
+    background: #f8fafc !important;
+    box-shadow: inset 0 -1px 0 #cbd5e1;
+}
+
+#assetTableHeader input,
+#assetTableHeader select,
+#assetTableHeader button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+#assetTableHeader button {
+    white-space: normal;
+}
+
+#assetTableBody tr {
+    background: #fff;
+}
+
+#assetTableBody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+#assetTableBody tr:hover {
+    background: #eff6ff;
+}
+
+#assetTableBody .badge,
+#assetTableBody td span,
+#assetTableBody td a,
+#assetTableBody td div {
+    max-width: 100%;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+}
+
+#assetTableBody td:nth-child(2),
+#assetTableBody td:nth-child(5),
+#assetTableBody td:nth-child(7) {
+    font-variant-numeric: tabular-nums;
+}
+
+#assetTableBody .asset-row-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+    width: 100%;
+}
+
+#assetTableBody .asset-row-actions .btn {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    white-space: normal;
+}
+
+#assetTableBody .asset-row-actions .btn-primary {
+    border-color: #0878df !important;
+    background: #0878df !important;
+    color: #fff !important;
+    font-family: Arial, "Segoe UI", sans-serif;
+    font-size: .72rem !important;
+    font-weight: 700;
+}
+
+#assetTableBody .asset-row-actions .btn-primary:hover {
+    border-color: #0566bd !important;
+    background: #0566bd !important;
+    color: #fff !important;
+}
+
+.master-asset-filterbar {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+    gap: 8px;
+    margin: -6px 0 14px;
+    padding: 10px;
+    border: 1px solid #dbe3ec;
+    border-radius: 7px;
+    background: #f8fafc;
+}
+
+.master-asset-filterbar .form-control {
+    min-width: 0;
+    height: 32px;
+    padding: 5px 8px;
+    font-size: .74rem;
+}
+
+#assetTableBody .asset-cell-line {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: flex-start;
+    gap: 5px;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: .71rem;
+}
+
+#assetTableBody .asset-cell-line > span:first-child {
+    color: #64748b;
+    white-space: nowrap !important;
+}
+
+#assetTableBody .asset-cell-line b {
+    min-width: 0;
+    color: #1e293b;
+    font-weight: 650;
+}
+
+#assetTableBody em {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+#assetTableBody .asset-mono {
+    font-family: Consolas, "Courier New", monospace;
+    letter-spacing: .01em;
+}
+
+#assetTableBody .asset-cell-tag {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: .68rem;
+    font-weight: 750;
+}
+
+#assetTableBody .asset-inline-action {
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: #0284c7;
+    cursor: pointer;
+}
+
+#assetTableBody .asset-warranty-value {
+    display: inline-flex;
+    gap: 5px;
+    color: #065f46;
+    font-family: Arial, "Segoe UI", sans-serif;
+    font-size: .76rem;
+    font-weight: 700;
+}
+
+#assetTableBody .asset-condition-stack {
+    display: grid;
+    justify-items: start;
+    gap: 6px;
+}
+
+#assetTableBody .asset-condition-stack small {
+    color: #b91c1c;
+    font-size: .66rem;
+    line-height: 1.3;
+}
+
+#assetTableBody .asset-document-button {
+    width: 100%;
+    display: inline-flex;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    gap: 6px;
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: .72rem;
+    font-weight: 700;
+    white-space: nowrap !important;
+}
+
+#assetTableBody .asset-document-button span {
+    white-space: nowrap !important;
+    overflow-wrap: normal;
+}
+
+#assetTableBody .asset-document-button:hover {
+    border-color: #0284c7;
+    color: #0369a1;
+}
+
+.master-asset-empty {
+    padding: 28px !important;
+    color: #64748b !important;
+    text-align: center !important;
+}
+
+.master-asset-print-dialog {
+    width: min(92vw, 560px);
+}
+
+.master-asset-print-description {
+    margin: 0 0 16px;
+    color: #64748b;
+    line-height: 1.55;
+}
+
+.master-asset-print-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    margin-bottom: 10px;
+    padding: 13px;
+    border: 1px solid #dbe3ec;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.master-asset-print-option:has(input:checked) {
+    border-color: #0284c7;
+    background: #f0f9ff;
+}
+
+.master-asset-print-option span,
+.master-asset-print-option small {
+    display: block;
+}
+
+.master-asset-print-option small {
+    margin-top: 3px;
+    color: #64748b;
+}
+
+.asset-legal-documents-modal {
+    width: min(94vw, 900px);
+    max-height: 90dvh;
+}
+
+.asset-legal-documents-modal .modal-body {
+    overflow-y: auto;
+}
+
+.asset-legal-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.asset-legal-summary > div {
+    padding: 13px;
+    border: 1px solid #dbe3ec;
+    border-radius: 7px;
+    background: #f8fafc;
+}
+
+.asset-legal-summary span,
+.asset-legal-summary strong {
+    display: block;
+}
+
+.asset-legal-summary span {
+    margin-bottom: 5px;
+    color: #64748b;
+    font-size: .72rem;
+}
+
+.asset-document-section {
+    margin-top: 18px;
+}
+
+.asset-document-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.asset-document-section-heading h3,
+.asset-document-section-heading p {
+    margin: 0;
+}
+
+.asset-document-section-heading p {
+    margin-top: 2px;
+    color: #64748b;
+    font-size: .72rem;
+}
+
+.asset-document-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.asset-document-gallery a {
+    overflow: hidden;
+    border: 1px solid #dbe3ec;
+    border-radius: 7px;
+    background: #fff;
+    color: #334155;
+    text-decoration: none;
+}
+
+.asset-document-gallery img {
+    display: block;
+    width: 100%;
+    height: 105px;
+    object-fit: cover;
+}
+
+.asset-document-gallery a span {
+    display: block;
+    padding: 7px 9px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .72rem;
+    font-weight: 650;
+}
+
+.asset-document-pdf-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px;
+    border: 1px solid #dbe3ec;
+    border-radius: 7px;
+    color: #334155;
+    text-decoration: none;
+}
+
+.asset-document-pdf-link > i:first-child {
+    color: #dc2626;
+    font-size: 1.5rem;
+}
+
+.asset-document-pdf-link span {
+    flex: 1;
+}
+
+.asset-document-pdf-link strong,
+.asset-document-pdf-link small {
+    display: block;
+}
+
+.asset-document-pdf-link small {
+    margin-top: 2px;
+    color: #64748b;
+}
+
+.asset-document-empty-state,
+.asset-document-loading,
+.asset-document-error {
+    padding: 20px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 7px;
+    color: #64748b;
+    text-align: center;
+}
+
+.asset-document-error {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+@media (max-width: 1100px) {
+    #view-asset .master-asset-table-scroll {
+        height: 450px !important;
+        min-height: 450px !important;
+        max-height: 450px !important;
+    }
+
+    #view-asset #assetTable {
+        font-size: .76rem;
+    }
+
+    #assetTable th,
+    #assetTable td {
+        padding: 8px 5px;
+    }
+
+    .master-asset-filterbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .asset-legal-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .master-asset-filterbar {
+        grid-template-columns: 1fr;
+    }
+
+    #assetTableBody .asset-row-actions {
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
     }
 }
 

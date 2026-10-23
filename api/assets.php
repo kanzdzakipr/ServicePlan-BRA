@@ -135,6 +135,9 @@ switch ($method) {
 
         $assetCode = trim((string) ($data['asset_code'] ?? $assetId));
         if ($assetCode === '') $assetCode = $assetId;
+        if (mb_strlen($assetCode, 'UTF-8') > 50) {
+            api_json_response(422, ['status' => 'error', 'code' => 'VALIDATION_ERROR', 'message' => 'Kode unit maksimal 50 karakter.']);
+        }
         $initialHull = trim((string) ($data['hull_number'] ?? $data['alias_name'] ?? ''));
         if (mb_strlen($initialHull, 'UTF-8') > 100) {
             api_json_response(422, ['status' => 'error', 'message' => 'Nomor lambung maksimal 100 karakter.']);
@@ -238,6 +241,7 @@ switch ($method) {
                 'stnk_location' => nullable_asset_text($data, 'stnk_location', 150),
                 'bpkb_location' => nullable_asset_text($data, 'bpkb_location', 150),
                 'vehicle_type' => nullable_asset_text($data, 'vehicle_type', 100),
+                'capacity' => nullable_asset_text($data, 'capacity', 100),
             ];
             $ageInput = $data['asset_age'] ?? null;
             $assetAge = ($ageInput === null || $ageInput === '')
@@ -261,7 +265,7 @@ switch ($method) {
                 INSERT INTO assets (
                     asset_id, asset_code, hull_number, alias_name, serial_number, license_plate,
                     make_model, year_manufacture, type, category, status,
-                    warranty, chassis_number, dealer, project_name, operational_position,
+                    warranty, capacity, chassis_number, dealer, project_name, operational_position,
                     invoice_location, stnk_location, bpkb_location, vehicle_type, asset_age,
                     current_location_id, last_hm_km, is_active,
                     current_operator_name, last_service_date, last_service_hm_km,
@@ -271,7 +275,7 @@ switch ($method) {
                 ) VALUES (
                     :id, :code, :hull, :alias, :sn, :plate,
                     :make_model, :year, :type, :cat, :status,
-                    :warranty, :chassis, :dealer, :project_name, :position,
+                    :warranty, :capacity, :chassis, :dealer, :project_name, :position,
                     :invoice_location, :stnk_location, :bpkb_location, :vehicle_type, :asset_age,
                     :loc_id, :hm, 1,
                     :operator, :service_date, :service_meter,
@@ -295,6 +299,7 @@ switch ($method) {
                 ':cat' => $category,
                 ':status' => $status,
                 ':warranty' => $warrantyVal,
+                ':capacity' => $registrationFields['capacity'],
                 ':chassis' => $chassisVal,
                 ':dealer' => $registrationFields['dealer'],
                 ':project_name' => $registrationFields['project_name'],
@@ -354,6 +359,7 @@ switch ($method) {
                     "stnk_location" => $registrationFields['stnk_location'],
                     "bpkb_location" => $registrationFields['bpkb_location'],
                     "vehicle_type" => $registrationFields['vehicle_type'],
+                    "capacity" => $registrationFields['capacity'],
                     "asset_age" => $assetAge
                 ]
             ]);
@@ -499,10 +505,41 @@ switch ($method) {
             }
         }
 
+        if (array_key_exists('asset_age', $data) && $data['asset_age'] !== null && $data['asset_age'] !== '') {
+            $validatedAge = filter_var($data['asset_age'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 100]]);
+            if ($validatedAge === false) {
+                api_json_response(422, [
+                    'status' => 'error',
+                    'code' => 'INVALID_ASSET_AGE',
+                    'message' => 'Usia aset harus berupa angka antara 0 dan 100 tahun.'
+                ]);
+            }
+        }
+
+        foreach ([
+            'dealer' => 150,
+            'project_name' => 150,
+            'operational_position' => 150,
+            'invoice_location' => 150,
+            'stnk_location' => 150,
+            'bpkb_location' => 150,
+            'vehicle_type' => 100,
+            'capacity' => 100,
+        ] as $field => $maxLength) {
+            if (!array_key_exists($field, $data)) continue;
+            try {
+                $data[$field] = nullable_asset_text($data, $field, $maxLength);
+            } catch (InvalidArgumentException $e) {
+                api_json_response(422, ['status' => 'error', 'code' => 'INVALID_ASSET_FIELD', 'message' => $e->getMessage()]);
+            }
+        }
+
         $updatableFields = [
             'serial_number', 'license_plate', 'make_model',
             'year_manufacture', 'type', 'category', 'status',
-            'warranty', 'chassis_number',
+            'warranty', 'chassis_number', 'dealer', 'project_name',
+            'operational_position', 'invoice_location', 'stnk_location',
+            'bpkb_location', 'vehicle_type', 'capacity', 'asset_age',
             'current_location_id', 'last_hm_km'
         ];
 
@@ -512,11 +549,13 @@ switch ($method) {
         foreach ($updatableFields as $field) {
             if (array_key_exists($field, $data)) {
                 $val = $data[$field];
-                if (in_array($field, ['serial_number', 'license_plate', 'make_model', 'chassis_number'], true)) {
+                if (in_array($field, ['serial_number', 'license_plate', 'make_model', 'chassis_number', 'dealer', 'project_name', 'operational_position', 'invoice_location', 'stnk_location', 'bpkb_location', 'vehicle_type', 'capacity'], true)) {
                     $val = (trim((string) $val) === '' || trim((string) $val) === '-') ? null : trim((string) $val);
                 } elseif ($field === 'warranty') {
                     $val = trim((string) $val) !== '' ? trim((string) $val) : '0 HM';
                 } elseif ($field === 'year_manufacture') {
+                    $val = ($val !== null && trim((string) $val) !== '') ? (int) $val : null;
+                } elseif ($field === 'asset_age') {
                     $val = ($val !== null && trim((string) $val) !== '') ? (int) $val : null;
                 } elseif ($field === 'current_location_id') {
                     $val = ($val !== null && trim((string) $val) !== '') ? (int) $val : null;

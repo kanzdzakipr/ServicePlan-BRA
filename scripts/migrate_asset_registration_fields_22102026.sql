@@ -26,5 +26,6 @@ CALL add_asset_registration_column('stnk_location', 'stnk_location VARCHAR(150) 
 CALL add_asset_registration_column('bpkb_location', 'bpkb_location VARCHAR(150) NULL AFTER stnk_location');
 CALL add_asset_registration_column('vehicle_type', 'vehicle_type VARCHAR(100) NULL AFTER bpkb_location');
 CALL add_asset_registration_column('asset_age', 'asset_age SMALLINT UNSIGNED NULL AFTER vehicle_type');
+CALL add_asset_registration_column('capacity', 'capacity VARCHAR(100) NULL AFTER asset_age');
 
 DROP PROCEDURE add_asset_registration_column;
