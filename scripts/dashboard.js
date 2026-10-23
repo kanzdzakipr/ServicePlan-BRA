@@ -23491,7 +23491,7 @@
 
     const payload = {
       docNo: docNo,
-      reportDate: "2026-07-25",
+      reportDate: datetime.slice(0, 10),
       incidentDate: datetime.replace("T", " "),
       unitName: assetId,
       unitCode: codeOnly,
@@ -23644,30 +23644,50 @@
     if (modal) modal.classList.remove("active");
   };
 
-  window.releaseUnitHold = function (idx) {
+  window.releaseUnitHold = async function (idx) {
     const log = getAccidentLogs()[idx];
     if (!log) return;
 
-    if (
-      confirm(
-        `Apakah Anda yakin memverifikasi bahwa unit ${log.unitCode} telah lulus perbaikan & safety audit untuk di-RELEASE dari ACCIDENT_HOLD?`,
-      )
-    ) {
-      log.isUnitLocked = false;
-      log.status = "Closed";
+    if (!confirm(`Apakah Anda yakin unit ${log.unitCode} telah lulus perbaikan & safety audit?`)) return;
+    const reason = prompt("Masukkan alasan/bukti ringkas otorisasi rilis unit:", "CAPA selesai dan safety audit dinyatakan lulus");
+    if (reason === null) return;
+    if (!reason.trim()) {
+      alert("Alasan rilis wajib diisi.");
+      return;
+    }
 
-      // Restore asset status if available
-      if (window.globalData && window.globalData.assets) {
-        const asset = window.globalData.assets.find(
-          (a) => a.id.indexOf(log.unitCode) > -1,
-        );
-        if (asset) {
-          asset.status = "READY";
-        }
+    try {
+      const response = await fetch("api/accidents.php", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "release",
+          accident_id: log.docNo,
+          reason: reason.trim(),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.status !== "success") {
+        throw new Error(result.message || "Otorisasi rilis gagal.");
       }
 
-      alert(`Unit ${log.unitCode} berhasil di-RELEASE. Status kembali READY.`);
+      log.isUnitLocked = false;
+      log.status = "Closed";
+      log.releaseReason = reason.trim();
+      log.releasedAt = new Date().toISOString();
+      const restoredStatus = result.data?.restoredStatus;
+      if (restoredStatus && window.globalData?.assets) {
+        const asset = window.globalData.assets.find((item) => item.id === log.unitCode);
+        if (asset) asset.status = restoredStatus;
+      }
+      alert(
+        result.data?.remainingLocks > 0
+          ? `Insiden ${log.docNo} ditutup, tetapi unit tetap HOLD karena masih ada ${result.data.remainingLocks} insiden aktif.`
+          : `Unit ${log.unitCode} berhasil dirilis${restoredStatus ? ` ke status ${restoredStatus}` : ""}.`,
+      );
       renderHSEModuleContent();
+    } catch (error) {
+      alert(`Gagal merilis unit: ${error.message}`);
     }
   };
 
