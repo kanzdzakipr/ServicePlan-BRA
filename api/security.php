@@ -260,6 +260,7 @@ function api_builtin_permissions_for_roles(array $roleNames): array
     ];
     $roleMap = [
         'Administrator' => $all,
+        'General Manager' => $manager,
         'Asset Manager' => $manager,
         'Equipment Manager' => $manager,
         'Maintenance Planner' => [
@@ -607,6 +608,7 @@ function api_route_permission(): ?string
         'productivity.php' => 'dashboard.read',
         'costs.php' => $readWrite('cost.read', 'cost.write'),
         'kpi.php' => 'dashboard.read',
+        'people_kpi.php' => $readWrite('dashboard.read', 'reports.write'),
         'contracts.php' => $readWrite('dashboard.read', 'assets.write'),
         'notifications.php' => 'dashboard.read',
         'reports.php' => $readWrite('reports.read', 'reports.write'),

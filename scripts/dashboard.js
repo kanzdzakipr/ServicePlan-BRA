@@ -1961,13 +1961,17 @@
         .join("");
     }
     if (kind === "purchaseRequests") {
-      const allowedStatuses = activeSchema?.id === "ppb"
-        ? ["Approved", "Ordered"]
-        : ["bhw-in", "bhw-out"].includes(activeSchema?.id)
-          ? ["Approved", "Ordered", "Issued"]
-          : null;
+      const allowedStatuses =
+        activeSchema?.id === "ppb"
+          ? ["Approved", "Ordered"]
+          : ["bhw-in", "bhw-out"].includes(activeSchema?.id)
+            ? ["Approved", "Ordered", "Issued"]
+            : null;
       return reportReferences.purchaseRequests
-        .filter((request) => !allowedStatuses || allowedStatuses.includes(request.status))
+        .filter(
+          (request) =>
+            !allowedStatuses || allowedStatuses.includes(request.status),
+        )
         .map(
           (request) =>
             `<option value="${escapeHtml(request.id)}">${escapeHtml([request.workOrderId, request.assetId, request.location, request.status].filter(Boolean).join(" Â· "))}</option>`,
@@ -2471,17 +2475,24 @@
       control.value = previousSpb;
     };
     if (previousSpb === request.id) return;
-    const allowedStatuses = activeSchema.id === "ppb"
-      ? ["Approved", "Ordered"]
-      : ["Approved", "Ordered", "Issued"];
+    const allowedStatuses =
+      activeSchema.id === "ppb"
+        ? ["Approved", "Ordered"]
+        : ["Approved", "Ordered", "Issued"];
     if (!allowedStatuses.includes(request.status)) {
       restorePrevious();
-      showToast(`SPB ${request.id} belum disetujui atau sudah tidak dapat digunakan.`, true);
+      showToast(
+        `SPB ${request.id} belum disetujui atau sudah tidak dapat digunakan.`,
+        true,
+      );
       return;
     }
     if (!request.items?.length) {
       restorePrevious();
-      showToast(`SPB ${request.id} belum memiliki barang yang bisa dimuat.`, true);
+      showToast(
+        `SPB ${request.id} belum memiliki barang yang bisa dimuat.`,
+        true,
+      );
       return;
     }
     const populatedRows = (activeDraft.rows || []).filter((row) =>
@@ -2494,14 +2505,18 @@
     );
     if (
       populatedRows.length &&
-      !confirm(`Ganti ${populatedRows.length} baris yang sudah diisi dengan barang dari SPB ${request.id}? Baris lama akan diganti; salin dulu data yang ingin dipertahankan.`)
+      !confirm(
+        `Ganti ${populatedRows.length} baris yang sudah diisi dengan barang dari SPB ${request.id}? Baris lama akan diganti; salin dulu data yang ingin dipertahankan.`,
+      )
     ) {
       restorePrevious();
       return;
     }
     activeDraft.rows = request.items.map((item) => {
       const master = reportReferences.parts.find(
-        (part) => String(part.number).toLowerCase() === String(item.partNumber).toLowerCase(),
+        (part) =>
+          String(part.number).toLowerCase() ===
+          String(item.partNumber).toLowerCase(),
       );
       const common = {
         part_number: item.partNumber,
@@ -2585,7 +2600,10 @@
         const rowIndex = Number(control.dataset.row);
         const row = activeDraft?.rows?.[rowIndex];
         if (row) {
-          if (activeSchema?.id === "procurement-monitoring" && request.items?.length) {
+          if (
+            activeSchema?.id === "procurement-monitoring" &&
+            request.items?.length
+          ) {
             const previousSpb = String(row._sourceSpbId || "");
             if (previousSpb === request.id) return;
             const hasExistingMonitoringData = Object.entries(row).some(
@@ -2597,7 +2615,9 @@
             );
             if (
               hasExistingMonitoringData &&
-              !confirm(`Ganti baris monitoring ini dengan ${request.items.length} barang dari SPB ${request.id}?`)
+              !confirm(
+                `Ganti baris monitoring ini dengan ${request.items.length} barang dari SPB ${request.id}?`,
+              )
             ) {
               row.nomor_spb = previousSpb;
               control.value = previousSpb;
@@ -2632,7 +2652,8 @@
               part_number: item.partNumber,
               qty: String(item.quantity),
               satuan: item.unit,
-              status_pengadaan: statusMap[request.status] || "Menunggu Approval",
+              status_pengadaan:
+                statusMap[request.status] || "Menunggu Approval",
               ...(itemIndex === 0 ? processFields : {}),
             }));
             activeDraft.rows.splice(rowIndex, 1, ...mappedRows);
@@ -2640,7 +2661,9 @@
               item.nomor = String(index + 1);
               calculateRow(item);
             });
-            showToast(`${mappedRows.length} barang dari SPB ${request.id} dimuat ke Monitoring Pengadaan.`);
+            showToast(
+              `${mappedRows.length} barang dari SPB ${request.id} dimuat ke Monitoring Pengadaan.`,
+            );
           } else {
             row.nomor_spb = request.id;
             row.nomor_jo = request.workOrderId;
@@ -2666,7 +2689,10 @@
       ) {
         control.value = String(activeDraft.sourcePurchaseOrderId || "");
         activeDraft.fields.nomor_po = control.value;
-        showToast(`PO ${order.id} belum disetujui atau sudah tidak dapat diterima.`, true);
+        showToast(
+          `PO ${order.id} belum disetujui atau sudah tidak dapat diterima.`,
+          true,
+        );
         return;
       }
       const rowsAreEmpty = (activeDraft?.rows || []).every(
@@ -2680,7 +2706,9 @@
         activeSchema?.id !== "bapp" ||
         rowsAreEmpty ||
         !order.items?.length ||
-        confirm(`Ganti baris BAPP yang sudah diisi dengan ${order.items.length} barang dari PO ${order.id}?`);
+        confirm(
+          `Ganti baris BAPP yang sudah diisi dengan ${order.items.length} barang dari PO ${order.id}?`,
+        );
       if (!shouldReplaceBappRows) {
         const previousPo = String(activeDraft.sourcePurchaseOrderId || "");
         activeDraft.fields.nomor_po = previousPo;
@@ -2712,7 +2740,9 @@
         });
         activeDraft.sourcePurchaseOrderId = order.id;
         renderRows();
-        showToast(`${order.items.length} barang dari PO ${order.id} dimuat ke BAPP. Isi jumlah baik, rusak, dan kurang.`);
+        showToast(
+          `${order.items.length} barang dari PO ${order.id} dimuat ke BAPP. Isi jumlah baik, rusak, dan kurang.`,
+        );
       }
       return;
     }
@@ -3319,9 +3349,15 @@
 
   async function loadSpbDocuments() {
     try {
-      const response = await fetch("api/spb_workflow.php", { cache: "no-store" });
+      const response = await fetch("api/spb_workflow.php", {
+        cache: "no-store",
+      });
       const payload = await response.json();
-      if (!response.ok || payload.status !== "success" || !Array.isArray(payload.data)) {
+      if (
+        !response.ok ||
+        payload.status !== "success" ||
+        !Array.isArray(payload.data)
+      ) {
         throw new Error(payload.message || "Daftar SPB tidak tersedia.");
       }
       spbDocuments = payload.data;
@@ -3330,13 +3366,17 @@
     } catch (error) {
       spbDocuments = [];
       canVoidSpbDocuments = false;
-      showToast(`Daftar SPB dari database tidak tersedia: ${error.message}`, true);
+      showToast(
+        `Daftar SPB dari database tidak tersedia: ${error.message}`,
+        true,
+      );
     }
   }
 
   function spbDisplayStatus(spb) {
     const current = String(spb?.status || "");
-    if (current === "Draft" && spb?.approval_status === "REJECTED") return "Rejected";
+    if (current === "Draft" && spb?.approval_status === "REJECTED")
+      return "Rejected";
     if (current === "Submitted") return "Menunggu Approval";
     return current || "Status tidak tersedia";
   }
@@ -3345,7 +3385,10 @@
     const schema = formSchemas.find((item) => item.id === "spb");
     if (!schema) return showToast("Template SPB tidak tersedia.", true);
     try {
-      const response = await fetch(`api/spb_workflow.php?spb_id=${encodeURIComponent(spbId)}`, { cache: "no-store" });
+      const response = await fetch(
+        `api/spb_workflow.php?spb_id=${encodeURIComponent(spbId)}`,
+        { cache: "no-store" },
+      );
       const payload = await response.json();
       if (!response.ok || payload.status !== "success" || !payload.data) {
         throw new Error(payload.message || "Detail SPB tidak tersedia.");
@@ -3386,8 +3429,15 @@
   }
 
   async function voidOperationalSpb(spbId) {
-    if (!window.confirm(`Void SPB ${spbId}? SPB akan dilepas dari menu operasional. Jejak dan alasan pembatalan tetap disimpan.`)) return;
-    const reason = window.prompt("Alasan void SPB (wajib, maksimal 500 karakter):");
+    if (
+      !window.confirm(
+        `Void SPB ${spbId}? SPB akan dilepas dari menu operasional. Jejak dan alasan pembatalan tetap disimpan.`,
+      )
+    )
+      return;
+    const reason = window.prompt(
+      "Alasan void SPB (wajib, maksimal 500 karakter):",
+    );
     if (reason === null) return;
     const normalizedReason = reason.trim();
     if (!normalizedReason || normalizedReason.length > 500) {
@@ -3397,11 +3447,19 @@
     try {
       const response = await fetch("api/spb_workflow.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": window.APP_CSRF_TOKEN || "" },
-        body: JSON.stringify({ action: "void", spbId, reason: normalizedReason }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": window.APP_CSRF_TOKEN || "",
+        },
+        body: JSON.stringify({
+          action: "void",
+          spbId,
+          reason: normalizedReason,
+        }),
       });
       const payload = await response.json();
-      if (!response.ok || payload.status !== "success") throw new Error(payload.message || "Void SPB gagal.");
+      if (!response.ok || payload.status !== "success")
+        throw new Error(payload.message || "Void SPB gagal.");
       document.getElementById("historyPrintArea")?.replaceChildren();
       await loadSpbDocuments();
       window.loadSpbApprovalInbox?.();
@@ -3416,8 +3474,8 @@
     if (!list) return;
     const records = readHistory();
     const reportIds = new Set(records.map((record) => record.id));
-    const externalSpbs = spbDocuments.filter((spb) =>
-      !spb.source_report_id || !reportIds.has(spb.source_report_id),
+    const externalSpbs = spbDocuments.filter(
+      (spb) => !spb.source_report_id || !reportIds.has(spb.source_report_id),
     );
     const count = document.getElementById("reportHistoryCount");
     if (count) count.textContent = records.length + externalSpbs.length;
@@ -3430,11 +3488,14 @@
         .includes(query),
     );
     const filteredSpbs = externalSpbs.filter((spb) =>
-      `${spb.spb_id} ${spb.wo_id} ${spb.asset_id} SPB`.toLocaleLowerCase("id").includes(query),
+      `${spb.spb_id} ${spb.wo_id} ${spb.asset_id} SPB`
+        .toLocaleLowerCase("id")
+        .includes(query),
     );
 
-    list.innerHTML = filtered.length || filteredSpbs.length
-      ? `
+    list.innerHTML =
+      filtered.length || filteredSpbs.length
+        ? `
             <div class="history-table-wrap">
                 <table class="history-table">
                     <thead><tr>
@@ -3466,7 +3527,9 @@
                         `,
                           )
                           .join("")}
-                        ${filteredSpbs.map((spb) => `
+                        ${filteredSpbs
+                          .map(
+                            (spb) => `
                             <tr>
                                 <td><strong>${escapeHtml(formatDateTime(spb.requested_at))}</strong><small>${escapeHtml(spb.wo_id)} / ${escapeHtml(spb.asset_id)}</small></td>
                                 <td>${escapeHtml(spb.spb_id)}</td>
@@ -3477,12 +3540,14 @@
                                     <button type="button" data-spb-print="${escapeHtml(spb.spb_id)}"><i class="fa-regular fa-eye"></i> Lihat/Cetak</button>
                                     ${spb.source_report_id ? '<span title="Void melalui laporan Form asal">Void via Form</span>' : canVoidSpbDocuments ? `<button type="button" class="danger" data-spb-void="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-ban"></i> Void</button>` : ""}
                                 </div></td>
-                            </tr>`).join("")}
+                            </tr>`,
+                          )
+                          .join("")}
                     </tbody>
                 </table>
             </div>
         `
-      : `
+        : `
             <div class="report-empty history-empty">
                 <i class="fa-solid fa-box-archive"></i>
                 <strong>${records.length || externalSpbs.length ? "Riwayat tidak ditemukan" : "Belum ada laporan final"}</strong>
@@ -3506,10 +3571,14 @@
       );
     });
     list.querySelectorAll("[data-spb-print]").forEach((button) => {
-      button.addEventListener("click", () => viewSpbDocument(button.dataset.spbPrint));
+      button.addEventListener("click", () =>
+        viewSpbDocument(button.dataset.spbPrint),
+      );
     });
     list.querySelectorAll("[data-spb-void]").forEach((button) => {
-      button.addEventListener("click", () => voidOperationalSpb(button.dataset.spbVoid));
+      button.addEventListener("click", () =>
+        voidOperationalSpb(button.dataset.spbVoid),
+      );
     });
   }
 
@@ -3588,11 +3657,16 @@
     if (!confirmed) return;
     let voidReason = null;
     if (record.backend) {
-      voidReason = window.prompt("Tuliskan alasan pembatalan laporan (wajib, maksimal 500 karakter):");
+      voidReason = window.prompt(
+        "Tuliskan alasan pembatalan laporan (wajib, maksimal 500 karakter):",
+      );
       if (voidReason === null) return;
       voidReason = voidReason.trim();
       if (!voidReason || voidReason.length > 500) {
-        showToast("Alasan pembatalan wajib diisi (maksimal 500 karakter).", true);
+        showToast(
+          "Alasan pembatalan wajib diisi (maksimal 500 karakter).",
+          true,
+        );
         return;
       }
     }
@@ -6302,114 +6376,195 @@
     if (mitigation) mitigation.required = Boolean(isActive);
     if (isActive && byId("nwo-down")) byId("nwo-down").value = "No";
   }
-    function getNwoMasterParts() {
-        if (typeof window.SpareLogistics?.getMasterParts === 'function') {
-            const list = window.SpareLogistics.getMasterParts();
-            if (Array.isArray(list) && list.length > 0) return list;
+  function getNwoMasterParts() {
+    if (typeof window.SpareLogistics?.getMasterParts === "function") {
+      const list = window.SpareLogistics.getMasterParts();
+      if (Array.isArray(list) && list.length > 0) return list;
+    }
+    if (
+      Array.isArray(window.masterPartsShared) &&
+      window.masterPartsShared.length > 0
+    ) {
+      return window.masterPartsShared;
+    }
+    return defaultFallbackParts();
+  }
+
+  async function ensureNwoMasterParts() {
+    if (typeof window.SpareLogistics?.loadMasterParts === "function") {
+      try {
+        const parts = await window.SpareLogistics.loadMasterParts();
+        if (Array.isArray(parts) && parts.length > 0) {
+          window.masterPartsShared = parts;
+          return parts;
         }
-        if (Array.isArray(window.masterPartsShared) && window.masterPartsShared.length > 0) {
-            return window.masterPartsShared;
+      } catch (e) {
+        console.warn("SpareLogistics.loadMasterParts error, falling back:", e);
+      }
+    }
+    if (!window.masterPartsShared || !window.masterPartsShared.length) {
+      try {
+        const resp = await fetch("api/logistics.php?type=parts", {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
+        const json = await resp.json();
+        if (json && json.status === "success" && Array.isArray(json.data)) {
+          window.masterPartsShared = json.data.map((p) => ({
+            id: String(p.part_id || p.id || ""),
+            partNumber: String(p.part_number || p.partNumber || "").trim(),
+            description: String(
+              p.part_name || p.namaParts || p.description || "",
+            ).trim(),
+            category: String(p.category || "General").trim(),
+            uom:
+              String(p.unit_measure || p.satuan || p.uom || "pcs").trim() ||
+              "pcs",
+            stockQty: Number(p.stock_qty ?? p.stock) || 0,
+          }));
         }
-        return defaultFallbackParts();
+      } catch (e) {
+        console.warn("Fetch parts failed, using fallback:", e);
+      }
+    }
+    if (!window.masterPartsShared || !window.masterPartsShared.length) {
+      window.masterPartsShared = defaultFallbackParts();
+    }
+    return window.masterPartsShared;
+  }
+
+  function defaultFallbackParts() {
+    return [
+      {
+        partNumber: "P-001-OIL",
+        description: "Filter Oli Engine Komatsu PC200-10M0",
+        category: "Filter",
+        uom: "pcs",
+        stockQty: 23,
+      },
+      {
+        partNumber: "P-002-HYD",
+        description: "Selang Hidrolik 3/4 Inch (2 Meter)",
+        category: "Hydraulic",
+        uom: "pcs",
+        stockQty: 12,
+      },
+      {
+        partNumber: "P-003-BIT",
+        description: "Cutting Bit Grader XCMG GR135",
+        category: "Cutting Bit",
+        uom: "pcs",
+        stockQty: 60,
+      },
+      {
+        partNumber: "P-004-AIR",
+        description: "Air Filter Primary Hino Ranger FM280",
+        category: "Filter",
+        uom: "pcs",
+        stockQty: 18,
+      },
+      {
+        partNumber: "P-005-TIRE",
+        description: "Ban Radial 10.00-20 Dump Truck",
+        category: "Tire",
+        uom: "pcs",
+        stockQty: 8,
+      },
+      {
+        partNumber: "23304-JAF30",
+        description: "Element Set Fuel Filter Hino",
+        category: "Filter",
+        uom: "pcs",
+        stockQty: 15,
+      },
+      {
+        partNumber: "15613-JAA10",
+        description: "Element Oil Filter Hino FM260",
+        category: "Filter",
+        uom: "pcs",
+        stockQty: 14,
+      },
+      {
+        partNumber: "GRS-LITHIUM-EP2",
+        description: "Grease Chassis Lithium EP-2 (Pail 15Kg)",
+        category: "Lubricant",
+        uom: "can",
+        stockQty: 10,
+      },
+      {
+        partNumber: "BAT-95D31L",
+        description: "Aki GS Astra Maintenance Free 12V 80AH",
+        category: "Electrical",
+        uom: "pcs",
+        stockQty: 6,
+      },
+    ];
+  }
+
+  function defaultPartEta() {
+    const d = new Date();
+    d.setHours(d.getHours() + 4);
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  }
+
+  function renderNwoDraftRows() {
+    const tbody = byId("nwo-spb-items");
+    if (!tbody) return;
+    const masterParts = getNwoMasterParts();
+    if (!state.draft || !state.draft.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="4" class="wo-parts-empty"><i class="fa-solid fa-box-open" style="font-size:1.3rem; color:#cbd5e1; display:block; margin-bottom:5px;"></i>Belum ada spare part yang di-request. Gunakan tombol Tambah Spare Part di bawah.</td></tr>';
+      syncNwoPartsSummary();
+      return;
     }
 
-    async function ensureNwoMasterParts() {
-        if (typeof window.SpareLogistics?.loadMasterParts === 'function') {
-            try {
-                const parts = await window.SpareLogistics.loadMasterParts();
-                if (Array.isArray(parts) && parts.length > 0) {
-                    window.masterPartsShared = parts;
-                    return parts;
-                }
-            } catch (e) {
-                console.warn('SpareLogistics.loadMasterParts error, falling back:', e);
-            }
-        }
-        if (!window.masterPartsShared || !window.masterPartsShared.length) {
-            try {
-                const resp = await fetch('api/logistics.php?type=parts', { headers: { Accept: 'application/json' }, cache: 'no-store' });
-                const json = await resp.json();
-                if (json && json.status === 'success' && Array.isArray(json.data)) {
-                    window.masterPartsShared = json.data.map(p => ({
-                        id: String(p.part_id || p.id || ''),
-                        partNumber: String(p.part_number || p.partNumber || '').trim(),
-                        description: String(p.part_name || p.namaParts || p.description || '').trim(),
-                        category: String(p.category || 'General').trim(),
-                        uom: String(p.unit_measure || p.satuan || p.uom || 'pcs').trim() || 'pcs',
-                        stockQty: Number(p.stock_qty ?? p.stock) || 0
-                    }));
-                }
-            } catch (e) {
-                console.warn('Fetch parts failed, using fallback:', e);
-            }
-        }
-        if (!window.masterPartsShared || !window.masterPartsShared.length) {
-            window.masterPartsShared = defaultFallbackParts();
-        }
-        return window.masterPartsShared;
-    }
+    tbody.innerHTML = state.draft
+      .map((item, index) => {
+        const matchedPart = masterParts.find(
+          (p) =>
+            p.partNumber &&
+            p.partNumber.toLowerCase() ===
+              (item.partNumber || "").toLowerCase(),
+        );
+        const isManual = Boolean(
+          item.isManual || (item.partNumber && !matchedPart),
+        );
+        const selectedValue = matchedPart
+          ? matchedPart.partNumber
+          : isManual
+            ? "__MANUAL__"
+            : "";
 
-    function defaultFallbackParts() {
-        return [
-            { partNumber: 'P-001-OIL', description: 'Filter Oli Engine Komatsu PC200-10M0', category: 'Filter', uom: 'pcs', stockQty: 23 },
-            { partNumber: 'P-002-HYD', description: 'Selang Hidrolik 3/4 Inch (2 Meter)', category: 'Hydraulic', uom: 'pcs', stockQty: 12 },
-            { partNumber: 'P-003-BIT', description: 'Cutting Bit Grader XCMG GR135', category: 'Cutting Bit', uom: 'pcs', stockQty: 60 },
-            { partNumber: 'P-004-AIR', description: 'Air Filter Primary Hino Ranger FM280', category: 'Filter', uom: 'pcs', stockQty: 18 },
-            { partNumber: 'P-005-TIRE', description: 'Ban Radial 10.00-20 Dump Truck', category: 'Tire', uom: 'pcs', stockQty: 8 },
-            { partNumber: '23304-JAF30', description: 'Element Set Fuel Filter Hino', category: 'Filter', uom: 'pcs', stockQty: 15 },
-            { partNumber: '15613-JAA10', description: 'Element Oil Filter Hino FM260', category: 'Filter', uom: 'pcs', stockQty: 14 },
-            { partNumber: 'GRS-LITHIUM-EP2', description: 'Grease Chassis Lithium EP-2 (Pail 15Kg)', category: 'Lubricant', uom: 'can', stockQty: 10 },
-            { partNumber: 'BAT-95D31L', description: 'Aki GS Astra Maintenance Free 12V 80AH', category: 'Electrical', uom: 'pcs', stockQty: 6 }
-        ];
-    }
-
-    function defaultPartEta() {
-        const d = new Date();
-        d.setHours(d.getHours() + 4);
-        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-        return local.toISOString().slice(0, 16);
-    }
-
-    function renderNwoDraftRows() {
-        const tbody = byId('nwo-spb-items');
-        if (!tbody) return;
-        const masterParts = getNwoMasterParts();
-        if (!state.draft || !state.draft.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="wo-parts-empty"><i class="fa-solid fa-box-open" style="font-size:1.3rem; color:#cbd5e1; display:block; margin-bottom:5px;"></i>Belum ada spare part yang di-request. Gunakan tombol Tambah Spare Part di bawah.</td></tr>';
-            syncNwoPartsSummary();
-            return;
-        }
-
-        tbody.innerHTML = state.draft.map((item, index) => {
-            const matchedPart = masterParts.find(p => p.partNumber && p.partNumber.toLowerCase() === (item.partNumber || '').toLowerCase());
-            const isManual = Boolean(item.isManual || (item.partNumber && !matchedPart));
-            const selectedValue = matchedPart ? matchedPart.partNumber : (isManual ? '__MANUAL__' : '');
-
-            return `
+        return `
             <tr data-nwo-draft-row="${index}">
                 <td>
                     <select class="form-control" onchange="window.handleNwoPartSelectChange(${index}, this.value)" aria-label="Pilih Suku Cadang" style="margin-bottom:6px; font-weight:600;">
                         <option value="">-- Pilih dari Katalog Gudang --</option>
-                        ${masterParts.map(part => `
-                            <option value="${escapeText(part.partNumber)}" ${selectedValue === part.partNumber ? 'selected' : ''}>
-                                ${escapeText(part.partNumber)} · ${escapeText(part.description || 'Tanpa nama')} (Stok: ${part.stockQty} ${escapeText(part.uom)})
+                        ${masterParts
+                          .map(
+                            (part) => `
+                            <option value="${escapeText(part.partNumber)}" ${selectedValue === part.partNumber ? "selected" : ""}>
+                                ${escapeText(part.partNumber)} · ${escapeText(part.description || "Tanpa nama")} (Stok: ${part.stockQty} ${escapeText(part.uom)})
                             </option>
-                        `).join('')}
-                        <option value="__MANUAL__" ${selectedValue === '__MANUAL__' ? 'selected' : ''}>+ Part Baru / Input Manual</option>
+                        `,
+                          )
+                          .join("")}
+                        <option value="__MANUAL__" ${selectedValue === "__MANUAL__" ? "selected" : ""}>+ Part Baru / Input Manual</option>
                     </select>
                     <div style="display:grid; grid-template-columns: 1fr 2fr; gap:6px;">
-                        <input type="text" class="form-control font-mono" value="${escapeText(item.partNumber || '')}" placeholder="Part Number" oninput="window.handleNwoPartFieldChange(${index}, 'partNumber', this.value)" ${matchedPart && !isManual ? 'readonly' : ''} style="font-size:0.75rem;">
-                        <input type="text" class="form-control" value="${escapeText(item.description || '')}" placeholder="Nama / Spesifikasi Spare Part" oninput="window.handleNwoPartFieldChange(${index}, 'description', this.value)" ${matchedPart && !isManual ? 'readonly' : ''} style="font-size:0.75rem;">
+                        <input type="text" class="form-control font-mono" value="${escapeText(item.partNumber || "")}" placeholder="Part Number" oninput="window.handleNwoPartFieldChange(${index}, 'partNumber', this.value)" ${matchedPart && !isManual ? "readonly" : ""} style="font-size:0.75rem;">
+                        <input type="text" class="form-control" value="${escapeText(item.description || "")}" placeholder="Nama / Spesifikasi Spare Part" oninput="window.handleNwoPartFieldChange(${index}, 'description', this.value)" ${matchedPart && !isManual ? "readonly" : ""} style="font-size:0.75rem;">
                     </div>
                 </td>
                 <td>
                     <div style="display:flex; gap:6px; align-items:center;">
                         <input type="number" min="1" class="form-control font-mono" style="width:70px; text-align:center; font-weight:700;" value="${Number(item.qty) || 1}" oninput="window.handleNwoPartFieldChange(${index}, 'qty', this.value)">
-                        <input type="text" class="form-control" style="width:75px;" value="${escapeText(item.uom || 'pcs')}" placeholder="pcs" oninput="window.handleNwoPartFieldChange(${index}, 'uom', this.value)" ${matchedPart && !isManual ? 'readonly' : ''}>
+                        <input type="text" class="form-control" style="width:75px;" value="${escapeText(item.uom || "pcs")}" placeholder="pcs" oninput="window.handleNwoPartFieldChange(${index}, 'uom', this.value)" ${matchedPart && !isManual ? "readonly" : ""}>
                     </div>
                 </td>
                 <td>
-                    <input type="datetime-local" class="form-control font-mono" value="${escapeText(item.eta || '')}" oninput="window.handleNwoPartFieldChange(${index}, 'eta', this.value)" title="Jam & Tanggal Spare Part Tiba" style="font-size:0.76rem;">
+                    <input type="datetime-local" class="form-control font-mono" value="${escapeText(item.eta || "")}" oninput="window.handleNwoPartFieldChange(${index}, 'eta', this.value)" title="Jam & Tanggal Spare Part Tiba" style="font-size:0.76rem;">
                 </td>
                 <td style="text-align:center; vertical-align:middle;">
                     <button type="button" class="wo-part-remove-btn" onclick="window.removeNwoPartRow(${index})" title="Hapus spare part ini">
@@ -6417,366 +6572,422 @@
                     </button>
                 </td>
             </tr>`;
-        }).join('');
-        syncNwoPartsSummary();
+      })
+      .join("");
+    syncNwoPartsSummary();
+  }
+
+  function syncNwoPartsSummary() {
+    const valid = (state.draft || []).filter((item) =>
+      Boolean(item.partNumber || item.description),
+    );
+    const lines = valid.map((item) => {
+      const pn = item.partNumber ? ` (${item.partNumber})` : "";
+      const tag = item.isManual ? " [Luar Gudang/Manual]" : " [Gudang]";
+      const etaFormatted = item.eta
+        ? ` · Estimasi Tiba: ${item.eta.replace("T", " ")}`
+        : "";
+      return `• ${item.qty || 1} ${item.uom || "pcs"} - ${item.description || item.partNumber}${pn}${tag}${etaFormatted}`;
+    });
+    const textarea = byId("nwo-parts-needed");
+    if (textarea) textarea.value = lines.join("\n");
+    const counter = byId("nwo-spb-counter");
+    if (counter) counter.textContent = `${valid.length} spare part tercatat`;
+  }
+
+  let lastAddRowTime = 0;
+  function addNwoPartRow(prefill = {}) {
+    const now = Date.now();
+    if (
+      now - lastAddRowTime < 100 &&
+      (!prefill || typeof prefill !== "object" || !prefill.partNumber)
+    ) {
+      return;
     }
+    lastAddRowTime = now;
 
-    function syncNwoPartsSummary() {
-        const valid = (state.draft || []).filter(item => Boolean(item.partNumber || item.description));
-        const lines = valid.map(item => {
-            const pn = item.partNumber ? ` (${item.partNumber})` : '';
-            const tag = item.isManual ? ' [Luar Gudang/Manual]' : ' [Gudang]';
-            const etaFormatted = item.eta ? ` · Estimasi Tiba: ${item.eta.replace('T', ' ')}` : '';
-            return `• ${item.qty || 1} ${item.uom || 'pcs'} - ${item.description || item.partNumber}${pn}${tag}${etaFormatted}`;
-        });
-        const textarea = byId('nwo-parts-needed');
-        if (textarea) textarea.value = lines.join('\n');
-        const counter = byId('nwo-spb-counter');
-        if (counter) counter.textContent = `${valid.length} spare part tercatat`;
-    }
+    const p =
+      prefill && typeof prefill === "object" && !(prefill instanceof Event)
+        ? prefill
+        : {};
+    if (!Array.isArray(state.draft)) state.draft = [];
+    state.draft.push({
+      partNumber: p.partNumber || "",
+      description: p.description || "",
+      qty: Number(p.qty) || 1,
+      uom: p.uom || "pcs",
+      eta: p.eta || defaultPartEta(),
+      isManual: Boolean(p.isManual),
+    });
+    renderNwoDraftRows();
+    const rows = document.querySelectorAll("#nwo-spb-items tr");
+    const lastRow = rows[rows.length - 1];
+    lastRow?.querySelector("select")?.focus();
+  }
 
-    let lastAddRowTime = 0;
-    function addNwoPartRow(prefill = {}) {
-        const now = Date.now();
-        if (now - lastAddRowTime < 100 && (!prefill || typeof prefill !== 'object' || !prefill.partNumber)) {
-            return;
-        }
-        lastAddRowTime = now;
-
-        const p = (prefill && typeof prefill === 'object' && !(prefill instanceof Event)) ? prefill : {};
-        if (!Array.isArray(state.draft)) state.draft = [];
-        state.draft.push({
-            partNumber: p.partNumber || '',
-            description: p.description || '',
-            qty: Number(p.qty) || 1,
-            uom: p.uom || 'pcs',
-            eta: p.eta || defaultPartEta(),
-            isManual: Boolean(p.isManual)
-        });
-        renderNwoDraftRows();
-        const rows = document.querySelectorAll('#nwo-spb-items tr');
-        const lastRow = rows[rows.length - 1];
-        lastRow?.querySelector('select')?.focus();
-    }
-
-    function handleNwoPartSelectChange(index, selection) {
-        if (!state.draft || !state.draft[index]) return;
-        if (selection === '__MANUAL__') {
-            state.draft[index] = {
-                partNumber: '',
-                description: '',
-                qty: state.draft[index].qty || 1,
-                uom: 'pcs',
-                eta: state.draft[index].eta || defaultPartEta(),
-                isManual: true
-            };
-        } else if (!selection) {
-            state.draft[index] = {
-                partNumber: '',
-                description: '',
-                qty: state.draft[index].qty || 1,
-                uom: 'pcs',
-                eta: state.draft[index].eta || defaultPartEta(),
-                isManual: false
-            };
-        } else {
-            const masterParts = getNwoMasterParts();
-            const part = masterParts.find(p => p.partNumber === selection);
-            if (part) {
-                state.draft[index] = {
-                    partNumber: part.partNumber,
-                    description: part.description,
-                    qty: state.draft[index].qty || 1,
-                    uom: part.uom,
-                    eta: state.draft[index].eta || defaultPartEta(),
-                    stockQty: part.stockQty,
-                    isManual: false
-                };
-            }
-        }
-        renderNwoDraftRows();
-        const row = document.querySelector(`tr[data-nwo-draft-row="${index}"]`);
-        if (selection === '__MANUAL__') {
-            row?.querySelector('input[placeholder="Part Number"]')?.focus();
-        } else {
-            row?.querySelector('input[type="number"]')?.focus();
-        }
-    }
-
-    function handleNwoPartFieldChange(index, field, value) {
-        if (!state.draft || !state.draft[index]) return;
-        if (field === 'qty') {
-            state.draft[index].qty = Math.max(1, Number(value) || 1);
-        } else {
-            state.draft[index][field] = value;
-        }
-        syncNwoPartsSummary();
-    }
-
-    function removeNwoPartRow(index) {
-        if (!state.draft || index < 0 || index >= state.draft.length) return;
-        state.draft.splice(index, 1);
-        renderNwoDraftRows();
-    }
-
-    function resetForm() {
-        byId('newWoForm')?.reset();
-        state.mechanics = [];
-        state.photos = [];
-        clearPhotoUrls();
-        renderMechanics();
-        if (byId('nwo-photo-preview')) byId('nwo-photo-preview').innerHTML = '';
-        if (byId('nwo-trouble-at')) byId('nwo-trouble-at').value = inputDateTime();
-        if (byId('nwo-started-at')) byId('nwo-started-at').value = inputDateTime();
-        if (byId('nwo-parts-needed')) byId('nwo-parts-needed').value = '';
-        state.parts = [];
-        state.draft = [];
-        renderNwoDraftRows();
-        toggleMitigation(false);
-        setMessage('');
-    }
-
-    async function submit() {
-        const selectedAssetId = text(byId('nwo-id')?.value);
-        const issue = text(byId('nwo-issue')?.value);
-        const location = text(byId('nwo-location')?.value);
-        const hmValue = text(byId('nwo-hm-km')?.value);
-        const troubleAt = text(byId('nwo-trouble-at')?.value);
-        const startedAt = text(byId('nwo-started-at')?.value);
-        const completedAt = text(byId('nwo-completed-at')?.value);
-        const forcedOperation = Boolean(byId('nwo-forced-operation')?.checked);
-        const mitigation = text(byId('nwo-mitigation')?.value);
-
-        const required = [
-            [selectedAssetId, 'Pilih unit yang mengalami trouble.', 'nwo-id'],
-            [location, 'Lokasi trouble wajib diisi.', 'nwo-location'],
-            [hmValue, 'HM/KM aktual wajib diisi.', 'nwo-hm-km'],
-            [troubleAt, 'Tanggal dan waktu trouble wajib diisi.', 'nwo-trouble-at'],
-            [issue, 'Uraian jenis trouble wajib diisi.', 'nwo-issue'],
-            [!forcedOperation || mitigation, 'Mitigasi dan batas operasi wajib dijelaskan untuk RFU Bersyarat.', 'nwo-mitigation']
-        ];
-        const missing = required.find(([valid]) => !valid);
-        if (missing) {
-            setMessage(missing[1], 'error');
-            byId(missing[2])?.focus();
-            return;
-        }
-        if (startedAt && completedAt && completedAt < startedAt) {
-            setMessage('Waktu selesai tidak boleh lebih awal dari waktu mulai pekerjaan.', 'error');
-            byId('nwo-completed-at')?.focus();
-            return;
-        }
-
-        const asset = findAsset(selectedAssetId);
-        if (!asset) {
-            setMessage('Data unit tidak ditemukan pada master aset.', 'error');
-            return;
-        }
-
-        const priority = text(byId('nwo-prio')?.value || 'Normal');
-        const maintenanceType = text(byId('nwo-type')?.value || 'Corrective');
-        const down = forcedOperation ? 'No' : text(byId('nwo-down')?.value || 'Yes');
-        const rootCause = text(byId('nwo-root-cause')?.value);
-        const repairAction = text(byId('nwo-repair-action')?.value);
-        const partsNeeded = text(byId('nwo-parts-needed')?.value);
-        const partsItems = (state.draft || [])
-            .filter(item => Boolean(item.partNumber || item.description))
-            .map(item => ({
-                partNumber: item.partNumber || '',
-                description: item.description || item.partNumber || '',
-                qty: Math.max(1, Number(item.qty) || 1),
-                uom: item.uom || 'pcs',
-                eta: item.eta || null,
-                isManual: Boolean(item.isManual)
-            }));
-        const mechanics = [...state.mechanics];
-        const assignedTo = mechanics.length ? mechanics.join(', ') : 'Belum ada PIC';
-        const currentHmKm = Number(hmValue);
-        const year = String(new Date().getFullYear()).slice(-2);
-        const woId = `WO-${year}-${Date.now().toString().slice(-8)}`;
-        const details = assetDetails(asset);
-        const submitButton = byId('nwo-submit');
-
-        const workOrder = {
-            woId,
-            assetId: selectedAssetId,
-            status: 'Open',
-            priority,
-            maintenanceType,
-            issue,
-            rootCause,
-            repairAction,
-            partsRequirement: (partsItems.length > 0 || partsNeeded) ? 'REQUIRED' : 'UNASSESSED',
-            partsRequirementNote: partsNeeded,
-            partsItems: partsItems,
-            assignedTo,
-            downtime: down === 'Yes' ? '0' : '-',
-            equipmentType: text(byId('nwo-equipment-type')?.value),
-            hullNumber: text(byId('nwo-hull-number')?.value),
-            currentHmKm,
-            troubleAt,
-            rawLocation: location,
-            repairStartedAt: startedAt || null,
-            estimatedCompletionAt: completedAt || null,
-            isForcedOperation: forcedOperation,
-            mitigationAction: mitigation,
-            assignedMechanics: mechanics,
-            beforePhotoName: state.photos[0]?.name || null
+  function handleNwoPartSelectChange(index, selection) {
+    if (!state.draft || !state.draft[index]) return;
+    if (selection === "__MANUAL__") {
+      state.draft[index] = {
+        partNumber: "",
+        description: "",
+        qty: state.draft[index].qty || 1,
+        uom: "pcs",
+        eta: state.draft[index].eta || defaultPartEta(),
+        isManual: true,
+      };
+    } else if (!selection) {
+      state.draft[index] = {
+        partNumber: "",
+        description: "",
+        qty: state.draft[index].qty || 1,
+        uom: "pcs",
+        eta: state.draft[index].eta || defaultPartEta(),
+        isManual: false,
+      };
+    } else {
+      const masterParts = getNwoMasterParts();
+      const part = masterParts.find((p) => p.partNumber === selection);
+      if (part) {
+        state.draft[index] = {
+          partNumber: part.partNumber,
+          description: part.description,
+          qty: state.draft[index].qty || 1,
+          uom: part.uom,
+          eta: state.draft[index].eta || defaultPartEta(),
+          stockQty: part.stockQty,
+          isManual: false,
         };
+      }
+    }
+    renderNwoDraftRows();
+    const row = document.querySelector(`tr[data-nwo-draft-row="${index}"]`);
+    if (selection === "__MANUAL__") {
+      row?.querySelector('input[placeholder="Part Number"]')?.focus();
+    } else {
+      row?.querySelector('input[type="number"]')?.focus();
+    }
+  }
 
-        let newAssetStatus = null;
-        if (forcedOperation && details.status !== 'OPERATING') {
-            newAssetStatus = 'OPERATING';
-        } else if (down === 'Yes' && details.status !== 'BREAKDOWN') {
-            newAssetStatus = 'BREAKDOWN';
-        } else if (down === 'No' && details.status === 'READY') {
-            newAssetStatus = 'STANDBY';
-        }
+  function handleNwoPartFieldChange(index, field, value) {
+    if (!state.draft || !state.draft[index]) return;
+    if (field === "qty") {
+      state.draft[index].qty = Math.max(1, Number(value) || 1);
+    } else {
+      state.draft[index][field] = value;
+    }
+    syncNwoPartsSummary();
+  }
 
-        const payload = {
-            wo_id: woId,
-            asset_id: selectedAssetId,
-            status: 'Open',
-            priority,
-            maintenance_type: maintenanceType,
-            issue_description: issue,
-            root_cause: rootCause,
-            repair_action: repairAction,
-            parts_requirement: (partsItems.length > 0 || partsNeeded) ? 'REQUIRED' : 'UNASSESSED',
-            parts_requirement_note: partsNeeded,
-            parts_items: partsItems,
-            hull_number: workOrder.hullNumber,
-            equipment_type: workOrder.equipmentType,
-            current_hm_km: currentHmKm,
-            trouble_at: troubleAt,
-            raw_location: location,
-            repair_started_at: startedAt || null,
-            estimated_completion_at: completedAt || null,
-            is_downtime: down === 'Yes',
-            is_forced_operation: forcedOperation,
-            mitigation_action: mitigation,
-            assigned_mechanics: mechanics
-        };
+  function removeNwoPartRow(index) {
+    if (!state.draft || index < 0 || index >= state.draft.length) return;
+    state.draft.splice(index, 1);
+    renderNwoDraftRows();
+  }
 
-        if (submitButton) {
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan tiket';
-        }
-        setMessage('Menyimpan tiket dan memperbarui status unit secara transaksional.', 'info');
+  function resetForm() {
+    byId("newWoForm")?.reset();
+    state.mechanics = [];
+    state.photos = [];
+    clearPhotoUrls();
+    renderMechanics();
+    if (byId("nwo-photo-preview")) byId("nwo-photo-preview").innerHTML = "";
+    if (byId("nwo-trouble-at")) byId("nwo-trouble-at").value = inputDateTime();
+    if (byId("nwo-started-at")) byId("nwo-started-at").value = inputDateTime();
+    if (byId("nwo-parts-needed")) byId("nwo-parts-needed").value = "";
+    state.parts = [];
+    state.draft = [];
+    renderNwoDraftRows();
+    toggleMitigation(false);
+    setMessage("");
+  }
 
+  async function submit() {
+    const selectedAssetId = text(byId("nwo-id")?.value);
+    const issue = text(byId("nwo-issue")?.value);
+    const location = text(byId("nwo-location")?.value);
+    const hmValue = text(byId("nwo-hm-km")?.value);
+    const troubleAt = text(byId("nwo-trouble-at")?.value);
+    const startedAt = text(byId("nwo-started-at")?.value);
+    const completedAt = text(byId("nwo-completed-at")?.value);
+    const forcedOperation = Boolean(byId("nwo-forced-operation")?.checked);
+    const mitigation = text(byId("nwo-mitigation")?.value);
+
+    const required = [
+      [selectedAssetId, "Pilih unit yang mengalami trouble.", "nwo-id"],
+      [location, "Lokasi trouble wajib diisi.", "nwo-location"],
+      [hmValue, "HM/KM aktual wajib diisi.", "nwo-hm-km"],
+      [troubleAt, "Tanggal dan waktu trouble wajib diisi.", "nwo-trouble-at"],
+      [issue, "Uraian jenis trouble wajib diisi.", "nwo-issue"],
+      [
+        !forcedOperation || mitigation,
+        "Mitigasi dan batas operasi wajib dijelaskan untuk RFU Bersyarat.",
+        "nwo-mitigation",
+      ],
+    ];
+    const missing = required.find(([valid]) => !valid);
+    if (missing) {
+      setMessage(missing[1], "error");
+      byId(missing[2])?.focus();
+      return;
+    }
+    if (startedAt && completedAt && completedAt < startedAt) {
+      setMessage(
+        "Waktu selesai tidak boleh lebih awal dari waktu mulai pekerjaan.",
+        "error",
+      );
+      byId("nwo-completed-at")?.focus();
+      return;
+    }
+
+    const asset = findAsset(selectedAssetId);
+    if (!asset) {
+      setMessage("Data unit tidak ditemukan pada master aset.", "error");
+      return;
+    }
+
+    const priority = text(byId("nwo-prio")?.value || "Normal");
+    const maintenanceType = text(byId("nwo-type")?.value || "Corrective");
+    const down = forcedOperation
+      ? "No"
+      : text(byId("nwo-down")?.value || "Yes");
+    const rootCause = text(byId("nwo-root-cause")?.value);
+    const repairAction = text(byId("nwo-repair-action")?.value);
+    const partsNeeded = text(byId("nwo-parts-needed")?.value);
+    const partsItems = (state.draft || [])
+      .filter((item) => Boolean(item.partNumber || item.description))
+      .map((item) => ({
+        partNumber: item.partNumber || "",
+        description: item.description || item.partNumber || "",
+        qty: Math.max(1, Number(item.qty) || 1),
+        uom: item.uom || "pcs",
+        eta: item.eta || null,
+        isManual: Boolean(item.isManual),
+      }));
+    const mechanics = [...state.mechanics];
+    const assignedTo = mechanics.length
+      ? mechanics.join(", ")
+      : "Belum ada PIC";
+    const currentHmKm = Number(hmValue);
+    const year = String(new Date().getFullYear()).slice(-2);
+    const woId = `WO-${year}-${Date.now().toString().slice(-8)}`;
+    const details = assetDetails(asset);
+    const submitButton = byId("nwo-submit");
+
+    const workOrder = {
+      woId,
+      assetId: selectedAssetId,
+      status: "Open",
+      priority,
+      maintenanceType,
+      issue,
+      rootCause,
+      repairAction,
+      partsRequirement:
+        partsItems.length > 0 || partsNeeded ? "REQUIRED" : "UNASSESSED",
+      partsRequirementNote: partsNeeded,
+      partsItems: partsItems,
+      assignedTo,
+      downtime: down === "Yes" ? "0" : "-",
+      equipmentType: text(byId("nwo-equipment-type")?.value),
+      hullNumber: text(byId("nwo-hull-number")?.value),
+      currentHmKm,
+      troubleAt,
+      rawLocation: location,
+      repairStartedAt: startedAt || null,
+      estimatedCompletionAt: completedAt || null,
+      isForcedOperation: forcedOperation,
+      mitigationAction: mitigation,
+      assignedMechanics: mechanics,
+      beforePhotoName: state.photos[0]?.name || null,
+    };
+
+    let newAssetStatus = null;
+    if (forcedOperation && details.status !== "OPERATING") {
+      newAssetStatus = "OPERATING";
+    } else if (down === "Yes" && details.status !== "BREAKDOWN") {
+      newAssetStatus = "BREAKDOWN";
+    } else if (down === "No" && details.status === "READY") {
+      newAssetStatus = "STANDBY";
+    }
+
+    const payload = {
+      wo_id: woId,
+      asset_id: selectedAssetId,
+      status: "Open",
+      priority,
+      maintenance_type: maintenanceType,
+      issue_description: issue,
+      root_cause: rootCause,
+      repair_action: repairAction,
+      parts_requirement:
+        partsItems.length > 0 || partsNeeded ? "REQUIRED" : "UNASSESSED",
+      parts_requirement_note: partsNeeded,
+      parts_items: partsItems,
+      hull_number: workOrder.hullNumber,
+      equipment_type: workOrder.equipmentType,
+      current_hm_km: currentHmKm,
+      trouble_at: troubleAt,
+      raw_location: location,
+      repair_started_at: startedAt || null,
+      estimated_completion_at: completedAt || null,
+      is_downtime: down === "Yes",
+      is_forced_operation: forcedOperation,
+      mitigation_action: mitigation,
+      assigned_mechanics: mechanics,
+    };
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML =
+        '<i class="fa-solid fa-circle-notch fa-spin"></i> Menyimpan tiket';
+    }
+    setMessage(
+      "Menyimpan tiket dan memperbarui status unit secara transaksional.",
+      "info",
+    );
+
+    try {
+      const response = await fetch("api/work_orders.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok || result.status !== "success") {
+        throw new Error(
+          result.message || "Server menolak penyimpanan Work Order.",
+        );
+      }
+
+      newAssetStatus = text(result?.data?.assetStatus || newAssetStatus);
+      let photoWarning = "";
+      if (state.photos[0]) {
+        const photoPayload = new FormData();
+        photoPayload.append("wo_id", woId);
+        photoPayload.append("photo", state.photos[0], state.photos[0].name);
         try {
-            const response = await fetch('api/work_orders.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            if (!response.ok || result.status !== 'success') {
-                throw new Error(result.message || 'Server menolak penyimpanan Work Order.');
-            }
-
-            newAssetStatus = text(result?.data?.assetStatus || newAssetStatus);
-            let photoWarning = '';
-            if (state.photos[0]) {
-                const photoPayload = new FormData();
-                photoPayload.append('wo_id', woId);
-                photoPayload.append('photo', state.photos[0], state.photos[0].name);
-                try {
-                    const photoResponse = await fetch('api/work_orders.php?action=upload-photo', {
-                        method: 'POST',
-                        body: photoPayload
-                    });
-                    const photoResult = await photoResponse.json();
-                    if (!photoResponse.ok || photoResult.status !== 'success') {
-                        throw new Error(photoResult.message || 'Upload foto ditolak server.');
-                    }
-                    workOrder.beforePhotoUrl = photoResult?.data?.beforePhotoUrl || null;
-                } catch (photoError) {
-                    console.error('Error uploading WO photo:', photoError);
-                    photoWarning = ` Foto belum tersimpan: ${photoError?.message || 'upload gagal'}.`;
-                }
-            }
-
-            if (newAssetStatus && typeof window.setIntegratedAssetStatus === 'function') {
-                const updatedAsset = window.setIntegratedAssetStatus(selectedAssetId, newAssetStatus, 'Work Order', woId, issue);
-                if (updatedAsset) updatedAsset.syncExpectedStatus = newAssetStatus;
-            }
-            if (Array.isArray(window.globalData?.work_orders)) {
-                window.globalData.work_orders.unshift({
-                    ...workOrder,
-                    location,
-                    downtime: down === 'Yes' ? '0 jam 00 menit' : '-',
-                    reportedAt: troubleAt,
-                    closedAt: null,
-                    handlingDurationMinutes: 0
-                });
-            }
-
-            window.closeModal?.('modalNewWO');
-            if (typeof window.showView === 'function') {
-                window.showView(maintenanceType === 'Preventive' ? 'pm' : 'wo');
-            }
-            showSuccessToast(`${woId} berhasil dibuat untuk ${selectedAssetId}.${photoWarning}`);
-            window.syncFleetState?.();
-        } catch (error) {
-            console.error('Error creating WO:', error);
-            setMessage(error?.message || 'Koneksi gagal. Work Order belum tersimpan.', 'error');
-        } finally {
-            if (submitButton) {
-                submitButton.disabled = false;
-                submitButton.innerHTML = '<i class="fa-solid fa-file-circle-plus"></i> Buat tiket WO';
-            }
+          const photoResponse = await fetch(
+            "api/work_orders.php?action=upload-photo",
+            {
+              method: "POST",
+              body: photoPayload,
+            },
+          );
+          const photoResult = await photoResponse.json();
+          if (!photoResponse.ok || photoResult.status !== "success") {
+            throw new Error(
+              photoResult.message || "Upload foto ditolak server.",
+            );
+          }
+          workOrder.beforePhotoUrl = photoResult?.data?.beforePhotoUrl || null;
+        } catch (photoError) {
+          console.error("Error uploading WO photo:", photoError);
+          photoWarning = ` Foto belum tersimpan: ${photoError?.message || "upload gagal"}.`;
         }
+      }
+
+      if (
+        newAssetStatus &&
+        typeof window.setIntegratedAssetStatus === "function"
+      ) {
+        const updatedAsset = window.setIntegratedAssetStatus(
+          selectedAssetId,
+          newAssetStatus,
+          "Work Order",
+          woId,
+          issue,
+        );
+        if (updatedAsset) updatedAsset.syncExpectedStatus = newAssetStatus;
+      }
+      if (Array.isArray(window.globalData?.work_orders)) {
+        window.globalData.work_orders.unshift({
+          ...workOrder,
+          location,
+          downtime: down === "Yes" ? "0 jam 00 menit" : "-",
+          reportedAt: troubleAt,
+          closedAt: null,
+          handlingDurationMinutes: 0,
+        });
+      }
+
+      window.closeModal?.("modalNewWO");
+      if (typeof window.showView === "function") {
+        window.showView(maintenanceType === "Preventive" ? "pm" : "wo");
+      }
+      showSuccessToast(
+        `${woId} berhasil dibuat untuk ${selectedAssetId}.${photoWarning}`,
+      );
+      window.syncFleetState?.();
+    } catch (error) {
+      console.error("Error creating WO:", error);
+      setMessage(
+        error?.message || "Koneksi gagal. Work Order belum tersimpan.",
+        "error",
+      );
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML =
+          '<i class="fa-solid fa-file-circle-plus"></i> Buat tiket WO';
+      }
     }
+  }
 
-    window.NewWorkOrderForm = {
-        open(selectedAssetId = '') {
-            resetForm();
-            populateAssets('', selectedAssetId);
-            setupDropzone();
-            ensureNwoMasterParts().then(() => {
-                renderNwoDraftRows();
-            });
-            window.openModal?.('modalNewWO');
-            window.setTimeout(() => {
-                byId(selectedAssetId ? 'nwo-location' : 'nwo-unit-search')?.focus({ preventScroll: true });
-                if (byId('newWoForm')) byId('newWoForm').scrollTop = 0;
-            }, 80);
-        },
-        addPart: addNwoPartRow,
-        submit
-    };
-    window.filterNewWOUnits = query => populateAssets(query);
-    window.updateNewWOAssetSummary = updateAssetSummary;
-    window.toggleNewWOMitigation = toggleMitigation;
-    window.addNewWOMechanic = addMechanic;
-    window.handleNewWOMechanicKey = event => {
-        if (event.key === 'Enter' || event.key === ',') {
-            event.preventDefault();
-            addMechanic();
-        }
-    };
-    window.previewNewWOPhotos = previewPhotos;
-    window.addNwoPartRow = addNwoPartRow;
-    window.handleNwoPartSelectChange = handleNwoPartSelectChange;
-    window.handleNwoPartFieldChange = handleNwoPartFieldChange;
-    window.removeNwoPartRow = removeNwoPartRow;
-    window.addNwoDraftItem = addNwoPartRow;
-    window.handleNwoMasterPartChange = handleNwoPartSelectChange;
-    window.handleNwoDraftFieldChange = handleNwoPartFieldChange;
-    window.removeNwoDraftItem = removeNwoPartRow;
+  window.NewWorkOrderForm = {
+    open(selectedAssetId = "") {
+      resetForm();
+      populateAssets("", selectedAssetId);
+      setupDropzone();
+      ensureNwoMasterParts().then(() => {
+        renderNwoDraftRows();
+      });
+      window.openModal?.("modalNewWO");
+      window.setTimeout(() => {
+        byId(selectedAssetId ? "nwo-location" : "nwo-unit-search")?.focus({
+          preventScroll: true,
+        });
+        if (byId("newWoForm")) byId("newWoForm").scrollTop = 0;
+      }, 80);
+    },
+    addPart: addNwoPartRow,
+    submit,
+  };
+  window.filterNewWOUnits = (query) => populateAssets(query);
+  window.updateNewWOAssetSummary = updateAssetSummary;
+  window.toggleNewWOMitigation = toggleMitigation;
+  window.addNewWOMechanic = addMechanic;
+  window.handleNewWOMechanicKey = (event) => {
+    if (event.key === "Enter" || event.key === ",") {
+      event.preventDefault();
+      addMechanic();
+    }
+  };
+  window.previewNewWOPhotos = previewPhotos;
+  window.addNwoPartRow = addNwoPartRow;
+  window.handleNwoPartSelectChange = handleNwoPartSelectChange;
+  window.handleNwoPartFieldChange = handleNwoPartFieldChange;
+  window.removeNwoPartRow = removeNwoPartRow;
+  window.addNwoDraftItem = addNwoPartRow;
+  window.handleNwoMasterPartChange = handleNwoPartSelectChange;
+  window.handleNwoDraftFieldChange = handleNwoPartFieldChange;
+  window.removeNwoDraftItem = removeNwoPartRow;
 
-    // Global document-level click delegation for robust button interaction
-    document.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!target) return;
-        const addBtn = target.closest('#nwo-btn-add-part, .wo-parts-add-btn');
-        if (addBtn) {
-            event.preventDefault();
-            event.stopPropagation();
-            addNwoPartRow();
-        }
-    }, true);
+  // Global document-level click delegation for robust button interaction
+  document.addEventListener(
+    "click",
+    (event) => {
+      const target = event.target;
+      if (!target) return;
+      const addBtn = target.closest("#nwo-btn-add-part, .wo-parts-add-btn");
+      if (addBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        addNwoPartRow();
+      }
+    },
+    true,
+  );
 })();
 
 // ============================================================================
@@ -8145,15 +8356,21 @@
 
   function applyMasterPart(index, selection) {
     if (!state.modal?.draft[index]) return;
-    const query = String(selection || "").trim().toLowerCase();
-    const matches = masterParts.filter((part) =>
-      part.partNumber.toLowerCase() === query ||
-      `${part.partNumber} — ${part.description || "Tanpa nama"}`.toLowerCase() === query ||
-      String(part.description || "").toLowerCase() === query,
+    const query = String(selection || "")
+      .trim()
+      .toLowerCase();
+    const matches = masterParts.filter(
+      (part) =>
+        part.partNumber.toLowerCase() === query ||
+        `${part.partNumber} — ${part.description || "Tanpa nama"}`.toLowerCase() ===
+          query ||
+        String(part.description || "").toLowerCase() === query,
     );
     const selected = matches.length === 1 ? matches[0] : null;
     if (!selected && query) {
-      window.alert("Pilih part dari daftar saran. Untuk part baru, kosongkan pencarian lalu isi part number dan deskripsi manual.");
+      window.alert(
+        "Pilih part dari daftar saran. Untuk part baru, kosongkan pencarian lalu isi part number dan deskripsi manual.",
+      );
       return;
     }
     if (!selected) {
@@ -8266,8 +8483,13 @@
   function openFullSpbFormForWorkOrder(woId, assetId) {
     const reports = window.FleetReportForms;
     if (!reports?.importDraft) return false;
-    if (reports.getDraftState("spb")?.hasData &&
-        !window.confirm("Draft Form SPB yang tersimpan akan diganti dengan data WO ini. Lanjutkan?")) return false;
+    if (
+      reports.getDraftState("spb")?.hasData &&
+      !window.confirm(
+        "Draft Form SPB yang tersimpan akan diganti dengan data WO ini. Lanjutkan?",
+      )
+    )
+      return false;
     openForWorkOrder(woId, assetId);
     const draft = state.modal;
     if (!draft) return false;
@@ -8279,16 +8501,21 @@
       lokasi: asset?.location || "",
       project: wo?.project || asset?.project || "",
       tanggal: new Date().toLocaleDateString("en-CA"),
-      urgensi: draft.priority === "Critical" || draft.priority === "Urgent" ? "Emergency" : "Normal",
+      urgensi:
+        draft.priority === "Critical" || draft.priority === "Urgent"
+          ? "Emergency"
+          : "Normal",
     };
-    const rows = draft.draft.length ? draft.draft.map((item) => ({
-      nama: item.description || "",
-      spesifikasi: item.partNumber || "",
-      satuan: item.uom || "pcs",
-      jumlah: Number(item.qty) || 1,
-      keterangan: "",
-      status: "Diajukan",
-    })) : [{}];
+    const rows = draft.draft.length
+      ? draft.draft.map((item) => ({
+          nama: item.description || "",
+          spesifikasi: item.partNumber || "",
+          satuan: item.uom || "pcs",
+          jumlah: Number(item.qty) || 1,
+          keterangan: "",
+          status: "Diajukan",
+        }))
+      : [{}];
     closeDetail();
     window.showView?.("reports", "", "menu-reports");
     reports.importDraft({ schemaId: "spb", fields, rows }, { replace: true });
@@ -8384,7 +8611,10 @@
     try {
       const response = await fetch("api/logistics.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": window.APP_CSRF_TOKEN || "" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": window.APP_CSRF_TOKEN || "",
+        },
         body: JSON.stringify({ records: newRecords }),
       });
       const resData = await response.json();
@@ -10466,7 +10696,10 @@
     };
     persist();
     if (window.syncFleetState)
-      window.syncFleetState({ refreshInspection: false, assetId: status === "danger" ? asset.id : null });
+      window.syncFleetState({
+        refreshInspection: false,
+        assetId: status === "danger" ? asset.id : null,
+      });
     else render();
   }
 
@@ -10657,7 +10890,11 @@
         text: `${wo.woId} dibuat dan terhubung dengan inspeksi ${shortCode(asset.id)}.`,
       };
       persist();
-      window.syncFleetState?.({ refreshInspection: false, assetId: asset.id, workOrderId: wo.woId });
+      window.syncFleetState?.({
+        refreshInspection: false,
+        assetId: asset.id,
+        workOrderId: wo.woId,
+      });
     }
     if (navigate) {
       if (window.openWoDetailView)
@@ -21670,22 +21907,27 @@
     ];
   }
 
-  function loadPlannerSplReviews() {
+  let selectedSplReviewId = "";
+  let plannerSplReviews = {};
+
+  async function loadPlannerSplReviews() {
     try {
-      const stored = JSON.parse(
-        localStorage.getItem(SPL_PLANNER_REVIEW_KEY) || "{}",
-      );
-      return stored && typeof stored === "object" ? stored : {};
-    } catch (error) {
-      return {};
+      const resp = await fetch("api/people_kpi.php?action=spl_reviews", {
+        cache: "no-store",
+      });
+      const res = await resp.json();
+      if (res && res.status === "success" && res.reviews) {
+        plannerSplReviews = res.reviews;
+        renderPlannerSplRegister();
+      }
+    } catch (err) {
+      // Keep existing object on network issue
     }
   }
 
-  let selectedSplReviewId = "";
-  let plannerSplReviews = loadPlannerSplReviews();
-
-  // State Variables for Dynamic Calculator
+  // State Variables for Dynamic Calculator & Official Assessment
   let currentHeadKPI = JSON.parse(JSON.stringify(kpiHeadIndicators));
+  let currentHeadKPIAssessment = { status: "DRAFT" };
 
   // =========================================================================
   // 2. MAIN RENDER FUNCTION & HTML INJECTION
@@ -21716,6 +21958,25 @@
 
                 <!-- TAB 1: KPI HEAD OF EQUIPMENT -->
                 <div class="pk-tab-content active" id="tab-head">
+                    <!-- Action Bar Status & Approval KPI Head -->
+                    <div class="pk-kpi-action-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; background:var(--bg-surface); padding:12px 16px; border-radius:8px; border:1px solid var(--border-color); box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <span style="font-weight:700; font-size:0.88rem;"><i class="fa-solid fa-file-signature text-primary"></i> Status Penilaian:</span>
+                            <span id="badgeHeadKpiStatus" class="pk-badge pk-badge-warning" style="font-size:0.82rem; padding:4px 10px; font-weight:700;">DRAFT</span>
+                            <span id="infoHeadKpiMeta" style="font-size:0.82rem; color:var(--text-muted);"><i class="fa-regular fa-calendar" style="margin-right:4px;"></i> Periode: Januari 2026 · Dany Agung (Head of Equipment)</span>
+                        </div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;" id="actionsHeadKpi">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="window.saveHeadKPIDraft()" id="btnSaveHeadKpiDraft" title="Simpan draf sementara">
+                                <i class="fa-solid fa-floppy-disk"></i> Simpan Draf
+                            </button>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="window.submitHeadKPI()" id="btnSubmitHeadKpi" title="Ajukan untuk approval General Manager">
+                                <i class="fa-solid fa-paper-plane"></i> Ajukan Penilaian (Submit)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" onclick="window.approveHeadKPI('APPROVED')" id="btnApproveHeadKpi" title="Setujui penilaian KPI ini (Khusus GM / Administrator)" style="display:none; background:#16a34a; border-color:#16a34a; color:#fff;">
+                                <i class="fa-solid fa-circle-check"></i> Setujui (Approve GM)
+                            </button>
+                        </div>
+                    </div>
                     <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
                         <!-- Card 1: Total Skor KPI Head -->
                         <div class="kpi-card breakdown" id="cardHeadScore" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 105px; padding: 16px; background: var(--bg-surface); border-top: 3px solid #dc2626;">
@@ -22194,6 +22455,7 @@
     renderMechanicProductivity();
     renderPlannerEvaluation();
     renderOvertimeAttendance();
+    loadPlannerSplReviews();
   }
 
   // =========================================================================
@@ -22201,7 +22463,95 @@
   // =========================================================================
 
   // Section 1: Head of Equipment KPI
+  let isHeadKpiLoaded = false;
+
+  async function loadHeadKPIFromBackend(period = "2026-01") {
+    try {
+      const resp = await fetch(
+        `api/people_kpi.php?action=head_kpi&period=${encodeURIComponent(period)}`,
+        { cache: "no-store" },
+      );
+      const res = await resp.json();
+      if (res && res.status === "success") {
+        if (Array.isArray(res.indicators) && res.indicators.length > 0) {
+          currentHeadKPI = res.indicators.map((item) => ({
+            id: item.indicator_no,
+            aspect: item.aspect_name,
+            indicator: item.indicator_name,
+            target: item.target_standard,
+            score: Number(item.score_val) || 1,
+            weight: Number(item.weight_pct) || 10,
+            notes: item.audit_notes || "",
+          }));
+        }
+        currentHeadKPIAssessment = res.assessment || { status: "DRAFT" };
+        updateHeadKpiActionBar(currentHeadKPIAssessment);
+      }
+    } catch (e) {
+      console.warn(
+        "Gagal memuat KPI Head dari backend, menggunakan baseline:",
+        e,
+      );
+    }
+    isHeadKpiLoaded = true;
+    renderHeadKPITable();
+  }
+
+  function updateHeadKpiActionBar(assessment) {
+    const badge = document.getElementById("badgeHeadKpiStatus");
+    const meta = document.getElementById("infoHeadKpiMeta");
+    const btnApprove = document.getElementById("btnApproveHeadKpi");
+    const btnSubmit = document.getElementById("btnSubmitHeadKpi");
+    const btnDraft = document.getElementById("btnSaveHeadKpiDraft");
+
+    if (!badge) return;
+    const st = assessment.status || "DRAFT";
+    badge.innerText = st;
+    badge.className =
+      "pk-badge " +
+      (st === "APPROVED"
+        ? "pk-badge-success"
+        : st === "SUBMITTED"
+          ? "pk-badge-info"
+          : "pk-badge-warning");
+
+    if (meta) {
+      if (st === "APPROVED" && assessment.approved_by_name) {
+        meta.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> Disetujui resmi oleh <strong>${escapeHtml(assessment.approved_by_name)}</strong> pada ${assessment.approved_at || ""}`;
+      } else if (st === "SUBMITTED") {
+        meta.innerHTML = `<i class="fa-solid fa-clock text-info"></i> Diajukan (${assessment.submitted_at || ""}) · Menunggu persetujuan General Manager`;
+      } else {
+        meta.innerHTML = `<i class="fa-regular fa-calendar"></i> Periode: Januari 2026 · Dany Agung (Head of Equipment)`;
+      }
+    }
+
+    const userRole = (window.FleetAuth?.user?.role_name || "").toLowerCase();
+    const isAdminOrGM =
+      userRole.includes("admin") ||
+      userRole.includes("general manager") ||
+      window.FleetAuth?.user?.username === "admin";
+
+    if (btnApprove) {
+      btnApprove.style.display =
+        isAdminOrGM && st === "SUBMITTED" ? "inline-flex" : "none";
+    }
+    if (btnSubmit) {
+      btnSubmit.style.display = st === "APPROVED" ? "none" : "inline-flex";
+    }
+    if (btnDraft) {
+      btnDraft.style.display = st === "APPROVED" ? "none" : "inline-flex";
+    }
+  }
+
   function renderHeadKPI() {
+    if (!isHeadKpiLoaded) {
+      loadHeadKPIFromBackend("2026-01");
+      return;
+    }
+    renderHeadKPITable();
+  }
+
+  function renderHeadKPITable() {
     const tbody = document.getElementById("tbHeadKPIBody");
     if (!tbody) return;
 
@@ -22211,10 +22561,6 @@
       .map((item, idx) => {
         const weighted = (item.score * item.weight) / 5;
         totalWeightedScore += weighted;
-
-        let scoreBadgeClass = "pk-badge-success";
-        if (item.score <= 2) scoreBadgeClass = "pk-badge-danger";
-        else if (item.score <= 3) scoreBadgeClass = "pk-badge-warning";
 
         return `
                 <tr>
@@ -22233,12 +22579,91 @@
       })
       .join("");
 
-    // Update Total Score Labels
     updateTotalHeadScoreDisplay(totalWeightedScore);
-
-    // Render Monthly Trend Chart
     renderHeadMonthlyChart();
   }
+
+  window.saveHeadKPIDraft = async function () {
+    await submitHeadKPIPayload("DRAFT");
+  };
+
+  window.submitHeadKPI = async function () {
+    if (
+      !confirm(
+        "Apakah Anda yakin ingin mengajukan (Submit) penilaian KPI Head of Equipment ini untuk persetujuan General Manager?",
+      )
+    )
+      return;
+    await submitHeadKPIPayload("SUBMITTED");
+  };
+
+  async function submitHeadKPIPayload(status) {
+    try {
+      const payload = {
+        period: "2026-01",
+        status: status,
+        evaluated_user_id: 2,
+        indicators: currentHeadKPI.map((ind) => ({
+          indicator_no: ind.id,
+          aspect_name: ind.aspect,
+          indicator_name: ind.indicator,
+          target_standard: ind.target,
+          score_val: ind.score,
+          weight_pct: ind.weight,
+          audit_notes: ind.notes,
+        })),
+      };
+
+      const resp = await fetch("api/people_kpi.php?action=save_head_kpi", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": window.APP_CSRF_TOKEN || "",
+        },
+        body: JSON.stringify(payload),
+      });
+      const res = await resp.json();
+      if (!resp.ok || res.status !== "success")
+        throw new Error(res.message || "Gagal menyimpan penilaian");
+      if (typeof window.showToast === "function")
+        window.showToast("success", res.message);
+      else alert(res.message);
+      await loadHeadKPIFromBackend("2026-01");
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  window.approveHeadKPI = async function (decision) {
+    const notes = prompt(
+      `Masukkan catatan ${decision === "APPROVED" ? "persetujuan" : "penolakan"} KPI (opsional):`,
+      "",
+    );
+    if (notes === null) return;
+    try {
+      const resp = await fetch("api/people_kpi.php?action=approve_head_kpi", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": window.APP_CSRF_TOKEN || "",
+        },
+        body: JSON.stringify({
+          period: "2026-01",
+          decision: decision,
+          approval_notes: notes,
+        }),
+      });
+      const res = await resp.json();
+      if (!resp.ok || res.status !== "success")
+        throw new Error(res.message || "Gagal memproses approval");
+      if (typeof window.showToast === "function")
+        window.showToast("success", res.message);
+      else alert(res.message);
+      await loadHeadKPIFromBackend("2026-01");
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  };
 
   function updateTotalHeadScoreDisplay(total) {
     const totalRound = Math.round(total);
@@ -22747,47 +23172,109 @@
       });
     detail
       .querySelector("[data-pk-spl-mark-reviewed]")
-      ?.addEventListener("click", (event) => {
+      ?.addEventListener("click", async (event) => {
         const recordId = event.currentTarget.dataset.pkSplMarkReviewed;
-        plannerSplReviews[recordId] = {
-          reviewer: "Maintenance Planner",
-          reviewedAt: new Date().toISOString(),
-          headAcknowledgedBy: headApproval?.name || "",
-        };
-        persistPlannerSplReviews();
-        renderPlannerSplRegister();
+        try {
+          const resp = await fetch(
+            "api/people_kpi.php?action=save_spl_review",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": window.APP_CSRF_TOKEN || "",
+              },
+              body: JSON.stringify({
+                spl_number: record.id,
+                report_id: record.reportId || "",
+                review_status: "Reviewed",
+                review_notes:
+                  "Telah ditinjau rincian pekerjaan dan otorisasi instruksi Head.",
+              }),
+            },
+          );
+          const res = await resp.json();
+          if (!resp.ok || res.status !== "success")
+            throw new Error(res.message || "Gagal menyimpan review");
+          plannerSplReviews[record.id] = {
+            spl_number: record.id,
+            report_id: record.reportId || "",
+            review_status: "Reviewed",
+            planner_name:
+              window.FleetAuth?.user?.full_name || "Maintenance Planner",
+            reviewed_at: new Date().toISOString(),
+          };
+          renderPlannerSplRegister();
+          if (typeof window.showToast === "function")
+            window.showToast("success", res.message);
+          else alert(res.message);
+        } catch (err) {
+          alert("Gagal menyimpan review SPL ke database: " + err.message);
+        }
       });
   }
 
-  // Section 4: Attendance & Overtime
-  function renderOvertimeAttendance() {
+  // Section 4: Attendance & Overtime (Official Database Integration)
+  async function renderOvertimeAttendance() {
     const tbody = document.getElementById("tbAttendanceBody");
     if (!tbody) return;
 
-    tbody.innerHTML = attendanceOvertimeLeaderboard
-      .map((item) => {
-        let rankBadge = `<span class="pk-leaderboard-rank pk-rank-normal">${item.rank}</span>`;
-        if (item.rank === 1)
-          rankBadge = `<span class="pk-leaderboard-rank pk-rank-1"><i class="fa-solid fa-crown"></i></span>`;
-        else if (item.rank === 2)
-          rankBadge = `<span class="pk-leaderboard-rank pk-rank-2">2</span>`;
-        else if (item.rank === 3)
-          rankBadge = `<span class="pk-leaderboard-rank pk-rank-3">3</span>`;
+    try {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Memuat rekapitulasi lembur resmi dari SPL...</td></tr>`;
+      const resp = await fetch(
+        "api/people_kpi.php?action=overtime_leaderboard&period=2026-01",
+        { cache: "no-store" },
+      );
+      const res = await resp.json();
+      if (
+        !resp.ok ||
+        !res ||
+        res.status !== "success" ||
+        !res.has_data ||
+        !Array.isArray(res.leaderboard) ||
+        res.leaderboard.length === 0
+      ) {
+        tbody.innerHTML = `
+          <tr>
+              <td colspan="8" style="text-align:center; padding:32px 16px; color:var(--text-muted);">
+                  <div style="display:inline-flex; flex-direction:column; align-items:center; gap:8px;">
+                      <i class="fa-solid fa-clipboard-user" style="font-size:2rem; color:#94a3b8;"></i>
+                      <strong style="color:var(--text-main); font-size:1rem;">Belum Ada Dokumen Lembur / SPL Terverifikasi</strong>
+                      <span style="font-size:0.85rem; max-width:520px; line-height:1.4;">
+                          ${escapeHtml(res?.message || "Akumulasi jam lembur dan absensi dihitung secara otomatis dari Surat Perintah Lembur (SPL) resmi yang telah disetujui. Saat ini belum ada data lembur resmi di periode ini.")}
+                      </span>
+                  </div>
+              </td>
+          </tr>`;
+        return;
+      }
 
-        return `
+      tbody.innerHTML = res.leaderboard
+        .map((item) => {
+          let rankBadge = `<span class="pk-leaderboard-rank pk-rank-normal">${item.rank}</span>`;
+          if (item.rank === 1)
+            rankBadge = `<span class="pk-leaderboard-rank pk-rank-1"><i class="fa-solid fa-crown"></i></span>`;
+          else if (item.rank === 2)
+            rankBadge = `<span class="pk-leaderboard-rank pk-rank-2">2</span>`;
+          else if (item.rank === 3)
+            rankBadge = `<span class="pk-leaderboard-rank pk-rank-3">3</span>`;
+
+          return `
                 <tr>
                     <td style="text-align:center;">${rankBadge}</td>
-                    <td><span class="pk-badge ${item.site === "YARD KM12" ? "pk-badge-info" : "pk-badge-warning"}">${escapeHtml(item.site)}</span></td>
-                    <td><strong>${escapeHtml(item.name)}</strong></td>
-                    <td>${escapeHtml(item.role)}</td>
-                    <td style="text-align:center;">${item.kj} Hari</td>
-                    <td style="text-align:center;">${item.kl} Hari</td>
-                    <td style="text-align:center;">${item.o} Hari</td>
-                    <td style="font-weight:700; color:var(--primary); font-size:0.95rem;">${item.otHours.toFixed(1)} Jam</td>
+                    <td><span class="pk-badge pk-badge-info">${escapeHtml(item.location_name || "Yard / Site")}</span></td>
+                    <td><strong>${escapeHtml(item.employee_name)}</strong></td>
+                    <td>${escapeHtml(item.role_name || "-")}</td>
+                    <td style="text-align:center;">${item.total_spl} SPL</td>
+                    <td style="text-align:center;">${item.verified_sessions} Sesi</td>
+                    <td style="text-align:center;">-</td>
+                    <td style="font-weight:700; color:var(--primary); font-size:0.95rem;">${Number(item.total_hours).toFixed(1)} Jam</td>
                 </tr>
             `;
-      })
-      .join("");
+        })
+        .join("");
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--danger);"><i class="fa-solid fa-circle-exclamation"></i> Gagal memuat data lembur: ${escapeHtml(err.message)}</td></tr>`;
+    }
   }
 
   // Global Export Function
@@ -23648,8 +24135,16 @@
     const log = getAccidentLogs()[idx];
     if (!log) return;
 
-    if (!confirm(`Apakah Anda yakin unit ${log.unitCode} telah lulus perbaikan & safety audit?`)) return;
-    const reason = prompt("Masukkan alasan/bukti ringkas otorisasi rilis unit:", "CAPA selesai dan safety audit dinyatakan lulus");
+    if (
+      !confirm(
+        `Apakah Anda yakin unit ${log.unitCode} telah lulus perbaikan & safety audit?`,
+      )
+    )
+      return;
+    const reason = prompt(
+      "Masukkan alasan/bukti ringkas otorisasi rilis unit:",
+      "CAPA selesai dan safety audit dinyatakan lulus",
+    );
     if (reason === null) return;
     if (!reason.trim()) {
       alert("Alasan rilis wajib diisi.");
@@ -23677,7 +24172,9 @@
       log.releasedAt = new Date().toISOString();
       const restoredStatus = result.data?.restoredStatus;
       if (restoredStatus && window.globalData?.assets) {
-        const asset = window.globalData.assets.find((item) => item.id === log.unitCode);
+        const asset = window.globalData.assets.find(
+          (item) => item.id === log.unitCode,
+        );
         if (asset) asset.status = restoredStatus;
       }
       alert(
@@ -24823,7 +25320,9 @@
     document.addEventListener("keydown", (e) => {
       if (
         e.key === "Escape" &&
-        document.getElementById("modalKpiFormulaGuide")?.classList.contains("active")
+        document
+          .getElementById("modalKpiFormulaGuide")
+          ?.classList.contains("active")
       ) {
         window.closeModal("modalKpiFormulaGuide");
       }
@@ -26376,7 +26875,10 @@
     try {
       const response = await fetch("api/inspections.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": window.APP_CSRF_TOKEN || "" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": window.APP_CSRF_TOKEN || "",
+        },
         body: JSON.stringify(newP2H),
       });
       const resData = await response.json();
@@ -26541,7 +27043,11 @@
 
     renderHistoryTable();
     updateKpiSummary();
-    await window.syncFleetState?.({ refreshInspection: false, assetId, workOrderId: newAutoWoId });
+    await window.syncFleetState?.({
+      refreshInspection: false,
+      assetId,
+      workOrderId: newAutoWoId,
+    });
     window.switchP2HTab("history");
   };
 

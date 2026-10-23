@@ -63,6 +63,8 @@ Status F3c 23 Oktober 2026: **IMPLEMENTED / menunggu uji browser**. Hold/release
 
 ### F4 — People & KPI resmi
 
+Status F4 23 Oktober 2026: **IMPLEMENTED / Tes Otomatis Lulus (26/26), siap diuji di browser**. Skema siklus hidup penilaian resmi (`DRAFT → SUBMITTED → APPROVED / REJECTED`), otorisasi role approver (Administrator / General Manager), penghapusan `localStorage` review SPL digantikan tabel database `spl_planner_reviews`, serta leaderboard lembur jujur dari akumulasi `spl_overtime_records` telah selesai dibangun dan disinkronkan ke Laragon.
+
 1. Tetapkan model periode, indikator, bobot, target, penilai, status `DRAFT → SUBMITTED → APPROVED/REJECTED`, versi/revisi, lampiran bukti, dan audit event. Gunakan tabel `head_kpi_assessments`/`planner_evaluations` yang ada hanya setelah migrasi kompatibilitas diperiksa; jangan menimpa 10/5 baris yang sudah ada.
 2. Skor dan nilai bobot dihitung/validasi server; periode dan lokasi wajib. Review SPL serta persetujuan Head memakai identitas user, timestamp, keputusan, dan otorisasi server—bukan nama pada dokumen atau `localStorage`.
 3. Leaderboard lembur memakai SPL final/absensi yang terverifikasi. Bila sumber absensi belum tersedia, tampilkan `data belum tersedia`; pisahkan dokumen contoh historis dari register DB.
