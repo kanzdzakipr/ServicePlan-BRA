@@ -3517,7 +3517,7 @@ final class ReportIntegration
         }
 
         $assetStatement = $db->prepare(
-            'SELECT asset_id, category, status, last_hm_km, raw_location_notes
+            'SELECT asset_id, category, status, last_hm_km, raw_location_notes, current_location_id
              FROM assets WHERE asset_id = :asset_id OR asset_code = :asset_code LIMIT 1 FOR UPDATE'
         );
         $assetStatement->execute([':asset_id' => $assetId, ':asset_code' => $assetId]);
@@ -3662,7 +3662,82 @@ final class ReportIntegration
             ':created_by' => $actorId,
         ]);
 
-        return [
+        $createdWoId = null;
+        if ($overallResult === 'FAIL') {
+            $woPrefix = 'WO-' . date('ym') . '-';
+            do {
+                $candidateWoId = $woPrefix . str_pad((string) random_int(1000, 9999), 4, '0', STR_PAD_LEFT);
+                $existsStmt = $db->prepare('SELECT COUNT(*) FROM work_orders WHERE wo_id = :wo_id');
+                $existsStmt->execute([':wo_id' => $candidateWoId]);
+            } while ((int) $existsStmt->fetchColumn() > 0);
+            $createdWoId = $candidateWoId;
+
+            $isEmergency = false;
+            foreach ($failures as $failFinding) {
+                if (preg_match('/rem|brake|kemudi|steering/i', (string) $failFinding)) {
+                    $isEmergency = true;
+                    break;
+                }
+            }
+            $woPriority = $isEmergency ? 'Emergency' : 'High';
+            $woIssue = "Temuan Kritis P2H ({$reportNumber}): " . $summary;
+            $rawLocation = trim((string) ($site !== '' ? $site : ($asset['raw_location_notes'] ?? 'Site')));
+            if ($rawLocation === '') $rawLocation = 'Site';
+            $locationId = $asset['current_location_id'] !== null ? (int) $asset['current_location_id'] : null;
+
+            $insertWo = $db->prepare('
+                INSERT INTO work_orders 
+                (wo_id, asset_id, location_id, raw_location, issue_description, downtime_minutes, is_downtime, status, priority, maintenance_type, reported_at)
+                VALUES (:wo_id, :asset_id, :loc_id, :raw_location, :issue, 0, 1, :status, :priority, :maint_type, NOW())
+            ');
+            $insertWo->execute([
+                ':wo_id' => $createdWoId,
+                ':asset_id' => (string) $asset['asset_id'],
+                ':loc_id' => $locationId,
+                ':raw_location' => $rawLocation,
+                ':issue' => $woIssue,
+                ':status' => 'Open',
+                ':priority' => $woPriority,
+                ':maint_type' => 'Corrective',
+            ]);
+
+            $actorNameStmt = $db->prepare("SELECT COALESCE(NULLIF(full_name, ''), username) FROM users WHERE user_id = :user_id LIMIT 1");
+            $actorNameStmt->execute([':user_id' => $actorId]);
+            $actorDisplayName = (string) ($actorNameStmt->fetchColumn() ?: 'Inspector P2H');
+
+            $db->prepare('
+                INSERT INTO work_order_timeline 
+                (wo_id, event_type, from_status, to_status, title, description, actor_user_id, actor_name)
+                VALUES (:wo_id, :event_type, :from_st, :to_st, :title, :desc, :actor_id, :actor_name)
+            ')->execute([
+                ':wo_id' => $createdWoId,
+                ':event_type' => 'CREATED',
+                ':from_st' => null,
+                ':to_st' => 'Open',
+                ':title' => "Work Order otomatis diterbitkan dari hasil inspeksi P2H {$reportNumber}",
+                ':desc' => $woIssue,
+                ':actor_id' => $actorId,
+                ':actor_name' => $actorDisplayName,
+            ]);
+
+            $fetchCreatedWo = $db->prepare('SELECT * FROM work_orders WHERE wo_id = :wo_id');
+            $fetchCreatedWo->execute([':wo_id' => $createdWoId]);
+            $woSnapshot = $fetchCreatedWo->fetch(PDO::FETCH_ASSOC);
+
+            $db->prepare('
+                INSERT INTO report_work_order_integrations
+                (report_id, work_order_id, asset_id, owns_work_order, applied_payload, created_by)
+                VALUES (:report_id, :wo_id, :asset_id, 1, :payload, :created_by)
+            ')->execute([
+                ':report_id' => $reportId,
+                ':wo_id' => $createdWoId,
+                ':asset_id' => (string) $asset['asset_id'],
+                ':payload' => json_encode($woSnapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+                ':created_by' => $actorId,
+            ]);
+        }
+
+        $ret = [
             'type' => 'p2h-inspection',
             'applied' => true,
             'alreadyApplied' => false,
@@ -3672,6 +3747,11 @@ final class ReportIntegration
             'assetId' => (string) $asset['asset_id'],
             'message' => "Laporan berhasil difinalkan dan masuk ke Riwayat Inspeksi & P2H ({$statusLabel}).",
         ];
+        if ($createdWoId !== null) {
+            $ret['workOrderId'] = $createdWoId;
+            $ret['message'] .= " Tiket Work Order {$createdWoId} otomatis diterbitkan di Kanban.";
+        }
+        return $ret;
     }
 
     private static function applyMde02(

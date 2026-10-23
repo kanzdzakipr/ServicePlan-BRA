@@ -22353,13 +22353,14 @@ body.sl-modal-open {
 }
 
 #assetTable .asset-col-number { width: 3%; }
-#assetTable .asset-col-unit { width: 13%; }
-#assetTable .asset-col-detail { width: 15%; }
-#assetTable .asset-col-identity { width: 17%; }
+#assetTable .asset-col-unit { width: 12%; }
+#assetTable .asset-col-detail { width: 13%; }
+#assetTable .asset-col-identity { width: 13%; }
 #assetTable .asset-col-warranty { width: 9%; }
-#assetTable .asset-col-placement { width: 15%; }
-#assetTable .asset-col-condition { width: 12%; }
-#assetTable .asset-col-documents { width: 10%; }
+#assetTable .asset-col-chassis { width: 13%; }
+#assetTable .asset-col-placement { width: 13%; }
+#assetTable .asset-col-condition { width: 11%; }
+#assetTable .asset-col-documents { width: 7%; }
 #assetTable .asset-col-actions { width: 6%; }
 
 #assetTableHeader {

@@ -687,6 +687,7 @@
                                     <col class="asset-col-detail">
                                     <col class="asset-col-identity">
                                     <col class="asset-col-warranty">
+                                    <col class="asset-col-chassis">
                                     <col class="asset-col-placement">
                                     <col class="asset-col-condition">
                                     <col class="asset-col-documents">
@@ -698,7 +699,8 @@
                                         <th onclick="window.sortMasterAsset('id')" style="cursor:pointer">Identitas Unit <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('model')" style="cursor:pointer">Detail Aset <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('sn')" style="cursor:pointer">Identitas Kendaraan <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('warranty')" style="cursor:pointer">Garansi <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('warranty')" style="cursor:pointer">GARANSI <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('chassis')" style="cursor:pointer">NO. RANGKA <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('location')" style="cursor:pointer">Penempatan <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('status')" style="cursor:pointer">Kondisi Data <i class="fa-solid fa-sort"></i></th>
                                         <th>Dokumen</th>
@@ -6800,6 +6802,7 @@
                     initAssetView(scopedData.assets);
                     initWorkOrderView(scopedData.work_orders);
                     if (globalData.costs) initBiayaView(globalData.costs);
+                    if (typeof initNewViews === 'function') initNewViews();
                 };
 
                 window.syncFleetState = function (options = {}) {
@@ -7786,7 +7789,7 @@
 
                     window.filteredMasterAssetData = assets.slice();
                     if (assets.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="9" class="master-asset-empty"><i class="fa-solid fa-filter"></i> Tidak ada unit yang cocok dengan filter atau pencarian saat ini.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="10" class="master-asset-empty"><i class="fa-solid fa-filter"></i> Tidak ada unit yang cocok dengan filter atau pencarian saat ini.</td></tr>';
                         return;
                     }
 
@@ -7808,8 +7811,9 @@
                             <td style="color:var(--text-muted); font-variant-numeric:tabular-nums;">${rowIndex + 1}</td>
                             <td onclick="event.stopPropagation();"><a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(ident.unitId)}'); return false;"><strong class="unit-code-text">${escapeHtml(asset.id || asset.asset_id || ident.unitId)}</strong><i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon"></i></a><div class="asset-cell-line"><span>Kode</span><b>${shown(asset.asset_code)}</b></div><div class="asset-cell-line"><span>Lambung</span><b>${shown(ident.hull)}</b><button type="button" class="asset-inline-action" onclick="event.stopPropagation(); window.openRenameHullModal('${escapeHtml(asset.id)}', '${escapeHtml(ident.hull)}')" title="Ubah nomor lambung"><i class="fa-solid fa-pen"></i></button></div></td>
                             <td><strong>${shown(ident.model)}</strong><div class="asset-cell-line"><span>Tahun</span><b>${shown(ident.year)}</b></div><div class="asset-cell-line"><span>Usia</span><b>${calculatedAge === null ? 'Belum tersedia' : `${calculatedAge} tahun`}</b></div><div class="asset-cell-line"><span>Kapasitas</span><b>${shown(asset.capacity)}</b></div><span class="asset-cell-tag">${escapeHtml(asset.category || 'Other')}</span></td>
-                            <td><div class="asset-cell-line"><span>SN</span><b class="asset-mono">${shown(ident.sn)}</b></div><div class="asset-cell-line"><span>Pelat</span><b class="asset-mono">${shown(ident.plate)}</b></div><div class="asset-cell-line"><span>Rangka</span><b class="asset-mono">${shown(asset.chassis_number || asset.chassis)}</b></div></td>
-                            <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(asset.warranty || 'Belum diketahui')}</span></td>
+                            <td><div class="asset-cell-line"><span>SN</span><b class="asset-mono">${shown(ident.sn)}</b></div><div class="asset-cell-line"><span>Pelat</span><b class="asset-mono">${shown(ident.plate)}</b></div></td>
+                            <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(asset.warranty || '0 HM')}</span></td>
+                            <td><span class="asset-mono" style="font-weight:600; font-size:0.8rem; letter-spacing:0.3px;">${asset.chassis_number ? escapeHtml(asset.chassis_number) : ''}</span></td>
                             <td onclick="event.stopPropagation();">
                                 <div class="asset-cell-line"><span>Project</span><b><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || asset.project_name || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || asset.project_name || '')}"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.project_name || asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></b></div><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
                             </td>
@@ -8967,14 +8971,6 @@
                     return window.NewWorkOrderForm.submit();
                 }
 
-                function refreshAllViews() {
-                    initDashboard(globalData);
-                    initMonitoringView(globalData.assets);
-                    initAssetView(globalData.assets);
-                    initWorkOrderView(globalData.work_orders);
-                    initNewViews();
-                }
-
                 function toggleSidebar() {
                     document.body.classList.toggle('sidebar-collapsed');
                     const isCollapsed = document.body.classList.contains('sidebar-collapsed');
@@ -9046,6 +9042,9 @@
                     }
                     if (viewName === 'condition' && window.ConditionMonitoring) {
                         window.ConditionMonitoring.refresh();
+                    }
+                    if (viewName === 'pm' && window.PreventiveMaintenance?.refresh) {
+                        window.PreventiveMaintenance.refresh();
                     }
                     if (viewName === 'logistics' && window.SpareLogistics) {
                         window.SpareLogistics.refresh();

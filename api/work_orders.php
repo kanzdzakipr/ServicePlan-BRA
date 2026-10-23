@@ -685,6 +685,17 @@ switch ($method) {
                         if (!in_array($currentAssetSt, ['ACCIDENT_HOLD', 'INACTIVE'], true)) {
                             $db->prepare("UPDATE assets SET status = :st WHERE asset_id = :aid")
                                ->execute([':st' => $targetAssetStatus, ':aid' => (string) $current['asset_id']]);
+                            if ($currentAssetSt !== $targetAssetStatus) {
+                                wo_insert_timeline(
+                                    $db,
+                                    $id,
+                                    'STATUS_CHANGE',
+                                    $currentAssetSt,
+                                    $targetAssetStatus,
+                                    "Status unit {$current['asset_id']} diperbarui menjadi {$targetAssetStatus}",
+                                    "Unit dikembalikan ke status {$targetAssetStatus} setelah Work Order selesai."
+                                );
+                            }
                         }
                     } else {
                         // Other WOs are still active on this asset
@@ -692,6 +703,17 @@ switch ($method) {
                         if (!in_array($currentAssetSt, ['ACCIDENT_HOLD', 'INACTIVE'], true)) {
                             $db->prepare("UPDATE assets SET status = :st WHERE asset_id = :aid")
                                ->execute([':st' => $retainedStatus, ':aid' => (string) $current['asset_id']]);
+                            if ($currentAssetSt !== $retainedStatus) {
+                                wo_insert_timeline(
+                                    $db,
+                                    $id,
+                                    'STATUS_CHANGE',
+                                    $currentAssetSt,
+                                    $retainedStatus,
+                                    "Status unit {$current['asset_id']} dipertahankan {$retainedStatus}",
+                                    "Masih terdapat {$remainingActiveWos} Work Order aktif lain pada unit ini."
+                                );
+                            }
                         }
                     }
 
@@ -749,6 +771,21 @@ switch ($method) {
                                 planner_note = CONCAT(COALESCE(planner_note, ''), ' | Selesai via WO #', :wo_id)
                             WHERE asset_id = :aid AND status IN ('PLANNED', 'DUE_SOON', 'OVERDUE')
                         ")->execute([':wo_id' => $id, ':aid' => (string) $current['asset_id']]);
+
+                        $db->prepare('
+                            INSERT INTO pm_plans 
+                            (asset_id, interval_hm, current_smr, last_service_hm, last_service_date, target_due_hm, variance_hm, status, planner_note)
+                            VALUES (:id, :interval, :current, :last, CURDATE(), :target, :variance, :status, :note)
+                        ')->execute([
+                            ':id' => (string) $current['asset_id'],
+                            ':interval' => (int) $intervalVal,
+                            ':current' => $currentServiceHm,
+                            ':last' => $currentServiceHm,
+                            ':target' => $nextDueHm,
+                            ':variance' => $currentServiceHm - $nextDueHm,
+                            ':status' => 'PLANNED',
+                            ':note' => "Siklus berikutnya setelah WO #{$id}",
+                        ]);
                     }
                 } elseif (isset($data['target_unit_status']) || isset($data['unit_status'])) {
                     $targetAssetStatus = asset_normalize_status((string) ($data['target_unit_status'] ?? $data['unit_status']));

@@ -136,6 +136,9 @@ final class ConditionMonitoring
             ':inspected_by' => $actorId,
         ]);
         $recordId = (int) $db->lastInsertId();
+        if ($status === 'danger') {
+            self::applyDangerStatusToAsset($db, $assetId);
+        }
 
         return [
             'id' => 'CM-TIRE-' . $recordId,
@@ -194,6 +197,9 @@ final class ConditionMonitoring
             ':inspected_by' => $actorId,
         ]);
         $recordId = (int) $db->lastInsertId();
+        if ($status === 'danger') {
+            self::applyDangerStatusToAsset($db, $assetId);
+        }
 
         return [
             'id' => 'CM-GREASE-' . $recordId,
@@ -262,6 +268,9 @@ final class ConditionMonitoring
             ':inspected_by' => $actorId,
         ]);
         $recordId = (int) $db->lastInsertId();
+        if ($status === 'danger') {
+            self::applyDangerStatusToAsset($db, $assetId);
+        }
 
         return [
             'id' => 'CM-BATTERY-' . $recordId,
@@ -270,6 +279,16 @@ final class ConditionMonitoring
             'status' => $status,
             'summary' => self::formatNumber($voltage) . ' V · ' . self::formatNumber($cca) . "% CCA · {$terminal}",
         ];
+    }
+
+    private static function applyDangerStatusToAsset(PDO $db, string $assetId): void
+    {
+        $db->prepare("
+            UPDATE assets 
+            SET status = 'INSPEKSI' 
+            WHERE asset_id = :aid 
+              AND status NOT IN ('BREAKDOWN', 'ACCIDENT_HOLD', 'INACTIVE')
+        ")->execute([':aid' => $assetId]);
     }
 
     private static function ensureColumns(PDO $db, string $table, array $definitions): void
