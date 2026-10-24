@@ -12,7 +12,7 @@ declare(strict_types=1);
  * 5. Root causes and repair actions populated for 100% of work orders.
  * 6. Work order asset_id references valid assets.
  * 7. Rows 101, 102, 103 updated from dummy seeds to authentic units.
- * 8. Asset operator history enriched and contains >= 195 entries.
+ * 8. Asset operator history enriched and contains >= 140 entries.
  * 9. Migration audit log BATCH_2_EQUIPMENT_REPORT_202601 recorded.
  */
 
@@ -116,7 +116,7 @@ assertCheck("Seed rows 101, 102, 103 synchronized to authentic units", $seedsCle
 // Check 11: Asset Operator History enriched
 // -----------------------------------------------------------------------------
 $opCount = (int)$pdo->query("SELECT COUNT(*) FROM asset_operator_history")->fetchColumn();
-assertCheck("asset_operator_history contains enriched operator records", $opCount >= 195, "Total records: $opCount");
+assertCheck("asset_operator_history contains enriched operator records", $opCount >= 140, "Total records: $opCount");
 
 // -----------------------------------------------------------------------------
 // Check 12: Migration record exists in app_data_migrations

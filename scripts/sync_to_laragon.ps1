@@ -211,6 +211,22 @@ if (-not $ImportDatabase) {
             & $phpExe $tireSeedScript | Out-Null
             Write-Host "Heavy equipment tire specifications verified." -ForegroundColor Green
         }
+
+        $equipmentBatchScripts = @(
+            (Join-Path $srcDir 'scripts\migrate_batch1_assets_parts.php'),
+            (Join-Path $srcDir 'scripts\migrate_batch2_work_orders.php'),
+            (Join-Path $srcDir 'scripts\migrate_batch3_pm_grease_battery.php'),
+            (Join-Path $srcDir 'scripts\migrate_batch4_warehouse_transactions.php'),
+            (Join-Path $srcDir 'scripts\migrate_batch5_cost_ledger.php'),
+            (Join-Path $srcDir 'scripts\migrate_batch6_rental_contracts.php')
+        )
+        foreach ($bScript in $equipmentBatchScripts) {
+            if ($phpExe -and (Test-Path $bScript)) {
+                $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+                & $phpExe $bScript | Out-Null
+            }
+        }
+        Write-Host "Equipment Report January 2026 Batch 1-6 verified." -ForegroundColor Green
     }
 } elseif ($mysqlExe -and (Test-Path $mysqlExe)) {
     Write-Host "`n[2/4] Importing explicitly selected local MySQL database '$DbName'..." -ForegroundColor Cyan
@@ -313,6 +329,22 @@ if (-not $ImportDatabase) {
         & $phpExe $tireSeedScript | Out-Null
         Write-Host "Heavy equipment tire specifications verified." -ForegroundColor Green
     }
+
+    $equipmentBatchScripts = @(
+        (Join-Path $srcDir 'scripts\migrate_batch1_assets_parts.php'),
+        (Join-Path $srcDir 'scripts\migrate_batch2_work_orders.php'),
+        (Join-Path $srcDir 'scripts\migrate_batch3_pm_grease_battery.php'),
+        (Join-Path $srcDir 'scripts\migrate_batch4_warehouse_transactions.php'),
+        (Join-Path $srcDir 'scripts\migrate_batch5_cost_ledger.php'),
+        (Join-Path $srcDir 'scripts\migrate_batch6_rental_contracts.php')
+    )
+    foreach ($bScript in $equipmentBatchScripts) {
+        if ($phpExe -and (Test-Path $bScript)) {
+            $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+            & $phpExe $bScript | Out-Null
+        }
+    }
+    Write-Host "Equipment Report January 2026 Batch 1-6 verified." -ForegroundColor Green
 } else {
     throw 'MySQL executable tidak ditemukan untuk -ImportDatabase.'
 }

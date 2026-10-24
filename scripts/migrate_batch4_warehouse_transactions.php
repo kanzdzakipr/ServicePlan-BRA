@@ -234,59 +234,78 @@ echo "[3/6] Setting Up Master Report Records in report_records...\n";
 $pdo->beginTransaction();
 
 try {
+    // Dynamically resolve template_ids for bhw-in and bhw-out
+    $findTpl = $pdo->prepare("SELECT template_id FROM report_templates WHERE template_key = :k LIMIT 1");
+    
+    $findTpl->execute([':k' => 'bhw-in']);
+    $bhwInTplId = (int)$findTpl->fetchColumn();
+    if (!$bhwInTplId) {
+        $insTpl = $pdo->prepare("INSERT INTO report_templates (template_key, code, title, version, schema_json, is_active, created_at, updated_at) VALUES ('bhw-in', 'BHW-IN', 'Buku Harian Warehouse (Barang Masuk)', 1, '{}', 1, NOW(), NOW())");
+        $insTpl->execute();
+        $bhwInTplId = (int)$pdo->lastInsertId();
+    }
+
+    $findTpl->execute([':k' => 'bhw-out']);
+    $bhwOutTplId = (int)$findTpl->fetchColumn();
+    if (!$bhwOutTplId) {
+        $insTpl = $pdo->prepare("INSERT INTO report_templates (template_key, code, title, version, schema_json, is_active, created_at, updated_at) VALUES ('bhw-out', 'BHW-OUT', 'Buku Harian Warehouse (Barang Keluar)', 1, '{}', 1, NOW(), NOW())");
+        $insTpl->execute();
+        $bhwOutTplId = (int)$pdo->lastInsertId();
+    }
+
     $masterReports = [
         'BHW-IN-PARTS-202601' => [
             'report_id' => 'b4000001-0000-0000-0000-000000000001',
-            'template_id' => 14,
+            'template_id' => $bhwInTplId,
             'report_number' => '01/BAPB/BRA/PHR.DURI/I/2026',
             'final_number_key' => 'b4-bhw-in-parts-202601',
             'title' => 'Buku Harian Warehouse (Barang Masuk) Spare Part',
         ],
         'BHW-OUT-PARTS-202601' => [
             'report_id' => 'b4000001-0000-0000-0000-000000000002',
-            'template_id' => 54,
+            'template_id' => $bhwOutTplId,
             'report_number' => 'BHW-OUT/I/2026',
             'final_number_key' => 'b4-bhw-out-parts-202601',
             'title' => 'Buku Harian Warehouse (Barang Keluar) Spare Part',
         ],
         'BHW-IN-BAT-202601' => [
             'report_id' => 'b4000001-0000-0000-0000-000000000003',
-            'template_id' => 14,
+            'template_id' => $bhwInTplId,
             'report_number' => '01.01/BAPB/ACCU/2026',
             'final_number_key' => 'b4-bhw-in-bat-202601',
             'title' => 'Buku Harian Warehouse (Barang Masuk) Baterai Accu',
         ],
         'BHW-OUT-BAT-202601' => [
             'report_id' => 'b4000001-0000-0000-0000-000000000004',
-            'template_id' => 54,
+            'template_id' => $bhwOutTplId,
             'report_number' => '01.01/BKTBI/ACCU/2026',
             'final_number_key' => 'b4-bhw-out-bat-202601',
             'title' => 'Buku Harian Warehouse (Barang Keluar) Baterai Accu',
         ],
         'BHW-IN-TIRES-202601' => [
             'report_id' => 'b4000001-0000-0000-0000-000000000005',
-            'template_id' => 14,
+            'template_id' => $bhwInTplId,
             'report_number' => '01.01/BAPB/BAN/2026',
             'final_number_key' => 'b4-bhw-in-tires-202601',
             'title' => 'Buku Harian Warehouse (Barang Masuk) Ban',
         ],
         'BHW-OUT-TIRES-202601' => [
             'report_id' => 'b4000001-0000-0000-0000-000000000006',
-            'template_id' => 54,
+            'template_id' => $bhwOutTplId,
             'report_number' => '01.01-BAN/BKTBI/2026',
             'final_number_key' => 'b4-bhw-out-tires-202601',
             'title' => 'Buku Harian Warehouse (Barang Keluar) Ban',
         ],
         'BHW-IN-OILS-202601' => [
             'report_id' => 'b4000001-0000-0000-0000-000000000007',
-            'template_id' => 14,
+            'template_id' => $bhwInTplId,
             'report_number' => 'BHW-IN/OLI/I/2026',
             'final_number_key' => 'b4-bhw-in-oils-202601',
             'title' => 'Buku Harian Warehouse (Barang Masuk) Oli & Pelumas',
         ],
         'BHW-OUT-OILS-202601' => [
             'report_id' => 'b4000001-0000-0000-0000-000000000008',
-            'template_id' => 54,
+            'template_id' => $bhwOutTplId,
             'report_number' => 'BHW-OUT/OLI/I/2026',
             'final_number_key' => 'b4-bhw-out-oils-202601',
             'title' => 'Buku Harian Warehouse (Barang Keluar) Oli & Pelumas',

@@ -436,7 +436,7 @@ Setelah seluruh batch selesai dieksekusi, jalankan suite pengujian komprehensif 
 # 1. Verifikasi integritas skema dan kueri database
 php tests/test_batch1_identity_and_parts.php
 php tests/test_batch2_work_orders_enrichment.php
-php tests/test_batch3_pm_monitoring.php
+php tests/test_batch3_pm_grease_battery.php
 php tests/test_batch4_warehouse_flow.php
 php tests/test_batch5_cost_ledger_audit.php
 php tests/test_batch6_contracts_and_utilization.php

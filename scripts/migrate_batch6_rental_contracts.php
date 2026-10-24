@@ -241,6 +241,8 @@ $specialMappings = [
     'C07004' => 'EXC-00027',
     'C07076' => 'EXC-00028',
     '961582391716' => 'PF-00009',
+    '961582391718' => 'PF-00002',
+    'Bomag Padfoot 06' => 'PF-00002',
     '1372' => 'MG-00003',
     'ZCC60-0199' => 'CR-00001',
     'XUG035HDAKFC00524' => 'CR-00002',
@@ -309,7 +311,7 @@ foreach ($activeUnits as $u) {
             $vars[] = sprintf('BOMAG SINGLE DRUM 2024 (%02d)', $n);
             $vars[] = sprintf('BOMAG SINGLE DRUM (%02d)', $n);
             $vars[] = sprintf('BOMAG DRUM (%02d)', $n);
-        } elseif (preg_match('/^Bomag\s*Foot\s*(\d+)$/i', $codeClean, $m)) {
+        } elseif (preg_match('/^Bomag\s*(?:Pad\s*)?Foot\s*(\d+)$/i', $codeClean, $m)) {
             $n = (int)$m[1];
             $vars[] = sprintf('PF %02d', $n);
             $vars[] = sprintf('BOMAG FOOT (%02d)', $n);
