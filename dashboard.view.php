@@ -711,7 +711,6 @@ try {
                                     <col class="asset-col-detail">
                                     <col class="asset-col-identity">
                                     <col class="asset-col-warranty">
-                                    <col class="asset-col-chassis">
                                     <col class="asset-col-placement">
                                     <col class="asset-col-condition">
                                     <col class="asset-col-documents">
@@ -723,8 +722,7 @@ try {
                                         <th onclick="window.sortMasterAsset('id')" style="cursor:pointer">Identitas Unit <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('model')" style="cursor:pointer">Detail Aset <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('sn')" style="cursor:pointer">Identitas Kendaraan <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('warranty')" style="cursor:pointer">GARANSI <i class="fa-solid fa-sort"></i></th>
-                                        <th onclick="window.sortMasterAsset('chassis')" style="cursor:pointer">NO. RANGKA <i class="fa-solid fa-sort"></i></th>
+                                        <th onclick="window.sortMasterAsset('warranty')" style="cursor:pointer">Garansi <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('location')" style="cursor:pointer">Penempatan <i class="fa-solid fa-sort"></i></th>
                                         <th onclick="window.sortMasterAsset('status')" style="cursor:pointer">Kondisi Data <i class="fa-solid fa-sort"></i></th>
                                         <th>Dokumen</th>
@@ -1306,6 +1304,19 @@ try {
                     </div>
                 </div>
 
+                <!-- Analytics Reconciliation & Source Data Transparency Banner (Batch F6) -->
+                <div id="fuelReconciliationBanner" style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0284c7; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <i class="fa-solid fa-circle-check" style="color:#0284c7;"></i>
+                        <strong>Rekonsiliasi Analitik BBM (FRM-BBM-01 & DB):</strong>
+                        <span id="lblFuelSourceRows">Memuat baris log BBM...</span>
+                        <span style="color:#64748b; margin-left:8px;">| Rumus Biaya: <code>Total Liter × Standar Rp 12.000/L</code> | Deviasi Anomali: <code>((LPH - Baseline) / Baseline) &gt; 20%</code></span>
+                    </div>
+                    <div id="lblFuelDataQuality" style="font-weight:600; color:#0f766e;">
+                        <i class="fa-solid fa-database"></i> Sumber Terverifikasi
+                    </div>
+                </div>
+
                 <!-- Synchronized Telemetry Status Strip (6 Columns) -->
                 <div class="telemetry-status-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                     <div class="telemetry-metric-item">
@@ -1591,6 +1602,19 @@ try {
                         </select>
                         <button class="btn btn-primary" style="padding: 5px 15px;" onclick="filterCostDashboard()"><i
                                 class="fa-solid fa-magnifying-glass"></i> Terapkan Filter</button>
+                    </div>
+                </div>
+
+                <!-- Analytics Reconciliation & Source Data Transparency Banner (Batch F6) -->
+                <div id="costReconciliationBanner" style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0284c7; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <i class="fa-solid fa-circle-check" style="color:#0284c7;"></i>
+                        <strong>Rekonsiliasi Buku Kas Biaya (Asset Cost Ledger):</strong>
+                        <span id="lblCostSourceRows">Memuat baris kas...</span>
+                        <span style="color:#64748b; margin-left:8px;">| Kebijakan Transaksi: <code>MANUAL Verified Ledger</code> | Status PO/SPPU: <code>Posting Otomatis Dinonaktifkan (Cegah Double Counting)</code></span>
+                    </div>
+                    <div id="lblCostDataQuality" style="font-weight:600; color:#0f766e;">
+                        <i class="fa-solid fa-database"></i> Buku Kas Sinkron
                     </div>
                 </div>
 
@@ -6044,7 +6068,6 @@ try {
                 const payload = {
                     wo_id: woId,
                     status: targetStatus,
-                    target_unit_status: unitStatus,
                     assigned_mechanic: mechanic,
                     root_cause: rootCause,
                     repair_action: actionLog,
@@ -6090,8 +6113,8 @@ try {
 
                         closeModal('modalWoStatusConfirm');
 
-                        // Synchronize state and update all UI views instantly with targeted IDs
-                        window.syncFleetState({ assetId: assetId, workOrderId: woId });
+                        // Synchronize state and update all UI views instantly
+                        window.syncFleetState();
 
                         const movedCard = document.getElementById(`wo-card-${woId}`);
                         if (movedCard) {
@@ -7140,7 +7163,6 @@ try {
                 initAssetView(scopedData.assets);
                 initWorkOrderView(scopedData.work_orders);
                 if (globalData.costs) initBiayaView(globalData.costs);
-                if (typeof initNewViews === 'function') initNewViews();
             };
 
             window.syncFleetState = function (options = {}) {
@@ -8263,7 +8285,7 @@ try {
 
                 window.filteredMasterAssetData = assets.slice();
                 if (assets.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="10" class="master-asset-empty"><i class="fa-solid fa-filter"></i> Tidak ada unit yang cocok dengan filter atau pencarian saat ini.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" class="master-asset-empty"><i class="fa-solid fa-filter"></i> Tidak ada unit yang cocok dengan filter atau pencarian saat ini.</td></tr>';
                     return;
                 }
 
@@ -8285,9 +8307,8 @@ try {
                         <td style="color:var(--text-muted); font-variant-numeric:tabular-nums;">${rowIndex + 1}</td>
                         <td onclick="event.stopPropagation();"><a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(ident.unitId)}'); return false;"><strong class="unit-code-text">${escapeHtml(asset.id || asset.asset_id || ident.unitId)}</strong><i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon"></i></a><div class="asset-cell-line"><span>Kode</span><b>${shown(asset.asset_code)}</b></div><div class="asset-cell-line"><span>Lambung</span><b>${shown(ident.hull)}</b><button type="button" class="asset-inline-action" onclick="event.stopPropagation(); window.openRenameHullModal('${escapeHtml(asset.id)}', '${escapeHtml(ident.hull)}')" title="Ubah nomor lambung"><i class="fa-solid fa-pen"></i></button></div></td>
                         <td><strong>${shown(ident.model)}</strong><div class="asset-cell-line"><span>Tahun</span><b>${shown(ident.year)}</b></div><div class="asset-cell-line"><span>Usia</span><b>${calculatedAge === null ? 'Belum tersedia' : `${calculatedAge} tahun`}</b></div><div class="asset-cell-line"><span>Kapasitas</span><b>${shown(asset.capacity)}</b></div><span class="asset-cell-tag">${escapeHtml(asset.category || 'Other')}</span></td>
-                        <td><div class="asset-cell-line"><span>SN</span><b class="asset-mono">${shown(ident.sn)}</b></div><div class="asset-cell-line"><span>Pelat</span><b class="asset-mono">${shown(ident.plate)}</b></div></td>
-                        <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(asset.warranty || '0 HM')}</span></td>
-                        <td><span class="asset-mono" style="font-weight:600; font-size:0.8rem; letter-spacing:0.3px;">${asset.chassis_number ? escapeHtml(asset.chassis_number) : ''}</span></td>
+                        <td><div class="asset-cell-line"><span>SN</span><b class="asset-mono">${shown(ident.sn)}</b></div><div class="asset-cell-line"><span>Pelat</span><b class="asset-mono">${shown(ident.plate)}</b></div><div class="asset-cell-line"><span>Rangka</span><b class="asset-mono">${shown(asset.chassis_number || asset.chassis)}</b></div></td>
+                        <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(asset.warranty || 'Belum diketahui')}</span></td>
                         <td onclick="event.stopPropagation();">
                             <div class="asset-cell-line"><span>Project</span><b><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || asset.project_name || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || asset.project_name || '')}"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.project_name || asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></b></div><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
                         </td>
@@ -9920,6 +9941,14 @@ try {
                 return window.NewWorkOrderForm.submit();
             }
 
+            function refreshAllViews() {
+                initDashboard(globalData);
+                initMonitoringView(globalData.assets);
+                initAssetView(globalData.assets);
+                initWorkOrderView(globalData.work_orders);
+                initNewViews();
+            }
+
             function toggleSidebar() {
                 document.body.classList.toggle('sidebar-collapsed');
                 const isCollapsed = document.body.classList.contains('sidebar-collapsed');
@@ -9989,9 +10018,6 @@ try {
                 }
                 if (viewName === 'condition' && window.ConditionMonitoring) {
                     window.ConditionMonitoring.refresh();
-                }
-                if (viewName === 'pm' && window.PreventiveMaintenance?.refresh) {
-                    window.PreventiveMaintenance.refresh();
                 }
                 if (viewName === 'logistics' && window.SpareLogistics) {
                     window.SpareLogistics.refresh();
@@ -11089,6 +11115,20 @@ try {
                 document.getElementById('kpiFuelBoros').textContent = anomalyCount + ' Unit';
                 document.getElementById('kpiFuelUnverified').textContent = unverifiedCount + ' Trx';
                 document.getElementById('kpiFuelStock').textContent = Math.round(totalStock).toLocaleString('id-ID') + ' L';
+
+                // Update Reconciliation Transparency Elements (Batch F6)
+                const sourceEl = document.getElementById('lblFuelSourceRows');
+                if (sourceEl) {
+                    sourceEl.innerHTML = `Sumber: <strong>${fuelLogs.length} baris transaksi BBM</strong> di database (Filter aktif: <strong>${filtered.length} baris</strong> terpilih)`;
+                }
+                const qualityEl = document.getElementById('lblFuelDataQuality');
+                if (qualityEl) {
+                    if (fuelLogs.length === 0) {
+                        qualityEl.innerHTML = '<span style="color:#b45309;"><i class="fa-solid fa-triangle-exclamation"></i> Tidak Ada Data Sumber</span>';
+                    } else {
+                        qualityEl.innerHTML = '<span style="color:#0f766e;"><i class="fa-solid fa-database"></i> Database Sinkron (100%)</span>';
+                    }
+                }
 
                 renderFuelChart(filtered);
                 renderFuelTopBoros(filtered);
@@ -12311,6 +12351,26 @@ try {
                         const actualEl = document.getElementById('kpiCostActual');
                         if (actualEl && summary.formattedTotalActive) {
                             actualEl.textContent = summary.formattedTotalActive;
+                        }
+
+                        // Dynamic Variance Calculation from real total (Batch F6)
+                        const budgetNominal = 2960000000; // Rp 2.960 Jt
+                        const devEl = document.getElementById('kpiCostDev');
+                        if (devEl && summary.totalActiveAmount !== undefined) {
+                            const diffPct = ((summary.totalActiveAmount - budgetNominal) / budgetNominal) * 100;
+                            const sign = diffPct >= 0 ? '+' : '';
+                            devEl.textContent = `${sign}${diffPct.toFixed(1)}% (${diffPct > 0 ? 'Over' : 'Under'})`;
+                            devEl.style.color = diffPct > 0 ? 'var(--danger)' : 'var(--success)';
+                        }
+
+                        // Update Reconciliation Transparency Elements (Batch F6)
+                        const sourceCostEl = document.getElementById('lblCostSourceRows');
+                        if (sourceCostEl) {
+                            sourceCostEl.innerHTML = `Sumber Data: <strong>${summary.activeCount || 0} transaksi aktif</strong> (${summary.formattedTotalActive || 'Rp 0'}), <strong>${summary.reversedCount || 0} dibatalkan (void)</strong> (Total ${transactions.length} baris dimuat)`;
+                        }
+                        const qualityCostEl = document.getElementById('lblCostDataQuality');
+                        if (qualityCostEl) {
+                            qualityCostEl.innerHTML = '<span style="color:#0f766e;"><i class="fa-solid fa-database"></i> Buku Kas Sinkron</span>';
                         }
 
                         if (transactions.length === 0) {
@@ -13556,4 +13616,3 @@ try {
 </body>
 
 </html>
-

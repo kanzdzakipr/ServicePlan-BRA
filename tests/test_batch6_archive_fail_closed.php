@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+putenv('APP_ENV=local');
+putenv('DB_NAME=u646470441_ServicePlanBRA');
+putenv('DB_HOST=127.0.0.1');
+putenv('DB_USER=root');
+putenv('DB_PASSWORD=');
+
 define('API_AUTH_OPTIONAL', true);
 require_once __DIR__ . '/../api/db.php';
 
