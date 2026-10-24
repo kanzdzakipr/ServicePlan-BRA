@@ -115,7 +115,6 @@ try {
             </li>
             <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" role="button" tabindex="0"
                     data-title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a></li>
-            </li>
         </ul>
     </aside>
 
@@ -7168,15 +7167,29 @@ try {
             window.syncFleetState = function (options = {}) {
                 if (!globalData) return;
                 rebuildFleetSummary();
-                const syncResult = persistFleetState(options).catch(error => {
+                const syncResult = persistFleetState(options).then(result => {
+                    refreshAllViews();
+                    if (window.FleetInspectionModule && options.refreshInspection !== false) {
+                        window.FleetInspectionModule.refresh();
+                    }
+                    return result;
+                }).catch(error => {
                     console.error('Sinkronisasi terarah gagal:', error);
+                    // Revert state lokal jika sinkronisasi ke server ditolak atau gagal
+                    if (options.assetId && globalData.assets) {
+                        const targetAsset = globalData.assets.find(item => item.id === options.assetId);
+                        if (targetAsset && targetAsset.syncExpectedStatus) {
+                            targetAsset.status = targetAsset.syncExpectedStatus;
+                        }
+                    }
+                    rebuildFleetSummary();
+                    refreshAllViews();
+                    if (window.FleetInspectionModule && options.refreshInspection !== false) {
+                        window.FleetInspectionModule.refresh();
+                    }
                     alert(`Perubahan unit/WO belum tersimpan di database: ${error.message}`);
                     return null;
                 });
-                refreshAllViews();
-                if (window.FleetInspectionModule && options.refreshInspection !== false) {
-                    window.FleetInspectionModule.refresh();
-                }
                 return syncResult;
             };
 
