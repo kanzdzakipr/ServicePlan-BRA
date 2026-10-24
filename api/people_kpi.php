@@ -649,13 +649,13 @@ if ($method === 'POST') {
     }
 
     if ($action === 'approve_head_kpi') {
-        // Enforce role: Persetujuan diberikan oleh role Asset Manager, bukan Administrator
-        $canApprove = in_array('asset manager', $currentRoles, true);
+        // Enforce role: Persetujuan diberikan oleh role Administrator dan Asset Manager setelah diajukan oleh Equipment Manager
+        $canApprove = in_array('asset manager', $currentRoles, true) || in_array('administrator', $currentRoles, true);
         if (!$canApprove) {
             api_json_response(403, [
                 'status' => 'error',
                 'code' => 'FORBIDDEN',
-                'message' => 'Hanya Asset Manager yang berwenang memberikan persetujuan (Approval) KPI Head of Equipment setelah diajukan oleh Equipment Manager.'
+                'message' => 'Hanya Administrator atau Asset Manager yang berwenang memberikan persetujuan/penolakan (Approval) KPI Head of Equipment setelah diajukan oleh Equipment Manager.'
             ]);
         }
 
@@ -769,8 +769,8 @@ if ($method === 'POST') {
             'location_id' => $locationId,
             'decision' => $decision,
             'message' => ($decision === 'APPROVED')
-                ? 'KPI Head of Equipment periode ' . $period . ' telah disetujui (APPROVED) secara resmi oleh Asset Manager.'
-                : 'KPI Head of Equipment periode ' . $period . ' ditolak (REJECTED) oleh Asset Manager.'
+                ? 'KPI Head of Equipment periode ' . $period . ' telah disetujui (APPROVED) secara resmi.'
+                : 'KPI Head of Equipment periode ' . $period . ' ditolak (REJECTED).'
         ]);
     }
 

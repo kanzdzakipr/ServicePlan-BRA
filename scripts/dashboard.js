@@ -22241,13 +22241,13 @@
                             <button type="button" class="btn btn-sm btn-secondary" onclick="window.saveHeadKPIDraft()" id="btnSaveHeadKpiDraft" title="Simpan draf sementara">
                                 <i class="fa-solid fa-floppy-disk"></i> Simpan Draf
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="window.submitHeadKPI()" id="btnSubmitHeadKpi" title="Ajukan untuk persetujuan Asset Manager">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="window.submitHeadKPI()" id="btnSubmitHeadKpi" title="Ajukan untuk persetujuan Administrator / Asset Manager">
                                 <i class="fa-solid fa-paper-plane"></i> Ajukan Penilaian (Submit)
                             </button>
-                            <button type="button" class="btn btn-sm btn-success" onclick="window.approveHeadKPI('APPROVED')" id="btnApproveHeadKpi" title="Setujui penilaian KPI ini (Khusus Asset Manager)" style="display:none; background:#16a34a; border-color:#16a34a; color:#fff;">
-                                <i class="fa-solid fa-circle-check"></i> Setujui (Approve Asset Manager)
+                            <button type="button" class="btn btn-sm btn-success" onclick="window.approveHeadKPI('APPROVED')" id="btnApproveHeadKpi" title="Setujui penilaian KPI ini (Administrator / Asset Manager)" style="display:none; background:#16a34a; border-color:#16a34a; color:#fff;">
+                                <i class="fa-solid fa-circle-check"></i> Setujui (Approve)
                             </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="window.approveHeadKPI('REJECTED')" id="btnRejectHeadKpi" title="Tolak penilaian disertai alasan (Khusus Asset Manager)" style="display:none;">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="window.approveHeadKPI('REJECTED')" id="btnRejectHeadKpi" title="Tolak penilaian disertai alasan (Administrator / Asset Manager)" style="display:none;">
                                 <i class="fa-solid fa-circle-xmark"></i> Tolak
                             </button>
                         </div>
@@ -22827,9 +22827,9 @@
       const locationLabel = assessment.location_name || document.getElementById("selKpiLocation")?.selectedOptions?.[0]?.text || "-";
       const prefix = `${escapeHtml(periodLabel)} · ${escapeHtml(locationLabel)} · Versi ${Number(assessment.version || 1)}`;
       if (st === "APPROVED" && assessment.approved_by_name) {
-        meta.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> ${prefix} · Disetujui <strong>${escapeHtml(assessment.approved_by_name)}</strong> (Asset Manager) pada ${escapeHtml(assessment.approved_at || "")}`;
+        meta.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> ${prefix} · Disetujui <strong>${escapeHtml(assessment.approved_by_name)}</strong> pada ${escapeHtml(assessment.approved_at || "")}`;
       } else if (st === "SUBMITTED") {
-        meta.innerHTML = `<i class="fa-solid fa-clock text-info"></i> ${prefix} · Diajukan (${escapeHtml(assessment.submitted_at || "")}) · Menunggu persetujuan Asset Manager`;
+        meta.innerHTML = `<i class="fa-solid fa-clock text-info"></i> ${prefix} · Diajukan (${escapeHtml(assessment.submitted_at || "")}) · Menunggu persetujuan Administrator / Asset Manager`;
       } else if (st === "REJECTED") {
         meta.innerHTML = `<i class="fa-solid fa-circle-xmark text-danger"></i> ${prefix} · Ditolak: ${escapeHtml(assessment.approval_notes || "tanpa catatan")}`;
       } else {
@@ -22842,14 +22842,16 @@
       .filter(Boolean)
       .map((role) => String(role).toLowerCase());
     const isAssetManager = roleNames.some((role) => role.includes("asset manager"));
+    const isAdministrator = roleNames.some((role) => role.includes("administrator") || role === "admin");
+    const canApprove = isAssetManager || isAdministrator;
     const isEquipmentManager = roleNames.some((role) => role.includes("equipment manager"));
     const canAssess = isEquipmentManager || roleNames.some((role) => ["administrator", "equipment manager"].includes(role));
 
     if (btnApprove) {
-      btnApprove.style.display = isAssetManager && st === "SUBMITTED" ? "inline-flex" : "none";
+      btnApprove.style.display = canApprove && st === "SUBMITTED" ? "inline-flex" : "none";
     }
     if (btnReject) {
-      btnReject.style.display = isAssetManager && st === "SUBMITTED" ? "inline-flex" : "none";
+      btnReject.style.display = canApprove && st === "SUBMITTED" ? "inline-flex" : "none";
     }
     if (btnSubmit) {
       btnSubmit.style.display = canAssess && ["DRAFT", "REJECTED"].includes(st) ? "inline-flex" : "none";

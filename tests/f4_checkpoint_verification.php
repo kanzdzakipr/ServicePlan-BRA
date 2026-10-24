@@ -127,15 +127,16 @@ try {
     $mekanikPermissions = api_builtin_permissions_for_roles(['Mekanik Senior']);
     $assert(!in_array('reports.approve', $mekanikPermissions, true), "[F4.3] Role Mekanik Senior tidak memiliki hak reports.approve");
 
-    // Penilaian diajukan oleh Equipment Manager; persetujuan diberikan oleh Asset Manager, bukan Administrator
+    // Penilaian diajukan oleh Equipment Manager; persetujuan diberikan oleh Administrator dan Asset Manager
     $canApproveRole = static function(array $roles): bool {
-        return in_array('asset manager', array_map('strtolower', $roles), true);
+        $normalized = array_map('strtolower', $roles);
+        return in_array('asset manager', $normalized, true) || in_array('administrator', $normalized, true);
     };
 
-    $assert(!$canApproveRole(['Administrator']), "[F4.3] Role Administrator DITOLAK dari approval KPI (bukan Administrator)");
+    $assert($canApproveRole(['Administrator']), "[F4.3] Role Administrator DIIZINKAN memberikan approval/rejection KPI");
+    $assert($canApproveRole(['Asset Manager']), "[F4.3] Role Asset Manager DIIZINKAN memberikan approval/rejection KPI");
     $assert(!$canApproveRole(['Equipment Manager']), "[F4.3] Role Equipment Manager DITOLAK dari approval KPI (penilai tidak boleh approve)");
     $assert(!$canApproveRole(['Maintenance Planner']), "[F4.3] Role Maintenance Planner DITOLAK dari approval KPI");
-    $assert($canApproveRole(['Asset Manager']), "[F4.3] Role Asset Manager DIIZINKAN memberikan approval/rejection resmi");
 
     // Rejection simulation by Asset Manager
     $testRejectPeriod = '2099-11';

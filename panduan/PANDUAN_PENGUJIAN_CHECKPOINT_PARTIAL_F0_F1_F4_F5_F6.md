@@ -8,14 +8,14 @@ Dokumen ini menutup pengujian yang masih tersisa pada F0, F1B, F4, F5, dan F6. F
 
 ## 1. Status awal dan urutan pengujian
 
-| Checkpoint | Status awal | Target pengujian |
-| --- | --- | --- |
-| F0 | PARTIAL | Mutasi akun, password sendiri, CSRF, sesi, lokasi, dan audit |
-| F1A | PASS | Hanya regresi singkat pada F6 |
-| F1B | PARTIAL | Sinkronisasi satu ID, konflik dua browser, P2H/CM, role/lokasi |
-| F4 | PASS otomatis 26/26 | Lifecycle KPI dan review SPL melalui browser/DB |
-| F5 | PASS otomatis 28/28 | Archive, notifikasi, settings melalui browser/DB |
-| F6 | PARTIAL | Rekonsiliasi analitik dan regression gate akhir |
+| Checkpoint | Status awal         | Target pengujian                                               |
+| ---------- | ------------------- | -------------------------------------------------------------- |
+| F0         | PARTIAL             | Mutasi akun, password sendiri, CSRF, sesi, lokasi, dan audit   |
+| F1A        | PASS                | Hanya regresi singkat pada F6                                  |
+| F1B        | PARTIAL             | Sinkronisasi satu ID, konflik dua browser, P2H/CM, role/lokasi |
+| F4         | PASS otomatis 26/26 | Lifecycle KPI dan review SPL melalui browser/DB                |
+| F5         | PASS otomatis 28/28 | Archive, notifikasi, settings melalui browser/DB               |
+| F6         | PARTIAL             | Rekonsiliasi analitik dan regression gate akhir                |
 
 Urutan wajib: **F0 → F1B → F4 → F5 → F6**. Jangan menyatakan backend selesai sebelum seluruh gate di bagian akhir dokumen lulus.
 
@@ -56,14 +56,14 @@ SELECT COUNT(*) AS kpi_rows_total FROM head_kpi_assessments;
 
 Untuk setiap skenario, simpan:
 
-| Bukti | Isi |
-| --- | --- |
-| Akun | Username, role, lokasi; jangan mencatat password |
-| Browser | URL, waktu, screenshot sebelum/sesudah |
-| Network | Method, endpoint, HTTP status, response code/message |
-| Database | Query SELECT sebelum/sesudah dan ID QA |
-| Cleanup | Nilai dipulihkan atau data QA tersisa 0 |
-| Status | PASS / FAIL / BLOCKED / NOT TESTED |
+| Bukti    | Isi                                                  |
+| -------- | ---------------------------------------------------- |
+| Akun     | Username, role, lokasi; jangan mencatat password     |
+| Browser  | URL, waktu, screenshot sebelum/sesudah               |
+| Network  | Method, endpoint, HTTP status, response code/message |
+| Database | Query SELECT sebelum/sesudah dan ID QA               |
+| Cleanup  | Nilai dipulihkan atau data QA tersisa 0              |
+| Status   | PASS / FAIL / BLOCKED / NOT TESTED                   |
 
 ---
 
@@ -134,10 +134,10 @@ Saat login sebagai Administrator, uji tanpa token:
 ```javascript
 (() => {
   const xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/users.php');
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.onload = () => console.log('HTTP', xhr.status, xhr.responseText);
-  xhr.send(JSON.stringify({ action: 'create' }));
+  xhr.open("POST", "/api/users.php");
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.onload = () => console.log("HTTP", xhr.status, xhr.responseText);
+  xhr.send(JSON.stringify({ action: "create" }));
 })();
 ```
 
@@ -148,11 +148,11 @@ Kemudian uji token palsu:
 ```javascript
 (() => {
   const xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/users.php');
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.setRequestHeader('X-CSRF-Token', 'token-palsu-qa');
-  xhr.onload = () => console.log('HTTP', xhr.status, xhr.responseText);
-  xhr.send(JSON.stringify({ action: 'create' }));
+  xhr.open("POST", "/api/users.php");
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.setRequestHeader("X-CSRF-Token", "token-palsu-qa");
+  xhr.onload = () => console.log("HTTP", xhr.status, xhr.responseText);
+  xhr.send(JSON.stringify({ action: "create" }));
 })();
 ```
 
@@ -290,9 +290,9 @@ ORDER BY indicator_no;
 ### F4.3 Approval/rejection dan role negatif
 
 1. Penilaian KPI diajukan/disubmit oleh role **Equipment Manager**.
-2. Role Planner/Mekanik/Administrator tidak boleh melihat tombol approval.
-3. POST approval langsung dari role selain Asset Manager (termasuk Administrator dan penilai sendiri) harus menghasilkan **HTTP 403 FORBIDDEN**.
-4. Login sebagai **Asset Manager** (`widya_apriani`) yang berwenang memberikan persetujuan resmi (bukan Administrator).
+2. Role Planner/Mekanik (serta penilai sendiri) tidak boleh melihat tombol approval.
+3. POST approval langsung dari role selain Administrator dan Asset Manager (termasuk penilai sendiri) harus menghasilkan **HTTP 403 FORBIDDEN**.
+4. Login sebagai **Administrator** atau **Asset Manager** (`widya_apriani`) yang berwenang memberikan persetujuan/penolakan resmi.
 5. Pilih APPROVED atau REJECTED disertai catatan.
 6. Refresh/login ulang pada kedua browser.
 7. Setelah APPROVED, edit biasa harus ditolak atau mengikuti alur revisi/versioning resmi.
@@ -504,15 +504,15 @@ Backend boleh dinyatakan selesai hanya jika:
 ## 11. Rekap hasil
 
 | Checkpoint | Browser | HTTP/API | Database | Cleanup | Status akhir |
-| --- | --- | --- | --- | --- | --- |
-| F0 |  |  |  |  |  |
-| F1B |  |  |  |  |  |
-| F4 |  |  |  |  |  |
-| F5 |  |  |  |  |  |
-| F6 |  |  |  |  |  |
+| ---------- | ------- | -------- | -------- | ------- | ------------ |
+| F0         |         |          |          |         |              |
+| F1B        |         |          |          |         |              |
+| F4         |         |          |          |         |              |
+| F5         |         |          |          |         |              |
+| F6         |         |          |          |         |              |
 
 Temuan baru:
 
-| ID | Prioritas | Menu/alur | Bukti | Dampak | Usulan batch |
-| --- | --- | --- | --- | --- | --- |
-|  |  |  |  |  |  |
+| ID  | Prioritas | Menu/alur | Bukti | Dampak | Usulan batch |
+| --- | --------- | --------- | ----- | ------ | ------------ |
+|     |           |           |       |        |              |

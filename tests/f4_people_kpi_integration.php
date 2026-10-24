@@ -100,17 +100,17 @@ try {
 
     // Negative Role Check Simulation (Unauthorized role check logic)
     $plannerRole = 'Maintenance Planner';
-    $isAllowedPlanner = in_array(strtolower($plannerRole), ['asset manager'], true);
+    $isAllowedPlanner = in_array(strtolower($plannerRole), ['asset manager', 'administrator'], true);
     f4Assert(!$isAllowedPlanner, "Negative Role Test: Maintenance Planner is strictly rejected from approving Head KPI");
 
-    // Negative Role Check: Administrator is rejected from approving Head KPI (bukan administrator)
+    // Positive Role Check: Administrator is authorized to approve/reject Head KPI
     $adminRole = 'Administrator';
-    $isAllowedAdmin = in_array(strtolower($adminRole), ['asset manager'], true);
-    f4Assert(!$isAllowedAdmin, "Negative Role Test: Administrator is rejected from approving Head KPI (bukan administrator)");
+    $isAllowedAdmin = in_array(strtolower($adminRole), ['asset manager', 'administrator'], true);
+    f4Assert($isAllowedAdmin, "Positive Role Test: Administrator is authorized to approve/reject Head KPI");
 
     // Positive Approval by Asset Manager (User 15 - Widya Apriani)
     $assetManagerRole = 'Asset Manager';
-    $isAllowedAssetManager = in_array(strtolower($assetManagerRole), ['asset manager'], true);
+    $isAllowedAssetManager = in_array(strtolower($assetManagerRole), ['asset manager', 'administrator'], true);
     f4Assert($isAllowedAssetManager, "Positive Role Test: Asset Manager is authorized to approve Head KPI");
 
     $pdo->prepare("
