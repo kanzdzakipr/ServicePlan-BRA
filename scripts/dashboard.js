@@ -22241,7 +22241,7 @@
                             <button type="button" class="btn btn-sm btn-secondary" onclick="window.saveHeadKPIDraft()" id="btnSaveHeadKpiDraft" title="Simpan draf sementara">
                                 <i class="fa-solid fa-floppy-disk"></i> Simpan Draf
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="window.submitHeadKPI()" id="btnSubmitHeadKpi" title="Ajukan untuk persetujuan Administrator / Asset Manager">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="window.submitHeadKPI()" id="btnSubmitHeadKpi" title="Ajukan untuk persetujuan Asset Manager">
                                 <i class="fa-solid fa-paper-plane"></i> Ajukan Penilaian (Submit)
                             </button>
                             <button type="button" class="btn btn-sm btn-success" onclick="window.approveHeadKPI('APPROVED')" id="btnApproveHeadKpi" title="Setujui penilaian KPI ini (Administrator / Asset Manager)" style="display:none; background:#16a34a; border-color:#16a34a; color:#fff;">
@@ -22829,7 +22829,7 @@
       if (st === "APPROVED" && assessment.approved_by_name) {
         meta.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> ${prefix} · Disetujui <strong>${escapeHtml(assessment.approved_by_name)}</strong> pada ${escapeHtml(assessment.approved_at || "")}`;
       } else if (st === "SUBMITTED") {
-        meta.innerHTML = `<i class="fa-solid fa-clock text-info"></i> ${prefix} · Diajukan (${escapeHtml(assessment.submitted_at || "")}) · Menunggu persetujuan Administrator / Asset Manager`;
+        meta.innerHTML = `<i class="fa-solid fa-clock text-info"></i> ${prefix} · Diajukan (${escapeHtml(assessment.submitted_at || "")}) · Menunggu persetujuan Asset Manager`;
       } else if (st === "REJECTED") {
         meta.innerHTML = `<i class="fa-solid fa-circle-xmark text-danger"></i> ${prefix} · Ditolak: ${escapeHtml(assessment.approval_notes || "tanpa catatan")}`;
       } else {
