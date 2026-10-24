@@ -781,7 +781,7 @@ final class WorkOrderSupport
         throw new RuntimeException('Gagal membuat nomor permintaan layanan yang unik.');
     }
 
-    private static function timeline(
+    public static function timeline(
         PDO $db,
         string $woId,
         string $title,

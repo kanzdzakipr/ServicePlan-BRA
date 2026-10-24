@@ -188,7 +188,7 @@ final class ReportIntegration
             integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             report_id CHAR(36) NOT NULL,
             spb_id VARCHAR(50) NOT NULL,
-            asset_id VARCHAR(100) NOT NULL,
+            asset_id VARCHAR(100) NULL,
             owns_purchase_request TINYINT(1) NOT NULL DEFAULT 1,
             applied_payload LONGTEXT NOT NULL,
             created_by INT NULL,
@@ -205,8 +205,8 @@ final class ReportIntegration
         $db->exec("CREATE TABLE IF NOT EXISTS purchase_orders (
             ppb_id VARCHAR(50) PRIMARY KEY,
             spb_id VARCHAR(50) NOT NULL,
-            asset_id VARCHAR(100) NOT NULL,
-            wo_id VARCHAR(50) NOT NULL,
+            asset_id VARCHAR(100) NULL,
+            wo_id VARCHAR(50) NULL,
             vendor VARCHAR(190) NOT NULL,
             project VARCHAR(190) NOT NULL,
             quote_number VARCHAR(100) NULL,
@@ -243,7 +243,7 @@ final class ReportIntegration
             integration_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             report_id CHAR(36) NOT NULL,
             ppb_id VARCHAR(50) NOT NULL,
-            asset_id VARCHAR(100) NOT NULL,
+            asset_id VARCHAR(100) NULL,
             owns_purchase_order TINYINT(1) NOT NULL DEFAULT 1,
             applied_payload LONGTEXT NOT NULL,
             created_by INT NULL,
@@ -2453,13 +2453,13 @@ final class ReportIntegration
         $requestStatement = $db->prepare(
             "SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.status, w.status AS wo_status
              FROM purchase_requests pr
-             INNER JOIN work_orders w ON w.wo_id = pr.wo_id
+             LEFT JOIN work_orders w ON w.wo_id = pr.wo_id
              WHERE pr.spb_id = :spb_id LIMIT 1 FOR UPDATE"
         );
         $requestStatement->execute([':spb_id' => $spbId]);
         $request = $requestStatement->fetch(PDO::FETCH_ASSOC);
         if (!$request) throw new DomainException("SPB {$spbId} belum tersedia pada menu Logistik.");
-        if ($request['status'] === 'Closed' || in_array($request['wo_status'], ['Closed', 'Cancelled'], true)) {
+        if ($request['status'] === 'Closed' || (!empty($request['wo_id']) && in_array($request['wo_status'], ['Closed', 'Cancelled'], true))) {
             throw new DomainException("SPB {$spbId} atau Work Order terkait sudah ditutup.");
         }
         if (!in_array($request['status'], ['Approved', 'Ordered'], true)) {
@@ -2509,8 +2509,10 @@ final class ReportIntegration
         $subtotal = round($subtotal, 2);
         $tax = round($subtotal * 0.11, 2);
         $snapshot = ['header' => [
-            'ppb_id' => $ppbId, 'spb_id' => $spbId, 'asset_id' => (string) $request['asset_id'],
-            'wo_id' => (string) $request['wo_id'], 'vendor' => $vendor, 'project' => $project,
+            'ppb_id' => $ppbId, 'spb_id' => $spbId,
+            'asset_id' => !empty($request['asset_id']) ? (string) $request['asset_id'] : null,
+            'wo_id' => !empty($request['wo_id']) ? (string) $request['wo_id'] : null,
+            'vendor' => $vendor, 'project' => $project,
             'quote_number' => $quoteNumber, 'quote_date' => $quoteDate, 'delivery_due' => $deliveryDue,
             'delivery_location' => $deliveryLocation, 'subtotal' => $subtotal, 'tax_amount' => $tax,
             'total_amount' => round($subtotal + $tax, 2), 'status' => 'Submitted', 'created_by' => $actorId,
@@ -2555,7 +2557,7 @@ final class ReportIntegration
             foreach ($items as $item) { $params = []; foreach ($item as $key => $value) $params[':' . $key] = $value; $insertItem->execute($params); }
         }
         $ledger = $db->prepare('INSERT INTO report_purchase_order_integrations (report_id, ppb_id, asset_id, owns_purchase_order, applied_payload, created_by) VALUES (:report_id,:ppb_id,:asset_id,:owns,:payload,:created_by)');
-        $ledger->execute([':report_id'=>$reportId, ':ppb_id'=>$ppbId, ':asset_id'=>$request['asset_id'], ':owns'=>$ownsOrder ? 1 : 0, ':payload'=>json_encode($snapshot, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR), ':created_by'=>$actorId]);
+        $ledger->execute([':report_id'=>$reportId, ':ppb_id'=>$ppbId, ':asset_id'=>$request['asset_id'] ?: null, ':owns'=>$ownsOrder ? 1 : 0, ':payload'=>json_encode($snapshot, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR), ':created_by'=>$actorId]);
         return ['type'=>'ppb','applied'=>true,'alreadyApplied'=>false,'itemCount'=>count($items),'ppbId'=>$ppbId,'spbId'=>$spbId,'createdItemCount'=>$ownsOrder?count($items):0,'linkedItemCount'=>$ownsOrder?0:count($items),'message'=>$ownsOrder ? "Laporan berhasil difinalkan dan PPB {$ppbId} dengan ".count($items).' item dibuat.' : "Laporan berhasil ditautkan ke PPB {$ppbId} tanpa duplikasi."];
     }
 
@@ -2667,12 +2669,52 @@ final class ReportIntegration
         }
 
         $spbId = self::requiredText($fields['nomor_spb'] ?? null, 'Nomor SPB', 50);
-        $workOrderId = self::requiredText(
-            $fields['nomor_wo'] ?? ($fields['wo_id'] ?? null),
-            'Work Order / JO',
-            50
-        );
-        $reportedAsset = self::requiredText($fields['kode_unit'] ?? null, 'Kode unit', 100);
+        $rawWo = trim((string) ($fields['nomor_wo'] ?? ($fields['wo_id'] ?? '')));
+        $rawAsset = trim((string) ($fields['kode_unit'] ?? ($fields['asset_id'] ?? '')));
+        $isStandalone = ($rawWo === '' || $rawWo === '-' || strtoupper($rawWo) === 'N/A' || strtoupper($rawWo) === 'GENERAL_STOCK');
+
+        $workOrderId = null;
+        $reportedAsset = null;
+        $workOrder = null;
+
+        if (!$isStandalone) {
+            $workOrderId = self::requiredText($rawWo, 'Work Order / JO', 50);
+            $reportedAsset = self::requiredText($rawAsset, 'Kode unit', 100);
+            $workOrderStatement = $db->prepare(
+                'SELECT w.wo_id, w.asset_id, w.status, a.asset_code, a.is_active
+                 FROM work_orders w
+                 INNER JOIN assets a ON a.asset_id = w.asset_id
+                 WHERE w.wo_id = :wo_id
+                 LIMIT 1 FOR UPDATE'
+            );
+            $workOrderStatement->execute([':wo_id' => $workOrderId]);
+            $workOrder = $workOrderStatement->fetch(PDO::FETCH_ASSOC);
+            if (!$workOrder) {
+                throw new DomainException("Work Order {$workOrderId} tidak ditemukan.");
+            }
+            if ((int) $workOrder['is_active'] !== 1) {
+                throw new DomainException("Unit pada Work Order {$workOrderId} sudah tidak aktif.");
+            }
+            if (in_array((string) $workOrder['status'], ['Closed', 'Cancelled'], true)) {
+                throw new DomainException("Work Order {$workOrderId} sudah ditutup atau dibatalkan.");
+            }
+            if (
+                !hash_equals((string) $workOrder['asset_id'], $reportedAsset)
+                && !hash_equals((string) ($workOrder['asset_code'] ?? ''), $reportedAsset)
+            ) {
+                throw new DomainException(
+                    "Kode unit {$reportedAsset} tidak sesuai dengan unit Work Order {$workOrderId} ({$workOrder['asset_id']})."
+                );
+            }
+        } elseif ($rawAsset !== '' && $rawAsset !== '-' && strtoupper($rawAsset) !== 'N/A') {
+            $assetStmt = $db->prepare('SELECT asset_id, is_active FROM assets WHERE asset_id = :aid OR asset_code = :acode LIMIT 1');
+            $assetStmt->execute([':aid' => $rawAsset, ':acode' => $rawAsset]);
+            $matchedAsset = $assetStmt->fetch(PDO::FETCH_ASSOC);
+            if ($matchedAsset) {
+                $reportedAsset = (string) $matchedAsset['asset_id'];
+            }
+        }
+
         $requestDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal permintaan');
         $urgencyInput = self::requiredText($fields['urgensi'] ?? 'Normal', 'Urgensi', 20);
         $urgency = match ($urgencyInput) {
@@ -2680,33 +2722,6 @@ final class ReportIntegration
             'Emergency', 'Mendesak' => 'Emergency',
             default => throw new DomainException('Urgensi SPB tidak dikenali.'),
         };
-
-        $workOrderStatement = $db->prepare(
-            'SELECT w.wo_id, w.asset_id, w.status, a.asset_code, a.is_active
-             FROM work_orders w
-             INNER JOIN assets a ON a.asset_id = w.asset_id
-             WHERE w.wo_id = :wo_id
-             LIMIT 1 FOR UPDATE'
-        );
-        $workOrderStatement->execute([':wo_id' => $workOrderId]);
-        $workOrder = $workOrderStatement->fetch(PDO::FETCH_ASSOC);
-        if (!$workOrder) {
-            throw new DomainException("Work Order {$workOrderId} tidak ditemukan.");
-        }
-        if ((int) $workOrder['is_active'] !== 1) {
-            throw new DomainException("Unit pada Work Order {$workOrderId} sudah tidak aktif.");
-        }
-        if (in_array((string) $workOrder['status'], ['Closed', 'Cancelled'], true)) {
-            throw new DomainException("Work Order {$workOrderId} sudah ditutup atau dibatalkan.");
-        }
-        if (
-            !hash_equals((string) $workOrder['asset_id'], $reportedAsset)
-            && !hash_equals((string) ($workOrder['asset_code'] ?? ''), $reportedAsset)
-        ) {
-            throw new DomainException(
-                "Kode unit {$reportedAsset} tidak sesuai dengan unit Work Order {$workOrderId} ({$workOrder['asset_id']})."
-            );
-        }
 
         $itemStatusMap = [
             'Diajukan' => 'Menunggu Approval',
@@ -2778,14 +2793,14 @@ final class ReportIntegration
         if ($voidedNumber->fetchColumn()) {
             throw new DomainException("Nomor {$spbId} pernah di-void dan tidak boleh dipakai ulang.");
         }
-
-        $snapshot = [
+        $snapshot = [
             'header' => [
                 'spb_id' => $spbId,
                 'wo_id' => $workOrderId,
-                'asset_id' => (string) $workOrder['asset_id'],
+                'asset_id' => $workOrder ? (string) $workOrder['asset_id'] : $reportedAsset,
                 'requested_by' => $actorId,
                 'urgency' => $urgency,
+                'spb_type' => $workOrderId !== null ? 'EMERGENCY' : 'NORMAL',
                 'status' => 'Submitted',
                 'requested_at' => $requestDate . ' 00:00:00',
             ],
@@ -2814,8 +2829,8 @@ final class ReportIntegration
         if ($ownsRequest) {
             $insertRequest = $db->prepare(
                 'INSERT INTO purchase_requests
-                 (spb_id, wo_id, asset_id, requested_by, urgency, status, requested_at)
-                 VALUES (:spb_id, :wo_id, :asset_id, :requested_by, :urgency, :status, :requested_at)'
+                 (spb_id, wo_id, asset_id, requested_by, urgency, spb_type, status, requested_at)
+                 VALUES (:spb_id, :wo_id, :asset_id, :requested_by, :urgency, :spb_type, :status, :requested_at)'
             );
             $insertRequest->execute([
                 ':spb_id' => $snapshot['header']['spb_id'],
@@ -2823,6 +2838,7 @@ final class ReportIntegration
                 ':asset_id' => $snapshot['header']['asset_id'],
                 ':requested_by' => $snapshot['header']['requested_by'],
                 ':urgency' => $snapshot['header']['urgency'],
+                ':spb_type' => $snapshot['header']['spb_type'],
                 ':status' => $snapshot['header']['status'],
                 ':requested_at' => $snapshot['header']['requested_at'],
             ]);
@@ -2842,26 +2858,28 @@ final class ReportIntegration
                 ]);
             }
 
-            $partsNote = "Permintaan part dicatat melalui {$spbId} dari laporan.";
-            $db->prepare(
-                "UPDATE work_orders
-                 SET parts_requirement = 'REQUIRED', parts_requirement_note = :note
-                 WHERE wo_id = :wo_id"
-            )->execute([':note' => $partsNote, ':wo_id' => $workOrderId]);
-            $actorName = $db->prepare(
-                "SELECT COALESCE(NULLIF(full_name, ''), username) FROM users WHERE user_id = :user_id LIMIT 1"
-            );
-            $actorName->execute([':user_id' => $actorId]);
-            $db->prepare(
-                "INSERT INTO work_order_timeline
-                 (wo_id, event_type, title, description, actor_user_id, actor_name)
-                 VALUES (:wo_id, 'DETAIL_UPDATE', 'Kebutuhan part dicatat', :description, :actor_id, :actor_name)"
-            )->execute([
-                ':wo_id' => $workOrderId,
-                ':description' => $partsNote,
-                ':actor_id' => $actorId,
-                ':actor_name' => (string) ($actorName->fetchColumn() ?: 'Pengguna'),
-            ]);
+            if ($workOrderId !== null) {
+                $partsNote = "Permintaan part dicatat melalui {$spbId} dari laporan.";
+                $db->prepare(
+                    "UPDATE work_orders
+                     SET parts_requirement = 'REQUIRED', parts_requirement_note = :note
+                     WHERE wo_id = :wo_id"
+                )->execute([':note' => $partsNote, ':wo_id' => $workOrderId]);
+                $actorName = $db->prepare(
+                    "SELECT COALESCE(NULLIF(full_name, ''), username) FROM users WHERE user_id = :user_id LIMIT 1"
+                );
+                $actorName->execute([':user_id' => $actorId]);
+                $db->prepare(
+                    "INSERT INTO work_order_timeline
+                     (wo_id, event_type, title, description, actor_user_id, actor_name)
+                     VALUES (:wo_id, 'DETAIL_UPDATE', 'Kebutuhan part dicatat', :description, :actor_id, :actor_name)"
+                )->execute([
+                    ':wo_id' => $workOrderId,
+                    ':description' => $partsNote,
+                    ':actor_id' => $actorId,
+                    ':actor_name' => (string) ($actorName->fetchColumn() ?: 'Pengguna'),
+                ]);
+            }
         }
 
         $insertIntegration = $db->prepare(
@@ -2872,7 +2890,7 @@ final class ReportIntegration
         $insertIntegration->execute([
             ':report_id' => $reportId,
             ':spb_id' => $spbId,
-            ':asset_id' => $workOrder['asset_id'],
+            ':asset_id' => $snapshot['header']['asset_id'],
             ':owns_purchase_request' => $ownsRequest ? 1 : 0,
             ':applied_payload' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
             ':created_by' => $actorId,
@@ -4105,6 +4123,7 @@ final class ReportIntegration
         $reportDate = self::requiredDate($fields['tanggal'] ?? null, 'Tanggal laporan');
         $itemCount = 0;
         $totalQuantity = 0;
+        $affectedSpbMap = [];
 
         foreach (array_values($rows) as $position => $row) {
             if (!is_array($row) || !self::rowHasContent($row)) {
@@ -4201,10 +4220,72 @@ final class ReportIntegration
 
             $itemCount++;
             $totalQuantity += $quantity;
+
+            // Track and update matching Emergency or Work Order SPBs waiting for this part
+            $rowSpb = trim((string) ($row['nomor_spb'] ?? ''));
+            if ($rowSpb !== '') {
+                $spbItemsStmt = $db->prepare(
+                    "SELECT pri.id, pri.spb_id, pri.qty_requested, pr.wo_id
+                     FROM purchase_request_items pri
+                     INNER JOIN purchase_requests pr ON pr.spb_id = pri.spb_id
+                     WHERE pri.part_number = :part_number
+                       AND pr.spb_id = :spb_id
+                       AND pr.status NOT IN ('Closed', 'Cancelled', 'Issued')
+                       AND pri.status NOT IN ('Tiba', 'Received', 'Issued')
+                     ORDER BY pri.id ASC"
+                );
+                $spbItemsStmt->execute([':part_number' => $partNumber, ':spb_id' => $rowSpb]);
+            } else {
+                $spbItemsStmt = $db->prepare(
+                    "SELECT pri.id, pri.spb_id, pri.qty_requested, pr.wo_id
+                     FROM purchase_request_items pri
+                     INNER JOIN purchase_requests pr ON pr.spb_id = pri.spb_id
+                     WHERE pri.part_number = :part_number
+                       AND pr.status NOT IN ('Closed', 'Cancelled', 'Issued')
+                       AND pri.status NOT IN ('Tiba', 'Received', 'Issued')
+                     ORDER BY pr.requested_at ASC, pri.id ASC"
+                );
+                $spbItemsStmt->execute([':part_number' => $partNumber]);
+            }
+            $waitingSpbItems = $spbItemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($waitingSpbItems as $wItem) {
+                $db->prepare("UPDATE purchase_request_items SET status = 'Tiba' WHERE id = :id")
+                   ->execute([':id' => $wItem['id']]);
+                if (!empty($wItem['wo_id'])) {
+                    $affectedSpbMap[$wItem['spb_id']] = (string) $wItem['wo_id'];
+                }
+            }
         }
 
         if ($itemCount === 0) {
             throw new DomainException('BHW-IN tidak memiliki baris barang yang dapat diintegrasikan.');
+        }
+
+        if (!empty($affectedSpbMap)) {
+            require_once __DIR__ . '/WorkOrderSupport.php';
+            foreach ($affectedSpbMap as $spbId => $linkedWoId) {
+                $unfulfilledStmt = $db->prepare(
+                    "SELECT COUNT(*) FROM purchase_request_items
+                     WHERE spb_id = :spb_id AND status NOT IN ('Tiba', 'Received', 'Issued')"
+                );
+                $unfulfilledStmt->execute([':spb_id' => $spbId]);
+                $unfulfilledCount = (int) $unfulfilledStmt->fetchColumn();
+
+                if ($unfulfilledCount === 0) {
+                    $db->prepare("UPDATE purchase_requests SET status = 'Closed' WHERE spb_id = :spb_id")
+                       ->execute([':spb_id' => $spbId]);
+
+                    if (!empty($linkedWoId)) {
+                        WorkOrderSupport::checkAndResumeWorkOrder(
+                            $db,
+                            $linkedWoId,
+                            $actorId,
+                            'BHW-IN: Barang Tiba di Gudang'
+                        );
+                    }
+                }
+            }
         }
 
         return [
@@ -4269,8 +4350,10 @@ final class ReportIntegration
             );
             $counterparty = self::optionalText($row['tujuan'] ?? null, 190);
             $notes = self::optionalText($row['keterangan'] ?? null, 500);
-            $assetId = self::requiredText($row['id_unit'] ?? null, 'ID unit baris ' . ($position + 1), 100);
-            $woId = self::requiredText($row['nomor_jo'] ?? null, 'Nomor WO/JO baris ' . ($position + 1), 50);
+            $rawAssetId = $row['id_unit'] ?? $row['asset_id'] ?? null;
+            $assetId = self::requiredText($rawAssetId, 'ID unit baris ' . ($position + 1), 100);
+            $rawWoId = $row['nomor_jo'] ?? $row['nomor_wo'] ?? $row['wo_id'] ?? null;
+            $woId = self::requiredText($rawWoId, 'Nomor WO/JO baris ' . ($position + 1), 50);
             $workOrderStatement = $db->prepare('SELECT asset_id FROM work_orders WHERE wo_id = :wo_id LIMIT 1');
             $workOrderStatement->execute([':wo_id' => $woId]);
             $workOrderAsset = $workOrderStatement->fetchColumn();
@@ -4335,6 +4418,19 @@ final class ReportIntegration
                 ':notes' => $notes,
                 ':created_by' => $actorId,
             ]);
+
+            require_once __DIR__ . '/WorkOrderSupport.php';
+            WorkOrderSupport::timeline(
+                $db,
+                $woId,
+                'Pengeluaran Suku Cadang (BHW-OUT)',
+                "Suku cadang {$partNumber} ({$partName}) sejumlah {$quantity} {$unitMeasure} telah dikeluarkan dari gudang untuk WO ini (No. Bukti: {$referenceNumber}).",
+                $actorId,
+                'Logistik Gudang',
+                null,
+                null,
+                'DETAIL_UPDATE'
+            );
 
             $itemCount++;
             $totalQuantity += $quantity;

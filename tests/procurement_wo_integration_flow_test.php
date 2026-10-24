@@ -156,16 +156,113 @@ try {
     $resumed = WorkOrderSupport::checkAndResumeWorkOrder($db, $testWoIdB, $actorId, 'QA Tester');
     itAssert($resumed === false, 'WO does not resume while Emergency SPB is Submitted');
 
-    // Now simulate arrival and issue of parts: SPB updated to 'Issued'
-    $db->prepare("UPDATE purchase_requests SET status = 'Issued' WHERE spb_id = :spb_id")
-        ->execute([':spb_id' => $spbIdB]);
+    // Now simulate arrival of parts via BHW-IN
+    $bhwInTplKey = 'qa-bhwin-' . strtolower($suffix);
+    $db->prepare("INSERT INTO report_templates (template_key, code, title, version, schema_json, is_active)
+                  VALUES (:tkey, 'BHW-IN', 'QA BHW-IN', 1, '{}', 1)")
+        ->execute([':tkey' => $bhwInTplKey]);
+    $tplBhwIn = (int) $db->lastInsertId();
 
-    // Resume WO
-    $resumedAfter = WorkOrderSupport::checkAndResumeWorkOrder($db, $testWoIdB, $actorId, 'QA Tester');
-    itAssert($resumedAfter === true, 'WO automatically resumes to In Progress when Emergency SPB is fulfilled');
+    $bhwInReportId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff),
+        random_int(0x4000, 0x4fff), random_int(0x8000, 0xbfff),
+        random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff)
+    );
 
+    $db->prepare("INSERT INTO report_records (report_id, template_id, client_key, report_number, status, source_method, field_data, created_by, finalized_at, final_number_key)
+                  VALUES (:rid, :tid, :ckey, :rnum, 'FINAL', 'test', '{}', :actor, NOW(), :fnk)")
+        ->execute([
+            ':rid' => $bhwInReportId,
+            ':tid' => $tplBhwIn,
+            ':ckey' => 'qa-client-bhwin-' . strtolower($suffix),
+            ':rnum' => 'BHW-IN/QA/' . $suffix,
+            ':actor' => $actorId,
+            ':fnk' => $bhwInTplKey . '|bhw-in/qa/' . strtolower($suffix),
+        ]);
+
+    $bhwInFields = ['tanggal' => date('Y-m-d'), 'nomor_log' => 'BHW-IN/QA/' . $suffix];
+    $bhwInRows = [[
+        'tanggal' => date('Y-m-d'),
+        'bapb' => 'BAPB-' . $suffix,
+        'dari' => 'QA Vendor Parts',
+        'part_number' => $testPartNumB,
+        'nama' => 'Test Empty Part',
+        'satuan' => 'Pcs',
+        'jumlah' => 2,
+        'saldo_lalu' => 0,
+        'saldo_sekarang' => 2,
+        'nomor_spb' => $spbIdB,
+        'keterangan' => 'Emergency parts arrived at warehouse',
+    ]];
+
+    $bhwInRes = ReportIntegration::applyFinal($db, 'bhw-in', $bhwInReportId, $bhwInFields, $bhwInRows, $actorId);
+    itAssert($bhwInRes['applied'] === true, 'BHW-IN arrival finalized successfully');
+
+    // Verify stock of Part B is now 2
+    $stockB = (int) $db->query("SELECT stock_qty FROM parts WHERE part_number = '{$testPartNumB}'")->fetchColumn();
+    itAssert($stockB === 2, 'Part B warehouse stock increased to 2');
+
+    // Verify Emergency SPB item status changed to 'Tiba'
+    $itemStatusB = (string) $db->query("SELECT status FROM purchase_request_items WHERE id = 'ITEM-B-{$suffix}'")->fetchColumn();
+    itAssert($itemStatusB === 'Tiba', 'Emergency SPB item status automatically transitioned to Tiba upon BHW-IN');
+
+    // Verify Emergency SPB header status transitioned to 'Closed'
+    $spbStatusB = (string) $db->query("SELECT status FROM purchase_requests WHERE spb_id = '{$spbIdB}'")->fetchColumn();
+    itAssert($spbStatusB === 'Closed', 'Emergency SPB header status closed upon full arrival');
+
+    // Verify linked WO B was automatically resumed to 'In Progress'
     $woStmtB->execute([':wo_id' => $testWoIdB]);
-    itAssert($woStmtB->fetchColumn() === 'In Progress', 'WO status is restored to In Progress');
+    itAssert($woStmtB->fetchColumn() === 'In Progress', 'WO status automatically restored to In Progress via BHW-IN');
+
+    // Next: Mechanic issues BHW-OUT to consume the part for WO B
+    $bhwOutTplKey = 'qa-bhwout-' . strtolower($suffix);
+    $db->prepare("INSERT INTO report_templates (template_key, code, title, version, schema_json, is_active)
+                  VALUES (:tkey, 'BHW-OUT', 'QA BHW-OUT', 1, '{}', 1)")
+        ->execute([':tkey' => $bhwOutTplKey]);
+    $tplBhwOut = (int) $db->lastInsertId();
+
+    $bhwOutReportId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff),
+        random_int(0x4000, 0x4fff), random_int(0x8000, 0xbfff),
+        random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff)
+    );
+
+    $db->prepare("INSERT INTO report_records (report_id, template_id, client_key, report_number, status, source_method, field_data, created_by, finalized_at, final_number_key)
+                  VALUES (:rid, :tid, :ckey, :rnum, 'FINAL', 'test', '{}', :actor, NOW(), :fnk)")
+        ->execute([
+            ':rid' => $bhwOutReportId,
+            ':tid' => $tplBhwOut,
+            ':ckey' => 'qa-client-bhwout-' . strtolower($suffix),
+            ':rnum' => 'BHW-OUT/QA/' . $suffix,
+            ':actor' => $actorId,
+            ':fnk' => $bhwOutTplKey . '|bhw-out/qa/' . strtolower($suffix),
+        ]);
+
+    $bhwOutFields = ['tanggal' => date('Y-m-d'), 'nomor_log' => 'BHW-OUT/QA/' . $suffix];
+    $bhwOutRows = [[
+        'tanggal' => date('Y-m-d'),
+        'nomor_bukti' => 'BK-' . $suffix,
+        'tujuan' => 'Workshop Bengkel',
+        'nomor_wo' => $testWoIdB,
+        'id_unit' => $testAssetId,
+        'part_number' => $testPartNumB,
+        'nama' => 'Test Empty Part',
+        'satuan' => 'Pcs',
+        'persediaan' => 2,
+        'diberikan' => 2,
+        'sisa' => 0,
+        'keterangan' => 'Part issued to mechanic for emergency repair',
+    ]];
+
+    $bhwOutRes = ReportIntegration::applyFinal($db, 'bhw-out', $bhwOutReportId, $bhwOutFields, $bhwOutRows, $actorId);
+    itAssert($bhwOutRes['applied'] === true, 'BHW-OUT outbound issued successfully to Work Order');
+
+    $stockBAfterOut = (int) $db->query("SELECT stock_qty FROM parts WHERE part_number = '{$testPartNumB}'")->fetchColumn();
+    itAssert($stockBAfterOut === 0, 'Part B warehouse stock deducted from 2 to 0 via BHW-OUT');
+
+    // Verify part usage in WorkOrderSupport overview
+    $overviewB = WorkOrderSupport::overview($db, $testWoIdB);
+    itAssert(count($overviewB['partUsage']) >= 1, 'BHW-OUT usage appears in WorkOrderSupport overview partUsage');
 
     // -------------------------------------------------------------------------
     // TEST 4: Alur Normal Preventive Maintenance (SPB tanpa WO di awal)
