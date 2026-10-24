@@ -6508,6 +6508,45 @@
     return local.toISOString().slice(0, 16);
   }
 
+  function renderNwoStockBadge(item, matchedPart, isManual) {
+    if (!item || (!item.partNumber && !item.description)) {
+      return "";
+    }
+    const reqQty = Math.max(1, Number(item.qty) || 1);
+    if (isManual || (!matchedPart && item.partNumber)) {
+      return `
+        <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.72rem; padding:3px 8px; border-radius:4px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; margin-top:4px;">
+          <i class="fa-solid fa-arrow-up-right-from-square" style="color:#64748b;"></i>
+          <span><strong>Luar Katalog Gudang</strong> &bull; Perlu Pengadaan (Otomatis SPB Darurat)</span>
+        </div>`;
+    }
+    if (!matchedPart) {
+      return "";
+    }
+    const avail = Number(matchedPart.stockQty ?? matchedPart.stock) || 0;
+    const uom = escapeText(matchedPart.uom || item.uom || "pcs");
+    if (avail >= reqQty) {
+      return `
+        <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.72rem; padding:3px 8px; border-radius:4px; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; margin-top:4px;">
+          <i class="fa-solid fa-circle-check" style="color:#059669;"></i>
+          <span>Stok Gudang: <strong>${avail} ${uom}</strong> &bull; Siap Dikeluarkan (Langsung BHW-OUT)</span>
+        </div>`;
+    } else if (avail > 0) {
+      const def = reqQty - avail;
+      return `
+        <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.72rem; padding:3px 8px; border-radius:4px; background:#fffbeb; color:#92400e; border:1px solid #fde68a; margin-top:4px;">
+          <i class="fa-solid fa-triangle-exclamation" style="color:#d97706;"></i>
+          <span>Stok Kurang: Ada <strong>${avail}</strong> dari butuh <strong>${reqQty} ${uom}</strong> (Defisit ${def}) &bull; Otomatis SPB Darurat</span>
+        </div>`;
+    } else {
+      return `
+        <div style="display:inline-flex; align-items:center; gap:5px; font-size:0.72rem; padding:3px 8px; border-radius:4px; background:#fef2f2; color:#991b1b; border:1px solid #fecaca; margin-top:4px;">
+          <i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i>
+          <span>Stok Gudang Habis (0 ${uom}) &bull; Otomatis SPB Darurat & Waiting Part</span>
+        </div>`;
+    }
+  }
+
   function renderNwoDraftRows() {
     const tbody = byId("nwo-spb-items");
     if (!tbody) return;
@@ -6556,6 +6595,9 @@
                         <input type="text" class="form-control font-mono" value="${escapeText(item.partNumber || "")}" placeholder="Part Number" oninput="window.handleNwoPartFieldChange(${index}, 'partNumber', this.value)" ${matchedPart && !isManual ? "readonly" : ""} style="font-size:0.75rem;">
                         <input type="text" class="form-control" value="${escapeText(item.description || "")}" placeholder="Nama / Spesifikasi Spare Part" oninput="window.handleNwoPartFieldChange(${index}, 'description', this.value)" ${matchedPart && !isManual ? "readonly" : ""} style="font-size:0.75rem;">
                     </div>
+                    <div id="nwo-draft-badge-${index}">
+                        ${renderNwoStockBadge(item, matchedPart, isManual)}
+                    </div>
                 </td>
                 <td>
                     <div style="display:flex; gap:6px; align-items:center;">
@@ -6593,6 +6635,60 @@
     if (textarea) textarea.value = lines.join("\n");
     const counter = byId("nwo-spb-counter");
     if (counter) counter.textContent = `${valid.length} spare part tercatat`;
+
+    const flowAlert = byId("nwo-parts-flow-alert");
+    if (flowAlert) {
+      if (!valid.length) {
+        flowAlert.style.display = "none";
+        flowAlert.innerHTML = "";
+      } else {
+        const masterParts = getNwoMasterParts();
+        let allAvailable = true;
+        let deficitCount = 0;
+
+        valid.forEach((item) => {
+          const matchedPart = masterParts.find(
+            (p) =>
+              p.partNumber &&
+              p.partNumber.toLowerCase() ===
+                (item.partNumber || "").toLowerCase(),
+          );
+          const reqQty = Math.max(1, Number(item.qty) || 1);
+          const avail = matchedPart
+            ? Number(matchedPart.stockQty ?? matchedPart.stock) || 0
+            : 0;
+          if (!matchedPart || item.isManual || avail < reqQty) {
+            allAvailable = false;
+            deficitCount++;
+          }
+        });
+
+        flowAlert.style.display = "flex";
+        if (allAvailable) {
+          flowAlert.style.background = "#ecfdf5";
+          flowAlert.style.border = "1px solid #a7f3d0";
+          flowAlert.style.color = "#065f46";
+          flowAlert.innerHTML = `
+            <i class="fa-solid fa-circle-check" style="font-size:1.15rem; margin-top:2px; flex-shrink:0;"></i>
+            <div>
+              <strong>Kondisi A &bull; Seluruh Stok Gudang Tersedia (${valid.length} item)</strong><br>
+              Saat tiket disimpan, sistem akan <strong>langsung menerbitkan BHW-OUT</strong> dan memotong stok gudang. WO langsung aktif (<em>Open / In Progress</em>) tanpa menunggu SPB/PPB.
+            </div>
+          `;
+        } else {
+          flowAlert.style.background = "#fffbeb";
+          flowAlert.style.border = "1px solid #fde68a";
+          flowAlert.style.color = "#92400e";
+          flowAlert.innerHTML = `
+            <i class="fa-solid fa-triangle-exclamation" style="font-size:1.15rem; margin-top:2px; flex-shrink:0;"></i>
+            <div>
+              <strong>Kondisi B &bull; Kebutuhan Part Kurang / Belum Tersedia (${deficitCount} item)</strong><br>
+              Saat tiket disimpan, sistem akan <strong>otomatis menerbitkan SPB Darurat</strong> terhubung ke WO ini. Status WO dialihkan menjadi <em>Waiting Part</em> sampai suku cadang tiba melalui PPB & BHW-IN.
+            </div>
+          `;
+        }
+      }
+    }
   }
 
   let lastAddRowTime = 0;
@@ -6675,6 +6771,25 @@
       state.draft[index].qty = Math.max(1, Number(value) || 1);
     } else {
       state.draft[index][field] = value;
+    }
+    const badgeContainer = byId(`nwo-draft-badge-${index}`);
+    if (badgeContainer) {
+      const masterParts = getNwoMasterParts();
+      const item = state.draft[index];
+      const matchedPart = masterParts.find(
+        (p) =>
+          p.partNumber &&
+          p.partNumber.toLowerCase() ===
+            (item.partNumber || "").toLowerCase(),
+      );
+      const isManual = Boolean(
+        item.isManual || (item.partNumber && !matchedPart),
+      );
+      badgeContainer.innerHTML = renderNwoStockBadge(
+        item,
+        matchedPart,
+        isManual,
+      );
     }
     syncNwoPartsSummary();
   }
@@ -6903,6 +7018,7 @@
       if (Array.isArray(window.globalData?.work_orders)) {
         window.globalData.work_orders.unshift({
           ...workOrder,
+          status: result?.data?.status || workOrder.status,
           location,
           downtime: down === "Yes" ? "0 jam 00 menit" : "-",
           reportedAt: troubleAt,
@@ -6915,9 +7031,15 @@
       if (typeof window.showView === "function") {
         window.showView(maintenanceType === "Preventive" ? "pm" : "wo");
       }
-      showSuccessToast(
-        `${woId} berhasil dibuat untuk ${selectedAssetId}.${photoWarning}`,
-      );
+      const directIssue = result?.data?.directIssue;
+      const createdSpbId = result?.data?.createdSpbId;
+      let toastMsg = `${woId} berhasil dibuat untuk ${selectedAssetId}.`;
+      if (directIssue) {
+        toastMsg += ` Seluruh spare part tersedia & BHW-OUT #${directIssue.reportNumber} langsung diterbitkan.`;
+      } else if (createdSpbId) {
+        toastMsg += ` Kebutuhan part kosong/kurang & SPB Darurat #${createdSpbId} otomatis diajukan (Status: ${result?.data?.status || "Waiting Part"}).`;
+      }
+      showSuccessToast(toastMsg + photoWarning);
       window.syncFleetState?.();
     } catch (error) {
       console.error("Error creating WO:", error);
@@ -8936,6 +9058,10 @@
     submitDraft,
     createProcurementReport,
     close: closeDetail,
+    getMasterParts() {
+      return Array.isArray(masterParts) ? masterParts : [];
+    },
+    loadMasterParts,
     getUnitCounter(assetId) {
       const summary = summaryForAsset(assetId);
       return {
