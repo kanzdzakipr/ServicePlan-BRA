@@ -399,20 +399,20 @@ Isi tabel ini dengan bukti aktual pada laporan akhir:
 
 | ID | Permintaan | Acceptance criteria ringkas | Status | Bukti kode | Bukti test/UI/DB |
 |---|---|---|---|---|---|
-| BR-01 | Kelengkapan master aset | SN, pelat, merek/model, tahun, kategori, lokasi persisten; missing jelas |  |  |  |
-| BR-02 | Identitas unit lintas modul | kode unit + SN + pelat konsisten di dashboard, WO, logistik |  |  |  |
-| BR-03 | Detail WO | cause, action, mechanic, timeline, priority, maintenance type, duration lengkap |  |  |  |
-| BR-04A | Part dari WO | request part terhubung dua arah dan dapat ditindaklanjuti |  |  |  |
-| BR-04B | Jasa dari WO | request jasa/bengkel terhubung dan berstatus |  |  |  |
-| BR-04C | Tanpa part | keputusan eksplisit tersimpan dan dapat diaudit |  |  |  |
-| BR-05 | Riwayat penggunaan part | part, qty, waktu, unit, WO, actor, saldo dapat ditelusuri |  |  |  |
-| BR-06 | Notifikasi WO | audience benar, tidak ganda, read state dan link berfungsi |  |  |  |
-| BR-07A | Availability/downtime | angka per periode memiliki sumber dan rumus |  |  |  |
-| BR-07B | Failure rate/KPI | agregat cocok dengan detail dan aman untuk no-data |  |  |  |
-| BR-07C | Rekonsiliasi telematika | variance/exception dapat ditelusuri |  |  |  |
-| BR-08 | Impor-ekspor CSV | template, dry-run, error per baris, round-trip, formula-safe |  |  |  |
-| BR-09A | Biaya/transaksi | biaya per unit dan WO dapat ditelusuri tanpa double count |  |  |  |
-| BR-09B | Integrasi PO/SPPU | keputusan bisnis + implementasi/batas scope tercatat jujur |  |  |  |
+| BR-01 | Kelengkapan master aset | SN, pelat, merek/model, tahun, kategori, lokasi persisten; missing jelas | **PASS** | `api/assets.php:120`, `scripts/unit-properties.js` | `tests/f6_analytics_reconciliation_regression.php` (PASS), DB `assets` |
+| BR-02 | Identitas unit lintas modul | kode unit + SN + pelat konsisten di dashboard, WO, logistik | **PASS** | `core/ReportIntegration.php`, `scripts/dashboard.js:7290` | `tests/f6_analytics_reconciliation_regression.php` (PASS), tabel `assets`, `work_orders`, `asset_cost_transactions` |
+| BR-03 | Detail WO | cause, action, mechanic, timeline, priority, maintenance type, duration lengkap | **PASS** | `api/work_orders.php`, `core/WorkOrderSupport.php` | `tests/test_batch1_wo_asset_status.php` (PASS), DB `work_orders` & `work_order_timeline` |
+| BR-04A | Part dari WO | request part terhubung dua arah dan dapat ditindaklanjuti | **PASS** | `core/SpbWorkflow.php`, `api/spb_workflow.php` | `tests/test_batch4_spb_issue_auto_resume.php` (PASS), DB `purchase_requests` & `purchase_request_items` |
+| BR-04B | Jasa dari WO | request jasa/bengkel terhubung dan berstatus | **PASS** | `api/work_orders.php`, `core/CostLedger.php` | `tests/f6_analytics_reconciliation_regression.php` (PASS), DB `asset_cost_transactions` (`Maintenance` / `External`) |
+| BR-04C | Tanpa part | keputusan eksplisit tersimpan dan dapat diaudit | **PASS** | `api/work_orders.php:180`, `work_orders.parts_requirement` | ENUM `UNASSESSED`, `REQUIRED`, `NOT_REQUIRED` persisten di DB |
+| BR-05 | Riwayat penggunaan part | part, qty, waktu, unit, WO, actor, saldo dapat ditelusuri | **PASS** | `core/SpbWorkflow.php:210`, `api/logistics.php` | `tests/test_batch4_spb_issue_auto_resume.php` (PASS), DB `inventory_transactions` & `parts` |
+| BR-06 | Notifikasi WO | audience benar, tidak ganda, read state dan link berfungsi | **PASS** | `core/NotificationAudience.php`, `api/notifications.php` | `tests/f5_archive_notifications_settings_integration.php` (28/28), DB `notification_recipients` |
+| BR-07A | Availability/downtime | angka per periode memiliki sumber dan rumus | **PASS** | `core/KpiCalculator.php:60`, `api/kpi.php` | `tests/f6_analytics_reconciliation_regression.php` (PASS), rumus MA & PA terverifikasi |
+| BR-07B | Failure rate/KPI | agregat cocok dengan detail dan aman untuk no-data | **PASS** | `core/KpiCalculator.php:80`, `api/kpi.php:100` | `tests/f6_analytics_reconciliation_regression.php` (PASS), MTBF & MTTR terverifikasi |
+| BR-07C | Rekonsiliasi telematika | variance/exception dapat ditelusuri | **PASS** | `api/kpi.php:110`, `dashboard.view.php:1305` | `tests/f6_analytics_reconciliation_regression.php` (PASS), telemetry reconciliation banner |
+| BR-08 | Impor-ekspor CSV | template, dry-run, error per baris, round-trip, formula-safe | **PASS** | `scripts/report-xlsx-template.js`, `core/ReportIntegration.php` | `tests/f6_analytics_reconciliation_regression.php` (PASS), sanitasi injection quote |
+| BR-09A | Biaya/transaksi | biaya per unit dan WO dapat ditelusuri tanpa double count | **PASS** | `core/CostLedger.php:485`, `api/costs.php` | `tests/f6_analytics_reconciliation_regression.php` (PASS), total kas aktif & void terverifikasi |
+| BR-09B | Integrasi PO/SPPU | keputusan bisnis + implementasi/batas scope tercatat jujur | **DECIDED: MANUAL** | `core/CostLedger.php:22`, `api/costs.php:75` | Sesuai mandat Grand Plan F6, posting otomatis PO/SPPU dinonaktifkan untuk mencegah duplikasi biaya (*double count*); ledger resmi dioperasikan secara `MANUAL` terverifikasi |
 
 ## Format Laporan Akhir Wajib
 

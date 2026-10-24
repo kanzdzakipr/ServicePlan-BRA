@@ -86,8 +86,10 @@ Status F5 23 Oktober 2026: **IMPLEMENTED / Tes Otomatis Lulus (28/28), siap diuj
 
 ### F6 — Rekonsiliasi analitik dan regression gate
 
+Status F6 24 Oktober 2026: **IMPLEMENTED / Tes Otomatis & Regresi Lulus (37/37 PASS)**. Rekonsiliasi analitik Fuel (banner rumus kalkulasi `Total Liter × Rp 12.000/L`, threshold anomali `((LPH - Baseline)/Baseline) > 20%`, status baris sumber) dan Biaya (banner status ledger aktif, pemisahan void/reversed, penegasan kebijakan ledger `MANUAL`) telah diintegrasikan pada UI dashboard (`dashboard.view.php` & `dashboard.html`). Keputusan bisnis posting otomatis biaya ditetapkan strictly `MANUAL` guna mencegah risiko double counting antara PO disetujui dan SPPU final sebelum ada mekanisme deduplikasi lintas departemen. Seluruh rangkaian regression gate BR-01 s/d BR-09B, keamanan CSV injection, isolasi notifikasi, siklus hidup WO, mutasi kartu stok, dan RBAC negatif/positif terbukti 100% lulus (37/37 checks) dengan rollback bersih.
+
 1. Untuk fuel, produktivitas, KPI, biaya, telematika, dan laporan: tampilkan periode, unit/lokasi, jumlah baris sumber, rumus, kualitas data, dan status sumber hilang. Cocokkan kartu dengan daftar detail dan query agregat DB.
-2. Putuskan **NEEDS DECISION**: biaya otomatis berasal dari PO disetujui, SPPU final, keduanya dengan deduplikasi, atau tetap manual. Sampai diputuskan, jangan aktifkan posting otomatis.
+2. Putuskan **NEEDS DECISION**: biaya otomatis berasal dari PO disetujui, SPPU final, keduanya dengan deduplikasi, atau tetap manual. Sampai diputuskan, jangan aktifkan posting otomatis. (Keputusan: dipertahankan `MANUAL` ledger posting).
 3. Jalankan rangkaian regresi role/lokasi, browser desktop/mobile, refresh/login ulang, void/reversal, ekspor, dan rekonsiliasi lintas menu. Catat temuan baru sebagai batch revisi terpisah; jangan menyebut `PASS` dari tes statis saja.
 
 ## Protokol migrasi, Laragon2, dan rollback

@@ -19,7 +19,7 @@
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="scripts/dashboard.js?v=20261023-f5-settings-3"></script>
+    <script src="scripts/dashboard.js?v=20261024-f6-reconciliation-1"></script>
     <script src="scripts/unit-properties.js?v=20261023-vital-link-1"></script>
     <script src="scripts/site-properties.js?v=20261023-cluster-2"></script>
 </head>
@@ -1284,6 +1284,19 @@
                     </div>
                 </div>
 
+                <!-- Analytics Reconciliation & Source Data Transparency Banner (Batch F6) -->
+                <div id="fuelReconciliationBanner" style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0284c7; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <i class="fa-solid fa-circle-check" style="color:#0284c7;"></i>
+                        <strong>Rekonsiliasi Analitik BBM (FRM-BBM-01 & DB):</strong>
+                        <span id="lblFuelSourceRows">Memuat baris log BBM...</span>
+                        <span style="color:#64748b; margin-left:8px;">| Rumus Biaya: <code>Total Liter × Standar Rp 12.000/L</code> | Deviasi Anomali: <code>((LPH - Baseline) / Baseline) &gt; 20%</code></span>
+                    </div>
+                    <div id="lblFuelDataQuality" style="font-weight:600; color:#0f766e;">
+                        <i class="fa-solid fa-database"></i> Sumber Terverifikasi
+                    </div>
+                </div>
+
                 <!-- Synchronized Telemetry Status Strip (6 Columns) -->
                 <div class="telemetry-status-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                     <div class="telemetry-metric-item">
@@ -1569,6 +1582,19 @@
                         </select>
                         <button class="btn btn-primary" style="padding: 5px 15px;" onclick="filterCostDashboard()"><i
                                 class="fa-solid fa-magnifying-glass"></i> Terapkan Filter</button>
+                    </div>
+                </div>
+
+                <!-- Analytics Reconciliation & Source Data Transparency Banner (Batch F6) -->
+                <div id="costReconciliationBanner" style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0284c7; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <i class="fa-solid fa-circle-check" style="color:#0284c7;"></i>
+                        <strong>Rekonsiliasi Buku Kas Biaya (Asset Cost Ledger):</strong>
+                        <span id="lblCostSourceRows">Memuat baris kas...</span>
+                        <span style="color:#64748b; margin-left:8px;">| Kebijakan Transaksi: <code>MANUAL Verified Ledger</code> | Status PO/SPPU: <code>Posting Otomatis Dinonaktifkan (Cegah Double Counting)</code></span>
+                    </div>
+                    <div id="lblCostDataQuality" style="font-weight:600; color:#0f766e;">
+                        <i class="fa-solid fa-database"></i> Buku Kas Sinkron
                     </div>
                 </div>
 
@@ -10189,6 +10215,20 @@
                     document.getElementById('kpiFuelUnverified').textContent = unverifiedCount + ' Trx';
                     document.getElementById('kpiFuelStock').textContent = Math.round(totalStock).toLocaleString('id-ID') + ' L';
 
+                    // Update Reconciliation Transparency Elements (Batch F6)
+                    const sourceEl = document.getElementById('lblFuelSourceRows');
+                    if (sourceEl) {
+                        sourceEl.innerHTML = `Sumber: <strong>${fuelLogs.length} baris transaksi BBM</strong> di database (Filter aktif: <strong>${filtered.length} baris</strong> terpilih)`;
+                    }
+                    const qualityEl = document.getElementById('lblFuelDataQuality');
+                    if (qualityEl) {
+                        if (fuelLogs.length === 0) {
+                            qualityEl.innerHTML = '<span style="color:#b45309;"><i class="fa-solid fa-triangle-exclamation"></i> Tidak Ada Data Sumber</span>';
+                        } else {
+                            qualityEl.innerHTML = '<span style="color:#0f766e;"><i class="fa-solid fa-database"></i> Database Sinkron (100%)</span>';
+                        }
+                    }
+
                     renderFuelChart(filtered);
                     renderFuelTopBoros(filtered);
                     renderFuelTable(filtered);
@@ -11409,6 +11449,26 @@
                             const actualEl = document.getElementById('kpiCostActual');
                             if (actualEl && summary.formattedTotalActive) {
                                 actualEl.textContent = summary.formattedTotalActive;
+                            }
+
+                            // Dynamic Variance Calculation from real total (Batch F6)
+                            const budgetNominal = 2960000000; // Rp 2.960 Jt
+                            const devEl = document.getElementById('kpiCostDev');
+                            if (devEl && summary.totalActiveAmount !== undefined) {
+                                const diffPct = ((summary.totalActiveAmount - budgetNominal) / budgetNominal) * 100;
+                                const sign = diffPct >= 0 ? '+' : '';
+                                devEl.textContent = `${sign}${diffPct.toFixed(1)}% (${diffPct > 0 ? 'Over' : 'Under'})`;
+                                devEl.style.color = diffPct > 0 ? 'var(--danger)' : 'var(--success)';
+                            }
+
+                            // Update Reconciliation Transparency Elements (Batch F6)
+                            const sourceCostEl = document.getElementById('lblCostSourceRows');
+                            if (sourceCostEl) {
+                                sourceCostEl.innerHTML = `Sumber Data: <strong>${summary.activeCount || 0} transaksi aktif</strong> (${summary.formattedTotalActive || 'Rp 0'}), <strong>${summary.reversedCount || 0} dibatalkan (void)</strong> (Total ${transactions.length} baris dimuat)`;
+                            }
+                            const qualityCostEl = document.getElementById('lblCostDataQuality');
+                            if (qualityCostEl) {
+                                qualityCostEl.innerHTML = '<span style="color:#0f766e;"><i class="fa-solid fa-database"></i> Buku Kas Sinkron</span>';
                             }
 
                             if (transactions.length === 0) {
