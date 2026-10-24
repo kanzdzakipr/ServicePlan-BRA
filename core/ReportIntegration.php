@@ -1506,6 +1506,7 @@ final class ReportIntegration
         $instructedBy = $resolvePerson($fields['instruksi_oleh'] ?? null, 'Pemberi instruksi SPL');
         $target = self::optionalText($fields['target'] ?? null, 500);
         $generalInstruction = self::requiredText($fields['uraian'] ?? null, 'Instruksi umum lembur', 5000);
+        $woId = self::optionalText($fields['wo_id'] ?? $fields['nomor_jo'] ?? $fields['nomor_wo'] ?? null, 50);
 
         $preparedRows = [];
         $seenPeople = [];
@@ -1564,12 +1565,12 @@ final class ReportIntegration
 
         $insert = $db->prepare(
             'INSERT INTO spl_overtime_records
-             (report_id, report_item_position, spl_number, spl_date, period_start, period_end,
+             (report_id, report_item_position, spl_number, wo_id, spl_date, period_start, period_end,
               location_id, employee_user_id, role_snapshot, start_time, end_time, duration_hours,
               activity_description, target_description, general_instruction, prepared_by,
               instructed_by, start_verified, end_verified, created_by)
              VALUES
-             (:report_id, :position, :spl_number, :spl_date, :period_start, :period_end,
+             (:report_id, :position, :spl_number, :wo_id, :spl_date, :period_start, :period_end,
               :location_id, :employee_user_id, :role_snapshot, :start_time, :end_time, :duration_hours,
               :activity_description, :target_description, :general_instruction, :prepared_by,
               :instructed_by, :start_verified, :end_verified, :created_by)'
@@ -1579,6 +1580,7 @@ final class ReportIntegration
                 ':report_id' => $reportId,
                 ':position' => $row['position'],
                 ':spl_number' => $splNumber,
+                ':wo_id' => $woId,
                 ':spl_date' => $splDate,
                 ':period_start' => $periodStart,
                 ':period_end' => $periodEnd,

@@ -918,6 +918,214 @@ final class WorkOrderSupport
             error_log('WorkOrderSupport notification failed: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Inspect warehouse physical stock for requested spare parts.
+     * Evaluates whether all parts are available in warehouse, partial, or out of stock.
+     */
+    public static function checkPartsAvailability(PDO $db, array $items): array
+    {
+        if (empty($items)) {
+            return [
+                'all_available' => true,
+                'any_available' => false,
+                'summary_status' => 'EMPTY',
+                'items' => [],
+                'available_items' => [],
+                'deficit_items' => [],
+            ];
+        }
+
+        $allAvailable = true;
+        $anyAvailable = false;
+        $evaluatedItems = [];
+        $availableItems = [];
+        $deficitItems = [];
+
+        foreach ($items as $item) {
+            $partNum = trim((string) ($item['part_number'] ?? $item['partNumber'] ?? ''));
+            $desc = trim((string) ($item['description'] ?? ''));
+            $qtyReq = max(1, (int) ($item['qty'] ?? 1));
+            $isManual = !empty($item['is_manual']) || !empty($item['isManual']);
+            $uom = trim((string) ($item['uom'] ?? 'pcs')) ?: 'pcs';
+
+            $partRow = null;
+            if (!$isManual && $partNum !== '') {
+                $stmt = $db->prepare('SELECT part_id, part_number, part_name, unit_measure, stock_qty, min_stock_qty, location_warehouse FROM parts WHERE part_number = :pnum LIMIT 1');
+                $stmt->execute([':pnum' => $partNum]);
+                $partRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$partRow && is_numeric($partNum)) {
+                    $stmt = $db->prepare('SELECT part_id, part_number, part_name, unit_measure, stock_qty, min_stock_qty, location_warehouse FROM parts WHERE part_id = :pid LIMIT 1');
+                    $stmt->execute([':pid' => (int) $partNum]);
+                    $partRow = $stmt->fetch(PDO::FETCH_ASSOC);
+                }
+            }
+
+            $currentStock = $partRow ? (int) $partRow['stock_qty'] : 0;
+            $isAvailable = (!$isManual && $partRow && $currentStock >= $qtyReq);
+            $deficit = $isAvailable ? 0 : ($partRow ? max(0, $qtyReq - $currentStock) : $qtyReq);
+
+            $eval = [
+                'part_id' => $partRow ? (int) $partRow['part_id'] : null,
+                'part_number' => $partRow ? (string) $partRow['part_number'] : $partNum,
+                'part_name' => $partRow ? (string) $partRow['part_name'] : ($desc ?: 'Custom Part'),
+                'description' => $desc ?: ($partRow ? (string) $partRow['part_name'] : $partNum),
+                'unit_measure' => $partRow ? ((string) $partRow['unit_measure'] ?: $uom) : $uom,
+                'location_warehouse' => $partRow ? (string) $partRow['location_warehouse'] : 'Gudang Utama',
+                'requested_qty' => $qtyReq,
+                'stock_qty' => $currentStock,
+                'is_available' => $isAvailable,
+                'is_manual' => $isManual,
+                'deficit_qty' => $deficit,
+            ];
+
+            $evaluatedItems[] = $eval;
+            if ($isAvailable) {
+                $anyAvailable = true;
+                $availableItems[] = $eval;
+            } else {
+                $allAvailable = false;
+                $deficitItems[] = $eval;
+            }
+        }
+
+        $summaryStatus = $allAvailable
+            ? 'ALL_AVAILABLE'
+            : ($anyAvailable ? 'PARTIAL' : 'OUT_OF_STOCK');
+
+        return [
+            'all_available' => $allAvailable,
+            'any_available' => $anyAvailable,
+            'summary_status' => $summaryStatus,
+            'items' => $evaluatedItems,
+            'available_items' => $availableItems,
+            'deficit_items' => $deficitItems,
+        ];
+    }
+
+    /**
+     * Directly issue available spare parts from warehouse for a Work Order (BHW-OUT flow).
+     * Atomically deducts stock, creates inventory transactions, and links to the Work Order.
+     */
+    public static function issueDirectParts(
+        PDO $db,
+        string $woId,
+        string $assetId,
+        array $itemsToIssue,
+        ?int $actorId,
+        string $actorName
+    ): array {
+        if ($woId === '' || empty($itemsToIssue)) {
+            throw new InvalidArgumentException('ID Work Order dan daftar suku cadang yang dikeluarkan wajib diisi.');
+        }
+
+        // Generate UUID for report_id compliant with inventory_transactions foreign key
+        $reportId = sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            random_int(0, 0xffff), random_int(0, 0xffff),
+            random_int(0, 0xffff),
+            random_int(0x4000, 0x4fff),
+            random_int(0x8000, 0xbfff),
+            random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff)
+        );
+
+        $tplStmt = $db->prepare("SELECT template_id FROM report_templates WHERE template_key = 'bhw-out' LIMIT 1");
+        $tplStmt->execute();
+        $templateId = (int) $tplStmt->fetchColumn();
+        if ($templateId === 0) $templateId = 45;
+
+        $reportNumber = 'BHW-OUT/WO/' . $woId . '/' . date('ymdHis');
+        $db->prepare("
+            INSERT INTO report_records
+            (report_id, template_id, client_key, report_number, status, source_method, field_data, created_by, created_at, finalized_at)
+            VALUES (:rid, :tid, :ckey, :rnum, 'FINAL', 'wo_direct_issue', '{}', :actor, NOW(), NOW())
+        ")->execute([
+            ':rid' => $reportId,
+            ':tid' => $templateId,
+            ':ckey' => 'client-bhwout-' . substr(md5($reportId), 0, 12),
+            ':rnum' => $reportNumber,
+            ':actor' => $actorId ?: 1,
+        ]);
+
+        $issuedResults = [];
+        $position = 1;
+
+        foreach ($itemsToIssue as $item) {
+            $partNumber = (string) ($item['part_number'] ?? '');
+            $qty = max(1, (int) ($item['requested_qty'] ?? $item['qty'] ?? 1));
+
+            // Lock and verify stock
+            $pStmt = $db->prepare('SELECT * FROM parts WHERE part_number = :pnum FOR UPDATE');
+            $pStmt->execute([':pnum' => $partNumber]);
+            $part = $pStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$part && is_numeric($partNumber)) {
+                $pStmt = $db->prepare('SELECT * FROM parts WHERE part_id = :pid FOR UPDATE');
+                $pStmt->execute([':pid' => (int) $partNumber]);
+                $part = $pStmt->fetch(PDO::FETCH_ASSOC);
+            }
+
+            if (!$part) {
+                throw new OutOfBoundsException("Suku cadang {$partNumber} tidak ditemukan di master database parts.");
+            }
+
+            $currentStock = (int) ($part['stock_qty'] ?? 0);
+            if ($currentStock < $qty) {
+                throw new DomainException("Stok fisik {$part['part_name']} ({$part['part_number']}) tidak mencukupi saat proses pengeluaran! Tersedia: {$currentStock}, Diminta: {$qty}");
+            }
+
+            $stockAfter = $currentStock - $qty;
+
+            // Deduct stock
+            $db->prepare('UPDATE parts SET stock_qty = :stk WHERE part_id = :pid')
+               ->execute([':stk' => $stockAfter, ':pid' => (int) $part['part_id']]);
+
+            // Insert inventory transaction
+            $db->prepare("
+                INSERT INTO inventory_transactions
+                (report_id, report_item_position, movement_type, transaction_date,
+                 reference_number, counterparty, asset_id, wo_id, part_id, quantity, unit_measure,
+                 stock_before, stock_after, notes, created_by)
+                VALUES
+                (:report_id, :position, 'OUT', CURDATE(),
+                 :ref_num, :counterparty, :asset_id, :wo_id, :part_id, :quantity, :unit_measure,
+                 :stock_before, :stock_after, :notes, :created_by)
+            ")->execute([
+                ':report_id' => $reportId,
+                ':position' => $position++,
+                ':ref_num' => $reportNumber,
+                ':counterparty' => 'Gudang Yard KM 12',
+                ':asset_id' => $assetId,
+                ':wo_id' => $woId,
+                ':part_id' => (int) $part['part_id'],
+                ':quantity' => $qty,
+                ':unit_measure' => $part['unit_measure'] ?: 'Pcs',
+                ':stock_before' => $currentStock,
+                ':stock_after' => $stockAfter,
+                ':notes' => "Pengeluaran langsung suku cadang fisik untuk Work Order #{$woId} (Unit {$assetId})",
+                ':created_by' => $actorId,
+            ]);
+
+            $issuedResults[] = [
+                'partId' => (int) $part['part_id'],
+                'partNumber' => $part['part_number'],
+                'partName' => $part['part_name'],
+                'qtyIssued' => $qty,
+                'stockBefore' => $currentStock,
+                'stockAfter' => $stockAfter,
+            ];
+        }
+
+        return [
+            'reportId' => $reportId,
+            'reportNumber' => $reportNumber,
+            'woId' => $woId,
+            'assetId' => $assetId,
+            'itemsIssued' => $issuedResults,
+            'totalItems' => count($issuedResults),
+        ];
+    }
 }
 
 

@@ -124,6 +124,41 @@ Jangan menjalankan skenario ini pada akun bersama atau akun operasional.
 
 Gunakan DevTools Network pada request QA:
 
+> **Penting:** jangan memakai `fetch()` dari Console untuk uji token kosong/palsu.
+> `scripts/auth-client.js` membungkus `window.fetch` dan otomatis mengganti header
+> mutasi dengan token CSRF sesi yang valid. Gunakan `XMLHttpRequest` berikut agar
+> request yang diuji benar-benar dikirim tanpa token atau dengan token palsu.
+
+Saat login sebagai Administrator, uji tanpa token:
+
+```javascript
+(() => {
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/users.php');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onload = () => console.log('HTTP', xhr.status, xhr.responseText);
+  xhr.send(JSON.stringify({ action: 'create' }));
+})();
+```
+
+Hasil wajib: `HTTP 403` dengan kode `CSRF_INVALID`.
+
+Kemudian uji token palsu:
+
+```javascript
+(() => {
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/users.php');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('X-CSRF-Token', 'token-palsu-qa');
+  xhr.onload = () => console.log('HTTP', xhr.status, xhr.responseText);
+  xhr.send(JSON.stringify({ action: 'create' }));
+})();
+```
+
+Hasil wajib: `HTTP 403` dengan kode `CSRF_INVALID`. Respons `422` berarti token
+valid masih ikut terkirim atau pemeriksaan CSRF gagal dan skenario belum PASS.
+
 1. POST tanpa sesi harus 401/403.
 2. POST tanpa `X-CSRF-Token` atau dengan token salah harus 403.
 3. Non-admin mencoba create/toggle/delete harus 403 sebelum perubahan DB.
@@ -141,6 +176,12 @@ Gunakan DevTools Network pada request QA:
 SELECT COUNT(*) AS qa_user_remaining
 FROM users
 WHERE username LIKE 'QA-FINISH-USER-%';
+
+SELECT audit_id, action, actor_user_id, actor_username,
+       target_user_id, target_username, details_json, created_at
+FROM user_audit_trail
+WHERE target_username LIKE 'qa-finish-user-%'
+ORDER BY audit_id DESC;
 ```
 
 Gate F0 PASS apabila create, toggle, password sendiri, delete/soft-delete, CSRF, sesi, role/lokasi, refresh, dan audit seluruhnya terbukti.

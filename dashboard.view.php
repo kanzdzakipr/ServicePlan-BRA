@@ -7236,6 +7236,24 @@ try {
                 }
             }
 
+            async function fetchArchiveMarkersSafely() {
+                try {
+                    const auth = window.FleetAuthReady ? await window.FleetAuthReady : window.FleetAuth;
+                    const permissions = Array.isArray(auth?.user?.permissions) ? auth.user.permissions : [];
+                    const mayReadArchive = permissions.includes('*') || permissions.includes('archive.read');
+                    if (!mayReadArchive) {
+                        // Active-register APIs already exclude archived rows server-side. A role
+                        // without archive.read therefore needs no archive marker payload and must
+                        // not receive a misleading synchronization warning.
+                        return { status: 'success', data: [], permission_skipped: true };
+                    }
+                    return await fetchJsonSafely('api/archive.php');
+                } catch (error) {
+                    console.warn('Penanda arsip tidak dapat diverifikasi:', error.message || error);
+                    return null;
+                }
+            }
+
             function mapFuelApiRecord(f) {
                 const rateActual = parseFloat(f.calculated_lph) || 0;
                 const targetRate = parseFloat(f.baseline_lph) || 0;
@@ -7288,7 +7306,7 @@ try {
                         fetchJsonSafely('api/fuel_logs.php'),
                         fetchJsonSafely('api/pm_plans.php'),
                         fetchJsonSafely('api/tire_inspections.php'),
-                        fetchJsonSafely('api/archive.php'),
+                        fetchArchiveMarkersSafely(),
                         fetchJsonSafely('api/inspections.php'),
                         fetchJsonSafely('api/accidents.php')
                     ]);
@@ -13012,6 +13030,12 @@ try {
                     const isActive = Number(u.is_active) === 1;
                     const isSuperAdmin = Number(u.user_id) === 1 || u.username === 'admin';
                     const locName = u.assigned_location_name || '';
+                    const statusTitle = isSuperAdmin
+                        ? 'Administrator Utama tidak dapat dinonaktifkan'
+                        : (isActive ? 'Klik untuk menonaktifkan akun' : 'Klik untuk mengaktifkan akun');
+                    const statusAction = isSuperAdmin
+                        ? 'disabled aria-disabled="true"'
+                        : `onclick="toggleUserStatus(${u.user_id}, '${escapeHtml(u.username)}', ${isActive ? 1 : 0})"`;
 
                     return `
                         <tr style="border-bottom:1px solid #f1f5f9; background:#ffffff;">
@@ -13043,10 +13067,12 @@ try {
                                 `}
                             </td>
                             <td style="padding:10px 10px; text-align:center;">
-                                <span class="badge ${isActive ? 'badge-success' : 'badge-secondary'}" style="font-size:0.75rem; padding:3px 8px; ${isActive ? 'background:#dcfce7; color:#166534;' : 'background:#f1f5f9; color:#64748b;'}">
+                                <button type="button" class="badge ${isActive ? 'badge-success' : 'badge-secondary'}"
+                                    ${statusAction} title="${statusTitle}"
+                                    style="font-size:0.75rem; padding:4px 9px; border:1px solid ${isActive ? '#86efac' : '#cbd5e1'}; border-radius:999px; cursor:${isSuperAdmin ? 'not-allowed' : 'pointer'}; ${isActive ? 'background:#dcfce7; color:#166534;' : 'background:#f1f5f9; color:#64748b;'}">
                                     <i class="fa-solid fa-circle" style="font-size:0.5rem; margin-right:4px;"></i>
                                     ${isActive ? 'Aktif' : 'Nonaktif'}
-                                </span>
+                                </button>
                             </td>
                             <td style="padding:10px 12px; text-align:center;">
                                 <div style="display:inline-flex; gap:6px;">
@@ -13416,6 +13442,35 @@ try {
                     window.openRoleUsersModal(currentModalRoleId, currentModalRoleName);
                 } catch (err) {
                     alert('Kesalahan: ' + err.message);
+                }
+            };
+
+            window.toggleUserStatus = async function(userId, username, currentStatus) {
+                const actionLabel = Number(currentStatus) === 1 ? 'menonaktifkan' : 'mengaktifkan';
+                if (!confirm(`Apakah Anda yakin ingin ${actionLabel} akun '${username}'?`)) return;
+
+                try {
+                    const csrf = await getCsrfToken();
+                    const res = await fetch('api/users.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrf
+                        },
+                        body: JSON.stringify({
+                            action: 'toggle_status',
+                            user_id: userId
+                        })
+                    });
+                    const json = await res.json();
+                    if (!res.ok || json.status !== 'success') {
+                        throw new Error(json.message || 'Gagal mengubah status pengguna.');
+                    }
+
+                    alert(json.message || 'Status pengguna berhasil diperbarui.');
+                    await window.openRoleUsersModal(currentModalRoleId, currentModalRoleName);
+                } catch (err) {
+                    alert('Kesalahan: ' + (err.message || 'Status pengguna gagal diperbarui.'));
                 }
             };
 

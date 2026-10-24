@@ -7,6 +7,31 @@ require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
 $db = Database::getInstance();
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
+function recordUserAudit(PDO $db, string $action, array $target, array $details = []): void
+{
+    $actor = api_current_user();
+    $actorUsername = trim((string) ($actor['username'] ?? 'unknown'));
+    $targetUsername = trim((string) ($target['username'] ?? 'unknown'));
+    $detailsJson = $details === []
+        ? null
+        : json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+    $stmt = $db->prepare('
+        INSERT INTO user_audit_trail
+            (action, actor_user_id, actor_username, target_user_id, target_username, details_json, created_at)
+        VALUES
+            (:action, :actor_user_id, :actor_username, :target_user_id, :target_username, :details_json, NOW())
+    ');
+    $stmt->execute([
+        ':action' => strtoupper(trim($action)),
+        ':actor_user_id' => isset($actor['id']) ? (int) $actor['id'] : null,
+        ':actor_username' => $actorUsername !== '' ? $actorUsername : 'unknown',
+        ':target_user_id' => isset($target['user_id']) ? (int) $target['user_id'] : null,
+        ':target_username' => $targetUsername !== '' ? $targetUsername : 'unknown',
+        ':details_json' => $detailsJson,
+    ]);
+}
+
 try {
     switch ($method) {
         case 'GET':
@@ -191,6 +216,16 @@ try {
                     // Ignore if user_roles does not exist or duplicate
                 }
 
+                recordUserAudit($db, 'CREATE', [
+                    'user_id' => $newUserId,
+                    'username' => $username,
+                ], [
+                    'full_name' => $fullName,
+                    'role_id' => $roleId,
+                    'assigned_location_id' => $assignedLocationId,
+                    'is_active' => 1,
+                ]);
+
                 $db->commit();
 
                 $locInfo = $locationData ? " (Lokasi: {$locationData['location_name']})" : "";
@@ -257,8 +292,13 @@ try {
                 }
 
                 $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
+                $db->beginTransaction();
                 $updateStmt = $db->prepare('UPDATE users SET password_hash = :hash WHERE user_id = :id');
                 $updateStmt->execute([':hash' => $newHash, ':id' => $userId]);
+                recordUserAudit($db, 'CHANGE_PASSWORD', $user, [
+                    'self_service' => $userId === $currentAuthId,
+                ]);
+                $db->commit();
 
                 api_json_response(200, [
                     'status' => 'success',
@@ -301,6 +341,9 @@ try {
                     $db->beginTransaction();
                     $db->prepare('DELETE FROM user_roles WHERE user_id = :id')->execute([':id' => $userId]);
                     $db->prepare('DELETE FROM users WHERE user_id = :id')->execute([':id' => $userId]);
+                    recordUserAudit($db, 'DELETE', $user, [
+                        'delete_mode' => 'hard',
+                    ]);
                     $db->commit();
 
                     api_json_response(200, [
@@ -313,8 +356,14 @@ try {
                     }
                     // MySQL 1451 is foreign key constraint violation
                     if (str_contains($e->getMessage(), '1451') || $e->getCode() === '23000') {
+                        $db->beginTransaction();
                         $deactStmt = $db->prepare('UPDATE users SET is_active = 0 WHERE user_id = :id');
                         $deactStmt->execute([':id' => $userId]);
+                        recordUserAudit($db, 'DELETE', $user, [
+                            'delete_mode' => 'soft',
+                            'is_active' => 0,
+                        ]);
+                        $db->commit();
                         api_json_response(200, [
                             'status' => 'success',
                             'message' => "Pengguna '{$user['username']}' memiliki rekam jejak operasional, sehingga akun telah dinonaktifkan (soft delete) untuk menjaga integritas data audit."
@@ -337,15 +386,21 @@ try {
                     api_json_response(404, ['status' => 'error', 'message' => 'Pengguna tidak ditemukan.']);
                 }
 
-                if ($userId === 1) {
+                if ($userId === 1 || strtolower((string) $user['username']) === 'admin') {
                     api_json_response(403, ['status' => 'error', 'message' => 'Akun Administrator Utama tidak boleh dinonaktifkan.']);
                 }
 
                 $newStatus = ((int) $user['is_active']) === 1 ? 0 : 1;
+                $db->beginTransaction();
                 $db->prepare('UPDATE users SET is_active = :status WHERE user_id = :id')->execute([
                     ':status' => $newStatus,
                     ':id' => $userId
                 ]);
+                recordUserAudit($db, 'TOGGLE_STATUS', $user, [
+                    'previous_is_active' => (int) $user['is_active'],
+                    'new_is_active' => $newStatus,
+                ]);
+                $db->commit();
 
                 $statusLabel = $newStatus === 1 ? 'diaktifkan' : 'dinonaktifkan';
                 api_json_response(200, [

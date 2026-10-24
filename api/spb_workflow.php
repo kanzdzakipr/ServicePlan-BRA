@@ -16,16 +16,16 @@ if ($method === 'GET') {
             api_json_response(422, ['status' => 'error', 'message' => 'Nomor SPB tidak valid.']);
         }
         $detailSql = 'SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.requested_by,
-                             pr.requested_at, pr.status, pr.urgency, pr.notes,
+                             pr.requested_at, pr.status, pr.urgency, pr.spb_type, pr.notes,
                              u.full_name AS requester_name, l.location_name,
                              (SELECT ap.status FROM approvals ap WHERE ap.document_type = \'SPB\'
                               AND ap.document_id = pr.spb_id ORDER BY ap.approval_id DESC LIMIT 1) AS approval_status
                       FROM purchase_requests pr
-                      INNER JOIN assets a ON a.asset_id = pr.asset_id
+                      LEFT JOIN assets a ON a.asset_id = pr.asset_id
                       LEFT JOIN users u ON u.user_id = pr.requested_by
                       LEFT JOIN locations l ON l.location_id = a.current_location_id
                       WHERE pr.spb_id = :spb_id';
-        if ($scope['sql'] !== '') $detailSql .= ' AND ' . $scope['sql'];
+        if ($scope['sql'] !== '') $detailSql .= ' AND (pr.asset_id IS NULL OR ' . $scope['sql'] . ')';
         $detail = $db->prepare($detailSql . ' LIMIT 1');
         $detail->execute(array_merge([':spb_id' => $requestedSpbId], $scope['params']));
         $document = $detail->fetch(PDO::FETCH_ASSOC);
@@ -34,15 +34,15 @@ if ($method === 'GET') {
         }
         $items = $db->prepare('SELECT pri.id, pri.part_number, pri.description, pri.qty_requested,
                                       pri.status, COALESCE(p.unit_measure, \'PCS\') AS unit_measure
-                               FROM purchase_request_items pri
-                               LEFT JOIN parts p ON p.part_number = pri.part_number
-                               WHERE pri.spb_id = :spb_id ORDER BY pri.id');
+                                FROM purchase_request_items pri
+                                LEFT JOIN parts p ON p.part_number = pri.part_number
+                                WHERE pri.spb_id = :spb_id ORDER BY pri.id');
         $items->execute([':spb_id' => $requestedSpbId]);
         $document['items'] = $items->fetchAll(PDO::FETCH_ASSOC);
         api_json_response(200, ['status' => 'success', 'data' => $document]);
     }
     $sql = "SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.requested_by, pr.requested_at,
-                   pr.status, pr.urgency, pr.notes, u.full_name AS requester_name,
+                   pr.status, pr.urgency, pr.spb_type, pr.notes, u.full_name AS requester_name,
                    COUNT(pri.id) AS item_count, COALESCE(SUM(pri.qty_requested), 0) AS total_quantity,
                    (SELECT ap.status FROM approvals ap WHERE ap.document_type = 'SPB'
                     AND ap.document_id = pr.spb_id ORDER BY ap.approval_id DESC LIMIT 1) AS approval_status,
@@ -50,12 +50,12 @@ if ($method === 'GET') {
                     WHERE rpri.spb_id = pr.spb_id AND rpri.reversed_at IS NULL
                     ORDER BY rpri.integration_id DESC LIMIT 1) AS source_report_id
             FROM purchase_requests pr
-            INNER JOIN assets a ON a.asset_id = pr.asset_id
+            LEFT JOIN assets a ON a.asset_id = pr.asset_id
             LEFT JOIN users u ON u.user_id = pr.requested_by
             LEFT JOIN purchase_request_items pri ON pri.spb_id = pr.spb_id";
-    if ($scope['sql'] !== '') $sql .= ' WHERE ' . $scope['sql'];
+    if ($scope['sql'] !== '') $sql .= ' WHERE (pr.asset_id IS NULL OR ' . $scope['sql'] . ')';
     $sql .= ' GROUP BY pr.spb_id, pr.wo_id, pr.asset_id, pr.requested_by, pr.requested_at,
-              pr.status, pr.urgency, pr.notes, u.full_name
+              pr.status, pr.urgency, pr.spb_type, pr.notes, u.full_name
               ORDER BY pr.requested_at DESC, pr.spb_id DESC LIMIT 500';
     $stmt = $db->prepare($sql);
     $stmt->execute($scope['params']);
@@ -96,6 +96,89 @@ if (strtolower(trim((string) ($input['action'] ?? ''))) === 'void') {
 }
 
 $action = strtolower(trim((string) ($input['action'] ?? '')));
+if ($action === 'create') {
+    api_require_permission('logistics.write');
+    $spbId = trim((string) ($input['spbId'] ?? $input['spb_id'] ?? ''));
+    if ($spbId === '') {
+        $year = date('y');
+        $month = date('m');
+        $spbId = sprintf('SPB-%s%s-%04d', $year, $month, random_int(1000, 9999));
+    }
+    $woId = !empty($input['woId']) ? trim((string) $input['woId']) : (!empty($input['wo_id']) ? trim((string) $input['wo_id']) : null);
+    $assetId = !empty($input['assetId']) ? trim((string) $input['assetId']) : (!empty($input['asset_id']) ? trim((string) $input['asset_id']) : null);
+    if ($assetId !== null) {
+        api_require_asset_access($db, $assetId);
+    }
+    $urgency = in_array((string) ($input['urgency'] ?? ''), ['Normal', 'Emergency'], true) ? (string) $input['urgency'] : 'Normal';
+    $spbType = in_array((string) ($input['spbType'] ?? $input['spb_type'] ?? ''), ['NORMAL', 'EMERGENCY'], true)
+        ? (string) ($input['spbType'] ?? $input['spb_type'])
+        : ($woId ? 'EMERGENCY' : 'NORMAL');
+    $notes = trim((string) ($input['notes'] ?? ''));
+    $items = (array) ($input['items'] ?? []);
+
+    if (empty($items)) {
+        api_json_response(422, ['status' => 'error', 'message' => 'Daftar item suku cadang pada SPB wajib diisi.']);
+    }
+
+    try {
+        $db->beginTransaction();
+        $actorId = (int) (api_current_user()['id'] ?? 1);
+
+        $db->prepare("
+            INSERT INTO purchase_requests
+            (spb_id, wo_id, asset_id, requested_by, urgency, spb_type, status, notes, requested_at)
+            VALUES (:spb_id, :wo_id, :asset_id, :requested_by, :urgency, :spb_type, 'Submitted', :notes, NOW())
+        ")->execute([
+            ':spb_id' => $spbId,
+            ':wo_id' => $woId,
+            ':asset_id' => $assetId,
+            ':requested_by' => $actorId,
+            ':urgency' => $urgency,
+            ':spb_type' => $spbType,
+            ':notes' => $notes ?: null,
+        ]);
+
+        $itemStmt = $db->prepare("
+            INSERT INTO purchase_request_items
+            (id, spb_id, part_number, description, qty_requested, status)
+            VALUES (:id, :spb_id, :part_number, :description, :qty_requested, 'Submitted')
+        ");
+
+        foreach ($items as $idx => $p) {
+            $itemId = sprintf('SPBI-%s-%02d', substr(md5($spbId), 0, 8), $idx + 1);
+            $partNumber = trim((string) ($p['part_number'] ?? $p['partNumber'] ?? 'CUSTOM'));
+            $desc = trim((string) ($p['description'] ?? $p['nama'] ?? $partNumber));
+            $qty = max(1, (int) ($p['qty'] ?? $p['qty_requested'] ?? 1));
+
+            $itemStmt->execute([
+                ':id' => $itemId,
+                ':spb_id' => $spbId,
+                ':part_number' => $partNumber ?: 'CUSTOM',
+                ':description' => mb_substr($desc, 0, 255),
+                ':qty_requested' => $qty,
+            ]);
+        }
+
+        $db->commit();
+        api_json_response(200, [
+            'status' => 'success',
+            'message' => "SPB #{$spbId} ({$spbType}) berhasil dibuat.",
+            'data' => [
+                'spbId' => $spbId,
+                'spbType' => $spbType,
+                'woId' => $woId,
+                'assetId' => $assetId,
+                'status' => 'Submitted',
+                'itemCount' => count($items),
+            ]
+        ]);
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        error_log('Create SPB failed: ' . $e->getMessage());
+        api_json_response(500, ['status' => 'error', 'message' => 'Gagal membuat SPB: ' . $e->getMessage()]);
+    }
+}
+
 if ($action === 'issue_parts' || $action === 'issue') {
     api_require_permission('logistics.write');
     $spbId = trim((string) ($input['spbId'] ?? $input['spb_id'] ?? ''));

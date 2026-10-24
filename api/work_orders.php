@@ -203,6 +203,13 @@ if (!defined('API_SKIP_ROUTING') || API_SKIP_ROUTING !== true) {
 switch ($method) {
     case 'GET':
         AuthMiddleware::checkAccess('wo', 'R');
+        if ((string) ($_GET['action'] ?? '') === 'check-parts-stock') {
+            $partNumber = trim((string) ($_GET['part_number'] ?? ''));
+            $qty = max(1, (int) ($_GET['qty'] ?? 1));
+            $items = $partNumber !== '' ? [['part_number' => $partNumber, 'qty' => $qty]] : [];
+            $availability = WorkOrderSupport::checkPartsAvailability($db, $items);
+            api_json_response(200, ['status' => 'success', 'data' => $availability]);
+        }
         $scope = api_location_scope_clause('a', 'wo_list_location_id');
         $select = "SELECT w.*, a.asset_code, a.category AS asset_category,
                           TIMESTAMPDIFF(MINUTE, w.reported_at, COALESCE(w.closed_at, NOW())) AS handling_duration_minutes,
@@ -256,6 +263,13 @@ switch ($method) {
     case 'POST':
         if ((string) ($_GET['action'] ?? '') === 'upload-photo') {
             wo_upload_before_photo($db);
+        }
+        if ((string) ($_GET['action'] ?? '') === 'check-parts-stock') {
+            AuthMiddleware::checkAccess('wo', 'R');
+            $data = json_decode(file_get_contents('php://input'), true);
+            $items = is_array($data['items'] ?? null) ? $data['items'] : (is_array($data['parts_items'] ?? null) ? $data['parts_items'] : []);
+            $availability = WorkOrderSupport::checkPartsAvailability($db, $items);
+            api_json_response(200, ['status' => 'success', 'data' => $availability]);
         }
         AuthMiddleware::checkAccess('wo', 'C');
         $data = json_decode(file_get_contents('php://input'), true);
@@ -391,74 +405,113 @@ switch ($method) {
             }
             wo_insert_timeline($db, (string) $data['wo_id'], 'CREATED', null, $status, 'Work Order dibuat', $timelineDescription);
 
-            // Integrated Draft SPB creation if parts are specified
+            // Integrated Parts flow: Check warehouse stock -> Direct Issue (BHW-OUT) or Emergency SPB
             $createdSpbId = null;
+            $directIssueResult = null;
+            $partsAvailability = null;
             $actor = wo_actor();
+
             if (!empty($validPartsItems)) {
-                $year = date('y');
-                $month = date('m');
-                $createdSpbId = sprintf('SPB-%s%s-%04d', $year, $month, random_int(1000, 9999));
-                $spbUrgency = in_array($priority, ['Emergency', 'High'], true) ? 'Emergency' : 'Normal';
+                $partsAvailability = WorkOrderSupport::checkPartsAvailability($db, $validPartsItems);
 
-                $stmtSpb = $db->prepare(
-                    'INSERT INTO purchase_requests
-                     (spb_id, wo_id, asset_id, requested_by, urgency, status, notes, requested_at)
-                     VALUES (:spb_id, :wo_id, :asset_id, :requested_by, :urgency, :status, :notes, NOW())'
-                );
-                $stmtSpb->execute([
-                    ':spb_id' => $createdSpbId,
-                    ':wo_id' => (string) $data['wo_id'],
-                    ':asset_id' => (string) $data['asset_id'],
-                    ':requested_by' => (int) ($actor['id'] ?? 1),
-                    ':urgency' => $spbUrgency,
-                    ':status' => 'Submitted',
-                    ':notes' => $partsNote ?: $issue,
-                ]);
+                if ($partsAvailability['all_available']) {
+                    // Kondisi A: Seluruh suku cadang tersedia di gudang!
+                    // Langsung terbitkan pengeluaran barang fisik BHW-OUT dan potong stok
+                    $directIssueResult = WorkOrderSupport::issueDirectParts(
+                        $db,
+                        (string) $data['wo_id'],
+                        (string) $data['asset_id'],
+                        $partsAvailability['available_items'],
+                        $actor['id'],
+                        $actor['name']
+                    );
 
-                $stmtSpbItem = $db->prepare(
-                    'INSERT INTO purchase_request_items
-                     (id, spb_id, part_number, description, qty_requested, status)
-                     VALUES (:id, :spb_id, :part_number, :description, :qty_requested, :status)'
-                );
-                foreach ($validPartsItems as $idx => $p) {
-                    $itemId = sprintf('SPBI-%s-%02d', substr(md5($createdSpbId), 0, 8), $idx + 1);
-                    $stmtSpbItem->execute([
-                        ':id' => $itemId,
-                        ':spb_id' => $createdSpbId,
-                        ':part_number' => $p['part_number'] ?: 'CUSTOM',
-                        ':description' => mb_substr($p['description'], 0, 255),
-                        ':qty_requested' => $p['qty'],
-                        ':status' => 'Submitted',
-                    ]);
-                }
-
-                // If WO was Open, automatically transition to Waiting Part because active SPB is submitted
-                if ($status === 'Open') {
-                    $updWo = $db->prepare("UPDATE work_orders SET status = 'Waiting Part', parts_requirement = 'REQUIRED', parts_requirement_note = :note WHERE wo_id = :wo_id");
+                    // Perbarui catatan kebutuhan part pada WO
+                    $partsNoteWithIssue = ($partsNote ? $partsNote . "\n" : '') .
+                        "✓ Dikeluarkan langsung dari gudang via BHW-OUT #{$directIssueResult['reportNumber']}";
+                    $updWo = $db->prepare("UPDATE work_orders SET parts_requirement = 'REQUIRED', parts_requirement_note = :note WHERE wo_id = :wo_id");
                     $updWo->execute([
-                        ':note' => $partsNote,
-                        ':wo_id' => (string) $data['wo_id']
+                        ':note' => $partsNoteWithIssue,
+                        ':wo_id' => (string) $data['wo_id'],
                     ]);
+
                     wo_insert_timeline(
                         $db,
                         (string) $data['wo_id'],
-                        'STATUS_CHANGE',
-                        'Open',
-                        'Waiting Part',
-                        'Status otomatis: Waiting Part',
-                        "Status dialihkan ke Waiting Part karena terdapat kebutuhan suku cadang aktif (SPB #{$createdSpbId})."
+                        'PARTS_ISSUED',
+                        null,
+                        $status,
+                        'Suku Cadang Dikeluarkan Langsung (Gudang)',
+                        "Seluruh kebutuhan suku cadang ({$directIssueResult['totalItems']} item) tersedia di gudang dan telah dikeluarkan untuk perbaikan via BHW-OUT #{$directIssueResult['reportNumber']}."
                     );
-                    $status = 'Waiting Part';
                 } else {
-                    wo_insert_timeline(
-                        $db,
-                        (string) $data['wo_id'],
-                        'NOTE',
-                        null,
-                        null,
-                        'Pengajuan SPB Unit',
-                        "Kebutuhan suku cadang diajukan ke logistik melalui SPB #{$createdSpbId}."
+                    // Kondisi B: Suku cadang kosong atau kurang!
+                    // Terbitkan SPB Darurat linked ke nomor WO ini
+                    $year = date('y');
+                    $month = date('m');
+                    $createdSpbId = sprintf('SPB-%s%s-%04d', $year, $month, random_int(1000, 9999));
+                    $spbUrgency = in_array($priority, ['Emergency', 'High'], true) ? 'Emergency' : 'Normal';
+
+                    $stmtSpb = $db->prepare(
+                        'INSERT INTO purchase_requests
+                         (spb_id, wo_id, asset_id, requested_by, urgency, spb_type, status, notes, requested_at)
+                         VALUES (:spb_id, :wo_id, :asset_id, :requested_by, :urgency, "EMERGENCY", :status, :notes, NOW())'
                     );
+                    $stmtSpb->execute([
+                        ':spb_id' => $createdSpbId,
+                        ':wo_id' => (string) $data['wo_id'],
+                        ':asset_id' => (string) $data['asset_id'],
+                        ':requested_by' => (int) ($actor['id'] ?? 1),
+                        ':urgency' => $spbUrgency,
+                        ':status' => 'Submitted',
+                        ':notes' => $partsNote ?: $issue,
+                    ]);
+
+                    $stmtSpbItem = $db->prepare(
+                        'INSERT INTO purchase_request_items
+                         (id, spb_id, part_number, description, qty_requested, status)
+                         VALUES (:id, :spb_id, :part_number, :description, :qty_requested, :status)'
+                    );
+                    foreach ($validPartsItems as $idx => $p) {
+                        $itemId = sprintf('SPBI-%s-%02d', substr(md5($createdSpbId), 0, 8), $idx + 1);
+                        $stmtSpbItem->execute([
+                            ':id' => $itemId,
+                            ':spb_id' => $createdSpbId,
+                            ':part_number' => $p['part_number'] ?: 'CUSTOM',
+                            ':description' => mb_substr($p['description'], 0, 255),
+                            ':qty_requested' => $p['qty'],
+                            ':status' => 'Submitted',
+                        ]);
+                    }
+
+                    // Alihkan status WO ke Waiting Part karena suku cadang menunggu pengadaan
+                    if ($status === 'Open') {
+                        $updWo = $db->prepare("UPDATE work_orders SET status = 'Waiting Part', parts_requirement = 'REQUIRED', parts_requirement_note = :note WHERE wo_id = :wo_id");
+                        $updWo->execute([
+                            ':note' => $partsNote,
+                            ':wo_id' => (string) $data['wo_id']
+                        ]);
+                        wo_insert_timeline(
+                            $db,
+                            (string) $data['wo_id'],
+                            'STATUS_CHANGE',
+                            'Open',
+                            'Waiting Part',
+                            'Status otomatis: Waiting Part',
+                            "Status dialihkan ke Waiting Part karena suku cadang tidak mencukupi di gudang. Diajukan SPB Darurat #{$createdSpbId}."
+                        );
+                        $status = 'Waiting Part';
+                    } else {
+                        wo_insert_timeline(
+                            $db,
+                            (string) $data['wo_id'],
+                            'NOTE',
+                            null,
+                            null,
+                            'Pengajuan SPB Darurat Unit',
+                            "Kebutuhan suku cadang darurat diajukan ke logistik melalui SPB #{$createdSpbId}."
+                        );
+                    }
                 }
             }
 
@@ -483,6 +536,8 @@ switch ($method) {
                     'assetStatus' => $ticket['asset_status'],
                     'isForcedOperation' => (bool) $ticket['is_forced_operation'],
                     'createdSpbId' => $createdSpbId,
+                    'directIssue' => $directIssueResult,
+                    'partsAvailability' => $partsAvailability,
                 ],
             ]);
         } catch (InvalidArgumentException $e) {
