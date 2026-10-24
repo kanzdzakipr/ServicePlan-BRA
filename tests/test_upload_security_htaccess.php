@@ -20,7 +20,7 @@ define('API_AUTH_OPTIONAL', true);
 require_once dirname(__DIR__) . '/api/db.php';
 
 $testsPassed = 0;
-$totalTests = 9;
+$totalTests = 11;
 
 echo "====================================================================\n";
 echo "TEST SUITE: UPLOAD SECURITY & .HTACCESS HARDENING\n";
@@ -126,10 +126,34 @@ runAssert(
 $syncScript = file_get_contents($rootDir . '/scripts/sync_to_laragon.ps1');
 $hasUploadsSync = strpos($syncScript, '$targetUploads = Join-Path $destDir \'uploads\'') !== false;
 $hasHtaccessCopy = strpos($syncScript, 'Copy-Item -Path $sHt -Destination $tHt') !== false;
+$hasEvidenceInSync = strpos($syncScript, "'evidence'") !== false;
 runAssert(
     "9. Laragon Sync Script .htaccess & uploads Propagation",
-    $hasUploadsSync && $hasHtaccessCopy,
-    "Automated uploads and .htaccess deployment logic verified"
+    $hasUploadsSync && $hasHtaccessCopy && $hasEvidenceInSync,
+    "Automated uploads and .htaccess deployment logic verified (evidence included: " . ($hasEvidenceInSync ? 'YES' : 'NO') . ")"
+);
+
+// Test 10: uploads/evidence/.htaccess configuration
+$evHtPath = $rootDir . '/uploads/evidence/.htaccess';
+$evHtExists = file_exists($evHtPath);
+$evHtContent = $evHtExists ? file_get_contents($evHtPath) : '';
+$evHasDeny = strpos($evHtContent, 'Require all denied') !== false;
+$evHasScriptBlock = (bool) preg_match('/<FilesMatch.*php/i', $evHtContent);
+runAssert(
+    "10. Evidence uploads/evidence/.htaccess Hardening",
+    $evHtExists && $evHasDeny && $evHasScriptBlock,
+    "Script block: " . ($evHasScriptBlock ? 'YES' : 'NO') . ", Require all denied: " . ($evHasDeny ? 'YES' : 'NO')
+);
+
+// Test 11: Reports evidence upload and view-evidence proxy in api/reports.php
+$repCode = file_get_contents($rootDir . '/api/reports.php');
+$hasRepAutoCreate = strpos($repCode, '$deny = $evidenceDir . DIRECTORY_SEPARATOR . \'.htaccess\';') !== false;
+$hasViewEvidence = strpos($repCode, 'action === \'view-evidence\'') !== false;
+$hasUploadEvidence = strpos($repCode, 'upload-evidence') !== false;
+runAssert(
+    "11. Reports Evidence Decoupled Upload & Secure Proxy",
+    $hasRepAutoCreate && $hasViewEvidence && $hasUploadEvidence,
+    "Auto-create: " . ($hasRepAutoCreate ? 'YES' : 'NO') . ", View-Evidence: " . ($hasViewEvidence ? 'YES' : 'NO') . ", Upload-Evidence: " . ($hasUploadEvidence ? 'YES' : 'NO')
 );
 
 echo "\n--------------------------------------------------------------------\n";
@@ -143,3 +167,4 @@ if ($testsPassed === $totalTests) {
     echo ">>> STATUS: SOME CHECKS FAILED <<<\n";
     exit(1);
 }
+

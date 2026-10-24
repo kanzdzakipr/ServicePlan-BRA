@@ -4216,9 +4216,52 @@
       showToast("Ukuran file sumber maksimal 8 MB per item.", true);
       return;
     }
+    const rowIndex = Number(input.dataset.evidenceRow);
+    const parentContainer = input.closest(".evidence-control");
+    if (parentContainer) {
+      parentContainer.innerHTML =
+        '<div style="padding:10px; font-size:0.75rem; color:#0284c7;"><i class="fa-solid fa-spinner fa-spin"></i> Mengunggah bukti...</div>';
+    }
+
     try {
-      const rowIndex = Number(input.dataset.evidenceRow);
-      activeDraft.rows[rowIndex]._evidence = await readImage(file);
+      // 1. Decoupled Upload to Backend Server (Eliminates Base64 Database Bloat)
+      const formData = new FormData();
+      formData.append("action", "upload-evidence");
+      formData.append("evidence", file);
+
+      let uploadResult = null;
+      try {
+        const response = await fetch("api/reports.php?action=upload-evidence", {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+        });
+        const json = await response.json().catch(() => null);
+        if (response.ok && json && json.status === "success" && json.data?.url) {
+          uploadResult = json.data;
+        }
+      } catch (netErr) {
+        console.warn("Upload bukti via API gagal, fallback lokal:", netErr);
+      }
+
+      if (uploadResult && uploadResult.url) {
+        // High-efficiency server-stored URL: only ~50 chars in JSON!
+        activeDraft.rows[rowIndex]._evidence = {
+          name: file.name,
+          type: uploadResult.mime || file.type,
+          size: uploadResult.size || file.size,
+          width: uploadResult.width || null,
+          height: uploadResult.height || null,
+          url: uploadResult.url,
+          dataUrl: uploadResult.url, // 100% backward-compatible with all template rendering
+          caption: activeDraft.rows[rowIndex]._evidence?.caption || "",
+          uploadedAt: new Date().toISOString(),
+        };
+      } else {
+        // Fallback to client-side readImage if server upload fails (e.g. offline)
+        activeDraft.rows[rowIndex]._evidence = await readImage(file);
+      }
+
       if (!saveDraft()) {
         delete activeDraft.rows[rowIndex]._evidence;
         showToast(
@@ -4231,6 +4274,7 @@
       renderRows();
       showToast("Gambar bukti berhasil dilampirkan.");
     } catch (error) {
+      renderRows();
       if (error?.code === "LOW_RESOLUTION") {
         showToast(
           `Resolusi ${error.width}×${error.height}px terlalu kecil. Gunakan minimal HD 1280×720px.`,
@@ -4241,6 +4285,7 @@
       }
     }
   }
+
 
   function renderFields() {
     return activeSchema.fields

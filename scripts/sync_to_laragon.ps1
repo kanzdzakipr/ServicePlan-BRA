@@ -166,7 +166,7 @@ $htaccessNew = $htaccessBase.TrimEnd("`r", "`n") + "`r`n" + $localEnvironmentBlo
 # Ensure uploads directories and security .htaccess files exist in Laragon webroot
 $targetUploads = Join-Path $destDir 'uploads'
 $sourceUploads = Join-Path $srcDir 'uploads'
-$uploadSubdirs = @('', 'assets', 'work_orders')
+$uploadSubdirs = @('', 'assets', 'work_orders', 'evidence')
 foreach ($sub in $uploadSubdirs) {
     $tDir = if ($sub) { Join-Path $targetUploads $sub } else { $targetUploads }
     $sDir = if ($sub) { Join-Path $sourceUploads $sub } else { $sourceUploads }
