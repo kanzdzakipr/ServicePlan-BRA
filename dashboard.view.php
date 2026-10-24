@@ -8033,6 +8033,10 @@ try {
                 // Populate all active WOs from the same database payload as the WO view.
                 const activeWos = data.work_orders.filter(wo => wo.status !== 'Closed');
                 setupDashboardWoList(activeWos);
+
+                if (typeof window.initExecutiveAnalyticsPanels === 'function') {
+                    window.initExecutiveAnalyticsPanels();
+                }
             }
 
             let currentStatusDetailList = [];
