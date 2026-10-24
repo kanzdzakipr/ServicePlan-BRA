@@ -188,7 +188,12 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 3: Preventive Maintenance, Greasing Hauling & Battery Health Logs
+### 📦 BATCH 3: Preventive Maintenance, Greasing Hauling & Battery Health Logs `[SELESAI & TERVERIFIKASI - 25 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (11/11 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch3_pm_grease_battery.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch3_pm_grease_battery.php)  
+> **Skrip Verifikasi:** [`tests/test_batch3_pm_grease_battery.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch3_pm_grease_battery.php)  
+> **Hasil:** Tabel `grease_logs` terisi **25 log pelumasan** mingguan hauling (23 unit dump truck, Minggu 1 & 2) dengan titik pelumasan JSON terstruktur. Tabel `battery_logs` terisi **12 log kondisi baterai baru** (6 transaksi BKTBI dari `05_05` + 6 penggantian aki riil dari WO breakdown). Tabel `assets` dan `pm_plans` tersinkronisasi untuk 13 unit RSV1 dengan status dinamis (`OVERDUE`, `DUE_SOON`), interval KM/HM, dan tanggal jatuh tempo servis.
 
 #### 1. Tujuan & Sasaran Tabel
 - Mengisi tabel `grease_logs` (saat ini 0 baris) dengan 23 log greasing mingguan hauling.
