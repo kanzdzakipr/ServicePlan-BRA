@@ -49,17 +49,17 @@ try {
     // 0. Setup test asset and parts
     $db->prepare("INSERT INTO assets (asset_id, asset_code, category, status, current_location_id) 
                   VALUES (:id, :code, 'Dump Truck', 'BREAKDOWN', 1)")
-       ->execute([':id' => $testAssetId, ':code' => $testAssetId]);
+        ->execute([':id' => $testAssetId, ':code' => $testAssetId]);
 
     // Part A: Stock 20
     $db->prepare("INSERT INTO parts (part_number, part_name, category, unit_measure, stock_qty, min_stock_qty, location_warehouse)
                   VALUES (:pnum, 'Test Available Part', 'Filter', 'Pcs', 20, 5, 'Gudang Yard KM 12')")
-       ->execute([':pnum' => $testPartNumA]);
+        ->execute([':pnum' => $testPartNumA]);
 
     // Part B: Stock 0
     $db->prepare("INSERT INTO parts (part_number, part_name, category, unit_measure, stock_qty, min_stock_qty, location_warehouse)
                   VALUES (:pnum, 'Test Empty Part', 'Hydraulic', 'Pcs', 0, 2, 'Gudang Yard KM 12')")
-       ->execute([':pnum' => $testPartNumB]);
+        ->execute([':pnum' => $testPartNumB]);
 
     // -------------------------------------------------------------------------
     // TEST 1: checkPartsAvailability evaluates physical stock
@@ -86,7 +86,7 @@ try {
     // Create WO A (Emergency breakdown)
     $db->prepare("INSERT INTO work_orders (wo_id, asset_id, status, priority, maintenance_type, parts_requirement, issue_description, reported_at)
                   VALUES (:wo_id, :asset_id, 'Open', 'Emergency', 'Emergency', 'REQUIRED', 'Kerusakan mendesak part tersedia', NOW())")
-       ->execute([':wo_id' => $testWoIdA, ':asset_id' => $testAssetId]);
+        ->execute([':wo_id' => $testWoIdA, ':asset_id' => $testAssetId]);
 
     // Directly issue parts via WorkOrderSupport::issueDirectParts
     $directIssue = WorkOrderSupport::issueDirectParts(
@@ -126,26 +126,26 @@ try {
     // In Alur Emergency, the Work Order is created first!
     $db->prepare("INSERT INTO work_orders (wo_id, asset_id, status, priority, maintenance_type, parts_requirement, issue_description, reported_at)
                   VALUES (:wo_id, :asset_id, 'Waiting Part', 'Emergency', 'Emergency', 'REQUIRED', 'Kerusakan mendesak', NOW())")
-       ->execute([':wo_id' => $testWoIdB, ':asset_id' => $testAssetId]);
+        ->execute([':wo_id' => $testWoIdB, ':asset_id' => $testAssetId]);
 
     // Next, Emergency SPB is generated linked to this Work Order
     $spbIdB = 'SPB-EMG-' . $suffix;
     $db->prepare("INSERT INTO purchase_requests (spb_id, wo_id, asset_id, requested_by, urgency, spb_type, status, notes, requested_at)
                   VALUES (:spb_id, :wo_id, :asset_id, :req, 'Emergency', 'EMERGENCY', 'Submitted', 'Perbaikan mendesak unit breakdown', NOW())")
-       ->execute([
-           ':spb_id' => $spbIdB,
-           ':wo_id' => $testWoIdB,
-           ':asset_id' => $testAssetId,
-           ':req' => $actorId,
-       ]);
+        ->execute([
+            ':spb_id' => $spbIdB,
+            ':wo_id' => $testWoIdB,
+            ':asset_id' => $testAssetId,
+            ':req' => $actorId,
+        ]);
 
     $db->prepare("INSERT INTO purchase_request_items (id, spb_id, part_number, description, qty_requested, status)
                   VALUES (:id, :spb_id, :pnum, 'Test Empty Part', 2, 'Submitted')")
-       ->execute([
-           ':id' => 'ITEM-B-' . $suffix,
-           ':spb_id' => $spbIdB,
-           ':pnum' => $testPartNumB,
-       ]);
+        ->execute([
+            ':id' => 'ITEM-B-' . $suffix,
+            ':spb_id' => $spbIdB,
+            ':pnum' => $testPartNumB,
+        ]);
 
     // Verify WO B is in 'Waiting Part'
     $woStmtB = $db->prepare("SELECT status FROM work_orders WHERE wo_id = :wo_id");
@@ -156,16 +156,113 @@ try {
     $resumed = WorkOrderSupport::checkAndResumeWorkOrder($db, $testWoIdB, $actorId, 'QA Tester');
     itAssert($resumed === false, 'WO does not resume while Emergency SPB is Submitted');
 
-    // Now simulate arrival and issue of parts: SPB updated to 'Issued'
-    $db->prepare("UPDATE purchase_requests SET status = 'Issued' WHERE spb_id = :spb_id")
-       ->execute([':spb_id' => $spbIdB]);
+    // Now simulate arrival of parts via BHW-IN
+    $bhwInTplKey = 'qa-bhwin-' . strtolower($suffix);
+    $db->prepare("INSERT INTO report_templates (template_key, code, title, version, schema_json, is_active)
+                  VALUES (:tkey, 'BHW-IN', 'QA BHW-IN', 1, '{}', 1)")
+        ->execute([':tkey' => $bhwInTplKey]);
+    $tplBhwIn = (int) $db->lastInsertId();
 
-    // Resume WO
-    $resumedAfter = WorkOrderSupport::checkAndResumeWorkOrder($db, $testWoIdB, $actorId, 'QA Tester');
-    itAssert($resumedAfter === true, 'WO automatically resumes to In Progress when Emergency SPB is fulfilled');
+    $bhwInReportId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff),
+        random_int(0x4000, 0x4fff), random_int(0x8000, 0xbfff),
+        random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff)
+    );
 
+    $db->prepare("INSERT INTO report_records (report_id, template_id, client_key, report_number, status, source_method, field_data, created_by, finalized_at, final_number_key)
+                  VALUES (:rid, :tid, :ckey, :rnum, 'FINAL', 'test', '{}', :actor, NOW(), :fnk)")
+        ->execute([
+            ':rid' => $bhwInReportId,
+            ':tid' => $tplBhwIn,
+            ':ckey' => 'qa-client-bhwin-' . strtolower($suffix),
+            ':rnum' => 'BHW-IN/QA/' . $suffix,
+            ':actor' => $actorId,
+            ':fnk' => $bhwInTplKey . '|bhw-in/qa/' . strtolower($suffix),
+        ]);
+
+    $bhwInFields = ['tanggal' => date('Y-m-d'), 'nomor_log' => 'BHW-IN/QA/' . $suffix];
+    $bhwInRows = [[
+        'tanggal' => date('Y-m-d'),
+        'bapb' => 'BAPB-' . $suffix,
+        'dari' => 'QA Vendor Parts',
+        'part_number' => $testPartNumB,
+        'nama' => 'Test Empty Part',
+        'satuan' => 'Pcs',
+        'jumlah' => 2,
+        'saldo_lalu' => 0,
+        'saldo_sekarang' => 2,
+        'nomor_spb' => $spbIdB,
+        'keterangan' => 'Emergency parts arrived at warehouse',
+    ]];
+
+    $bhwInRes = ReportIntegration::applyFinal($db, 'bhw-in', $bhwInReportId, $bhwInFields, $bhwInRows, $actorId);
+    itAssert($bhwInRes['applied'] === true, 'BHW-IN arrival finalized successfully');
+
+    // Verify stock of Part B is now 2
+    $stockB = (int) $db->query("SELECT stock_qty FROM parts WHERE part_number = '{$testPartNumB}'")->fetchColumn();
+    itAssert($stockB === 2, 'Part B warehouse stock increased to 2');
+
+    // Verify Emergency SPB item status changed to 'Tiba'
+    $itemStatusB = (string) $db->query("SELECT status FROM purchase_request_items WHERE id = 'ITEM-B-{$suffix}'")->fetchColumn();
+    itAssert($itemStatusB === 'Tiba', 'Emergency SPB item status automatically transitioned to Tiba upon BHW-IN');
+
+    // Verify Emergency SPB header status transitioned to 'Closed'
+    $spbStatusB = (string) $db->query("SELECT status FROM purchase_requests WHERE spb_id = '{$spbIdB}'")->fetchColumn();
+    itAssert($spbStatusB === 'Closed', 'Emergency SPB header status closed upon full arrival');
+
+    // Verify linked WO B was automatically resumed to 'In Progress'
     $woStmtB->execute([':wo_id' => $testWoIdB]);
-    itAssert($woStmtB->fetchColumn() === 'In Progress', 'WO status is restored to In Progress');
+    itAssert($woStmtB->fetchColumn() === 'In Progress', 'WO status automatically restored to In Progress via BHW-IN');
+
+    // Next: Mechanic issues BHW-OUT to consume the part for WO B
+    $bhwOutTplKey = 'qa-bhwout-' . strtolower($suffix);
+    $db->prepare("INSERT INTO report_templates (template_key, code, title, version, schema_json, is_active)
+                  VALUES (:tkey, 'BHW-OUT', 'QA BHW-OUT', 1, '{}', 1)")
+        ->execute([':tkey' => $bhwOutTplKey]);
+    $tplBhwOut = (int) $db->lastInsertId();
+
+    $bhwOutReportId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff),
+        random_int(0x4000, 0x4fff), random_int(0x8000, 0xbfff),
+        random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff)
+    );
+
+    $db->prepare("INSERT INTO report_records (report_id, template_id, client_key, report_number, status, source_method, field_data, created_by, finalized_at, final_number_key)
+                  VALUES (:rid, :tid, :ckey, :rnum, 'FINAL', 'test', '{}', :actor, NOW(), :fnk)")
+        ->execute([
+            ':rid' => $bhwOutReportId,
+            ':tid' => $tplBhwOut,
+            ':ckey' => 'qa-client-bhwout-' . strtolower($suffix),
+            ':rnum' => 'BHW-OUT/QA/' . $suffix,
+            ':actor' => $actorId,
+            ':fnk' => $bhwOutTplKey . '|bhw-out/qa/' . strtolower($suffix),
+        ]);
+
+    $bhwOutFields = ['tanggal' => date('Y-m-d'), 'nomor_log' => 'BHW-OUT/QA/' . $suffix];
+    $bhwOutRows = [[
+        'tanggal' => date('Y-m-d'),
+        'nomor_bukti' => 'BK-' . $suffix,
+        'tujuan' => 'Workshop Bengkel',
+        'nomor_wo' => $testWoIdB,
+        'id_unit' => $testAssetId,
+        'part_number' => $testPartNumB,
+        'nama' => 'Test Empty Part',
+        'satuan' => 'Pcs',
+        'persediaan' => 2,
+        'diberikan' => 2,
+        'sisa' => 0,
+        'keterangan' => 'Part issued to mechanic for emergency repair',
+    ]];
+
+    $bhwOutRes = ReportIntegration::applyFinal($db, 'bhw-out', $bhwOutReportId, $bhwOutFields, $bhwOutRows, $actorId);
+    itAssert($bhwOutRes['applied'] === true, 'BHW-OUT outbound issued successfully to Work Order');
+
+    $stockBAfterOut = (int) $db->query("SELECT stock_qty FROM parts WHERE part_number = '{$testPartNumB}'")->fetchColumn();
+    itAssert($stockBAfterOut === 0, 'Part B warehouse stock deducted from 2 to 0 via BHW-OUT');
+
+    // Verify part usage in WorkOrderSupport overview
+    $overviewB = WorkOrderSupport::overview($db, $testWoIdB);
+    itAssert(count($overviewB['partUsage']) >= 1, 'BHW-OUT usage appears in WorkOrderSupport overview partUsage');
 
     // -------------------------------------------------------------------------
     // TEST 4: Alur Normal Preventive Maintenance (SPB tanpa WO di awal)
@@ -173,11 +270,11 @@ try {
     $spbNormalId = 'SPB-NORM-' . $suffix;
     $db->prepare("INSERT INTO purchase_requests (spb_id, wo_id, asset_id, requested_by, urgency, spb_type, status, notes, requested_at)
                   VALUES (:spb_id, NULL, :asset_id, :req, 'Normal', 'NORMAL', 'Submitted', 'Pengadaan bulanan suku cadang PM', NOW())")
-       ->execute([
-           ':spb_id' => $spbNormalId,
-           ':asset_id' => $testAssetId,
-           ':req' => $actorId,
-       ]);
+        ->execute([
+            ':spb_id' => $spbNormalId,
+            ':asset_id' => $testAssetId,
+            ':req' => $actorId,
+        ]);
 
     $checkNormal = $db->prepare("SELECT wo_id, spb_type, status FROM purchase_requests WHERE spb_id = :spb_id");
     $checkNormal->execute([':spb_id' => $spbNormalId]);
@@ -188,19 +285,23 @@ try {
     // -------------------------------------------------------------------------
     // TEST 5: Surat Perintah Lembur (SPL) linked to wo_id
     // -------------------------------------------------------------------------
-    $reportId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-        random_int(0, 0xffff), random_int(0, 0xffff),
+    $reportId = sprintf(
+        '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        random_int(0, 0xffff),
+        random_int(0, 0xffff),
         random_int(0, 0xffff),
         random_int(0x4000, 0x4fff),
         random_int(0x8000, 0xbfff),
-        random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff)
+        random_int(0, 0xffff),
+        random_int(0, 0xffff),
+        random_int(0, 0xffff)
     );
 
     // Setup temporary report template for SPL QA
     $splTemplateKey = 'qa-spl-' . strtolower($suffix);
     $db->prepare("INSERT INTO report_templates (template_key, code, title, version, schema_json, is_active)
                   VALUES (:tkey, 'SPL', 'QA Overtime', 1, '{}', 1)")
-       ->execute([':tkey' => $splTemplateKey]);
+        ->execute([':tkey' => $splTemplateKey]);
     $tplSpl = (int) $db->lastInsertId();
 
     // Fetch active location for SPL
@@ -219,28 +320,30 @@ try {
         'wo_id' => $testWoIdA,
     ];
 
-    $rows = [[
-        'nama' => 'Administrator Utama',
-        'jabatan' => 'Administrator',
-        'lokasi' => $activeLocation,
-        'mulai' => '17:00',
-        'selesai' => '20:00',
-        'durasi' => '3.00',
-        'uraian' => 'Pekerjaan perbaikan lembur',
-        'verifikasi_mulai' => 'Terverifikasi',
-        'verifikasi_selesai' => 'Terverifikasi',
-    ]];
+    $rows = [
+        [
+            'nama' => 'Administrator Utama',
+            'jabatan' => 'Administrator',
+            'lokasi' => $activeLocation,
+            'mulai' => '17:00',
+            'selesai' => '20:00',
+            'durasi' => '3.00',
+            'uraian' => 'Pekerjaan perbaikan lembur',
+            'verifikasi_mulai' => 'Terverifikasi',
+            'verifikasi_selesai' => 'Terverifikasi',
+        ]
+    ];
 
     // Insert parent report_record to satisfy fk_spl_overtime_report
     $db->prepare("INSERT INTO report_records (report_id, template_id, client_key, report_number, status, source_method, field_data, created_by, finalized_at)
                   VALUES (:rid, :tid, :ckey, :rnum, 'FINAL', 'test', '{}', :actor, NOW())")
-       ->execute([
-           ':rid' => $reportId,
-           ':tid' => $tplSpl,
-           ':ckey' => 'client-spl-' . $suffix,
-           ':rnum' => $splNumber,
-           ':actor' => $actorId,
-       ]);
+        ->execute([
+            ':rid' => $reportId,
+            ':tid' => $tplSpl,
+            ':ckey' => 'client-spl-' . $suffix,
+            ':rnum' => $splNumber,
+            ':actor' => $actorId,
+        ]);
 
     $splResult = ReportIntegration::applyFinal($db, 'spl', $reportId, $fields, $rows, $actorId);
     itAssert($splResult['applied'] === true, 'SPL Report integration applied successfully');
@@ -250,6 +353,13 @@ try {
     $spl = $splRecord->fetch();
     itAssert($spl['wo_id'] === $testWoIdA, 'SPL record correctly stores linked wo_id');
     itAssert((float) $spl['duration_hours'] === 3.0, 'SPL duration is recorded accurately');
+
+    // TEST 6: WorkOrderSupport::overview returns linked overtimeRecords
+    $overview = WorkOrderSupport::overview($db, $testWoIdA);
+    itAssert(isset($overview['overtimeRecords']), 'WorkOrderSupport overview includes overtimeRecords array');
+    itAssert(count($overview['overtimeRecords']) === 1, 'Exactly 1 overtime record returned for test WO');
+    itAssert($overview['overtimeRecords'][0]['splNumber'] === $splNumber, 'Overtime record splNumber matches');
+    itAssert((float) $overview['overtimeRecords'][0]['durationHours'] === 3.0, 'Overtime record duration matches 3.0h');
 
     echo "\nAll {$passed} lifecycle integration checks PASSED successfully!\n";
 } finally {

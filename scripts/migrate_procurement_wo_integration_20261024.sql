@@ -80,6 +80,10 @@ CALL make_column_nullable('purchase_orders', 'asset_id', '`asset_id` VARCHAR(100
 CALL add_procurement_column('spl_overtime_records', 'wo_id', '`wo_id` VARCHAR(50) NULL AFTER `spl_number`');
 CALL add_procurement_index('spl_overtime_records', 'idx_spl_overtime_wo_id', '(`wo_id`)');
 
+-- 4. report integration adjustments for standalone SPB/PPB
+CALL make_column_nullable('report_purchase_request_integrations', 'asset_id', '`asset_id` VARCHAR(100) NULL');
+CALL make_column_nullable('report_purchase_order_integrations', 'asset_id', '`asset_id` VARCHAR(100) NULL');
+
 -- Cleanup temporary helper procedures
 DROP PROCEDURE IF EXISTS add_procurement_column;
 DROP PROCEDURE IF EXISTS make_column_nullable;

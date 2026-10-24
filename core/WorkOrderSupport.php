@@ -348,6 +348,26 @@ final class WorkOrderSupport
         );
         $usage->execute([':wo_id' => $woId, ':asset_id' => $workOrder['asset_id']]);
 
+        // Overtime Records (Surat Perintah Lembur) linked to this WO
+        $splStmt = $db->prepare(
+            'SELECT s.spl_number, s.report_id, s.wo_id, s.spl_date, s.period_start, s.period_end,
+                    s.start_time, s.end_time, s.duration_hours, s.activity_description, s.general_instruction,
+                    s.role_snapshot AS employee_role, s.start_verified, s.end_verified,
+                    COALESCE(u.full_name, "Personel") AS employee_name,
+                    prep.full_name AS prepared_by_name,
+                    inst.full_name AS instructed_by_name,
+                    loc.location_name
+             FROM spl_overtime_records s
+             LEFT JOIN users u ON u.user_id = s.employee_user_id
+             LEFT JOIN users prep ON prep.user_id = s.prepared_by
+             LEFT JOIN users inst ON inst.user_id = s.instructed_by
+             LEFT JOIN locations loc ON loc.location_id = s.location_id
+             WHERE s.wo_id = :wo_id AND s.reversed_at IS NULL
+             ORDER BY s.spl_date DESC, s.report_item_position ASC'
+        );
+        $splStmt->execute([':wo_id' => $woId]);
+        $splRows = $splStmt->fetchAll(PDO::FETCH_ASSOC);
+
         return [
             'workOrder' => [
                 'woId' => (string) $workOrder['wo_id'],
@@ -429,6 +449,26 @@ final class WorkOrderSupport
                 'assetId' => (string) $row['asset_id'],
             ], $usage->fetchAll(PDO::FETCH_ASSOC)),
             'serviceRequests' => array_map([self::class, 'mapServiceRequest'], $services->fetchAll(PDO::FETCH_ASSOC)),
+            'overtimeRecords' => array_map(static fn(array $row): array => [
+                'splNumber' => (string) $row['spl_number'],
+                'reportId' => (int) $row['report_id'],
+                'woId' => (string) $row['wo_id'],
+                'splDate' => (string) $row['spl_date'],
+                'periodStart' => (string) $row['period_start'],
+                'periodEnd' => (string) $row['period_end'],
+                'startTime' => (string) ($row['start_time'] ?? ''),
+                'endTime' => (string) ($row['end_time'] ?? ''),
+                'durationHours' => (float) $row['duration_hours'],
+                'activityDescription' => (string) ($row['activity_description'] ?? ''),
+                'generalInstruction' => (string) ($row['general_instruction'] ?? ''),
+                'employeeName' => (string) ($row['employee_name'] ?? ''),
+                'employeeRole' => (string) ($row['employee_role'] ?? ''),
+                'preparedByName' => (string) ($row['prepared_by_name'] ?? ''),
+                'instructedByName' => (string) ($row['instructed_by_name'] ?? ''),
+                'locationName' => (string) ($row['location_name'] ?? ''),
+                'startVerified' => (bool) $row['start_verified'],
+                'endVerified' => (bool) $row['end_verified'],
+            ], $splRows),
             'costs' => $costs,
         ];
     }
@@ -741,7 +781,7 @@ final class WorkOrderSupport
         throw new RuntimeException('Gagal membuat nomor permintaan layanan yang unik.');
     }
 
-    private static function timeline(
+    public static function timeline(
         PDO $db,
         string $woId,
         string $title,

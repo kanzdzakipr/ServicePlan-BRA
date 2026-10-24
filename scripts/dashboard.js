@@ -909,6 +909,7 @@
         field("akhir_periode", "Selesai pelaksanaan", "date", true),
         field("lokasi", "Area / lokasi", "text", true),
         field("target", "Target waktu / penyelesaian"),
+        field("nomor_wo", "Nomor Work Order (Terkait)", "text", false),
         field("uraian", "Instruksi umum lembur", "textarea", true, [], true),
         field("dibuat_oleh", "Dibuat oleh", "text", true),
         field(
@@ -8643,6 +8644,93 @@
     reports.importDraft({ schemaId: "spb", fields, rows }, { replace: true });
     return true;
   }
+
+  function openSplFormForWorkOrder(woId, assetId) {
+    const reports = window.FleetReportForms;
+    if (!reports?.importDraft) {
+      window.alert?.("Modul formulir laporan belum siap.");
+      return false;
+    }
+    if (
+      reports.getDraftState?.("spl")?.hasData &&
+      !window.confirm(
+        "Draft Form SPL yang tersimpan akan diganti dengan data penugasan lembur WO ini. Lanjutkan?",
+      )
+    ) {
+      return false;
+    }
+
+    const wo = workOrderById(woId) || (window.globalData?.work_orders || []).find(
+      (w) => String(w.woId || w.wo_id) === String(woId),
+    );
+    const resolvedAssetId = assetId || wo?.assetId || wo?.asset_id || "";
+    const asset = assetById(resolvedAssetId);
+
+    const today = new Date().toISOString().slice(0, 10);
+    const locationName = wo?.rawLocation || wo?.location || asset?.location || "Yard KM 12";
+
+    let mechanics = [];
+    if (Array.isArray(wo?.assignedMechanics) && wo.assignedMechanics.length) {
+      mechanics = wo.assignedMechanics;
+    } else if (wo?.assignedTo && wo.assignedTo !== "Belum ada PIC") {
+      mechanics = wo.assignedTo.split(",").map((m) => m.trim()).filter(Boolean);
+    } else if (wo?.assignedMechanic) {
+      mechanics = [wo.assignedMechanic];
+    }
+    if (!mechanics.length) {
+      mechanics = ["Mekanik Yard"];
+    }
+
+    const cleanWoId = String(woId || "").replace(/[^0-9A-Za-z]/g, "");
+    const fields = {
+      nomor_spl: `SPL/${new Date().getFullYear()}/EMERGENCY/${cleanWoId}`,
+      tanggal_spl: today,
+      mulai_periode: today,
+      akhir_periode: today,
+      lokasi: locationName,
+      target: "Pekerjaan trouble selesai & unit berstatus RFU",
+      nomor_wo: woId,
+      uraian: `Penugasan lembur perbaikan darurat unit ${resolvedAssetId}. Masalah: ${wo?.issueDescription || wo?.issue || "Perbaikan Breakdown"}. Work Order #${woId}.`,
+      dibuat_oleh: window.currentUser?.fullName || "Administrator Utama",
+      instruksi_oleh: "Administrator Utama",
+    };
+
+    const rows = mechanics.map((m) => ({
+      nama: m,
+      jabatan: "Mekanik",
+      lokasi: locationName,
+      uraian: `Perbaikan darurat unit ${resolvedAssetId} #${woId}`,
+      mulai: "17:00",
+      verifikasi_mulai: "Belum diverifikasi",
+      selesai: "20:00",
+      verifikasi_selesai: "Belum diverifikasi",
+      durasi: 3,
+    }));
+
+    closeDetail();
+    window.closeModal?.("modalWoDetail");
+    window.closeModal?.("modalWoSupport");
+    window.showView?.("reports", "", "menu-reports");
+    reports.importDraft({ schemaId: "spl", fields, rows }, { replace: true });
+    return true;
+  }
+
+  window.openSplFormForWorkOrder = openSplFormForWorkOrder;
+  window.createSplForCurrentWo = function () {
+    const woId =
+      document.getElementById("modalWoId")?.textContent?.trim() ||
+      document.getElementById("supportWoId")?.value ||
+      "";
+    const assetId =
+      document.getElementById("modalWoAsset")?.textContent?.trim() ||
+      document.getElementById("supportAssetId")?.value ||
+      "";
+    if (!woId) {
+      window.alert?.("Work Order belum dipilih.");
+      return;
+    }
+    openSplFormForWorkOrder(woId, assetId);
+  };
 
   function closeDetail() {
     state.modal = null;
