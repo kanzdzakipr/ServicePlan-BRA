@@ -2,6 +2,8 @@
 
 Status: **rencana revisi, bukan sertifikat lulus**. Disusun 22 Oktober 2026 dari audit read-only Batch 0–16 dan dokumen rencana/panduan yang ada. Setiap batch implementasi berhenti untuk uji dan persetujuan pengguna. Tidak ada migrasi, impor dump, sinkronisasi Laragon2, atau perubahan data dalam penyusunan dokumen ini.
 
+Panduan penutupan seluruh checkpoint yang masih partial tersedia di [panduan/PANDUAN_PENGUJIAN_CHECKPOINT_PARTIAL_F0_F1_F4_F5_F6.md](panduan/PANDUAN_PENGUJIAN_CHECKPOINT_PARTIAL_F0_F1_F4_F5_F6.md).
+
 ## Keputusan dan aturan sumber kebenaran
 
 - **People & KPI adalah penilaian resmi**, bukan simulator. Skor, periode, penilai, persetujuan, revisi, dan audit trail harus persisten serta tunduk pada role/lokasi.
