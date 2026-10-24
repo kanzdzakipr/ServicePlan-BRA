@@ -1033,7 +1033,14 @@ final class WorkOrderSupport
         $tplStmt = $db->prepare("SELECT template_id FROM report_templates WHERE template_key = 'bhw-out' LIMIT 1");
         $tplStmt->execute();
         $templateId = (int) $tplStmt->fetchColumn();
-        if ($templateId === 0) $templateId = 45;
+        if ($templateId === 0) {
+            $insertTpl = $db->prepare("
+                INSERT INTO report_templates (template_key, code, title, version, schema_json, is_active)
+                VALUES ('bhw-out', 'BHW-OUT', 'Buku Harian Warehouse (Barang Keluar)', 1, '{}', 1)
+            ");
+            $insertTpl->execute();
+            $templateId = (int) $db->lastInsertId();
+        }
 
         $reportNumber = 'BHW-OUT/WO/' . $woId . '/' . date('ymdHis');
         $db->prepare("
