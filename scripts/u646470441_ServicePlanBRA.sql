@@ -854,7 +854,7 @@ CREATE TABLE `head_kpi_assessments` (
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`kpi_id`),
   KEY `idx_head_kpi_period_location` (`period_key`,`location_id`,`indicator_no`)
-) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1907,7 +1907,7 @@ CREATE TABLE `report_templates` (
   PRIMARY KEY (`template_id`),
   UNIQUE KEY `uq_report_template_version` (`template_key`,`version`),
   KEY `idx_report_template_active` (`template_key`,`is_active`)
-) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2083,7 +2083,7 @@ CREATE TABLE `spl_overtime_records` (
   CONSTRAINT `fk_spl_overtime_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`location_id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_spl_overtime_prepared` FOREIGN KEY (`prepared_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_spl_overtime_report` FOREIGN KEY (`report_id`) REFERENCES `report_records` (`report_id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2114,7 +2114,7 @@ CREATE TABLE `spl_planner_reviews` (
   KEY `idx_spl_review_report` (`report_id`),
   KEY `idx_spl_review_number` (`spl_number`),
   KEY `idx_spl_review_planner` (`planner_user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2183,7 +2183,7 @@ CREATE TABLE `system_notifications` (
   KEY `idx_menu_name` (`menu_name`),
   CONSTRAINT `chk_system_notifications_involved_parties` CHECK (json_valid(`involved_parties_json`)),
   CONSTRAINT `chk_system_notifications_related_tables` CHECK (json_valid(`related_tables_json`))
-) ENGINE=InnoDB AUTO_INCREMENT=74 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2627,4 +2627,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-25  3:43:53
+-- Dump completed on 2026-10-25  4:36:26
