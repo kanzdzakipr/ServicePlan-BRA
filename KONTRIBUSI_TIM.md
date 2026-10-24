@@ -532,6 +532,12 @@ pie title Distribusi Kontribusi Term 3 (29 Agustus - 24 Oktober 2026) - UPDATED
 ### 📌 Log Commit Term 3 (29 Agustus – 24 Oktober 2026) — `[OPEN / ONGOING - UPDATED PER 24 OKTOBER 2026]`
 
 ```git
+* 77c54c1 (bisamelihat) feat(procurement-bhw): link BHW-IN goods receipt to emergency SPB fulfillment and WO auto-resume
+* 2009991 (bisamelihat) feat(wo-spl): integrate overtime records and direct SPL creation from work order detail
+* b335deb (bisamelihat) feat(wo-modal): connect live warehouse stock status badges and flow alert banner
+* b900b4c (briannugraha) chore: synchronize master SQL dump with latest schema and 323-unit fleet data
+* bb2b795 (briannugraha) Merge branch 'main' of https://github.com/kanzdzakipr/ServicePlan-BRA
+* 600bac5 (briannugraha) docs: update team contribution report and metrics for term 3 up to October 24, 2026
 * 484b0f3 (briannugraha) Merge branch 'main' of https://github.com/kanzdzakipr/ServicePlan-BRA
 * 83215fb (briannugraha) feat: add ingestion and enrichment scripts for operational vehicles and technical assets
 * a24147f (bisamelihat) feat: add scripts and SQL migration for asset valuation enrichment and sold asset archiving
