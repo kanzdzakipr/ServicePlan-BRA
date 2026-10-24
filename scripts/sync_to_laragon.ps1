@@ -48,7 +48,8 @@ $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_f5_archive_settings_schema_23102026.sql"),
     (Join-Path $srcDir "scripts\migrate_f0_user_audit_24102026.sql"),
     (Join-Path $srcDir "scripts\migrate_seed_initial_notifications_23102026.sql"),
-    (Join-Path $srcDir "scripts\migrate_procurement_wo_integration_20261024.sql")
+    (Join-Path $srcDir "scripts\migrate_procurement_wo_integration_20261024.sql"),
+    (Join-Path $srcDir "scripts\migrate_sync_missing_lv_assets_from_sql_20261024.sql")
 )
 
 if (-not (Test-Path -LiteralPath $laragonRootPath -PathType Container) -or
