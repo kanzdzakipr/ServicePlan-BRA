@@ -32,12 +32,16 @@ Temuan ini adalah ringkasan audit, **bukan** klaim bahwa semua skenario telah di
 
 ### F0 — Pengamanan segera akun dan baseline
 
+Status F0 24 Oktober 2026: **PASS backend (34/34 checkpoint + HTTP end-to-end)**. Login sesi nyata membuktikan create, toggle aktif/nonaktif, penolakan login akun nonaktif, ganti password sendiri, CSRF kosong/palsu, pembatasan non-admin, dan audit trail. Data QA telah dibersihkan.
+
 1. Kunci `users.php` per aksi: daftar sesuai izin administrasi yang diputuskan, create/toggle/delete/reset password hanya untuk administrator yang berhak; ganti password sendiri mensyaratkan password lama. Jangan memberi semua pemilik `dashboard.read` akses ke daftar akun penuh.
 2. Audit fallback server `*` untuk Asset/Equipment Manager; definisikan matriks izin minimal di server. Putuskan apakah tabel permission diisi melalui migrasi atau fallback dibatasi sementara. UI RBAC hanyalah cerminan, bukan penentu izin API.
 3. Tambah tes HTTP/API: pengguna tanpa izin mendapat 403; admin berizin berhasil pada data uji terisolasi; lokasi lain tidak bocor; CSRF salah ditolak; tidak ada perubahan pada akun nyata.
 4. Gate: uji role negatif dan positif lulus, seluruh POST akun diaudit, serta tidak ada endpoint lain dengan pola izin baca untuk operasi tulis. **Jangan lanjut uji akun tulis di DB bersama sebelum gate ini.**
 
 ### F1 — Sumber kebenaran dashboard, status aset, dan sinkronisasi
+
+Status F1 24 Oktober 2026: **PASS backend (44/44)**. Sumber data dashboard, kebijakan sync satu objek, konflik optimistik, P2H/idempotensi, validasi payload, dan rollback data QA lulus.
 
 1. Petakan semua penulis status/WO; hentikan penimpaan massal dari cache browser. Gunakan operasi server spesifik dengan precondition/versi atau transaksi, dan catat aktor/sumber.
 2. Saat API penting gagal, tampilkan error/ketidaklengkapan, bukan angka atau item fallback yang tampak valid. Nol adalah nol; jangan gunakan operator `||` untuk mengganti hitungan sah.
@@ -67,7 +71,7 @@ Status F3c 23 Oktober 2026: **PASS berdasarkan konfirmasi pengguna**. Hold/relea
 
 ### F4 — People & KPI resmi
 
-Status F4 24 Oktober 2026: **IMPLEMENTED / Tes database rollback 27/27 + kontrak kode 12/12 lulus, siap diuji di browser**. Periode dan lokasi kini dinamis, payload mutasi tidak lagi hardcoded ke Januari 2026, penilaian resmi memakai siklus `DRAFT → SUBMITTED → APPROVED / REJECTED`, self-approval ditolak, rejection memerlukan alasan, revisi menaikkan versi, dan setiap transisi dicatat pada `head_kpi_audit_trail`. Review SPL dibatasi pada Planner/Administrator, lokasi akun, serta SPL final aktif; leaderboard dan CSV mengikuti periode/lokasi yang dipilih. Perubahan telah disinkronkan secara terarah ke Laragon2 tanpa impor ulang dump atau perubahan 10/5 baris historis. Status browser masih menunggu bukti pengguna dan tidak dinyatakan PASS hanya dari tes otomatis.
+Status F4 24 Oktober 2026: **PASS backend / visual browser menunggu konfirmasi akhir**. Kontrak 12/12, integrasi rollback 27/27, dan HTTP sesi nyata membuktikan `DRAFT → SUBMITTED → APPROVED`, retry idempoten, pemisahan penilai–approver, penguncian pasca-approval, 10 indikator dengan bobot 100%, serta audit lifecycle. Periode dan lokasi dinamis; data QA dibersihkan. Verifikasi visual lintas browser tetap dijalankan sebagai release gate UI.
 
 1. Tetapkan model periode, indikator, bobot, target, penilai, status `DRAFT → SUBMITTED → APPROVED/REJECTED`, versi/revisi, lampiran bukti, dan audit event. Gunakan tabel `head_kpi_assessments`/`planner_evaluations` yang ada hanya setelah migrasi kompatibilitas diperiksa; jangan menimpa 10/5 baris yang sudah ada.
 2. Skor dan nilai bobot dihitung/validasi server; periode dan lokasi wajib. Review SPL serta persetujuan Head memakai identitas user, timestamp, keputusan, dan otorisasi server—bukan nama pada dokumen atau `localStorage`.
@@ -77,7 +81,7 @@ Status F4 24 Oktober 2026: **IMPLEMENTED / Tes database rollback 27/27 + kontrak
 
 ### F5 — Archive, notifikasi, dan pengaturan operasional
 
-Status F5 24 Oktober 2026: **IMPLEMENTED / Tes integrasi 28/28 + kontrak register Archive 7/7 lulus, siap diuji di browser**. DDL runtime `archived_items` telah dipindahkan ke migrasi resmi `scripts/migrate_f5_archive_settings_schema_23102026.sql`, audit trail arsip/restore persisten pada `archive_audit_trail`, dan register Archive sekarang membaca snapshot objek langsung dari `api/archive.php`, terpisah dari daftar aktif. Bug aset yang hilang dari Master Asset tetapi tidak tampil di Archive setelah refresh telah diperbaiki; restore memuat ulang data aktif dari database. Fail-closed banner, CSRF mutasi notifikasi, dan API `operational_settings` tetap aktif. Bukti browser untuk kasus `DT-41006` masih menunggu konfirmasi pengguna.
+Status F5 24 Oktober 2026: **PASS backend / visual lintas role menunggu konfirmasi akhir**. Checkpoint 29/29, kontrak Archive 7/7, dan HTTP sesi nyata membuktikan archive–register–restore, audit, role negatif, notifikasi unread/read persisten, perubahan setting tervalidasi, dan pemulihan nilai awal. Bug aset hilang dari register Archive telah diperbaiki. Data QA dibersihkan; bukti browser kasus Archive sebelumnya telah dilakukan pengguna.
 
 1. Pindahkan DDL `archived_items` dari GET API ke migrasi. Tambah audit aktor/waktu/alasan pada arsip dan restore, serta fail-closed atau indikator kegagalan ketika penanda arsip tidak termuat.
 2. Tambah CSRF pada POST notifikasi UI; uji penerima, badge, mark-read, mark-all-read, dan tautan target lintas role/lokasi.
@@ -86,7 +90,7 @@ Status F5 24 Oktober 2026: **IMPLEMENTED / Tes integrasi 28/28 + kontrak registe
 
 ### F6 — Rekonsiliasi analitik dan regression gate
 
-Status F6 24 Oktober 2026: **IMPLEMENTED / Tes Otomatis & Regresi Lulus (37/37 PASS)**. Rekonsiliasi analitik Fuel (banner rumus kalkulasi `Total Liter × Rp 12.000/L`, threshold anomali `((LPH - Baseline)/Baseline) > 20%`, status baris sumber) dan Biaya (banner status ledger aktif, pemisahan void/reversed, penegasan kebijakan ledger `MANUAL`) telah diintegrasikan pada UI dashboard (`dashboard.view.php` & `dashboard.html`). Keputusan bisnis posting otomatis biaya ditetapkan strictly `MANUAL` guna mencegah risiko double counting antara PO disetujui dan SPPU final sebelum ada mekanisme deduplikasi lintas departemen. Seluruh rangkaian regression gate BR-01 s/d BR-09B, keamanan CSV injection, isolasi notifikasi, siklus hidup WO, mutasi kartu stok, dan RBAC negatif/positif terbukti 100% lulus (37/37 checks) dengan rollback bersih.
+Status F6 24 Oktober 2026: **PASS backend (37/37 regresi)**. Rekonsiliasi analitik Fuel (banner rumus kalkulasi `Total Liter × Rp 12.000/L`, threshold anomali `((LPH - Baseline)/Baseline) > 20%`, status baris sumber) dan Biaya (banner status ledger aktif, pemisahan void/reversed, penegasan kebijakan ledger `MANUAL`) telah diintegrasikan pada UI dashboard (`dashboard.view.php` & `dashboard.html`). Keputusan bisnis posting otomatis biaya ditetapkan strictly `MANUAL` guna mencegah risiko double counting antara PO disetujui dan SPPU final sebelum ada mekanisme deduplikasi lintas departemen. Seluruh rangkaian regression gate BR-01 s/d BR-09B, keamanan CSV injection, isolasi notifikasi, siklus hidup WO, mutasi kartu stok, dan RBAC negatif/positif terbukti 100% lulus dengan rollback bersih. Smoke test visual lintas perangkat tetap menjadi release gate UI.
 
 1. Untuk fuel, produktivitas, KPI, biaya, telematika, dan laporan: tampilkan periode, unit/lokasi, jumlah baris sumber, rumus, kualitas data, dan status sumber hilang. Cocokkan kartu dengan daftar detail dan query agregat DB.
 2. Putuskan **NEEDS DECISION**: biaya otomatis berasal dari PO disetujui, SPPU final, keduanya dengan deduplikasi, atau tetap manual. Sampai diputuskan, jangan aktifkan posting otomatis. (Keputusan: dipertahankan `MANUAL` ledger posting).

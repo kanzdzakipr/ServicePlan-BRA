@@ -17,6 +17,11 @@ Dokumen ini menutup pengujian yang masih tersisa pada F0, F1B, F4, F5, dan F6. F
 | F5 | PASS otomatis 28/28 | Archive, notifikasi, settings melalui browser/DB |
 | F6 | PARTIAL | Rekonsiliasi analitik dan regression gate akhir |
 
+Update 24 Oktober 2026: lapisan backend telah menjalani **247 pemeriksaan PASS**
+(205 regresi otomatis + 42 HTTP end-to-end dengan sesi nyata). Rincian terdapat
+di `panduan/HASIL_FINISHING_BACKEND_20261024.md`. Kolom browser di bagian rekap
+tetap dipisahkan agar hasil visual tidak disimpulkan dari tes server.
+
 Urutan wajib: **F0 → F1B → F4 → F5 → F6**. Jangan menyatakan backend selesai sebelum seluruh gate di bagian akhir dokumen lulus.
 
 ## 2. Aturan keselamatan
@@ -805,6 +810,16 @@ Backend boleh dinyatakan selesai hanya jika:
 | F4 |  |  |  |  |  |
 | F5 |  |  |  |  |  |
 | F6 |  |  |  |  |  |
+
+Rekap backend 24 Oktober 2026:
+
+| Checkpoint | Browser | HTTP/API | Database | Cleanup | Status akhir |
+| --- | --- | --- | --- | --- | --- |
+| F0 | dikonfirmasi pengguna; smoke visual akhir tetap boleh diulang | PASS | PASS | PASS | PASS backend |
+| F1B | dikonfirmasi pengguna | PASS | PASS | PASS | PASS backend |
+| F4 | menunggu konfirmasi visual | PASS | PASS | PASS | PASS backend / UI pending |
+| F5 | Archive dikonfirmasi; notifikasi/settings perlu smoke visual | PASS | PASS | PASS | PASS backend / UI pending |
+| F6 | mobile/lintas role menunggu release smoke | PASS | PASS | PASS | PASS backend / UI pending |
 
 Temuan baru:
 
