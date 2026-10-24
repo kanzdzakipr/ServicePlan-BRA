@@ -1,0 +1,10 @@
+# ============================================================================
+# ASSET PRIVATE STORAGE SECURITY CONFIGURATION (.htaccess)
+# ServicePlan-BRA (PT Bina Rekayasa Anugrah Equipment System)
+#
+# Direct web access to this directory is strictly denied.
+# All unit photos and service manuals MUST be accessed through the
+# authenticated proxy endpoint: api/asset_files.php
+# ============================================================================
+
+Require all denied

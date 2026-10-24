@@ -23,9 +23,14 @@ config/constants.local.php
 !scripts/
 
 # 4. Storage & Dynamic Uploads
-uploads/*
+uploads/**/*
+!uploads/**/
+!uploads/**/.htaccess
+!uploads/.htaccess
 !uploads/.gitkeep
 logs/*.log
+
+
 .runtime/
 
 # 5. IDE, Editors & OS System Files
