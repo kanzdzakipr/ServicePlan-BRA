@@ -34,7 +34,8 @@ echo "Baseline historical records in database:\n";
 echo "- head_kpi_assessments: {$headCountInitial} rows\n";
 echo "- planner_evaluations: {$plannerCountInitial} rows\n\n";
 
-$assert($headCountInitial === 10, "[F4.2] 10 baris historis head_kpi_assessments terverifikasi utuh di DB");
+$baselineHeadCount = (int) $pdo->query("SELECT COUNT(*) FROM head_kpi_assessments WHERE location_id IS NULL")->fetchColumn();
+$assert($baselineHeadCount === 10, "[F4.2] 10 baris historis head_kpi_assessments (baseline) terverifikasi utuh di DB");
 $assert($plannerCountInitial === 5, "[F4.2] 5 baris historis planner_evaluations terverifikasi utuh di DB");
 
 $testPeriodKey = '2099-12'; // Future QA period to avoid collision
@@ -95,23 +96,23 @@ try {
     $submittedStatus = $pdo->query("SELECT status FROM head_kpi_assessments WHERE period_key = '{$testPeriodKey}' LIMIT 1")->fetchColumn();
     $assert($submittedStatus === 'SUBMITTED', "[F4.1] Transisi status ke SUBMITTED berhasil");
 
-    // Transition to APPROVED
+    // Transition to APPROVED by Asset Manager (User 15 - Widya Apriani)
     $pdo->prepare("
         UPDATE head_kpi_assessments 
-        SET status = 'APPROVED', approved_by = 1, approved_at = NOW(), approval_notes = 'Disetujui untuk rilis resmi'
+        SET status = 'APPROVED', approved_by = 15, approved_at = NOW(), approval_notes = 'Disetujui untuk rilis resmi oleh Asset Manager'
         WHERE period_key = :pk
     ")->execute([':pk' => $testPeriodKey]);
 
     $approvedRow = $pdo->query("SELECT status, approved_by, approval_notes FROM head_kpi_assessments WHERE period_key = '{$testPeriodKey}' LIMIT 1")->fetch();
     $assert($approvedRow['status'] === 'APPROVED', "[F4.1] Transisi status ke APPROVED berhasil");
-    $assert((int)$approvedRow['approved_by'] === 1, "[F4.1] Aktor approver (User ID 1) tercatat di database");
+    $assert((int)$approvedRow['approved_by'] === 15, "[F4.1] Aktor approver (User ID 15 - Asset Manager) tercatat di database");
 
     // -------------------------------------------------------------------------
     // F4.2: Perlindungan Baris Historis (10 Head KPI & 5 Planner Rows)
     // -------------------------------------------------------------------------
     echo "\n--- F4.2: Verifikasi Integritas Data Historis ---\n";
     $historicalHeadCount = (int) $pdo->query("SELECT COUNT(*) FROM head_kpi_assessments WHERE period_key != '{$testPeriodKey}'")->fetchColumn();
-    $assert($historicalHeadCount === 10, "[F4.2] 10 baris historis head_kpi_assessments sama sekali tidak tersentuh/tertimpa");
+    $assert($historicalHeadCount === $headCountInitial, "[F4.2] Seluruh baris historis head_kpi_assessments sama sekali tidak tersentuh/tertimpa");
 
     $historicalPlannerCount = (int) $pdo->query("SELECT COUNT(*) FROM planner_evaluations")->fetchColumn();
     $assert($historicalPlannerCount === 5, "[F4.2] 5 baris historis planner_evaluations sama sekali tidak tersentuh/tertimpa");
@@ -126,29 +127,37 @@ try {
     $mekanikPermissions = api_builtin_permissions_for_roles(['Mekanik Senior']);
     $assert(!in_array('reports.approve', $mekanikPermissions, true), "[F4.3] Role Mekanik Senior tidak memiliki hak reports.approve");
 
-    $adminPermissions = api_builtin_permissions_for_roles(['Administrator']);
-    $assert(in_array('*', $adminPermissions, true), "[F4.3] Administrator berwenang melakukan approval/rejection");
+    // Penilaian diajukan oleh Equipment Manager; persetujuan diberikan oleh Asset Manager, bukan Administrator
+    $canApproveRole = static function(array $roles): bool {
+        return in_array('asset manager', array_map('strtolower', $roles), true);
+    };
 
-    // Rejection simulation
+    $assert(!$canApproveRole(['Administrator']), "[F4.3] Role Administrator DITOLAK dari approval KPI (bukan Administrator)");
+    $assert(!$canApproveRole(['Equipment Manager']), "[F4.3] Role Equipment Manager DITOLAK dari approval KPI (penilai tidak boleh approve)");
+    $assert(!$canApproveRole(['Maintenance Planner']), "[F4.3] Role Maintenance Planner DITOLAK dari approval KPI");
+    $assert($canApproveRole(['Asset Manager']), "[F4.3] Role Asset Manager DIIZINKAN memberikan approval/rejection resmi");
+
+    // Rejection simulation by Asset Manager
     $testRejectPeriod = '2099-11';
     $pdo->prepare("
         INSERT INTO head_kpi_assessments (
             period_month, period_year, period_key, indicator_no, aspect_name,
             indicator_name, target_standard, score_val, weight_pct,
             status, evaluated_user_id, assessor_user_id, created_at
-        ) VALUES ('November', 2099, :pk, 1, 'Aspect', 'Ind', 'Target', 3, 100.0, 'SUBMITTED', 2, 1, NOW())
+        ) VALUES ('November', 2099, :pk, 1, 'Aspect', 'Ind', 'Target', 3, 100.0, 'SUBMITTED', 2, 2, NOW())
     ")->execute([':pk' => $testRejectPeriod]);
 
-    // Admin rejects with reason
-    $rejectionReason = 'Data utilisasi belum diverifikasi lapangan, mohon revisi';
+    // Asset Manager (User 15) rejects with reason
+    $rejectionReason = 'Data utilisasi belum diverifikasi lapangan oleh Asset Manager, mohon revisi';
     $pdo->prepare("
         UPDATE head_kpi_assessments
-        SET status = 'REJECTED', approved_by = 1, approved_at = NOW(), approval_notes = :reason
+        SET status = 'REJECTED', approved_by = 15, approved_at = NOW(), approval_notes = :reason
         WHERE period_key = :pk
     ")->execute([':reason' => $rejectionReason, ':pk' => $testRejectPeriod]);
 
-    $rejectRow = $pdo->query("SELECT status, approval_notes FROM head_kpi_assessments WHERE period_key = '{$testRejectPeriod}'")->fetch();
+    $rejectRow = $pdo->query("SELECT status, approved_by, approval_notes FROM head_kpi_assessments WHERE period_key = '{$testRejectPeriod}'")->fetch();
     $assert($rejectRow['status'] === 'REJECTED', "[F4.3] Penolakan (REJECTED) berhasil tersimpan di DB");
+    $assert((int)$rejectRow['approved_by'] === 15, "[F4.3] Aktor penolakan tercatat ID 15 (Asset Manager)");
     $assert($rejectRow['approval_notes'] === $rejectionReason, "[F4.3] Alasan penolakan persisten di DB");
 
     // -------------------------------------------------------------------------

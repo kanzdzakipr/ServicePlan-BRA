@@ -22153,13 +22153,13 @@
                             <button type="button" class="btn btn-sm btn-secondary" onclick="window.saveHeadKPIDraft()" id="btnSaveHeadKpiDraft" title="Simpan draf sementara">
                                 <i class="fa-solid fa-floppy-disk"></i> Simpan Draf
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="window.submitHeadKPI()" id="btnSubmitHeadKpi" title="Ajukan untuk approval General Manager">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="window.submitHeadKPI()" id="btnSubmitHeadKpi" title="Ajukan untuk persetujuan Asset Manager">
                                 <i class="fa-solid fa-paper-plane"></i> Ajukan Penilaian (Submit)
                             </button>
-                            <button type="button" class="btn btn-sm btn-success" onclick="window.approveHeadKPI('APPROVED')" id="btnApproveHeadKpi" title="Setujui penilaian KPI ini (Khusus GM / Administrator)" style="display:none; background:#16a34a; border-color:#16a34a; color:#fff;">
-                                <i class="fa-solid fa-circle-check"></i> Setujui (Approve GM)
+                            <button type="button" class="btn btn-sm btn-success" onclick="window.approveHeadKPI('APPROVED')" id="btnApproveHeadKpi" title="Setujui penilaian KPI ini (Khusus Asset Manager)" style="display:none; background:#16a34a; border-color:#16a34a; color:#fff;">
+                                <i class="fa-solid fa-circle-check"></i> Setujui (Approve Asset Manager)
                             </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="window.approveHeadKPI('REJECTED')" id="btnRejectHeadKpi" title="Tolak penilaian disertai alasan" style="display:none;">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="window.approveHeadKPI('REJECTED')" id="btnRejectHeadKpi" title="Tolak penilaian disertai alasan (Khusus Asset Manager)" style="display:none;">
                                 <i class="fa-solid fa-circle-xmark"></i> Tolak
                             </button>
                         </div>
@@ -22739,9 +22739,9 @@
       const locationLabel = assessment.location_name || document.getElementById("selKpiLocation")?.selectedOptions?.[0]?.text || "-";
       const prefix = `${escapeHtml(periodLabel)} · ${escapeHtml(locationLabel)} · Versi ${Number(assessment.version || 1)}`;
       if (st === "APPROVED" && assessment.approved_by_name) {
-        meta.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> ${prefix} · Disetujui <strong>${escapeHtml(assessment.approved_by_name)}</strong> pada ${escapeHtml(assessment.approved_at || "")}`;
+        meta.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> ${prefix} · Disetujui <strong>${escapeHtml(assessment.approved_by_name)}</strong> (Asset Manager) pada ${escapeHtml(assessment.approved_at || "")}`;
       } else if (st === "SUBMITTED") {
-        meta.innerHTML = `<i class="fa-solid fa-clock text-info"></i> ${prefix} · Diajukan (${escapeHtml(assessment.submitted_at || "")}) · Menunggu persetujuan`;
+        meta.innerHTML = `<i class="fa-solid fa-clock text-info"></i> ${prefix} · Diajukan (${escapeHtml(assessment.submitted_at || "")}) · Menunggu persetujuan Asset Manager`;
       } else if (st === "REJECTED") {
         meta.innerHTML = `<i class="fa-solid fa-circle-xmark text-danger"></i> ${prefix} · Ditolak: ${escapeHtml(assessment.approval_notes || "tanpa catatan")}`;
       } else {
@@ -22753,17 +22753,15 @@
     const roleNames = [authUser.role_name, authUser.primary_role, ...(authUser.roles || [])]
       .filter(Boolean)
       .map((role) => String(role).toLowerCase());
-    const isAdminOrGM = roleNames.some((role) => role.includes("admin") || role.includes("general manager"))
-      || authUser.username === "admin";
-    const canAssess = roleNames.some((role) =>
-      ["administrator", "equipment manager", "asset manager"].includes(role),
-    );
+    const isAssetManager = roleNames.some((role) => role.includes("asset manager"));
+    const isEquipmentManager = roleNames.some((role) => role.includes("equipment manager"));
+    const canAssess = isEquipmentManager || roleNames.some((role) => ["administrator", "equipment manager"].includes(role));
 
     if (btnApprove) {
-      btnApprove.style.display = isAdminOrGM && st === "SUBMITTED" ? "inline-flex" : "none";
+      btnApprove.style.display = isAssetManager && st === "SUBMITTED" ? "inline-flex" : "none";
     }
     if (btnReject) {
-      btnReject.style.display = isAdminOrGM && st === "SUBMITTED" ? "inline-flex" : "none";
+      btnReject.style.display = isAssetManager && st === "SUBMITTED" ? "inline-flex" : "none";
     }
     if (btnSubmit) {
       btnSubmit.style.display = canAssess && ["DRAFT", "REJECTED"].includes(st) ? "inline-flex" : "none";
@@ -22823,7 +22821,7 @@
   window.submitHeadKPI = async function () {
     if (
       !confirm(
-        "Apakah Anda yakin ingin mengajukan (Submit) penilaian KPI Head of Equipment ini untuk persetujuan General Manager?",
+        "Apakah Anda yakin ingin mengajukan (Submit) penilaian KPI Head of Equipment ini untuk persetujuan Asset Manager?",
       )
     )
       return;
@@ -30332,6 +30330,13 @@ window.archiveData = async function (type, id) {
       window.renderAccidentTable();
   }
 
+  if (typeof window.fetchNotificationsFromApi === "function") {
+    window.fetchNotificationsFromApi();
+  }
+  if (typeof window.showToast === "function") {
+    window.showToast("Data berhasil dipindahkan ke Archive.");
+  }
+
   window.renderArchiveTables();
 };
 
@@ -30360,6 +30365,9 @@ window.restoreData = async function (type, id) {
   }
 
   await window.loadArchiveRecords();
+  if (typeof window.fetchNotificationsFromApi === "function") {
+    window.fetchNotificationsFromApi();
+  }
   window.location.reload();
 };
 
@@ -30642,6 +30650,7 @@ window.renderArchiveTables = function () {
         renderNotifications();
       });
   }
+  window.fetchNotificationsFromApi = fetchNotificationsFromApi;
 
   window.toggleMobileSearch = function (event) {
     if (event) event.stopPropagation();
@@ -30730,6 +30739,21 @@ window.renderArchiveTables = function () {
       window.openWoDetailModal(woId, assetId || "");
     } else if (typeof window.showView === "function") {
       window.showView("view-work-order");
+    }
+  };
+
+  window.openArchiveNotificationTarget = function (id, itemType) {
+    if (id) {
+      window.markNotificationAsRead(id);
+    }
+    const panel = document.getElementById("notificationDropdownPanel");
+    if (panel) panel.style.display = "none";
+
+    if (typeof window.showView === "function") {
+      window.showView("view-archive");
+      if (itemType && typeof window.switchArchiveTab === "function") {
+        window.switchArchiveTab(itemType);
+      }
     }
   };
 
@@ -30882,8 +30906,11 @@ window.renderArchiveTables = function () {
             ? related.records.find((r) => r.table === "assets")?.id
             : null);
 
+        const isArchive = n.badgeClass === "archive" || (n.menu || "").toLowerCase() === "archive";
+        const archiveItemType = related.item_type || (assetId ? "asset" : "");
+
         return `
-            <div class="notif-item ${!n.isRead ? "unread" : ""}" onclick="${woId ? `window.openNotificationTarget(${n.id}, '${escapeHtml(woId)}', '${escapeHtml(assetId || "")}')` : `markNotificationAsRead(${n.id})`}">
+            <div class="notif-item ${!n.isRead ? "unread" : ""}" onclick="${woId ? `window.openNotificationTarget(${n.id}, '${escapeHtml(woId)}', '${escapeHtml(assetId || "")}')` : (isArchive ? `window.openArchiveNotificationTarget(${n.id}, '${escapeHtml(archiveItemType)}')` : `markNotificationAsRead(${n.id})`)}">
                 <div class="notif-avatar">
                     <i class="fa-solid ${getMenuIcon(n.badgeClass)}"></i>
                 </div>
@@ -30916,6 +30943,14 @@ window.renderArchiveTables = function () {
                         <div style="margin-top:6px;">
                             <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); window.openNotificationTarget(${n.id}, '${escapeHtml(woId)}', '${escapeHtml(assetId || "")}')" style="padding:2px 8px; font-size:0.75rem; background:var(--primary, #0284c7); color:#fff; border:none; border-radius:3px; cursor:pointer;">
                                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Work Order #${escapeHtml(woId)}
+                            </button>
+                        </div>
+                    `
+                        : isArchive
+                        ? `
+                        <div style="margin-top:6px;">
+                            <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); window.openArchiveNotificationTarget(${n.id}, '${escapeHtml(archiveItemType)}')" style="padding:2px 8px; font-size:0.75rem; background:#475569; color:#fff; border:none; border-radius:3px; cursor:pointer;">
+                                <i class="fa-solid fa-box-archive"></i> Buka Register Arsip
                             </button>
                         </div>
                     `
@@ -30953,6 +30988,8 @@ window.renderArchiveTables = function () {
         return "fa-boxes-stacked";
       case "pm":
         return "fa-clock-rotate-left";
+      case "archive":
+        return "fa-box-archive";
       default:
         return "fa-bell";
     }

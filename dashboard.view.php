@@ -578,7 +578,7 @@ try {
                 </div>
 
                 <!-- Synchronized Master Asset Telemetry Strip -->
-                <div class="telemetry-status-grid" style="grid-template-columns: repeat(6, 1fr);">
+                <div class="telemetry-status-grid master-asset-telemetry-grid">
                     <div class="telemetry-metric-item" title="Total Armada Aset Terdaftar">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Total Armada Aset</span>
@@ -10832,7 +10832,7 @@ try {
                             </div>
                             <button type="button" class="callout-close-btn" onclick="closeAssetActionCallout()" style="background:none; border:none; font-size:1.2rem; color:#94a3b8; cursor:pointer; padding:0 4px; line-height:1; font-weight:400;" title="Tutup">&times;</button>
                         </div>
-                        <div class="callout-actions-row" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
+                        <div class="callout-actions-row" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                             <button type="button" id="cBtn360" class="callout-btn-pill primary" style="background:#eff6ff; border:1px solid #93c5fd; color:#0284c7; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Detail 360&deg; Master Asset & Telemetri">
                                 <i class="fa-solid fa-cube"></i> <span>360&deg;</span>
                             </button>
@@ -10865,7 +10865,7 @@ try {
                                 </div>
                                 <button type="button" class="callout-close-btn" onclick="closeAssetActionCallout()" style="background:none; border:none; font-size:1.2rem; color:#94a3b8; cursor:pointer; padding:0 4px; line-height:1; font-weight:400;" title="Tutup">&times;</button>
                             </div>
-                            <div class="callout-actions-row" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
+                            <div class="callout-actions-row" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                                 <button type="button" id="cBtn360" class="callout-btn-pill primary" style="background:#eff6ff; border:1px solid #93c5fd; color:#0284c7; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Detail 360&deg; Master Asset & Telemetri">
                                     <i class="fa-solid fa-cube"></i> <span>360&deg;</span>
                                 </button>
@@ -10973,8 +10973,8 @@ try {
                     return;
                 }
 
-                const calloutWidth = 470;
-                const calloutHeight = 85;
+                const calloutWidth = Math.min(callout.offsetWidth || 470, window.innerWidth - 20);
+                const calloutHeight = callout.offsetHeight || 85;
 
                 let left = rect.left; // Align left under Asset ID
                 let top = rect.bottom + 8;

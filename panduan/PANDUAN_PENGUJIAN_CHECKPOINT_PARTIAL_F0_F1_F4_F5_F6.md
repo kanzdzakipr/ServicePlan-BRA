@@ -289,12 +289,13 @@ ORDER BY indicator_no;
 
 ### F4.3 Approval/rejection dan role negatif
 
-1. Role Planner/Mekanik tidak boleh melihat tombol approval.
-2. POST approval langsung dari role tersebut harus 403.
-3. Login sebagai Administrator/General Manager yang berbeda dari penilai.
-4. Pilih APPROVED atau REJECTED disertai catatan.
-5. Refresh/login ulang pada kedua browser.
-6. Setelah APPROVED, edit biasa harus ditolak atau mengikuti alur revisi/versioning resmi.
+1. Penilaian KPI diajukan/disubmit oleh role **Equipment Manager**.
+2. Role Planner/Mekanik/Administrator tidak boleh melihat tombol approval.
+3. POST approval langsung dari role selain Asset Manager (termasuk Administrator dan penilai sendiri) harus menghasilkan **HTTP 403 FORBIDDEN**.
+4. Login sebagai **Asset Manager** (`widya_apriani`) yang berwenang memberikan persetujuan resmi (bukan Administrator).
+5. Pilih APPROVED atau REJECTED disertai catatan.
+6. Refresh/login ulang pada kedua browser.
+7. Setelah APPROVED, edit biasa harus ditolak atau mengikuti alur revisi/versioning resmi.
 
 ### F4.4 Review SPL dan leaderboard
 
@@ -331,6 +332,7 @@ Gate F4 PASS apabila lifecycle, otorisasi, persistensi lintas browser, SPL, lead
 4. Refresh/login ulang; status arsip harus tetap.
 5. Restore dengan alasan `QA FINISH restore test`.
 6. Pastikan unit kembali aktif.
+7. Periksa panel lonceng notifikasi: Saat unit diarsipkan (`ARCHIVE_ASSET`) maupun dipulihkan (`RESTORE_ASSET`), sistem membuat notifikasi otomatis di `system_notifications` dan mendistribusikannya ke peran manajerial (Asset Manager, Equipment Manager, Administrator) serta personel lokasi terkait via `NotificationAudience::deliverWo`. Klik notifikasi arsip di dropdown notifikasi untuk membuka tab Register Arsip secara langsung.
 
 ```sql
 SELECT item_type, item_id, archived_at, archived_by_user_id,
@@ -342,9 +344,15 @@ SELECT action, actor_user_id, actor_name, reason, created_at
 FROM archive_audit_trail
 WHERE item_id = 'QA-FINISH-ASSET-...'
 ORDER BY audit_id;
+
+SELECT notification_id, action_type, title, message, created_at
+FROM system_notifications
+WHERE action_type IN ('ARCHIVE_ASSET', 'RESTORE_ASSET')
+ORDER BY notification_id DESC
+LIMIT 2;
 ```
 
-Kriteria PASS: marker aktif hilang setelah restore, tetapi dua audit event `ARCHIVE` dan `RESTORE` tetap ada.
+Kriteria PASS: marker aktif hilang setelah restore, dua audit event `ARCHIVE` dan `RESTORE` tercatat di audit trail, dan notifikasi sistem terdistribusi ke penerima resmi.
 
 ### F5.2 Fail-closed Archive
 

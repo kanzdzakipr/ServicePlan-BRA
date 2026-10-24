@@ -100,23 +100,28 @@ try {
 
     // Negative Role Check Simulation (Unauthorized role check logic)
     $plannerRole = 'Maintenance Planner';
-    $isAllowed = in_array(strtolower($plannerRole), ['administrator', 'general manager'], true);
-    f4Assert(!$isAllowed, "Negative Role Test: Maintenance Planner is strictly rejected from approving Head KPI");
+    $isAllowedPlanner = in_array(strtolower($plannerRole), ['asset manager'], true);
+    f4Assert(!$isAllowedPlanner, "Negative Role Test: Maintenance Planner is strictly rejected from approving Head KPI");
 
-    // Positive Approval by Administrator (User 1)
+    // Negative Role Check: Administrator is rejected from approving Head KPI (bukan administrator)
     $adminRole = 'Administrator';
-    $isAllowedAdmin = in_array(strtolower($adminRole), ['administrator', 'general manager'], true);
-    f4Assert($isAllowedAdmin, "Positive Role Test: Administrator is authorized to approve Head KPI");
+    $isAllowedAdmin = in_array(strtolower($adminRole), ['asset manager'], true);
+    f4Assert(!$isAllowedAdmin, "Negative Role Test: Administrator is rejected from approving Head KPI (bukan administrator)");
+
+    // Positive Approval by Asset Manager (User 15 - Widya Apriani)
+    $assetManagerRole = 'Asset Manager';
+    $isAllowedAssetManager = in_array(strtolower($assetManagerRole), ['asset manager'], true);
+    f4Assert($isAllowedAssetManager, "Positive Role Test: Asset Manager is authorized to approve Head KPI");
 
     $pdo->prepare("
         UPDATE head_kpi_assessments
-        SET status = 'APPROVED', approved_by = 1, approved_at = NOW(), approval_notes = 'Disetujui untuk bonus tahunan'
+        SET status = 'APPROVED', approved_by = 15, approved_at = NOW(), approval_notes = 'Disetujui untuk bonus tahunan'
         WHERE period_key = :p_key
     ")->execute([':p_key' => $testPeriod]);
 
     $appRow = $pdo->query("SELECT status, approved_by, approval_notes FROM head_kpi_assessments WHERE period_key = '{$testPeriod}' LIMIT 1")->fetch();
     f4Assert($appRow['status'] === 'APPROVED', "Assessment officially APPROVED");
-    f4Assert((int)$appRow['approved_by'] === 1, "Approved by Administrator recorded in audit trail");
+    f4Assert((int)$appRow['approved_by'] === 15, "Approved by Asset Manager recorded in audit trail");
 
     // -------------------------------------------------------------------------
     // 4. SPL Planner Reviews Persistence Test

@@ -639,7 +639,7 @@ if ($method === 'POST') {
                 'location_id' => $locationId,
                 'version' => $version,
                 'message' => ($targetStatus === 'SUBMITTED')
-                    ? 'Penilaian KPI Head of Equipment berhasil dikirim (SUBMITTED) untuk persetujuan GM.'
+                    ? 'Penilaian KPI Head of Equipment berhasil dikirim (SUBMITTED) untuk persetujuan Asset Manager.'
                     : 'Draf penilaian KPI Head of Equipment berhasil disimpan.'
             ]);
         } catch (Throwable $e) {
@@ -649,15 +649,13 @@ if ($method === 'POST') {
     }
 
     if ($action === 'approve_head_kpi') {
-        // Enforce role: Only General Manager or Administrator
-        $canApprove = in_array('administrator', $currentRoles, true)
-            || in_array('general manager', $currentRoles, true)
-            || strtolower((string)($currentUser['username'] ?? '')) === 'admin';
+        // Enforce role: Persetujuan diberikan oleh role Asset Manager, bukan Administrator
+        $canApprove = in_array('asset manager', $currentRoles, true);
         if (!$canApprove) {
             api_json_response(403, [
                 'status' => 'error',
                 'code' => 'FORBIDDEN',
-                'message' => 'Hanya General Manager atau Administrator yang berwenang memberikan persetujuan (Approval) KPI Head of Equipment.'
+                'message' => 'Hanya Asset Manager yang berwenang memberikan persetujuan (Approval) KPI Head of Equipment setelah diajukan oleh Equipment Manager.'
             ]);
         }
 
@@ -771,8 +769,8 @@ if ($method === 'POST') {
             'location_id' => $locationId,
             'decision' => $decision,
             'message' => ($decision === 'APPROVED')
-                ? 'KPI Head of Equipment periode ' . $period . ' telah disetujui (APPROVED) secara resmi.'
-                : 'KPI Head of Equipment periode ' . $period . ' ditolak (REJECTED).'
+                ? 'KPI Head of Equipment periode ' . $period . ' telah disetujui (APPROVED) secara resmi oleh Asset Manager.'
+                : 'KPI Head of Equipment periode ' . $period . ' ditolak (REJECTED) oleh Asset Manager.'
         ]);
     }
 

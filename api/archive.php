@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once 'db.php';
 require_once 'security.php';
+require_once dirname(__DIR__) . '/core/NotificationAudience.php';
 
 $db = Database::getInstance();
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
@@ -161,9 +162,42 @@ switch ($method) {
         $currentUser = api_current_user();
         $actorId = (int) ($currentUser['id'] ?? 0);
         $actorName = trim((string) ($currentUser['full_name'] ?? $currentUser['username'] ?? 'User'));
+        $actorRole = trim((string) ($currentUser['primary_role'] ?? $currentUser['role_name'] ?? 'User'));
 
         if ($reason === '') {
             $reason = ($action === 'archive') ? 'Diarsipkan melalui sistem' : 'Dipulihkan ke operasional aktif';
+        }
+
+        // Ambil data unit & lokasi untuk pengiriman notifikasi terarah
+        $locationId = null;
+        $unitLabel = ucfirst($type) . " #{$id}";
+        $makeModel = '';
+        if ($type === 'asset') {
+            $aStmt = $db->prepare("SELECT asset_code, make_model, current_location_id FROM assets WHERE asset_id = :id LIMIT 1");
+            $aStmt->execute([':id' => $id]);
+            $aInfo = $aStmt->fetch(PDO::FETCH_ASSOC);
+            if ($aInfo) {
+                $locationId = isset($aInfo['current_location_id']) ? (int) $aInfo['current_location_id'] : null;
+                $assetCode = trim((string) $aInfo['asset_code']) ?: $id;
+                $makeModel = trim((string) $aInfo['make_model']);
+                $unitLabel = "Unit {$assetCode}";
+            }
+        } elseif ($type === 'accident') {
+            $acStmt = $db->prepare("SELECT ac.asset_id, ac.location_id FROM accidents ac WHERE ac.accident_id = :id LIMIT 1");
+            $acStmt->execute([':id' => $id]);
+            $acInfo = $acStmt->fetch(PDO::FETCH_ASSOC);
+            if ($acInfo) {
+                $locationId = isset($acInfo['location_id']) ? (int) $acInfo['location_id'] : null;
+                $unitLabel = "Laporan Insiden #{$id}";
+            }
+        } else {
+            $iStmt = $db->prepare("SELECT i.asset_id, a.current_location_id FROM inspections i LEFT JOIN assets a ON a.asset_id = i.asset_id WHERE (CAST(i.inspection_id AS CHAR) = :id OR JSON_UNQUOTE(JSON_EXTRACT(i.payload_json, '$.id')) = :id) LIMIT 1");
+            $iStmt->execute([':id' => $id]);
+            $iInfo = $iStmt->fetch(PDO::FETCH_ASSOC);
+            if ($iInfo) {
+                $locationId = isset($iInfo['current_location_id']) ? (int) $iInfo['current_location_id'] : null;
+                $unitLabel = "Inspeksi P2H #{$id}";
+            }
         }
 
         $db->beginTransaction();
@@ -198,6 +232,45 @@ switch ($method) {
                     ':reason' => $reason
                 ]);
 
+                // Notifikasi sistem untuk pemindahan ke arsip
+                $modelSuffix = $makeModel !== '' ? " ({$makeModel})" : "";
+                $notifTitle = "{$unitLabel} Dipindahkan ke Arsip";
+                $notifMessage = "{$unitLabel}{$modelSuffix} telah dipindahkan ke arsip oleh {$actorName}. Alasan: {$reason}";
+                $notifAction = 'ARCHIVE_' . strtoupper($type);
+
+                $relatedTables = [
+                    'records' => [
+                        ['table' => ($type === 'asset' ? 'assets' : ($type === 'p2h' ? 'inspections' : 'accidents')), 'id' => $id],
+                        ['table' => 'archived_items', 'id' => $id],
+                    ],
+                    'item_type' => $type,
+                    'item_id' => $id,
+                    'location_id' => $locationId,
+                ];
+                if ($type === 'asset') {
+                    $relatedTables['asset_id'] = $id;
+                }
+
+                $notifStmt = $db->prepare("
+                    INSERT INTO system_notifications
+                        (menu_name, user_name, user_role, action_type, title, message,
+                         involved_parties_json, related_tables_json, is_read, created_at)
+                    VALUES ('Archive', :uname, :urole, :act, :title, :msg, :parties, :tables, 0, NOW())
+                ");
+                $notifStmt->execute([
+                    ':uname' => $actorName,
+                    ':urole' => $actorRole,
+                    ':act' => $notifAction,
+                    ':title' => $notifTitle,
+                    ':msg' => $notifMessage,
+                    ':parties' => json_encode([$actorName], JSON_UNESCAPED_UNICODE),
+                    ':tables' => json_encode($relatedTables, JSON_UNESCAPED_UNICODE),
+                ]);
+                $notifId = (int) $db->lastInsertId();
+                if ($notifId > 0) {
+                    NotificationAudience::deliverWo($db, $notifId, $locationId, $actorId > 0 ? $actorId : null);
+                }
+
                 $db->commit();
                 api_json_response(200, [
                     "status" => "success",
@@ -219,6 +292,44 @@ switch ($method) {
                     ':uname' => $actorName,
                     ':reason' => $reason
                 ]);
+
+                // Notifikasi sistem untuk pemulihan dari arsip
+                $modelSuffix = $makeModel !== '' ? " ({$makeModel})" : "";
+                $notifTitle = "{$unitLabel} Dipulihkan dari Arsip";
+                $notifMessage = "{$unitLabel}{$modelSuffix} telah dipulihkan ke operasional aktif oleh {$actorName}. Alasan: {$reason}";
+                $notifAction = 'RESTORE_' . strtoupper($type);
+
+                $relatedTables = [
+                    'records' => [
+                        ['table' => ($type === 'asset' ? 'assets' : ($type === 'p2h' ? 'inspections' : 'accidents')), 'id' => $id],
+                    ],
+                    'item_type' => $type,
+                    'item_id' => $id,
+                    'location_id' => $locationId,
+                ];
+                if ($type === 'asset') {
+                    $relatedTables['asset_id'] = $id;
+                }
+
+                $notifStmt = $db->prepare("
+                    INSERT INTO system_notifications
+                        (menu_name, user_name, user_role, action_type, title, message,
+                         involved_parties_json, related_tables_json, is_read, created_at)
+                    VALUES ('Archive', :uname, :urole, :act, :title, :msg, :parties, :tables, 0, NOW())
+                ");
+                $notifStmt->execute([
+                    ':uname' => $actorName,
+                    ':urole' => $actorRole,
+                    ':act' => $notifAction,
+                    ':title' => $notifTitle,
+                    ':msg' => $notifMessage,
+                    ':parties' => json_encode([$actorName], JSON_UNESCAPED_UNICODE),
+                    ':tables' => json_encode($relatedTables, JSON_UNESCAPED_UNICODE),
+                ]);
+                $notifId = (int) $db->lastInsertId();
+                if ($notifId > 0) {
+                    NotificationAudience::deliverWo($db, $notifId, $locationId, $actorId > 0 ? $actorId : null);
+                }
 
                 $db->commit();
                 api_json_response(200, [
