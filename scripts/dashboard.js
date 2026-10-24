@@ -28085,6 +28085,15 @@
     );
     if (!targetContainer) return;
 
+    if (window._execApexChartInstances && Array.isArray(window._execApexChartInstances)) {
+      window._execApexChartInstances.forEach((c) => {
+        try {
+          c?.destroy();
+        } catch (e) {}
+      });
+    }
+    window._execApexChartInstances = [];
+
     const globalAssets = (window.globalData?.assets || []).filter(
       (a) => !a.isArchived,
     );
@@ -28215,41 +28224,46 @@
       ...new Set(displayServiceRows.map((row) => row.category)),
     ].sort((a, b) => a.localeCompare(b, "id"));
 
-    // Calculate dynamic counts
-    const valTerlambat = countTerlambat || 12;
-    const valJatuhTempo = countJatuhTempo || 7;
-    const val7Hari = count7Hari || 18;
-    const valSelesai = countSelesai || 43;
-    const valBelumData = countBelumData || 5;
+    // Calculate dynamic counts honoring legitimate zero values
+    const hasLiveAssets = globalAssets.length > 0;
+    const valTerlambat = hasLiveAssets ? countTerlambat : 12;
+    const valJatuhTempo = hasLiveAssets ? countJatuhTempo : 7;
+    const val7Hari = hasLiveAssets ? count7Hari : 18;
+    const valSelesai = hasLiveAssets ? countSelesai : 43;
+    const valBelumData = hasLiveAssets ? countBelumData : 5;
 
     const sumUnits =
       valTerlambat + valJatuhTempo + val7Hari + valSelesai + valBelumData;
-    const pctTerlambat = Math.round((valTerlambat / sumUnits) * 100);
-    const pctJatuhTempo = Math.round((valJatuhTempo / sumUnits) * 100);
-    const pct7Hari = Math.round((val7Hari / sumUnits) * 100);
-    const pctSelesai = Math.round((valSelesai / sumUnits) * 100);
+    const pctTerlambat = sumUnits > 0 ? Math.round((valTerlambat / sumUnits) * 100) : 0;
+    const pctJatuhTempo = sumUnits > 0 ? Math.round((valJatuhTempo / sumUnits) * 100) : 0;
+    const pct7Hari = sumUnits > 0 ? Math.round((val7Hari / sumUnits) * 100) : 0;
+    const pctSelesai = sumUnits > 0 ? Math.round((valSelesai / sumUnits) * 100) : 0;
     const pctBelumData =
-      100 - (pctTerlambat + pctJatuhTempo + pct7Hari + pctSelesai);
+      sumUnits > 0 ? Math.max(0, 100 - (pctTerlambat + pctJatuhTempo + pct7Hari + pctSelesai)) : 0;
 
-    const compliancePct = (((sumUnits - valTerlambat) / sumUnits) * 100)
-      .toFixed(1)
-      .replace(".", ",");
+    const compliancePct = sumUnits > 0
+      ? (((sumUnits - valTerlambat) / sumUnits) * 100).toFixed(1).replace(".", ",")
+      : "100,0";
     const woNotCreated = countTerlambat + countJatuhTempo;
     const partsPending =
-      globalSpb.filter((s) => s.status !== "Tiba").length || 4;
+      globalSpb.length > 0
+        ? globalSpb.filter((s) => s.status !== "Tiba" && s.status !== "Closed").length
+        : 0;
 
     // 2. Status Perbaikan Unit (Donut 2B)
-    const woClosedCount =
-      globalWos.filter((w) => w.status === "Closed" || w.status === "Completed")
-        .length || 38;
-    const woInProgressCount =
-      globalWos.filter((w) => w.status === "In Progress" || w.status === "Open")
-        .length || 27;
-    const woPendingPartCount =
-      globalWos.filter((w) => w.status === "Pending" || w.priority === "High")
-        .length || 16;
-    const woBreakdownCount =
-      globalAssets.filter((a) => a.status === "BREAKDOWN").length || 8;
+    const hasLiveWos = globalWos.length > 0;
+    const woClosedCount = hasLiveWos
+      ? globalWos.filter((w) => w.status === "Closed" || w.status === "Completed").length
+      : 38;
+    const woInProgressCount = hasLiveWos
+      ? globalWos.filter((w) => w.status === "In Progress" || w.status === "Open").length
+      : 27;
+    const woPendingPartCount = hasLiveWos
+      ? globalWos.filter((w) => (w.status === "Waiting Part" || w.status === "Pending") && w.status !== "Closed").length
+      : 16;
+    const woBreakdownCount = hasLiveAssets
+      ? globalAssets.filter((a) => a.status === "BREAKDOWN").length
+      : 8;
     const totalWoUnits =
       woClosedCount + woInProgressCount + woPendingPartCount + woBreakdownCount;
 
@@ -28436,11 +28450,11 @@
                                 </div>
                                 <div class="compliance-item">
                                     <span class="lbl">Unit Terlambat > 100 HM/KM</span>
-                                    <span class="val text-danger">${over100Count || 8} unit</span>
+                                    <span class="val text-danger">${hasLiveAssets ? over100Count : 8} unit</span>
                                 </div>
                                 <div class="compliance-item">
                                     <span class="lbl">WO Service Belum Dibuat</span>
-                                    <span class="val text-warning">${woNotCreated || 6} unit</span>
+                                    <span class="val text-warning">${hasLiveAssets ? woNotCreated : 6} unit</span>
                                 </div>
                                 <div class="compliance-item">
                                     <span class="lbl">Spare Part Service Belum Siap</span>
@@ -29208,6 +29222,7 @@
             tooltip: { y: { formatter: (val) => val + " Unit" } },
           });
           chartService.render();
+          window._execApexChartInstances.push(chartService);
 
           categoryFilter?.addEventListener("change", () => {
             activeServiceStatusFilter = "ALL";
@@ -29267,6 +29282,7 @@
         );
         if (elCategory) {
           elCategory.innerHTML = "";
+          const totalAssetCount = globalAssets.length || 282;
           const chartCategory = new ApexCharts(elCategory, {
             series: [53.5, 29.0, 10.2, 5.3, 2.0],
             labels: [
@@ -29299,7 +29315,7 @@
                       fontSize: "10px",
                       fontWeight: 700,
                       color: "#64748b",
-                      formatter: () => "282 Unit",
+                      formatter: () => `${totalAssetCount} Unit`,
                     },
                   },
                 },
@@ -29309,6 +29325,7 @@
             tooltip: { y: { formatter: (val) => val + "%" } },
           });
           chartCategory.render();
+          window._execApexChartInstances.push(chartCategory);
         }
 
         // 3. WO Repair Status Donut Chart
@@ -29364,6 +29381,7 @@
             tooltip: { y: { formatter: (val) => val + " Unit" } },
           });
           chartRepair.render();
+          window._execApexChartInstances.push(chartRepair);
         }
 
         // 3B. Logistics Order Status Donut Chart
@@ -29413,6 +29431,7 @@
             tooltip: { y: { formatter: (val) => val + " Item" } },
           });
           chartLogistics.render();
+          window._execApexChartInstances.push(chartLogistics);
         }
 
         // 4. Mechanic Productivity Column Chart
@@ -29479,6 +29498,7 @@
             },
           });
           chartMechanic.render();
+          window._execApexChartInstances.push(chartMechanic);
         }
 
         // 5. Monthly Maintenance Cost Trend with source-based budget baseline
@@ -29591,6 +29611,7 @@
               ],
             });
             chartCost.render();
+            window._execApexChartInstances.push(chartCost);
             viewButtons.forEach((button) => {
               const isActive = button.dataset.costChartView === view;
               button.classList.toggle("active", isActive);
