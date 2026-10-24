@@ -111,8 +111,10 @@ try {
     api_json_response(201, ['status' => 'success', 'message' => 'Laporan insiden tersimpan.', 'data' => $saved]);
 } catch (DomainException $error) {
     if ($db->inTransaction()) $db->rollBack();
-    $code = str_contains($error->getMessage(), 'sudah digunakan') ? 409 : 422;
-    api_json_response($code, ['status' => 'error', 'code' => 'HSE_VALIDATION_FAILED', 'message' => $error->getMessage()]);
+    $isConflict = str_contains($error->getMessage(), 'sudah digunakan');
+    $code = $isConflict ? 409 : 422;
+    $errCode = $isConflict ? 'OBJECT_ID_CONFLICT' : 'HSE_VALIDATION_FAILED';
+    api_json_response($code, ['status' => 'error', 'code' => $errCode, 'message' => $error->getMessage()]);
 } catch (Throwable $error) {
     if ($db->inTransaction()) $db->rollBack();
     error_log('Accident workflow failed: ' . $error->getMessage());

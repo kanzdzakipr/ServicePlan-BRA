@@ -614,7 +614,7 @@ try {
                         </div>
                     </div>
 
-                    <div class="telemetry-metric-item" onclick="window.filterMasterAssetFromCard('BREAKDOWN')" style="cursor:pointer;" title="Klik untuk memfilter unit Breakdown / Under Repair">
+                    <div class="telemetry-metric-item" onclick="window.filterMasterAssetFromCard('BREAKDOWN_ALL')" style="cursor:pointer;" title="Klik untuk memfilter unit Breakdown / Under Repair">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Breakdown / WO</span>
                             <i class="fa-solid fa-triangle-exclamation"
@@ -697,7 +697,7 @@ try {
                                         <option value="">Semua lokasi</option><option value="Borrow Pit">Borrow Pit</option><option value="Site Celcin">Site Celcin</option><option value="Yard">Yard</option><option value="Workshop">Workshop</option><option value="Site Alpha">Site Alpha</option><option value="Minas">Minas Field</option>
                                     </select>
                                     <select id="filterAssetComp" class="form-control" onchange="window.filterMasterAsset('completeness', this.value)"><option value="">Semua kelengkapan</option><option value="complete">Lengkap</option><option value="incomplete">Belum lengkap</option></select>
-                                    <select id="filterAssetStat" class="form-control" onchange="window.filterMasterAsset('status', this.value)"><option value="">Semua status</option><option value="READY_OPERATING">READY / OPERASIONAL</option><option value="READY">READY</option><option value="OPERATING">OPERATING</option><option value="STANDBY">STANDBY</option><option value="BREAKDOWN">BREAKDOWN</option><option value="INSPEKSI">INSPEKSI</option><option value="ACCIDENT_HOLD">ACCIDENT HOLD</option></select>
+                                    <select id="filterAssetStat" class="form-control" onchange="window.filterMasterAsset('status', this.value)"><option value="">Semua status</option><option value="READY_OPERATING">READY / OPERASIONAL</option><option value="READY">READY</option><option value="OPERATING">OPERATING</option><option value="STANDBY">STANDBY</option><option value="BREAKDOWN_ALL">BREAKDOWN / WO (SEMUA PERBAIKAN)</option><option value="BREAKDOWN">BREAKDOWN</option><option value="INSPEKSI">INSPEKSI</option><option value="ACCIDENT_HOLD">ACCIDENT HOLD</option></select>
                                 </div>
                             </div>
                         </div>
@@ -7948,7 +7948,7 @@ try {
                 const totalUnits = assets.length;
                 const readyOpCount = assets.filter(a => a.status === 'READY' || a.status === 'OPERATING').length;
                 const standbyCount = assets.filter(a => a.status === 'STANDBY').length;
-                const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN').length;
+                const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN' || a.status === 'ACCIDENT_HOLD').length;
                 const inspeksiCount = assets.filter(a => a.status === 'INSPEKSI').length;
 
                 document.getElementById('kpiTotal').textContent = totalUnits;
@@ -8104,8 +8104,8 @@ try {
                         titleText = "Tabulasi Unit Status: STANDBY";
                         filtered = scopedAssets.filter(a => a.status === 'STANDBY');
                     } else if (statusKey === 'BREAKDOWN') {
-                        titleText = "Tabulasi Unit Status: BREAKDOWN";
-                        filtered = scopedAssets.filter(a => a.status === 'BREAKDOWN');
+                        titleText = "Tabulasi Unit Status: BREAKDOWN & ACCIDENT HOLD";
+                        filtered = scopedAssets.filter(a => a.status === 'BREAKDOWN' || a.status === 'ACCIDENT_HOLD');
                     } else if (statusKey === 'INSPEKSI') {
                         titleText = "Tabulasi Unit Status: INSPEKSI / PM";
                         filtered = scopedAssets.filter(a => a.status === 'INSPEKSI');
@@ -8393,7 +8393,7 @@ try {
                         const filterStat = f.status.toUpperCase().replace(/\s+/g, '_');
                         if (filterStat === 'READY_OPERATING' || filterStat === 'OPERATING_READY' || filterStat === 'READY_OPERASIONAL') {
                             if (effStat !== 'READY' && effStat !== 'OPERATING') return false;
-                        } else if (filterStat === 'BREAKDOWN') {
+                        } else if (filterStat === 'BREAKDOWN_ALL' || filterStat === 'BREAKDOWN_REPAIR' || filterStat === 'BREAKDOWN_WO') {
                             if (effStat !== 'BREAKDOWN' && effStat !== 'INSPEKSI' && effStat !== 'ACCIDENT_HOLD') return false;
                         } else {
                             if (effStat !== filterStat) return false;
