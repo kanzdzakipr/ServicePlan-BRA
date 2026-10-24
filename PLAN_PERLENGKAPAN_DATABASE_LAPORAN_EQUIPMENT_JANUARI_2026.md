@@ -369,9 +369,15 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 6: Penugasan Kontrak Sewa, Alokasi Proyek & Matriks Jam Operasi
+### 📦 BATCH 6: Penugasan Kontrak Sewa, Alokasi Proyek & Matriks Jam Operasi `[SELESAI & TERVERIFIKASI - 25 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (11/11 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch6_rental_contracts.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch6_rental_contracts.php)  
+> **Skrip Verifikasi:** [`tests/test_batch6_contracts_and_utilization.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch6_contracts_and_utilization.php)  
+> **Hasil:** Tabel `contract_assignments` terisi **184 penugasan kontrak sewa aktif** (*Zero Orphan Assets, Zero Missing References*) dengan total jam target operasional **45.632,00 jam kerja**. Distribusi unit proyek mencakup **PHR (142 unit / 35.216 jam)**, **PEP (23 unit / 5.704 jam)**, **ADERA (12 unit / 2.976 jam)**, dan **KBB (7 unit / 1.736 jam)**. Sebanyak **19 unit alat berat & kendaraan otentik** berhasil didaftarkan ke katalog aset master. Tabel `assets` tersinkronisasi sempurna pada kolom `project_name`, `operational_position`, dan `status` (`OPERATING` untuk seluruh 184 unit terkontrak). Sebanyak **12 log telemetri** pada `telematics_logs` terhubung ke master `asset_id`. Core service `ContractCsv::records` dan endpoint `api/contracts.php` terverifikasi aktif (*HTTP 200*).
 
 #### 1. Tujuan & Sasaran Tabel
+
 - Mengingest 184 penugasan sewa proyek aktif dari `07_01_Identitas_dan_Ringkasan_Pendapatan_Sewa.md` ke dalam tabel `contract_assignments`.
 - Mengingest data utilisasi harian dari `07_02_Pencatatan_Proyek_Harian_Sewa_Alat.md` (31 hari operasi kerja).
 - Memperbarui kolom `project_name` dan `operational_position` pada tabel `assets`.
