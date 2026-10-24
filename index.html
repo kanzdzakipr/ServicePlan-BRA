@@ -212,15 +212,26 @@
                     cache: 'no-store',
                     headers: { 'Accept': 'application/json' }
                 });
-                const payload = await response.json();
-                if (!response.ok) throw new Error('Server authentication tidak tersedia');
-                if (payload.authenticated) {
+                let payload = null;
+                try {
+                    payload = await response.json();
+                } catch (_) {
+                    payload = null;
+                }
+                if (!response.ok) {
+                    const serverMsg = payload?.message || `Koneksi server gagal (HTTP ${response.status}). Periksa konfigurasi .env atau database.`;
+                    throw new Error(serverMsg);
+                }
+                if (payload?.authenticated) {
                     window.location.replace('dashboard.php');
                     return;
                 }
-                csrfToken = payload.csrf_token || '';
+                csrfToken = payload?.csrf_token || '';
             } catch (error) {
-                showError('Layanan login belum siap. Periksa konfigurasi server.');
+                const msg = (error && error.message && error.message !== 'Failed to fetch')
+                    ? error.message
+                    : 'Layanan login belum siap. Periksa konfigurasi server (.env / database).';
+                showError(msg);
             }
         }
 
