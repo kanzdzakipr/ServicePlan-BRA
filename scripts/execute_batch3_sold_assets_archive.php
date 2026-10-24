@@ -91,9 +91,18 @@ if ($isCommit) {
                 reason = VALUES(reason)
         ");
 
+        // Preserve a single audit event when the batch is safely replayed.
         $insertAudit = $pdo->prepare("
             INSERT INTO archive_audit_trail (item_type, item_id, action, actor_user_id, actor_name, reason, created_at)
-            VALUES ('asset', :id, 'ARCHIVE', 1, 'Administrator Utama', :reason, NOW())
+            SELECT 'asset', :id, 'ARCHIVE', 1, 'Administrator Utama', :reason, NOW()
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM archive_audit_trail
+                WHERE item_type = 'asset'
+                  AND item_id = :check_id
+                  AND action = 'ARCHIVE'
+                  AND reason = :check_reason
+            )
         ");
 
         $updateAsset = $pdo->prepare("
@@ -119,7 +128,9 @@ if ($isCommit) {
 
             $insertAudit->execute([
                 ':id' => $u['asset_id'],
-                ':reason' => $u['reason']
+                ':reason' => $u['reason'],
+                ':check_id' => $u['asset_id'],
+                ':check_reason' => $u['reason']
             ]);
 
             $updateAsset->execute([

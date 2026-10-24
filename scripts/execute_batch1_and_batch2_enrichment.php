@@ -247,6 +247,45 @@ foreach ($rows16 as $c) {
     }
 }
 
+// PIC alat berat yang telah diverifikasi pada dump terbaru 24 Oktober 2026.
+// Isi hanya kolom yang masih kosong agar perubahan pengguna lokal tetap aman.
+$verifiedHeavyEquipmentOperators = [
+    'DZ-00004' => 'SULARNO',
+    'EXC-00010' => 'ADI SANTOSO',
+    'EXC-00013' => 'GERY',
+    'EXC-00015' => 'INDRA PRANATA',
+    'EXC-41001' => 'BOIMAH',
+    'FBT-31001' => 'ANTONI',
+    'FBT-31002' => 'RENALDI SOARMIN',
+    'FBT-31004' => 'BUSTAMI',
+    'MG-00004' => 'JUNI HARDI',
+    'PF-00003' => 'JORDAN',
+    'PF-00011' => 'BAMBANG',
+    'SUP-00009' => 'ROHIN',
+    'TMC-31002' => 'ILHAM AKBAR',
+    'TMC-31003' => 'ANADA RIZA',
+];
+
+foreach ($verifiedHeavyEquipmentOperators as $assetId => $operatorName) {
+    $target = $dbById[$assetId] ?? null;
+    if (!$target || trim((string) ($target['current_operator_name'] ?? '')) !== '') {
+        continue;
+    }
+    if (!isset($enrichmentPlan[$assetId])) {
+        $enrichmentPlan[$assetId] = [
+            'asset_id' => $assetId,
+            'source' => 'Verified dump 2026-10-24',
+            'license_plate' => $target['license_plate'],
+            'updates' => [],
+            'operator_history' => null,
+        ];
+    }
+    if (!isset($enrichmentPlan[$assetId]['updates']['current_operator_name'])) {
+        $enrichmentPlan[$assetId]['updates']['current_operator_name'] = $operatorName;
+        $counters['current_operator_name']++;
+    }
+}
+
 // Filter only items with updates
 $validPlan = array_filter($enrichmentPlan, fn($p) => !empty($p['updates']));
 

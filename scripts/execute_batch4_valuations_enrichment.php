@@ -321,6 +321,63 @@ foreach ($lines18 as $line) {
     }
 }
 
+// The latest verified dump contains these three rows, but the source sheets
+// can resolve their shared aliases/plates to a different asset depending on
+// lookup insertion order. Keep an explicit asset-id fallback so a replay on
+// an older local database produces the same rows without deleting local-only
+// valuations.
+$verifiedDumpRows = [
+    'DZ-00006' => [
+        'unit_code_alias' => 'DZ-00006',
+        'monthly_rental_rate' => 0.00,
+        'monthly_leasing_installment' => 0.00,
+    ],
+    'EXC-00014' => [
+        'unit_code_alias' => 'Exca 01',
+        'monthly_rental_rate' => 45000000.00,
+        'monthly_leasing_installment' => 44441000.00,
+    ],
+    'EXC-00008' => [
+        'unit_code_alias' => 'Exca 08',
+        'monthly_rental_rate' => 50000000.00,
+        'monthly_leasing_installment' => 36475000.00,
+    ],
+    'EXC-00011' => [
+        'unit_code_alias' => 'Exca 06',
+        'monthly_rental_rate' => 45000000.00,
+        'monthly_leasing_installment' => 43723000.00,
+    ],
+    'EXC-00009' => [
+        'unit_code_alias' => 'Exca 21',
+        'monthly_rental_rate' => 50000000.00,
+        'monthly_leasing_installment' => 0.00,
+    ],
+    'DT-00152' => [
+        'unit_code_alias' => 'DT 15',
+        'monthly_rental_rate' => 29000000.00,
+        'monthly_leasing_installment' => 20815000.00,
+    ],
+    'DT-00058' => [
+        'unit_code_alias' => 'DT 31',
+        'monthly_rental_rate' => 29000000.00,
+        'monthly_leasing_installment' => 23909000.00,
+    ],
+];
+
+foreach ($verifiedDumpRows as $assetId => $verifiedRow) {
+    if (!isset($assetById[$assetId])) {
+        continue;
+    }
+    $valuationsPlan[$assetId] = [
+        'asset_id' => $assetId,
+        'unit_name' => $assetById[$assetId]['make_model'] ?: $assetId,
+        'unit_code_alias' => $verifiedRow['unit_code_alias'],
+        'monthly_rental_rate' => $verifiedRow['monthly_rental_rate'],
+        'monthly_leasing_installment' => $verifiedRow['monthly_leasing_installment'],
+        'match_source' => 'Verified latest dump row',
+    ];
+}
+
 // Fetch current unit_valuations from DB
 $currentValuations = $pdo->query("SELECT valuation_id, asset_id, unit_name, unit_code_alias, monthly_rental_rate, monthly_leasing_installment FROM unit_valuations")->fetchAll();
 $currentByAid = [];

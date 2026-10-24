@@ -40,6 +40,7 @@ $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_f3b_asset_schema_location_23102026.sql"),
     (Join-Path $srcDir "scripts\migrate_f3c_accident_hold_release_23102026.sql"),
     (Join-Path $srcDir "scripts\migrate_asset_registration_fields_22102026.sql"),
+    (Join-Path $srcDir "scripts\migrate_asset_enrichment_valuation_24102026.sql"),
     (Join-Path $srcDir "scripts\migrate_location_coordinates_22102026.sql"),
     (Join-Path $srcDir "scripts\migrate_populate_asset_pics_jan2026.sql"),
     (Join-Path $srcDir "scripts\migrate_f4_people_kpi_schema_23102026.sql"),
