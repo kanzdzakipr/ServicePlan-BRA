@@ -70,7 +70,8 @@ final class PurchaseOrderApproval
             $existing->execute([':id' => $ppbId]);
             if ($existing->fetchColumn()) throw new DomainException('Biaya PO sudah tercatat; persetujuan ulang ditolak.');
             CostLedger::createTransaction($db, [
-                'asset_id' => $order['asset_id'], 'wo_id' => $order['wo_id'],
+                'asset_id' => !empty($order['asset_id']) ? (string) $order['asset_id'] : 'GENERAL_STOCK',
+                'wo_id' => $order['wo_id'],
                 'transaction_date' => date('Y-m-d'), 'cost_category' => 'Sparepart',
                 'description' => 'Pembelian part PO ' . $ppbId,
                 'amount' => $amount, 'vendor_name' => $order['vendor'],

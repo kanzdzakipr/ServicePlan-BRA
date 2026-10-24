@@ -12,8 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $scope = api_location_scope_clause('a', 'po_scope_location');
     $sql = "SELECT po.ppb_id, po.spb_id, po.wo_id, po.asset_id, po.vendor,
                    po.total_amount, po.status, po.created_at
-            FROM purchase_orders po JOIN assets a ON a.asset_id = po.asset_id";
-    if ($scope['sql'] !== '') $sql .= ' WHERE ' . $scope['sql'];
+            FROM purchase_orders po LEFT JOIN assets a ON a.asset_id = po.asset_id";
+    if ($scope['sql'] !== '') $sql .= ' WHERE (po.asset_id IS NULL OR ' . $scope['sql'] . ')';
     $sql .= ' ORDER BY po.created_at DESC, po.ppb_id DESC LIMIT 500';
     $stmt = $db->prepare($sql);
     $stmt->execute($scope['params']);
@@ -41,7 +41,9 @@ try {
     $scope->execute([':id' => $ppbId]);
     $assetId = $scope->fetchColumn();
     if ($assetId === false) throw new OutOfBoundsException('PO tidak ditemukan.');
-    api_require_asset_access($db, (string) $assetId);
+    if ($assetId !== null && $assetId !== '') {
+        api_require_asset_access($db, (string) $assetId);
+    }
     $actorId = (int) (api_current_user()['id'] ?? 0);
     $result = $decision === 'cancel'
         ? PurchaseOrderApproval::cancel($db, $ppbId, $actorId, $reason)
