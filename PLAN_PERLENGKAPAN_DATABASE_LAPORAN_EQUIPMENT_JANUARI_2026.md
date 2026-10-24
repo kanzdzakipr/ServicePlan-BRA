@@ -311,7 +311,12 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 5: Ledger Biaya Operasional & Finansial Bulanan Equipment
+### 📦 BATCH 5: Ledger Biaya Operasional & Finansial Bulanan Equipment `[SELESAI & TERVERIFIKASI - 25 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (11/11 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch5_cost_ledger.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch5_cost_ledger.php)  
+> **Skrip Verifikasi:** [`tests/test_batch5_cost_ledger_audit.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch5_cost_ledger_audit.php)  
+> **Hasil:** Tabel `asset_cost_transactions` terisi **60 transaksi biaya riil per unit alat berat & kendaraan** dengan total pengeluaran langsung **Rp 309.505.450,00** (*Zero Orphan Assets, Zero Negative Amounts*). Sebanyak **36 transaksi biaya terhubung langsung ke tiket perbaikan aktif (`work_orders`)**. Tabel `cost_financial_monthly` diperkaya dengan **rekap eksekutif Januari 2026 sebesar Rp 680.276.164,00** beserta 4 breakdown kategori (Corrective: Rp 38.608.000, Preventive: Rp 94.714.684, SDM: Rp 104.108.227, Operasional: Rp 442.845.253). Seluruh endpoint biaya (`api/costs.php` & `api/logistics.php?type=costs`) terverifikasi aktif (*HTTP 200*).
 
 #### 1. Tujuan & Sasaran Tabel
 - Mengingest 37 transaksi perbaikan berbiaya kas dari `06_02_Laporan_Realisasi_Penggunaan_Dana.md` ke dalam `asset_cost_transactions`.
