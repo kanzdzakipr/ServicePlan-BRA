@@ -4438,6 +4438,8 @@ try {
                                     <span id="nwo-spb-counter" class="wo-parts-counter">0 spare part tercatat</span>
                                 </div>
 
+                                <div id="nwo-parts-flow-alert" style="display:none; align-items:flex-start; gap:10px; padding:10px 14px; border-radius:8px; font-size:0.8rem; line-height:1.45; margin-top:10px; transition:all 0.2s ease;"></div>
+
                                 <textarea id="nwo-parts-needed" style="display:none;"></textarea>
                             </div>
                         </div>
@@ -4588,6 +4590,10 @@ try {
                     <button type="button" class="wo-tab-btn" onclick="switchWoDetailTab('tabWoCosts')">
                         <i class="fa-solid fa-coins"></i> Biaya Perbaikan
                         <span id="modalWoCostsTabBadge" class="badge bg-secondary" style="margin-left:4px; font-size:0.7rem;">0</span>
+                    </button>
+                    <button type="button" class="wo-tab-btn" onclick="switchWoDetailTab('tabWoOvertime')">
+                        <i class="fa-solid fa-business-time"></i> Lembur (SPL)
+                        <span id="modalWoOvertimeTabBadge" class="badge bg-secondary" style="margin-left:4px; font-size:0.7rem;">0</span>
                     </button>
                     <button type="button" class="wo-tab-btn" onclick="switchWoDetailTab('tabWoTimeline')">
                         <i class="fa-solid fa-timeline"></i> Timeline
@@ -4821,6 +4827,22 @@ try {
                             <div style="color:var(--text-muted);">Memuat timeline penanganan...</div>
                         </div>
                     </div>
+
+                    <!-- TAB 6: Lembur (SPL) -->
+                    <div id="tabWoOvertime" class="wo-tab-pane" style="padding:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                            <div>
+                                <strong style="font-size:0.92rem; color:#1e293b;"><i class="fa-solid fa-business-time" style="color:var(--primary);"></i> Surat Perintah Lembur (SPL) Terkait</strong>
+                                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">Penugasan jam lembur personel untuk percepatan penanganan perbaikan darurat / breakdown unit.</div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="window.createSplForCurrentWo()">
+                                <i class="fa-solid fa-file-circle-plus"></i> Buat SPL Lembur
+                            </button>
+                        </div>
+                        <div id="modalWoOvertimeContainer">
+                            <div style="color:var(--text-muted); font-size:0.86rem; padding:12px; text-align:center;">Memuat riwayat SPL...</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Footer -->
@@ -4836,6 +4858,9 @@ try {
                         </button>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-outline-warning btn-sm" id="modalWoOvertimeFooterBtn" onclick="window.createSplForCurrentWo()" type="button" style="padding:5px 12px; font-size:0.82rem;" title="Ajukan Surat Perintah Lembur Mekanik untuk WO Ini">
+                            <i class="fa-solid fa-business-time"></i> Ajukan SPL Lembur
+                        </button>
                         <button class="btn btn-outline-primary btn-sm" id="modalWoAssetBtn" style="padding:5px 12px; font-size:0.82rem;">
                             <i class="fa-solid fa-truck"></i> Detail Aset 360&deg;
                         </button>
@@ -4951,6 +4976,16 @@ try {
                     <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
                         <strong style="display:block; margin-bottom:10px;">Riwayat penggunaan suku cadang pada WO ini</strong>
                         <div id="supportPartUsageList" style="display:grid; gap:8px;"></div>
+                    </section>
+
+                    <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                            <strong style="margin:0;"><i class="fa-solid fa-business-time" style="color:var(--primary);"></i> Surat Perintah Lembur (SPL)</strong>
+                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="openSplFromSupport()">
+                                <i class="fa-solid fa-file-circle-plus"></i> Buat SPL dari WO
+                            </button>
+                        </div>
+                        <div id="supportSplList" style="display:grid; gap:8px;"></div>
                     </section>
 
                     <section style="border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:16px;">
@@ -5554,6 +5589,18 @@ try {
                         : '<div style="font-size:0.84rem; color:var(--text-muted);">Belum ada transaksi barang keluar yang tertaut ke WO ini.</div>';
                 }
 
+                const splList = document.getElementById('supportSplList');
+                if (splList) {
+                    const splRecords = Array.isArray(data?.overtimeRecords) ? data.overtimeRecords : [];
+                    splList.innerHTML = splRecords.length
+                        ? splRecords.map(s => `
+                            <div style="padding:9px 11px; background:#f8fafc; border-radius:7px; font-size:0.84rem;">
+                                <strong>${escapeHtml(s.splNumber)}</strong> &middot; ${escapeHtml(s.splDate)} &middot; ${escapeHtml(s.employeeName)} (${Number(s.durationHours || 0).toFixed(1)} Jam)<br>
+                                <span style="color:var(--text-muted);">${escapeHtml(s.activityDescription || s.generalInstruction || '-')}</span>
+                            </div>`).join('')
+                        : '<div style="font-size:0.84rem; color:var(--text-muted);">Belum ada SPL lembur yang tertaut ke WO ini.</div>';
+                }
+
                 const serviceRequests = Array.isArray(data?.serviceRequests) ? data.serviceRequests : [];
                 if (serviceList) {
                     serviceList.innerHTML = serviceRequests.length
@@ -5611,6 +5658,15 @@ try {
                 const assetId = document.getElementById('supportAssetId')?.value || '';
                 closeModal('modalWoSupport');
                 openSpbForWo(woId, assetId);
+            };
+
+            window.openSplFromSupport = function () {
+                const woId = document.getElementById('supportWoId')?.value || '';
+                const assetId = document.getElementById('supportAssetId')?.value || '';
+                closeModal('modalWoSupport');
+                if (typeof window.openSplFormForWorkOrder === 'function') {
+                    window.openSplFormForWorkOrder(woId, assetId);
+                }
             };
 
             window.markWoNoParts = async function () {
@@ -6549,6 +6605,54 @@ try {
                                             <td style="padding:7px 10px;">${escapeHtml(c.description || '-')}</td>
                                             <td style="padding:7px 10px; text-align:right; font-weight:700; color:#0f172a;">${c.formattedAmount || `Rp ${Number(c.amount || 0).toLocaleString('id-ID')}`}</td>
                                             <td style="padding:7px 10px; font-size:0.78rem; color:#64748b;">${escapeHtml(c.referenceNumber || '-')}</td>
+                                        </tr>`).join('')}
+                                </tbody>
+                            </table>`;
+                    }
+                }
+
+                // Overtime (SPL) List
+                const overtimeContainer = document.getElementById('modalWoOvertimeContainer');
+                const overtimeTabBadge = document.getElementById('modalWoOvertimeTabBadge');
+                const splRecords = Array.isArray(support.overtimeRecords) ? support.overtimeRecords : [];
+                if (overtimeTabBadge) overtimeTabBadge.textContent = splRecords.length;
+
+                if (overtimeContainer) {
+                    if (!splRecords.length) {
+                        overtimeContainer.innerHTML = `
+                            <div style="text-align:center; padding:24px; color:var(--text-muted); background:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1;">
+                                <i class="fa-solid fa-business-time" style="font-size:2rem; color:#cbd5e1; margin-bottom:8px; display:block;"></i>
+                                Belum ada Surat Perintah Lembur (SPL) yang diterbitkan untuk pekerjaan WO ini.<br>
+                                <small>Gunakan tombol <strong>"Buat SPL Lembur"</strong> di atas jika perbaikan unit memerlukan waktu kerja lembur mekanik.</small>
+                            </div>`;
+                    } else {
+                        overtimeContainer.innerHTML = `
+                            <table style="width:100%; border-collapse:collapse; font-size:0.82rem; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
+                                <thead>
+                                    <tr style="background:#f8fafc; color:#475569; text-align:left; border-bottom:1px solid #e2e8f0;">
+                                        <th style="padding:8px 10px;">No. SPL</th>
+                                        <th style="padding:8px 10px;">Tanggal</th>
+                                        <th style="padding:8px 10px;">Personel (Role)</th>
+                                        <th style="padding:8px 10px;">Jam Kerja</th>
+                                        <th style="padding:8px 10px; text-align:center;">Durasi</th>
+                                        <th style="padding:8px 10px;">Verifikasi</th>
+                                        <th style="padding:8px 10px;">Uraian Pekerjaan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${splRecords.map(s => `
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:7px 10px; font-family:var(--font-mono); font-weight:700; color:var(--primary);">${escapeHtml(s.splNumber || '-')}</td>
+                                            <td style="padding:7px 10px; color:#64748b;">${escapeHtml(s.splDate || '-')}</td>
+                                            <td style="padding:7px 10px; font-weight:600;">${escapeHtml(s.employeeName || '-')} <small style="color:#64748b; font-weight:normal;">(${escapeHtml(s.employeeRole || 'Mekanik')})</small></td>
+                                            <td style="padding:7px 10px; font-family:var(--font-mono);">${escapeHtml(s.periodStart || '')} - ${escapeHtml(s.periodEnd || '')}</td>
+                                            <td style="padding:7px 10px; text-align:center; font-weight:700; color:#059669;">${Number(s.durationHours || 0).toFixed(1)} Jam</td>
+                                            <td style="padding:7px 10px;">
+                                                ${s.endVerified 
+                                                    ? '<span class="badge bg-operating" style="font-size:0.7rem;"><i class="fa-solid fa-check-double"></i> Terverifikasi</span>' 
+                                                    : (s.startVerified ? '<span class="badge bg-standby" style="font-size:0.7rem;"><i class="fa-solid fa-clock"></i> Berjalan</span>' : '<span class="badge bg-secondary" style="font-size:0.7rem;">Draft / Belum TTD</span>')}
+                                            </td>
+                                            <td style="padding:7px 10px; font-size:0.8rem; color:#334155;">${escapeHtml(s.activityDescription || s.generalInstruction || '-')}</td>
                                         </tr>`).join('')}
                                 </tbody>
                             </table>`;
