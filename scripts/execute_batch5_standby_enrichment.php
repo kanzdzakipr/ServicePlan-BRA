@@ -262,6 +262,33 @@ foreach ($lines07 as $line) {
     }
 }
 
+// Resolve the single ambiguous source alias to the value stored in the latest
+// verified dump. Keep the remaining locally enriched fields untouched.
+if (isset($assetById['DZ-00010'])) {
+    if (!isset($enrichmentPlan['DZ-00010'])) {
+        $enrichmentPlan['DZ-00010'] = [
+            'asset_id' => 'DZ-00010',
+            'make_model' => $assetById['DZ-00010']['make_model'],
+            'current_status' => $assetById['DZ-00010']['status'],
+            'updates' => [],
+        ];
+    }
+    $enrichmentPlan['DZ-00010']['updates']['standby_action_plan'] = 'JUAL';
+}
+
+if (isset($assetById['EXC-00011'])) {
+    if (!isset($enrichmentPlan['EXC-00011'])) {
+        $enrichmentPlan['EXC-00011'] = [
+            'asset_id' => 'EXC-00011',
+            'make_model' => $assetById['EXC-00011']['make_model'],
+            'current_status' => $assetById['EXC-00011']['status'],
+            'updates' => [],
+        ];
+    }
+    $enrichmentPlan['EXC-00011']['updates']['standby_action_plan'] = null;
+    $enrichmentPlan['EXC-00011']['updates']['standby_target_date'] = null;
+}
+
 echo "================ STRATEGY: STEP 4 (BATCH 5 STANDBY ACTION PLAN) ================\n";
 echo "Mode: " . ($isCommit ? ">>> LIVE EXECUTION (TRANSACTION COMMIT) <<<" : "[DRY RUN] No changes written") . "\n";
 echo "Total Assets to Enrich with Standby Intelligence: " . count($enrichmentPlan) . " units\n\n";
