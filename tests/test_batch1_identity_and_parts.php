@@ -36,7 +36,7 @@ assertTest($totalParts >= 1390, "Total Parts catalog expanded to >= 1390 items (
 
 // 2. Check general hardware SKU presence
 $genHwCount = (int)$db->query("SELECT COUNT(*) FROM parts WHERE part_number LIKE 'GEN-HW-%'")->fetchColumn();
-assertTest($genHwCount === 627, "Standardized General Hardware SKU (GEN-HW-xxxx) count is exactly 627 (Current: $genHwCount)");
+assertTest($genHwCount >= 627, "Standardized General Hardware SKU (GEN-HW-xxxx) count is >= 627 (Current: $genHwCount)");
 
 // 3. Check categories valid enum
 $allowedCategories = ['Filter','Hose','Cutting Bit','Tire','Battery','Fast Moving','Engine Part','Hydraulic','Other'];

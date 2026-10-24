@@ -258,7 +258,12 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 4: Mutasi Pergudangan, Penerimaan & Pengeluaran Suku Cadang (BHW-IN/OUT)
+### 📦 BATCH 4: Mutasi Pergudangan, Penerimaan & Pengeluaran Suku Cadang (BHW-IN/OUT) `[SELESAI & TERVERIFIKASI - 25 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (10/10 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch4_warehouse_transactions.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch4_warehouse_transactions.php)  
+> **Skrip Verifikasi:** [`tests/test_batch4_warehouse_flow.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch4_warehouse_flow.php)  
+> **Hasil:** Tabel `inventory_transactions` terisi **637 transaksi riil** (227 `IN` + 410 `OUT`) dari 8 berkas laporan logistik. Sebanyak **8 master report header** dibuat di `report_records` (BHW-IN & BHW-OUT untuk Spare Parts, Ban, Baterai, dan Pelumas). Katalog master `parts` diperluas dengan **241 suku cadang & consumable baru** (total katalog mencapai **1.634 item**). Rekonstruksi saldo matematis menjamin **0 pelanggaran stok negatif** (*Zero Negative Stock*). Sebanyak **322 transaksi pengeluaran terhubung ke unit aset** dan **156 transaksi terhubung ke tiket work orders**. Saldo akhir `parts.stock_qty` 100% sinkron dengan laporan master kartu stok (`05_03`, `05_06`, `05_09`, `05_12`). Endpoint API `api/logistics.php?type=inventory` berfungsi optimal (*HTTP 200*).
 
 #### 1. Tujuan & Sasaran Tabel
 - Mengingest riwayat pergerakan gudang ke tabel `inventory_transactions`:
