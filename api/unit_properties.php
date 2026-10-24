@@ -135,6 +135,9 @@ if (in_array(trim((string) ($asset['make_model'] ?? '')), $generatedModels, true
     $asset['make_model'] = null;
     $suppressedFields[] = 'make_model';
 }
+$asset['display_model'] = $asset['make_model']
+    ?? ($asset['category'] ? ($asset['category'] . ' (' . ($asset['type'] ?? 'Heavy Equipment') . ')') : ($asset['type'] ?? 'Heavy Equipment'));
+
 
 $seededGpsTimestamp = '2026-08-05 06:40:37';
 if (($asset['created_at'] ?? null) === $seededGpsTimestamp
@@ -334,6 +337,99 @@ $asset['service_history'] = $fetchAll($db,
      ORDER BY service_date DESC, service_log_id DESC",
     $params
 );
+
+// Contracts & Rental Assignments
+$contracts = $fetchAll($db,
+    "SELECT assignment_id, contract_number, project, site, start_date, end_date, target_hours, notes
+     FROM contract_assignments
+     WHERE asset_id = :asset_id
+     ORDER BY end_date DESC, assignment_id DESC",
+    $params
+);
+$asset['contracts'] = $contracts;
+$asset['active_contract'] = $contracts[0] ?? null;
+
+// Unit Valuations
+$valuations = $fetchAll($db,
+    "SELECT valuation_id, unit_name, unit_code_alias, total_repair_cost, purchase_price, book_value, 
+            monthly_rental_rate, monthly_leasing_installment, market_price_min, market_price_max, raw_market_price_str
+     FROM unit_valuations
+     WHERE asset_id = :asset_id
+     ORDER BY valuation_id DESC",
+    $params
+);
+$asset['valuation'] = $valuations[0] ?? null;
+
+// Direct Operational Cost Transactions
+$costTransactions = $fetchAll($db,
+    "SELECT transaction_id, cost_code, transaction_date, cost_category, description, amount, currency, vendor_name, reference_no
+     FROM asset_cost_transactions
+     WHERE asset_id = :asset_id AND reversed_at IS NULL
+     ORDER BY transaction_date DESC, transaction_id DESC",
+    $params
+);
+$asset['cost_transactions'] = $costTransactions;
+$asset['total_direct_cost'] = array_sum(array_column($costTransactions, 'amount'));
+
+// Operator Shift & Telemetry Usage Rate
+if (!empty($asset['operator_history']) && empty($asset['operator_shift'])) {
+    $asset['operator_shift'] = $asset['operator_history'][0]['shift_type'] ?? 'Shift 1 (Utama)';
+}
+
+if ($asset['daily_usage_coefficient'] === null) {
+    if (!empty($asset['active_contract']['target_hours']) && (float) $asset['active_contract']['target_hours'] > 0) {
+        $asset['daily_usage_coefficient'] = round((float) $asset['active_contract']['target_hours'] / 31.0, 1);
+    } elseif (!empty($telemetryRows[0]['working_hours']) && (float) $telemetryRows[0]['working_hours'] > 0) {
+        $wDays = max(1, (int) ($telemetryRows[0]['working_days'] ?? 25));
+        $asset['daily_usage_coefficient'] = round((float) $telemetryRows[0]['working_hours'] / $wDays, 1);
+    }
+}
+
+// Dynamic Health Score Calculation
+$statusUpper = strtoupper((string) ($asset['status'] ?? 'READY'));
+$baseHealth = 98;
+if ($statusUpper === 'BREAKDOWN') {
+    $baseHealth -= 35;
+} elseif (str_contains($statusUpper, 'ACCIDENT')) {
+    $baseHealth -= 40;
+} elseif ($statusUpper === 'STANDBY') {
+    $baseHealth -= 10;
+}
+
+$openWOCount = 0;
+foreach ($workOrders as $wo) {
+    $wSt = strtoupper((string) ($wo['status'] ?? ''));
+    if (!in_array($wSt, ['CLOSED', 'COMPLETED', 'CANCELLED'], true)) {
+        $openWOCount++;
+    }
+}
+$baseHealth -= min(25, $openWOCount * 8);
+
+$redTireCount = 0;
+foreach ($latestTires as $tire) {
+    if (strtoupper((string) ($tire['condition_color'] ?? '')) === 'RED') {
+        $redTireCount++;
+    }
+}
+$baseHealth -= min(15, $redTireCount * 5);
+
+$asset['health_score'] = max(35, min(100, $baseHealth));
+
+// Dynamic Next Service Date Calculation
+if (empty($asset['next_service_estimated_date']) && !empty($asset['next_service_due_hm_km']) && !empty($asset['last_hm_km'])) {
+    $remainingHm = (float) $asset['next_service_due_hm_km'] - (float) $asset['last_hm_km'];
+    $dailyRate = (float) ($asset['daily_usage_coefficient'] ?? 8.0);
+    if ($dailyRate <= 0) {
+        $dailyRate = 8.0;
+    }
+
+    if ($remainingHm <= 0) {
+        $asset['next_service_estimated_date'] = date('Y-m-d');
+    } else {
+        $daysNeeded = max(1, (int) round($remainingHm / $dailyRate));
+        $asset['next_service_estimated_date'] = date('Y-m-d', strtotime("+$daysNeeded days"));
+    }
+}
 
 api_json_response(200, [
     'status' => 'success',

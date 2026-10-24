@@ -170,6 +170,11 @@ function wo_upload_before_photo(PDO $db): never
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0750, true) && !is_dir($uploadDir)) {
         api_json_response(500, ['status' => 'error', 'message' => 'Direktori dokumentasi Work Order tidak dapat disiapkan.']);
     }
+    $deny = $uploadDir . DIRECTORY_SEPARATOR . '.htaccess';
+    if (!file_exists($deny)) {
+        @file_put_contents($deny, "Options -Indexes\n<FilesMatch \"\\.(?:php[0-9]?|phtml|phar|cgi|pl|py|sh|shtml|asp|aspx|jsp|exe|dll|bat|cmd)$\">\n    <IfModule mod_authz_core.c>\n        Require all denied\n    </IfModule>\n    <IfModule !mod_authz_core.c>\n        Order allow,deny\n        Deny from all\n    </IfModule>\n</FilesMatch>\n<IfModule mod_headers.c>\n    Header set X-Content-Type-Options \"nosniff\"\n</IfModule>\n<IfModule mod_php.c>\n    php_flag engine off\n</IfModule>\n<IfModule mod_php7.c>\n    php_flag engine off\n</IfModule>\n<IfModule mod_php8.c>\n    php_flag engine off\n</IfModule>\n");
+    }
+
 
     $safeWoId = preg_replace('/[^A-Za-z0-9_-]/', '-', $woId) ?: 'WO';
     $fileName = $safeWoId . '-' . bin2hex(random_bytes(12)) . '.' . $extensions[$mime];
@@ -210,6 +215,28 @@ switch ($method) {
             $availability = WorkOrderSupport::checkPartsAvailability($db, $items);
             api_json_response(200, ['status' => 'success', 'data' => $availability]);
         }
+        if ((string) ($_GET['action'] ?? '') === 'view-photo') {
+            $woId = trim((string) ($_GET['wo_id'] ?? ''));
+            if ($woId === '') api_json_response(422, ['status' => 'error', 'message' => 'ID Work Order wajib diisi.']);
+            api_require_work_order_access($db, $woId);
+            $stmt = $db->prepare('SELECT before_photo_url FROM work_orders WHERE wo_id = :id LIMIT 1');
+            $stmt->execute([':id' => $woId]);
+            $photoPath = (string) $stmt->fetchColumn();
+            if ($photoPath === '') api_json_response(404, ['status' => 'error', 'message' => 'Foto tidak ditemukan pada Work Order ini.']);
+            $base = realpath(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'work_orders');
+            $path = realpath(dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $photoPath));
+            if (!$base || !$path || !str_starts_with($path, $base . DIRECTORY_SEPARATOR) || !is_file($path)) {
+                api_json_response(404, ['status' => 'error', 'message' => 'Berkas foto tidak ditemukan di server.']);
+            }
+            $mime = (new finfo(FILEINFO_MIME_TYPE))->file($path) ?: 'application/octet-stream';
+            header('Content-Type: ' . $mime);
+            header('X-Content-Type-Options: nosniff');
+            header('Content-Length: ' . filesize($path));
+            header('Content-Disposition: inline; filename="' . basename($path) . '"');
+            readfile($path);
+            exit;
+        }
+
         $scope = api_location_scope_clause('a', 'wo_list_location_id');
         $select = "SELECT w.*, a.asset_code, a.category AS asset_category,
                           TIMESTAMPDIFF(MINUTE, w.reported_at, COALESCE(w.closed_at, NOW())) AS handling_duration_minutes,

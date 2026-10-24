@@ -41,7 +41,14 @@ DirectoryIndex index.html dashboard.php index.php
 
     # Block access to core backend PHP class folders & internal configs
     RewriteRule ^(core|config|models)/ - [F,L]
+
+    # Strictly forbid executing any script files in uploads/ storage tree
+    RewriteRule ^uploads/.*\.(?:php[0-9]?|phtml|phar|cgi|pl|py|sh|shtml|asp|aspx|jsp|exe|dll|bat|cmd)$ - [F,L,NC]
+
+    # Asset private storage must strictly be proxied via api/asset_files.php
+    RewriteRule ^uploads/assets(?:/|$) - [F,L,NC]
 </IfModule>
+
 
 # 5. Deny Direct Web Access to Sensitive Credentials & SQL Schemas
 <FilesMatch "(^\.env(?:\..*)?$|\.(?:sql|log|git|gitignore|htaccess|ini|sh|phps|ps1|bat|cmd|md)$)">

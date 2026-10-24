@@ -214,10 +214,25 @@
                         <span class="prop-doc-pill-meta">${escapeHtml(asset.legal_stnk_expiry)}</span>
                     </a>
                 `;
+            } else if (asset.stnk_location) {
+                docsHtml += `
+                    <span class="prop-doc-link active" title="Fisik STNK Tercatat di: ${escapeHtml(asset.stnk_location)}">
+                        <i class="fa-solid fa-file-shield"></i> STNK: <span class="prop-doc-pill-meta">${escapeHtml(asset.stnk_location)}</span>
+                    </span>
+                `;
             } else {
                 docsHtml += `
-                    <span class="prop-doc-link disabled" title="Dokumen STNK belum diunggah">
+                    <span class="prop-doc-link disabled" title="Dokumen STNK belum diunggah / dicatat">
                         <i class="fa-solid fa-file-shield"></i> STNK: <span class="prop-doc-muted-text">${NO_DATA}</span>
+                    </span>
+                `;
+            }
+
+            // BPKB
+            if (asset.bpkb_location) {
+                docsHtml += `
+                    <span class="prop-doc-link active" title="Fisik BPKB / Treasury: ${escapeHtml(asset.bpkb_location)}">
+                        <i class="fa-solid fa-building-columns"></i> BPKB: <span class="prop-doc-pill-meta">${escapeHtml(asset.bpkb_location)}</span>
                     </span>
                 `;
             }
@@ -242,14 +257,24 @@
             if (asset.legal_silo_expiry) {
                 docsHtml += `
                     <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('SILO', 'Surat Izin Layak Operasi (SILO K3)', '${escapeHtml(asset.legal_silo_expiry)}', null)" title="Lihat Dokumen SILO (Masa Berlaku: ${escapeHtml(asset.legal_silo_expiry)})">
-                        <i class="fa-solid fa-file-contract"></i> Lihat SILO
+                        <i class="fa-solid fa-file-circle-check"></i> Lihat SILO
                         <span class="prop-doc-pill-meta">${escapeHtml(asset.legal_silo_expiry)}</span>
                     </a>
                 `;
             } else {
                 docsHtml += `
                     <span class="prop-doc-link disabled" title="Dokumen SILO belum diunggah">
-                        <i class="fa-solid fa-file-contract"></i> SILO: <span class="prop-doc-muted-text">${NO_DATA}</span>
+                        <i class="fa-solid fa-file-circle-check"></i> SILO: <span class="prop-doc-muted-text">${NO_DATA}</span>
+                    </span>
+                `;
+            }
+
+            // Kontrak Sewa Aktif (dari contract_assignments)
+            if (asset.active_contract) {
+                const ktrTitle = `Kontrak: ${escapeHtml(asset.active_contract.contract_number)} | Proyek: ${escapeHtml(asset.active_contract.project)} | Target: ${escapeHtml(asset.active_contract.target_hours || '200')} Jam`;
+                docsHtml += `
+                    <span class="prop-doc-link active" title="${ktrTitle}">
+                        <i class="fa-solid fa-file-contract"></i> Kontrak: <span class="prop-doc-pill-meta">${escapeHtml(asset.active_contract.project)} (${escapeHtml(asset.active_contract.contract_number)})</span>
                     </span>
                 `;
             }
@@ -874,16 +899,24 @@
         const unitIdEls = document.querySelectorAll('.prop-render-unit-id');
         unitIdEls.forEach(el => el.textContent = asset.id || assetId);
 
+        const displayModel = asset.make_model || asset.display_model || asset.category || asset.type;
         const modelEl = document.getElementById('propUnitModel');
-        if (modelEl) modelEl.textContent = displayData(asset.make_model);
+        if (modelEl) modelEl.textContent = displayData(displayModel);
 
         const plateEl = document.getElementById('propUnitPlate');
         if (plateEl) plateEl.textContent = displayData(asset.license_plate);
 
+        const snOrChassis = asset.serial_number || asset.chassis_number;
         const serialEl = document.getElementById('propUnitSerial');
-        if (serialEl) serialEl.textContent = displayData(asset.serial_number);
+        if (serialEl) {
+            serialEl.textContent = displayData(snOrChassis);
+            if (!asset.serial_number && asset.chassis_number) {
+                serialEl.title = `Nomor Rangka (Chassis): ${asset.chassis_number}`;
+            }
+        }
+        const hullOrAlias = asset.hull_number || asset.alias_name;
         const hullEl = document.getElementById('propUnitHull');
-        if (hullEl) hullEl.textContent = displayData(asset.hull_number);
+        if (hullEl) hullEl.textContent = displayData(hullOrAlias);
 
         const iconBox = document.getElementById('propCategoryIcon');
         if (iconBox) {
@@ -1173,15 +1206,26 @@
             </div>`;
         const listEl = document.getElementById('propSpecListGrid');
         if (!listEl) return;
+        const activeKtr = asset.active_contract;
+        const ktrDisplay = activeKtr ? `${activeKtr.project} (${activeKtr.contract_number})` : null;
+        const targetHoursDisplay = activeKtr && activeKtr.target_hours ? `${Number(activeKtr.target_hours).toLocaleString('id-ID')} Jam / Bulan` : null;
+        const modelDisplay = asset.make_model || asset.display_model || asset.category || asset.type;
+        const serialDisplay = asset.serial_number || (asset.chassis_number ? `Rangka: ${asset.chassis_number}` : null);
+        const locDisplay = asset.operational_position || asset.location_name || asset.raw_location_notes;
+        const legalLocations = [
+            asset.stnk_location ? `STNK: ${asset.stnk_location}` : null,
+            asset.bpkb_location ? `BPKB: ${asset.bpkb_location}` : null
+        ].filter(Boolean).join(' | ');
+
         listEl.innerHTML = [
-            row('fa-truck', 'Tipe & Kategori Alat', asset.category || asset.type, 'fa-tag', 'Merek / Model Unit', asset.make_model),
-            row('fa-barcode', 'Nomor Seri (SN)', asset.serial_number, 'fa-id-card', 'Nomor Polisi', asset.license_plate),
+            row('fa-truck', 'Tipe & Kategori Alat', asset.category || asset.type, 'fa-tag', 'Merek / Model Unit', modelDisplay),
+            row('fa-barcode', 'Nomor Seri (SN) / Rangka', serialDisplay, 'fa-id-card', 'Nomor Polisi (No. Pol)', asset.license_plate),
             row('fa-shield-halved', 'Garansi (Warranty)', asset.warranty, 'fa-fingerprint', 'Nomor Rangka (Chassis)', asset.chassis_number),
-            row('fa-building-shield', 'Status Kepemilikan', asset.ownership, 'fa-building-flag', 'Cabang & Wilayah Operasi', asset.sub_group_branch),
-            row('fa-calendar-check', 'Tahun Pembuatan Unit', asset.year_manufacture, 'fa-location-dot', 'Lokasi Aktif', asset.location_name || asset.raw_location_notes),
-            row('fa-gears', 'Model Mesin (Powertrain)', asset.engine_model, 'fa-code-branch', 'Transmisi & Drive Train', asset.transmission_drive_train),
-            row('fa-weight-hanging', 'Kapasitas Muatan / GVW', asset.payload_gvw, 'fa-road', 'Konfigurasi Penggerak / Drive', asset.drive_configuration),
-            row('fa-oil-can', 'Kapasitas Pelumas & Hidrolik', asset.lubricant_hydraulic_capacity, 'fa-gas-pump', 'Kapasitas Tangki Bahan Bakar', asset.fuel_tank_capacity),
+            row('fa-building-shield', 'Status Kepemilikan', asset.ownership, 'fa-handshake', 'Kontrak Sewa Aktif', ktrDisplay),
+            row('fa-calendar-check', 'Tahun Pembuatan Unit', asset.year_manufacture, 'fa-stopwatch-20', 'Target Jam Operasi Kontrak', targetHoursDisplay),
+            row('fa-location-dot', 'Wilayah / Posisi Operasional', locDisplay, 'fa-building-flag', 'Cabang Administrasi', asset.sub_group_branch),
+            row('fa-file-shield', 'Penyimpanan Dokumen Fisik', legalLocations || null, 'fa-shop', 'Vendor / Agen Dealer', asset.dealer),
+            row('fa-gears', 'Model Mesin (Powertrain)', asset.engine_model, 'fa-weight-hanging', 'Kapasitas Muatan / GVW', asset.capacity || asset.payload_gvw),
             row('fa-heart-pulse', 'Mean Time Between Failures (MTBF)', metric(calculated.mtbf_hours), 'fa-stopwatch', 'Mean Time to Repair (MTTR)', metric(calculated.mttr_hours))
         ].join('');
     }

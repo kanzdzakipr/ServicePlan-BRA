@@ -87,11 +87,16 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 1: Standardisasi Identitas Aset & Master Katalog Suku Cadang Baru
+### 📦 BATCH 1: Standardisasi Identitas Aset & Master Katalog Suku Cadang Baru `[SELESAI & TERVERIFIKASI - 24 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (10/10 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch1_assets_parts.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch1_assets_parts.php)  
+> **Skrip Verifikasi:** [`tests/test_batch1_identity_and_parts.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch1_identity_and_parts.php)  
+> **Hasil:** 30 unit aset diperkaya dengan alias operasional & serial number, 672 suku cadang baru diingest (45 OEM + 627 SKU `GEN-HW-xxxx`), saldo stok 419 part diperbarui, total katalog menjadi **1.393 item** (*Zero Duplicates*).
 
 #### 1. Tujuan & Sasaran Tabel
 - Melengkapi kamus alias panggil operasional lapangan (`alias_name`, `hull_number`) pada tabel `assets`.
-- Mengingest 46 suku cadang baru dengan OEM Part Number valid ke tabel `parts`.
+- Mengingest 45 suku cadang baru dengan OEM Part Number valid ke tabel `parts`.
 - Menstandarkan 627 item general hardware/consumables tanpa part number menjadi SKU berformat `GEN-HW-xxxx`.
 
 #### 2. Langkah-Langkah Eksekusi (*Step-by-Step*)
@@ -132,7 +137,12 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 2: Rekonsiliasi Work Order, Downtime & Riwayat Penugasan Operator
+### 📦 BATCH 2: Rekonsiliasi Work Order, Downtime & Riwayat Penugasan Operator `[SELESAI & TERVERIFIKASI - 24 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (12/12 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch2_work_orders.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch2_work_orders.php)  
+> **Skrip Verifikasi:** [`tests/test_batch2_work_orders_enrichment.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch2_work_orders_enrichment.php)  
+> **Hasil:** 364 record `work_orders` diperkaya dengan tanggal breakdown (`trouble_at`), waktu selesai (`closed_at`), durasi downtime menit/formatted, assigned mechanic + JSON array, tindakan perbaikan komprehensif, dan root cause analysis dari data riil. Relasi dummy seed 101-103 disinkronkan ke unit riil. Riwayat operator bertambah 29 entri baru menjadi total 196 entri di `asset_operator_history`. Zero negative downtime (`closed_at >= trouble_at`).
 
 #### 1. Tujuan & Sasaran Tabel
 - Melengkapi 364 record `work_orders` dengan data riil breakdown: tanggal/jam gangguan, durasi downtime menit/hari, tindakan mekanik, akar masalah, dan estimasi.
@@ -178,7 +188,12 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 3: Preventive Maintenance, Greasing Hauling & Battery Health Logs
+### 📦 BATCH 3: Preventive Maintenance, Greasing Hauling & Battery Health Logs `[SELESAI & TERVERIFIKASI - 25 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (11/11 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch3_pm_grease_battery.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch3_pm_grease_battery.php)  
+> **Skrip Verifikasi:** [`tests/test_batch3_pm_grease_battery.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch3_pm_grease_battery.php)  
+> **Hasil:** Tabel `grease_logs` terisi **25 log pelumasan** mingguan hauling (23 unit dump truck, Minggu 1 & 2) dengan titik pelumasan JSON terstruktur. Tabel `battery_logs` terisi **12 log kondisi baterai baru** (6 transaksi BKTBI dari `05_05` + 6 penggantian aki riil dari WO breakdown). Tabel `assets` dan `pm_plans` tersinkronisasi untuk 13 unit RSV1 dengan status dinamis (`OVERDUE`, `DUE_SOON`), interval KM/HM, dan tanggal jatuh tempo servis.
 
 #### 1. Tujuan & Sasaran Tabel
 - Mengisi tabel `grease_logs` (saat ini 0 baris) dengan 23 log greasing mingguan hauling.
@@ -243,7 +258,12 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 4: Mutasi Pergudangan, Penerimaan & Pengeluaran Suku Cadang (BHW-IN/OUT)
+### 📦 BATCH 4: Mutasi Pergudangan, Penerimaan & Pengeluaran Suku Cadang (BHW-IN/OUT) `[SELESAI & TERVERIFIKASI - 25 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (10/10 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch4_warehouse_transactions.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch4_warehouse_transactions.php)  
+> **Skrip Verifikasi:** [`tests/test_batch4_warehouse_flow.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch4_warehouse_flow.php)  
+> **Hasil:** Tabel `inventory_transactions` terisi **637 transaksi riil** (227 `IN` + 410 `OUT`) dari 8 berkas laporan logistik. Sebanyak **8 master report header** dibuat di `report_records` (BHW-IN & BHW-OUT untuk Spare Parts, Ban, Baterai, dan Pelumas). Katalog master `parts` diperluas dengan **241 suku cadang & consumable baru** (total katalog mencapai **1.634 item**). Rekonstruksi saldo matematis menjamin **0 pelanggaran stok negatif** (*Zero Negative Stock*). Sebanyak **322 transaksi pengeluaran terhubung ke unit aset** dan **156 transaksi terhubung ke tiket work orders**. Saldo akhir `parts.stock_qty` 100% sinkron dengan laporan master kartu stok (`05_03`, `05_06`, `05_09`, `05_12`). Endpoint API `api/logistics.php?type=inventory` berfungsi optimal (*HTTP 200*).
 
 #### 1. Tujuan & Sasaran Tabel
 - Mengingest riwayat pergerakan gudang ke tabel `inventory_transactions`:
@@ -291,7 +311,12 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 5: Ledger Biaya Operasional & Finansial Bulanan Equipment
+### 📦 BATCH 5: Ledger Biaya Operasional & Finansial Bulanan Equipment `[SELESAI & TERVERIFIKASI - 25 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (11/11 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch5_cost_ledger.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch5_cost_ledger.php)  
+> **Skrip Verifikasi:** [`tests/test_batch5_cost_ledger_audit.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch5_cost_ledger_audit.php)  
+> **Hasil:** Tabel `asset_cost_transactions` terisi **60 transaksi biaya riil per unit alat berat & kendaraan** dengan total pengeluaran langsung **Rp 309.505.450,00** (*Zero Orphan Assets, Zero Negative Amounts*). Sebanyak **36 transaksi biaya terhubung langsung ke tiket perbaikan aktif (`work_orders`)**. Tabel `cost_financial_monthly` diperkaya dengan **rekap eksekutif Januari 2026 sebesar Rp 680.276.164,00** beserta 4 breakdown kategori (Corrective: Rp 38.608.000, Preventive: Rp 94.714.684, SDM: Rp 104.108.227, Operasional: Rp 442.845.253). Seluruh endpoint biaya (`api/costs.php` & `api/logistics.php?type=costs`) terverifikasi aktif (*HTTP 200*).
 
 #### 1. Tujuan & Sasaran Tabel
 - Mengingest 37 transaksi perbaikan berbiaya kas dari `06_02_Laporan_Realisasi_Penggunaan_Dana.md` ke dalam `asset_cost_transactions`.
@@ -344,9 +369,15 @@ Sebelum eksekusi migrasi, seluruh data sumber telah diaudit melalui script inspe
 
 ---
 
-### 📦 BATCH 6: Penugasan Kontrak Sewa, Alokasi Proyek & Matriks Jam Operasi
+### 📦 BATCH 6: Penugasan Kontrak Sewa, Alokasi Proyek & Matriks Jam Operasi `[SELESAI & TERVERIFIKASI - 25 OKT 2026]`
+
+> **Status Eksekusi:** ✅ **BERHASIL DISELESAIKAN SECARA PERMANEN (11/11 TEST PASSED)**  
+> **Skrip Migrasi:** [`scripts/migrate_batch6_rental_contracts.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/scripts/migrate_batch6_rental_contracts.php)  
+> **Skrip Verifikasi:** [`tests/test_batch6_contracts_and_utilization.php`](file:///c:/Users/DerpyPotatoes8/Downloads/vscode/widya/ServicePlan-BRA/tests/test_batch6_contracts_and_utilization.php)  
+> **Hasil:** Tabel `contract_assignments` terisi **184 penugasan kontrak sewa aktif** (*Zero Orphan Assets, Zero Missing References*) dengan total jam target operasional **45.632,00 jam kerja**. Distribusi unit proyek mencakup **PHR (142 unit / 35.216 jam)**, **PEP (23 unit / 5.704 jam)**, **ADERA (12 unit / 2.976 jam)**, dan **KBB (7 unit / 1.736 jam)**. Sebanyak **19 unit alat berat & kendaraan otentik** berhasil didaftarkan ke katalog aset master. Tabel `assets` tersinkronisasi sempurna pada kolom `project_name`, `operational_position`, dan `status` (`OPERATING` untuk seluruh 184 unit terkontrak). Sebanyak **12 log telemetri** pada `telematics_logs` terhubung ke master `asset_id`. Core service `ContractCsv::records` dan endpoint `api/contracts.php` terverifikasi aktif (*HTTP 200*).
 
 #### 1. Tujuan & Sasaran Tabel
+
 - Mengingest 184 penugasan sewa proyek aktif dari `07_01_Identitas_dan_Ringkasan_Pendapatan_Sewa.md` ke dalam tabel `contract_assignments`.
 - Mengingest data utilisasi harian dari `07_02_Pencatatan_Proyek_Harian_Sewa_Alat.md` (31 hari operasi kerja).
 - Memperbarui kolom `project_name` dan `operational_position` pada tabel `assets`.

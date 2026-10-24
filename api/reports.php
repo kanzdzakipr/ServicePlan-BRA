@@ -240,6 +240,24 @@ try {
         }
 
         $action = strtolower(trim((string)($_GET['action'] ?? '')));
+        if ($action === 'view-evidence') {
+            $file = basename(trim((string)($_GET['file'] ?? '')));
+            if ($file === '' || !preg_match('/^EVD-[0-9]{8}-[A-Za-z0-9_-]+\.(?:jpg|jpeg|png|webp)$/i', $file)) {
+                reportReply('error', null, 'Nama berkas bukti tidak valid.', 422);
+            }
+            $base = realpath(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'evidence');
+            $path = realpath($base . DIRECTORY_SEPARATOR . $file);
+            if (!$base || !$path || !str_starts_with($path, $base . DIRECTORY_SEPARATOR) || !is_file($path)) {
+                reportReply('error', null, 'Berkas bukti tidak ditemukan.', 404);
+            }
+            $mime = (new finfo(FILEINFO_MIME_TYPE))->file($path) ?: 'application/octet-stream';
+            header('Content-Type: ' . $mime);
+            header('X-Content-Type-Options: nosniff');
+            header('Content-Length: ' . filesize($path));
+            header('Content-Disposition: inline; filename="' . $file . '"');
+            readfile($path);
+            exit;
+        }
         if ($action === 'draft') {
             $schemaId = trim((string)($_GET['schema_id'] ?? ''));
             $clientKey = trim((string)($_GET['client_key'] ?? ''));
@@ -282,11 +300,65 @@ try {
     }
 
     if ($method !== 'POST') reportReply('error', null, 'Metode tidak diizinkan.', 405);
+
+    $postAction = strtolower(trim((string)($_GET['action'] ?? $_POST['action'] ?? '')));
+    if ($postAction === 'upload-evidence') {
+        $file = $_FILES['evidence'] ?? ($_FILES['file'] ?? null);
+        if (!is_array($file) || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            reportReply('error', null, 'Pilih satu file foto bukti yang valid.', 422);
+        }
+        $size = (int)($file['size'] ?? 0);
+        if ($size <= 0 || $size > 5 * 1024 * 1024) {
+            reportReply('error', null, 'Ukuran foto maksimal 5 MB.', 422);
+        }
+        $tmp = (string)($file['tmp_name'] ?? '');
+        if (!is_uploaded_file($tmp)) {
+            reportReply('error', null, 'Sumber berkas unggahan tidak valid.', 422);
+        }
+        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($tmp);
+        $allowed = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ];
+        $imgInfo = @getimagesize($tmp);
+        if (!isset($allowed[$mime]) || $imgInfo === false) {
+            reportReply('error', null, 'Format foto harus berupa JPG, PNG, atau WebP yang valid.', 422);
+        }
+
+        $evidenceDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'evidence';
+        if (!is_dir($evidenceDir) && !mkdir($evidenceDir, 0750, true) && !is_dir($evidenceDir)) {
+            reportReply('error', null, 'Folder penyimpanan bukti tidak dapat disiapkan.', 500);
+        }
+        $deny = $evidenceDir . DIRECTORY_SEPARATOR . '.htaccess';
+        if (!file_exists($deny)) {
+            @file_put_contents($deny, "Options -Indexes\n<FilesMatch \"\\.(?:php[0-9]?|phtml|phar|cgi|pl|py|sh|shtml|asp|aspx|jsp|exe|dll|bat|cmd)$\">\n    <IfModule mod_authz_core.c>\n        Require all denied\n    </IfModule>\n    <IfModule !mod_authz_core.c>\n        Order allow,deny\n        Deny from all\n    </IfModule>\n</FilesMatch>\n<IfModule mod_headers.c>\n    Header set X-Content-Type-Options \"nosniff\"\n</IfModule>\n<IfModule mod_php.c>\n    php_flag engine off\n</IfModule>\n<IfModule mod_php7.c>\n    php_flag engine off\n</IfModule>\n<IfModule mod_php8.c>\n    php_flag engine off\n</IfModule>\n");
+        }
+
+        $filename = 'EVD-' . date('Ymd') . '-' . bin2hex(random_bytes(10)) . '.' . $allowed[$mime];
+        $fullPath = $evidenceDir . DIRECTORY_SEPARATOR . $filename;
+        if (!move_uploaded_file($tmp, $fullPath)) {
+            reportReply('error', null, 'Gagal menyimpan file foto bukti ke server.', 500);
+        }
+        $relativePath = 'uploads/evidence/' . $filename;
+        reportReply('success', [
+            'url' => $relativePath,
+            'dataUrl' => $relativePath,
+            'filename' => $filename,
+            'name' => basename((string)($file['name'] ?? $filename)),
+            'size' => $size,
+            'mime' => $mime,
+            'width' => (int)($imgInfo[0] ?? 0),
+            'height' => (int)($imgInfo[1] ?? 0),
+        ], 'Foto bukti berhasil diunggah.');
+    }
+
     $input = json_decode(file_get_contents('php://input'), true);
     if (!is_array($input)) reportReply('error', null, 'Payload JSON tidak valid.', 400);
     $action = strtolower(trim((string)($input['action'] ?? '')));
     $clientKey = trim((string)($input['clientKey'] ?? ''));
     if (!validClientKey($clientKey)) reportReply('error', null, 'Identitas browser tidak valid.', 422);
+
 
     if ($action === 'save_draft' || $action === 'finalize') {
         $template = $input['template'] ?? [];
