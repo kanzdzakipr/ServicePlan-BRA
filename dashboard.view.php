@@ -109,7 +109,7 @@ try {
             </li>
 
             <li class="nav-section-label">System</li>
-            <li><a onclick="showView('archive', '', 'menu-archive'); window.renderArchiveTables();" id="menu-archive"
+            <li><a onclick="showView('archive', '', 'menu-archive'); window.loadArchiveRecords?.();" id="menu-archive"
                     role="button" tabindex="0" data-title="Archive"><i class="fa-solid fa-box-archive"></i><span
                         class="nav-label">Archive</span></a>
             </li>
@@ -7410,6 +7410,8 @@ try {
                     }
 
                     if (archiveDataRes?.status === 'success' && Array.isArray(archiveDataRes.data)) {
+                        window.archiveRecords = archiveDataRes.data;
+                        window.archiveRecordsInitialized = true;
                         const archivedAssets = new Set(archiveDataRes.data.filter(x => x.item_type === 'asset').map(x => String(x.item_id).trim()));
                         const archivedP2H = new Set(archiveDataRes.data.filter(x => x.item_type === 'p2h').map(x => String(x.item_id).trim()));
                         const archivedAccidents = new Set(archiveDataRes.data.filter(x => x.item_type === 'accident').map(x => String(x.item_id).trim()));

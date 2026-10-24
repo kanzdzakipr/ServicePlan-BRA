@@ -30127,6 +30127,33 @@ document.addEventListener("click", function (e) {
 // ARCHIVE FUNCTIONALITY
 // ==========================================
 
+window.archiveRecords = Array.isArray(window.archiveRecords)
+  ? window.archiveRecords
+  : [];
+window.archiveRecordsInitialized = Boolean(window.archiveRecordsInitialized);
+
+window.loadArchiveRecords = async function () {
+  try {
+    const response = await fetch(`api/archive.php?_t=${Date.now()}`, {
+      cache: "no-store",
+      headers: { "Cache-Control": "no-cache" },
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.status !== "success" || !Array.isArray(payload.data)) {
+      throw new Error(payload.message || "Data arsip tidak valid");
+    }
+    window.archiveRecords = payload.data;
+    window.archiveRecordsInitialized = true;
+    window.archiveDataLoadFailed = false;
+    window.renderArchiveTables?.();
+    return payload.data;
+  } catch (error) {
+    window.archiveDataLoadFailed = true;
+    console.error("Gagal memuat register Archive:", error);
+    return null;
+  }
+};
+
 window.archiveData = async function (type, id) {
   const reasonPrompt = prompt("Apakah Anda yakin ingin memindahkan data ini ke Archive?\n\nMasukkan alasan pengarsipan (opsional):", "");
   if (reasonPrompt === null) return; // User cancelled
@@ -30150,6 +30177,8 @@ window.archiveData = async function (type, id) {
     alert("Terjadi kesalahan koneksi saat mengarsipkan.");
     return;
   }
+
+  await window.loadArchiveRecords();
 
   if (type === "asset") {
     const item = window.globalData.assets.find((a) => a.id === id);
@@ -30204,33 +30233,8 @@ window.restoreData = async function (type, id) {
     return;
   }
 
-  if (type === "asset") {
-    const item = window.globalData.assets.find((a) => a.id === id);
-    if (item) item.isArchived = false;
-    if (typeof initAssetView === "function")
-      initAssetView(window.globalData.assets);
-    if (typeof updateKpiSummary === "function") updateKpiSummary();
-  } else if (type === "p2h") {
-    const list =
-      window.globalData && window.globalData.inspections
-        ? window.globalData.inspections
-        : [];
-    const item = list.find((a) => a.id === id);
-    if (item) item.isArchived = false;
-    if (typeof window.renderHistoryTable === "function")
-      window.renderHistoryTable();
-  } else if (type === "accident") {
-    const list =
-      window.globalData && window.globalData.accidents
-        ? window.globalData.accidents
-        : [];
-    const item = list.find((a) => a.docNo === id);
-    if (item) item.isArchived = false;
-    if (typeof window.renderAccidentTable === "function")
-      window.renderAccidentTable();
-  }
-
-  window.renderArchiveTables();
+  await window.loadArchiveRecords();
+  window.location.reload();
 };
 
 window.switchArchiveTab = function (tabName) {
@@ -30254,12 +30258,24 @@ window.switchArchiveTab = function (tabName) {
   }
 
   window.renderArchiveTables();
+  window.loadArchiveRecords();
 };
 
 window.renderArchiveTables = function () {
   const tbAsset = document.getElementById("tbArchiveAssetBody");
-  if (tbAsset && window.globalData && window.globalData.assets) {
-    const archivedAssets = window.globalData.assets.filter((a) => a.isArchived);
+  if (tbAsset) {
+    const serverAssets = (window.archiveRecords || [])
+      .filter((record) => record.item_type === "asset")
+      .map((record) => ({
+        ...(record.details || {}),
+        id: record.details?.id || record.item_id,
+        archivedAt: record.archived_at,
+        archivedBy: record.archived_by_name,
+        archiveReason: record.reason,
+      }));
+    const archivedAssets = window.archiveRecordsInitialized
+      ? serverAssets
+      : (window.globalData?.assets || []).filter((asset) => asset.isArchived);
     if (archivedAssets.length === 0) {
       tbAsset.innerHTML =
         '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">Tidak ada data Armada di arsip.</td></tr>';
@@ -30275,7 +30291,7 @@ window.renderArchiveTables = function () {
                     <td>${escapeHtml(asset.category)}</td>
                     <td>${escapeHtml(asset.status)}</td>
                     <td>${escapeHtml(asset.location)}</td>
-                    <td>${escapeHtml(asset.lastUpdate)}</td>
+                    <td>${escapeHtml(asset.archivedAt || asset.lastUpdate || "-")}</td>
                     <td>
                         <button class="btn btn-sm" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc;" onclick="window.restoreData('asset', '${escapeHtml(asset.id)}')"><i class="fa-solid fa-rotate-left"></i> Restore</button>
                     </td>
@@ -30287,11 +30303,12 @@ window.renderArchiveTables = function () {
 
   const tbP2H = document.getElementById("tbArchiveP2HBody");
   if (tbP2H) {
-    const listP2H =
-      window.globalData && window.globalData.inspections
-        ? window.globalData.inspections
-        : [];
-    const archivedP2H = listP2H.filter((a) => a.isArchived);
+    const serverP2H = (window.archiveRecords || [])
+      .filter((record) => record.item_type === "p2h")
+      .map((record) => ({ ...(record.details || {}), id: record.details?.id || record.item_id }));
+    const archivedP2H = window.archiveRecordsInitialized
+      ? serverP2H
+      : (window.globalData?.inspections || []).filter((item) => item.isArchived);
     if (archivedP2H.length === 0) {
       tbP2H.innerHTML =
         '<tr><td colspan="8" style="text-align:center; color:#94a3b8;">Tidak ada data P2H di arsip.</td></tr>';
@@ -30317,11 +30334,12 @@ window.renderArchiveTables = function () {
 
   const tbAccident = document.getElementById("tbArchiveAccidentBody");
   if (tbAccident) {
-    const listAccidents =
-      window.globalData && window.globalData.accidents
-        ? window.globalData.accidents
-        : [];
-    const archivedAccident = listAccidents.filter((a) => a.isArchived);
+    const serverAccidents = (window.archiveRecords || [])
+      .filter((record) => record.item_type === "accident")
+      .map((record) => ({ ...(record.details || {}), docNo: record.details?.docNo || record.item_id }));
+    const archivedAccident = window.archiveRecordsInitialized
+      ? serverAccidents
+      : (window.globalData?.accidents || []).filter((item) => item.isArchived);
     if (archivedAccident.length === 0) {
       tbAccident.innerHTML =
         '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">Tidak ada data Insiden di arsip.</td></tr>';

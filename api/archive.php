@@ -41,6 +41,83 @@ function requireArchiveItemAccess(PDO $db, string $type, string $id): void
     }
 }
 
+function archiveItemSnapshot(PDO $db, string $type, string $id): array
+{
+    if ($type === 'asset') {
+        $stmt = $db->prepare("
+            SELECT a.asset_id AS id,
+                   a.asset_code AS assetCode,
+                   a.hull_number AS hullNumber,
+                   a.serial_number AS serialNumber,
+                   a.license_plate AS licensePlate,
+                   a.category,
+                   a.type,
+                   a.status,
+                   COALESCE(l.location_name, a.raw_location_notes, '') AS location,
+                   a.last_update_timestamp AS lastUpdate
+            FROM assets a
+            LEFT JOIN locations l ON l.location_id = a.current_location_id
+            WHERE a.asset_id = :id
+            LIMIT 1
+        ");
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    if ($type === 'p2h') {
+        $stmt = $db->prepare("
+            SELECT i.inspection_id, i.asset_id, i.inspection_date,
+                   i.current_hm_km, i.overall_result, i.findings_summary,
+                   i.payload_json
+            FROM inspections i
+            WHERE CAST(i.inspection_id AS CHAR) = :inspection_id
+               OR JSON_UNQUOTE(JSON_EXTRACT(i.payload_json, '$.id')) = :payload_id
+            ORDER BY i.inspection_id DESC
+            LIMIT 1
+        ");
+        $stmt->execute([':inspection_id' => $id, ':payload_id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) return [];
+        $payload = json_decode((string) ($row['payload_json'] ?? ''), true);
+        if (!is_array($payload)) $payload = [];
+        return array_replace($payload, [
+            'id' => (string) ($payload['id'] ?? $row['inspection_id']),
+            'date' => (string) ($payload['date'] ?? $row['inspection_date']),
+            'unitId' => (string) ($payload['unitId'] ?? $row['asset_id']),
+            'hmStart' => $payload['hmStart'] ?? $row['current_hm_km'],
+            'status' => (string) ($payload['status'] ?? $row['overall_result']),
+            'notes' => (string) ($payload['notes'] ?? $row['findings_summary'] ?? ''),
+        ]);
+    }
+
+    if ($type === 'accident') {
+        $stmt = $db->prepare("
+            SELECT ac.*, l.location_name
+            FROM accidents ac
+            LEFT JOIN locations l ON l.location_id = ac.location_id
+            WHERE ac.accident_id = :id
+            LIMIT 1
+        ");
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) return [];
+        $payload = json_decode((string) ($row['payload_json'] ?? ''), true);
+        if (!is_array($payload)) $payload = [];
+        return array_replace($payload, [
+            'docNo' => (string) $row['accident_id'],
+            'reportDate' => (string) $row['report_date'],
+            'incidentDate' => (string) $row['incident_datetime'],
+            'unitCode' => (string) $row['asset_id'],
+            'location' => (string) ($payload['location'] ?? $row['location_name'] ?? ''),
+            'operatorName' => (string) ($row['operator_name'] ?? ''),
+            'severity' => (string) ($row['severity'] ?? ''),
+            'status' => (string) ($row['status'] ?? ''),
+        ]);
+    }
+
+    return [];
+}
+
 switch ($method) {
     case 'GET':
         api_require_permission('archive.read');
@@ -51,6 +128,10 @@ switch ($method) {
                 $rows,
                 static fn(array $row): bool => archiveItemAccessible($db, (string) $row['item_type'], (string) $row['item_id'])
             ));
+            foreach ($result as &$row) {
+                $row['details'] = archiveItemSnapshot($db, (string) $row['item_type'], (string) $row['item_id']);
+            }
+            unset($row);
             api_json_response(200, ["status" => "success", "data" => $result]);
         } catch (PDOException $e) {
             api_json_response(500, ["status" => "error", "message" => "Gagal memuat data arsip: " . $e->getMessage()]);

@@ -617,7 +617,18 @@ Gate F4 hanya PASS apabila semua skenario penting lulus di browser, HTTP, dan DB
 
 ### F5.1 Archive dan restore unit QA
 
-1. Gunakan unit `QA-FINISH-ASSET-...`; jangan memakai `EXC-00001` atau unit operasional.
+Status perbaikan 24 Oktober 2026: register Archive sekarang memakai payload snapshot dari `api/archive.php`, terpisah dari daftar Master Asset aktif. Bug yang membuat aset hilang dari kedua menu setelah refresh telah ditutup. Kasus uji aktif saat ini adalah `item_id = DT-41006`, dengan `asset_code = QA-FINISH-ASSET-01`, alasan `QA FINISH archive test`; jangan archive ulang sebelum menyelesaikan verifikasi dan restore kasus ini.
+
+1. Tekan `Ctrl+F5`, buka menu **Archive → Armada**, lalu pastikan `DT-41006` muncul.
+2. Pastikan kolom kategori, status, lokasi, dan waktu arsip berasal dari database; lokasi kasus ini adalah `Borrow Pit Harapan Baru`.
+3. Pastikan `DT-41006` tidak muncul di Master Asset selama marker arsip masih aktif.
+4. Refresh/login ulang; `DT-41006` harus tetap hanya berada di Archive.
+5. Klik **Restore** untuk `DT-41006` dengan alasan `QA FINISH restore test`; halaman akan dimuat ulang otomatis.
+6. Pastikan `DT-41006` hilang dari Archive dan kembali ke Master Asset.
+
+Untuk pengujian baru setelah kasus tersebut selesai:
+
+1. Gunakan unit dengan `asset_code` berawalan `QA-FINISH-ASSET-`; jangan memakai `EXC-00001` atau unit operasional.
 2. Archive dengan alasan `QA FINISH archive test`.
 3. Pastikan unit hilang dari daftar aktif dan muncul di Archive.
 4. Refresh/login ulang; status arsip harus tetap.
