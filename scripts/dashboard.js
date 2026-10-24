@@ -21853,6 +21853,8 @@
       ? window.globalData.spl_overtime_records
       : [];
     rows.forEach((row) => {
+      if (activeKpiLocationId() && Number(row.locationId) !== activeKpiLocationId()) return;
+      if (activeKpiPeriod() && !String(row.splDate || "").startsWith(activeKpiPeriod())) return;
       const key = String(row.reportId || row.splNumber || "");
       if (!key) return;
       if (!grouped.has(key)) {
@@ -21900,19 +21902,17 @@
       personnelCount: record.personnel.length,
       totalPersonHours: `${Math.round(record.totalHours * 100) / 100} Jam-Orang`,
     }));
-    const databaseIds = new Set(databaseRecords.map((record) => record.id));
-    return [
-      ...databaseRecords,
-      ...officialSplRegister.filter((record) => !databaseIds.has(record.id)),
-    ];
+    return databaseRecords;
   }
 
   let selectedSplReviewId = "";
   let plannerSplReviews = {};
 
   async function loadPlannerSplReviews() {
+    const locationId = activeKpiLocationId();
+    if (!locationId) return;
     try {
-      const resp = await fetch("api/people_kpi.php?action=spl_reviews", {
+      const resp = await fetch(`api/people_kpi.php?action=spl_reviews&period=${encodeURIComponent(activeKpiPeriod())}&location_id=${encodeURIComponent(locationId)}`, {
         cache: "no-store",
       });
       const res = await resp.json();
@@ -21928,6 +21928,52 @@
   // State Variables for Dynamic Calculator & Official Assessment
   let currentHeadKPI = JSON.parse(JSON.stringify(kpiHeadIndicators));
   let currentHeadKPIAssessment = { status: "DRAFT" };
+
+  function activeKpiPeriod() {
+    return document.getElementById("selKpiPeriod")?.value || "2026-01";
+  }
+
+  function activeKpiLocationId() {
+    return Number(document.getElementById("selKpiLocation")?.value || 0);
+  }
+
+  function formatKpiPeriod(period) {
+    const [year, month] = String(period || "").split("-");
+    const date = new Date(Number(year), Number(month) - 1, 1);
+    return Number.isNaN(date.getTime())
+      ? period
+      : new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(date);
+  }
+
+  async function loadKpiLocations() {
+    const selector = document.getElementById("selKpiLocation");
+    if (!selector) return;
+    try {
+      const resp = await fetch("api/people_kpi.php?action=locations&period=2026-01", {
+        cache: "no-store",
+      });
+      const res = await resp.json();
+      if (!resp.ok || res.status !== "success" || !Array.isArray(res.locations)) {
+        throw new Error(res.message || "Daftar lokasi gagal dimuat");
+      }
+      selector.innerHTML = res.locations
+        .map((loc) => `<option value="${Number(loc.location_id)}">${escapeHtml(loc.location_name)}</option>`)
+        .join("");
+      const assigned = Number(res.assigned_location_id || 0);
+      if (assigned && res.locations.some((loc) => Number(loc.location_id) === assigned)) {
+        selector.value = String(assigned);
+      }
+      if (!activeKpiLocationId()) {
+        throw new Error("Akun tidak memiliki lokasi aktif yang dapat diuji");
+      }
+      await loadHeadKPIFromBackend(activeKpiPeriod(), activeKpiLocationId());
+      await loadPlannerSplReviews();
+      await renderOvertimeAttendance();
+    } catch (err) {
+      selector.innerHTML = '<option value="">Lokasi tidak tersedia</option>';
+      alert("People & KPI belum dapat diuji: " + err.message);
+    }
+  }
 
   // =========================================================================
   // 2. MAIN RENDER FUNCTION & HTML INJECTION
@@ -21948,19 +21994,12 @@
                     <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <label for="selKpiPeriod" style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin:0;"><i class="fa-regular fa-calendar"></i> Periode:</label>
-                            <select id="selKpiPeriod" class="form-control" style="width:auto; font-weight:700; padding:6px 14px; font-size:0.88rem; border-radius:8px; border:1px solid #cbd5e1; background:var(--bg-surface); cursor:pointer;" aria-label="Pilih Periode KPI">
-                                <option value="2026-01" selected>Januari 2026</option>
-                                <option value="2026-02">Februari 2026</option>
-                                <option value="2026-03">Maret 2026</option>
-                                <option value="2026-04">April 2026</option>
-                                <option value="2026-05">Mei 2026</option>
-                                <option value="2026-06">Juni 2026</option>
-                                <option value="2026-07">Juli 2026</option>
-                                <option value="2026-08">Agustus 2026</option>
-                                <option value="2026-09">September 2026</option>
-                                <option value="2026-10">Oktober 2026</option>
-                                <option value="2026-11">November 2026</option>
-                                <option value="2026-12">Desember 2026</option>
+                            <input id="selKpiPeriod" type="month" min="2026-01" max="2099-12" value="2026-01" class="form-control" style="width:auto; font-weight:700; padding:6px 14px; font-size:0.88rem; border-radius:8px; border:1px solid #cbd5e1; background:var(--bg-surface);" aria-label="Pilih Periode KPI">
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <label for="selKpiLocation" style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin:0;"><i class="fa-solid fa-location-dot"></i> Lokasi:</label>
+                            <select id="selKpiLocation" class="form-control" style="max-width:240px; font-weight:700; padding:6px 10px; font-size:0.88rem; border-radius:8px;" aria-label="Pilih Lokasi KPI">
+                                <option value="">Memuat lokasi...</option>
                             </select>
                         </div>
                         <button class="btn btn-primary" onclick="window.exportKPIReport()"><i class="fa-solid fa-download"></i> Ekspor Laporan KPI</button>
@@ -21993,6 +22032,9 @@
                             </button>
                             <button type="button" class="btn btn-sm btn-success" onclick="window.approveHeadKPI('APPROVED')" id="btnApproveHeadKpi" title="Setujui penilaian KPI ini (Khusus GM / Administrator)" style="display:none; background:#16a34a; border-color:#16a34a; color:#fff;">
                                 <i class="fa-solid fa-circle-check"></i> Setujui (Approve GM)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="window.approveHeadKPI('REJECTED')" id="btnRejectHeadKpi" title="Tolak penilaian disertai alasan" style="display:none;">
+                                <i class="fa-solid fa-circle-xmark"></i> Tolak
                             </button>
                         </div>
                     </div>
@@ -22415,20 +22457,7 @@
                             <span id="lblAttendancePeriodTitle"><i class="fa-solid fa-list-ol"></i> Rekapitulasi Jam Lembur & Absensi Personel (Januari 2026)</span>
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <label for="selAttendancePeriod" style="font-size:0.82rem; margin:0; font-weight:600;"><i class="fa-regular fa-calendar"></i> Periode Lembur:</label>
-                                <select id="selAttendancePeriod" class="form-control" style="width:auto; font-weight:600; padding:4px 8px; font-size:0.82rem; border-radius:6px;" aria-label="Pilih Periode Lembur">
-                                    <option value="2026-01" selected>Januari 2026</option>
-                                    <option value="2026-02">Februari 2026</option>
-                                    <option value="2026-03">Maret 2026</option>
-                                    <option value="2026-04">April 2026</option>
-                                    <option value="2026-05">Mei 2026</option>
-                                    <option value="2026-06">Juni 2026</option>
-                                    <option value="2026-07">Juli 2026</option>
-                                    <option value="2026-08">Agustus 2026</option>
-                                    <option value="2026-09">September 2026</option>
-                                    <option value="2026-10">Oktober 2026</option>
-                                    <option value="2026-11">November 2026</option>
-                                    <option value="2026-12">Desember 2026</option>
-                                </select>
+                                <input id="selAttendancePeriod" type="month" min="2026-01" max="2099-12" value="2026-01" class="form-control" style="width:auto; font-weight:600; padding:4px 8px; font-size:0.82rem; border-radius:6px;" aria-label="Pilih Periode Lembur">
                             </div>
                         </div>
                         <div class="pk-panel-body no-padding">
@@ -22500,14 +22529,17 @@
     document.getElementById("selAttendancePeriod")?.addEventListener("change", (e) => {
       handlePeriodChange(e.target.value);
     });
+    document.getElementById("selKpiLocation")?.addEventListener("change", () => {
+      loadHeadKPIFromBackend(activeKpiPeriod(), activeKpiLocationId());
+      loadPlannerSplReviews();
+      renderOvertimeAttendance();
+    });
   }
 
   function renderTabContent() {
     renderHeadKPI();
     renderMechanicProductivity();
     renderPlannerEvaluation();
-    renderOvertimeAttendance();
-    loadPlannerSplReviews();
   }
 
   // =========================================================================
@@ -22517,10 +22549,11 @@
   // Section 1: Head of Equipment KPI
   let isHeadKpiLoaded = false;
 
-  async function loadHeadKPIFromBackend(period = "2026-01") {
+  async function loadHeadKPIFromBackend(period = activeKpiPeriod(), locationId = activeKpiLocationId()) {
+    if (!locationId) return;
     try {
       const resp = await fetch(
-        `api/people_kpi.php?action=head_kpi&period=${encodeURIComponent(period)}`,
+        `api/people_kpi.php?action=head_kpi&period=${encodeURIComponent(period)}&location_id=${encodeURIComponent(locationId)}`,
         { cache: "no-store" },
       );
       const res = await resp.json();
@@ -22536,14 +22569,23 @@
             notes: item.audit_notes || "",
           }));
         }
-        currentHeadKPIAssessment = res.assessment || { status: "DRAFT" };
+        currentHeadKPIAssessment = {
+          ...(res.assessment || { status: "DRAFT" }),
+          data_source: res.is_new_draft ? "SIMULASI BELUM TERSIMPAN" : "DATABASE",
+        };
         updateHeadKpiActionBar(currentHeadKPIAssessment);
       }
     } catch (e) {
-      console.warn(
-        "Gagal memuat KPI Head dari backend, menggunakan baseline:",
-        e,
-      );
+      console.error("Gagal memuat KPI Head dari backend:", e);
+      currentHeadKPI = [];
+      currentHeadKPIAssessment = { status: "ERROR" };
+      const tbody = document.getElementById("tbHeadKPIBody");
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--danger);"><i class="fa-solid fa-circle-exclamation"></i> Data KPI gagal dimuat dari server. Muat ulang halaman atau hubungi Administrator.</td></tr>`;
+      }
+      isHeadKpiLoaded = true;
+      updateHeadKpiActionBar(currentHeadKPIAssessment);
+      return;
     }
     isHeadKpiLoaded = true;
     renderHeadKPITable();
@@ -22553,51 +22595,61 @@
     const badge = document.getElementById("badgeHeadKpiStatus");
     const meta = document.getElementById("infoHeadKpiMeta");
     const btnApprove = document.getElementById("btnApproveHeadKpi");
+    const btnReject = document.getElementById("btnRejectHeadKpi");
     const btnSubmit = document.getElementById("btnSubmitHeadKpi");
     const btnDraft = document.getElementById("btnSaveHeadKpiDraft");
-
     if (!badge) return;
+
     const st = assessment.status || "DRAFT";
     badge.innerText = st;
-    badge.className =
-      "pk-badge " +
-      (st === "APPROVED"
-        ? "pk-badge-success"
-        : st === "SUBMITTED"
-          ? "pk-badge-info"
-          : "pk-badge-warning");
+    badge.className = "pk-badge " + (st === "APPROVED"
+      ? "pk-badge-success"
+      : st === "SUBMITTED"
+        ? "pk-badge-info"
+        : st === "REJECTED" ? "pk-badge-danger" : "pk-badge-warning");
 
     if (meta) {
+      const periodLabel = formatKpiPeriod(assessment.period || activeKpiPeriod());
+      const locationLabel = assessment.location_name || document.getElementById("selKpiLocation")?.selectedOptions?.[0]?.text || "-";
+      const prefix = `${escapeHtml(periodLabel)} · ${escapeHtml(locationLabel)} · Versi ${Number(assessment.version || 1)}`;
       if (st === "APPROVED" && assessment.approved_by_name) {
-        meta.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> Disetujui resmi oleh <strong>${escapeHtml(assessment.approved_by_name)}</strong> pada ${assessment.approved_at || ""}`;
+        meta.innerHTML = `<i class="fa-solid fa-circle-check text-success"></i> ${prefix} · Disetujui <strong>${escapeHtml(assessment.approved_by_name)}</strong> pada ${escapeHtml(assessment.approved_at || "")}`;
       } else if (st === "SUBMITTED") {
-        meta.innerHTML = `<i class="fa-solid fa-clock text-info"></i> Diajukan (${assessment.submitted_at || ""}) · Menunggu persetujuan General Manager`;
+        meta.innerHTML = `<i class="fa-solid fa-clock text-info"></i> ${prefix} · Diajukan (${escapeHtml(assessment.submitted_at || "")}) · Menunggu persetujuan`;
+      } else if (st === "REJECTED") {
+        meta.innerHTML = `<i class="fa-solid fa-circle-xmark text-danger"></i> ${prefix} · Ditolak: ${escapeHtml(assessment.approval_notes || "tanpa catatan")}`;
       } else {
-        meta.innerHTML = `<i class="fa-regular fa-calendar"></i> Periode: Januari 2026 · Dany Agung (Head of Equipment)`;
+        meta.innerHTML = `<i class="fa-regular fa-calendar"></i> ${prefix} · ${escapeHtml(assessment.evaluated_name || "Head of Equipment")}`;
       }
     }
 
-    const userRole = (window.FleetAuth?.user?.role_name || "").toLowerCase();
-    const isAdminOrGM =
-      userRole.includes("admin") ||
-      userRole.includes("general manager") ||
-      window.FleetAuth?.user?.username === "admin";
+    const authUser = window.FleetAuth?.user || {};
+    const roleNames = [authUser.role_name, authUser.primary_role, ...(authUser.roles || [])]
+      .filter(Boolean)
+      .map((role) => String(role).toLowerCase());
+    const isAdminOrGM = roleNames.some((role) => role.includes("admin") || role.includes("general manager"))
+      || authUser.username === "admin";
+    const canAssess = roleNames.some((role) =>
+      ["administrator", "equipment manager", "asset manager"].includes(role),
+    );
 
     if (btnApprove) {
-      btnApprove.style.display =
-        isAdminOrGM && st === "SUBMITTED" ? "inline-flex" : "none";
+      btnApprove.style.display = isAdminOrGM && st === "SUBMITTED" ? "inline-flex" : "none";
+    }
+    if (btnReject) {
+      btnReject.style.display = isAdminOrGM && st === "SUBMITTED" ? "inline-flex" : "none";
     }
     if (btnSubmit) {
-      btnSubmit.style.display = st === "APPROVED" ? "none" : "inline-flex";
+      btnSubmit.style.display = canAssess && ["DRAFT", "REJECTED"].includes(st) ? "inline-flex" : "none";
     }
     if (btnDraft) {
-      btnDraft.style.display = st === "APPROVED" ? "none" : "inline-flex";
+      btnDraft.style.display = canAssess && ["DRAFT", "REJECTED"].includes(st) ? "inline-flex" : "none";
     }
   }
 
   function renderHeadKPI() {
     if (!isHeadKpiLoaded) {
-      loadHeadKPIFromBackend("2026-01");
+      loadKpiLocations();
       return;
     }
     renderHeadKPITable();
@@ -22608,6 +22660,9 @@
     if (!tbody) return;
 
     let totalWeightedScore = 0;
+    const inputsLocked = ["SUBMITTED", "APPROVED", "ERROR"].includes(
+      currentHeadKPIAssessment.status || "DRAFT",
+    );
 
     tbody.innerHTML = currentHeadKPI
       .map((item, idx) => {
@@ -22621,7 +22676,7 @@
                     <td>${escapeHtml(item.indicator)}</td>
                     <td><span class="pk-badge pk-badge-info">${escapeHtml(item.target)}</span></td>
                     <td>
-                        <input type="number" min="1" max="5" class="pk-score-input" value="${item.score}" aria-label="Skor ${escapeHtml(item.aspect)}, 1 sampai 5" onchange="window.updateHeadKPIScore(${idx}, this.value)">
+                        <input type="number" min="1" max="5" class="pk-score-input" value="${item.score}" aria-label="Skor ${escapeHtml(item.aspect)}, 1 sampai 5" onchange="window.updateHeadKPIScore(${idx}, this.value)" ${inputsLocked ? "disabled" : ""}>
                     </td>
                     <td style="text-align:center;">${item.weight}%</td>
                     <td style="text-align:center; font-weight:700;" id="weighted-${idx}">${weighted.toFixed(1)}</td>
@@ -22651,10 +22706,14 @@
 
   async function submitHeadKPIPayload(status) {
     try {
+      const period = activeKpiPeriod();
+      const locationId = activeKpiLocationId();
+      if (!period || !locationId) throw new Error("Pilih periode dan lokasi sebelum menyimpan.");
       const payload = {
-        period: "2026-01",
+        period,
+        location_id: locationId,
         status: status,
-        evaluated_user_id: 2,
+        evaluated_user_id: Number(currentHeadKPIAssessment.evaluated_user_id || 2),
         indicators: currentHeadKPI.map((ind) => ({
           indicator_no: ind.id,
           aspect_name: ind.aspect,
@@ -22680,7 +22739,7 @@
       if (typeof window.showToast === "function")
         window.showToast("success", res.message);
       else alert(res.message);
-      await loadHeadKPIFromBackend("2026-01");
+      await loadHeadKPIFromBackend(period, locationId);
     } catch (err) {
       alert("Error: " + err.message);
     }
@@ -22688,11 +22747,18 @@
 
   window.approveHeadKPI = async function (decision) {
     const notes = prompt(
-      `Masukkan catatan ${decision === "APPROVED" ? "persetujuan" : "penolakan"} KPI (opsional):`,
+      `Masukkan catatan ${decision === "APPROVED" ? "persetujuan (opsional)" : "penolakan (wajib)"} KPI:`,
       "",
     );
     if (notes === null) return;
+    if (decision === "REJECTED" && !notes.trim()) {
+      alert("Alasan penolakan wajib diisi.");
+      return;
+    }
     try {
+      const period = activeKpiPeriod();
+      const locationId = activeKpiLocationId();
+      if (!period || !locationId) throw new Error("Pilih periode dan lokasi sebelum memproses approval.");
       const resp = await fetch("api/people_kpi.php?action=approve_head_kpi", {
         method: "POST",
         headers: {
@@ -22700,7 +22766,8 @@
           "X-CSRF-Token": window.APP_CSRF_TOKEN || "",
         },
         body: JSON.stringify({
-          period: "2026-01",
+          period,
+          location_id: locationId,
           decision: decision,
           approval_notes: notes,
         }),
@@ -22711,7 +22778,7 @@
       if (typeof window.showToast === "function")
         window.showToast("success", res.message);
       else alert(res.message);
-      await loadHeadKPIFromBackend("2026-01");
+      await loadHeadKPIFromBackend(period, locationId);
     } catch (err) {
       alert("Error: " + err.message);
     }
@@ -23238,6 +23305,7 @@
               body: JSON.stringify({
                 spl_number: record.id,
                 report_id: record.reportId || "",
+                location_id: activeKpiLocationId(),
                 review_status: "Reviewed",
                 review_notes:
                   "Telah ditinjau rincian pekerjaan dan otorisasi instruksi Head.",
@@ -23286,7 +23354,7 @@
     try {
       tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Memuat rekapitulasi lembur resmi dari SPL (${activePeriod})...</td></tr>`;
       const resp = await fetch(
-        `api/people_kpi.php?action=overtime_leaderboard&period=${encodeURIComponent(activePeriod)}`,
+        `api/people_kpi.php?action=overtime_leaderboard&period=${encodeURIComponent(activePeriod)}&location_id=${encodeURIComponent(activeKpiLocationId())}`,
         { cache: "no-store" },
       );
       const res = await resp.json();
@@ -23344,7 +23412,19 @@
 
   // Global Export Function
   window.exportKPIReport = function () {
+    const period = activeKpiPeriod();
+    const locationName = currentHeadKPIAssessment.location_name
+      || document.getElementById("selKpiLocation")?.selectedOptions?.[0]?.text
+      || "-";
+    const lifecycleStatus = currentHeadKPIAssessment.status || "DRAFT";
+    const version = Number(currentHeadKPIAssessment.version || 1);
+    const source = currentHeadKPIAssessment.data_source || "DATABASE";
     const headers = [
+      "Periode",
+      "Lokasi",
+      "Status",
+      "Versi",
+      "Sumber",
       "Aspek",
       "Indikator",
       "Target",
@@ -23354,6 +23434,11 @@
       "Catatan Audit",
     ];
     const rows = currentHeadKPI.map((item) => [
+      period,
+      locationName,
+      lifecycleStatus,
+      version,
+      source,
       item.aspect,
       item.indicator,
       item.target,
@@ -23364,6 +23449,11 @@
     ]);
     plannerPmKpis.forEach((item) =>
       rows.push([
+        period,
+        locationName,
+        "REFERENSI",
+        version,
+        "KONFIGURASI UI",
         "KPI Maintenance Planner",
         item.name,
         `≥ ${PLANNER_PM_MIN_TARGET}%`,
@@ -23381,9 +23471,11 @@
       .join("\r\n");
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
     const link = document.createElement("a");
-    link.href = URL.revokeObjectURL(link.href) || URL.createObjectURL(blob);
-    link.download = "Laporan_KPI_People_Equipment_2026.csv";
+    const objectUrl = URL.createObjectURL(blob);
+    link.href = objectUrl;
+    link.download = `Laporan_KPI_Head_${period}_${locationName.replace(/[^a-z0-9]+/gi, "-")}_${lifecycleStatus}_v${version}.csv`;
     link.click();
+    URL.revokeObjectURL(objectUrl);
     alert("Laporan KPI & People berhasil diekspor ke CSV.");
   };
 

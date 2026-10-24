@@ -253,71 +253,363 @@ Gate F1 PASS apabila F1A tetap lulus dan seluruh skenario F1B di atas terbukti t
 
 ## 6. F4 — People & KPI resmi
 
-### F4.1 Perlindungan data historis
+### F4.0 Tujuan, akun, dan aturan keselamatan
 
-Baseline harus menunjukkan 10 baris KPI Head dan 5 baris evaluasi planner lama tetap ada. Jangan menimpa Januari 2026 untuk pengujian.
+F4 membuktikan bahwa penilaian KPI dan review SPL merupakan data resmi di database, bukan hanya perubahan tampilan browser. Siapkan:
+
+- Browser A: akun penilai yang berwenang, bukan akun approver.
+- Browser B/incognito: Administrator atau General Manager sebagai approver.
+- Browser C/incognito lain bila tersedia: Maintenance Planner/Mekanik untuk uji penolakan role.
+- Periode draf QA: `2099-12`.
+- Periode rejection QA: `2099-11`.
+- Lokasi QA yang sama pada akun penilai dan data pengujian.
+- DevTools tab **Network** dengan opsi **Preserve log** aktif.
+- HeidiSQL pada database `u646470441_serviceplanbra`.
+
+Jangan menggunakan Januari 2026 untuk mutasi. Jangan mengubah 10 baris `head_kpi_assessments` dan 5 baris `planner_evaluations` historis.
+
+#### Status kesiapan per 24 Oktober 2026
+
+Blocker periode hardcoded sudah diperbaiki. Pemilih periode menerima rentang `2026-01` sampai `2099-12`, lokasi dimuat sesuai scope akun, dan payload Simpan/Submit/Approve membawa `period` serta `location_id` yang dipilih. Backend memvalidasi 10 indikator, total bobot 100%, role/lokasi, transisi status, pemisahan penilai–approver, dan mencatat audit lifecycle. Tetap lakukan preflight F4.2 untuk membuktikan versi yang tampil di browser adalah versi terbaru dari Laragon2.
+
+### F4.1 Baseline database dan bukti awal
+
+Jalankan di HeidiSQL sebelum membuka menu People & KPI:
 
 ```sql
-SELECT period_key, status, COUNT(*) AS indicator_count
+SELECT period_key, status, COUNT(*) AS indicator_count,
+       MIN(kpi_id) AS first_id, MAX(kpi_id) AS last_id,
+       MIN(updated_at) AS first_update, MAX(updated_at) AS last_update
 FROM head_kpi_assessments
 GROUP BY period_key, status
 ORDER BY period_key, status;
 
-SELECT period_key, planner_user_id, COUNT(*) AS evaluation_count
+SELECT period_key, planner_user_id, COUNT(*) AS evaluation_count,
+       MIN(eval_id) AS first_id, MAX(eval_id) AS last_id,
+       MIN(updated_at) AS first_update, MAX(updated_at) AS last_update
 FROM planner_evaluations
 GROUP BY period_key, planner_user_id
 ORDER BY period_key, planner_user_id;
+
+SELECT COUNT(*) AS qa_kpi_before
+FROM head_kpi_assessments
+WHERE period_key IN ('2099-11', '2099-12');
+
+SELECT COUNT(*) AS spl_reviews_before FROM spl_planner_reviews;
+SELECT COUNT(*) AS overtime_rows_before FROM spl_overtime_records;
 ```
 
-Gunakan periode QA yang belum dipakai, misalnya `2099-12`. Jika UI masih terkunci pada Januari 2026 dan tidak dapat memilih periode QA, hentikan mutasi browser dan tandai **BLOCKED — belum ada isolasi periode browser**.
+Catat atau screenshot hasilnya. Kondisi aman untuk memulai:
 
-### F4.2 DRAFT dan SUBMITTED
+- Januari 2026 tetap memiliki 10 indikator KPI Head.
+- Evaluasi planner historis tetap memiliki 5 baris.
+- `qa_kpi_before = 0`; jika tidak nol, hentikan dan periksa apakah itu data QA lama milik pengguna lain.
+- Catat jumlah review SPL dan lembur agar perubahan dapat direkonsiliasi.
 
-1. Login sebagai penilai yang berwenang.
-2. Pilih periode QA dan lokasi QA.
-3. Ubah satu skor lalu simpan sebagai DRAFT.
-4. Refresh; nilai, bobot, catatan, penilai, periode, dan lokasi harus tetap.
-5. Ajukan penilaian; status menjadi SUBMITTED dan `submitted_at` terisi.
+### F4.2 Preflight periode dan lokasi — wajib sebelum menulis
+
+1. Login Browser A sebagai penilai.
+2. Buka **People & KPI → KPI Head of Equipment**.
+3. Periksa pilihan periode. Periode QA `Desember 2099` harus tersedia tanpa mengubah HTML melalui DevTools.
+4. Jika hanya tahun 2026 yang tersedia, catat **BLOCKED** dan jangan klik Simpan Draf.
+5. Jika periode QA sudah tersedia, pilih `2099-12`.
+6. Buka DevTools → Network, lalu cari request `people_kpi.php`.
+7. Request baca harus berbentuk:
+
+   ```text
+   GET api/people_kpi.php?action=head_kpi&period=2099-12&location_id=ID_LOKASI_QA
+   HTTP 200
+   ```
+
+8. Pastikan UI menunjukkan periode Desember 2099 dan status `DRAFT` baru.
+9. Sebelum mengirim, periksa bahwa implementasi akan mengirim:
+
+   ```json
+   {
+     "period": "2099-12",
+     "location_id": "ID_LOKASI_QA",
+     "status": "DRAFT"
+   }
+   ```
+
+10. Jika payload menunjukkan `2026-01` atau tidak memiliki `location_id`, hentikan. Jangan meneruskan F4.3–F4.5.
+
+Kriteria PASS preflight: periode yang dipilih sama pada UI, URL GET, payload mutasi, dan lokasi akun QA.
+
+### F4.3 Simpan DRAFT
+
+Jalankan hanya jika F4.2 lulus.
+
+1. Catat skor awal indikator nomor 1 dan total nilai pada layar.
+2. Ubah skor indikator nomor 1 ke nilai berbeda antara `1–5`.
+3. Klik **Simpan Draf** satu kali.
+4. Pada Network, buka request:
+
+   ```text
+   POST api/people_kpi.php?action=save_head_kpi
+   ```
+
+5. Pastikan HTTP `200`, respons `status: success`, payload `period: 2099-12`, `status: DRAFT`, dan `location_id` benar.
+6. Refresh halaman menggunakan `Ctrl+F5`.
+7. Pilih kembali `2099-12`; skor dan status harus tetap.
+8. Logout/login ulang Browser A; nilai harus tetap sama.
+9. Jalankan:
 
 ```sql
-SELECT period_key, location_id, status, version, assessor_user_id,
-       evaluated_user_id, submitted_at, approved_by, approved_at
+SELECT kpi_id, period_key, location_id, indicator_no,
+       score_val, weight_pct, weighted_score,
+       ROUND((score_val * weight_pct) / 5, 2) AS expected_weighted_score,
+       status, version, assessor_user_id, evaluated_user_id,
+       submitted_at, approved_by, approved_at, approval_notes,
+       created_at, updated_at
 FROM head_kpi_assessments
 WHERE period_key = '2099-12'
 ORDER BY indicator_no;
+
+SELECT period_key, location_id, status, version,
+       COUNT(*) AS indicator_count,
+       SUM(weight_pct) AS total_weight,
+       SUM(weighted_score) AS total_weighted_score
+FROM head_kpi_assessments
+WHERE period_key = '2099-12'
+GROUP BY period_key, location_id, status, version;
 ```
 
-### F4.3 Approval/rejection dan role negatif
+Hasil wajib:
 
-1. Role Planner/Mekanik tidak boleh melihat tombol approval.
-2. POST approval langsung dari role tersebut harus 403.
-3. Login sebagai Administrator/General Manager yang berbeda dari penilai.
-4. Pilih APPROVED atau REJECTED disertai catatan.
-5. Refresh/login ulang pada kedua browser.
-6. Setelah APPROVED, edit biasa harus ditolak atau mengikuti alur revisi/versioning resmi.
+- Tepat 10 indikator.
+- `location_id` tidak `NULL` dan sesuai lokasi QA.
+- `status = DRAFT`.
+- `assessor_user_id` adalah akun Browser A.
+- Setiap `weighted_score = score_val × weight_pct ÷ 5`.
+- Total bobot sesuai konfigurasi resmi dan UI sama dengan `SUM(weighted_score)`.
+- Refresh dan login ulang tidak mengembalikan nilai lama.
 
-### F4.4 Review SPL dan leaderboard
+### F4.4 Submit dan idempotensi
 
-1. Pilih SPL QA/final yang aman dan catat review sebagai Planner.
-2. Buka browser lain; review harus tetap tersimpan pada `spl_planner_reviews`.
-3. Pastikan SPL void/reversed tidak dihitung dalam leaderboard.
-4. Jika belum ada SPL final terverifikasi, UI harus menampilkan `data belum tersedia`, bukan angka dummy.
+1. Pada Browser A dan periode `2099-12`, klik **Ajukan Penilaian (Submit)**.
+2. Konfirmasi satu kali.
+3. Network harus menunjukkan HTTP `200`, payload `status: SUBMITTED`, periode dan lokasi QA yang benar.
+4. Status UI menjadi `SUBMITTED` dan waktu pengajuan tampil.
+5. Refresh dan login ulang; status tetap `SUBMITTED`.
+6. Jangan klik berkali-kali. Jika request terulang karena refresh/retry, jumlah indikator tetap 10 dan tidak boleh menjadi 20.
 
 ```sql
+SELECT period_key, location_id, status, version,
+       COUNT(*) AS indicator_count,
+       COUNT(DISTINCT submitted_at) AS submitted_timestamp_count,
+       MIN(submitted_at) AS submitted_at
+FROM head_kpi_assessments
+WHERE period_key = '2099-12'
+GROUP BY period_key, location_id, status, version;
+```
+
+Hasil wajib: `SUBMITTED`, tepat 10 baris, satu timestamp submit, dan tidak ada duplikasi.
+
+### F4.5 Approval positif dan pemisahan tugas
+
+1. Biarkan Browser A tetap login sebagai penilai.
+2. Login Browser B sebagai Administrator/General Manager yang berbeda.
+3. Buka periode `2099-12`.
+4. Tombol **Setujui (Approve GM)** hanya muncul pada Browser B.
+5. Klik Approve dan isi catatan unik, misalnya `QA-F4-APPROVE-2099-12`.
+6. Network harus menghasilkan HTTP `200` dan keputusan `APPROVED`.
+7. Refresh/login ulang pada Browser A dan B.
+8. Kedua browser harus menampilkan status dan approver yang sama.
+
+```sql
+SELECT period_key, status, version, assessor_user_id,
+       approved_by, approved_at, approval_notes,
+       COUNT(*) AS indicator_count
+FROM head_kpi_assessments
+WHERE period_key = '2099-12'
+GROUP BY period_key, status, version, assessor_user_id,
+         approved_by, approved_at, approval_notes;
+```
+
+Hasil wajib:
+
+- `status = APPROVED`.
+- `approved_by` adalah Browser B dan berbeda dari `assessor_user_id`.
+- `approved_at` serta catatan persetujuan terisi.
+- Tombol Simpan/Submit hilang atau server menolak edit biasa setelah approval.
+- Percobaan edit setelah approval tidak boleh menghapus keputusan lama atau kembali menjadi DRAFT tanpa proses revisi/versioning resmi.
+
+Jika akun yang sama dapat menilai sekaligus menyetujui, tandai **FAIL P1 — pemisahan tugas belum ditegakkan server**.
+
+### F4.6 Rejection dan perbaikan
+
+Gunakan periode terpisah `2099-11`, bukan mengubah data approval pada `2099-12`.
+
+1. Ulangi DRAFT dan SUBMITTED untuk `2099-11`.
+2. Browser B pilih keputusan `REJECTED`.
+3. Isi alasan wajib, misalnya `QA-F4-REJECT-SKOR-PERLU-DIPERBAIKI`.
+4. Refresh kedua browser.
+5. Pastikan status `REJECTED`, approver, waktu, dan alasan tetap tersimpan.
+6. Jika revisi diizinkan, ubah skor sebagai Browser A dan submit ulang.
+7. Versi harus bertambah atau riwayat keputusan lama tetap tersedia. Jika data lama langsung ditimpa tanpa riwayat, tandai **FAIL P1 — versioning/audit lifecycle belum tersedia**.
+
+```sql
+SELECT period_key, status, version, assessor_user_id,
+       approved_by, approved_at, approval_notes, updated_at
+FROM head_kpi_assessments
+WHERE period_key = '2099-11'
+ORDER BY indicator_no;
+```
+
+### F4.7 Role negatif dan request langsung
+
+1. Login Browser C sebagai Maintenance Planner atau Mekanik.
+2. Pastikan tombol Approve tidak terlihat.
+3. Buka DevTools → Console dan jalankan request aman terhadap periode QA yang tidak ada:
+
+```javascript
+fetch('api/people_kpi.php?action=approve_head_kpi', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    period: '2099-10',
+    decision: 'APPROVED',
+    approval_notes: 'QA role negative'
+  })
+}).then(async r => console.log('HTTP', r.status, await r.text()));
+```
+
+`auth-client.js` akan memasukkan CSRF sesi yang sah. Server tetap wajib menjawab `HTTP 403` dengan `FORBIDDEN` karena role tidak berwenang.
+
+4. Pastikan tidak ada data yang terbentuk:
+
+```sql
+SELECT COUNT(*) AS unauthorized_rows
+FROM head_kpi_assessments
+WHERE period_key = '2099-10';
+```
+
+Hasil wajib: `unauthorized_rows = 0`.
+
+### F4.8 Review SPL Planner
+
+Jangan memakai SPL operasional secara sembarang. Gunakan SPL QA/final yang telah disetujui. Jika tidak tersedia, tandai **BLOCKED — tidak ada SPL QA final**.
+
+1. Catat SPL QA dan baseline review:
+
+```sql
+SELECT overtime_id, report_id, spl_number, spl_date, location_id,
+       employee_user_id, duration_hours, start_verified,
+       end_verified, reversed_at
+FROM spl_overtime_records
+WHERE spl_number LIKE 'QA-%'
+ORDER BY overtime_id DESC;
+
 SELECT review_id, report_id, spl_number, planner_user_id,
        review_status, review_notes, reviewed_at
 FROM spl_planner_reviews
-ORDER BY reviewed_at DESC
-LIMIT 20;
+WHERE spl_number LIKE 'QA-%'
+ORDER BY reviewed_at DESC;
 ```
 
-### F4.5 CSV
+2. Login sebagai Maintenance Planner pada lokasi yang sesuai.
+3. Buka **People & KPI → Evaluasi Maintenance Planner**.
+4. Pilih SPL QA dan klik **Catat sudah ditinjau Planner**.
+5. Isi catatan unik `QA-F4-SPL-REVIEW` bila kolom tersedia.
+6. Refresh lalu buka browser lain dengan akun Planner yang sama.
+7. Status review harus tetap ada dan berasal dari database.
+8. Jalankan query review kembali; `planner_user_id` harus sama dengan akun Planner dan hanya satu review aktif untuk SPL tersebut.
+9. Role yang bukan Planner mencoba request langsung harus ditolak. Jika berhasil menulis review, tandai **FAIL P1 — role review SPL belum ditegakkan server**.
 
-1. Ekspor periode QA.
-2. Pastikan period, location, status, version, nilai, dan sumber sama dengan DB.
-3. Draf/simulasi harus diberi label; jangan tampil sebagai penilaian APPROVED.
+### F4.9 Leaderboard lembur dan data kosong
 
-Gate F4 PASS apabila lifecycle, otorisasi, persistensi lintas browser, SPL, leaderboard, CSV, dan audit/versioning terbukti tanpa menimpa 10/5 baris historis.
+1. Buka tab **Absensi & Lembur Tim**.
+2. Pilih periode SPL QA.
+3. Jika tidak ada SPL final, layar harus menampilkan `Belum ada dokumen lembur / SPL terverifikasi`, bukan nama/jam contoh.
+4. Jika ada data, cocokkan UI dengan query:
+
+```sql
+SELECT s.employee_user_id,
+       COALESCE(u.full_name, s.role_snapshot) AS employee_name,
+       s.role_snapshot, l.location_name,
+       COUNT(DISTINCT s.spl_number) AS total_spl,
+       SUM(s.duration_hours) AS total_hours,
+       SUM(CASE WHEN s.end_verified = 1 THEN 1 ELSE 0 END) AS verified_sessions
+FROM spl_overtime_records s
+LEFT JOIN users u ON u.user_id = s.employee_user_id
+LEFT JOIN locations l ON l.location_id = s.location_id
+WHERE s.reversed_at IS NULL
+  AND s.spl_date >= '2099-12-01'
+  AND s.spl_date <  '2100-01-01'
+GROUP BY s.employee_user_id, employee_name, s.role_snapshot, l.location_name
+ORDER BY total_hours DESC;
+```
+
+5. Baris dengan `reversed_at IS NOT NULL` tidak boleh dihitung.
+6. Urutan, jumlah SPL, sesi terverifikasi, total jam, nama, dan lokasi harus sama dengan UI.
+
+### F4.10 Ekspor CSV
+
+1. Pilih periode QA yang telah diuji.
+2. Catat status, versi, lokasi, total skor, dan sumber pada UI/DB.
+3. Klik **Ekspor Laporan KPI**.
+4. Buka CSV dan pastikan minimal memuat:
+   - periode;
+   - lokasi;
+   - status lifecycle;
+   - versi;
+   - indikator dan skor;
+   - bobot dan nilai bobot;
+   - catatan;
+   - sumber data atau label simulasi/draf.
+5. Hitung ulang satu indikator: `score × weight ÷ 5` harus sama dengan CSV dan DB.
+6. Draf atau simulasi tidak boleh diberi label `APPROVED`.
+7. Jika nama file/periode masih tetap `2026` ketika periode lain dipilih, atau CSV tidak memiliki status/lokasi/versi, tandai **FAIL P2 — ekspor belum merepresentasikan versi tersimpan**.
+
+### F4.11 Audit lifecycle, cleanup, dan format hasil
+
+Periksa apakah setiap transisi memiliki riwayat terpisah, bukan hanya kondisi terakhir:
+
+```sql
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = DATABASE()
+  AND table_name LIKE '%kpi%audit%';
+```
+
+Jika tidak ada audit append-only untuk DRAFT, SUBMITTED, APPROVED/REJECTED, revisi, aktor, dan waktu, catat **FAIL P1 — audit lifecycle KPI belum lengkap**.
+
+Jangan menjalankan `DELETE` manual pada database bersama. Setelah bukti disimpan, cleanup periode QA dilakukan melalui alur aplikasi/migrasi cleanup yang disetujui. Pastikan data historis tetap sama:
+
+```sql
+SELECT period_key, status, COUNT(*) AS indicator_count,
+       MIN(updated_at) AS first_update, MAX(updated_at) AS last_update
+FROM head_kpi_assessments
+WHERE period_key = '2026-01'
+GROUP BY period_key, status;
+
+SELECT period_key, planner_user_id, COUNT(*) AS evaluation_count,
+       MIN(updated_at) AS first_update, MAX(updated_at) AS last_update
+FROM planner_evaluations
+WHERE period_key = '2026-01'
+GROUP BY period_key, planner_user_id;
+```
+
+Catat hasil akhir:
+
+| Skenario | UI | HTTP | DB | Status |
+| --- | --- | --- | --- | --- |
+| Baseline historis 10/5 |  | read-only |  | PASS/FAIL |
+| Periode dan lokasi QA |  | GET/POST |  | PASS/BLOCKED |
+| DRAFT + refresh/login ulang |  | 200 |  | PASS/FAIL |
+| SUBMITTED + idempotensi |  | 200 |  | PASS/FAIL |
+| APPROVED beda aktor |  | 200 |  | PASS/FAIL |
+| REJECTED + revisi/versioning |  | 200/409 |  | PASS/FAIL |
+| Role negatif | tombol tersembunyi | 403 | tidak berubah | PASS/FAIL |
+| Review SPL Planner |  | 200/403 |  | PASS/BLOCKED |
+| Leaderboard/empty state |  | 200 | agregat sama | PASS/FAIL |
+| CSV |  | unduhan | sama dengan DB | PASS/FAIL |
+| Audit lifecycle |  |  | append-only | PASS/FAIL |
+
+Gate F4 hanya PASS apabila semua skenario penting lulus di browser, HTTP, dan DB; approver berbeda dari penilai; role/lokasi lain ditolak; refresh/login ulang konsisten; CSV sama dengan versi tersimpan; audit tersedia; serta 10/5 baris historis tidak berubah.
 
 ---
 

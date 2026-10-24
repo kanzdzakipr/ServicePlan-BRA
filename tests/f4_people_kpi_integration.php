@@ -44,6 +44,8 @@ try {
 
     $tables = $pdo->query("SHOW TABLES LIKE 'spl_planner_reviews'")->fetchAll();
     f4Assert(count($tables) === 1, "spl_planner_reviews table exists in database");
+    $auditTables = $pdo->query("SHOW TABLES LIKE 'head_kpi_audit_trail'")->fetchAll();
+    f4Assert(count($auditTables) === 1, "head_kpi_audit_trail table exists in database");
 
     // -------------------------------------------------------------------------
     // 2. Head KPI Assessment CRUD & Math Validation
