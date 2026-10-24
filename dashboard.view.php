@@ -579,7 +579,7 @@ try {
 
                 <!-- Synchronized Master Asset Telemetry Strip -->
                 <div class="telemetry-status-grid master-asset-telemetry-grid">
-                    <div class="telemetry-metric-item" title="Total Armada Aset Terdaftar">
+                    <div class="telemetry-metric-item" onclick="window.filterMasterAssetFromCard('ALL')" style="cursor:pointer;" title="Klik untuk menampilkan semua unit armada">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Total Armada Aset</span>
                             <i class="fa-solid fa-truck-monster" style="color: var(--primary); font-size: 0.9rem;"></i>
@@ -590,7 +590,7 @@ try {
                         </div>
                     </div>
 
-                    <div class="telemetry-metric-item" title="Unit Status Ready / Operasional">
+                    <div class="telemetry-metric-item" onclick="window.filterMasterAssetFromCard('READY_OPERATING')" style="cursor:pointer;" title="Klik untuk memfilter unit Ready / Operasional">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Ready / Operasional</span>
                             <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 0.9rem;"></i>
@@ -602,7 +602,7 @@ try {
                         </div>
                     </div>
 
-                    <div class="telemetry-metric-item" title="Unit Status Standby / Idle">
+                    <div class="telemetry-metric-item" onclick="window.filterMasterAssetFromCard('STANDBY')" style="cursor:pointer;" title="Klik untuk memfilter unit Standby / Idle">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Standby / Idle</span>
                             <i class="fa-solid fa-pause" style="color: var(--warning); font-size: 0.9rem;"></i>
@@ -614,7 +614,7 @@ try {
                         </div>
                     </div>
 
-                    <div class="telemetry-metric-item" title="Unit Status Breakdown / Under Repair">
+                    <div class="telemetry-metric-item" onclick="window.filterMasterAssetFromCard('BREAKDOWN')" style="cursor:pointer;" title="Klik untuk memfilter unit Breakdown / Under Repair">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Breakdown / WO</span>
                             <i class="fa-solid fa-triangle-exclamation"
@@ -697,7 +697,7 @@ try {
                                         <option value="">Semua lokasi</option><option value="Borrow Pit">Borrow Pit</option><option value="Site Celcin">Site Celcin</option><option value="Yard">Yard</option><option value="Workshop">Workshop</option><option value="Site Alpha">Site Alpha</option><option value="Minas">Minas Field</option>
                                     </select>
                                     <select id="filterAssetComp" class="form-control" onchange="window.filterMasterAsset('completeness', this.value)"><option value="">Semua kelengkapan</option><option value="complete">Lengkap</option><option value="incomplete">Belum lengkap</option></select>
-                                    <select id="filterAssetStat" class="form-control" onchange="window.filterMasterAsset('status', this.value)"><option value="">Semua status</option><option value="READY">READY</option><option value="OPERATING">OPERATING</option><option value="STANDBY">STANDBY</option><option value="BREAKDOWN">BREAKDOWN</option><option value="INSPEKSI">INSPEKSI</option><option value="ACCIDENT_HOLD">ACCIDENT HOLD</option></select>
+                                    <select id="filterAssetStat" class="form-control" onchange="window.filterMasterAsset('status', this.value)"><option value="">Semua status</option><option value="READY_OPERATING">READY / OPERASIONAL</option><option value="READY">READY</option><option value="OPERATING">OPERATING</option><option value="STANDBY">STANDBY</option><option value="BREAKDOWN">BREAKDOWN</option><option value="INSPEKSI">INSPEKSI</option><option value="ACCIDENT_HOLD">ACCIDENT HOLD</option></select>
                                 </div>
                             </div>
                         </div>
@@ -8323,6 +8323,18 @@ try {
                 window.renderAssetTableBody();
             };
 
+            window.filterMasterAssetFromCard = function(statusKey) {
+                const sel = document.getElementById('filterAssetStat');
+                if (statusKey === 'ALL') {
+                    window.resetMasterAssetFilters();
+                } else {
+                    if (!window.masterAssetFilters) window.masterAssetFilters = {};
+                    window.masterAssetFilters.status = statusKey;
+                    if (sel) sel.value = statusKey;
+                    window.renderAssetTableBody();
+                }
+            };
+
             window.toggleMasterAssetAdvanced = function() {
                 const el = document.getElementById('masterAssetAdvancedFilters');
                 const icon = document.getElementById('iconMasterAssetAdvanced');
@@ -8351,7 +8363,7 @@ try {
                 
                 // Apply Filters
                 assets = assets.filter(a => {
-                    const f = window.masterAssetFilters;
+                    const f = window.masterAssetFilters || {};
                     const ident = window.formatAssetIdentityDetails(a);
                     const compl = window.getAssetCompleteness(a);
                     
@@ -8379,7 +8391,13 @@ try {
                     if (f.status) {
                         const effStat = (a.subStatus || a.status || '').toUpperCase().replace(/\s+/g, '_');
                         const filterStat = f.status.toUpperCase().replace(/\s+/g, '_');
-                        if (effStat !== filterStat) return false;
+                        if (filterStat === 'READY_OPERATING' || filterStat === 'OPERATING_READY' || filterStat === 'READY_OPERASIONAL') {
+                            if (effStat !== 'READY' && effStat !== 'OPERATING') return false;
+                        } else if (filterStat === 'BREAKDOWN') {
+                            if (effStat !== 'BREAKDOWN' && effStat !== 'INSPEKSI' && effStat !== 'ACCIDENT_HOLD') return false;
+                        } else {
+                            if (effStat !== filterStat) return false;
+                        }
                     }
                     return true;
                 });
@@ -8729,10 +8747,10 @@ try {
                 assets = window.currentAssetData;
 
                 // 1. Calculate Master Asset KPI Stats
-                const totalCount = assets.length || 48;
-                const readyCount = assets.filter(a => a.status === 'READY').length;
+                const totalCount = assets.length;
+                const readyCount = assets.filter(a => a.status === 'READY' || a.status === 'OPERATING').length;
                 const standbyCount = assets.filter(a => a.status === 'STANDBY').length;
-                const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN' || a.status === 'INSPEKSI').length;
+                const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN' || a.status === 'INSPEKSI' || a.status === 'ACCIDENT_HOLD').length;
                 const paPercentage = totalCount > 0 ? (((readyCount + standbyCount) / totalCount) * 100).toFixed(1) + '%' : '87.5%';
 
                 const elTotal = document.getElementById('kpiAssetTotal');
