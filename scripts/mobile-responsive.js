@@ -75,8 +75,9 @@
         if (!(table instanceof HTMLTableElement) || table.dataset.mobileTableReady === 'true') return;
         table.dataset.mobileTableReady = 'true';
 
+        const isDashboardWo = table.classList.contains('dashboard-wo-table');
         const columnCount = getTableColumnCount(table);
-        table.classList.add(columnCount <= 3 ? 'mobile-compact-table' : 'mobile-wide-table');
+        table.classList.add((columnCount <= 3 || isDashboardWo) ? 'mobile-compact-table' : 'mobile-wide-table');
 
         let region = table.closest(tableContainerSelector);
         if (!region) {
@@ -85,7 +86,9 @@
             table.parentNode.insertBefore(region, table);
             region.appendChild(table);
         }
-        prepareScrollRegion(region, table.getAttribute('aria-label'));
+        if (!isDashboardWo) {
+            prepareScrollRegion(region, table.getAttribute('aria-label'));
+        }
     }
 
     function classifyFieldGrid(grid) {
@@ -246,8 +249,20 @@
         scope.querySelectorAll('.wo-view-switch').forEach(enhanceSegmentedControl);
     }
 
+    function isLandscapePhone() {
+        const isLandscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+        return Boolean(isLandscape && window.innerHeight <= 520 && window.innerWidth <= 1024);
+    }
+
     function isMobile() {
-        return window.innerWidth <= MOBILE_BREAKPOINT;
+        if (window.innerWidth <= MOBILE_BREAKPOINT) return true;
+        if (isLandscapePhone()) return true;
+        return false;
+    }
+
+    function isTabletLandscape() {
+        const isLandscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+        return Boolean(isLandscape && window.innerWidth > MOBILE_BREAKPOINT && window.innerWidth <= 1366 && window.innerHeight > 520);
     }
 
     function setDrawer(open) {
@@ -273,9 +288,14 @@
 
     function syncViewportMode() {
         const mobile = isMobile();
+        const tabletLandscape = isTabletLandscape();
+
         if (mobile !== previousMobileState) {
             if (mobile) {
                 document.body.classList.remove('sidebar-collapsed');
+            } else if (tabletLandscape) {
+                const hasExplicitPref = localStorage.getItem('fleetmonitor_sidebar_collapsed') !== null;
+                document.body.classList.toggle('sidebar-collapsed', hasExplicitPref ? desktopCollapsedPreference : true);
             } else {
                 document.body.classList.toggle('sidebar-collapsed', desktopCollapsedPreference);
             }
@@ -293,8 +313,9 @@
     function notifyVisualResize() {
         window.requestAnimationFrame(function () {
             window.dispatchEvent(new Event('resize'));
-            if (window.dashboardMapInstance && typeof window.dashboardMapInstance.invalidateSize === 'function') {
-                window.dashboardMapInstance.invalidateSize();
+            const mapInst = window.dashboardMapInstance || (typeof dashboardMapInstance !== 'undefined' ? dashboardMapInstance : null);
+            if (mapInst && typeof mapInst.invalidateSize === 'function') {
+                mapInst.invalidateSize();
             }
         });
     }
@@ -332,13 +353,23 @@
         });
 
         let resizeTimer = 0;
-        window.addEventListener('resize', function () {
+        function handleViewportChange() {
             window.clearTimeout(resizeTimer);
             resizeTimer = window.setTimeout(function () {
                 syncViewportMode();
                 notifyVisualResize();
-            }, 100);
+            }, 80);
+        }
+
+        window.addEventListener('resize', handleViewportChange, { passive: true });
+        window.addEventListener('orientationchange', function () {
+            window.setTimeout(handleViewportChange, 120);
         }, { passive: true });
+        if (window.screen && window.screen.orientation && typeof window.screen.orientation.addEventListener === 'function') {
+            window.screen.orientation.addEventListener('change', function () {
+                window.setTimeout(handleViewportChange, 120);
+            });
+        }
 
         const observer = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {

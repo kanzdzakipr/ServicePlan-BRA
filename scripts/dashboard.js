@@ -17634,7 +17634,7 @@
             <section class="official-template-library" aria-labelledby="officialTemplateTitle">
                 <div class="official-template-heading">
                     <div class="official-template-icon"><i class="fa-solid fa-folder-open"></i></div>
-                    <div>
+                    <div class="official-template-text">
                         <span>TEMPLATE DOKUMEN</span>
                         <h2 id="officialTemplateTitle">Mulai dari format resmi sistem</h2>
                         <p>Unduh, isi tanpa mengubah label, lalu unggah kembali agar ekstraksi dan pemetaan lebih konsisten.</p>
@@ -20531,13 +20531,19 @@
                     <i class="fa-regular fa-calendar"></i>
                     <div><div class="pm-context-label">Periode aktif</div><div class="pm-context-value">Juli 2026 · WUR EW Project</div></div>
                 </div>
-                <div class="pm-context-group">
+                <div class="pm-context-group pm-warning-window-group">
                     <i class="fa-solid fa-bell"></i>
                     <div>
-                        <div class="pm-context-label">Warning window</div>
-                        <div class="pm-context-value">
-                            HM <input class="pm-threshold-input" id="pmHmThreshold" type="number" min="1" value="${thresholds.HM}" aria-label="Batas peringatan HM">
-                            &nbsp; KM <input class="pm-threshold-input" id="pmKmThreshold" type="number" min="1" value="${thresholds.KM}" aria-label="Batas peringatan KM">
+                        <div class="pm-context-label">Warning Window</div>
+                        <div class="pm-threshold-pill-group">
+                            <div class="pm-threshold-pill" title="Ambang batas peringatan Hour Meter (HM)">
+                                <span class="pm-threshold-unit">HM</span>
+                                <input class="pm-threshold-input" id="pmHmThreshold" type="number" min="1" value="${thresholds.HM}" aria-label="Batas peringatan HM">
+                            </div>
+                            <div class="pm-threshold-pill" title="Ambang batas peringatan Kilometer (KM)">
+                                <span class="pm-threshold-unit">KM</span>
+                                <input class="pm-threshold-input" id="pmKmThreshold" type="number" min="1" value="${thresholds.KM}" aria-label="Batas peringatan KM">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -20751,7 +20757,7 @@
             <div class="pm-formula-strip" id="pmFormulaStrip">
                 <i class="fa-solid fa-calculator"></i>
                 <div><strong>Target service</strong>Service terakhir + interval</div>
-                <div><strong>Selisih jatuh tempo</strong>Meter terkini âˆ’ target service</div>
+                <div><strong>Selisih jatuh tempo</strong>Meter terkini &minus; target service</div>
                 <div><strong>Status otomatis</strong>Positif = Overdue · 0 = Due · dalam warning window = Due Soon</div>
             </div>
         `;
@@ -20872,7 +20878,7 @@
       .filter((plan) => ["OVERDUE", "DUE", "DUE SOON"].includes(statusOf(plan)))
       .sort((a, b) => (varianceOf(b) || 0) - (varianceOf(a) || 0));
     if (!priority.length)
-      return '<li class="pm-priority-item"><div class="pm-priority-copy"><strong>Tidak ada prioritas aktif</strong><span>Seluruh jadwal berada dalam kondisi aman.</span></div></li>';
+      return '<li class="pm-priority-item pm-priority-empty"><div class="pm-empty-state-icon"><i class="fa-solid fa-circle-check"></i></div><div class="pm-priority-copy"><strong>Tidak ada prioritas aktif</strong><span>Seluruh jadwal berada dalam kondisi aman.</span></div></li>';
     return priority
       .map((plan) => {
         const variance = varianceOf(plan);
@@ -21139,8 +21145,8 @@
             <div class="pm-formula-strip">
                 <i class="fa-solid fa-boxes-stacked"></i>
                 <div><strong>Input berikutnya</strong>Qty required · stock available · reserved · on order</div>
-                <div><strong>Shortage</strong>MAX(Qty required âˆ’ stock yang dapat dialokasikan, 0)</div>
-                <div><strong>Qty to order</strong>MAX(Shortage âˆ’ on order, 0) setelah PN tervalidasi</div>
+                <div><strong>Shortage</strong>MAX(Qty required &minus; stock yang dapat dialokasikan, 0)</div>
+                <div><strong>Qty to order</strong>MAX(Shortage &minus; on order, 0) setelah PN tervalidasi</div>
             </div>
         `;
     panel.querySelectorAll("[data-kit-detail]").forEach((button) => {
@@ -22250,18 +22256,27 @@
                         <h2><i class="fa-solid fa-users-gear text-primary"></i> Manajemen People, Performa & KPI Tim Maintenance</h2>
                         <p>Integrasi terpadu Penilaian Head of Equipment, Produktivitas Mekanik, Evaluasi Planner, dan Audit Lembur SPL</p>
                     </div>
-                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <label for="selKpiPeriod" style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin:0;"><i class="fa-regular fa-calendar"></i> Periode:</label>
-                            <input id="selKpiPeriod" type="month" min="2026-01" max="2099-12" value="2026-01" class="form-control" style="width:auto; font-weight:700; padding:6px 14px; font-size:0.88rem; border-radius:8px; border:1px solid #cbd5e1; background:var(--bg-surface);" aria-label="Pilih Periode KPI">
+                    <div class="pk-header-controls">
+                        <div class="pk-control-group">
+                            <label class="pk-control-label" for="selKpiPeriod">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>Periode</span>
+                            </label>
+                            <input id="selKpiPeriod" type="month" min="2026-01" max="2099-12" value="2026-01" class="pk-control-input" aria-label="Pilih Periode KPI">
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <label for="selKpiLocation" style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin:0;"><i class="fa-solid fa-location-dot"></i> Lokasi:</label>
-                            <select id="selKpiLocation" class="form-control" style="max-width:240px; font-weight:700; padding:6px 10px; font-size:0.88rem; border-radius:8px;" aria-label="Pilih Lokasi KPI">
+                        <div class="pk-control-group">
+                            <label class="pk-control-label" for="selKpiLocation">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span>Lokasi</span>
+                            </label>
+                            <select id="selKpiLocation" class="pk-control-select" aria-label="Pilih Lokasi KPI">
                                 <option value="">Memuat lokasi...</option>
                             </select>
                         </div>
-                        <button class="btn btn-primary" onclick="window.exportKPIReport()"><i class="fa-solid fa-download"></i> Ekspor Laporan KPI</button>
+                        <button type="button" class="pk-btn-export" onclick="window.exportKPIReport()" title="Ekspor Laporan Resmi KPI Tim Maintenance">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Ekspor Laporan KPI</span>
+                        </button>
                     </div>
                 </div>
 
