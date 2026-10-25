@@ -8476,7 +8476,7 @@ try {
                         <td onclick="event.stopPropagation();">
                             <div class="asset-row-actions">
                                 <button type="button" class="btn btn-sm btn-primary" onclick="window.openEditAssetModal('${escapeHtml(asset.id)}')" style="padding:3px 7px; font-size:0.72rem; border-radius:3px;" title="Edit & Lengkapi Data Unit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                                <button type="button" class="btn btn-sm" onclick="openAssetActionCalloutFromElement(event, this.closest('tr'))" style="background:#f1f5f9; color:#475569; padding:3px 6px; font-size:0.72rem; border-radius:3px;" title="Menu Aksi Lainnya"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                <button type="button" class="btn btn-sm btn-asset-action-popover" onclick="openAssetActionCalloutFromElement(event, this)" style="background:#f1f5f9; color:#475569; padding:3px 6px; font-size:0.72rem; border-radius:3px;" title="Menu Aksi Lainnya"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                             </div>
                         </td>
                     </tr>
@@ -10941,6 +10941,22 @@ try {
             let cachedCalloutEl = null;
 
             function getOrCreateCalloutContainer() {
+                let backdrop = document.getElementById('assetActionCalloutBackdrop');
+                if (!backdrop) {
+                    backdrop = document.createElement('div');
+                    backdrop.id = 'assetActionCalloutBackdrop';
+                    backdrop.className = 'asset-action-callout-backdrop';
+                    backdrop.onclick = function (e) {
+                        e.stopPropagation();
+                        closeAssetActionCallout();
+                    };
+                    backdrop.ontouchstart = function (e) {
+                        e.stopPropagation();
+                        closeAssetActionCallout();
+                    };
+                    document.body.appendChild(backdrop);
+                }
+
                 let callout = document.getElementById('assetActionCallout');
                 if (!callout) {
                     callout = document.createElement('div');
@@ -11025,13 +11041,17 @@ try {
                     if (event.stopImmediatePropagation) event.stopImmediatePropagation();
                     if (event.preventDefault) event.preventDefault();
                 }
-                if (!el) return;
-                const assetId = el.getAttribute('data-asset-id') || '';
-                const status = el.getAttribute('data-asset-status') || '';
-                const category = el.getAttribute('data-asset-category') || '';
-                const location = el.getAttribute('data-asset-location') || '';
+                const triggerEl = el || (event ? (event.currentTarget || event.target) : null);
+                if (!triggerEl) return;
+                const row = triggerEl.tagName === 'TR' ? triggerEl : triggerEl.closest('tr');
+                if (!row) return;
 
-                openAssetActionCallout(event, assetId, status, category, location, el);
+                const assetId = row.getAttribute('data-asset-id') || '';
+                const status = row.getAttribute('data-asset-status') || '';
+                const category = row.getAttribute('data-asset-category') || '';
+                const location = row.getAttribute('data-asset-location') || '';
+
+                openAssetActionCallout(event, assetId, status, category, location, triggerEl);
             }
 
             function openAssetActionCallout(event, assetId, status, category, location, triggerEl) {
@@ -11070,11 +11090,17 @@ try {
                 if (btnP2H) btnP2H.onclick = () => { closeAssetActionCallout(); openIntegratedP2H(assetId, 'history'); };
                 if (btnWO) btnWO.onclick = () => { closeAssetActionCallout(); openIntegratedWO(assetId); };
                 if (btnCond) btnCond.onclick = () => { closeAssetActionCallout(); ConditionMonitoring.openForAsset(assetId, 'overview'); };
-                if (btnEdit) btnEdit.onclick = () => { closeAssetActionCallout(); openAssetModal(assetId, status, category, location); };
+                if (btnEdit) btnEdit.onclick = () => { closeAssetActionCallout(); if (typeof window.openEditAssetModal === 'function') { window.openEditAssetModal(assetId); } else { openAssetModal(assetId, status, category, location); } };
                 if (btnArsip) btnArsip.onclick = () => { closeAssetActionCallout(); window.archiveData('asset', assetId); };
 
-                // Target Asset ID cell for left alignment & scroll locking
-                activeCalloutTarget = targetRow ? (targetRow.querySelector('td') || targetRow) : (triggerEl || (event ? (event.currentTarget || event.target) : null));
+                // Target: prefer specific clicked button/element, or clicked cell, or row
+                if (triggerEl && triggerEl.tagName !== 'TR') {
+                    activeCalloutTarget = triggerEl;
+                } else if (event && event.target && event.target.tagName !== 'TABLE' && event.target.tagName !== 'TBODY') {
+                    activeCalloutTarget = event.target.closest('td') || event.target;
+                } else {
+                    activeCalloutTarget = targetRow;
+                }
                 
                 callout.style.display = 'block';
                 updateAssetCalloutPosition();
@@ -11089,41 +11115,71 @@ try {
                     return;
                 }
 
+                const backdrop = document.getElementById('assetActionCalloutBackdrop');
+                const isMobileTablet = window.innerWidth <= 1024;
+
+                if (isMobileTablet) {
+                    if (backdrop) backdrop.classList.add('active');
+                    callout.className = 'asset-action-callout mobile-docked';
+                    callout.style.left = '';
+                    callout.style.top = '';
+                    callout.style.bottom = '';
+                    callout.style.right = '';
+                    return;
+                }
+
+                // Desktop (> 1024px)
+                if (backdrop) backdrop.classList.remove('active');
+
                 const rect = activeCalloutTarget.getBoundingClientRect();
 
-                // Hide callout if target row is scrolled out of viewport
-                if (rect.bottom < 10 || rect.top > window.innerHeight - 10 || rect.right < 10 || rect.left > window.innerWidth - 10) {
-                    callout.style.display = 'none';
+                // Only close if target row / element is scrolled completely out of vertical viewport
+                if (rect.bottom < 0 || rect.top > window.innerHeight) {
+                    closeAssetActionCallout();
                     return;
                 }
 
                 const calloutWidth = Math.min(callout.offsetWidth || 470, window.innerWidth - 20);
                 const calloutHeight = callout.offsetHeight || 85;
 
-                let left = rect.left; // Align left under Asset ID
+                let left;
+                if (rect.right > window.innerWidth - calloutWidth) {
+                    left = rect.right - calloutWidth;
+                } else {
+                    left = rect.left;
+                }
+
+                if (left + calloutWidth > window.innerWidth - 12) {
+                    left = window.innerWidth - calloutWidth - 12;
+                }
+                if (left < 12) left = 12;
+
                 let top = rect.bottom + 8;
                 let arrowClass = 'arrow-top';
 
-                // Prevent overflow off right edge of window
-                if (left + calloutWidth > window.innerWidth - 10) {
-                    left = window.innerWidth - calloutWidth - 10;
-                }
-                if (left < 10) left = 10;
-
-                // Flip to open above row if overflowing bottom
-                if (top + calloutHeight > window.innerHeight) {
+                if (top + calloutHeight > window.innerHeight - 10) {
                     top = rect.top - calloutHeight - 8;
                     arrowClass = 'arrow-bottom';
                 }
+                if (top < 10) top = 10;
+
+                const targetCenter = rect.left + (rect.width / 2);
+                let arrowOffset = targetCenter - left;
+                arrowOffset = Math.max(18, Math.min(calloutWidth - 18, arrowOffset));
 
                 callout.className = `asset-action-callout ${arrowClass}`;
                 callout.style.left = Math.round(left) + 'px';
                 callout.style.top = Math.round(top) + 'px';
+                callout.style.bottom = 'auto';
+                callout.style.right = 'auto';
+                callout.style.setProperty('--arrow-left', Math.round(arrowOffset) + 'px');
             }
 
             function closeAssetActionCallout() {
                 const callout = cachedCalloutEl || document.getElementById('assetActionCallout');
                 if (callout) callout.style.display = 'none';
+                const backdrop = document.getElementById('assetActionCalloutBackdrop');
+                if (backdrop) backdrop.classList.remove('active');
                 activeCalloutTarget = null;
                 if (lastSelectedRow) {
                     lastSelectedRow.classList.remove('asset-table-row-selected');
@@ -11143,6 +11199,7 @@ try {
             document.addEventListener('click', function (e) {
                 const callout = cachedCalloutEl || document.getElementById('assetActionCallout');
                 if (!callout || callout.style.display === 'none') return;
+                if (window.innerWidth <= 1024) return;
                 if (!callout.contains(e.target) && !e.target.closest('.btn-asset-action-popover') && !e.target.closest('#assetTableBody tr')) {
                     closeAssetActionCallout();
                 }
@@ -13749,7 +13806,8 @@ try {
         <!-- Global Condition Monitoring Modal Container (Works on top of any menu) -->
         <div id="globalCmModalContainer"></div>
 
-        <!-- Floating Asset Action Callout Container -->
+        <!-- Floating Asset Action Callout Container & Backdrop -->
+        <div id="assetActionCalloutBackdrop" class="asset-action-callout-backdrop" onclick="closeAssetActionCallout()"></div>
         <div id="assetActionCallout" class="asset-action-callout" style="display:none;" onclick="event.stopPropagation();">
             <div class="callout-header">
                 <div class="callout-title-wrap">
