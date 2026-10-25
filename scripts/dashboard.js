@@ -20531,13 +20531,19 @@
                     <i class="fa-regular fa-calendar"></i>
                     <div><div class="pm-context-label">Periode aktif</div><div class="pm-context-value">Juli 2026 · WUR EW Project</div></div>
                 </div>
-                <div class="pm-context-group">
+                <div class="pm-context-group pm-warning-window-group">
                     <i class="fa-solid fa-bell"></i>
                     <div>
-                        <div class="pm-context-label">Warning window</div>
-                        <div class="pm-context-value">
-                            HM <input class="pm-threshold-input" id="pmHmThreshold" type="number" min="1" value="${thresholds.HM}" aria-label="Batas peringatan HM">
-                            &nbsp; KM <input class="pm-threshold-input" id="pmKmThreshold" type="number" min="1" value="${thresholds.KM}" aria-label="Batas peringatan KM">
+                        <div class="pm-context-label">Warning Window</div>
+                        <div class="pm-threshold-pill-group">
+                            <div class="pm-threshold-pill" title="Ambang batas peringatan Hour Meter (HM)">
+                                <span class="pm-threshold-unit">HM</span>
+                                <input class="pm-threshold-input" id="pmHmThreshold" type="number" min="1" value="${thresholds.HM}" aria-label="Batas peringatan HM">
+                            </div>
+                            <div class="pm-threshold-pill" title="Ambang batas peringatan Kilometer (KM)">
+                                <span class="pm-threshold-unit">KM</span>
+                                <input class="pm-threshold-input" id="pmKmThreshold" type="number" min="1" value="${thresholds.KM}" aria-label="Batas peringatan KM">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -20751,7 +20757,7 @@
             <div class="pm-formula-strip" id="pmFormulaStrip">
                 <i class="fa-solid fa-calculator"></i>
                 <div><strong>Target service</strong>Service terakhir + interval</div>
-                <div><strong>Selisih jatuh tempo</strong>Meter terkini âˆ’ target service</div>
+                <div><strong>Selisih jatuh tempo</strong>Meter terkini &minus; target service</div>
                 <div><strong>Status otomatis</strong>Positif = Overdue · 0 = Due · dalam warning window = Due Soon</div>
             </div>
         `;
@@ -20872,7 +20878,7 @@
       .filter((plan) => ["OVERDUE", "DUE", "DUE SOON"].includes(statusOf(plan)))
       .sort((a, b) => (varianceOf(b) || 0) - (varianceOf(a) || 0));
     if (!priority.length)
-      return '<li class="pm-priority-item"><div class="pm-priority-copy"><strong>Tidak ada prioritas aktif</strong><span>Seluruh jadwal berada dalam kondisi aman.</span></div></li>';
+      return '<li class="pm-priority-item pm-priority-empty"><div class="pm-empty-state-icon"><i class="fa-solid fa-circle-check"></i></div><div class="pm-priority-copy"><strong>Tidak ada prioritas aktif</strong><span>Seluruh jadwal berada dalam kondisi aman.</span></div></li>';
     return priority
       .map((plan) => {
         const variance = varianceOf(plan);
@@ -21139,8 +21145,8 @@
             <div class="pm-formula-strip">
                 <i class="fa-solid fa-boxes-stacked"></i>
                 <div><strong>Input berikutnya</strong>Qty required · stock available · reserved · on order</div>
-                <div><strong>Shortage</strong>MAX(Qty required âˆ’ stock yang dapat dialokasikan, 0)</div>
-                <div><strong>Qty to order</strong>MAX(Shortage âˆ’ on order, 0) setelah PN tervalidasi</div>
+                <div><strong>Shortage</strong>MAX(Qty required &minus; stock yang dapat dialokasikan, 0)</div>
+                <div><strong>Qty to order</strong>MAX(Shortage &minus; on order, 0) setelah PN tervalidasi</div>
             </div>
         `;
     panel.querySelectorAll("[data-kit-detail]").forEach((button) => {

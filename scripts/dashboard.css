@@ -9093,24 +9093,71 @@ body.cm-modal-open {
     align-items: center;
 }
 
-.pm-threshold-input {
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    color: #0f172a;
-    font-family: 'JetBrains Mono', monospace, sans-serif;
-    font-weight: 700;
-    margin-left: 5px;
-    outline: 0;
-    padding: 3px 8px;
-    width: 72px;
-    transition: all 0.15s ease;
-    background: #f8fafc;
+.pm-threshold-pill-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 3px;
 }
 
-.pm-threshold-input:focus {
+.pm-threshold-pill {
+    display: inline-flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    height: 28px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: all 0.15s ease;
+    overflow: hidden;
+}
+
+.pm-threshold-pill:hover {
+    border-color: #94a3b8;
+    background: #ffffff;
+}
+
+.pm-threshold-pill:focus-within {
     border-color: #0284c7;
     background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.18);
+}
+
+.pm-threshold-unit {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0 8px;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    letter-spacing: 0.04em;
+    font-family: 'JetBrains Mono', monospace, sans-serif;
+    border-right: 1px solid #cbd5e1;
+    user-select: none;
+}
+
+.pm-threshold-input {
+    border: none;
+    background: transparent;
+    color: #0f172a;
+    font-family: 'JetBrains Mono', monospace, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin: 0;
+    outline: none;
+    padding: 0 6px;
+    width: 50px;
+    height: 100%;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.pm-threshold-input::-webkit-outer-spin-button,
+.pm-threshold-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .pm-source-note {
@@ -9332,6 +9379,59 @@ body.cm-modal-open {
 
 .pm-priority-item:last-child {
     border-bottom: 0;
+}
+
+.pm-priority-item.pm-priority-empty,
+.pm-priority-item:has(> .pm-priority-copy:only-child) {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 22px 18px !important;
+    background: #f8fafc !important;
+    border-radius: 8px !important;
+    margin: 12px 16px !important;
+    border: 1px dashed #cbd5e1 !important;
+}
+
+.pm-priority-item.pm-priority-empty .pm-empty-state-icon {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    background: #ecfdf5 !important;
+    color: #10b981 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.2rem !important;
+    flex-shrink: 0 !important;
+}
+
+.pm-priority-item.pm-priority-empty .pm-priority-copy,
+.pm-priority-item:has(> .pm-priority-copy:only-child) .pm-priority-copy {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+
+.pm-priority-item.pm-priority-empty .pm-priority-copy strong,
+.pm-priority-item:has(> .pm-priority-copy:only-child) .pm-priority-copy strong {
+    font-size: 0.88rem !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    margin-bottom: 3px !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    display: block !important;
+}
+
+.pm-priority-item.pm-priority-empty .pm-priority-copy span,
+.pm-priority-item:has(> .pm-priority-copy:only-child) .pm-priority-copy span {
+    color: #64748b !important;
+    font-size: 0.78rem !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    line-height: 1.4 !important;
+    display: block !important;
 }
 
 .pm-priority-meter {
