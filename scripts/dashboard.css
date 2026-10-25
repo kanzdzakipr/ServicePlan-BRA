@@ -9151,6 +9151,8 @@ body.cm-modal-open {
     width: 50px;
     height: 100%;
     text-align: center;
+    appearance: textfield;
+    -webkit-appearance: textfield;
     -moz-appearance: textfield;
 }
 
