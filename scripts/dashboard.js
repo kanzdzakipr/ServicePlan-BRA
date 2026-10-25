@@ -17634,7 +17634,7 @@
             <section class="official-template-library" aria-labelledby="officialTemplateTitle">
                 <div class="official-template-heading">
                     <div class="official-template-icon"><i class="fa-solid fa-folder-open"></i></div>
-                    <div>
+                    <div class="official-template-text">
                         <span>TEMPLATE DOKUMEN</span>
                         <h2 id="officialTemplateTitle">Mulai dari format resmi sistem</h2>
                         <p>Unduh, isi tanpa mengubah label, lalu unggah kembali agar ekstraksi dan pemetaan lebih konsisten.</p>

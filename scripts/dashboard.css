@@ -16541,45 +16541,67 @@ body.sl-modal-open {
 .official-template-heading {
     align-items: center;
     display: flex;
-    gap: 14px;
-    padding: 17px 18px;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
 }
 
-.official-template-heading > div:nth-child(2) {
-    flex: 1;
+.official-template-heading > div:nth-child(2),
+.official-template-text {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .official-template-icon {
     align-items: center;
     background: #2457c5;
-    border-radius: 11px;
+    border-radius: 12px;
     color: #fff;
     display: flex;
-    flex: 0 0 auto;
+    flex: 0 0 46px;
     font-size: 1.25rem;
-    height: 48px;
+    height: 46px;
     justify-content: center;
-    width: 48px;
+    width: 46px;
+    box-shadow: 0 4px 12px rgba(36, 87, 197, 0.2);
 }
 
 .official-template-heading span {
     color: #2457c5;
     display: block;
-    font-size: .62rem;
+    font-size: .65rem;
     font-weight: 900;
     letter-spacing: .08em;
+    text-transform: uppercase;
 }
 
 .official-template-heading h2 {
-    font-size: 1rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
     margin: 2px 0 3px;
+    line-height: 1.3;
 }
 
 .official-template-heading p {
-    color: #657083;
-    font-size: .73rem;
+    color: #64748b;
+    font-size: .78rem;
     line-height: 1.45;
     margin: 0;
+}
+
+.official-template-heading .import-secondary-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-weight: 700;
+    border-radius: 8px;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
 }
 
 #officialTemplateBody {
@@ -16766,28 +16788,164 @@ body.sl-modal-open {
     }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 840px) {
     .official-template-heading {
-        align-items: flex-start;
-        flex-wrap: wrap;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+        padding: 13px 16px !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .official-template-icon {
+        flex: 0 0 40px !important;
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 1.1rem !important;
+        border-radius: 10px !important;
+    }
+
+    .official-template-heading h2 {
+        font-size: 0.96rem !important;
+        margin: 1px 0 2px !important;
+    }
+
+    .official-template-heading p {
+        font-size: 0.74rem !important;
+        line-height: 1.35 !important;
     }
 
     .official-template-heading .import-secondary-button {
-        margin-left: 62px;
+        flex: 0 0 auto !important;
+        height: 34px !important;
+        padding: 0 12px !important;
+        font-size: 0.78rem !important;
+        margin: 0 !important;
+        width: auto !important;
     }
 
-    .official-template-toolbar,
+    .official-template-toolbar {
+        grid-template-columns: 1.3fr 1fr !important;
+        gap: 8px !important;
+    }
+
+    .official-template-toolbar > :first-child {
+        grid-column: auto !important;
+    }
+
+    .official-template-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        max-height: 240px !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .official-template-library {
+        border-radius: 12px !important;
+        margin-bottom: 14px !important;
+    }
+
+    .official-template-heading {
+        display: grid !important;
+        grid-template-columns: 38px minmax(0, 1fr) !important;
+        grid-template-areas:
+            "icon text"
+            "action action" !important;
+        gap: 10px !important;
+        padding: 12px 14px !important;
+        align-items: start !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .official-template-icon {
+        grid-area: icon !important;
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 1.05rem !important;
+        border-radius: 10px !important;
+        align-self: flex-start !important;
+        margin-top: 2px !important;
+    }
+
+    .official-template-heading > div:nth-child(2),
+    .official-template-text {
+        grid-area: text !important;
+        min-width: 0 !important;
+    }
+
+    .official-template-heading span {
+        font-size: 0.62rem !important;
+    }
+
+    .official-template-heading h2 {
+        font-size: 0.92rem !important;
+        margin: 1px 0 3px !important;
+        line-height: 1.3 !important;
+    }
+
+    .official-template-heading p {
+        font-size: 0.73rem !important;
+        line-height: 1.4 !important;
+    }
+
+    .official-template-heading .import-secondary-button {
+        grid-area: action !important;
+        width: 100% !important;
+        height: 34px !important;
+        margin: 2px 0 0 0 !important;
+        padding: 0 12px !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        justify-content: center !important;
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 7px !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    }
+
+    #officialTemplateBody {
+        padding: 12px 14px 14px !important;
+    }
+
+    .official-template-toolbar {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .official-template-toolbar > * {
+        width: 100% !important;
+        grid-column: auto !important;
+    }
+
     .official-template-grid,
     .import-manual-field-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+        max-height: 300px !important;
+        padding-right: 0 !important;
     }
 
     .official-template-card {
-        grid-template-columns: 40px minmax(0, 1fr);
+        grid-template-columns: 40px minmax(0, 1fr) !important;
+        gap: 8px 10px !important;
+        padding: 9px 10px !important;
+        border-radius: 8px !important;
     }
 
     .official-template-card .import-secondary-button {
-        grid-column: 1 / -1;
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+        justify-content: center !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
     }
 
     .import-quality-grid {
@@ -19700,8 +19858,7 @@ body.sl-modal-open {
     .pm-filter-bar,
     .sl-toolbar,
     .cm-catalog-toolbar,
-    .report-filter,
-    .official-template-toolbar {
+    .report-filter {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: 8px !important;
     }
@@ -19710,8 +19867,7 @@ body.sl-modal-open {
     .pm-filter-bar > :first-child,
     .sl-toolbar > :first-child,
     .cm-catalog-toolbar > :first-child,
-    .report-filter > :first-child,
-    .official-template-toolbar > :first-child {
+    .report-filter > :first-child {
         grid-column: 1 / -1;
     }
 
