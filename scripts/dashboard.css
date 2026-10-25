@@ -17751,7 +17751,7 @@ body.sl-modal-open {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px), screen and (orientation: landscape) and (max-height: 520px) {
     body {
         flex-direction: column;
     }
@@ -18092,7 +18092,7 @@ body.sl-modal-open {
 }
 
 /* Mobile Header & Control Bar Glitch-Free Layout */
-@media (max-width: 768px) {
+@media (max-width: 768px), screen and (orientation: landscape) and (max-height: 520px) {
     .top-header {
         display: flex !important;
         flex-wrap: nowrap !important;
@@ -18868,7 +18868,7 @@ body.sl-modal-open {
     max-width: 100% !important;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px), screen and (orientation: landscape) and (max-height: 520px) {
     :root {
         --mobile-page-gutter: 10px;
         --mobile-panel-padding: 12px;
@@ -23138,4 +23138,698 @@ body.sl-modal-open {
     color: #0369a1 !important;
     text-decoration: underline !important;
 }
+
+/* ========================================================================== */
+/* COMPREHENSIVE LANDSCAPE OPTIMIZATION ENGINE                                */
+/* Tailored for Smartphones (iPhone, Android) and Tablets (iPad, Android Tab) */
+/* ========================================================================== */
+
+/* -------------------------------------------------------------------------- */
+/* 1. SMARTPHONES IN LANDSCAPE (Short height <= 520px, wide aspect ratio)     */
+/* -------------------------------------------------------------------------- */
+@media screen and (orientation: landscape) and (max-height: 520px) {
+    :root {
+        --mobile-header-height: 44px;
+        --mobile-page-gutter: 8px;
+        --mobile-panel-padding: 8px;
+        --mobile-control-height: 32px;
+    }
+
+    html, body {
+        height: 100dvh !important;
+        min-height: 100dvh !important;
+        overflow-x: hidden !important;
+        background-color: var(--bg-body) !important;
+    }
+
+    body {
+        display: flex !important;
+        flex-direction: column !important;
+        padding-left: env(safe-area-inset-left) !important;
+        padding-right: env(safe-area-inset-right) !important;
+    }
+
+    /* Compact Top Header with Safe Area Insets */
+    .top-header {
+        height: var(--mobile-header-height) !important;
+        min-height: var(--mobile-header-height) !important;
+        max-height: var(--mobile-header-height) !important;
+        flex: 0 0 var(--mobile-header-height) !important;
+        padding: 0 max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left)) !important;
+        background: #ffffff !important;
+        border-bottom: 1px solid var(--border) !important;
+        z-index: 1000 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+    }
+
+    .header-left {
+        max-width: 58% !important;
+        gap: 6px !important;
+    }
+
+    .header-right {
+        gap: 5px !important;
+    }
+
+    .btn-sidebar-toggle,
+    .btn-mobile-search-toggle,
+    .btn-notification-bell,
+    .btn-profile-avatar {
+        min-width: 32px !important;
+        min-height: 32px !important;
+        width: 32px !important;
+        height: 32px !important;
+        flex: 0 0 32px !important;
+        padding: 0 !important;
+        border-radius: 6px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .btn-profile-avatar img {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    #globalProjectFilter {
+        height: 32px !important;
+        min-height: 32px !important;
+        font-size: 0.74rem !important;
+        padding: 4px 6px !important;
+    }
+
+    /* Off-Canvas Slide Drawer for Landscape Phones */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: min(72vw, 260px) !important;
+        max-width: 260px !important;
+        min-width: 0 !important;
+        height: 100dvh !important;
+        transform: translateX(-105%) !important;
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        z-index: 1050 !important;
+        padding-left: max(0px, env(safe-area-inset-left)) !important;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    body.sidebar-collapsed .sidebar {
+        transform: translateX(0) !important;
+    }
+
+    .sidebar-header {
+        height: 48px !important;
+        min-height: 48px !important;
+        padding: 0 12px !important;
+    }
+
+    .sidebar-logo-img {
+        max-height: 28px !important;
+    }
+
+    .sidebar-menu li a {
+        min-height: 36px !important;
+        height: 36px !important;
+        padding: 0 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+    .sidebar-menu li a i {
+        font-size: 0.88rem !important;
+        margin-right: 10px !important;
+    }
+
+    .sidebar-menu .nav-section-label {
+        padding: 6px 12px 2px !important;
+        font-size: 0.65rem !important;
+    }
+
+    /* Main Scrollable Viewport */
+    .main-wrapper {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        height: calc(100dvh - var(--mobile-header-height)) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .content {
+        padding: 8px max(10px, env(safe-area-inset-right)) 16px max(10px, env(safe-area-inset-left)) !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .page-title,
+    #view-fuel .page-title,
+    #view-settings .page-title {
+        font-size: 1.05rem !important;
+        margin: 2px 0 8px !important;
+    }
+
+    /* KPI Telemetry Strip: 5 Columns in 1 Row (Zero Vertical Waste) */
+    .telemetry-status-grid,
+    #view-dashboard .telemetry-status-grid,
+    #view-fuel .telemetry-status-grid,
+    #view-asset .telemetry-status-grid,
+    #view-biaya .telemetry-status-grid,
+    .kpi-grid,
+    .monitoring-summary {
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 6px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .telemetry-status-grid > .telemetry-metric-item:first-child,
+    #view-dashboard .telemetry-status-grid > .telemetry-metric-item:first-child,
+    .monitoring-summary > .total,
+    .kpi-grid > :last-child:nth-child(odd) {
+        grid-column: auto !important;
+    }
+
+    .telemetry-metric-item,
+    #view-fuel .telemetry-metric-item,
+    .kpi-card,
+    .pm-kpi-card,
+    .pk-card,
+    .hse-card,
+    .prod-card,
+    .p2h-kpi-card,
+    .sl-kpi-card,
+    .service-counter-card,
+    .monitoring-summary > div {
+        padding: 6px 8px !important;
+        min-height: 58px !important;
+        border-radius: 6px !important;
+    }
+
+    .telemetry-metric-label,
+    .kpi-title {
+        font-size: 0.6rem !important;
+        letter-spacing: 0.02em !important;
+        margin-bottom: 2px !important;
+        line-height: 1.15 !important;
+    }
+
+    .telemetry-metric-value,
+    .kpi-value {
+        font-size: 1.15rem !important;
+        line-height: 1.1 !important;
+    }
+
+    .telemetry-metric-footer {
+        margin-top: 3px !important;
+        padding-top: 2px !important;
+        gap: 3px !important;
+    }
+
+    .telemetry-action-link {
+        font-size: 0.65rem !important;
+        min-height: 22px !important;
+        padding: 2px 6px !important;
+    }
+
+    /* Dashboard Layout: Side-by-Side (Map & WO Emergency Attention) */
+    .dashboard-layout {
+        display: grid !important;
+        grid-template-columns: 1.25fr 0.95fr !important;
+        gap: 8px !important;
+        margin-bottom: 10px !important;
+        align-items: stretch !important;
+    }
+
+    .panel {
+        margin-bottom: 8px !important;
+        border-radius: 6px !important;
+    }
+
+    .panel-header {
+        padding: 6px 10px !important;
+        font-size: 0.8rem !important;
+    }
+
+    .panel-body {
+        padding: 8px !important;
+    }
+
+    /* Clamped Live Map Height */
+    #map,
+    #leaflet-map,
+    .leaflet-container,
+    #siteLocationMap,
+    #unitPropLocationMap {
+        height: 220px !important;
+        min-height: 190px !important;
+        max-height: 240px !important;
+        width: 100% !important;
+        border-radius: 0 0 6px 6px !important;
+    }
+
+    /* Clamped Attention List (Emergency WO) */
+    .attention-list {
+        height: 220px !important;
+        max-height: 240px !important;
+        overflow-y: auto !important;
+        padding-right: 4px !important;
+        gap: 6px !important;
+    }
+
+    .attention-item {
+        padding: 6px 8px !important;
+        margin-bottom: 4px !important;
+        border-radius: 6px !important;
+    }
+
+    .attention-header {
+        gap: 4px !important;
+        margin-bottom: 3px !important;
+    }
+
+    .attention-wo-badge {
+        font-size: 0.78rem !important;
+    }
+
+    .attention-asset-pill {
+        font-size: 0.65rem !important;
+        padding: 1px 4px !important;
+    }
+
+    .attention-downtime {
+        font-size: 0.65rem !important;
+        padding: 1px 5px !important;
+    }
+
+    .attention-meta {
+        font-size: 0.7rem !important;
+        margin-bottom: 3px !important;
+    }
+
+    .attention-desc {
+        font-size: 0.72rem !important;
+        line-height: 1.2 !important;
+        margin-bottom: 5px !important;
+        -webkit-line-clamp: 1 !important;
+        line-clamp: 1 !important;
+    }
+
+    .attention-actions {
+        padding-top: 5px !important;
+        gap: 4px !important;
+    }
+
+    .attention-action-btn {
+        min-height: 26px !important;
+        font-size: 0.7rem !important;
+        padding: 3px 6px !important;
+    }
+
+    /* Dashboard Data Layout: Side-by-Side (Category & Active WO Table) */
+    .dashboard-data-layout,
+    .dash-grid-2 {
+        display: grid !important;
+        grid-template-columns: 0.9fr 1.3fr !important;
+        gap: 8px !important;
+        align-items: stretch !important;
+    }
+
+    .dashboard-data-panel {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .dashboard-data-table-wrap {
+        height: 215px !important;
+        max-height: 235px !important;
+        overflow-y: auto !important;
+    }
+
+    .dashboard-wo-scroll,
+    #dashboardWoScroll,
+    .dashboard-data-table-wrap.dashboard-wo-scroll {
+        height: 215px !important;
+        min-height: 175px !important;
+        max-height: 235px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+    }
+
+    table.dashboard-wo-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        font-size: 0.75rem !important;
+    }
+
+    table.dashboard-wo-table th,
+    table.dashboard-wo-table td {
+        padding: 5px 6px !important;
+        font-size: 0.74rem !important;
+    }
+
+    /* Bounded Landscape Modals & Form Dialogs (Zero Screen Clippings) */
+    .modal-overlay,
+    .hse-modal-overlay,
+    .sl-modal-overlay,
+    .guide-modal,
+    #modalNewWO,
+    #modalWoStatusConfirm {
+        align-items: flex-start !important;
+        padding: 4px max(10px, env(safe-area-inset-right)) 4px max(10px, env(safe-area-inset-left)) !important;
+        overflow-y: auto !important;
+    }
+
+    .modal-content,
+    .hse-modal-card,
+    .sl-modal-dialog,
+    .guide-modal-panel,
+    #modalNewWO .wo-create-dialog,
+    .modal-change-pwd-content,
+    #modalRoleUsers .modal-content {
+        max-height: calc(100dvh - 10px) !important;
+        width: min(94vw, 760px) !important;
+        max-width: 760px !important;
+        margin: 4px auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        border-radius: 8px !important;
+    }
+
+    .modal-header,
+    .hse-modal-header,
+    .sl-modal-header {
+        padding: 6px 12px !important;
+        min-height: 38px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .modal-header h2,
+    .modal-header h3 {
+        font-size: 0.92rem !important;
+    }
+
+    .modal-body,
+    .hse-modal-body,
+    .sl-modal-scroll,
+    .guide-modal-body,
+    #modalRoleUsers .modal-body {
+        max-height: calc(100dvh - 84px) !important;
+        padding: 8px 12px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+    }
+
+    .modal-footer,
+    .hse-modal-footer,
+    .guide-modal-footer,
+    .sl-modal-actions,
+    #modalRoleUsers .modal-footer {
+        padding: 5px 12px !important;
+        min-height: 40px !important;
+        flex-shrink: 0 !important;
+        gap: 6px !important;
+    }
+
+    .modal-footer .btn,
+    .hse-modal-footer .btn {
+        min-height: 30px !important;
+        height: 30px !important;
+        font-size: 0.78rem !important;
+        padding: 4px 10px !important;
+    }
+
+    /* 2-Column Responsive Form Grids in Landscape Modals */
+    .adaptive-field-grid,
+    .hse-form-grid,
+    .cm-form-grid,
+    .p2h-form-header,
+    .pm-detail-form,
+    .import-manual-field-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 5px 8px !important;
+    }
+
+    .form-group {
+        margin-bottom: 6px !important;
+    }
+
+    .form-group label,
+    .hse-form-group label {
+        margin-bottom: 2px !important;
+        font-size: 0.72rem !important;
+    }
+
+    .form-control,
+    .view-section input:not([type="checkbox"]):not([type="radio"]),
+    .view-section select,
+    .modal-content input:not([type="checkbox"]):not([type="radio"]),
+    .modal-content select {
+        min-height: var(--mobile-control-height) !important;
+        height: var(--mobile-control-height) !important;
+        font-size: 0.78rem !important;
+        padding: 4px 8px !important;
+    }
+
+    /* Dual-Pane View Settings Layout */
+    #view-settings .settings-layout {
+        display: grid !important;
+        grid-template-columns: 210px 1fr !important;
+        gap: 10px !important;
+        align-items: start !important;
+    }
+
+    #view-settings .settings-sidebar-nav {
+        width: 100% !important;
+    }
+
+    #view-settings .settings-content-area {
+        padding: 10px 12px !important;
+    }
+
+    /* Horizontal Tab Bar Scrolling */
+    .report-view-tabs,
+    .notification-panel-tabs,
+    .p2h-nav-tabs,
+    .wo-view-switch {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 4px !important;
+        padding-bottom: 3px !important;
+        scrollbar-width: none !important;
+    }
+
+    .report-view-tabs::-webkit-scrollbar,
+    .notification-panel-tabs::-webkit-scrollbar,
+    .p2h-nav-tabs::-webkit-scrollbar,
+    .wo-view-switch::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* Popover Panels */
+    .notification-dropdown-panel {
+        top: 48px !important;
+        right: max(8px, env(safe-area-inset-right)) !important;
+        left: auto !important;
+        width: min(340px, calc(100vw - 20px)) !important;
+        max-height: calc(100dvh - 56px) !important;
+    }
+
+    .profile-dropdown-panel {
+        top: 48px !important;
+        right: max(8px, env(safe-area-inset-right)) !important;
+        left: auto !important;
+        width: min(280px, calc(100vw - 20px)) !important;
+        max-height: calc(100dvh - 56px) !important;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2. TABLETS & IPADS IN LANDSCAPE (Width: 769px–1366px, Height >= 521px)     */
+/* -------------------------------------------------------------------------- */
+@media screen and (min-width: 769px) and (max-width: 1366px) and (orientation: landscape) {
+    :root {
+        --tablet-header-height: 52px;
+    }
+
+    body {
+        display: flex !important;
+        flex-direction: row !important;
+        padding-bottom: max(0px, env(safe-area-inset-bottom)) !important;
+    }
+
+    /* Sidebar in Collapsed Mode by default or clean expandable bar */
+    body.sidebar-collapsed .sidebar {
+        width: 64px !important;
+        min-width: 64px !important;
+        max-width: 64px !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        z-index: 1020 !important;
+    }
+
+    body.sidebar-collapsed .main-wrapper {
+        margin-left: 64px !important;
+        width: calc(100% - 64px) !important;
+        min-width: 0 !important;
+    }
+
+    body:not(.sidebar-collapsed) .sidebar {
+        width: 230px !important;
+        min-width: 230px !important;
+        max-width: 230px !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        z-index: 1020 !important;
+    }
+
+    body:not(.sidebar-collapsed) .main-wrapper {
+        margin-left: 230px !important;
+        width: calc(100% - 230px) !important;
+        min-width: 0 !important;
+    }
+
+    .top-header {
+        height: var(--tablet-header-height) !important;
+        min-height: var(--tablet-header-height) !important;
+        padding: 0 16px !important;
+    }
+
+    .search-bar {
+        display: flex !important;
+    }
+
+    .btn-mobile-search-toggle {
+        display: none !important;
+    }
+
+    .profile span {
+        display: inline !important;
+    }
+
+    .content {
+        padding: 14px 18px 24px !important;
+    }
+
+    /* KPI Telemetry 5-Column Grid */
+    .telemetry-status-grid,
+    #view-dashboard .telemetry-status-grid,
+    #view-fuel .telemetry-status-grid,
+    #view-asset .telemetry-status-grid,
+    #view-biaya .telemetry-status-grid,
+    .kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+        margin-bottom: 14px !important;
+    }
+
+    .telemetry-metric-item {
+        padding: 10px 12px !important;
+    }
+
+    .telemetry-metric-value {
+        font-size: 1.4rem !important;
+    }
+
+    /* Balanced 2-Column Dashboard Layout */
+    .dashboard-layout {
+        display: grid !important;
+        grid-template-columns: 1.35fr 0.85fr !important;
+        gap: 16px !important;
+        align-items: stretch !important;
+        margin-bottom: 16px !important;
+    }
+
+    #map,
+    #leaflet-map,
+    .leaflet-container,
+    #siteLocationMap,
+    #unitPropLocationMap {
+        height: 380px !important;
+        min-height: 350px !important;
+    }
+
+    .attention-list {
+        height: 380px !important;
+        max-height: 380px !important;
+        overflow-y: auto !important;
+    }
+
+    /* Dashboard Data Layout */
+    .dashboard-data-layout {
+        display: grid !important;
+        grid-template-columns: 0.95fr 1.35fr !important;
+        gap: 16px !important;
+        align-items: stretch !important;
+    }
+
+    .dashboard-wo-scroll,
+    #dashboardWoScroll,
+    .dashboard-data-table-wrap.dashboard-wo-scroll {
+        height: 350px !important;
+        max-height: 390px !important;
+        overflow-y: auto !important;
+    }
+
+    /* Analytics 2x2 Grid */
+    .dash-grid-2,
+    .dash-grid-2-equal,
+    .panel-grid-2 {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+
+    /* Touch Controls: Min 42px touch target for comfortable finger control */
+    .sidebar-menu li a {
+        min-height: 42px !important;
+    }
+
+    .btn,
+    .tab-btn,
+    .report-view-tab {
+        min-height: 38px !important;
+    }
+
+    /* Modals for Tablet Landscape */
+    .modal-overlay,
+    .hse-modal-overlay,
+    .sl-modal-overlay {
+        padding: 20px !important;
+    }
+
+    .modal-content,
+    .hse-modal-card,
+    .sl-modal-dialog {
+        max-width: min(880px, 92vw) !important;
+        max-height: 88dvh !important;
+    }
+
+    .modal-body,
+    .hse-modal-body,
+    .sl-modal-scroll {
+        max-height: calc(88dvh - 130px) !important;
+        overflow-y: auto !important;
+    }
+}
+
 

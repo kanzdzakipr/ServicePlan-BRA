@@ -1342,7 +1342,7 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px), screen and (orientation: landscape) and (max-height: 520px) {
     #view-unit-properties {
         min-width: 0;
         max-width: 100%;
