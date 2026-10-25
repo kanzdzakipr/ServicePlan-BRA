@@ -44,6 +44,7 @@ try {
         'PF-00007' => ['alias' => 'SD 03', 'hull' => 'BOMAG DRUM (03)', 'sn' => '961582391145'],
         'PF-00008' => ['alias' => 'SD 07', 'hull' => 'BOMAG SINGLE DRUM 2024 (07)', 'sn' => '961582391103'],
         'PF-00010' => ['alias' => 'SD 08', 'hull' => 'BOMAG SINGLE DRUM 2024 (08)', 'sn' => '961582391660'],
+        'PF-00002' => ['alias' => 'PF 06', 'hull' => 'BOMAG FOOT (06)', 'sn' => '961582391718'],
         'PF-00013' => ['alias' => 'PF 05', 'hull' => 'BOMAG FOOT (05)', 'sn' => '961582391717'],
         'PF-00014' => ['alias' => 'SD 11', 'hull' => 'CAT CS10GC (11)', 'sn' => 'T8F03605'],
         'PF-00015' => ['alias' => 'SD 12', 'hull' => 'CAT CS10GC (12)', 'sn' => 'T8F03606'],
@@ -153,14 +154,24 @@ try {
 
         if ($pn === '') {
             $sku = sprintf("GEN-HW-%04d", $hwSeq++);
-            $stmtInsertPart->execute([
-                ':pn' => $sku,
-                ':pname' => $name,
-                ':cat' => $cat,
-                ':uom' => $satuan !== '' ? $satuan : 'pcs',
-                ':qty' => $saldo
-            ]);
-            $partsInsertedHW++;
+            if (isset($existingPns[$sku])) {
+                $stmtUpdateStock->execute([
+                    ':qty' => $saldo,
+                    ':cat' => $cat,
+                    ':id'  => $existingPns[$sku]
+                ]);
+                $partsUpdated += $stmtUpdateStock->rowCount();
+            } else {
+                $stmtInsertPart->execute([
+                    ':pn' => $sku,
+                    ':pname' => $name,
+                    ':cat' => $cat,
+                    ':uom' => $satuan !== '' ? $satuan : 'pcs',
+                    ':qty' => $saldo
+                ]);
+                $existingPns[$sku] = (int)$db->lastInsertId();
+                $partsInsertedHW++;
+            }
         } else {
             $pnClean = strtoupper($pn);
             if (isset($existingPns[$pnClean])) {
