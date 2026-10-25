@@ -809,7 +809,6 @@ try {
 
             <!-- VIEW: PREVENTIVE MAINTENANCE -->
             <div id="view-pm" class="view-section">
-                <div style="display:flex;justify-content:flex-end;margin:0 0 12px;"><button type="button" class="btn btn-primary" onclick="openModal('modalNewAsset')"><i class="fa-solid fa-plus"></i> Tambah Unit Baru</button></div>
                 <div id="preventiveMaintenanceModule"></div>
             </div>
 
