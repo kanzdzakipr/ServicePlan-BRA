@@ -1561,32 +1561,133 @@ body.sidebar-collapsed .sidebar-menu li a i {
         }
 
         @media (max-width: 768px) {
-            .dashboard-wo-scroll {
-                height: 450px;
-                min-height: 450px;
+            .dashboard-wo-scroll,
+            #dashboardWoScroll,
+            .dashboard-data-table-wrap.dashboard-wo-scroll {
+                height: clamp(360px, 50vh, 460px) !important;
+                min-height: 360px !important;
+                max-height: 460px !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                -webkit-overflow-scrolling: touch !important;
+                touch-action: pan-y !important;
+                overscroll-behavior-y: contain !important;
+                overscroll-behavior-x: none !important;
+                scrollbar-width: thin !important;
             }
 
-            .dashboard-wo-table {
-                font-size: 0.7rem;
+            .dashboard-wo-table,
+            .dashboard-data-table-wrap .dashboard-wo-table,
+            .table-responsive .dashboard-wo-table,
+            .view-section table.dashboard-wo-table {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                table-layout: fixed !important;
+                font-size: 0.68rem !important;
             }
 
-            .dashboard-wo-table th,
-            .dashboard-wo-table td {
-                padding-inline: 5px;
-                overflow-wrap: anywhere;
-                white-space: normal;
+            .dashboard-wo-table thead th {
+                height: 36px !important;
+                padding: 6px 3px !important;
+                font-size: 0.65rem !important;
+                letter-spacing: -0.01em !important;
+                white-space: nowrap !important;
+                text-align: center !important;
             }
 
-            .dashboard-wo-table .col-wo-unit { width: 38%; }
-            .dashboard-wo-table .col-status { width: 14%; }
-            .dashboard-wo-table .col-priority { width: 14%; }
-            .dashboard-wo-table .col-mechanic { width: 19%; }
-            .dashboard-wo-table .col-downtime { width: 15%; }
+            .dashboard-wo-table thead th:first-child {
+                text-align: left !important;
+                padding-left: 6px !important;
+            }
 
-            .dashboard-wo-number,
-            .dashboard-wo-downtime,
+            .dashboard-wo-table thead th:last-child {
+                text-align: right !important;
+                padding-right: 6px !important;
+            }
+
+            .dashboard-wo-table tbody td {
+                padding: 6px 3px !important;
+                font-size: 0.68rem !important;
+                vertical-align: middle !important;
+            }
+
+            .dashboard-wo-table tbody td:first-child {
+                padding-left: 6px !important;
+            }
+
+            .dashboard-wo-table tbody td:last-child {
+                padding-right: 6px !important;
+            }
+
+            .dashboard-wo-table .col-wo-unit { width: 33% !important; }
+            .dashboard-wo-table .col-status { width: 17% !important; }
+            .dashboard-wo-table .col-priority { width: 16% !important; }
+            .dashboard-wo-table .col-mechanic { width: 18% !important; }
+            .dashboard-wo-table .col-downtime { width: 16% !important; }
+
+            .dashboard-wo-row {
+                height: auto !important;
+                min-height: 46px !important;
+            }
+
+            .dashboard-wo-number {
+                font-size: 0.68rem !important;
+                font-weight: 700 !important;
+                margin-bottom: 2px !important;
+                line-height: 1.15 !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+
             .dashboard-wo-unit .unit-prop-hover-link {
-                white-space: normal;
+                font-size: 0.72rem !important;
+                font-weight: 700 !important;
+                line-height: 1.15 !important;
+                gap: 3px !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+
+            .dashboard-wo-unit .unit-prop-hover-icon {
+                font-size: 0.6rem !important;
+            }
+
+            .dashboard-wo-status-value {
+                font-size: 0.66rem !important;
+                font-weight: 700 !important;
+                min-height: 22px !important;
+                line-height: 1.2 !important;
+                text-align: center !important;
+                justify-content: center !important;
+            }
+
+            .dashboard-wo-priority .badge {
+                font-size: 0.62rem !important;
+                padding: 2px 4px !important;
+                min-width: 0 !important;
+                min-height: 20px !important;
+                line-height: 1.2 !important;
+                border-radius: 4px !important;
+                justify-content: center !important;
+            }
+
+            .dashboard-wo-mechanic {
+                font-size: 0.66rem !important;
+                line-height: 1.2 !important;
+                text-align: center !important;
+                overflow-wrap: break-word !important;
+                word-break: break-word !important;
+            }
+
+            .dashboard-wo-downtime {
+                font-size: 0.66rem !important;
+                font-weight: 600 !important;
+                text-align: right !important;
+                white-space: nowrap !important;
             }
 
             .dashboard-wo-panel-header {
@@ -18876,7 +18977,7 @@ body.sl-modal-open {
     }
 
     .mobile-table-scroll,
-    .table-responsive,
+    .table-responsive:not(.dashboard-wo-scroll),
     .table-container,
     .logistics-data-table-wrap,
     .cm-kpi-table-wrap,
@@ -18902,23 +19003,26 @@ body.sl-modal-open {
     }
 
     /* All tables inside scrollable containers have a minimum readable width */
-    .table-responsive table:not(.mobile-compact-table),
-    .table-container table:not(.mobile-compact-table),
-    .mobile-table-scroll table:not(.mobile-compact-table),
+    .table-responsive table:not(.mobile-compact-table):not(.dashboard-wo-table),
+    .table-container table:not(.mobile-compact-table):not(.dashboard-wo-table),
+    .mobile-table-scroll table:not(.mobile-compact-table):not(.dashboard-wo-table),
     .mru-table-wrap table,
-    .view-section table:not(.mobile-compact-table),
-    .modal-body table:not(.mobile-compact-table) {
+    .view-section table:not(.mobile-compact-table):not(.dashboard-wo-table),
+    .modal-body table:not(.mobile-compact-table):not(.dashboard-wo-table) {
         min-width: max(740px, 100%) !important;
         width: 100%;
         max-width: none;
     }
 
-    .view-section table.mobile-compact-table {
+    .view-section table.mobile-compact-table,
+    table.dashboard-wo-table {
         min-width: 0 !important;
-        table-layout: auto;
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed;
     }
 
-    .view-section table.mobile-wide-table,
+    .view-section table.mobile-wide-table:not(.dashboard-wo-table),
     #view-asset table.table,
     #assetTable {
         min-width: 1250px !important;

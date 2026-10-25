@@ -75,8 +75,9 @@
         if (!(table instanceof HTMLTableElement) || table.dataset.mobileTableReady === 'true') return;
         table.dataset.mobileTableReady = 'true';
 
+        const isDashboardWo = table.classList.contains('dashboard-wo-table');
         const columnCount = getTableColumnCount(table);
-        table.classList.add(columnCount <= 3 ? 'mobile-compact-table' : 'mobile-wide-table');
+        table.classList.add((columnCount <= 3 || isDashboardWo) ? 'mobile-compact-table' : 'mobile-wide-table');
 
         let region = table.closest(tableContainerSelector);
         if (!region) {
@@ -85,7 +86,9 @@
             table.parentNode.insertBefore(region, table);
             region.appendChild(table);
         }
-        prepareScrollRegion(region, table.getAttribute('aria-label'));
+        if (!isDashboardWo) {
+            prepareScrollRegion(region, table.getAttribute('aria-label'));
+        }
     }
 
     function classifyFieldGrid(grid) {

@@ -472,7 +472,7 @@ try {
                         </div>
                         <div class="panel-body" style="padding: 0;">
                             <div class="table-responsive dashboard-data-table-wrap dashboard-wo-scroll" id="dashboardWoScroll">
-                                <table class="dashboard-data-table dashboard-wo-table">
+                                <table class="dashboard-data-table dashboard-wo-table mobile-compact-table">
                                     <colgroup>
                                         <col class="col-wo-unit">
                                         <col class="col-status">
