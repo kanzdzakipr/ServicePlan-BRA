@@ -8453,6 +8453,12 @@ try {
                     const badge = window.getAssetStatusBadge(asset.status);
                     const calculatedAge = asset.asset_age ?? ((Number(ident.year) >= 1970) ? Math.max(0, new Date().getFullYear() - Number(ident.year)) : null);
                     const shown = value => value && value !== '-' && value !== 'Belum tersedia' ? escapeHtml(value) : '<em>Belum tersedia</em>';
+                    const cleanWarranty = value => {
+                        if (!value || value === '-' || value === 'Belum tersedia') return 'Belum diketahui';
+                        const s = String(value).trim();
+                        if (s === 'Warranty (Tidak Ada HM)' || s.toLowerCase() === 'warranty (tidak ada hm)') return 'Warranty';
+                        return s;
+                    };
 
                     return `
                     <tr data-asset-id="${escapeHtml(asset.id)}"
@@ -8466,7 +8472,7 @@ try {
                         <td onclick="event.stopPropagation();"><a href="javascript:void(0)" class="unit-prop-hover-link" onclick="window.openUnitProperties('${escapeHtml(ident.unitId)}'); return false;"><strong class="unit-code-text">${escapeHtml(asset.id || asset.asset_id || ident.unitId)}</strong><i class="fa-solid fa-arrow-up-right-from-square unit-prop-hover-icon"></i></a><div class="asset-cell-line"><span>Kode</span><b>${shown(asset.asset_code)}</b></div><div class="asset-cell-line"><span>Lambung</span><b>${shown(ident.hull)}</b><button type="button" class="asset-inline-action" onclick="event.stopPropagation(); window.openRenameHullModal('${escapeHtml(asset.id)}', '${escapeHtml(ident.hull)}')" title="Ubah nomor lambung"><i class="fa-solid fa-pen"></i></button></div></td>
                         <td><strong>${shown(ident.model)}</strong><div class="asset-cell-line"><span>Tahun</span><b>${shown(ident.year)}</b></div><div class="asset-cell-line"><span>Usia</span><b>${calculatedAge === null ? 'Belum tersedia' : `${calculatedAge} tahun`}</b></div><div class="asset-cell-line"><span>Kapasitas</span><b>${shown(asset.capacity)}</b></div><span class="asset-cell-tag">${escapeHtml(asset.category || 'Other')}</span></td>
                         <td><div class="asset-cell-line"><span>SN</span><b class="asset-mono">${shown(ident.sn)}</b></div><div class="asset-cell-line"><span>Pelat</span><b class="asset-mono">${shown(ident.plate)}</b></div><div class="asset-cell-line"><span>Rangka</span><b class="asset-mono">${shown(asset.chassis_number || asset.chassis)}</b></div></td>
-                        <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(asset.warranty || 'Belum diketahui')}</span></td>
+                        <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(cleanWarranty(asset.warranty))}</span></td>
                         <td onclick="event.stopPropagation();">
                             <div class="asset-cell-line"><span>Project</span><b><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || asset.project_name || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || asset.project_name || '')}"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.project_name || asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></b></div><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
                         </td>
@@ -8611,12 +8617,18 @@ try {
                 }
                 reportWindow.opener = null;
                 const text = value => escapeHtml(value === null || value === undefined || value === '' || value === '-' ? 'Belum tersedia' : String(value));
+                const cleanWarrantyExport = value => {
+                    if (!value || value === '-' || value === 'Belum tersedia') return 'Belum diketahui';
+                    const s = String(value).trim();
+                    if (s === 'Warranty (Tidak Ada HM)' || s.toLowerCase() === 'warranty (tidak ada hm)') return 'Warranty';
+                    return s;
+                };
                 const rows = assets.map((asset, index) => {
                     const ident = window.formatAssetIdentityDetails(asset);
                     const compl = window.getAssetCompleteness(asset);
                     const age = asset.asset_age ?? ((Number(ident.year) >= 1970) ? Math.max(0, new Date().getFullYear() - Number(ident.year)) : null);
                     const status = String(asset.subStatus || asset.status || 'Belum tersedia').replaceAll('_', ' ');
-                    return `<tr><td>${index + 1}</td><td>${text(asset.id || asset.asset_id)}</td><td>${text(asset.asset_code)}</td><td>${text(ident.hull)}</td><td>${text(ident.model)}</td><td>${text(asset.dealer || asset.vehicle_type)}</td><td>${text(ident.year)}</td><td>${age === null ? 'Belum tersedia' : `${age} tahun`}</td><td>${text(asset.capacity)}</td><td>${text(ident.sn)}</td><td>${text(ident.plate)}</td><td>${text(asset.chassis_number || asset.chassis)}</td><td>${text(asset.category)}</td><td>${text(asset.project_name)}</td><td>${text(asset.location || asset.operational_position)}</td><td>${text(status)}</td><td>${text(asset.warranty || 'Belum diketahui')}</td><td>${compl.isComplete ? 'Lengkap' : `Kurang: ${text(compl.missing.join(', '))}`}</td></tr>`;
+                    return `<tr><td>${index + 1}</td><td>${text(asset.id || asset.asset_id)}</td><td>${text(asset.asset_code)}</td><td>${text(ident.hull)}</td><td>${text(ident.model)}</td><td>${text(asset.dealer || asset.vehicle_type)}</td><td>${text(ident.year)}</td><td>${age === null ? 'Belum tersedia' : `${age} tahun`}</td><td>${text(asset.capacity)}</td><td>${text(ident.sn)}</td><td>${text(ident.plate)}</td><td>${text(asset.chassis_number || asset.chassis)}</td><td>${text(asset.category)}</td><td>${text(asset.project_name)}</td><td>${text(asset.location || asset.operational_position)}</td><td>${text(status)}</td><td>${text(cleanWarrantyExport(asset.warranty))}</td><td>${compl.isComplete ? 'Lengkap' : `Kurang: ${text(compl.missing.join(', '))}`}</td></tr>`;
                 }).join('');
                 const printedAt = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Bangkok', dateStyle: 'long', timeStyle: 'short' });
                 const logoUrl = new URL('assets/logo-pt-bina-rekayasa-anugrah.png', window.location.href).href;

@@ -1220,7 +1220,7 @@
         listEl.innerHTML = [
             row('fa-truck', 'Tipe & Kategori Alat', asset.category || asset.type, 'fa-tag', 'Merek / Model Unit', modelDisplay),
             row('fa-barcode', 'Nomor Seri (SN) / Rangka', serialDisplay, 'fa-id-card', 'Nomor Polisi (No. Pol)', asset.license_plate),
-            row('fa-shield-halved', 'Garansi (Warranty)', asset.warranty, 'fa-fingerprint', 'Nomor Rangka (Chassis)', asset.chassis_number),
+            row('fa-shield-halved', 'Garansi (Warranty)', (asset.warranty === 'Warranty (Tidak Ada HM)' || (typeof asset.warranty === 'string' && asset.warranty.toLowerCase() === 'warranty (tidak ada hm)')) ? 'Warranty' : asset.warranty, 'fa-fingerprint', 'Nomor Rangka (Chassis)', asset.chassis_number),
             row('fa-building-shield', 'Status Kepemilikan', asset.ownership, 'fa-handshake', 'Kontrak Sewa Aktif', ktrDisplay),
             row('fa-calendar-check', 'Tahun Pembuatan Unit', asset.year_manufacture, 'fa-stopwatch-20', 'Target Jam Operasi Kontrak', targetHoursDisplay),
             row('fa-location-dot', 'Wilayah / Posisi Operasional', locDisplay, 'fa-building-flag', 'Cabang Administrasi', asset.sub_group_branch),

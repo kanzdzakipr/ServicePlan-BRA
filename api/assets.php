@@ -293,6 +293,9 @@ switch ($method) {
                 )
             ");
             $warrantyVal = trim((string) ($data['warranty'] ?? '0 HM')) ?: '0 HM';
+            if ($warrantyVal === 'Warranty (Tidak Ada HM)' || strcasecmp($warrantyVal, 'warranty (tidak ada hm)') === 0) {
+                $warrantyVal = 'Warranty';
+            }
             $chassisVal = trim((string) ($data['chassis_number'] ?? $data['chassis'] ?? '')) ?: null;
             $stmt->execute([
                 ':id' => $assetId,
@@ -561,6 +564,9 @@ switch ($method) {
                     $val = (trim((string) $val) === '' || trim((string) $val) === '-') ? null : trim((string) $val);
                 } elseif ($field === 'warranty') {
                     $val = trim((string) $val) !== '' ? trim((string) $val) : '0 HM';
+                    if ($val === 'Warranty (Tidak Ada HM)' || strcasecmp($val, 'warranty (tidak ada hm)') === 0) {
+                        $val = 'Warranty';
+                    }
                 } elseif ($field === 'year_manufacture') {
                     $val = ($val !== null && trim((string) $val) !== '') ? (int) $val : null;
                 } elseif ($field === 'asset_age') {
