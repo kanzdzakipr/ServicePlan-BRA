@@ -22256,18 +22256,27 @@
                         <h2><i class="fa-solid fa-users-gear text-primary"></i> Manajemen People, Performa & KPI Tim Maintenance</h2>
                         <p>Integrasi terpadu Penilaian Head of Equipment, Produktivitas Mekanik, Evaluasi Planner, dan Audit Lembur SPL</p>
                     </div>
-                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <label for="selKpiPeriod" style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin:0;"><i class="fa-regular fa-calendar"></i> Periode:</label>
-                            <input id="selKpiPeriod" type="month" min="2026-01" max="2099-12" value="2026-01" class="form-control" style="width:auto; font-weight:700; padding:6px 14px; font-size:0.88rem; border-radius:8px; border:1px solid #cbd5e1; background:var(--bg-surface);" aria-label="Pilih Periode KPI">
+                    <div class="pk-header-controls">
+                        <div class="pk-control-group">
+                            <label class="pk-control-label" for="selKpiPeriod">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>Periode</span>
+                            </label>
+                            <input id="selKpiPeriod" type="month" min="2026-01" max="2099-12" value="2026-01" class="pk-control-input" aria-label="Pilih Periode KPI">
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <label for="selKpiLocation" style="font-size:0.85rem; font-weight:700; color:var(--text-main); margin:0;"><i class="fa-solid fa-location-dot"></i> Lokasi:</label>
-                            <select id="selKpiLocation" class="form-control" style="max-width:240px; font-weight:700; padding:6px 10px; font-size:0.88rem; border-radius:8px;" aria-label="Pilih Lokasi KPI">
+                        <div class="pk-control-group">
+                            <label class="pk-control-label" for="selKpiLocation">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span>Lokasi</span>
+                            </label>
+                            <select id="selKpiLocation" class="pk-control-select" aria-label="Pilih Lokasi KPI">
                                 <option value="">Memuat lokasi...</option>
                             </select>
                         </div>
-                        <button class="btn btn-primary" onclick="window.exportKPIReport()"><i class="fa-solid fa-download"></i> Ekspor Laporan KPI</button>
+                        <button type="button" class="pk-btn-export" onclick="window.exportKPIReport()" title="Ekspor Laporan Resmi KPI Tim Maintenance">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Ekspor Laporan KPI</span>
+                        </button>
                     </div>
                 </div>
 
