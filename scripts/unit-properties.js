@@ -208,8 +208,9 @@
 
             // STNK
             if (asset.legal_stnk_expiry) {
+                const stnkUrl = asset.stnk_pdf_url ? `api/asset_files.php?kind=stnk&asset_id=${encodeURIComponent(asset.asset_id)}` : null;
                 docsHtml += `
-                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('STNK', 'Surat Tanda Nomor Kendaraan (STNK)', '${escapeHtml(asset.legal_stnk_expiry)}', null)" title="Lihat Dokumen STNK (Masa Berlaku: ${escapeHtml(asset.legal_stnk_expiry)})">
+                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('STNK', 'Surat Tanda Nomor Kendaraan (STNK)', '${escapeHtml(asset.legal_stnk_expiry)}', ${stnkUrl ? `'${stnkUrl}'` : 'null'})" title="Lihat Dokumen STNK (Masa Berlaku: ${escapeHtml(asset.legal_stnk_expiry)})">
                         <i class="fa-solid fa-file-shield"></i> Lihat STNK
                         <span class="prop-doc-pill-meta">${escapeHtml(asset.legal_stnk_expiry)}</span>
                     </a>
@@ -239,8 +240,9 @@
 
             // KIR
             if (asset.legal_kir_expiry) {
+                const kirUrl = asset.kir_pdf_url ? `api/asset_files.php?kind=kir&asset_id=${encodeURIComponent(asset.asset_id)}` : null;
                 docsHtml += `
-                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('KIR', 'Uji Kelayakan Kendaraan Bermotor (KIR)', '${escapeHtml(asset.legal_kir_expiry)}', null)" title="Lihat Dokumen KIR (Masa Berlaku: ${escapeHtml(asset.legal_kir_expiry)})">
+                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('KIR', 'Uji Kelayakan Kendaraan Bermotor (KIR)', '${escapeHtml(asset.legal_kir_expiry)}', ${kirUrl ? `'${kirUrl}'` : 'null'})" title="Lihat Dokumen KIR (Masa Berlaku: ${escapeHtml(asset.legal_kir_expiry)})">
                         <i class="fa-solid fa-certificate"></i> Lihat KIR
                         <span class="prop-doc-pill-meta">${escapeHtml(asset.legal_kir_expiry)}</span>
                     </a>
@@ -255,8 +257,9 @@
 
             // SILO
             if (asset.legal_silo_expiry) {
+                const siloUrl = asset.silo_pdf_url ? `api/asset_files.php?kind=silo&asset_id=${encodeURIComponent(asset.asset_id)}` : null;
                 docsHtml += `
-                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('SILO', 'Surat Izin Layak Operasi (SILO K3)', '${escapeHtml(asset.legal_silo_expiry)}', null)" title="Lihat Dokumen SILO (Masa Berlaku: ${escapeHtml(asset.legal_silo_expiry)})">
+                    <a href="javascript:void(0)" class="prop-doc-link active" onclick="window.openPropDocumentModal('SILO', 'Surat Izin Layak Operasi (SILO K3)', '${escapeHtml(asset.legal_silo_expiry)}', ${siloUrl ? `'${siloUrl}'` : 'null'})" title="Lihat Dokumen SILO (Masa Berlaku: ${escapeHtml(asset.legal_silo_expiry)})">
                         <i class="fa-solid fa-file-circle-check"></i> Lihat SILO
                         <span class="prop-doc-pill-meta">${escapeHtml(asset.legal_silo_expiry)}</span>
                     </a>
