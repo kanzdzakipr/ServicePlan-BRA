@@ -702,7 +702,7 @@ try {
                             </div>
                         </div>
 
-                        <div class="table-responsive master-asset-table-scroll dashboard-wo-scroll">
+                        <div class="table-responsive master-asset-table-scroll">
                             <table class="table" id="assetTable">
                                 <colgroup>
                                     <col class="asset-col-number">
