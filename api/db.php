@@ -53,27 +53,6 @@ final class Database
                 PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci',
             ]);
         } catch (PDOException $e) {
-            // Jika koneksi lokal/localhost gagal (misal kredensial remote pada .env), coba fallback ke root lokal Laragon
-            if ($isLocal || in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
-                try {
-                    self::$instance = new PDO("mysql:host={$host};port={$port};dbname={$database};charset=utf8mb4", 'root', '', [
-                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                        PDO::ATTR_EMULATE_PREPARES => false,
-                        PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci',
-                    ]);
-                    error_log('Database connected via local root fallback.');
-                    $authenticationOptional = defined('API_AUTH_OPTIONAL') && API_AUTH_OPTIONAL === true;
-                    if (!$authenticationOptional) {
-                        api_refresh_authenticated_user(self::$instance);
-                        api_authorize_current_route();
-                    }
-                    return self::$instance;
-                } catch (PDOException $fallbackException) {
-                    // Teruskan exception asli jika fallback juga gagal
-                }
-            }
-
             error_log('Database connection failed: ' . $e->getMessage());
             api_json_response(503, [
                 'status' => 'error',
