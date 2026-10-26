@@ -2172,6 +2172,12 @@ try {
                                         sounding</small>
                                 </div>
                                 <div class="form-group">
+                                    <label style="font-weight:600; font-size:0.85rem;">Harga Acuan Solar Industri (Rp/Liter)</label>
+                                    <input type="number" id="cfg-fuel-price-per-liter" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_fuel_price_per_liter'] ?? '14500'), ENT_QUOTES, 'UTF-8') ?>"
+                                        step="100">
+                                    <small style="color:var(--text-muted);">Dasar estimasi kerugian finansial idling satelit KOMTRAX</small>
+                                </div>
+                                <div class="form-group">
                                     <label style="font-weight:600; font-size:0.85rem;">Telematika Komtrax Idling Alarm
                                         Limit (%)</label>
                                     <input type="number" id="cfg-idling-limit" class="form-control" value="<?= htmlspecialchars((string) ($settingsMap['cfg_idling_limit'] ?? '50.0'), ENT_QUOTES, 'UTF-8') ?>"

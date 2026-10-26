@@ -25147,6 +25147,7 @@
 
   let telematicsReconciliation = [];
   let idlingAnomalyData = [];
+  let fuelCostPerLiter = 14500;
   let lhoOperationData = [];
   let contractRows = [];
   let contractPreviewReady = false;
@@ -25228,19 +25229,59 @@
     val,
     strokeColor = "var(--primary)",
     size = 28,
+    id = "",
   ) {
-    const numericVal = Math.min(100, Math.max(0, parseFloat(val) || 0));
+    const isNoData = val === null || val === undefined || isNaN(parseFloat(val));
+    const numericVal = isNoData ? 0 : Math.min(100, Math.max(0, parseFloat(val)));
     const r = 11;
     const circumference = 2 * Math.PI * r;
     const dashOffset = (circumference * (1 - numericVal / 100)).toFixed(2);
+    const idAttr = id ? ` id="${id}"` : "";
+    const titleText = isNoData ? "Tidak Ada Data" : `${numericVal}%`;
+    const isHidden = isNoData || numericVal <= 0;
 
-    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" class="mini-donut-chart" title="${numericVal}%" style="transform: rotate(-90deg); flex-shrink: 0;">
+    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" class="mini-donut-chart"${idAttr} title="${titleText}" style="flex-shrink: 0;">
             <circle cx="16" cy="16" r="${r}" fill="none" stroke="var(--border, rgba(0,0,0,0.1))" stroke-width="3" />
-            <circle cx="16" cy="16" r="${r}" fill="none" stroke="${strokeColor}" stroke-width="3" 
+            <circle class="donut-progress" cx="16" cy="16" r="${r}" fill="none" stroke="${strokeColor}" stroke-width="3" 
                 stroke-dasharray="${circumference.toFixed(2)}" 
                 stroke-dashoffset="${dashOffset}" 
-                stroke-linecap="round" />
+                stroke-linecap="round"
+                style="${isHidden ? 'opacity: 0;' : 'opacity: 1;'} transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s ease, opacity 0.3s ease;" />
         </svg>`;
+  }
+
+  function updateMiniDonutChart(id, val, strokeColor) {
+    const svgEl = document.getElementById(id);
+    if (!svgEl) return;
+
+    const isNoData = val === null || val === undefined || isNaN(parseFloat(val));
+    const numericVal = isNoData ? 0 : Math.min(100, Math.max(0, parseFloat(val)));
+    const r = 11;
+    const circumference = 2 * Math.PI * r;
+    const dashOffset = (circumference * (1 - numericVal / 100)).toFixed(2);
+    const isHidden = isNoData || numericVal <= 0;
+
+    const progressCircle = svgEl.querySelector(".donut-progress");
+    if (progressCircle) {
+      progressCircle.style.strokeDashoffset = dashOffset;
+      if (strokeColor) {
+        progressCircle.style.stroke = strokeColor;
+      }
+      progressCircle.style.opacity = isHidden ? "0" : "1";
+      svgEl.setAttribute("title", isNoData ? "Tidak Ada Data" : `${numericVal}%`);
+    } else {
+      svgEl.outerHTML = renderMiniDonutChartSVG(val, strokeColor, 28, id);
+    }
+  }
+
+  function getKpiRingColor(valObj, fallbackColor) {
+    if (!valObj || valObj.value === null || valObj.value === undefined) {
+      return "var(--border, rgba(0,0,0,0.1))";
+    }
+    if (valObj.status === "MEETS_TARGET") return "var(--success)";
+    if (valObj.status === "BELOW_TARGET" || valObj.status === "ABOVE_LIMIT")
+      return "var(--warning)";
+    return fallbackColor || "var(--primary)";
   }
 
   function createProductivityModule() {
@@ -25263,7 +25304,7 @@
                     <button class="prod-tab-btn active" data-prod-tab="tab-kpi-dash"><i class="fa-solid fa-gauge-high"></i> Dashboard Availability & KPI</button>
                     <button class="prod-tab-btn" data-prod-tab="tab-komtrax-table"><i class="fa-solid fa-satellite-dish"></i> Rekonsiliasi Telematika KOMTRAX</button>
                     <button class="prod-tab-btn" data-prod-tab="tab-idling-anomaly"><i class="fa-solid fa-triangle-exclamation"></i> Idling Anomaly & Fuel Loss</button>
-                    <button class="prod-tab-btn" data-prod-tab="tab-standby-fleet"><i class="fa-solid fa-boxes-stacked"></i> Audit Fleet Standby (48 Unit)</button>
+                    <button class="prod-tab-btn" data-prod-tab="tab-standby-fleet"><i class="fa-solid fa-boxes-stacked"></i> <span id="prod-tab-standby-label">Audit Fleet Standby</span></button>
                     <button class="prod-tab-btn" data-prod-tab="tab-lho-operation"><i class="fa-solid fa-clipboard-list"></i> LHO Operasional</button>
                     <button class="prod-tab-btn" data-prod-tab="tab-contracts"><i class="fa-solid fa-file-contract"></i> Data Kontrak CSV</button>
                 </div>
@@ -25275,7 +25316,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Physical Availability (PA)</span>
-                                ${renderMiniDonutChartSVG(0, "var(--success)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.physicalAvailability?.value ?? 0, getKpiRingColor(fleetKPIs.physicalAvailability, "var(--success)"), 28, "kpi-pa-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-pa-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25285,7 +25326,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Use of Availability (UA)</span>
-                                ${renderMiniDonutChartSVG(0, "var(--success)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.useOfAvailability?.value ?? 0, getKpiRingColor(fleetKPIs.useOfAvailability, "var(--success)"), 28, "kpi-ua-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-ua-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25295,7 +25336,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Breakdown Rate (BR)</span>
-                                ${renderMiniDonutChartSVG(0, "var(--primary)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.breakdownRate?.value ?? 0, getKpiRingColor(fleetKPIs.breakdownRate, "var(--primary)"), 28, "kpi-br-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-br-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25305,7 +25346,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Utilization Rate (UT)</span>
-                                ${renderMiniDonutChartSVG(0, "var(--warning)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.utilizationRate?.value ?? 0, getKpiRingColor(fleetKPIs.utilizationRate, "var(--warning)"), 28, "kpi-ut-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-ut-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25319,6 +25360,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">MTBF (Mean Time Between Failures)</span>
+                                <i class="fa-solid fa-clock-rotate-left text-muted" style="font-size:0.8rem;" title="Mean Time Between Failures"></i>
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-mtbf-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25328,6 +25370,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Total Jam Kerja Terjadwal Armada</span>
+                                <i class="fa-solid fa-calendar-check text-muted" style="font-size:0.8rem;" title="Jam Kerja Terjadwal Telematika"></i>
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-total-wh-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25361,7 +25404,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Rata-rata Idling Fleet</span>
-                                ${renderMiniDonutChartSVG(0, "var(--danger)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.avgIdlingRatio?.value ?? 0, (parseFloat(fleetKPIs.avgIdlingRatio?.value) || 0) >= 50 ? "var(--danger)" : "var(--warning)", 28, "kpi-idling-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-idling-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25641,7 +25684,7 @@
                     <div class="pk-alert pk-alert-warning">
                         <i class="fa-solid fa-triangle-exclamation"></i>
                         <div>
-                            <strong>Peringatan Pemborosan Idling Tinggi (> 50%):</strong> Unit dengan rasio idling tinggi membakar bahan bakar tanpa menghasilkan produksi. Di bawah ini adalah unit yang terdeteksi memiliki rasio idling di atas 50% pada data telematika KOMTRAX.
+                            <strong>Peringatan Pemborosan Idling Tinggi (> 50%):</strong> Unit dengan rasio idling tinggi membakar bahan bakar tanpa menghasilkan produksi. Di bawah ini adalah unit yang terdeteksi memiliki rasio idling di atas 50% pada data telematika KOMTRAX. <span id="prodFuelPriceBadge" class="prod-badge prod-badge-info" style="margin-left:6px; font-size:0.8rem;"><i class="fa-solid fa-gas-pump"></i> Acuan Solar: Rp 14.500/L</span>
                         </div>
                     </div>
 
@@ -25675,31 +25718,8 @@
 
                 <!-- TAB 4: STANDBY FLEET AUDIT -->
                 <div class="prod-tab-content" id="tab-standby-fleet">
-                    <div class="prod-cards-grid">
-                        <div class="prod-card danger">
-                            <div class="prod-card-info">
-                                <span>TOTAL UNIT STANDBY</span>
-                                <strong class="prod-val">48 Unit</strong>
-                                <small class="prod-sub">Rekap Audit Lapangan</small>
-                            </div>
-                            <div class="prod-card-icon"><i class="fa-solid fa-pause"></i></div>
-                        </div>
-                        <div class="prod-card primary">
-                            <div class="prod-card-info">
-                                <span>LOKASI YARD DURI</span>
-                                <strong class="prod-val">35 Unit <small>(72.9%)</small></strong>
-                                <small class="prod-sub">Didominasi Dump Truck</small>
-                            </div>
-                            <div class="prod-card-icon"><i class="fa-solid fa-warehouse"></i></div>
-                        </div>
-                        <div class="prod-card warning">
-                            <div class="prod-card-info">
-                                <span>LOKASI YARD PRABUMULIH</span>
-                                <strong class="prod-val">13 Unit <small>(27.1%)</small></strong>
-                                <small class="prod-sub">Didominasi Excavator</small>
-                            </div>
-                            <div class="prod-card-icon"><i class="fa-solid fa-building-flag"></i></div>
-                        </div>
+                    <div class="prod-cards-grid" id="prodStandbyCardsGrid">
+                        <!-- Populated dynamically via JS -->
                     </div>
 
                     <div class="pk-panel" style="margin-top: 20px;">
@@ -25905,6 +25925,7 @@
     renderKomtraxTable();
     renderReconciliationTable();
     renderIdlingAnomalyTable();
+    renderStandbyCards();
     renderStandbyCategoryTable();
   }
 
@@ -26198,7 +26219,10 @@
     const tbody = document.getElementById("tbIdlingAnomalyBody");
     if (!tbody) return;
 
-    const fuelCostPerLiter = 14500; // Rp 14,500 per liter solar industri
+    const badgeEl = document.getElementById("prodFuelPriceBadge");
+    if (badgeEl) {
+      badgeEl.innerHTML = `<i class="fa-solid fa-gas-pump"></i> Acuan Solar: Rp ${Number(fuelCostPerLiter).toLocaleString("id-ID")}/L`;
+    }
 
     if (idlingAnomalyData && idlingAnomalyData.length > 0) {
       tbody.innerHTML = idlingAnomalyData
@@ -26324,6 +26348,38 @@
     updateKpiEl("kpi-total-fuel-val", fleetKPIs.totalFuelConsumed);
     updateKpiEl("kpi-avg-fuel-val", fleetKPIs.avgFuelLPH);
     updateKpiEl("kpi-idling-val", fleetKPIs.avgIdlingRatio);
+
+    // Update Ring Indicators Dynamically
+    updateMiniDonutChart(
+      "kpi-pa-ring",
+      fleetKPIs.physicalAvailability?.value,
+      getKpiRingColor(fleetKPIs.physicalAvailability, "var(--success)")
+    );
+    updateMiniDonutChart(
+      "kpi-ua-ring",
+      fleetKPIs.useOfAvailability?.value,
+      getKpiRingColor(fleetKPIs.useOfAvailability, "var(--success)")
+    );
+    updateMiniDonutChart(
+      "kpi-br-ring",
+      fleetKPIs.breakdownRate?.value,
+      getKpiRingColor(fleetKPIs.breakdownRate, "var(--primary)")
+    );
+    updateMiniDonutChart(
+      "kpi-ut-ring",
+      fleetKPIs.utilizationRate?.value,
+      getKpiRingColor(fleetKPIs.utilizationRate, "var(--warning)")
+    );
+
+    const idlingVal = fleetKPIs.avgIdlingRatio?.value;
+    const idlingNum = parseFloat(idlingVal) || 0;
+    const idlingColor =
+      idlingNum >= 50
+        ? "var(--danger)"
+        : idlingNum >= 30
+          ? "var(--warning)"
+          : "var(--success)";
+    updateMiniDonutChart("kpi-idling-ring", idlingVal, idlingColor);
   }
 
   async function loadProductivityData() {
@@ -26353,6 +26409,9 @@
         if (Array.isArray(payload.data.idlingAnomalies)) {
           idlingAnomalyData = payload.data.idlingAnomalies;
         }
+        if (payload.data.fuelPricePerLiter) {
+          fuelCostPerLiter = Number(payload.data.fuelPricePerLiter) || 14500;
+        }
         renderProdModuleContent();
       }
     } catch (e) {
@@ -26360,11 +26419,81 @@
     }
   }
 
+  function renderStandbyCards() {
+    const total = Number(standbySummary?.totalUnits || 0);
+    const tabLabel = document.getElementById("prod-tab-standby-label");
+    if (tabLabel) {
+      tabLabel.textContent = `Audit Fleet Standby (${total} Unit)`;
+    }
+
+    const container = document.getElementById("prodStandbyCardsGrid");
+    if (!container) return;
+
+    const locs = Array.isArray(standbySummary?.locations) ? standbySummary.locations : [];
+
+    let cardsHtml = `
+      <div class="prod-card danger">
+          <div class="prod-card-info">
+              <span>TOTAL UNIT STANDBY</span>
+              <strong class="prod-val">${total} Unit</strong>
+              <small class="prod-sub">Status Unit Standby Realtime</small>
+          </div>
+          <div class="prod-card-icon"><i class="fa-solid fa-pause"></i></div>
+      </div>
+    `;
+
+    const locThemes = ["primary", "warning", "info", "secondary"];
+    const locIcons = ["fa-warehouse", "fa-building-flag", "fa-map-pin", "fa-location-dot"];
+
+    locs.slice(0, 3).forEach((loc, idx) => {
+      const theme = locThemes[idx % locThemes.length];
+      const icon = locIcons[idx % locIcons.length];
+      const sub = loc.dumpTrucks
+        ? `${loc.dumpTrucks} Dump Truck`
+        : (loc.excavators ? `${loc.excavators} Excavator` : `${loc.count} Unit Siap Alokasi`);
+
+      cardsHtml += `
+        <div class="prod-card ${theme}">
+            <div class="prod-card-info">
+                <span>LOKASI ${escapeHtml(loc.name)}</span>
+                <strong class="prod-val">${loc.count} Unit <small>(${loc.ratio}%)</small></strong>
+                <small class="prod-sub">${escapeHtml(sub)}</small>
+            </div>
+            <div class="prod-card-icon"><i class="fa-solid ${icon}"></i></div>
+        </div>
+      `;
+    });
+
+    if (locs.length > 3) {
+      const remainingLocs = locs.slice(3);
+      const remainingCount = remainingLocs.reduce((sum, l) => sum + (l.count || 0), 0);
+      const remainingRatio = total > 0 ? ((remainingCount / total) * 100).toFixed(1) : 0;
+      cardsHtml += `
+        <div class="prod-card secondary">
+            <div class="prod-card-info">
+                <span>LOKASI LAINNYA (${remainingLocs.length} SITE)</span>
+                <strong class="prod-val">${remainingCount} Unit <small>(${remainingRatio}%)</small></strong>
+                <small class="prod-sub">${remainingLocs.map(l => escapeHtml(l.name)).join(", ")}</small>
+            </div>
+            <div class="prod-card-icon"><i class="fa-solid fa-layer-group"></i></div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = cardsHtml;
+  }
+
   function renderStandbyCategoryTable() {
     const tbody = document.getElementById("tbStandbyCatBody");
     if (!tbody) return;
 
-    tbody.innerHTML = standbySummary.categories
+    const cats = Array.isArray(standbySummary?.categories) ? standbySummary.categories : [];
+    if (cats.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada unit standby saat ini.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = cats
       .map((c) => {
         const iconCls = c.type.includes("Dump")
           ? "fa-truck-moving"
@@ -31292,6 +31421,7 @@ window.renderArchiveTables = function () {
       setVal("cfg-tire-red", s.cfg_tire_red);
       setVal("cfg-pm-warning", s.cfg_pm_warning);
       setVal("cfg-fuel-anomali", s.cfg_fuel_anomali);
+      setVal("cfg-fuel-price-per-liter", s.cfg_fuel_price_per_liter);
       setVal("cfg-idling-limit", s.cfg_idling_limit);
       setVal("cfg-cuttingbit-safety", s.cfg_cuttingbit_safety);
       setVal("cfg-idle-timeout", s.cfg_idle_timeout);
@@ -31320,6 +31450,7 @@ window.renderArchiveTables = function () {
       cfg_tire_red: document.getElementById("cfg-tire-red")?.value,
       cfg_pm_warning: document.getElementById("cfg-pm-warning")?.value,
       cfg_fuel_anomali: document.getElementById("cfg-fuel-anomali")?.value,
+      cfg_fuel_price_per_liter: document.getElementById("cfg-fuel-price-per-liter")?.value,
       cfg_idling_limit: document.getElementById("cfg-idling-limit")?.value,
       cfg_cuttingbit_safety: document.getElementById("cfg-cuttingbit-safety")?.value,
     };
@@ -31338,6 +31469,9 @@ window.renderArchiveTables = function () {
       if (res.ok && json.status === "success") {
         alert("Parameter Threshold & SLA berhasil disimpan ke database.");
         await loadOperationalSettings();
+        if (typeof loadProductivityData === "function") {
+          await loadProductivityData();
+        }
       } else {
         alert("Gagal menyimpan parameter: " + (json.message || "Akses ditolak."));
       }
@@ -31352,6 +31486,7 @@ window.renderArchiveTables = function () {
       cfg_tire_red: document.getElementById("cfg-tire-red")?.value,
       cfg_pm_warning: document.getElementById("cfg-pm-warning")?.value,
       cfg_fuel_anomali: document.getElementById("cfg-fuel-anomali")?.value,
+      cfg_fuel_price_per_liter: document.getElementById("cfg-fuel-price-per-liter")?.value,
       cfg_idling_limit: document.getElementById("cfg-idling-limit")?.value,
       cfg_cuttingbit_safety: document.getElementById("cfg-cuttingbit-safety")?.value,
       cfg_idle_timeout: document.getElementById("cfg-idle-timeout")?.value,
