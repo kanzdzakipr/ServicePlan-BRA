@@ -7,20 +7,22 @@ require_once __DIR__ . '/db.php';
 $db = Database::getInstance();
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
-function api_get_saved_rbac_matrix(PDO $db): ?array
-{
-    try {
-        $stmt = $db->prepare("SELECT setting_value FROM operational_settings WHERE setting_key = 'cfg_rbac_matrix' LIMIT 1");
-        $stmt->execute();
-        $val = $stmt->fetchColumn();
-        if ($val && is_string($val)) {
-            $decoded = json_decode($val, true);
-            if (is_array($decoded)) {
-                return $decoded;
+if (!function_exists('api_get_saved_rbac_matrix')) {
+    function api_get_saved_rbac_matrix(PDO $db): ?array
+    {
+        try {
+            $stmt = $db->prepare("SELECT setting_value FROM operational_settings WHERE setting_key = 'cfg_rbac_matrix' LIMIT 1");
+            $stmt->execute();
+            $val = $stmt->fetchColumn();
+            if ($val && is_string($val)) {
+                $decoded = json_decode($val, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
             }
-        }
-    } catch (Throwable $e) {}
-    return null;
+        } catch (Throwable $e) {}
+        return null;
+    }
 }
 
 if ($method === 'GET') {

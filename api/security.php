@@ -394,6 +394,22 @@ function api_refresh_authenticated_user(PDO $db): void
     $_SESSION['auth_user'] = $context;
 }
 
+function api_get_saved_rbac_matrix(PDO $db): ?array
+{
+    try {
+        $stmt = $db->prepare("SELECT setting_value FROM operational_settings WHERE setting_key = 'cfg_rbac_matrix' LIMIT 1");
+        $stmt->execute();
+        $val = $stmt->fetchColumn();
+        if ($val && is_string($val)) {
+            $decoded = json_decode($val, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+    } catch (Throwable $e) {}
+    return null;
+}
+
 function api_has_permission(string $permission): bool
 {
     $permissions = api_current_user()['permissions'] ?? [];

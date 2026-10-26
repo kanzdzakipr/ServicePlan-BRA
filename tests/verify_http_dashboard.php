@@ -45,6 +45,7 @@ curl_close($ch);
 
 echo "Dashboard HTTP Code: {$dashCode}\n";
 echo "Dashboard Length: " . strlen($html) . " bytes\n";
+
 echo "Has nwo-parts-flow-alert: " . (str_contains($html, 'nwo-parts-flow-alert') ? 'YES' : 'NO') . "\n";
 echo "Has modalWoOvertimeTabBadge: " . (str_contains($html, 'modalWoOvertimeTabBadge') ? 'YES' : 'NO') . "\n";
 echo "Has modalWoDetail: " . (str_contains($html, 'modalWoDetail') ? 'YES' : 'NO') . "\n";
