@@ -367,11 +367,10 @@ function api_load_user_context(PDO $db, int $userId): ?array
             $permissions = [];
         }
 
-        // Existing production dumps contain the RBAC tables but no permission rows.
-        // Use a conservative server-side role matrix until the RBAC migration is applied.
-        if ($permissions === []) {
-            $permissions = api_builtin_permissions_for_roles($roleNames);
-        }
+        // Always guarantee baseline built-in permissions for roles are present,
+        // merged with any permissions granted in the database.
+        $builtin = api_builtin_permissions_for_roles($roleNames);
+        $permissions = array_values(array_unique(array_merge($builtin, $permissions)));
     }
 
     return [

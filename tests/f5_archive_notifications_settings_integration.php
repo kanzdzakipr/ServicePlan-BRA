@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+define('API_AUTH_OPTIONAL', true);
+define('API_SKIP_ROUTING', true);
+
 $dsn = (string) (getenv('DB_DSN') ?: 'mysql:host=127.0.0.1;port=3306;dbname=u646470441_ServicePlanBRA;charset=utf8mb4');
 $user = (string) (getenv('DB_USER') ?: 'root');
 $password = (string) (getenv('DB_PASSWORD') ?: '');

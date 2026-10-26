@@ -101,6 +101,9 @@ try {
         ':related' => json_encode($related, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
     ]);
     $newId = (int) $db->lastInsertId();
+    $notifMenu = (string) ($input['menu_name'] ?? $input['menu'] ?? 'System');
+    $notifAction = (string) ($input['action_type'] ?? 'UPDATE');
+    NotificationAudience::deliverNotification($db, $newId, $locationId, $userId, $notifMenu, $notifAction);
     NotificationAudience::deliverSelf($db, $newId, $userId, $locationId);
     $db->commit();
 } catch (Throwable $error) {
