@@ -7,6 +7,22 @@ require_once __DIR__ . '/db.php';
 $db = Database::getInstance();
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
+function api_get_saved_rbac_matrix(PDO $db): ?array
+{
+    try {
+        $stmt = $db->prepare("SELECT setting_value FROM operational_settings WHERE setting_key = 'cfg_rbac_matrix' LIMIT 1");
+        $stmt->execute();
+        $val = $stmt->fetchColumn();
+        if ($val && is_string($val)) {
+            $decoded = json_decode($val, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+    } catch (Throwable $e) {}
+    return null;
+}
+
 if ($method === 'GET') {
     if (api_is_authenticated()) {
         api_refresh_authenticated_user($db);
@@ -16,6 +32,7 @@ if ($method === 'GET') {
         'authenticated' => api_is_authenticated(),
         'csrf_token' => api_csrf_token(),
         'user' => api_is_authenticated() ? api_current_user() : null,
+        'rbac_matrix' => api_get_saved_rbac_matrix($db),
     ]);
 }
 
@@ -144,4 +161,5 @@ api_json_response(200, [
     'message' => 'Login berhasil.',
     'csrf_token' => api_csrf_token(),
     'user' => $context,
+    'rbac_matrix' => api_get_saved_rbac_matrix($db),
 ]);

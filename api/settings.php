@@ -28,9 +28,18 @@ if ($method === 'GET') {
             $settingsMap[$row['setting_key']] = $row['setting_value'];
         }
 
+        $customMatrix = null;
+        if (!empty($settingsMap['cfg_rbac_matrix'])) {
+            $decoded = json_decode($settingsMap['cfg_rbac_matrix'], true);
+            if (is_array($decoded)) {
+                $customMatrix = $decoded;
+            }
+        }
+
         api_json_response(200, [
             'status' => 'success',
             'settings' => $settingsMap,
+            'rbac_matrix' => $customMatrix,
             'data' => $rows
         ]);
     } catch (PDOException $e) {
@@ -57,6 +66,65 @@ if ($method === 'POST') {
     $input = json_decode((string) file_get_contents('php://input'), true);
     if (!is_array($input)) {
         $input = $_POST;
+    }
+
+    $action = trim((string) ($input['action'] ?? ''));
+
+    // Handle RBAC Matrix Save
+    if ($action === 'save_rbac_matrix') {
+        $matrix = $input['matrix'] ?? null;
+        if (!is_array($matrix) || empty($matrix)) {
+            api_json_response(422, ['status' => 'error', 'message' => 'Data matriks RBAC tidak valid.']);
+        }
+
+        foreach ($matrix as $r) {
+            if (!isset($r['name']) || !isset($r['permissions']) || !is_array($r['permissions'])) {
+                api_json_response(422, ['status' => 'error', 'message' => 'Format item matriks RBAC tidak valid.']);
+            }
+        }
+
+        $jsonMatrix = json_encode($matrix, JSON_UNESCAPED_UNICODE);
+        $chk = $db->prepare("SELECT COUNT(*) FROM operational_settings WHERE setting_key = 'cfg_rbac_matrix'");
+        $chk->execute();
+        if ((int)$chk->fetchColumn() > 0) {
+            $upd = $db->prepare("
+                UPDATE operational_settings 
+                SET setting_value = :val, updated_by_user_id = :uid, updated_by_name = :uname, updated_at = NOW() 
+                WHERE setting_key = 'cfg_rbac_matrix'
+            ");
+            $upd->execute([
+                ':val' => $jsonMatrix,
+                ':uid' => $currentUserId > 0 ? $currentUserId : null,
+                ':uname' => $currentUserName
+            ]);
+        } else {
+            $ins = $db->prepare("
+                INSERT INTO operational_settings (setting_key, setting_value, category, description, updated_by_user_id, updated_by_name, updated_at) 
+                VALUES ('cfg_rbac_matrix', :val, 'rbac', 'Custom RBAC Matrix Override', :uid, :uname, NOW())
+            ");
+            $ins->execute([
+                ':val' => $jsonMatrix,
+                ':uid' => $currentUserId > 0 ? $currentUserId : null,
+                ':uname' => $currentUserName
+            ]);
+        }
+
+        api_json_response(200, [
+            'status' => 'success',
+            'message' => 'Matriks Hak Akses (RCUAO) berhasil disimpan ke database.',
+            'matrix' => $matrix
+        ]);
+    }
+
+    // Handle RBAC Matrix Reset
+    if ($action === 'reset_rbac_matrix') {
+        $del = $db->prepare("DELETE FROM operational_settings WHERE setting_key = 'cfg_rbac_matrix'");
+        $del->execute();
+
+        api_json_response(200, [
+            'status' => 'success',
+            'message' => 'Matriks Hak Akses (RCUAO) berhasil di-reset ke standar default master.'
+        ]);
     }
 
     $settingsToUpdate = $input['settings'] ?? $input;

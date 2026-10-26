@@ -66,6 +66,69 @@ class AuthMiddleware {
         ]
     ];
 
+    private static ?array $customRbacMatrix = null;
+
+    public static function clearMatrixCache(): void {
+        self::$customRbacMatrix = null;
+    }
+
+    public static function getEffectiveMatrix(): array {
+        if (self::$customRbacMatrix !== null) {
+            return self::$customRbacMatrix;
+        }
+
+        $matrix = self::$rbacMatrix;
+        try {
+            $dbPath = dirname(__DIR__) . '/api/db.php';
+            if (file_exists($dbPath)) {
+                require_once $dbPath;
+                if (class_exists('Database')) {
+                    $db = Database::getInstance();
+                    $stmt = $db->prepare("SELECT setting_value FROM operational_settings WHERE setting_key = 'cfg_rbac_matrix' LIMIT 1");
+                    $stmt->execute();
+                    $val = $stmt->fetchColumn();
+                    if ($val && is_string($val)) {
+                        $customRoles = json_decode($val, true);
+                        if (is_array($customRoles)) {
+                            $moduleKeysOrder = [
+                                'dashboard', 'monitoring', 'asset', 'inspection',
+                                'wo', 'pm', 'logistics', 'condition',
+                                'fuel', 'productivity', 'biaya', 'people',
+                                'hse', 'reports', 'approval', 'settings'
+                            ];
+                            foreach ($customRoles as $cr) {
+                                if (!isset($cr['name']) || !isset($cr['permissions']) || !is_array($cr['permissions'])) {
+                                    continue;
+                                }
+                                $cleanName = preg_replace('/^\d+\.\s*/', '', trim((string)$cr['name']));
+                                $matchedKey = null;
+                                foreach (array_keys($matrix) as $roleKey) {
+                                    if (strcasecmp($roleKey, $cleanName) === 0) {
+                                        $matchedKey = $roleKey;
+                                        break;
+                                    }
+                                }
+                                if ($matchedKey) {
+                                    foreach ($cr['permissions'] as $idx => $perm) {
+                                        if (isset($moduleKeysOrder[$idx])) {
+                                            $modKey = $moduleKeysOrder[$idx];
+                                            $matrix[$matchedKey][$modKey] = str_replace(' ', '', (string)$perm);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            // fallback safely to default matrix
+        }
+
+        self::$customRbacMatrix = $matrix;
+        return self::$customRbacMatrix;
+    }
+
     /**
      * Memastikan user yang sedang login memiliki hak akses tertentu pada sebuah menu/modul.
      * Jika tidak, fungsi ini akan langsung menghentikan eksekusi dan mengembalikan 403 Forbidden.
@@ -78,13 +141,27 @@ class AuthMiddleware {
             session_start();
         }
         
-        $role = $_SESSION['auth_user']['primary_role'] ?? 'Unknown';
+        $role = trim((string)($_SESSION['auth_user']['primary_role'] ?? 'Unknown'));
+
+        // Administrator always has full master access
+        if (strcasecmp($role, 'Administrator') === 0 || strcasecmp($role, 'admin') === 0) {
+            return;
+        }
+
+        $effectiveMatrix = self::getEffectiveMatrix();
+        $matchedRoleKey = null;
+        foreach (array_keys($effectiveMatrix) as $k) {
+            if (strcasecmp($k, $role) === 0) {
+                $matchedRoleKey = $k;
+                break;
+            }
+        }
         
-        if (!isset(self::$rbacMatrix[$role])) {
+        if (!$matchedRoleKey) {
             self::denyAccess();
         }
         
-        $permissions = self::$rbacMatrix[$role][$menu] ?? '-';
+        $permissions = $effectiveMatrix[$matchedRoleKey][$menu] ?? '-';
         
         if ($permissions === '-' || strpos($permissions, $action) === false) {
             self::denyAccess();

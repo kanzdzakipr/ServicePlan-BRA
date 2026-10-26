@@ -34,7 +34,10 @@ try {
     <link rel="stylesheet" href="scripts/unit-properties.css?v=<?= filemtime(__DIR__ . '/scripts/unit-properties.css') ?>">
     <link rel="stylesheet" href="scripts/site-properties.css?v=20261023-cluster-2">
     <meta name="csrf-token" content="<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
-    <script>window.APP_CSRF_TOKEN = '<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>';</script>
+    <script>
+        window.APP_CSRF_TOKEN = '<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>';
+        window.SERVER_RBAC_MATRIX = <?= json_encode(api_get_saved_rbac_matrix($db), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: 'null' ?>;
+    </script>
     <script src="scripts/auth-client.js?v=20260809-1"></script>
     <script src="scripts/rbac.js?v=20260823-1"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
@@ -60,60 +63,60 @@ try {
         </div>
         <ul class="sidebar-menu">
             <li class="nav-section-label">Overview</li>
-            <li><a onclick="showView('dashboard')" id="menu-dashboard" class="active" role="button" tabindex="0"
+            <li><a onclick="showView('dashboard')" id="menu-dashboard" data-rbac-menu="dashboard" class="active" role="button" tabindex="0"
                     aria-current="page" data-title="Dashboard"><i class="fa-solid fa-gauge-high"></i><span
                         class="nav-label">Dashboard</span></a></li>
-            <li><a onclick="showView('monitoring')" id="menu-monitoring" role="button" tabindex="0"
+            <li><a onclick="showView('monitoring')" id="menu-monitoring" data-rbac-menu="monitoring" role="button" tabindex="0"
                     data-title="Monitoring Unit"><i class="fa-solid fa-location-dot"></i><span class="nav-label">Monitoring
                         Unit</span></a></li>
 
             <li class="nav-section-label">Asset & Maintenance</li>
-            <li><a onclick="showView('asset')" id="menu-asset" role="button" tabindex="0" data-title="Master Asset"><i
+            <li><a onclick="showView('asset')" id="menu-asset" data-rbac-menu="asset" role="button" tabindex="0" data-title="Master Asset"><i
                         class="fa-solid fa-cubes"></i><span class="nav-label">Master Asset</span></a></li>
-            <li><a onclick="showView('inspection', '', 'menu-inspection')" id="menu-inspection" role="button"
+            <li><a onclick="showView('inspection', '', 'menu-inspection')" id="menu-inspection" data-rbac-menu="inspection" role="button"
                     tabindex="0" data-title="Inspeksi & P2H"><i class="fa-solid fa-clipboard-check"></i><span
                         class="nav-label">Inspeksi & P2H</span></a></li>
-            <li><a onclick="showView('wo')" id="menu-wo" role="button" tabindex="0" data-title="Work Order"><i
+            <li><a onclick="showView('wo')" id="menu-wo" data-rbac-menu="wo" role="button" tabindex="0" data-title="Work Order"><i
                         class="fa-solid fa-screwdriver-wrench"></i><span class="nav-label">Work Order</span></a></li>
-            <li><a onclick="showView('pm')" id="menu-pm" role="button" tabindex="0" data-title="Preventive Maintenance"><i
+            <li><a onclick="showView('pm')" id="menu-pm" data-rbac-menu="pm" role="button" tabindex="0" data-title="Preventive Maintenance"><i
                         class="fa-regular fa-calendar-check"></i><span class="nav-label">Preventive Maint.</span></a>
             </li>
-            <li><a onclick="showView('condition', '', 'menu-condition')" id="menu-condition" role="button" tabindex="0"
+            <li><a onclick="showView('condition', '', 'menu-condition')" id="menu-condition" data-rbac-menu="condition" role="button" tabindex="0"
                     data-title="Condition Monitoring"><i class="fa-solid fa-stethoscope"></i><span
                         class="nav-label">Condition Monitoring</span></a></li>
 
             <li class="nav-section-label">Operations</li>
-            <li><a onclick="showView('logistics', '', 'menu-logistics')" id="menu-logistics" role="button" tabindex="0"
+            <li><a onclick="showView('logistics', '', 'menu-logistics')" id="menu-logistics" data-rbac-menu="logistics" role="button" tabindex="0"
                     data-title="Spare Part & Logistik"><i class="fa-solid fa-boxes-stacked"></i><span class="nav-label">Spare
                         Part & Logistik</span></a></li>
-            <li><a onclick="showView('fuel', '', 'menu-fuel'); window.refreshFuelLogsFromServer?.()" id="menu-fuel" role="button" tabindex="0"
+            <li><a onclick="showView('fuel', '', 'menu-fuel'); window.refreshFuelLogsFromServer?.()" id="menu-fuel" data-rbac-menu="fuel" role="button" tabindex="0"
                     data-title="Fuel Management"><i class="fa-solid fa-gas-pump"></i><span class="nav-label">Fuel</span></a>
             </li>
-            <li><a onclick="showView('productivity', '', 'menu-productivity')" id="menu-productivity" role="button"
+            <li><a onclick="showView('productivity', '', 'menu-productivity')" id="menu-productivity" data-rbac-menu="productivity" role="button"
                     tabindex="0" data-title="Produktivitas"><i class="fa-solid fa-chart-line"></i><span
                         class="nav-label">Produktivitas</span></a></li>
-            <li><a onclick="showView('biaya')" id="menu-biaya" role="button" tabindex="0" data-title="Biaya"><i
+            <li><a onclick="showView('biaya')" id="menu-biaya" data-rbac-menu="biaya" role="button" tabindex="0" data-title="Biaya"><i
                         class="fa-solid fa-money-bill-trend-up"></i><span class="nav-label">Biaya</span></a></li>
 
             <li class="nav-section-label">Governance</li>
-            <li><a onclick="showView('people', '', 'menu-people')" id="menu-people" role="button" tabindex="0"
+            <li><a onclick="showView('people', '', 'menu-people')" id="menu-people" data-rbac-menu="people" role="button" tabindex="0"
                     data-title="People & KPI"><i class="fa-solid fa-users-gear"></i><span class="nav-label">People &
                         KPI</span></a></li>
-            <li><a onclick="showView('hse', '', 'menu-hse')" id="menu-hse" role="button" tabindex="0"
+            <li><a onclick="showView('hse', '', 'menu-hse')" id="menu-hse" data-rbac-menu="hse" role="button" tabindex="0"
                     data-title="HSE / Accident"><i class="fa-solid fa-triangle-exclamation"></i><span class="nav-label">HSE /
                         Accident</span></a></li>
-            <li><a onclick="showView('reports')" id="menu-reports" role="button" tabindex="0" data-title="Laporan & Form"><i
+            <li><a onclick="showView('reports')" id="menu-reports" data-rbac-menu="reports" role="button" tabindex="0" data-title="Laporan & Form"><i
                         class="fa-solid fa-file-invoice"></i><span class="nav-label">Laporan & Form</span></a></li>
-            <li><a onclick="showView('approval', '', 'menu-approval')" id="menu-approval" role="button" tabindex="0"
+            <li><a onclick="showView('approval', '', 'menu-approval')" id="menu-approval" data-rbac-menu="approval" role="button" tabindex="0"
                     data-title="Approval"><i class="fa-solid fa-check-double"></i><span class="nav-label">Approval</span></a>
             </li>
 
             <li class="nav-section-label">System</li>
-            <li><a onclick="showView('archive', '', 'menu-archive'); window.loadArchiveRecords?.();" id="menu-archive"
+            <li><a onclick="showView('archive', '', 'menu-archive'); window.loadArchiveRecords?.();" id="menu-archive" data-rbac-menu="archive"
                     role="button" tabindex="0" data-title="Archive"><i class="fa-solid fa-box-archive"></i><span
                         class="nav-label">Archive</span></a>
             </li>
-            <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" role="button" tabindex="0"
+            <li><a onclick="showView('settings', '', 'menu-settings')" id="menu-settings" data-rbac-menu="settings" role="button" tabindex="0"
                     data-title="Pengaturan"><i class="fa-solid fa-gear"></i><span class="nav-label">Pengaturan</span></a></li>
         </ul>
     </aside>
@@ -572,7 +575,7 @@ try {
                     style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
                     <h1 class="page-title" style="margin:0;">Master Asset Armada</h1>
                     <div>
-                        <button class="btn btn-primary" onclick="openModal('modalNewAsset')"><i
+                        <button class="btn btn-primary rbac-create-only" data-rbac-menu="asset" data-rbac-action="C" onclick="openModal('modalNewAsset')"><i
                                 class="fa-solid fa-plus"></i> Registrasi Unit Baru</button>
                     </div>
                 </div>
@@ -754,7 +757,7 @@ try {
                             <button type="button" data-wo-mode="table" onclick="switchWorkOrderMode('table')"><i
                                     class="fa-solid fa-table-list"></i> Tabel</button>
                         </div>
-                        <button class="btn btn-danger" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Buat
+                        <button class="btn btn-danger rbac-create-only" data-rbac-menu="wo" data-rbac-action="C" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Buat
                             Tiket WO</button>
                     </div>
                 </div>
@@ -1253,9 +1256,9 @@ try {
                         </p>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <button class="btn btn-primary" onclick="openFuelInputModal()"><i class="fa-solid fa-plus"></i>
+                        <button class="btn btn-primary rbac-create-only" data-rbac-menu="fuel" data-rbac-action="C" onclick="openFuelInputModal()"><i class="fa-solid fa-plus"></i>
                             Input Pengisian (FRM-BBM-01)</button>
-                        <button class="btn btn-success" onclick="openStockSoundingModal()"><i
+                        <button class="btn btn-success rbac-create-only" data-rbac-menu="fuel" data-rbac-action="C" onclick="openStockSoundingModal()"><i
                                 class="fa-solid fa-droplet"></i> Sounding Stok (FRM-STK-02)</button>
                     </div>
                 </div>
@@ -1565,7 +1568,7 @@ try {
                         </p>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <button class="btn btn-primary" onclick="openCostInputModal()"><i class="fa-solid fa-plus"></i>
+                        <button class="btn btn-primary rbac-create-only" data-rbac-menu="biaya" data-rbac-action="C" onclick="openCostInputModal()"><i class="fa-solid fa-plus"></i>
                             Catat Transaksi Biaya</button>
                         <button class="btn btn-secondary" onclick="exportCostReport()"><i
                                 class="fa-solid fa-file-excel"></i> Export Laporan Keuangan</button>
@@ -1848,7 +1851,7 @@ try {
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
                                 <h3 style="margin:0; font-size:1.05rem;"><i class="fa-solid fa-receipt"></i>
                                     Buku Besar Biaya Perbaikan (Cost Ledger) &amp; Transaksi WO</h3>
-                                <button type="button" class="btn btn-primary" onclick="openCostInputModal()"><i class="fa-solid fa-plus"></i> Catat Transaksi Biaya</button>
+                                <button type="button" class="btn btn-primary rbac-create-only" data-rbac-menu="biaya" data-rbac-action="C" onclick="openCostInputModal()"><i class="fa-solid fa-plus"></i> Catat Transaksi Biaya</button>
                             </div>
 
                             <!-- Decision Gate Note (BR-09B) -->
@@ -1893,7 +1896,7 @@ try {
                                 style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
                                 <h3 style="margin:0; font-size:1.05rem;"><i class="fa-solid fa-list-check"></i>
                                     Perbandingan Rencana vs Realisasi PM Jan-Feb 2026</h3>
-                                <button class="btn btn-primary" onclick="openNewPMModal()"><i
+                                <button class="btn btn-primary rbac-create-only" data-rbac-menu="pm" data-rbac-action="C" onclick="openNewPMModal()"><i
                                         class="fa-solid fa-plus"></i> Rencana Service Berkala (PM)</button>
                             </div>
                             <div class="table-responsive">
@@ -5467,6 +5470,20 @@ try {
             window.getAssetStatusBadge = getAssetStatusBadge;
 
             window.openModal = function (id) {
+                if (window.FleetRBAC) {
+                    if (id === 'modalNewAsset' && !window.FleetRBAC.hasAccess('asset', 'C')) {
+                        alert('Akses Ditolak: Anda tidak memiliki hak akses (C - Create) untuk menambah Master Asset.');
+                        return;
+                    }
+                    if (id === 'modalEditAsset' && !window.FleetRBAC.hasAccess('asset', 'U')) {
+                        alert('Akses Ditolak: Anda tidak memiliki hak akses (U - Update) untuk mengubah data Master Asset.');
+                        return;
+                    }
+                    if (id === 'modalNewPM' && !window.FleetRBAC.hasAccess('pm', 'C')) {
+                        alert('Akses Ditolak: Anda tidak memiliki hak akses (C - Create) untuk membuat Jadwal PM.');
+                        return;
+                    }
+                }
                 const el = document.getElementById(id);
                 if (el) {
                     if (id === 'modalNewAsset' || id === 'modalEditAsset') window.loadAssetLocations();
@@ -10104,6 +10121,10 @@ try {
             }
 
             function openNewWOModal(assetId = '') {
+                if (window.FleetRBAC && !window.FleetRBAC.hasAccess('wo', 'C')) {
+                    alert('Akses Ditolak: Anda tidak memiliki hak akses (C - Create) untuk membuat Work Order.');
+                    return;
+                }
                 window.NewWorkOrderForm.open(assetId);
             }
 
@@ -11698,6 +11719,10 @@ try {
             };
 
             window.openFuelInputModal = function () {
+                if (window.FleetRBAC && !window.FleetRBAC.hasAccess('fuel', 'C')) {
+                    alert('Akses Ditolak: Anda tidak memiliki hak akses (C - Create) untuk input transaksi BBM.');
+                    return;
+                }
                 const now = new Date();
                 const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -11892,6 +11917,10 @@ try {
             };
 
             window.openStockSoundingModal = function () {
+                if (window.FleetRBAC && !window.FleetRBAC.hasAccess('fuel', 'C')) {
+                    alert('Akses Ditolak: Anda tidak memiliki hak akses (C - Create) untuk input sounding stok tangki.');
+                    return;
+                }
                 onTankSelectChange('TANK-01');
                 document.getElementById('stkPhysicalSounding').value = '';
                 document.getElementById('stkVariance').value = '-';
@@ -12316,6 +12345,10 @@ try {
             };
 
             window.openNewPMModal = function () {
+                if (window.FleetRBAC && !window.FleetRBAC.hasAccess('pm', 'C')) {
+                    alert('Akses Ditolak: Anda tidak memiliki hak akses (C - Create) untuk membuat Rencana Service PM.');
+                    return;
+                }
                 const select = document.getElementById('npm-id');
                 // Populasikan daftar aset aktif
                 select.innerHTML = '<option value="" disabled selected>-- Pilih Unit --</option>' +
@@ -12461,6 +12494,10 @@ try {
             // =========================================================================
 
             window.openCostInputModal = function (defaultAssetId = '', defaultWoId = '') {
+                if (window.FleetRBAC && !window.FleetRBAC.hasAccess('biaya', 'C')) {
+                    alert('Akses Ditolak: Anda tidak memiliki hak akses (C - Create) untuk mencatat transaksi biaya.');
+                    return;
+                }
                 const selectAsset = document.getElementById('costInputAssetId');
                 if (selectAsset) {
                     const allAssets = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
@@ -12875,8 +12912,11 @@ try {
                 }
             ];
 
-            // Helper to load persisted RBAC custom overrides from localStorage
+            // Helper to load persisted RBAC custom overrides from server or localStorage
             function loadSavedRbacData() {
+                if (window.SERVER_RBAC_MATRIX && Array.isArray(window.SERVER_RBAC_MATRIX) && window.SERVER_RBAC_MATRIX.length === defaultRbacRolesMaster.length) {
+                    return JSON.parse(JSON.stringify(window.SERVER_RBAC_MATRIX));
+                }
                 try {
                     const saved = localStorage.getItem('fleetmonitor_rbac_custom_matrix');
                     if (saved) {
@@ -12894,6 +12934,17 @@ try {
             // Active State Store (Support Override & Persistence)
             let activeRbacRolesData = loadSavedRbacData();
             let currentActiveRoleIndex = 1; // Default: Equipment Manager
+
+            window.applyServerRbacMatrix = function (serverMatrix) {
+                if (Array.isArray(serverMatrix) && serverMatrix.length === defaultRbacRolesMaster.length) {
+                    activeRbacRolesData = JSON.parse(JSON.stringify(serverMatrix));
+                    window.renderRbacMatrix(currentActiveRoleIndex);
+                    if (window.FleetRBAC) {
+                        window.FleetRBAC.setMatrix(activeRbacRolesData);
+                        window.FleetRBAC.applyUIPermissions();
+                    }
+                }
+            };
 
             window.switchSettingsTab = function (tabName, el) {
                 document.querySelectorAll('#view-settings .settings-nav-item').forEach(t => t.classList.remove('active'));
@@ -12946,7 +12997,7 @@ try {
                 openModal('modalEditRbacPermission');
             };
 
-            window.saveRbacCellOverride = function () {
+            window.saveRbacCellOverride = async function () {
                 if (window.FleetRBAC && !window.FleetRBAC.hasAccess('settings', 'O')) {
                     alert("Akses Ditolak: Hanya Administrator yang berhak menyimpan perubahan hak akses.");
                     return;
@@ -12967,26 +13018,79 @@ try {
                 role.permissions[modIdx] = newPerm;
                 role.isCustomized = true;
 
+                // 1. LocalStorage immediate backup
                 try {
                     localStorage.setItem('fleetmonitor_rbac_custom_matrix', JSON.stringify(activeRbacRolesData));
                 } catch (e) {
                     console.error('Gagal menyimpan RBAC ke localStorage:', e);
                 }
 
+                // 2. Persist to MySQL database via API
+                let serverSuccess = false;
+                try {
+                    const csrf = await getCsrfToken();
+                    const res = await fetch('api/settings.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrf
+                        },
+                        body: JSON.stringify({
+                            action: 'save_rbac_matrix',
+                            matrix: activeRbacRolesData
+                        })
+                    });
+                    const resJson = await res.json();
+                    if (res.ok && resJson.status === 'success') {
+                        serverSuccess = true;
+                    } else {
+                        console.warn('Gagal menyimpan matriks ke server MySQL:', resJson.message);
+                    }
+                } catch (err) {
+                    console.warn('Gagal koneksi simpan matriks ke server MySQL:', err);
+                }
+
                 closeModal('modalEditRbacPermission');
                 window.renderRbacMatrix(roleIdx);
-                if (window.FleetRBAC) window.FleetRBAC.applyUIPermissions();
-                alert(`Hak akses [${role.name}] pada modul [${rbacModulesList[modIdx]}] berhasil di-override menjadi: ${newPerm}`);
+                if (window.FleetRBAC) {
+                    window.FleetRBAC.setMatrix(activeRbacRolesData);
+                    window.FleetRBAC.applyUIPermissions();
+                }
+
+                const serverNote = serverSuccess 
+                    ? " & tersimpan permanen di database MySQL."
+                    : " (tersimpan lokal, periksa koneksi server database).";
+                alert(`Hak akses [${role.name}] pada modul [${rbacModulesList[modIdx]}] berhasil diatur menjadi: ${newPerm}${serverNote}`);
             };
 
-            window.resetRbacToDefault = function () {
+            window.resetRbacToDefault = async function () {
                 if (confirm('Apakah Anda yakin ingin mengembalikan seluruh hak akses 10 Roles ke konfigurasi standar default master?')) {
                     activeRbacRolesData = JSON.parse(JSON.stringify(defaultRbacRolesMaster));
                     try {
                         localStorage.removeItem('fleetmonitor_rbac_custom_matrix');
                     } catch (e) {}
+
+                    try {
+                        const csrf = await getCsrfToken();
+                        await fetch('api/settings.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-Token': csrf
+                            },
+                            body: JSON.stringify({
+                                action: 'reset_rbac_matrix'
+                            })
+                        });
+                    } catch (e) {
+                        console.warn('Gagal mereset matriks di server MySQL:', e);
+                    }
+
+                    if (window.FleetRBAC) {
+                        window.FleetRBAC.setMatrix(defaultRbacRolesMaster);
+                        window.FleetRBAC.applyUIPermissions();
+                    }
                     window.renderRbacMatrix(currentActiveRoleIndex);
-                    if (window.FleetRBAC) window.FleetRBAC.applyUIPermissions();
                     alert('Seluruh matriks hak akses berhasil dikembalikan ke standar default master.');
                 }
             };
@@ -13018,27 +13122,36 @@ try {
                 const defaultRole = defaultRbacRolesMaster[highlightIndex] || defaultRbacRolesMaster[0];
                 const isRoleCustomized = activeRole.isCustomized || JSON.stringify(activeRole.permissions) !== JSON.stringify(defaultRole.permissions);
                 const grantedCount = activeRole.permissions.filter(p => p !== '-').length;
+                const isSimulatingThis = window.FleetRBAC && window.FleetRBAC.isSimulating() && window.FleetRBAC.getRole().toLowerCase() === activeRole.name.replace(/^\d+\.\s*/, '').trim().toLowerCase();
 
                 if (summaryBox) {
                     summaryBox.style.borderLeftColor = activeRole.color;
                     summaryBox.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div style="width:42px; height:42px; border-radius:8px; background:${activeRole.color}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
-                            <i class="fa-solid ${activeRole.icon}"></i>
-                        </div>
-                        <div>
-                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                                <strong style="font-size:1.05rem; color:var(--text-dark);">${activeRole.name}</strong>
-                                <span class="badge" style="background:${activeRole.color}; color:#fff; font-size:0.8rem;">${activeRole.badge}</span>
-                                ${isRoleCustomized ? '<span class="badge" style="background:#f59e0b; color:#fff; font-size:0.85rem;"><i class="fa-solid fa-pen-to-square"></i> Customized Override</span>' : ''}
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; width:100%;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width:42px; height:42px; border-radius:8px; background:${activeRole.color}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+                                <i class="fa-solid ${activeRole.icon}"></i>
                             </div>
-                            <p style="margin:2px 0 0 0; font-size:0.82rem; color:var(--text-muted);">${activeRole.desc}</p>
+                            <div>
+                                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <strong style="font-size:1.05rem; color:var(--text-dark);">${activeRole.name}</strong>
+                                    <span class="badge" style="background:${activeRole.color}; color:#fff; font-size:0.8rem;">${activeRole.badge}</span>
+                                    ${isRoleCustomized ? '<span class="badge" style="background:#f59e0b; color:#fff; font-size:0.85rem;"><i class="fa-solid fa-pen-to-square"></i> Customized Override</span>' : ''}
+                                </div>
+                                <p style="margin:2px 0 0 0; font-size:0.82rem; color:var(--text-muted);">${activeRole.desc}</p>
+                                <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                                    <button type="button" class="btn btn-sm ${isSimulatingThis ? 'btn-danger' : 'btn-outline-primary'}" style="font-size:0.8rem; padding:4px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; font-weight:600;" onclick="${isSimulatingThis ? 'window.FleetRBAC.exitSimulation(); window.renderRbacMatrix(currentActiveRoleIndex);' : `window.FleetRBAC.simulateRole('${escapeHtml(activeRole.name)}'); window.renderRbacMatrix(currentActiveRoleIndex);`}">
+                                        <i class="fa-solid ${isSimulatingThis ? 'fa-xmark' : 'fa-eye'}"></i>
+                                        <span>${isSimulatingThis ? 'Hentikan Simulasi' : 'Pratinjau / Simulasikan Role Ini'}</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div style="text-align:right;">
-                            <div style="font-size:0.85rem; color:var(--text-muted);">Akses Modul Aktif</div>
-                            <strong style="font-size:1.2rem; color:${activeRole.color};">${grantedCount} / 16 Modul</strong>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="text-align:right;">
+                                <div style="font-size:0.85rem; color:var(--text-muted);">Akses Modul Aktif</div>
+                                <strong style="font-size:1.2rem; color:${activeRole.color};">${grantedCount} / 16 Modul</strong>
+                            </div>
                         </div>
                     </div>
                 `;

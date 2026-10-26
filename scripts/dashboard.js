@@ -31277,6 +31277,16 @@ window.renderArchiveTables = function () {
       setVal("cfg-wo-prefix", s.cfg_wo_prefix);
       setVal("cfg-po-prefix", s.cfg_po_prefix);
       setVal("cfg-company-header", s.cfg_company_header);
+
+      if (json.rbac_matrix) {
+        window.SERVER_RBAC_MATRIX = json.rbac_matrix;
+        if (window.FleetRBAC) {
+          window.FleetRBAC.setMatrix(json.rbac_matrix);
+        }
+        if (typeof window.applyServerRbacMatrix === "function") {
+          window.applyServerRbacMatrix(json.rbac_matrix);
+        }
+      }
     } catch (err) {
       console.warn("Gagal memuat konfigurasi operasional:", err);
     }

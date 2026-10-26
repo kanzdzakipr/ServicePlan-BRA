@@ -24563,4 +24563,18 @@ body.sl-modal-open {
     }
 }
 
+/* ==========================================================================
+   RBAC (Role-Based Access Control) Enforcement Styles
+   ========================================================================== */
+.rbac-hidden {
+    display: none !important;
+}
+
+[data-rbac-action].rbac-action-hidden {
+    display: none !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+}
+
+
 

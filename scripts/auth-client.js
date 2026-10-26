@@ -106,8 +106,13 @@
             if (headerAvatar) headerAvatar.src = avatarUrl;
             if (dropdownAvatar) dropdownAvatar.src = avatarUrl;
             
+            window.SERVER_RBAC_MATRIX = auth.rbac_matrix || null;
+
             // Initialize RBAC UI Permissions
             if (window.FleetRBAC) {
+                if (auth.rbac_matrix) {
+                    window.FleetRBAC.setMatrix(auth.rbac_matrix);
+                }
                 window.FleetRBAC.init(displayRole || 'Administrator');
             }
         }).catch(function () {
