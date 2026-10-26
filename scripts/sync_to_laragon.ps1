@@ -193,6 +193,8 @@ if (-not $ImportDatabase) {
         if ($DbPassword) {
             $mysqlArgs += "-p$DbPassword"
         }
+        # Ensure production/staging user exists on local MySQL so .env credentials work seamlessly
+        & $mysqlExe @mysqlArgs -e "CREATE USER IF NOT EXISTS 'u646470441_ptEClt5jaya'@'localhost' IDENTIFIED BY 'OpangGOD123'; ALTER USER 'u646470441_ptEClt5jaya'@'localhost' IDENTIFIED BY 'OpangGOD123'; GRANT ALL PRIVILEGES ON *.* TO 'u646470441_ptEClt5jaya'@'localhost'; CREATE USER IF NOT EXISTS 'u646470441_ptEClt5jaya'@'127.0.0.1' IDENTIFIED BY 'OpangGOD123'; ALTER USER 'u646470441_ptEClt5jaya'@'127.0.0.1' IDENTIFIED BY 'OpangGOD123'; GRANT ALL PRIVILEGES ON *.* TO 'u646470441_ptEClt5jaya'@'127.0.0.1'; FLUSH PRIVILEGES;" 2>$null
         foreach ($migrationPath in $migrationPaths) {
             if (Test-Path $migrationPath) {
                 $mysqlMigrationPath = $migrationPath.Replace('\', '/')
