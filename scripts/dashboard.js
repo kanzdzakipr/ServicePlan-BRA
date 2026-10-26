@@ -9444,12 +9444,17 @@
     return base;
   }
 
+  let _conditionPersistTimer = null;
   function persist() {
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(state));
-    } catch (error) {
-      console.warn("Condition Monitoring state tidak dapat disimpan:", error);
-    }
+    if (_conditionPersistTimer) clearTimeout(_conditionPersistTimer);
+    _conditionPersistTimer = setTimeout(() => {
+      _conditionPersistTimer = null;
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      } catch (error) {
+        console.warn("Condition Monitoring state tidak dapat disimpan:", error);
+      }
+    }, 250);
   }
 
   function esc(value) {
@@ -28141,7 +28146,21 @@
   // 2. RENDER FUNCTIONS FOR 4 ANALYTICS ROWS
   // =========================================================================
 
+  let _execAnalyticsDebounceTimer = null;
   function initExecutiveAnalyticsPanels() {
+    if (!window.globalData || !Array.isArray(window.globalData.assets) || window.globalData.assets.length === 0) {
+      return;
+    }
+    if (_execAnalyticsDebounceTimer) {
+      clearTimeout(_execAnalyticsDebounceTimer);
+    }
+    _execAnalyticsDebounceTimer = setTimeout(() => {
+      _execAnalyticsDebounceTimer = null;
+      _doInitExecutiveAnalyticsPanels();
+    }, 40);
+  }
+
+  function _doInitExecutiveAnalyticsPanels() {
     const targetContainer = document.getElementById(
       "dashAnalyticsPanelsContainer",
     );
@@ -28156,10 +28175,13 @@
     }
     window._execApexChartInstances = [];
 
-    const globalAssets = (window.globalData?.assets || []).filter(
-      (a) => !a.isArchived,
-    );
-    const globalWos = window.globalData?.work_orders || [];
+    const globalAssets = (typeof window.getProjectScopedAssets === 'function'
+      ? window.getProjectScopedAssets()
+      : (window.globalData?.assets || [])
+    ).filter((a) => !a.isArchived);
+    const globalWos = typeof window.getProjectScopedWorkOrders === 'function'
+      ? window.getProjectScopedWorkOrders()
+      : (window.globalData?.work_orders || []);
     const globalSpb = window.globalData?.spb || [];
 
     // 1. Build Service Berkala Data dynamically from MySQL Assets

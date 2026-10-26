@@ -6938,13 +6938,51 @@
                     });
                 }
 
-                function getUnitIntegrationContext(asset) {
+                let _integrationContextCache = null;
+                function invalidateUnitIntegrationContextCache() {
+                    _integrationContextCache = null;
+                }
+
+                function buildIntegrationContextIndex() {
                     const inspections = (globalData && globalData.inspections) || [];
                     const workOrders = (globalData && globalData.work_orders) || [];
-                    const latestInspection = inspections
-                        .filter(item => item.unitId === asset.id)
-                        .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0] || null;
-                    const unitWos = workOrders.filter(wo => (wo.assetId || wo.unitId) === asset.id);
+
+                    const latestInspectionMap = new Map();
+                    for (let i = 0; i < inspections.length; i++) {
+                        const item = inspections[i];
+                        const uid = item.unitId;
+                        if (!uid) continue;
+                        const existing = latestInspectionMap.get(uid);
+                        if (!existing || String(item.date || '').localeCompare(String(existing.date || '')) > 0) {
+                            latestInspectionMap.set(uid, item);
+                        }
+                    }
+
+                    const unitWosMap = new Map();
+                    for (let i = 0; i < workOrders.length; i++) {
+                        const wo = workOrders[i];
+                        const uid = wo.assetId || wo.unitId;
+                        if (!uid) continue;
+                        let list = unitWosMap.get(uid);
+                        if (!list) {
+                            list = [];
+                            unitWosMap.set(uid, list);
+                        }
+                        list.push(wo);
+                    }
+
+                    _integrationContextCache = { latestInspectionMap, unitWosMap };
+                    return _integrationContextCache;
+                }
+
+                function getUnitIntegrationContext(asset) {
+                    if (!asset) return { asset: null, latestInspection: null, activeWo: null, unitWos: [] };
+                    if (!_integrationContextCache) {
+                        buildIntegrationContextIndex();
+                    }
+                    const { latestInspectionMap, unitWosMap } = _integrationContextCache;
+                    const latestInspection = latestInspectionMap.get(asset.id) || null;
+                    const unitWos = unitWosMap.get(asset.id) || [];
                     const activeWos = unitWos.filter(wo => wo.status !== 'Closed');
                     const activeWo = activeWos.find(wo => wo.priority === 'High')
                         || activeWos.find(wo => wo.status === 'In Progress')
@@ -6952,12 +6990,14 @@
                         || null;
                     return { asset, latestInspection, activeWo, unitWos };
                 }
+                window.invalidateUnitIntegrationContextCache = invalidateUnitIntegrationContextCache;
+                window.getUnitIntegrationContext = getUnitIntegrationContext;
 
                 window.refreshAllViews = function () {
                     if (!globalData) return;
+                    invalidateUnitIntegrationContextCache();
                     const scopedData = buildProjectScopedData();
                     initDashboard(scopedData);
-                    if (window.initExecutiveAnalyticsPanels) window.initExecutiveAnalyticsPanels();
                     initMonitoringView(scopedData.assets);
                     initAssetView(scopedData.assets);
                     initWorkOrderView(scopedData.work_orders);
@@ -7206,9 +7246,9 @@
                         window.globalData = globalData;
                         initializeProjectMaster();
 
+                        invalidateUnitIntegrationContextCache();
                         const initialData = buildProjectScopedData();
                         initDashboard(initialData);
-                        if (window.initExecutiveAnalyticsPanels) window.initExecutiveAnalyticsPanels();
                         initMonitoringView(initialData.assets);
                         initAssetView(initialData.assets);
                         initWorkOrderView(initialData.work_orders);
@@ -7216,7 +7256,6 @@
                         initFuelEngine(globalData);
                         initNewViews();
                         window.FleetInspectionModule?.refresh();
-                        initMonitoringView(initialData.assets);
 
                         if (window.renderHistoryTable) window.renderHistoryTable();
                         if (window.renderAccidentTable) window.renderAccidentTable();
@@ -7935,44 +7974,23 @@
                         return true;
                     });
 
-                    // Apply Sorting
+                    // Apply Sorting with precomputed keys for optimal performance
                     if (window.masterAssetSort.col) {
-                        assets.sort((a, b) => {
-                            const identA = window.formatAssetIdentityDetails(a);
-                            const identB = window.formatAssetIdentityDetails(b);
-                            const complA = window.getAssetCompleteness(a);
-                            const complB = window.getAssetCompleteness(b);
-
-                            let valA = a[window.masterAssetSort.col] || '';
-                            let valB = b[window.masterAssetSort.col] || '';
-
-                            if (window.masterAssetSort.col === 'id') {
-                                valA = identA.unitId;
-                                valB = identB.unitId;
-                            } else if (window.masterAssetSort.col === 'hull') {
-                                valA = identA.hull;
-                                valB = identB.hull;
-                            } else if (window.masterAssetSort.col === 'model') {
-                                valA = identA.model;
-                                valB = identB.model;
-                            } else if (window.masterAssetSort.col === 'sn') {
-                                valA = identA.sn;
-                                valB = identB.sn;
-                            } else if (window.masterAssetSort.col === 'warranty') {
-                                valA = a.warranty || '0 HM';
-                                valB = b.warranty || '0 HM';
-                            } else if (window.masterAssetSort.col === 'chassis') {
-                                valA = a.chassis_number || a.chassis || '';
-                                valB = b.chassis_number || b.chassis || '';
-                            } else if (window.masterAssetSort.col === 'completeness') {
-                                valA = complA.isComplete ? '1' : '0';
-                                valB = complB.isComplete ? '1' : '0';
-                            }
-
-                            if (valA < valB) return window.masterAssetSort.dir === 'asc' ? -1 : 1;
-                            if (valA > valB) return window.masterAssetSort.dir === 'asc' ? 1 : -1;
-                            return 0;
-                        });
+                        const col = window.masterAssetSort.col;
+                        const dir = window.masterAssetSort.dir === 'asc' ? 1 : -1;
+                        const getSortVal = (a) => {
+                            if (col === 'id') return (window.formatAssetIdentityDetails(a).unitId || '').toLowerCase();
+                            if (col === 'hull') return (window.formatAssetIdentityDetails(a).hull || '').toLowerCase();
+                            if (col === 'model') return (window.formatAssetIdentityDetails(a).model || '').toLowerCase();
+                            if (col === 'sn') return (window.formatAssetIdentityDetails(a).sn || '').toLowerCase();
+                            if (col === 'warranty') return (a.warranty || '0 HM').toLowerCase();
+                            if (col === 'chassis') return (a.chassis_number || a.chassis || '').toLowerCase();
+                            if (col === 'completeness') return window.getAssetCompleteness(a).isComplete ? '1' : '0';
+                            return (a[col] || '').toString().toLowerCase();
+                        };
+                        const mapped = assets.map(a => ({ a, val: getSortVal(a) }));
+                        mapped.sort((x, y) => (x.val < y.val ? -dir : (x.val > y.val ? dir : 0)));
+                        assets = mapped.map(x => x.a);
                     }
 
                     window.filteredMasterAssetData = assets.slice();

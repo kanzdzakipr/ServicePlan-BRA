@@ -268,6 +268,7 @@ function api_builtin_permissions_for_roles(array $roleNames): array
             'accidents.read', 'fuel.read', 'inspections.read', 'inspections.write', 'logistics.read',
             'logistics.write', 'pm.read', 'pm.write', 'tires.read', 'reports.read', 'reports.write',
             'archive.read', 'archive.write', 'sync.write', 'cost.read', 'cost.write',
+            'scope.all_locations',
         ],
         'Mekanik Senior' => [
             'dashboard.read', 'assets.read', 'work_orders.read', 'work_orders.write', 'inspections.read',
@@ -285,15 +286,23 @@ function api_builtin_permissions_for_roles(array $roleNames): array
             'dashboard.read', 'assets.read', 'work_orders.read', 'accidents.read', 'accidents.write',
             'inspections.read', 'inspections.write', 'reports.read', 'reports.write', 'archive.read',
             'archive.write',
+            'scope.all_locations',
         ],
         'Logistic Head' => [
             'dashboard.read', 'assets.read', 'work_orders.read', 'logistics.read', 'logistics.write',
             'reports.read', 'reports.write', 'archive.read', 'archive.write', 'cost.read',
+            'scope.all_locations',
         ],
         'HRD Manager' => [
             'dashboard.read', 'assets.read', 'reports.read', 'reports.write', 'archive.read',
+            'scope.all_locations',
         ],
     ];
+
+    $roleMap['Inspector K3L'] = $roleMap['Inspector K3L / Safety'];
+    $roleMap['Safety'] = $roleMap['Inspector K3L / Safety'];
+    $roleMap['HRD'] = $roleMap['HRD Manager'];
+    $roleMap['Logistic'] = $roleMap['Logistic Head'];
 
     $permissions = [];
     foreach ($roleNames as $roleName) {
