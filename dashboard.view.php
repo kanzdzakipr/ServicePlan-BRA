@@ -38,8 +38,8 @@ try {
         window.APP_CSRF_TOKEN = '<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>';
         window.SERVER_RBAC_MATRIX = <?= json_encode(api_get_saved_rbac_matrix($db), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: 'null' ?>;
     </script>
-    <script src="scripts/auth-client.js?v=20260809-1"></script>
-    <script src="scripts/rbac.js?v=20260823-1"></script>
+    <script src="scripts/auth-client.js?v=<?= @filemtime(__DIR__ . '/scripts/auth-client.js') ?: '20261026' ?>"></script>
+    <script src="scripts/rbac.js?v=<?= @filemtime(__DIR__ . '/scripts/rbac.js') ?: '20261026' ?>"></script>
     <script src="scripts/logistics_data.js?v=20260801-1"></script>
     <script src="scripts/report-xlsx-template.js?v=20260731-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -2090,19 +2090,48 @@ try {
                                 <!-- Rendered via JS -->
                             </div>
 
-                            <!-- Interactive RBAC Matrix Table -->
-                            <div class="table-scroll-hint rbac-table-scroll-hint"
-                                style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:0.75rem; color:var(--text-muted);">
-                                <span><i class="fa-solid fa-arrows-left-right"></i> Geser ke samping untuk melihat 16 modul operasional</span>
-                                <span style="font-weight:700; color:var(--primary); font-size:0.75rem;">10 Roles &times; 16 Modul</span>
+                            <!-- View Mode Switcher -->
+                            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                                <div style="display:inline-flex; border:1px solid #cbd5e1; border-radius:8px; overflow:hidden; background:#f8fafc; padding:2px; gap:2px;">
+                                    <button type="button" id="rbacModeBtnRole" class="btn btn-sm btn-primary" style="font-size:0.8rem; padding:5px 12px; border-radius:6px; font-weight:600;" onclick="switchRbacViewMode('role')">
+                                        <i class="fa-solid fa-user-tag"></i> Tabel Detail Role Terpilih
+                                    </button>
+                                    <button type="button" id="rbacModeBtnMatrix" class="btn btn-sm btn-secondary" style="font-size:0.8rem; padding:5px 12px; border-radius:6px; font-weight:600;" onclick="switchRbacViewMode('matrix')">
+                                        <i class="fa-solid fa-table-cells"></i> Matriks Komparasi 10 Roles
+                                    </button>
+                                    <button type="button" id="rbacModeBtnBoth" class="btn btn-sm btn-secondary" style="font-size:0.8rem; padding:5px 12px; border-radius:6px; font-weight:600;" onclick="switchRbacViewMode('both')">
+                                        <i class="fa-solid fa-table-columns"></i> Tampilkan Keduanya
+                                    </button>
+                                </div>
+                                <div id="rbacViewModeNote" style="font-size:0.78rem; color:var(--text-muted);">
+                                    <i class="fa-solid fa-circle-info"></i> Menampilkan rincian hak akses per modul untuk role aktif
+                                </div>
                             </div>
-                            <div class="table-responsive rbac-matrix-container"
-                                style="max-height:520px; overflow-x:auto; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; -webkit-overflow-scrolling:touch; width:100%;">
-                                <table class="table rbac-matrix-table"
-                                    style="font-size:0.78rem; white-space:nowrap; margin:0; width:max-content; min-width:2400px;"
-                                    id="rbacMatrixTable">
-                                    <!-- Rendered via JS -->
-                                </table>
+
+                            <!-- Container 1: Tabel RBAC Role Terpilih -->
+                            <div id="rbacSingleRoleContainer" style="margin-bottom:20px;">
+                                <div class="table-responsive" style="border:1px solid #e2e8f0; border-radius:8px; overflow-x:auto; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                                    <table class="table" style="font-size:0.82rem; margin:0; width:100%; border-collapse:collapse;" id="rbacSingleRoleTable">
+                                        <!-- Rendered via JS -->
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Container 2: Matriks Komparasi 10 Roles x 16 Modul -->
+                            <div id="rbacFullMatrixContainer">
+                                <div class="table-scroll-hint rbac-table-scroll-hint"
+                                    style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:0.75rem; color:var(--text-muted);">
+                                    <span><i class="fa-solid fa-arrows-left-right"></i> Geser ke samping untuk melihat seluruh 16 modul operasional</span>
+                                    <span style="font-weight:700; color:var(--primary); font-size:0.75rem;">10 Roles &times; 16 Modul</span>
+                                </div>
+                                <div class="table-responsive rbac-matrix-container"
+                                    style="max-height:520px; overflow-x:auto; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; -webkit-overflow-scrolling:touch; width:100%;">
+                                    <table class="table rbac-matrix-table"
+                                        style="font-size:0.78rem; white-space:nowrap; margin:0; width:max-content; min-width:2400px;"
+                                        id="rbacMatrixTable">
+                                        <!-- Rendered via JS -->
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
