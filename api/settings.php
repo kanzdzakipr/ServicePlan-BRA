@@ -138,6 +138,7 @@ if ($method === 'POST') {
         'cfg_tire_red' => ['type' => 'float', 'min' => 0.5, 'max' => 30.0, 'desc' => 'Batas Merah Aus Ban (mm)'],
         'cfg_pm_warning' => ['type' => 'int', 'min' => 10, 'max' => 500, 'desc' => 'Batas HM Warning PM (HM)'],
         'cfg_fuel_anomali' => ['type' => 'float', 'min' => 1.0, 'max' => 100.0, 'desc' => 'Toleransi Anomali BBM (%)'],
+        'cfg_fuel_price_per_liter' => ['type' => 'float', 'min' => 1000.0, 'max' => 100000.0, 'desc' => 'Harga Solar Industri per Liter (Rp)'],
         'cfg_idling_limit' => ['type' => 'float', 'min' => 5.0, 'max' => 100.0, 'desc' => 'Telematika Idling Alarm (%)'],
         'cfg_cuttingbit_safety' => ['type' => 'int', 'min' => 0, 'max' => 50000, 'desc' => 'Safety Stock Cutting Bit'],
         'cfg_idle_timeout' => ['type' => 'int', 'min' => 5, 'max' => 480, 'desc' => 'Session Timeout (Menit)'],

@@ -21,13 +21,35 @@ require_once __DIR__ . '/KpiCalculator.php';
  */
 final class ProductivityCalculator
 {
-    public const FUEL_COST_PER_LITER = 14500; // Rp 14,500/L solar industri
+    public const FUEL_COST_PER_LITER = 14500; // Rp 14,500/L solar industri (default fallback)
+
+    /**
+     * Get reference industrial fuel price per liter from operational_settings (default: 14500).
+     */
+    public static function getFuelPricePerLiter(?PDO $db = null): float
+    {
+        if ($db === null) {
+            $db = Database::getInstance();
+        }
+        try {
+            $stmt = $db->query("SELECT setting_value FROM operational_settings WHERE setting_key = 'cfg_fuel_price_per_liter' LIMIT 1");
+            $val = $stmt ? $stmt->fetchColumn() : false;
+            if ($val !== false && is_numeric($val) && (float) $val > 0) {
+                return (float) $val;
+            }
+        } catch (Throwable $t) {
+            // Graceful fallback if operational_settings is unavailable
+        }
+        return (float) self::FUEL_COST_PER_LITER;
+    }
 
     /**
      * Compute comprehensive productivity, telematics reconciliation, and standby fleet data.
      */
     public static function calculate(PDO $db, ?int $locationId = null, ?string $period = 'Januari 2026', ?string $assetId = null, ?string $category = null): array
     {
+        $fuelCostPerLiter = self::getFuelPricePerLiter($db);
+
         // 1. Fetch telematics records with location scoping
         $sqlTele = "SELECT 
                         t.*,
@@ -101,7 +123,7 @@ final class ProductivityCalculator
                 'telematics' => [],
                 'idlingAnomalies' => [],
                 'reconciliation' => [],
-                'standbySummary' => self::getStandbySummary($locationId),
+                'standbySummary' => self::getStandbySummary($db, $locationId),
                 'meta' => [
                     'period' => $period,
                     'locationId' => $locationId,
@@ -133,8 +155,8 @@ final class ProductivityCalculator
             $idling = (float) $r['idling_ratio'];
             $smr = (float) $r['smr_hours'];
             $sn = (string) $r['serial_number'];
-            $assetId = $r['asset_id'] ?? null;
-            $assetCode = $r['asset_code'] ?? ($assetId ?? '-');
+            $unitAssetId = $r['asset_id'] ?? null;
+            $assetCode = $r['asset_code'] ?? ($unitAssetId ?? '-');
 
             $totalWorkingHours += $wh;
             $totalActualHours += $actWh;
@@ -166,7 +188,7 @@ final class ProductivityCalculator
 
             $teleRowFormatted = [
                 'no' => $idx + 1,
-                'assetId' => $assetId,
+                'assetId' => $unitAssetId,
                 'assetCode' => $assetCode,
                 'model' => (string) $r['model_type'],
                 'sn' => $sn,
@@ -192,7 +214,7 @@ final class ProductivityCalculator
             // Idling Anomaly Detection (> 50%)
             if ($idling >= 50.0) {
                 $estimatedIdleFuel = round($fuel * ($idling / 100.0), 1);
-                $estimatedLossCost = round($estimatedIdleFuel * self::FUEL_COST_PER_LITER);
+                $estimatedLossCost = round($estimatedIdleFuel * $fuelCostPerLiter);
                 $idlingAnomalies[] = [
                     'sn' => $sn,
                     'model' => (string) $r['model_type'],
@@ -201,12 +223,13 @@ final class ProductivityCalculator
                     'idlingRatio' => $idling,
                     'estimatedIdleFuel' => $estimatedIdleFuel,
                     'estimatedLossCost' => $estimatedLossCost,
+                    'fuelPricePerLiter' => $fuelCostPerLiter,
                     'recommendation' => 'Audit perilaku operator & matikan mesin saat standby > 5 menit.',
                 ];
             }
 
             // Reconciliation against Manual LHO Operations
-            $lhoInfo = ($assetId && isset($lhoAgg[$assetId])) ? $lhoAgg[$assetId] : null;
+            $lhoInfo = ($unitAssetId && isset($lhoAgg[$unitAssetId])) ? $lhoAgg[$unitAssetId] : null;
             $manualHours = $lhoInfo ? (float) $lhoInfo['total_lho_work_hours'] : null;
 
             $exceptions = [];
@@ -272,7 +295,22 @@ final class ProductivityCalculator
             $repairSql .= ' AND a.current_location_id = :repair_location_id';
             $repairParams[':repair_location_id'] = $locationId;
         }
-        if ($assetId !== null) { $repairSql .= ' AND a.asset_id = :repair_asset_id'; $repairParams[':repair_asset_id'] = $assetId; }
+        if ($assetId !== null) {
+            $repairSql .= ' AND a.asset_id = :repair_asset_id';
+            $repairParams[':repair_asset_id'] = $assetId;
+        } else {
+            // When calculating fleet KPI without single-asset filter, scope work orders to the telematics fleet
+            $teleAssetIds = array_values(array_filter(array_unique(array_column($telematicsFormatted, 'assetId'))));
+            if (!empty($teleAssetIds)) {
+                $placeholders = [];
+                foreach ($teleAssetIds as $tIdx => $tAid) {
+                    $pKey = ":tele_aid_{$tIdx}";
+                    $placeholders[] = $pKey;
+                    $repairParams[$pKey] = $tAid;
+                }
+                $repairSql .= ' AND a.asset_id IN (' . implode(',', $placeholders) . ')';
+            }
+        }
         if ($category !== null) { $repairSql .= ' AND a.category = :repair_category'; $repairParams[':repair_category'] = $category; }
         $repairStatement = $db->prepare($repairSql);
         $repairStatement->execute($repairParams);
@@ -426,10 +464,12 @@ final class ProductivityCalculator
             'telematics' => $telematicsFormatted,
             'idlingAnomalies' => $idlingAnomalies,
             'reconciliation' => $reconciliationRows,
-            'standbySummary' => self::getStandbySummary($locationId),
+            'standbySummary' => self::getStandbySummary($db, $locationId),
+            'fuelPricePerLiter' => $fuelCostPerLiter,
             'meta' => [
                 'period' => $period,
                 'locationId' => $locationId,
+                'assetId' => $assetId,
                 'recordCount' => $recordCount,
                 'status' => 'SUCCESS',
                 'formulaVersion' => $lockedKpis['formulaVersion'],
@@ -476,41 +516,99 @@ final class ProductivityCalculator
     }
 
     /**
-     * Standby fleet audit summary based on field audit data (REKAP_UNIT_STANDBY.md).
+     * Standby fleet audit summary dynamically aggregated from database assets & locations.
      */
-    public static function getStandbySummary(?int $locationId = null): array
+    public static function getStandbySummary(?PDO $db = null, ?int $locationId = null): array
     {
+        if ($db === null) {
+            $db = Database::getInstance();
+        }
+
+        $where = "a.status = 'STANDBY'";
+        $params = [];
+        if ($locationId !== null) {
+            $where .= ' AND a.current_location_id = :sb_loc_id';
+            $params[':sb_loc_id'] = $locationId;
+        }
+
+        // 1. Total standby units
+        $stmtTotal = $db->prepare("SELECT COUNT(*) FROM assets a WHERE {$where}");
+        $stmtTotal->execute($params);
+        $totalUnits = (int) $stmtTotal->fetchColumn();
+
+        // 2. Locations breakdown
+        $sqlLoc = "SELECT 
+                       COALESCE(l.location_name, 'Lokasi Lainnya') AS name,
+                       COUNT(*) AS count,
+                       SUM(CASE WHEN a.category LIKE '%Dump Truck%' THEN 1 ELSE 0 END) AS dumpTrucks,
+                       SUM(CASE WHEN a.category LIKE '%Excavator%' THEN 1 ELSE 0 END) AS excavators,
+                       SUM(CASE WHEN a.category LIKE '%Compactor%' THEN 1 ELSE 0 END) AS compactors,
+                       SUM(CASE WHEN a.category LIKE '%Bulldozer%' THEN 1 ELSE 0 END) AS bulldozers,
+                       SUM(CASE WHEN a.category LIKE '%Trado%' THEN 1 ELSE 0 END) AS trados
+                   FROM assets a
+                   LEFT JOIN locations l ON a.current_location_id = l.location_id
+                   WHERE {$where}
+                   GROUP BY COALESCE(l.location_name, 'Lokasi Lainnya')
+                   ORDER BY count DESC";
+        $stmtLoc = $db->prepare($sqlLoc);
+        $stmtLoc->execute($params);
+        $locRows = $stmtLoc->fetchAll(PDO::FETCH_ASSOC);
+
+        $locations = [];
+        foreach ($locRows as $lr) {
+            $c = (int) $lr['count'];
+            $locations[] = [
+                'name' => strtoupper((string) $lr['name']),
+                'count' => $c,
+                'ratio' => $totalUnits > 0 ? round(($c / $totalUnits) * 100.0, 1) : 0.0,
+                'dumpTrucks' => (int) $lr['dumpTrucks'],
+                'excavators' => (int) $lr['excavators'],
+                'compactors' => (int) $lr['compactors'],
+                'bulldozers' => (int) $lr['bulldozers'],
+                'trados' => (int) $lr['trados'],
+            ];
+        }
+
+        // 3. Categories breakdown
+        $sqlCat = "SELECT 
+                       COALESCE(a.category, 'Lainnya') AS type,
+                       COUNT(*) AS count
+                   FROM assets a
+                   WHERE {$where}
+                   GROUP BY COALESCE(a.category, 'Lainnya')
+                   ORDER BY count DESC";
+        $stmtCat = $db->prepare($sqlCat);
+        $stmtCat->execute($params);
+        $catRows = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
+
+        $impactMap = [
+            'Dump Truck' => 'Tinggi (Rugi Kapasitas Hauling)',
+            'Excavator' => 'Sedang (Rugi Kapasitas Loading)',
+            'Bulldozer' => 'Sedang (Rugi Kapasitas Stripping)',
+            'Compactor' => 'Sedang (Rugi Kapasitas Compacting)',
+            'Vibro Compactor' => 'Sedang (Rugi Kapasitas Compacting)',
+            'Smooth Drum Compactor' => 'Sedang (Rugi Kapasitas Compacting)',
+            'Trado' => 'Rendah (Peralatan Mobilisasi)',
+            'Reclaimer Spreader' => 'Rendah (Peralatan Penunjang)',
+        ];
+
+        $categories = [];
+        foreach ($catRows as $cr) {
+            $c = (int) $cr['count'];
+            $t = (string) $cr['type'];
+            $impact = $impactMap[$t] ?? ($c > 5 ? 'Sedang (Idle Fleet)' : 'Rendah (Peralatan Penunjang)');
+            $categories[] = [
+                'type' => $t,
+                'count' => $c,
+                'ratio' => $totalUnits > 0 ? round(($c / $totalUnits) * 100.0, 1) : 0.0,
+                'impact' => $impact,
+            ];
+        }
+
         return [
-            'totalUnits' => 48,
-            'locations' => [
-                [
-                    'name' => 'YARD DURI',
-                    'count' => 35,
-                    'ratio' => 72.9,
-                    'dumpTrucks' => 24,
-                    'excavators' => 2,
-                    'compactors' => 6,
-                    'bulldozers' => 3,
-                    'trados' => 0,
-                ],
-                [
-                    'name' => 'YARD PRABUMULIH',
-                    'count' => 13,
-                    'ratio' => 27.1,
-                    'dumpTrucks' => 3,
-                    'excavators' => 6,
-                    'compactors' => 0,
-                    'bulldozers' => 2,
-                    'trados' => 2,
-                ]
-            ],
-            'categories' => [
-                ['type' => 'Dump Truck', 'count' => 27, 'ratio' => 56.2, 'impact' => 'Tinggi (Rugi Kapasitas Hauling)'],
-                ['type' => 'Excavator', 'count' => 8, 'ratio' => 16.7, 'impact' => 'Sedang (Rugi Kapasitas Loading)'],
-                ['type' => 'Compactor', 'count' => 6, 'ratio' => 12.5, 'impact' => 'Sedang (Rugi Kapasitas Compacting)'],
-                ['type' => 'Bulldozer', 'count' => 5, 'ratio' => 10.4, 'impact' => 'Sedang (Rugi Kapasitas Stripping)'],
-                ['type' => 'Trado Heavy Transport', 'count' => 2, 'ratio' => 4.2, 'impact' => 'Rendah (Peralatan Mobilisasi)'],
-            ],
+            'totalUnits' => $totalUnits,
+            'locations' => $locations,
+            'categories' => $categories,
         ];
     }
 }

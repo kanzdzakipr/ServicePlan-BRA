@@ -52,7 +52,9 @@ $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_sync_missing_lv_assets_from_sql_20261024.sql"),
     (Join-Path $srcDir "scripts\migrate_normalize_asset_warranty_20261025.sql"),
     (Join-Path $srcDir "scripts\migrate_asset_document_urls_25102026.sql"),
-    (Join-Path $srcDir "scripts\migrate_rbac_matrix_20261026.sql")
+    (Join-Path $srcDir "scripts\migrate_rbac_matrix_20261026.sql"),
+    (Join-Path $srcDir "scripts\migrate_telematics_asset_mappings_26102026.sql"),
+    (Join-Path $srcDir "scripts\migrate_fuel_price_setting_26102026.sql")
 )
 
 if (-not (Test-Path -LiteralPath $laragonRootPath -PathType Container) -or
@@ -221,7 +223,8 @@ if (-not $ImportDatabase) {
             (Join-Path $srcDir 'scripts\migrate_batch3_pm_grease_battery.php'),
             (Join-Path $srcDir 'scripts\migrate_batch4_warehouse_transactions.php'),
             (Join-Path $srcDir 'scripts\migrate_batch5_cost_ledger.php'),
-            (Join-Path $srcDir 'scripts\migrate_batch6_rental_contracts.php')
+            (Join-Path $srcDir 'scripts\migrate_batch6_rental_contracts.php'),
+            (Join-Path $srcDir 'scripts\migrate_batch7_lho_operations.php')
         )
         foreach ($bScript in $equipmentBatchScripts) {
             if ($phpExe -and (Test-Path $bScript)) {
@@ -229,7 +232,7 @@ if (-not $ImportDatabase) {
                 & $phpExe $bScript | Out-Null
             }
         }
-        Write-Host "Equipment Report January 2026 Batch 1-6 verified." -ForegroundColor Green
+        Write-Host "Equipment Report January 2026 Batch 1-7 verified." -ForegroundColor Green
     }
 } elseif ($mysqlExe -and (Test-Path $mysqlExe)) {
     Write-Host "`n[2/4] Importing explicitly selected local MySQL database '$DbName'..." -ForegroundColor Cyan
@@ -339,7 +342,8 @@ if (-not $ImportDatabase) {
         (Join-Path $srcDir 'scripts\migrate_batch3_pm_grease_battery.php'),
         (Join-Path $srcDir 'scripts\migrate_batch4_warehouse_transactions.php'),
         (Join-Path $srcDir 'scripts\migrate_batch5_cost_ledger.php'),
-        (Join-Path $srcDir 'scripts\migrate_batch6_rental_contracts.php')
+        (Join-Path $srcDir 'scripts\migrate_batch6_rental_contracts.php'),
+        (Join-Path $srcDir 'scripts\migrate_batch7_lho_operations.php')
     )
     foreach ($bScript in $equipmentBatchScripts) {
         if ($phpExe -and (Test-Path $bScript)) {
@@ -347,7 +351,7 @@ if (-not $ImportDatabase) {
             & $phpExe $bScript | Out-Null
         }
     }
-    Write-Host "Equipment Report January 2026 Batch 1-6 verified." -ForegroundColor Green
+    Write-Host "Equipment Report January 2026 Batch 1-7 verified." -ForegroundColor Green
 } else {
     throw 'MySQL executable tidak ditemukan untuk -ImportDatabase.'
 }
