@@ -25224,19 +25224,59 @@
     val,
     strokeColor = "var(--primary)",
     size = 28,
+    id = "",
   ) {
-    const numericVal = Math.min(100, Math.max(0, parseFloat(val) || 0));
+    const isNoData = val === null || val === undefined || isNaN(parseFloat(val));
+    const numericVal = isNoData ? 0 : Math.min(100, Math.max(0, parseFloat(val)));
     const r = 11;
     const circumference = 2 * Math.PI * r;
     const dashOffset = (circumference * (1 - numericVal / 100)).toFixed(2);
+    const idAttr = id ? ` id="${id}"` : "";
+    const titleText = isNoData ? "Tidak Ada Data" : `${numericVal}%`;
+    const isHidden = isNoData || numericVal <= 0;
 
-    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" class="mini-donut-chart" title="${numericVal}%" style="transform: rotate(-90deg); flex-shrink: 0;">
+    return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" class="mini-donut-chart"${idAttr} title="${titleText}" style="flex-shrink: 0;">
             <circle cx="16" cy="16" r="${r}" fill="none" stroke="var(--border, rgba(0,0,0,0.1))" stroke-width="3" />
-            <circle cx="16" cy="16" r="${r}" fill="none" stroke="${strokeColor}" stroke-width="3" 
+            <circle class="donut-progress" cx="16" cy="16" r="${r}" fill="none" stroke="${strokeColor}" stroke-width="3" 
                 stroke-dasharray="${circumference.toFixed(2)}" 
                 stroke-dashoffset="${dashOffset}" 
-                stroke-linecap="round" />
+                stroke-linecap="round"
+                style="${isHidden ? 'opacity: 0;' : 'opacity: 1;'} transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s ease, opacity 0.3s ease;" />
         </svg>`;
+  }
+
+  function updateMiniDonutChart(id, val, strokeColor) {
+    const svgEl = document.getElementById(id);
+    if (!svgEl) return;
+
+    const isNoData = val === null || val === undefined || isNaN(parseFloat(val));
+    const numericVal = isNoData ? 0 : Math.min(100, Math.max(0, parseFloat(val)));
+    const r = 11;
+    const circumference = 2 * Math.PI * r;
+    const dashOffset = (circumference * (1 - numericVal / 100)).toFixed(2);
+    const isHidden = isNoData || numericVal <= 0;
+
+    const progressCircle = svgEl.querySelector(".donut-progress");
+    if (progressCircle) {
+      progressCircle.style.strokeDashoffset = dashOffset;
+      if (strokeColor) {
+        progressCircle.style.stroke = strokeColor;
+      }
+      progressCircle.style.opacity = isHidden ? "0" : "1";
+      svgEl.setAttribute("title", isNoData ? "Tidak Ada Data" : `${numericVal}%`);
+    } else {
+      svgEl.outerHTML = renderMiniDonutChartSVG(val, strokeColor, 28, id);
+    }
+  }
+
+  function getKpiRingColor(valObj, fallbackColor) {
+    if (!valObj || valObj.value === null || valObj.value === undefined) {
+      return "var(--border, rgba(0,0,0,0.1))";
+    }
+    if (valObj.status === "MEETS_TARGET") return "var(--success)";
+    if (valObj.status === "BELOW_TARGET" || valObj.status === "ABOVE_LIMIT")
+      return "var(--warning)";
+    return fallbackColor || "var(--primary)";
   }
 
   function createProductivityModule() {
@@ -25271,7 +25311,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Physical Availability (PA)</span>
-                                ${renderMiniDonutChartSVG(0, "var(--success)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.physicalAvailability?.value ?? 0, getKpiRingColor(fleetKPIs.physicalAvailability, "var(--success)"), 28, "kpi-pa-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-pa-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25281,7 +25321,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Use of Availability (UA)</span>
-                                ${renderMiniDonutChartSVG(0, "var(--success)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.useOfAvailability?.value ?? 0, getKpiRingColor(fleetKPIs.useOfAvailability, "var(--success)"), 28, "kpi-ua-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-ua-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25291,7 +25331,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Breakdown Rate (BR)</span>
-                                ${renderMiniDonutChartSVG(0, "var(--primary)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.breakdownRate?.value ?? 0, getKpiRingColor(fleetKPIs.breakdownRate, "var(--primary)"), 28, "kpi-br-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-br-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25301,7 +25341,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Utilization Rate (UT)</span>
-                                ${renderMiniDonutChartSVG(0, "var(--warning)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.utilizationRate?.value ?? 0, getKpiRingColor(fleetKPIs.utilizationRate, "var(--warning)"), 28, "kpi-ut-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-ut-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25315,6 +25355,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">MTBF (Mean Time Between Failures)</span>
+                                <i class="fa-solid fa-clock-rotate-left text-muted" style="font-size:0.8rem;" title="Mean Time Between Failures"></i>
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-mtbf-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25324,6 +25365,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Total Jam Kerja Terjadwal Armada</span>
+                                <i class="fa-solid fa-calendar-check text-muted" style="font-size:0.8rem;" title="Jam Kerja Terjadwal Telematika"></i>
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-total-wh-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -25357,7 +25399,7 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Rata-rata Idling Fleet</span>
-                                ${renderMiniDonutChartSVG(0, "var(--danger)", 28)}
+                                ${renderMiniDonutChartSVG(fleetKPIs.avgIdlingRatio?.value ?? 0, (parseFloat(fleetKPIs.avgIdlingRatio?.value) || 0) >= 50 ? "var(--danger)" : "var(--warning)", 28, "kpi-idling-ring")}
                             </div>
                             <div class="telemetry-metric-value font-mono" id="kpi-idling-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
@@ -26301,6 +26343,38 @@
     updateKpiEl("kpi-total-fuel-val", fleetKPIs.totalFuelConsumed);
     updateKpiEl("kpi-avg-fuel-val", fleetKPIs.avgFuelLPH);
     updateKpiEl("kpi-idling-val", fleetKPIs.avgIdlingRatio);
+
+    // Update Ring Indicators Dynamically
+    updateMiniDonutChart(
+      "kpi-pa-ring",
+      fleetKPIs.physicalAvailability?.value,
+      getKpiRingColor(fleetKPIs.physicalAvailability, "var(--success)")
+    );
+    updateMiniDonutChart(
+      "kpi-ua-ring",
+      fleetKPIs.useOfAvailability?.value,
+      getKpiRingColor(fleetKPIs.useOfAvailability, "var(--success)")
+    );
+    updateMiniDonutChart(
+      "kpi-br-ring",
+      fleetKPIs.breakdownRate?.value,
+      getKpiRingColor(fleetKPIs.breakdownRate, "var(--primary)")
+    );
+    updateMiniDonutChart(
+      "kpi-ut-ring",
+      fleetKPIs.utilizationRate?.value,
+      getKpiRingColor(fleetKPIs.utilizationRate, "var(--warning)")
+    );
+
+    const idlingVal = fleetKPIs.avgIdlingRatio?.value;
+    const idlingNum = parseFloat(idlingVal) || 0;
+    const idlingColor =
+      idlingNum >= 50
+        ? "var(--danger)"
+        : idlingNum >= 30
+          ? "var(--warning)"
+          : "var(--success)";
+    updateMiniDonutChart("kpi-idling-ring", idlingVal, idlingColor);
   }
 
   async function loadProductivityData() {
