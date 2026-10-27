@@ -48,7 +48,7 @@ WHERE r.role_name = 'Maintenance Planner'
     'dashboard.read', 'assets.read', 'assets.write', 'work_orders.read', 'work_orders.write',
     'accidents.read', 'fuel.read', 'inspections.read', 'inspections.write', 'logistics.read',
     'logistics.write', 'pm.read', 'pm.write', 'tires.read', 'reports.read', 'reports.write',
-    'archive.read', 'archive.write', 'sync.write'
+    'archive.read', 'archive.write', 'sync.write', 'scope.all_locations'
   );
 
 -- Mechanics and fabrication roles.
@@ -72,7 +72,7 @@ WHERE r.role_name = 'Inspector K3L / Safety'
   AND p.permission_key IN (
     'dashboard.read', 'assets.read', 'work_orders.read', 'accidents.read', 'accidents.write',
     'inspections.read', 'inspections.write', 'reports.read', 'reports.write',
-    'archive.read', 'archive.write'
+    'archive.read', 'archive.write', 'scope.all_locations'
   );
 
 -- Logistics.
@@ -83,7 +83,7 @@ CROSS JOIN permissions p
 WHERE r.role_name = 'Logistic Head'
   AND p.permission_key IN (
     'dashboard.read', 'assets.read', 'work_orders.read', 'logistics.read', 'logistics.write',
-    'reports.read', 'reports.write', 'archive.read', 'archive.write'
+    'reports.read', 'reports.write', 'archive.read', 'archive.write', 'scope.all_locations'
   );
 
 -- HRD.
@@ -92,6 +92,6 @@ SELECT r.role_id, p.permission_id
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.role_name = 'HRD Manager'
-  AND p.permission_key IN ('dashboard.read', 'assets.read', 'reports.read', 'reports.write', 'archive.read');
+  AND p.permission_key IN ('dashboard.read', 'assets.read', 'reports.read', 'reports.write', 'archive.read', 'scope.all_locations');
 
 COMMIT;

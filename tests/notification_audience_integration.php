@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+define('API_AUTH_OPTIONAL', true);
+define('API_SKIP_ROUTING', true);
+
 require_once dirname(__DIR__) . '/core/NotificationAudience.php';
 
 $dsn = (string) (getenv('REPORT_TEST_DSN') ?: 'mysql:host=127.0.0.1;port=3306;dbname=u646470441_ServicePlanBRA;charset=utf8mb4');
@@ -28,7 +31,7 @@ if (!$planner || !$logistic || $planner['assigned_location_id'] === null ||
 $locationId = $planner['assigned_location_id'];
 foreach ($users as $candidate) {
     if ($candidate['assigned_location_id'] !== null && $candidate['assigned_location_id'] !== $locationId &&
-        !array_intersect($candidate['roles'], ['Administrator', 'Equipment Manager', 'Asset Manager'])) {
+        !array_intersect($candidate['roles'], NotificationAudience::GLOBAL_SCOPE_ROLES)) {
         $otherLocation = $candidate;
         break;
     }

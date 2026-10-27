@@ -37,7 +37,21 @@ $assert(!in_array('*', $manager['permissions'], true), 'equipment manager fallba
 $assert(!in_array('*', $assetManager['permissions'], true), 'asset manager fallback is not wildcard');
 $assert(!in_array('admin.seed', $manager['permissions'], true), 'equipment manager cannot seed');
 $assert(!in_array('users.manage', $manager['permissions'], true), 'equipment manager cannot manage accounts');
-$assert(in_array('scope.all_locations', $manager['permissions'], true), 'manager operational location scope retained');
+$assert(in_array('scope.all_locations', $manager['permissions'], true), 'equipment manager operational location scope retained');
+$assert(in_array('scope.all_locations', $assetManager['permissions'], true), 'asset manager operational location scope retained');
+$assert(in_array('scope.all_locations', $planner['permissions'], true), 'maintenance planner operational location scope retained');
+
+$inspector = ['id' => 5, 'roles' => ['Inspector K3L / Safety'], 'permissions' => api_builtin_permissions_for_roles(['Inspector K3L / Safety'])];
+$assert(in_array('scope.all_locations', $inspector['permissions'], true), 'inspector k3l operational location scope retained');
+
+$logistic = ['id' => 6, 'roles' => ['Logistic Head'], 'permissions' => api_builtin_permissions_for_roles(['Logistic Head'])];
+$assert(in_array('scope.all_locations', $logistic['permissions'], true), 'logistic head operational location scope retained');
+
+$hrd = ['id' => 7, 'roles' => ['HRD Manager'], 'permissions' => api_builtin_permissions_for_roles(['HRD Manager'])];
+$assert(in_array('scope.all_locations', $hrd['permissions'], true), 'hrd manager operational location scope retained');
+
+$mechanic = ['id' => 8, 'roles' => ['Mekanik Senior'], 'permissions' => api_builtin_permissions_for_roles(['Mekanik Senior'])];
+$assert(!in_array('scope.all_locations', $mechanic['permissions'], true), 'field mechanic remains restricted to assigned location');
 
 $_SERVER['SCRIPT_NAME'] = '/api/users.php';
 $_SERVER['REQUEST_METHOD'] = 'GET';

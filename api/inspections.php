@@ -1,6 +1,7 @@
 <?php
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
+require_once dirname(__DIR__) . '/core/NotificationAudience.php';
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -86,23 +87,48 @@ switch ($method) {
 
                 // Auto-create notification entry in system_notifications
                 try {
-                    $insId = $db->lastInsertId();
-                    $notifStmt = $db->prepare("INSERT INTO system_notifications 
-                        (menu_name, user_name, user_role, action_type, title, message, involved_parties_json, related_tables_json, is_read, created_at)
-                        VALUES ('Inspections', :user, 'Inspector', :type, :title, :msg, :parties, :tables, 0, NOW())");
-                    
                     $actionType = ($result === 'FAIL') ? 'P2H_REJECT' : 'P2H_SUBMIT';
                     $titleStr = ($result === 'FAIL') ? "Inspeksi P2H Ditolak - {$assetId} (BREAKDOWN)" : "Form P2H #{$insId} Disetujui ({$assetId})";
                     $msgStr = "Inspector memasukkan data inspeksi P2H untuk unit {$assetId}. Hasil: {$result}. " . ($summary ? "Catatan: {$summary}" : "");
                     
+                    $assetLocStmt = $db->prepare("SELECT location_id FROM assets WHERE asset_id = :aid LIMIT 1");
+                    $assetLocStmt->execute([':aid' => $assetId]);
+                    $locId = $assetLocStmt->fetchColumn();
+                    $locId = ($locId !== false && $locId !== null) ? (int)$locId : null;
+
+                    $relatedTables = [
+                        'tables' => ['inspections', 'assets'],
+                        'records' => [
+                            ['table' => 'inspections', 'id' => (string)$insId],
+                            ['table' => 'assets', 'id' => $assetId]
+                        ],
+                        'location_id' => $locId,
+                        'asset_id' => $assetId
+                    ];
+
+                    $notifStmt = $db->prepare("INSERT INTO system_notifications 
+                        (menu_name, user_name, user_role, action_type, title, message, involved_parties_json, related_tables_json, is_read, created_at)
+                        VALUES ('Inspections', :user, 'Inspector', :type, :title, :msg, :parties, :tables, 0, NOW())");
+
                     $notifStmt->execute([
                         ':user' => $ins['operatorName'] ?? 'Inspector',
                         ':type' => $actionType,
                         ':title' => $titleStr,
                         ':msg' => $msgStr,
                         ':parties' => json_encode([$ins['operatorName'] ?? 'Inspector', 'Supervisor Yard']),
-                        ':tables' => json_encode(['tables' => ['inspections', 'assets'], 'records' => [['table' => 'inspections', 'id' => (string)$insId], ['table' => 'assets', 'id' => $assetId]]])
+                        ':tables' => json_encode($relatedTables)
                     ]);
+                    $notifId = (int)$db->lastInsertId();
+                    if ($notifId > 0) {
+                        NotificationAudience::deliverNotification(
+                            $db,
+                            $notifId,
+                            $locId,
+                            isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null,
+                            'Inspections',
+                            $actionType
+                        );
+                    }
                 } catch (Exception $ne) {
                     // Ignore non-critical notification error
                 }

@@ -352,6 +352,13 @@ if (-not $ImportDatabase) {
         }
     }
     Write-Host "Equipment Report January 2026 Batch 1-7 verified." -ForegroundColor Green
+
+    $notifRbacScript = Join-Path $srcDir 'scripts\migrate_notification_recipients_rbac_20261027.php'
+    if ($phpExe -and (Test-Path $notifRbacScript)) {
+        $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+        & $phpExe $notifRbacScript | Out-Null
+        Write-Host "Notification recipients aligned with RBAC matrix." -ForegroundColor Green
+    }
 } else {
     throw 'MySQL executable tidak ditemukan untuk -ImportDatabase.'
 }
