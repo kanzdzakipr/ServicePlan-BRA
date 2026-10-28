@@ -20517,6 +20517,7 @@
                     <p>Forecast interval HM/KM, realisasi service, kualitas histori, dan kesiapan referensi filter dalam satu tampilan kerja planner.</p>
                 </div>
                 <div class="pm-header-actions">
+                    <button class="pm-button primary" id="pmEnrollUnitButton" style="background:#0284c7; border-color:#0284c7;"><i class="fa-solid fa-calendar-plus"></i> Masukkan Unit ke Tabel PM</button>
                     <button class="pm-button primary" id="pmAddAssetButton" style="background:#16a34a; border-color:#16a34a;" onclick="window.openModal ? window.openModal('modalNewAsset') : null"><i class="fa-solid fa-plus"></i> Tambah Unit Baru</button>
                     <button class="pm-button secondary" id="pmMethodButton"><i class="fa-solid fa-calculator"></i> Metodologi</button>
                     <button class="pm-button primary" id="pmExportButton"><i class="fa-solid fa-file-export"></i> Export Tracker</button>
@@ -20586,6 +20587,9 @@
         50,
       );
     });
+    document
+      .getElementById("pmEnrollUnitButton")
+      ?.addEventListener("click", () => openEnrollUnitModal());
     document
       .getElementById("pmExportButton")
       .addEventListener("click", exportTracker);
@@ -20709,6 +20713,7 @@
                     <div><div class="pm-card-title"><i class="fa-solid fa-list-check"></i> PM Forecast Tracker</div><div class="pm-card-caption">Target = service terakhir + interval &middot; selisih positif berarti overdue</div></div>
                     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end">
                         <span class="pm-card-caption" id="pmTableCount"></span>
+                        <button type="button" class="pm-row-action" id="pmTrackerEnrollUnitBtn" style="background:#eff6ff; color:#0284c7; border-color:#bae6fd;"><i class="fa-solid fa-calendar-plus"></i> Masukkan Unit ke Tabel PM</button>
                         <button type="button" class="pm-row-action" id="pmDatabaseStatus" title="Muat ulang rencana PM dari database">${pmDatabaseStatusMarkup()}</button>
                     </div>
                 </div>
@@ -20780,6 +20785,9 @@
     document
       .getElementById("pmSiteFilter")
       .addEventListener("change", renderFiltered);
+    document
+      .getElementById("pmTrackerEnrollUnitBtn")
+      ?.addEventListener("click", () => openEnrollUnitModal());
     document
       .getElementById("pmDatabaseStatus")
       ?.addEventListener("click", hydrateReportPmPlans);
@@ -21392,6 +21400,489 @@
     overlay.innerHTML = "";
   }
 
+  let availablePmUnitsCache = [];
+
+  async function fetchAvailableUnitsForPm() {
+    try {
+      const response = await fetch("api/pm.php?view=available_units", {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const payload = await response.json();
+      if (
+        response.ok &&
+        payload?.status === "success" &&
+        Array.isArray(payload.data)
+      ) {
+        availablePmUnitsCache = payload.data;
+        return availablePmUnitsCache;
+      }
+    } catch (error) {
+      console.warn("Gagal memuat daftar unit dari api/pm.php?view=available_units:", error);
+    }
+
+    const fallbackAssets = Array.isArray(window.globalData?.assets)
+      ? window.globalData.assets
+      : Array.isArray(window.currentAssetData)
+        ? window.currentAssetData
+        : [];
+    const existingIds = new Set(pmPlans.map((p) => String(p.assetId || p.id)));
+    availablePmUnitsCache = fallbackAssets.map((a) => {
+      const assetId = String(a.asset_id || a.id || "");
+      return {
+        asset_id: assetId,
+        asset_code: String(a.asset_code || assetId),
+        hull_number: String(a.hull_number || a.alias_name || ""),
+        serial_number: String(a.serial_number || ""),
+        license_plate: String(a.license_plate || ""),
+        year_manufacture: a.year_manufacture || "",
+        make_model: String(a.make_model || a.name || ""),
+        category: String(a.category || ""),
+        last_hm_km: a.last_hm_km ?? 0,
+        location_name: String(a.location_name || a.location || ""),
+        current_operator_name: String(a.current_operator_name || ""),
+        last_service_date: String(a.last_service_date || ""),
+        last_service_hm_km: a.last_service_hm_km ?? null,
+        service_interval_val: a.service_interval_val ?? null,
+        service_interval_unit: String(a.service_interval_unit || ""),
+        daily_usage_coefficient: a.daily_usage_coefficient ?? null,
+        planner_note: String(a.planner_note || ""),
+        in_pm_table: existingIds.has(assetId) ? 1 : 0,
+      };
+    });
+    return availablePmUnitsCache;
+  }
+
+  function defaultMeterUnitForCategory(category) {
+    const cat = String(category || "").toLowerCase();
+    if (
+      cat.includes("dump truck") ||
+      cat.includes("prime mover") ||
+      cat.includes("light vehicle") ||
+      cat.includes("water truck") ||
+      cat.includes("trado")
+    ) {
+      return "KM";
+    }
+    return "HM";
+  }
+
+  async function openEnrollUnitModal(preselectedAssetId = "") {
+    if (
+      window.FleetRBAC &&
+      !window.FleetRBAC.hasAccess("pm", "C") &&
+      !window.FleetRBAC.hasAccess("pm", "U")
+    ) {
+      showToast(
+        "Akses Ditolak: Anda tidak memiliki izin untuk menambahkan unit ke tabel PM.",
+        true,
+      );
+      return;
+    }
+
+    const overlay = document.getElementById("pmDetailOverlay");
+    if (!overlay) return;
+
+    overlay.innerHTML = `
+      <div class="pm-detail-dialog" style="max-width:760px">
+        <div class="pm-detail-header">
+          <div class="pm-detail-title">
+            <i class="fa-solid fa-calendar-plus"></i>
+            <div>
+              <h2>Masukkan Unit ke Tabel Preventive Maintenance</h2>
+              <p>Memuat daftar seluruh unit aktif...</p>
+            </div>
+          </div>
+          <button class="pm-close" data-close-pm><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="pm-detail-body" style="text-align:center; padding:32px;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; color:var(--pm-blue);"></i>
+        </div>
+      </div>
+    `;
+    overlay.classList.add("active");
+    overlay
+      .querySelectorAll("[data-close-pm]")
+      .forEach((btn) => btn.addEventListener("click", closeDetail));
+
+    const units = await fetchAvailableUnitsForPm();
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const notInPmCount = units.filter((u) => !Number(u.in_pm_table)).length;
+
+    overlay.innerHTML = `
+      <div class="pm-detail-dialog" style="max-width:780px">
+        <div class="pm-detail-header">
+          <div class="pm-detail-title">
+            <i class="fa-solid fa-calendar-plus"></i>
+            <div>
+              <h2>Masukkan Unit ke Tabel Preventive Maintenance</h2>
+              <p>Pilih salah satu dari ${units.length} unit aktif (${notInPmCount} belum ada di tabel PM) dan tetapkan jadwal servis berkala.</p>
+            </div>
+          </div>
+          <button class="pm-close" data-close-pm><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="pm-detail-body">
+          <form class="pm-detail-form" id="pmEnrollUnitForm">
+            <div class="pm-field">
+              <label for="pmEnrollSearchInput">Cari Unit (Kode / Lambung / SN / Plat / Model)</label>
+              <input class="pm-input" id="pmEnrollSearchInput" type="search" placeholder="Ketik untuk menyaring daftar unit...">
+            </div>
+            <div class="pm-field">
+              <label for="pmEnrollFilterScope">Filter Status Unit</label>
+              <select class="pm-select" id="pmEnrollFilterScope">
+                <option value="ALL">Semua Unit Aktif (${units.length})</option>
+                <option value="NOT_IN_PM" ${notInPmCount > 0 && !preselectedAssetId ? "selected" : ""}>Belum di Tabel PM (${notInPmCount})</option>
+                <option value="IN_PM">Sudah di Tabel PM (${units.length - notInPmCount})</option>
+              </select>
+            </div>
+            <div class="pm-field full" style="grid-column: 1 / -1;">
+              <label for="pmEnrollAssetSelect">Pilih Unit Alat Berat / Kendaraan *</label>
+              <select class="pm-select" id="pmEnrollAssetSelect" name="asset_id" required></select>
+            </div>
+
+            <div class="pm-detail-grid" id="pmEnrollUnitSummary" style="grid-column: 1 / -1; margin-bottom: 4px; display:none;"></div>
+
+            <div class="pm-detail-section" style="grid-column: 1 / -1; margin-top: 8px;">
+              <h3>Parameter Jadwal Servis Berkala (PM)</h3>
+              <div class="pm-detail-form">
+                <div class="pm-field">
+                  <label for="pmEnrollCurrentMeter">Meter Unit Saat Ini (HM/KM) *</label>
+                  <input class="pm-input" id="pmEnrollCurrentMeter" name="current_meter" type="number" min="0" step="0.1" placeholder="Contoh: 1250" required>
+                </div>
+                <div class="pm-field">
+                  <label for="pmEnrollIntervalUnit">Jenis Meter *</label>
+                  <select class="pm-select" id="pmEnrollIntervalUnit" name="service_interval_unit" required>
+                    <option value="HM">HM (Hour Meter)</option>
+                    <option value="KM">KM (Kilometer)</option>
+                  </select>
+                </div>
+                <div class="pm-field">
+                  <label for="pmEnrollLastDate">Tanggal Servis Terakhir *</label>
+                  <input class="pm-input" id="pmEnrollLastDate" name="last_service_date" type="date" value="${todayIso}" required>
+                </div>
+                <div class="pm-field">
+                  <label for="pmEnrollLastMeter">Meter Servis Terakhir (HM/KM) *</label>
+                  <input class="pm-input" id="pmEnrollLastMeter" name="last_service_hm_km" type="number" min="0" step="0.1" placeholder="Contoh: 1000" required>
+                </div>
+                <div class="pm-field">
+                  <label for="pmEnrollIntervalVal">Interval Servis Berkala *</label>
+                  <input class="pm-input" id="pmEnrollIntervalVal" name="service_interval_val" type="number" min="1" step="1" placeholder="Contoh: 250 atau 10000" required>
+                </div>
+                <div class="pm-field">
+                  <label for="pmEnrollDailyRate">Pemakaian Rata-Rata per Hari *</label>
+                  <input class="pm-input" id="pmEnrollDailyRate" name="daily_usage_coefficient" type="number" min="0.01" step="0.01" placeholder="Contoh: 7 (HM) atau 150 (KM)" required>
+                </div>
+                <div class="pm-field">
+                  <label for="pmEnrollOperator">Operator / PIC Unit</label>
+                  <input class="pm-input" id="pmEnrollOperator" name="current_operator_name" type="text" placeholder="Nama operator / PIC">
+                </div>
+                <div class="pm-field">
+                  <label for="pmEnrollNote">Catatan Planner</label>
+                  <input class="pm-input" id="pmEnrollNote" name="planner_note" type="text" placeholder="Catatan jadwal / kebutuhan filter">
+                </div>
+              </div>
+            </div>
+
+            <div class="pm-detail-section" style="grid-column: 1 / -1; margin-top: 6px;">
+              <h3>Preview Kalkulasi Jadwal Otomatis</h3>
+              <div class="pm-detail-grid" id="pmEnrollCalcPreview" style="margin-bottom:0;"></div>
+            </div>
+          </form>
+        </div>
+        <div class="pm-detail-footer">
+          <button type="button" class="pm-button secondary" data-close-pm>Batal</button>
+          <button type="button" class="pm-button primary" id="pmSaveEnrollUnit"><i class="fa-solid fa-check"></i> Masukkan ke Tabel PM</button>
+        </div>
+      </div>
+    `;
+
+    overlay
+      .querySelectorAll("[data-close-pm]")
+      .forEach((btn) => btn.addEventListener("click", closeDetail));
+
+    const searchInput = document.getElementById("pmEnrollSearchInput");
+    const scopeSelect = document.getElementById("pmEnrollFilterScope");
+    const assetSelect = document.getElementById("pmEnrollAssetSelect");
+    const summaryBox = document.getElementById("pmEnrollUnitSummary");
+    const calcBox = document.getElementById("pmEnrollCalcPreview");
+
+    const currentMeterInput = document.getElementById("pmEnrollCurrentMeter");
+    const intervalUnitSelect = document.getElementById("pmEnrollIntervalUnit");
+    const lastDateInput = document.getElementById("pmEnrollLastDate");
+    const lastMeterInput = document.getElementById("pmEnrollLastMeter");
+    const intervalValInput = document.getElementById("pmEnrollIntervalVal");
+    const dailyRateInput = document.getElementById("pmEnrollDailyRate");
+    const operatorInput = document.getElementById("pmEnrollOperator");
+    const noteInput = document.getElementById("pmEnrollNote");
+
+    function updateCalcPreview() {
+      const mUnit = intervalUnitSelect.value || "HM";
+      const cur = Number(currentMeterInput.value);
+      const last = Number(lastMeterInput.value);
+      const intv = Number(intervalValInput.value);
+      const rate = Number(dailyRateInput.value);
+
+      if (
+        lastMeterInput.value === "" ||
+        intervalValInput.value === "" ||
+        !Number.isFinite(last) ||
+        !Number.isFinite(intv) ||
+        intv <= 0
+      ) {
+        calcBox.innerHTML = `
+          ${detailStat("Target Servis Berikutnya", "—")}
+          ${detailStat("Selisih Jatuh Tempo", "—")}
+          ${detailStat("Estimasi Tanggal Servis", "—")}
+        `;
+        return;
+      }
+
+      const target = last + intv;
+      const variance = Number.isFinite(cur) ? Math.round((cur - target) * 10) / 10 : null;
+      let estText = "—";
+      if (Number.isFinite(cur) && Number.isFinite(rate) && rate > 0) {
+        const rem = target - cur;
+        if (rem <= 0) {
+          estText = "Jatuh Tempo / Overdue (Hari Ini)";
+        } else {
+          const days = Math.max(1, Math.ceil(rem / rate));
+          const d = new Date(Date.now() + days * 86400000);
+          const dStr = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+          estText = `${dStr} (~${days} hari)`;
+        }
+      }
+
+      calcBox.innerHTML = `
+        ${detailStat("Target Servis Berikutnya", `${formatNumber(target)} ${mUnit}`)}
+        ${detailStat("Selisih Jatuh Tempo", variance == null ? "—" : `${variance > 0 ? "+" : ""}${formatNumber(variance)} ${mUnit}`)}
+        ${detailStat("Estimasi Tanggal Servis", escapeHtml(estText))}
+      `;
+    }
+
+    function applySelectedUnitDefaults() {
+      const selectedId = assetSelect.value;
+      const unit = units.find((u) => String(u.asset_id) === String(selectedId));
+      if (!unit) {
+        summaryBox.style.display = "none";
+        summaryBox.innerHTML = "";
+        updateCalcPreview();
+        return;
+      }
+
+      const hull = unit.hull_number || unit.alias_name || "Belum ada";
+      const snOrPlate =
+        [unit.serial_number, unit.license_plate].filter(Boolean).join(" / ") ||
+        "Belum ada";
+      summaryBox.style.display = "grid";
+      summaryBox.innerHTML = `
+        ${detailStat("Kode / ID Unit", `${escapeHtml(unit.asset_code || unit.asset_id)} (${escapeHtml(unit.asset_id)})`)}
+        ${detailStat("Nomor Lambung", escapeHtml(hull))}
+        ${detailStat("Kategori & Model", escapeHtml([unit.category, unit.make_model].filter(Boolean).join(" · ") || "—"))}
+        ${detailStat("SN / Pelat", escapeHtml(snOrPlate))}
+        ${detailStat("Lokasi / Site", escapeHtml(unit.location_name || "—"))}
+        ${detailStat("Status Tabel PM", Number(unit.in_pm_table) ? '<span class="pm-status completed">Sudah di Tabel PM</span>' : '<span class="pm-status due-soon">Belum di Tabel PM</span>')}
+      `;
+
+      const defaultUnit =
+        unit.service_interval_unit === "KM" || unit.service_interval_unit === "HM"
+          ? unit.service_interval_unit
+          : defaultMeterUnitForCategory(unit.category);
+      intervalUnitSelect.value = defaultUnit;
+
+      const curMeter =
+        unit.last_hm_km != null && unit.last_hm_km !== ""
+          ? Number(unit.last_hm_km)
+          : 0;
+      currentMeterInput.value = curMeter;
+
+      const lastDate = unit.last_service_date
+        ? String(unit.last_service_date).slice(0, 10)
+        : todayIso;
+      lastDateInput.value = lastDate;
+
+      const lastMeter =
+        unit.last_service_hm_km != null && unit.last_service_hm_km !== ""
+          ? Number(unit.last_service_hm_km)
+          : curMeter;
+      lastMeterInput.value = lastMeter;
+
+      const defaultIntv =
+        unit.service_interval_val != null && Number(unit.service_interval_val) > 0
+          ? Number(unit.service_interval_val)
+          : defaultUnit === "KM"
+            ? 10000
+            : 250;
+      intervalValInput.value = defaultIntv;
+
+      const defaultRate =
+        unit.daily_usage_coefficient != null &&
+        Number(unit.daily_usage_coefficient) > 0
+          ? Number(unit.daily_usage_coefficient)
+          : defaultUnit === "KM"
+            ? 150
+            : 7;
+      dailyRateInput.value = defaultRate;
+
+      operatorInput.value = unit.current_operator_name || "";
+      noteInput.value = unit.planner_note || "";
+
+      updateCalcPreview();
+    }
+
+    function populateUnitOptions() {
+      const q = searchInput.value.trim().toLowerCase();
+      const scope = scopeSelect.value;
+      const currentVal = assetSelect.value || preselectedAssetId;
+
+      const filtered = units.filter((u) => {
+        if (scope === "NOT_IN_PM" && Number(u.in_pm_table)) return false;
+        if (scope === "IN_PM" && !Number(u.in_pm_table)) return false;
+        if (!q) return true;
+        const hay =
+          `${u.asset_id} ${u.asset_code || ""} ${u.hull_number || ""} ${u.alias_name || ""} ${u.serial_number || ""} ${u.license_plate || ""} ${u.make_model || ""} ${u.category || ""} ${u.location_name || ""}`.toLowerCase();
+        return hay.includes(q);
+      });
+
+      if (filtered.length === 0) {
+        assetSelect.innerHTML =
+          '<option value="">-- Tidak ada unit yang cocok dengan filter --</option>';
+        applySelectedUnitDefaults();
+        return;
+      }
+
+      assetSelect.innerHTML =
+        '<option value="">-- Pilih Salah Satu Unit (${filtered.length} unit tersedia) --</option>'.replace(
+          "${filtered.length}",
+          String(filtered.length),
+        ) +
+        filtered
+          .map((u) => {
+            const code = u.asset_code || u.asset_id;
+            const idPart =
+              code && code !== u.asset_id ? `${code} (${u.asset_id})` : u.asset_id;
+            const hullPart =
+              u.hull_number && u.hull_number !== code ? ` · Lambung: ${u.hull_number}` : "";
+            const modelPart = [u.category, u.make_model].filter(Boolean).join(" ");
+            const statusTag = Number(u.in_pm_table)
+              ? "[Sudah di Tabel PM]"
+              : "[Belum di Tabel PM]";
+            return `<option value="${escapeHtml(u.asset_id)}">${escapeHtml(idPart)}${escapeHtml(hullPart)} — ${escapeHtml(modelPart)} ${statusTag}</option>`;
+          })
+          .join("");
+
+      if (
+        currentVal &&
+        filtered.some((u) => String(u.asset_id) === String(currentVal))
+      ) {
+        assetSelect.value = currentVal;
+      } else if (filtered.length === 1) {
+        assetSelect.value = filtered[0].asset_id;
+      }
+      applySelectedUnitDefaults();
+    }
+
+    searchInput.addEventListener("input", populateUnitOptions);
+    scopeSelect.addEventListener("change", populateUnitOptions);
+    assetSelect.addEventListener("change", applySelectedUnitDefaults);
+    [
+      currentMeterInput,
+      intervalUnitSelect,
+      lastDateInput,
+      lastMeterInput,
+      intervalValInput,
+      dailyRateInput,
+    ].forEach((el) => el.addEventListener("input", updateCalcPreview));
+
+    document
+      .getElementById("pmSaveEnrollUnit")
+      .addEventListener("click", saveEnrollUnit);
+
+    populateUnitOptions();
+  }
+
+  async function saveEnrollUnit() {
+    const form = document.getElementById("pmEnrollUnitForm");
+    if (!form || !form.reportValidity()) return;
+
+    const data = Object.fromEntries(new FormData(form).entries());
+    const currentMeter = Number(data.current_meter);
+    const lastMeter = Number(data.last_service_hm_km);
+    if (lastMeter > currentMeter) {
+      showToast(
+        "Meter servis terakhir tidak boleh lebih besar dari meter unit saat ini.",
+        true,
+      );
+      return;
+    }
+
+    const saveBtn = document.getElementById("pmSaveEnrollUnit");
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+    }
+
+    try {
+      const response = await fetch("api/pm.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "enroll_unit",
+          asset_id: data.asset_id,
+          current_meter: currentMeter,
+          last_service_date: data.last_service_date,
+          last_service_hm_km: lastMeter,
+          service_interval_val: Number(data.service_interval_val),
+          service_interval_unit: data.service_interval_unit,
+          daily_usage_coefficient: Number(data.daily_usage_coefficient),
+          current_operator_name: data.current_operator_name || "",
+          planner_note: data.planner_note || "",
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.status !== "success") {
+        throw new Error(
+          result.message || "Gagal memasukkan unit ke tabel Preventive Maintenance.",
+        );
+      }
+
+      if (Array.isArray(window.globalData?.assets)) {
+        const targetAsset = window.globalData.assets.find(
+          (a) =>
+            String(a.id || a.asset_id) === String(data.asset_id) ||
+            String(a.asset_code) === String(data.asset_id),
+        );
+        if (targetAsset && result.data) {
+          targetAsset.last_hm_km = currentMeter;
+          targetAsset.last_service_date = result.data.last_service_date;
+          targetAsset.last_service_hm_km = result.data.last_service_hm_km;
+          targetAsset.service_interval_val = result.data.service_interval_val;
+          targetAsset.service_interval_unit = result.data.service_interval_unit;
+          targetAsset.daily_usage_coefficient =
+            result.data.daily_usage_coefficient;
+          targetAsset.next_service_due_hm_km =
+            result.data.next_service_due_hm_km;
+          targetAsset.next_service_estimated_date =
+            result.data.next_service_estimated_date;
+        }
+      }
+
+      closeDetail();
+      await hydrateReportPmPlans();
+      showToast(
+        result.message ||
+          `Unit ${data.asset_id} berhasil dimasukkan ke tabel Preventive Maintenance.`,
+      );
+    } catch (error) {
+      showToast(error.message, true);
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML =
+          '<i class="fa-solid fa-check"></i> Masukkan ke Tabel PM';
+      }
+    }
+  }
+
   function exportTracker() {
     const headers = [
       "Kode Unit",
@@ -21462,7 +21953,7 @@
     showToast.timer = setTimeout(() => toast.classList.remove("show"), 2800);
   }
 
-  window.PreventiveMaintenance = { refresh: hydrateReportPmPlans };
+  window.PreventiveMaintenance = { refresh: hydrateReportPmPlans, openEnrollUnitModal };
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", createModule);
   } else {
