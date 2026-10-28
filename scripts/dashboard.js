@@ -19856,6 +19856,23 @@
   let pmDatabaseState = { status: "idle", count: 0, message: "" };
   let calibrationRecords = [];
   let calibrationDatabaseState = { status: "idle", count: 0, message: "" };
+  let calendarYear = 2026;
+  let calendarMonth = 6; // 0-indexed: 6 = Juli 2026
+  let calendarShowEstimates = true;
+  const calendarMonthNames = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
 
   function planKey(plan) {
     return String(plan?.key || plan?.id || "");
@@ -21061,43 +21078,189 @@
     if (priorityContainer) bindDetailButtons(priorityContainer);
   }
 
-  function renderCalendar() {
-    const panel = document.getElementById("pmPanelCalendar");
-    const events = {};
+  function collectAllCalendarEvents() {
+    const allEvents = [];
     pmPlans.forEach((rawPlan) => {
       const plan = mergedPlan(rawPlan);
-      if (plan.actualDate && plan.actualDate.startsWith("2026-07")) {
-        const day = Number(plan.actualDate.slice(-2));
-        if (!events[day]) events[day] = [];
-        events[day].push(plan);
+      const seenDates = new Set();
+      const unitLabel = plan.code || plan.id;
+      const mType = meterType(plan);
+
+      const addEvt = (dateStr, kind, meterVal, tagLabel, cssClass) => {
+        if (!dateStr) return;
+        const clean = String(dateStr).trim().slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(clean)) return;
+        if (seenDates.has(clean)) return;
+        seenDates.add(clean);
+        const [yr, mo, dy] = clean.split("-").map(Number);
+        allEvents.push({
+          plan,
+          date: clean,
+          year: yr,
+          month: mo - 1,
+          day: dy,
+          kind,
+          meter: meterVal,
+          unitLabel,
+          tagLabel,
+          mType,
+          cssClass,
+        });
+      };
+
+      if (plan.actualDate) {
+        addEvt(
+          plan.actualDate,
+          "actual",
+          plan.actual,
+          "Realisasi PM",
+          plan.actual == null ? "incomplete" : "",
+        );
+      }
+
+      const history = getPmHistory(plan);
+      history.forEach((h) => {
+        if (h && h.date) {
+          addEvt(
+            h.date,
+            "history",
+            h.meter,
+            `Histori ${h.label || "Servis"}`,
+            "",
+          );
+        }
+      });
+
+      if (plan.lastDate) {
+        addEvt(
+          plan.lastDate,
+          "last",
+          plan.last,
+          "Servis Terakhir",
+          "",
+        );
+      }
+
+      if (calendarShowEstimates && !plan.completed && plan.nextServiceDate) {
+        addEvt(
+          plan.nextServiceDate,
+          "estimate",
+          plan.target,
+          "Estimasi Jadwal",
+          "incomplete",
+        );
       }
     });
-    const firstDayOffset = (new Date(2026, 6, 1).getDay() + 6) % 7;
+    return allEvents;
+  }
+
+  function renderCalendar() {
+    const panel = document.getElementById("pmPanelCalendar");
+    if (!panel) return;
+
+    const allEvents = collectAllCalendarEvents();
+    const eventsByDay = {};
+    const monthEventCounts = Array(12).fill(0);
+    const yearEventCounts = {};
+    const yearsSet = new Set([2024, 2025, 2026, 2027, new Date().getFullYear(), calendarYear]);
+
+    allEvents.forEach((evt) => {
+      yearsSet.add(evt.year);
+      yearEventCounts[evt.year] = (yearEventCounts[evt.year] || 0) + 1;
+      if (evt.year === calendarYear) {
+        monthEventCounts[evt.month] = (monthEventCounts[evt.month] || 0) + 1;
+        if (evt.month === calendarMonth) {
+          if (!eventsByDay[evt.day]) eventsByDay[evt.day] = [];
+          eventsByDay[evt.day].push(evt);
+        }
+      }
+    });
+
+    const sortedYears = Array.from(yearsSet).sort((a, b) => a - b);
+    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const firstDayOffset = (new Date(calendarYear, calendarMonth, 1).getDay() + 6) % 7;
+    const now = new Date();
+    const isCurrentRealMonth =
+      now.getFullYear() === calendarYear && now.getMonth() === calendarMonth;
+    const todayDateNum = now.getDate();
+
     const cells = Array.from(
       { length: firstDayOffset },
       () => '<div class="pm-calendar-day empty"></div>',
     );
-    for (let day = 1; day <= 31; day++) {
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayEvents = eventsByDay[day] || [];
+      const isToday = isCurrentRealMonth && day === todayDateNum;
+      const dayNumberHtml = isToday
+        ? `<div class="pm-calendar-number" style="display:flex; align-items:center; justify-content:space-between;"><span style="background:var(--pm-blue, #0284c7); color:#fff; border-radius:999px; padding:1px 7px; font-weight:800;">${day}</span><span style="font-size:0.6rem; color:var(--pm-blue, #0284c7); font-weight:700;">Hari Ini</span></div>`
+        : `<div class="pm-calendar-number">${day}</div>`;
+      const eventsHtml = dayEvents
+        .map((evt) => {
+          const meterInfo =
+            evt.meter != null ? ` · ${formatNumber(evt.meter)} ${evt.mType}` : "";
+          const badgePrefix =
+            evt.kind === "estimate" ? "[Est] " : evt.kind === "history" ? `[${evt.tagLabel.replace("Histori ", "")}] ` : "";
+          return `<button class="pm-calendar-event ${evt.cssClass}" data-pm-detail="${escapeHtml(planKey(evt.plan))}" title="${escapeHtml(`${evt.unitLabel} — ${evt.tagLabel}${meterInfo} (${evt.date})`)}">${escapeHtml(badgePrefix + evt.unitLabel)}</button>`;
+        })
+        .join("");
       cells.push(
-        `<div class="pm-calendar-day"><div class="pm-calendar-number">${day}</div>${(events[day] || []).map((plan) => `<button class="pm-calendar-event ${plan.actual == null ? "incomplete" : ""}" data-pm-detail="${escapeHtml(planKey(plan))}" title="${escapeHtml(plan.code || plan.id)}">${escapeHtml(plan.code || plan.id)}</button>`).join("")}</div>`,
+        `<div class="pm-calendar-day"${isToday ? ' style="background:#f0f9ff; box-shadow:inset 0 0 0 1px #7dd3fc;"' : ""}>${dayNumberHtml}${eventsHtml}</div>`,
       );
     }
+
+    const totalEventsInMonth = Object.values(eventsByDay).flat().length;
+    const actualOrHistCount = Object.values(eventsByDay)
+      .flat()
+      .filter((e) => e.kind !== "estimate").length;
+    const estCount = totalEventsInMonth - actualOrHistCount;
+
     const attention = pmPlans.filter(
       (plan) =>
         ["OVERDUE", "DUE", "DUE SOON"].includes(statusOf(plan)) ||
         (mergedPlan(plan).completed && !mergedPlan(plan).actualDate),
     );
+
+    const monthOptionsHtml = calendarMonthNames
+      .map(
+        (mName, idx) =>
+          `<option value="${idx}" ${idx === calendarMonth ? "selected" : ""}>${mName}${monthEventCounts[idx] ? ` (${monthEventCounts[idx]})` : ""}</option>`,
+      )
+      .join("");
+    const yearOptionsHtml = sortedYears
+      .map(
+        (yr) =>
+          `<option value="${yr}" ${yr === calendarYear ? "selected" : ""}>${yr}${yearEventCounts[yr] ? ` (${yearEventCounts[yr]})` : ""}</option>`,
+      )
+      .join("");
+
     panel.innerHTML = `
             <div class="pm-calendar-layout">
                 <section class="pm-card">
-                    <div class="pm-card-header"><div><div class="pm-card-title"><i class="fa-regular fa-calendar-days"></i> Juli 2026</div><div class="pm-card-caption">Tanggal menampilkan realisasi yang tercatat, bukan estimasi due date</div></div><span class="pm-status completed">${Object.values(events).flat().length} TERCATAT</span></div>
+                    <div class="pm-card-header" style="flex-wrap:wrap; gap:12px;">
+                        <div>
+                            <div class="pm-card-title"><i class="fa-regular fa-calendar-days"></i> ${calendarMonthNames[calendarMonth]} ${calendarYear}</div>
+                            <div class="pm-card-caption">Menampilkan realisasi servis, histori perawatan (${actualOrHistCount}), dan estimasi jatuh tempo (${estCount})</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                            <button type="button" class="pm-row-action" id="pmCalPrevMonth" title="Bulan Sebelumnya" style="padding:5px 9px;"><i class="fa-solid fa-chevron-left"></i></button>
+                            <select id="pmCalMonthSelect" class="pm-select" aria-label="Pilih Bulan Kalender" style="min-width:130px; padding:5px 8px; height:32px; font-size:0.78rem;">${monthOptionsHtml}</select>
+                            <select id="pmCalYearSelect" class="pm-select" aria-label="Pilih Tahun Kalender" style="min-width:95px; padding:5px 8px; height:32px; font-size:0.78rem;">${yearOptionsHtml}</select>
+                            <button type="button" class="pm-row-action" id="pmCalNextMonth" title="Bulan Berikutnya" style="padding:5px 9px;"><i class="fa-solid fa-chevron-right"></i></button>
+                            <button type="button" class="pm-row-action" id="pmCalTodayBtn" title="Lompat ke Bulan Ini" style="padding:5px 10px; font-size:0.74rem;">Bulan Ini</button>
+                            ${calendarYear !== 2026 || calendarMonth !== 6 ? `<button type="button" class="pm-row-action" id="pmCalJuly2026Btn" title="Kembali ke Periode Juli 2026" style="padding:5px 10px; font-size:0.74rem; background:#eff6ff; color:#0284c7; border-color:#bae6fd;">Juli 2026</button>` : ""}
+                            <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.73rem; color:var(--text-muted); cursor:pointer; margin-left:4px; user-select:none;">
+                                <input type="checkbox" id="pmCalToggleEstimate" ${calendarShowEstimates ? "checked" : ""}> Estimasi Due
+                            </label>
+                            <span class="pm-status completed">${totalEventsInMonth} AGENDA</span>
+                        </div>
+                    </div>
                     <div class="pm-calendar">
                         ${["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((day) => `<div class="pm-calendar-head">${day}</div>`).join("")}
                         ${cells.join("")}
                     </div>
                 </section>
                 <section class="pm-card">
-                    <div class="pm-card-header"><div><div class="pm-card-title"><i class="fa-solid fa-clipboard-list"></i> Perlu Dijadwalkan / Dilengkapi</div><div class="pm-card-caption">Tidak membuat tanggal estimasi tanpa data usage rate</div></div></div>
+                    <div class="pm-card-header"><div><div class="pm-card-title"><i class="fa-solid fa-clipboard-list"></i> Perlu Dijadwalkan / Dilengkapi</div><div class="pm-card-caption">Unit Overdue, Due Soon, atau realisasi belum lengkap</div></div></div>
                     <ul class="pm-unscheduled-list">
                         ${attention
                           .map((rawPlan) => {
@@ -21110,6 +21273,47 @@
                 </section>
             </div>
         `;
+
+    document.getElementById("pmCalPrevMonth")?.addEventListener("click", () => {
+      calendarMonth -= 1;
+      if (calendarMonth < 0) {
+        calendarMonth = 11;
+        calendarYear -= 1;
+      }
+      renderCalendar();
+    });
+    document.getElementById("pmCalNextMonth")?.addEventListener("click", () => {
+      calendarMonth += 1;
+      if (calendarMonth > 11) {
+        calendarMonth = 0;
+        calendarYear += 1;
+      }
+      renderCalendar();
+    });
+    document.getElementById("pmCalMonthSelect")?.addEventListener("change", (e) => {
+      calendarMonth = Number(e.target.value);
+      renderCalendar();
+    });
+    document.getElementById("pmCalYearSelect")?.addEventListener("change", (e) => {
+      calendarYear = Number(e.target.value);
+      renderCalendar();
+    });
+    document.getElementById("pmCalTodayBtn")?.addEventListener("click", () => {
+      const current = new Date();
+      calendarYear = current.getFullYear();
+      calendarMonth = current.getMonth();
+      renderCalendar();
+    });
+    document.getElementById("pmCalJuly2026Btn")?.addEventListener("click", () => {
+      calendarYear = 2026;
+      calendarMonth = 6;
+      renderCalendar();
+    });
+    document.getElementById("pmCalToggleEstimate")?.addEventListener("change", (e) => {
+      calendarShowEstimates = Boolean(e.target.checked);
+      renderCalendar();
+    });
+
     bindDetailButtons(panel);
   }
 
