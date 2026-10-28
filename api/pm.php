@@ -193,9 +193,25 @@ if ($view === 'available_units') {
                    COALESCE(NULLIF(a.last_hm_km, 0), p.current_smr, a.last_hm_km) AS last_hm_km,
                    a.current_location_id, l.location_name, a.current_operator_name,
                    COALESCE(a.last_service_date, p.last_service_date) AS last_service_date,
-                   COALESCE(a.last_service_hm_km, p.last_service_hm) AS last_service_hm_km,
+                   COALESCE(
+                       a.last_service_hm_km,
+                       p.last_service_hm,
+                       CASE
+                           WHEN COALESCE(a.next_service_due_hm_km, p.target_due_hm) IS NOT NULL
+                            AND COALESCE(a.service_interval_val, p.interval_hm) IS NOT NULL
+                           THEN GREATEST(0, COALESCE(a.next_service_due_hm_km, p.target_due_hm) - COALESCE(a.service_interval_val, p.interval_hm))
+                           ELSE NULL
+                       END
+                   ) AS last_service_hm_km,
                    COALESCE(a.service_interval_val, p.interval_hm) AS service_interval_val,
-                   a.service_interval_unit, a.daily_usage_coefficient,
+                   COALESCE(
+                       NULLIF(a.service_interval_unit, \'\'),
+                       CASE WHEN a.category IN (\'Dump Truck\', \'Prime Mover\', \'Light Vehicle\', \'Water Truck\', \'Trado\') THEN \'KM\' ELSE \'HM\' END
+                   ) AS service_interval_unit,
+                   COALESCE(
+                       a.daily_usage_coefficient,
+                       CASE WHEN COALESCE(NULLIF(a.service_interval_unit, \'\'), CASE WHEN a.category IN (\'Dump Truck\', \'Prime Mover\', \'Light Vehicle\', \'Water Truck\', \'Trado\') THEN \'KM\' ELSE \'HM\' END) = \'KM\' THEN 150.00 ELSE 7.00 END
+                   ) AS daily_usage_coefficient,
                    COALESCE(a.next_service_due_hm_km, p.target_due_hm) AS next_service_due_hm_km,
                    a.next_service_estimated_date, p.pm_plan_id, p.status AS pm_status,
                    p.planner_note,
@@ -222,13 +238,30 @@ $sql = 'SELECT a.asset_id, a.asset_code, a.hull_number, a.alias_name, a.serial_n
                COALESCE(NULLIF(a.last_hm_km, 0), p.current_smr, a.last_hm_km) AS last_hm_km,
                a.current_location_id, l.location_name, a.current_operator_name,
                COALESCE(a.last_service_date, p.last_service_date) AS last_service_date,
-               COALESCE(a.last_service_hm_km, p.last_service_hm) AS last_service_hm_km,
+               COALESCE(
+                   a.last_service_hm_km,
+                   p.last_service_hm,
+                   CASE
+                       WHEN COALESCE(a.next_service_due_hm_km, p.target_due_hm) IS NOT NULL
+                        AND COALESCE(a.service_interval_val, p.interval_hm) IS NOT NULL
+                       THEN GREATEST(0, COALESCE(a.next_service_due_hm_km, p.target_due_hm) - COALESCE(a.service_interval_val, p.interval_hm))
+                       ELSE NULL
+                   END
+               ) AS last_service_hm_km,
                COALESCE(a.service_interval_val, p.interval_hm) AS service_interval_val,
-               a.service_interval_unit, a.daily_usage_coefficient,
+               COALESCE(
+                   NULLIF(a.service_interval_unit, \'\'),
+                   CASE WHEN a.category IN (\'Dump Truck\', \'Prime Mover\', \'Light Vehicle\', \'Water Truck\', \'Trado\') THEN \'KM\' ELSE \'HM\' END
+               ) AS service_interval_unit,
+               COALESCE(
+                   a.daily_usage_coefficient,
+                   CASE WHEN COALESCE(NULLIF(a.service_interval_unit, \'\'), CASE WHEN a.category IN (\'Dump Truck\', \'Prime Mover\', \'Light Vehicle\', \'Water Truck\', \'Trado\') THEN \'KM\' ELSE \'HM\' END) = \'KM\' THEN 150.00 ELSE 7.00 END
+               ) AS daily_usage_coefficient,
                COALESCE(a.next_service_due_hm_km, p.target_due_hm) AS next_service_due_hm_km,
                a.next_service_estimated_date,
                a.service_manual_pdf_url, p.pm_plan_id, p.status AS pm_status,
-               p.warranty_status, p.planner_note
+               COALESCE(p.warranty_status, NULLIF(a.warranty, \'\'), \'No Warranty\') AS warranty_status,
+               p.planner_note
         FROM assets a
         LEFT JOIN locations l ON l.location_id = a.current_location_id
         LEFT JOIN pm_plans p ON p.pm_plan_id = (
@@ -256,12 +289,12 @@ unset($asset);
 if ($assets) {
     $ids = array_keys($byId);
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $historyStmt = $db->prepare("SELECT asset_id, service_date, service_hm_km, service_type FROM asset_service_history WHERE asset_id IN ($placeholders) ORDER BY service_date DESC, service_log_id DESC");
+    $historyStmt = $db->prepare("SELECT asset_id, service_date, service_hm_km, service_type, mechanic_pic, jo_report_number, notes FROM asset_service_history WHERE asset_id IN ($placeholders) ORDER BY service_date DESC, service_log_id DESC");
     $historyStmt->execute($ids);
     foreach ($historyStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $byId[$row['asset_id']]['service_history'][] = $row;
     }
-    $photoStmt = $db->prepare("SELECT asset_id, photo_title, photo_url FROM asset_gallery_photos WHERE asset_id IN ($placeholders) ORDER BY photo_id DESC");
+    $photoStmt = $db->prepare("SELECT photo_id, asset_id, photo_title, photo_url FROM asset_gallery_photos WHERE asset_id IN ($placeholders) ORDER BY photo_id DESC");
     $photoStmt->execute($ids);
     foreach ($photoStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $byId[$row['asset_id']]['gallery_photos'][] = $row;

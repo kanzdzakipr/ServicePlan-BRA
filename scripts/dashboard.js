@@ -19684,7 +19684,7 @@
     },
   ];
 
-  const pmPlans = [];
+  const pmPlans = [...legacyPmPlans];
   const kitReferences = [
     {
       no: 1,
@@ -19877,14 +19877,16 @@
 
   function formatDate(value) {
     if (!value) return "—";
-    const parts = value.split("-");
+    const cleanDate = String(value).trim().slice(0, 10);
+    const parts = cleanDate.split("-");
+    if (parts.length < 3) return String(value);
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    if (Number.isNaN(d.getTime())) return cleanDate;
     return new Intl.DateTimeFormat("id-ID", {
       day: "2-digit",
       month: "short",
       year: "numeric",
-    }).format(
-      new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])),
-    );
+    }).format(d);
   }
 
   function categoryOf(plan) {
@@ -20263,27 +20265,56 @@
         !Array.isArray(payload.data)
       )
         throw new Error(payload.message || "Data PM tidak tersedia.");
+      const legacyByAid = {};
+      legacyPmPlans.forEach((lp) => {
+        const lid = String(lp.id || "").trim();
+        if (lid) legacyByAid[lid] = lp;
+        if (lid === "SD-00001") legacyByAid["PF-00006"] = lp;
+        if (lid.includes("DT-04053")) legacyByAid["DT-04053"] = lp;
+        if (lid === "PM-00001") legacyByAid["PM-00002"] = lp;
+      });
       const rows = payload.data.map((asset) => {
+        const aid = String(asset.asset_id || "");
+        const legacy = legacyByAid[aid] || null;
         const history = Array.isArray(asset.service_history)
           ? asset.service_history
           : [];
+        const realizationLog = history.find((item) =>
+          String(item.service_type || "").toLowerCase().includes("realisasi"),
+        );
+        const lastDateClean = String(asset.last_service_date || "").slice(0, 10);
+        const actualVal =
+          realizationLog && realizationLog.service_hm_km != null
+            ? Number(realizationLog.service_hm_km)
+            : legacy && legacy.actual != null
+              ? Number(legacy.actual)
+              : null;
+        const actualDateVal =
+          realizationLog && realizationLog.service_date
+            ? String(realizationLog.service_date).slice(0, 10)
+            : legacy && legacy.actualDate
+              ? String(legacy.actualDate)
+              : null;
+        const rawCode = String(asset.asset_code || asset.asset_id || "");
+        const displayCode =
+          legacy && legacy.code && rawCode === aid ? legacy.code : rawCode;
         return {
-          key: `asset-${asset.asset_id}`,
-          id: String(asset.asset_id),
-          assetId: String(asset.asset_id),
-          code: String(asset.asset_code || asset.asset_id),
+          key: `asset-${aid}`,
+          id: aid,
+          assetId: aid,
+          code: displayCode,
           asset:
             [asset.category, asset.make_model].filter(Boolean).join(" ") ||
-            String(asset.asset_code || asset.asset_id),
-          hullNumber: String(asset.hull_number || asset.alias_name || ""),
+            displayCode,
+          hullNumber: String(asset.hull_number || asset.alias_name || (legacy && legacy.code) || ""),
           serialNumber: String(asset.serial_number || ""),
           licensePlate: String(asset.license_plate || ""),
           category: String(asset.category || ""),
           model: String(asset.make_model || ""),
-          year: Number(asset.year_manufacture) || "-",
-          warranty: String(asset.warranty_status || "No Warranty"),
+          year: Number(asset.year_manufacture) || (legacy && legacy.year) || "-",
+          warranty: String(asset.warranty_status || (legacy && legacy.warranty) || "No Warranty"),
           current: asset.last_hm_km == null ? null : Number(asset.last_hm_km),
-          tracking: String(asset.last_service_date || ""),
+          tracking: (legacy && legacy.tracking) || lastDateClean,
           interval:
             asset.service_interval_val == null
               ? null
@@ -20292,13 +20323,16 @@
             asset.last_service_hm_km == null
               ? null
               : Number(asset.last_service_hm_km),
-          lastDate: String(asset.last_service_date || ""),
+          lastDate: lastDateClean,
           target:
             asset.next_service_due_hm_km == null
               ? null
               : Number(asset.next_service_due_hm_km),
           completed:
-            String(asset.pm_status || "").toUpperCase() === "COMPLETED",
+            String(asset.pm_status || "").toUpperCase() === "COMPLETED" ||
+            Boolean(legacy && legacy.completed),
+          actual: actualVal,
+          actualDate: actualDateVal,
           location: String(asset.location_name || ""),
           locationId: asset.current_location_id,
           operator: String(asset.current_operator_name || ""),
@@ -20310,7 +20344,7 @@
           nextServiceDate: String(asset.next_service_estimated_date || ""),
           history: history.map((item, index) => ({
             label: `P${history.length - index}`,
-            date: String(item.service_date).slice(0, 10),
+            date: String(item.service_date || "").slice(0, 10),
             meter: Number(item.service_hm_km),
           })),
           photos: (asset.gallery_photos || []).map((item) => ({
@@ -20320,9 +20354,9 @@
             date: "",
           })),
           pdfUrl: asset.service_manual_pdf_url
-            ? `api/asset_files.php?kind=pdf&asset_id=${encodeURIComponent(asset.asset_id)}`
+            ? `api/asset_files.php?kind=pdf&asset_id=${encodeURIComponent(aid)}`
             : "",
-          note: String(asset.planner_note || ""),
+          note: String(asset.planner_note || (legacy && legacy.note) || ""),
           source: "database",
         };
       });
@@ -20334,7 +20368,9 @@
       };
       renderAll();
     } catch (error) {
-      pmPlans.splice(0, pmPlans.length);
+      if (pmPlans.length === 0) {
+        pmPlans.push(...legacyPmPlans);
+      }
       pmDatabaseState = {
         status: "error",
         count: 0,

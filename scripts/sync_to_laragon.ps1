@@ -224,7 +224,8 @@ if (-not $ImportDatabase) {
             (Join-Path $srcDir 'scripts\migrate_batch4_warehouse_transactions.php'),
             (Join-Path $srcDir 'scripts\migrate_batch5_cost_ledger.php'),
             (Join-Path $srcDir 'scripts\migrate_batch6_rental_contracts.php'),
-            (Join-Path $srcDir 'scripts\migrate_batch7_lho_operations.php')
+            (Join-Path $srcDir 'scripts\migrate_batch7_lho_operations.php'),
+            (Join-Path $srcDir 'scripts\migrate_batch8_pm_plan_july2026.php')
         )
         foreach ($bScript in $equipmentBatchScripts) {
             if ($phpExe -and (Test-Path $bScript)) {
@@ -343,7 +344,8 @@ if (-not $ImportDatabase) {
         (Join-Path $srcDir 'scripts\migrate_batch4_warehouse_transactions.php'),
         (Join-Path $srcDir 'scripts\migrate_batch5_cost_ledger.php'),
         (Join-Path $srcDir 'scripts\migrate_batch6_rental_contracts.php'),
-        (Join-Path $srcDir 'scripts\migrate_batch7_lho_operations.php')
+        (Join-Path $srcDir 'scripts\migrate_batch7_lho_operations.php'),
+        (Join-Path $srcDir 'scripts\migrate_batch8_pm_plan_july2026.php')
     )
     foreach ($bScript in $equipmentBatchScripts) {
         if ($phpExe -and (Test-Path $bScript)) {
