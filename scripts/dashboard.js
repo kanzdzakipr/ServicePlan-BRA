@@ -26018,6 +26018,7 @@
       status: "BELOW_TARGET",
     },
   };
+  let currentProdPeriod = "September 2026";
 
   // =========================================================================
   // 2. MAIN MODULE RENDER FUNCTION
@@ -26094,7 +26095,21 @@
                         <h2><i class="fa-solid fa-chart-line text-primary"></i> Manajemen Produktivitas & Fleet Availability (Telematics & KPI)</h2>
                         <p>Monitoring Physical Availability (PA), Use of Availability (UA), Rekonsiliasi Telematika KOMTRAX, dan Audit Fleet Standby</p>
                     </div>
-                    <button class="btn btn-primary" onclick="window.exportProductivityReport()"><i class="fa-solid fa-file-csv"></i> Ekspor Laporan Produktivitas</button>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:8px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:6px 12px; box-shadow:0 1px 2px rgba(15,23,42,0.04);">
+                            <label for="prodPeriodFilter" style="font-size:0.82rem; font-weight:700; color:#334155; margin:0; white-space:nowrap;">
+                                <i class="fa-solid fa-calendar-days" style="color:var(--primary); margin-right:4px;"></i> Periode KOMTRAX:
+                            </label>
+                            <select id="prodPeriodFilter" aria-label="Filter Periode Telematika KOMTRAX" style="border:none; background:transparent; font-weight:700; font-size:0.86rem; color:#0f172a; outline:none; cursor:pointer; padding-right:4px;">
+                                <option value="September 2026" selected>September 2026 (Terbaru)</option>
+                                <option value="Agustus 2026">Agustus 2026</option>
+                                <option value="Juli 2026">Juli 2026</option>
+                                <option value="Januari 2026">Januari 2026</option>
+                                <option value="all">Semua Periode (Kumulatif)</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="window.exportProductivityReport()"><i class="fa-solid fa-file-csv"></i> Ekspor Laporan Produktivitas</button>
+                    </div>
                 </div>
 
                 <!-- Nav Tabs -->
@@ -26224,7 +26239,7 @@
                             <div class="kpi-inspector-filter-bar">
                                 <div class="kpi-filter-group">
                                     <label for="kpi-inspector-period"><i class="fa-regular fa-calendar" style="margin-right:4px;"></i> Periode</label>
-                                    <input id="kpi-inspector-period" type="month" value="2026-01" class="kpi-filter-input">
+                                    <input id="kpi-inspector-period" type="month" value="2026-09" class="kpi-filter-input">
                                 </div>
                                 <div class="kpi-filter-group">
                                     <label for="kpi-inspector-asset"><i class="fa-solid fa-truck-front" style="margin-right:4px;"></i> Unit</label>
@@ -26235,6 +26250,13 @@
                                 <button id="kpi-inspector-load" type="button" class="btn btn-primary kpi-filter-btn">
                                     <i class="fa-solid fa-magnifying-glass-chart" style="margin-right:5px;"></i> Periksa KPI
                                 </button>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:10px; margin-bottom:4px; font-size:0.78rem; color:#475569;">
+                                <span><i class="fa-solid fa-satellite-dish" style="color:var(--primary);"></i> Pilih Cepat Periode KOMTRAX:</span>
+                                <button type="button" class="btn btn-sm kpi-quick-period-btn" data-kpi-month="2026-01" style="padding:2px 8px; font-size:0.75rem; border:1px solid #cbd5e1; background:#f8fafc; color:#334155; border-radius:6px; cursor:pointer;">Jan 2026</button>
+                                <button type="button" class="btn btn-sm kpi-quick-period-btn" data-kpi-month="2026-07" style="padding:2px 8px; font-size:0.75rem; border:1px solid #cbd5e1; background:#f8fafc; color:#334155; border-radius:6px; cursor:pointer;">Jul 2026</button>
+                                <button type="button" class="btn btn-sm kpi-quick-period-btn" data-kpi-month="2026-08" style="padding:2px 8px; font-size:0.75rem; border:1px solid #cbd5e1; background:#f8fafc; color:#334155; border-radius:6px; cursor:pointer;">Agu 2026</button>
+                                <button type="button" class="btn btn-sm kpi-quick-period-btn" data-kpi-month="2026-09" style="padding:2px 8px; font-size:0.75rem; border:1px solid #cbd5e1; background:#e0f2fe; color:#0369a1; font-weight:700; border-radius:6px; cursor:pointer;">Sep 2026</button>
                             </div>
                             <div id="kpi-inspector-result" aria-live="polite" class="kpi-inspector-result-box">
                                 <i class="fa-solid fa-circle-info" style="margin-right:6px; color:#0284c7;"></i> Pilih periode dan unit, lalu klik <strong>Periksa KPI</strong> untuk melihat detail kalkulasi. Untuk mempelajari metodologi formula perhitungan, klik <strong>Metode Perhitungan</strong> di atas.
@@ -26408,13 +26430,13 @@
                     <div class="pk-alert pk-alert-info">
                         <i class="fa-solid fa-satellite-dish"></i>
                         <div>
-                            <strong>Data Telematika KOMTRAX (Periode Januari 2026):</strong> Menampilkan data jam kerja otomatis dari satelit Komtrax (18 Unit). Bandingkan jam SMR aktual dengan jam kerja laporan manual operator untuk mendeteksi ketidaksesuaian (*discrepancy*).
+                            <strong id="prodKomtraxPeriodLabel">Data Telematika KOMTRAX (Periode September 2026):</strong> Menampilkan data jam kerja otomatis dari satelit Komtrax (18 Unit). Bandingkan jam SMR aktual dengan jam kerja laporan manual operator untuk mendeteksi ketidaksesuaian (*discrepancy*).
                         </div>
                     </div>
 
                     <div class="pk-panel">
                         <div class="pk-panel-header">
-                            <span><i class="fa-solid fa-table"></i> Tabel Matriks Telematika KOMTRAX 18 Unit</span>
+                            <span id="prodKomtraxTableTitle"><i class="fa-solid fa-table"></i> Tabel Matriks Telematika KOMTRAX 18 Unit (September 2026)</span>
                             <div class="search-bar" style="max-width:240px;">
                                 <input type="text" id="searchKomtrax" placeholder="Cari serial / model..." onkeyup="window.filterKomtraxTable()">
                             </div>
@@ -26488,7 +26510,7 @@
 
                     <div class="pk-panel">
                         <div class="pk-panel-header">
-                            <span><i class="fa-solid fa-fire"></i> Matriks Unit dengan Rasio Idling Anomaly (> 50%)</span>
+                            <span id="prodIdlingAnomalyTitle"><i class="fa-solid fa-fire"></i> Matriks Unit dengan Rasio Idling Anomaly (> 50%) — September 2026</span>
                         </div>
                         <div class="pk-panel-body no-padding">
                             <div class="table-responsive">
@@ -26622,7 +26644,79 @@
   // 3. BINDINGS & RENDER LOGIC
   // =========================================================================
 
+  function updateProdPeriodLabels(periodVal) {
+    const labelText =
+      periodVal === "all"
+        ? "Semua Periode (Jan, Jul, Agu, Sep 2026)"
+        : `Periode ${periodVal}`;
+    const shortLabel =
+      periodVal === "all" ? "Semua Periode" : periodVal;
+
+    const bannerEl = document.getElementById("prodKomtraxPeriodLabel");
+    if (bannerEl) {
+      bannerEl.textContent = `Data Telematika KOMTRAX (${labelText}):`;
+    }
+    const tableTitleEl = document.getElementById("prodKomtraxTableTitle");
+    if (tableTitleEl) {
+      tableTitleEl.innerHTML = `<i class="fa-solid fa-table"></i> Tabel Matriks Telematika KOMTRAX 18 Unit (${escapeHtml(shortLabel)})`;
+    }
+    const anomalyTitleEl = document.getElementById("prodIdlingAnomalyTitle");
+    if (anomalyTitleEl) {
+      anomalyTitleEl.innerHTML = `<i class="fa-solid fa-fire"></i> Matriks Unit dengan Rasio Idling Anomaly (> 50%) — ${escapeHtml(shortLabel)}`;
+    }
+  }
+
   function bindProdEvents() {
+    const periodSelect = document.getElementById("prodPeriodFilter");
+    if (periodSelect) {
+      periodSelect.value = currentProdPeriod;
+      periodSelect.addEventListener("change", (e) => {
+        currentProdPeriod = e.target.value || "September 2026";
+        updateProdPeriodLabels(currentProdPeriod);
+
+        // Sync KPI Inspector month input if a specific month is selected
+        const periodMap = {
+          "Januari 2026": "2026-01",
+          "Juli 2026": "2026-07",
+          "Agustus 2026": "2026-08",
+          "September 2026": "2026-09",
+        };
+        const kpiPeriodInput = document.getElementById("kpi-inspector-period");
+        if (kpiPeriodInput && periodMap[currentProdPeriod]) {
+          kpiPeriodInput.value = periodMap[currentProdPeriod];
+          document.querySelectorAll(".kpi-quick-period-btn").forEach((b) => {
+            const isMatch = b.getAttribute("data-kpi-month") === periodMap[currentProdPeriod];
+            b.style.background = isMatch ? "#e0f2fe" : "#f8fafc";
+            b.style.color = isMatch ? "#0369a1" : "#334155";
+            b.style.fontWeight = isMatch ? "700" : "400";
+          });
+        }
+
+        loadProductivityData(currentProdPeriod);
+        const lhoTab = document.getElementById("tab-lho-operation");
+        if (lhoTab && lhoTab.classList.contains("active")) {
+          loadLhoOperations(currentProdPeriod);
+        }
+      });
+    }
+
+    document.querySelectorAll(".kpi-quick-period-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetMonth = btn.getAttribute("data-kpi-month");
+        const kpiPeriodInput = document.getElementById("kpi-inspector-period");
+        if (kpiPeriodInput && targetMonth) {
+          kpiPeriodInput.value = targetMonth;
+          document.querySelectorAll(".kpi-quick-period-btn").forEach((b) => {
+            const isMatch = b.getAttribute("data-kpi-month") === targetMonth;
+            b.style.background = isMatch ? "#e0f2fe" : "#f8fafc";
+            b.style.color = isMatch ? "#0369a1" : "#334155";
+            b.style.fontWeight = isMatch ? "700" : "400";
+          });
+          loadKpiInspector();
+        }
+      });
+    });
+
     const inspectorButton = document.getElementById("kpi-inspector-load");
     if (inspectorButton)
       inspectorButton.addEventListener("click", loadKpiInspector);
@@ -26727,13 +26821,15 @@
     renderStandbyCategoryTable();
   }
 
-  async function loadLhoOperations() {
+  async function loadLhoOperations(periodOverride) {
+    const activePeriod = periodOverride || currentProdPeriod || "September 2026";
     const tbody = document.getElementById("tbLhoOperationsBody");
     if (tbody)
       tbody.innerHTML =
         '<tr><td colspan="10" style="text-align:center; padding:24px;"><i class="fa-solid fa-rotate fa-spin"></i> Memuat data LHO...</td></tr>';
     try {
-      const response = await fetch("api/productivity.php", {
+      const params = new URLSearchParams({ period: activePeriod });
+      const response = await fetch(`api/productivity.php?${params}`, {
         credentials: "same-origin",
         cache: "no-store",
       });
@@ -26993,11 +27089,16 @@
         else if (u.status === "High Efficiency" || u.status === "Top Workload")
           badgeCls = "prod-badge-info";
 
+        const periodBadge =
+          currentProdPeriod === "all" && u.periodMonth
+            ? `<br><span class="prod-badge prod-badge-info" style="font-size:0.68rem;">${escapeHtml(u.periodMonth)}</span>`
+            : "";
+
         return `
                 <tr>
                     <td style="text-align:center;">${u.no}</td>
                     <td><strong>${escapeHtml(u.model)}</strong></td>
-                    <td><strong class="text-primary">${escapeHtml(u.sn)}</strong></td>
+                    <td><strong class="text-primary">${escapeHtml(u.sn)}</strong>${periodBadge}</td>
                     <td><small class="text-muted">${escapeHtml(u.branch)}</small></td>
                     <td style="font-weight:600;">${u.smr.toFixed(1)} h</td>
                     <td style="text-align:center;">${u.days} Hari</td>
@@ -27024,10 +27125,14 @@
 
     if (idlingAnomalyData && idlingAnomalyData.length > 0) {
       tbody.innerHTML = idlingAnomalyData
-        .map(
-          (u) => `
+        .map((u) => {
+          const periodBadge =
+            currentProdPeriod === "all" && u.periodMonth
+              ? `<br><span class="prod-badge prod-badge-info" style="font-size:0.68rem;">${escapeHtml(u.periodMonth)}</span>`
+              : "";
+          return `
                 <tr class="prod-anomaly-row">
-                    <td><strong class="text-danger">${escapeHtml(u.sn)}</strong></td>
+                    <td><strong class="text-danger">${escapeHtml(u.sn)}</strong>${periodBadge}</td>
                     <td><strong>${escapeHtml(u.model)}</strong></td>
                     <td>${escapeHtml(u.branch)}</td>
                     <td style="text-align:center;">${(u.hours || 0).toFixed(1)} h</td>
@@ -27036,8 +27141,8 @@
                     <td style="font-weight:700; color:var(--danger);">Rp ${((u.estimatedLossCost || 0) / 1000000).toFixed(2)} Jt</td>
                     <td style="font-size:0.82rem;">${escapeHtml(u.recommendation || "Audit perilaku operator & matikan mesin saat standby > 5 menit.")}</td>
                 </tr>
-            `,
-        )
+            `;
+        })
         .join("");
       return;
     }
@@ -27186,18 +27291,17 @@
     updateMiniDonutChart("kpi-idling-ring", idlingVal, idlingColor);
   }
 
-  async function loadProductivityData() {
+  async function loadProductivityData(periodOverride) {
+    const activePeriod = periodOverride || currentProdPeriod || "September 2026";
     try {
-      const response = await fetch("api/productivity.php", {
+      const params = new URLSearchParams({ period: activePeriod });
+      const response = await fetch(`api/productivity.php?${params}`, {
         credentials: "same-origin",
         cache: "no-store",
       });
       const payload = await response.json();
       if (response.ok && payload.status === "success" && payload.data) {
-        if (
-          Array.isArray(payload.data.telematics) &&
-          payload.data.telematics.length > 0
-        ) {
+        if (Array.isArray(payload.data.telematics)) {
           komtraxFleetData = payload.data.telematics;
         }
         if (payload.data.kpis) {
@@ -27381,7 +27485,8 @@
     const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "Laporan_Produktivitas_Komtrax_2026.csv";
+    const safePeriod = String(currentProdPeriod || "2026").replace(/\s+/g, "_");
+    link.download = `Laporan_Produktivitas_Komtrax_${safePeriod}.csv`;
     link.click();
     alert(
       "Laporan Produktivitas & Fleet Availability berhasil diekspor ke CSV.",
