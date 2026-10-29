@@ -642,18 +642,6 @@ try {
                             <span class="badge badge-info">Market Valuation</span>
                         </div>
                     </div>
-
-                    <div class="telemetry-metric-item" title="Physical Availability (PA) Ketersediaan Fisik Armada">
-                        <div class="telemetry-metric-header">
-                            <span class="telemetry-metric-label">Phys. Availability</span>
-                            <i class="fa-solid fa-chart-pie" style="color: var(--primary); font-size: 0.9rem;"></i>
-                        </div>
-                        <div class="telemetry-metric-value tabular-nums" id="kpiAssetPA"
-                            style="color: var(--primary); font-size: 1.5rem;">87.5%</div>
-                        <div class="telemetry-metric-footer">
-                            <span class="badge badge-info">PA Ratio</span>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="panel">
@@ -8830,19 +8818,16 @@ try {
                 const readyCount = assets.filter(a => a.status === 'READY' || a.status === 'OPERATING').length;
                 const standbyCount = assets.filter(a => a.status === 'STANDBY').length;
                 const breakdownCount = assets.filter(a => a.status === 'BREAKDOWN' || a.status === 'INSPEKSI' || a.status === 'ACCIDENT_HOLD').length;
-                const paPercentage = totalCount > 0 ? (((readyCount + standbyCount) / totalCount) * 100).toFixed(1) + '%' : '87.5%';
 
                 const elTotal = document.getElementById('kpiAssetTotal');
                 const elReady = document.getElementById('kpiAssetReady');
                 const elStandby = document.getElementById('kpiAssetStandby');
                 const elBreakdown = document.getElementById('kpiAssetBreakdown');
-                const elPA = document.getElementById('kpiAssetPA');
 
                 if (elTotal) elTotal.innerText = `${totalCount} Unit`;
                 if (elReady) elReady.innerText = `${readyCount} Unit`;
                 if (elStandby) elStandby.innerText = `${standbyCount} Unit`;
                 if (elBreakdown) elBreakdown.innerText = `${breakdownCount} Unit`;
-                if (elPA) elPA.innerText = paPercentage;
 
                 // 2. Render Asset Rows with Rich Linkage Actions
                 window.renderAssetTableBody();
