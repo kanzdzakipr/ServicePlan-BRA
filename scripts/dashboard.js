@@ -26273,7 +26273,7 @@
                                         </div>
                                         <div class="kpi-formula-code-box">
                                             <span class="formula-eq">PA = </span>
-                                            <span class="formula-expr"><span class="formula-bracket">(</span>(W + S) / T<span class="formula-bracket">)</span> &times; 100%</span>
+                                            <span class="formula-expr"><span class="formula-bracket">(</span>Scheduled Hours &ndash; Breakdown Hours<span class="formula-bracket">)</span> / Scheduled Hours &times; 100%</span>
                                         </div>
                                         <p class="kpi-formula-desc">Mengukur kesiapan fisik alat berat untuk dapat beroperasi bebas dari kerusakan mekanis (kondisi siap pakai operasional / standby).</p>
                                     </div>
@@ -26289,7 +26289,7 @@
                                         </div>
                                         <div class="kpi-formula-code-box">
                                             <span class="formula-eq">UA = </span>
-                                            <span class="formula-expr"><span class="formula-bracket">(</span>W / (W + S)<span class="formula-bracket">)</span> &times; 100%</span>
+                                            <span class="formula-expr">Working Hours / Available Hours &times; 100%</span>
                                         </div>
                                         <p class="kpi-formula-desc">Mengukur efektivitas dan efisiensi pemanfaatan jam kerja operasi nyata terhadap unit yang sedang berstatus siap pakai (Ready).</p>
                                     </div>
@@ -26321,7 +26321,7 @@
                                         </div>
                                         <div class="kpi-formula-code-box">
                                             <span class="formula-eq">MTBF = </span>
-                                            <span class="formula-expr">W / Frekuensi Kerusakan</span>
+                                            <span class="formula-expr">Operating Hours / Number of Failures</span>
                                         </div>
                                         <p class="kpi-formula-desc">Rata-rata selang waktu jam kerja di antara dua insiden breakdown untuk mengukur keandalan perawatan armada.</p>
                                     </div>
@@ -26339,7 +26339,7 @@
                                             <strong>Mechanical Availability (MA)</strong>
                                             <span class="prod-badge prod-badge-info">Target &ge; 85%</span>
                                         </div>
-                                        <div class="sec-card-formula">MA = (W / (W + R)) &times; 100%</div>
+                                        <div class="sec-card-formula">MA = (Available Hours &ndash; Mechanical Downtime) / Available Hours &times; 100%</div>
                                         <div class="sec-card-desc">Mengukur keandalan mekanis murni tanpa memperhitungkan variabel waktu standby operasional lapangan.</div>
                                     </div>
 
@@ -26348,7 +26348,7 @@
                                             <strong>Effective Utilization (EU)</strong>
                                             <span class="prod-badge prod-badge-warning">Target &ge; 70%</span>
                                         </div>
-                                        <div class="sec-card-formula">EU = (W / T) &times; 100%</div>
+                                        <div class="sec-card-formula">EU = Working Hours / Scheduled Hours &times; 100%</div>
                                         <div class="sec-card-desc">Persentase pemanfaatan jam kerja operasi unit sesungguhnya terhadap total kapasitas waktu kalender terjadwal.</div>
                                     </div>
 
@@ -26357,7 +26357,7 @@
                                             <strong>Mean Time To Repair (MTTR)</strong>
                                             <span class="prod-badge prod-badge-danger">Target &le; 4.0 Jam</span>
                                         </div>
-                                        <div class="sec-card-formula">MTTR = R / Frekuensi Perbaikan</div>
+                                        <div class="sec-card-formula">MTTR = Total Corrective Repair Hours / Number of Completed Repairs</div>
                                         <div class="sec-card-desc">Rata-rata kecepatan dan efisiensi waktu mekanik dalam menyelesaikan perbaikan per insiden Work Order.</div>
                                     </div>
                                 </div>
