@@ -257,12 +257,14 @@ $gpsLogs = $fetchAll($db,
 );
 
 $movements = $fetchAll($db,
-    "SELECT am.movement_id, am.bast_number, am.movement_date,
+    "SELECT am.movement_id, am.bast_number, am.movement_date, am.notes,
             origin.location_name AS from_location,
-            destination.location_name AS to_location
+            destination.location_name AS to_location,
+            requester.full_name AS requested_by
      FROM asset_movements am
      LEFT JOIN locations origin ON origin.location_id = am.from_location_id
      LEFT JOIN locations destination ON destination.location_id = am.to_location_id
+     LEFT JOIN users requester ON requester.user_id = am.requested_by
      WHERE am.asset_id = :asset_id
      ORDER BY am.movement_date DESC, am.movement_id DESC
      LIMIT 50",

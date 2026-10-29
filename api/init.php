@@ -44,6 +44,7 @@ try {
                            origin.location_name AS fromLocation,
                            destination.location_name AS toLocation,
                            am.bast_number AS bastNumber, am.movement_date AS movementDate,
+                           am.notes AS notes,
                            requester.full_name AS requestedBy
                     FROM asset_movements am
                     INNER JOIN assets a ON a.asset_id = am.asset_id

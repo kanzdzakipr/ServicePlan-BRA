@@ -95,6 +95,23 @@ switch ($method) {
             $historyStmt = $db->prepare('SELECT history_id, old_hull_number, new_hull_number, change_reason, effective_date, changed_by_name, changed_at FROM asset_hull_history WHERE asset_id = :id ORDER BY changed_at DESC, history_id DESC');
             $historyStmt->execute([':id' => (string) $_GET['id']]);
             $result['hull_history'] = $historyStmt->fetchAll();
+
+            $locHistoryStmt = $db->prepare('
+                SELECT am.movement_id, am.asset_id, am.from_location_id, am.to_location_id,
+                       origin.location_name AS from_location_name,
+                       destination.location_name AS to_location_name,
+                       am.bast_number, am.movement_date, am.notes,
+                       requester.full_name AS requested_by_name
+                FROM asset_movements am
+                LEFT JOIN locations origin ON origin.location_id = am.from_location_id
+                LEFT JOIN locations destination ON destination.location_id = am.to_location_id
+                LEFT JOIN users requester ON requester.user_id = am.requested_by
+                WHERE am.asset_id = :id
+                ORDER BY am.movement_date DESC, am.movement_id DESC
+            ');
+            $locHistoryStmt->execute([':id' => (string) $_GET['id']]);
+            $result['location_history'] = $locHistoryStmt->fetchAll(PDO::FETCH_ASSOC);
+
             foreach ([
                 'operator_history' => 'SELECT history_id, operator_name, start_date, end_date, shift_type, handover_notes FROM asset_operator_history WHERE asset_id = :id ORDER BY start_date DESC, history_id DESC',
                 'service_history' => 'SELECT service_log_id, service_sequence, service_date, service_hm_km, service_type, mechanic_pic, jo_report_number, notes FROM asset_service_history WHERE asset_id = :id ORDER BY service_date DESC, service_log_id DESC',
@@ -441,19 +458,114 @@ switch ($method) {
             }
         }
 
+        if (($data['action'] ?? '') === 'relocate_asset' || ($data['action'] ?? '') === 'move_location') {
+            $roles = api_current_user()['roles'] ?? [];
+            if (!array_intersect((array) $roles, ['Administrator', 'Asset Manager', 'Equipment Manager', 'Maintenance Planner', 'Site Coordinator', 'Operator Lead'])) {
+                api_json_response(403, ['status' => 'error', 'code' => 'RELOCATION_FORBIDDEN', 'message' => 'Peran Anda tidak diizinkan melakukan mutasi lokasi unit.']);
+            }
+            $toLocationId = (int) ($data['to_location_id'] ?? $data['current_location_id'] ?? 0);
+            $movementDate = trim((string) ($data['movement_date'] ?? $data['effective_date'] ?? date('Y-m-d')));
+            $reason = trim((string) ($data['change_reason'] ?? $data['reason'] ?? $data['notes'] ?? ''));
+            $bastNumber = trim((string) ($data['bast_number'] ?? ''));
+            $additionalNotes = trim((string) ($data['additional_notes'] ?? ''));
+
+            if ($toLocationId <= 0) {
+                api_json_response(422, ['status' => 'error', 'code' => 'INVALID_LOCATION', 'message' => 'Lokasi tujuan mutasi wajib dipilih.']);
+            }
+            if ($reason === '') {
+                api_json_response(422, ['status' => 'error', 'code' => 'INVALID_REASON', 'message' => 'Alasan mutasi / pemindahan lokasi wajib diisi.']);
+            }
+
+            $locCheck = $db->prepare('SELECT location_id, location_name FROM locations WHERE location_id = :id AND is_active = 1 LIMIT 1');
+            $locCheck->execute([':id' => $toLocationId]);
+            $targetLoc = $locCheck->fetch(PDO::FETCH_ASSOC);
+            if (!$targetLoc) {
+                api_json_response(404, ['status' => 'error', 'code' => 'LOCATION_NOT_FOUND', 'message' => 'Lokasi tujuan tidak ditemukan atau nonaktif.']);
+            }
+            if (!api_can_access_location($toLocationId)) {
+                api_json_response(403, ['status' => 'error', 'code' => 'LOCATION_SCOPE_DENIED', 'message' => 'Lokasi tujuan berada di luar cakupan izin akun Anda.']);
+            }
+
+            try {
+                $db->beginTransaction();
+                $lockStmt = $db->prepare('SELECT current_location_id, project_name FROM assets WHERE asset_id = :id FOR UPDATE');
+                $lockStmt->execute([':id' => $id]);
+                $currentAsset = $lockStmt->fetch(PDO::FETCH_ASSOC);
+                if (!$currentAsset) {
+                    $db->rollBack();
+                    api_json_response(404, ['status' => 'error', 'message' => 'Unit tidak ditemukan.']);
+                }
+                $fromLocationId = $currentAsset['current_location_id'] !== null ? (int) $currentAsset['current_location_id'] : null;
+                if ($fromLocationId === $toLocationId) {
+                    $db->rollBack();
+                    api_json_response(409, ['status' => 'error', 'code' => 'LOCATION_UNCHANGED', 'message' => 'Lokasi tujuan sama dengan lokasi unit saat ini.']);
+                }
+
+                $fullNotes = $reason;
+                if ($additionalNotes !== '' && $additionalNotes !== $reason) {
+                    $fullNotes .= ' - ' . $additionalNotes;
+                }
+
+                $actor = api_current_user();
+                $actorId = (int) ($actor['id'] ?? 0);
+                if ($actorId <= 0) $actorId = null;
+
+                $upd = $db->prepare('UPDATE assets SET current_location_id = :loc_id, project_name = :project WHERE asset_id = :id');
+                $upd->execute([
+                    ':loc_id' => $toLocationId,
+                    ':project' => $targetLoc['location_name'],
+                    ':id' => $id,
+                ]);
+
+                $movementTimestamp = (strlen($movementDate) === 10) ? $movementDate . ' ' . date('H:i:s') : $movementDate;
+                $ins = $db->prepare('INSERT INTO asset_movements (asset_id, from_location_id, to_location_id, bast_number, movement_date, notes, requested_by) VALUES (:asset_id, :from_loc, :to_loc, :bast, :mdate, :notes, :req_by)');
+                $ins->execute([
+                    ':asset_id' => $id,
+                    ':from_loc' => $fromLocationId,
+                    ':to_loc' => $toLocationId,
+                    ':bast' => $bastNumber !== '' ? $bastNumber : null,
+                    ':mdate' => $movementTimestamp,
+                    ':notes' => $fullNotes,
+                    ':req_by' => $actorId,
+                ]);
+                $movementId = (int) $db->lastInsertId();
+
+                $db->commit();
+                api_json_response(200, [
+                    'status' => 'success',
+                    'message' => "Lokasi unit {$id} berhasil dimutasi ke {$targetLoc['location_name']}.",
+                    'data' => [
+                        'movement_id' => $movementId,
+                        'asset_id' => $id,
+                        'from_location_id' => $fromLocationId,
+                        'to_location_id' => $toLocationId,
+                        'to_location_name' => $targetLoc['location_name'],
+                        'movement_date' => $movementDate,
+                        'notes' => $fullNotes,
+                    ],
+                ]);
+            } catch (Throwable $e) {
+                if ($db->inTransaction()) $db->rollBack();
+                error_log('Relocation failed: ' . $e->getMessage());
+                api_json_response(500, ['status' => 'error', 'message' => 'Gagal mencatat mutasi lokasi: ' . $e->getMessage()]);
+            }
+        }
+
         $onboardingKeys = ['current_operator_name', 'operator_start_date', 'operator_shift', 'last_service_date', 'last_service_hm_km', 'service_interval_val', 'service_interval_unit', 'daily_usage_coefficient', 'legal_stnk_expiry', 'legal_kir_expiry', 'legal_silo_expiry'];
         $onboarding = null;
         $previous = null;
-        if (array_intersect(array_keys($data), $onboardingKeys)) {
+        if (array_intersect(array_keys($data), $onboardingKeys) || array_key_exists('current_location_id', $data)) {
             $previousStmt = $db->prepare('SELECT * FROM assets WHERE asset_id = :id');
             $previousStmt->execute([':id' => $id]);
             $previous = $previousStmt->fetch(PDO::FETCH_ASSOC);
-            $merged = array_merge($previous, $data);
-            try {
-                $onboarding = AssetOnboarding::fields($merged, isset($merged['last_hm_km']) ? (float) $merged['last_hm_km'] : 0.0);
-                if (array_key_exists('operator_start_date', $data)) AssetOnboarding::date($data['operator_start_date']);
-            } catch (InvalidArgumentException $e) {
-                api_json_response(422, ['status' => 'error', 'code' => 'INVALID_ONBOARDING', 'message' => $e->getMessage()]);
+            if (array_intersect(array_keys($data), $onboardingKeys)) {
+                $merged = array_merge($previous ?: [], $data);
+                try {
+                    $onboarding = AssetOnboarding::fields($merged, isset($merged['last_hm_km']) ? (float) $merged['last_hm_km'] : 0.0);
+                    if (array_key_exists('operator_start_date', $data)) AssetOnboarding::date($data['operator_start_date']);
+                } catch (InvalidArgumentException $e) {
+                    api_json_response(422, ['status' => 'error', 'code' => 'INVALID_ONBOARDING', 'message' => $e->getMessage()]);
+                }
             }
         }
 
@@ -613,6 +725,27 @@ switch ($method) {
                 $newService = $db->prepare('INSERT INTO asset_service_history (asset_id, service_sequence, service_date, service_hm_km, service_type) VALUES (:id, :seq, :date, :meter, :type)');
                 $newService->execute([':id' => $id, ':seq' => (int) $seqStmt->fetchColumn(), ':date' => $onboarding['last_service_date'], ':meter' => $onboarding['last_service_hm_km'], ':type' => 'Servis tercatat']);
             }
+
+            // Automatic movement history log when location changes via general asset update
+            if ($previous !== null && array_key_exists('current_location_id', $data)) {
+                $oldLocId = $previous['current_location_id'] !== null ? (int) $previous['current_location_id'] : null;
+                $newLocId = ($data['current_location_id'] !== null && $data['current_location_id'] !== '') ? (int) $data['current_location_id'] : null;
+                if ($newLocId !== null && $newLocId !== $oldLocId) {
+                    $actor = api_current_user();
+                    $actorId = (int) ($actor['id'] ?? 0);
+                    if ($actorId <= 0) $actorId = null;
+                    $moveNotes = trim((string) ($data['relocation_reason'] ?? $data['notes'] ?? 'Pembaruan lokasi melalui Master Asset'));
+                    $insMove = $db->prepare('INSERT INTO asset_movements (asset_id, from_location_id, to_location_id, movement_date, notes, requested_by) VALUES (:asset_id, :from_loc, :to_loc, NOW(), :notes, :req_by)');
+                    $insMove->execute([
+                        ':asset_id' => $id,
+                        ':from_loc' => $oldLocId,
+                        ':to_loc' => $newLocId,
+                        ':notes' => $moveNotes,
+                        ':req_by' => $actorId,
+                    ]);
+                }
+            }
+
             $db->commit();
             api_json_response(200, ["status" => "success", "message" => "Data unit aset '{$id}' berhasil diperbarui."]);
         } catch (Throwable $e) {

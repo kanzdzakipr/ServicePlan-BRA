@@ -20,6 +20,9 @@ param(
 
 # Auto-detect source directory (repository root directory containing this script)
 $srcDir = (Get-Item $PSScriptRoot).Parent.FullName
+if ($LaragonRoot -eq "C:\laragon" -and -not (Test-Path -LiteralPath "C:\laragon") -and (Test-Path -LiteralPath "C:\laragon2")) {
+    $LaragonRoot = "C:\laragon2"
+}
 $laragonRootPath = [System.IO.Path]::GetFullPath($LaragonRoot).TrimEnd('\')
 $laragonWebRoot = [System.IO.Path]::GetFullPath((Join-Path $laragonRootPath 'www')).TrimEnd('\')
 if ([string]::IsNullOrWhiteSpace($TargetDir)) {
@@ -54,7 +57,8 @@ $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_asset_document_urls_25102026.sql"),
     (Join-Path $srcDir "scripts\migrate_rbac_matrix_20261026.sql"),
     (Join-Path $srcDir "scripts\migrate_telematics_asset_mappings_26102026.sql"),
-    (Join-Path $srcDir "scripts\migrate_fuel_price_setting_26102026.sql")
+    (Join-Path $srcDir "scripts\migrate_fuel_price_setting_26102026.sql"),
+    (Join-Path $srcDir "scripts\migrate_asset_location_relocation_20261029.sql")
 )
 
 if (-not (Test-Path -LiteralPath $laragonRootPath -PathType Container) -or

@@ -2700,18 +2700,20 @@
                                 </div>
                                 <div class="prop-vital-cell" id="cardVitalLocation">
                                     <div class="vital-label-row">
-                                        <div class="vital-label"><i class="fa-solid fa-location-dot"></i> Posisi Terkini
+                                        <div class="vital-label"><i class="fa-solid fa-location-dot"></i> Posisi Terkini</div>
+                                        <div style="display:inline-flex; align-items:center; gap:6px;">
+                                            <a href="javascript:void(0)" class="vital-history-link" onclick="window.openPropLocationHistoryModal()" title="Lihat Riwayat Mutasi Lokasi">
+                                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                            </a>
+                                            <a href="javascript:void(0)" class="vital-history-link" onclick="window.openRelocateAssetModal(currentPropUnitId, document.getElementById('propVitalLoc').textContent.trim())" title="Mutasi / Pindah Lokasi Unit">
+                                                <i class="fa-solid fa-route"></i>
+                                            </a>
+                                            <a href="javascript:void(0)" class="vital-history-link" onclick="window.openSiteProperties(document.getElementById('propVitalLoc').textContent.trim(), 'unit-properties')" title="Buka Detail Lembar Properties Site Ini">
+                                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                            </a>
                                         </div>
-                                        <a href="javascript:void(0)" class="vital-history-link"
-                                            onclick="window.openSiteProperties(document.getElementById('propVitalLoc').textContent.trim(), 'unit-properties')"
-                                            title="Buka Detail Lembar Properties Site Ini">
-                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                        </a>
                                     </div>
-                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem; cursor:pointer;"
-                                        onclick="window.openSiteProperties(this.textContent.trim(), 'unit-properties')"
-                                        title="Klik untuk membuka lembar properties site ini">Borrow Pit Harapan Baru
-                                    </div>
+                                    <div class="vital-val" id="propVitalLoc" style="font-size:0.95rem; cursor:pointer;" onclick="window.openSiteProperties(this.textContent.trim(), 'unit-properties')" title="Klik untuk membuka lembar properties site ini">Borrow Pit Harapan Baru</div>
                                     <div class="vital-sub" id="propVitalLocSub">Mining Sector Area</div>
                                 </div>
                                 <div class="prop-vital-cell">
@@ -3871,8 +3873,12 @@
                     <!-- Individual Unit Leaflet Map -->
                     <div id="modalUnitMap"></div>
 
-                    <h4 style="margin-top:15px; margin-bottom:10px;"><i class="fa-solid fa-route"></i> Riwayat
-                        Perpindahan Lokasi & BAST</h4>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0;"><i class="fa-solid fa-route"></i> Riwayat Perpindahan Lokasi &amp; BAST</h4>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="window.openRelocateAssetModal(document.getElementById('modalAssetId').textContent, document.getElementById('modalLokasi').textContent)" style="font-size:0.75rem; padding:4px 10px; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-route"></i> Mutasi / Pindah Lokasi
+                        </button>
+                    </div>
                     <div class="movement-timeline" id="movementTimeline">
                         <div class="movement-timeline-item latest">
                             <div class="movement-timeline-title">Memuat riwayat perpindahan...</div>
@@ -5489,6 +5495,169 @@
                 <button type="button" class="btn btn-primary btn-sm"
                     onclick="closeModal('modalPropHullHistory'); window.openPropRenameModal();">
                     <i class="fa-solid fa-pen-to-square"></i> Ubah Nomor Lambung
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Mutasi / Pindah Lokasi Unit -->
+    <div class="modal-overlay" id="modalRelocateAsset">
+        <div class="modal-content" style="max-width: 580px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; padding: 16px 20px; border-bottom: 1px solid #334155;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:36px; height:36px; border-radius:8px; background:rgba(14,165,233,0.2); display:flex; align-items:center; justify-content:center; color:#38bdf8;">
+                        <i class="fa-solid fa-route" style="font-size:1.1rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:1.05rem; color:#fff;">Mutasi / Pindah Lokasi Unit</h3>
+                        <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Penempatan armada &amp; pencatatan riwayat perpindahan site</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modalRelocateAsset')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px 24px;">
+                <input type="hidden" id="relocateAssetId">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div class="form-group">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Kode Aset / Unit ID</label>
+                        <input type="text" id="relocateAssetCode" class="form-control" readonly style="background:#f1f5f9; font-weight:700; font-family:var(--font-mono); color:#0f172a;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Model / Kategori</label>
+                        <input type="text" id="relocateAssetModel" class="form-control" readonly style="background:#f1f5f9; color:#475569; font-size:0.82rem;">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Lokasi Unit Saat Ini</label>
+                    <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;">
+                        <i class="fa-solid fa-map-pin" style="color:#ef4444;"></i>
+                        <span id="relocateCurrentLocation" style="font-weight:700; color:#334155; font-size:0.9rem;">-</span>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label style="font-size:0.8rem; font-weight:700; color:#0f172a; margin:0;">Lokasi Tujuan (Site Baru) <span style="color:#ef4444;">*</span></label>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.openNewLocationModal()" style="font-size:0.72rem; padding:2px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;" title="Tambah Master Lokasi / Site Baru">
+                            <i class="fa-solid fa-plus"></i> Tambah Master Lokasi
+                        </button>
+                    </div>
+                    <select id="relocateTargetLocation" class="form-control" required style="font-weight:600; border:1.5px solid #38bdf8; background:#f0f9ff; color:#0369a1;">
+                        <option value="">-- Pilih Lokasi Tujuan --</option>
+                    </select>
+                    <small style="color:#64748b; font-size:0.72rem; margin-top:3px; display:block;">Pilih site/yard/workshop yang dituju oleh alat berat ini.</small>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:14px;">
+                    <div class="form-group">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Tanggal Efektif Mutasi <span style="color:#ef4444;">*</span></label>
+                        <input type="date" id="relocateEffectiveDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Nomor BAST / Surat Jalan</label>
+                        <input type="text" id="relocateBastNumber" class="form-control font-mono" placeholder="Contoh: BAST-2026/X/01 (opsional)">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Keperluan / Jenis Mutasi <span style="color:#ef4444;">*</span></label>
+                    <select id="relocateReasonSelect" class="form-control" onchange="window.handleRelocateReasonChange(this.value)">
+                        <option value="Mobilisasi Proyek Baru">Mobilisasi Proyek Baru</option>
+                        <option value="Relokasi Antar Site">Relokasi Antar Site</option>
+                        <option value="Servis / Overhaul Workshop">Servis / Overhaul Workshop</option>
+                        <option value="Selesai Kontrak / Standby Yard">Selesai Kontrak / Standby Yard</option>
+                        <option value="Re-alokasi Armada Operasional">Re-alokasi Armada Operasional</option>
+                        <option value="Lainnya">Lainnya (Ketik Manual)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Catatan / Keterangan Mutasi</label>
+                    <textarea id="relocateNotes" rows="2" class="form-control" placeholder="Contoh: Unit dipindahkan untuk pekerjaan galian Borrow Pit tahap 2..."></textarea>
+                </div>
+                <div id="relocateErrorAlert" style="display:none; padding:8px 12px; background:#fee2e2; border:1px solid #f87171; color:#b91c1c; border-radius:6px; font-size:0.8rem; margin-bottom:14px;"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalRelocateAsset')">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitRelocate" onclick="window.submitRelocateAsset()"><i class="fa-solid fa-route"></i> Simpan Mutasi Lokasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Master Lokasi Baru -->
+    <div class="modal-overlay" id="modalNewLocation">
+        <div class="modal-content" style="max-width: 500px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff; padding: 16px 20px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:36px; height:36px; border-radius:8px; background:rgba(34,197,94,0.2); display:flex; align-items:center; justify-content:center; color:#4ade80;">
+                        <i class="fa-solid fa-location-dot" style="font-size:1.1rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:1.05rem; color:#fff;">Tambah Master Lokasi Baru</h3>
+                        <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Daftarkan titik site, yard, atau workshop operasional baru</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modalNewLocation')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px 24px;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-size:0.8rem; font-weight:700; color:#0f172a; display:block; margin-bottom:4px;">Nama Lokasi / Site <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="newLocName" class="form-control" placeholder="Contoh: Site Minas West, Yard KM 15 Duri" required style="font-weight:600;">
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div class="form-group">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Tipe Lokasi</label>
+                        <select id="newLocType" class="form-control">
+                            <option value="Site Area">Site Area</option>
+                            <option value="Yard">Yard</option>
+                            <option value="Workshop">Workshop</option>
+                            <option value="Borrow Pit">Borrow Pit</option>
+                            <option value="Pit">Pit</option>
+                            <option value="Branch">Branch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Wilayah / Region</label>
+                        <input type="text" id="newLocRegion" class="form-control" placeholder="Contoh: Duri, Riau" value="Riau / Pekanbaru">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
+                    <div class="form-group">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Latitude (GPS)</label>
+                        <input type="number" step="0.0000001" id="newLocLat" class="form-control font-mono" placeholder="Contoh: 1.2854300">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Longitude (GPS)</label>
+                        <input type="number" step="0.0000001" id="newLocLng" class="form-control font-mono" placeholder="Contoh: 101.2185400">
+                    </div>
+                </div>
+                <div id="newLocErrorAlert" style="display:none; padding:8px 12px; background:#fee2e2; border:1px solid #f87171; color:#b91c1c; border-radius:6px; font-size:0.8rem; margin-bottom:14px;"></div>
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalNewLocation')">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitNewLocation" onclick="window.submitNewLocation()"><i class="fa-solid fa-floppy-disk"></i> Simpan Lokasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Riwayat Mutasi & Lokasi Unit Properties -->
+    <div class="modal-overlay" id="modalPropLocationHistory">
+        <div class="modal-content" style="max-width: 600px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff; padding: 16px 20px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:36px; height:36px; border-radius:8px; background:rgba(14,165,233,0.2); display:flex; align-items:center; justify-content:center; color:#38bdf8;">
+                        <i class="fa-solid fa-route" style="font-size:1.1rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:1.05rem; color:#fff;">Riwayat Mutasi &amp; Lokasi Unit</h3>
+                        <p style="margin:0; font-size:0.75rem; color:#94a3b8;">Unit: <strong id="mplAssetTitle" style="color:#38bdf8;">-</strong></p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modalPropLocationHistory')" style="border:none; background:none; font-size:1.5rem; color:#94a3b8; cursor:pointer;" aria-label="Tutup">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 18px 20px; max-height: 65vh; overflow-y: auto;">
+                <div id="mplHistoryList">Memuat riwayat mutasi...</div>
+            </div>
+            <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalPropLocationHistory')">Tutup</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modalPropLocationHistory'); window.openRelocateAssetModal(currentPropUnitId, currentAssetOnboardingCache?.location || currentAssetOnboardingCache?.location_name || '');">
+                    <i class="fa-solid fa-route"></i> Mutasi Lokasi Unit
                 </button>
             </div>
         </div>
@@ -8375,7 +8544,7 @@
                             <td><div class="asset-cell-line"><span>SN</span><b class="asset-mono">${shown(ident.sn)}</b></div><div class="asset-cell-line"><span>Pelat</span><b class="asset-mono">${shown(ident.plate)}</b></div><div class="asset-cell-line"><span>Rangka</span><b class="asset-mono">${shown(asset.chassis_number || asset.chassis)}</b></div></td>
                             <td><span class="asset-warranty-value"><i class="fa-solid fa-shield-halved"></i> ${escapeHtml(cleanWarranty(asset.warranty))}</span></td>
                             <td onclick="event.stopPropagation();">
-                                <div class="asset-cell-line"><span>Project</span><b><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || asset.project_name || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || asset.project_name || '')}"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.project_name || asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></b></div><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
+                                <div class="asset-cell-line"><span>Project</span><b><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || asset.project_name || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || asset.project_name || '')}"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.project_name || asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></b><button type="button" class="asset-inline-action" onclick="event.stopPropagation(); window.openRelocateAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.location || asset.project_name || '')}')" title="Mutasi / Pindah Lokasi Unit"><i class="fa-solid fa-route"></i></button></div><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
                             </td>
                             <td><div class="asset-condition-stack">${badge}${compl.isComplete ? '<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Lengkap</span>' : `<span class="badge badge-warning" title="${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum lengkap</span><small>Kurang: ${escapeHtml(compl.missing.join(', '))}</small>`}</div></td>
                             <td onclick="event.stopPropagation();"><button type="button" class="btn btn-sm asset-document-button" onclick="window.openAssetLegalDocuments('${escapeHtml(asset.id)}')" title="Cek legalitas dan dokumentasi unit"><i class="fa-solid fa-folder-open"></i><span>Dokumen</span></button></td>
@@ -8571,6 +8740,313 @@
                 alert('Gagal mengubah nomor lambung: ' + err.message);
             } finally {
                 if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Nomor Lambung'; }
+            }
+        };
+
+        window.handleRelocateReasonChange = function(reason) {
+            const notesEl = document.getElementById('relocateNotes');
+            if (!notesEl) return;
+            if (reason === 'Lainnya') {
+                notesEl.placeholder = 'Tuliskan alasan/kebutuhan mutasi secara detail...';
+                notesEl.focus();
+            } else {
+                notesEl.placeholder = `Catatan atau rincian tambahan terkait ${reason.toLowerCase()}...`;
+            }
+        };
+
+        window.openRelocateAssetModal = async function(assetId, currentLoc) {
+            const asset = (window.currentAssetData || []).find(a => (a.id || a.asset_id) === assetId)
+                || (globalData?.assets || []).find(a => (a.id || a.asset_id) === assetId);
+            const elId = document.getElementById('relocateAssetId');
+            const elCode = document.getElementById('relocateAssetCode');
+            const elModel = document.getElementById('relocateAssetModel');
+            const elCurrLoc = document.getElementById('relocateCurrentLocation');
+            const elTargetLoc = document.getElementById('relocateTargetLocation');
+            const elDate = document.getElementById('relocateEffectiveDate');
+            const elBast = document.getElementById('relocateBastNumber');
+            const elNotes = document.getElementById('relocateNotes');
+            const elReason = document.getElementById('relocateReasonSelect');
+            const alertEl = document.getElementById('relocateErrorAlert');
+
+            if (alertEl) { alertEl.style.display = 'none'; alertEl.textContent = ''; }
+            if (elId) elId.value = assetId;
+            if (elCode) elCode.value = (asset ? asset.asset_code : assetId) || assetId;
+            if (elModel) elModel.value = (asset ? `${asset.make_model || ''} (${asset.category || ''})` : '-') || '-';
+            
+            const locName = currentLoc || asset?.location || asset?.location_name || asset?.project_name || 'Belum ditentukan';
+            if (elCurrLoc) elCurrLoc.textContent = locName;
+            if (elDate) elDate.value = new Date().toLocaleDateString('en-CA');
+            if (elBast) elBast.value = '';
+            if (elNotes) elNotes.value = '';
+            if (elReason) elReason.value = 'Mobilisasi Proyek Baru';
+
+            // Populate target locations
+            if (elTargetLoc) {
+                elTargetLoc.replaceChildren();
+                const defaultOpt = document.createElement('option');
+                defaultOpt.value = '';
+                defaultOpt.textContent = '-- Pilih Lokasi Tujuan --';
+                elTargetLoc.appendChild(defaultOpt);
+
+                try {
+                    const res = await fetch('api/assets.php?references=locations', { cache: 'no-store' });
+                    const json = await res.json();
+                    if (res.ok && json.status === 'success' && Array.isArray(json.data)) {
+                        for (const loc of json.data) {
+                            const opt = document.createElement('option');
+                            opt.value = String(loc.location_id);
+                            opt.textContent = loc.location_name;
+                            if (asset && loc.location_id == asset.current_location_id) {
+                                opt.disabled = true;
+                                opt.textContent += ' (Lokasi Saat Ini)';
+                            }
+                            elTargetLoc.appendChild(opt);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Gagal memuat daftar lokasi:', e);
+                }
+            }
+
+            window.openModal('modalRelocateAsset');
+        };
+
+        window.submitRelocateAsset = async function() {
+            const assetId = document.getElementById('relocateAssetId')?.value;
+            const toLocId = document.getElementById('relocateTargetLocation')?.value;
+            const effectiveDate = document.getElementById('relocateEffectiveDate')?.value;
+            const reasonSelect = document.getElementById('relocateReasonSelect')?.value;
+            const notes = document.getElementById('relocateNotes')?.value.trim();
+            const bastNumber = document.getElementById('relocateBastNumber')?.value.trim();
+            const alertEl = document.getElementById('relocateErrorAlert');
+            const btn = document.getElementById('btnSubmitRelocate');
+
+            if (alertEl) { alertEl.style.display = 'none'; alertEl.textContent = ''; }
+
+            if (!assetId || !toLocId) {
+                if (alertEl) {
+                    alertEl.textContent = 'Harap pilih lokasi tujuan mutasi.';
+                    alertEl.style.display = 'block';
+                }
+                return;
+            }
+            if (!effectiveDate) {
+                if (alertEl) {
+                    alertEl.textContent = 'Tanggal efektif mutasi wajib diisi.';
+                    alertEl.style.display = 'block';
+                }
+                return;
+            }
+
+            const reason = reasonSelect === 'Lainnya' && notes ? notes : (reasonSelect + (notes ? `: ${notes}` : ''));
+
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; }
+
+            try {
+                const res = await fetch(`api/assets.php?id=${encodeURIComponent(assetId)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        asset_id: assetId,
+                        action: 'relocate_asset',
+                        to_location_id: parseInt(toLocId, 10),
+                        movement_date: effectiveDate,
+                        change_reason: reason,
+                        bast_number: bastNumber,
+                        notes: notes
+                    })
+                });
+                const json = await res.json();
+                if (!res.ok || json.status === 'error') throw new Error(json.message || 'Gagal memutasi lokasi');
+
+                const targetLocName = json.data?.to_location_name || 'Lokasi baru';
+
+                // Update memory state
+                const asset = (window.currentAssetData || []).find(a => (a.id || a.asset_id) === assetId)
+                    || (globalData?.assets || []).find(a => (a.id || a.asset_id) === assetId);
+                if (asset) {
+                    asset.current_location_id = parseInt(toLocId, 10);
+                    asset.location = targetLocName;
+                    asset.location_name = targetLocName;
+                    asset.project_name = targetLocName;
+                    asset.lastUpdate = 'Baru saja';
+                }
+
+                // Add to globalData.asset_movements
+                if (!Array.isArray(globalData.asset_movements)) globalData.asset_movements = [];
+                globalData.asset_movements.unshift({
+                    movementId: json.data?.movement_id || Date.now(),
+                    assetId: assetId,
+                    fromLocation: document.getElementById('relocateCurrentLocation')?.textContent || '',
+                    toLocation: targetLocName,
+                    bastNumber: bastNumber || '',
+                    movementDate: effectiveDate + ' ' + new Date().toTimeString().split(' ')[0],
+                    notes: reason,
+                    requestedBy: 'Anda (Sesi Aktif)'
+                });
+
+                window.closeModal('modalRelocateAsset');
+                if (typeof window.renderAssetTableBody === 'function') {
+                    window.renderAssetTableBody();
+                }
+                const modalLocEl = document.getElementById('modalLokasi');
+                if (modalLocEl && document.getElementById('modalAssetId')?.textContent === assetId) {
+                    modalLocEl.textContent = targetLocName;
+                    if (typeof updateModalMovementTimeline === 'function') {
+                        updateModalMovementTimeline(assetId, targetLocName);
+                    }
+                }
+
+                alert(`Berhasil! Unit ${assetId} telah dimutasi ke ${targetLocName}.`);
+            } catch (err) {
+                console.error(err);
+                if (alertEl) {
+                    alertEl.textContent = err.message || 'Gagal menyimpan mutasi lokasi.';
+                    alertEl.style.display = 'block';
+                } else {
+                    alert('Gagal memutasi lokasi: ' + err.message);
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-route"></i> Simpan Mutasi Lokasi'; }
+            }
+        };
+
+        window.openNewLocationModal = function() {
+            const nameEl = document.getElementById('newLocName');
+            const typeEl = document.getElementById('newLocType');
+            const regEl = document.getElementById('newLocRegion');
+            const latEl = document.getElementById('newLocLat');
+            const lngEl = document.getElementById('newLocLng');
+            const alertEl = document.getElementById('newLocErrorAlert');
+
+            if (alertEl) { alertEl.style.display = 'none'; alertEl.textContent = ''; }
+            if (nameEl) nameEl.value = '';
+            if (typeEl) typeEl.value = 'Site Area';
+            if (regEl) regEl.value = 'Riau / Pekanbaru';
+            if (latEl) latEl.value = '';
+            if (lngEl) lngEl.value = '';
+
+            window.openModal('modalNewLocation');
+            setTimeout(() => nameEl && nameEl.focus(), 80);
+        };
+
+        window.submitNewLocation = async function() {
+            const name = document.getElementById('newLocName')?.value.trim();
+            const type = document.getElementById('newLocType')?.value;
+            const region = document.getElementById('newLocRegion')?.value.trim();
+            const lat = document.getElementById('newLocLat')?.value;
+            const lng = document.getElementById('newLocLng')?.value;
+            const alertEl = document.getElementById('newLocErrorAlert');
+            const btn = document.getElementById('btnSubmitNewLocation');
+
+            if (alertEl) { alertEl.style.display = 'none'; alertEl.textContent = ''; }
+
+            if (!name || name.length < 3) {
+                if (alertEl) {
+                    alertEl.textContent = 'Nama lokasi wajib diisi minimal 3 karakter.';
+                    alertEl.style.display = 'block';
+                }
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...'; }
+
+            try {
+                const res = await fetch('api/locations.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        location_name: name,
+                        location_type: type,
+                        region: region,
+                        latitude: lat ? parseFloat(lat) : null,
+                        longitude: lng ? parseFloat(lng) : null
+                    })
+                });
+                const json = await res.json();
+                if (!res.ok || json.status === 'error') throw new Error(json.message || 'Gagal menyimpan master lokasi');
+
+                const newLoc = json.data;
+                
+                // Auto-select in relocate modal if open
+                const relocateTarget = document.getElementById('relocateTargetLocation');
+                if (relocateTarget && newLoc?.location_id) {
+                    const opt = document.createElement('option');
+                    opt.value = String(newLoc.location_id);
+                    opt.textContent = newLoc.location_name;
+                    relocateTarget.appendChild(opt);
+                    relocateTarget.value = String(newLoc.location_id);
+                }
+
+                window.closeModal('modalNewLocation');
+                alert(`Master lokasi '${name}' berhasil didaftarkan!`);
+            } catch (err) {
+                console.error(err);
+                if (alertEl) {
+                    alertEl.textContent = err.message || 'Gagal menyimpan master lokasi.';
+                    alertEl.style.display = 'block';
+                } else {
+                    alert('Gagal: ' + err.message);
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Lokasi'; }
+            }
+        };
+
+        window.openPropLocationHistoryModal = async function(assetId) {
+            const targetId = assetId || currentPropUnitId;
+            if (!targetId) return;
+            const titleEl = document.getElementById('mplAssetTitle');
+            const listContainer = document.getElementById('mplHistoryList');
+            if (titleEl) titleEl.textContent = targetId;
+
+            if (listContainer) {
+                listContainer.innerHTML = '<div style="text-align:center; padding:24px; color:#64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br>Memuat riwayat mutasi lokasi...</div>';
+            }
+            window.openModal('modalPropLocationHistory');
+
+            try {
+                const res = await fetch(`api/assets.php?id=${encodeURIComponent(targetId)}`, { cache: 'no-store' });
+                const json = await res.json();
+                if (!res.ok || json.status !== 'success') throw new Error(json.message || 'Gagal memuat');
+                const history = Array.isArray(json.data?.location_history) ? json.data.location_history : [];
+
+                if (listContainer) {
+                    if (history.length === 0) {
+                        listContainer.innerHTML = `
+                            <div style="text-align:center; padding:32px 16px; color:#64748b;">
+                                <i class="fa-solid fa-route fa-2x" style="color:#cbd5e1; margin-bottom:8px;"></i>
+                                <div style="font-weight:600; color:#475569;">Belum Ada Riwayat Mutasi</div>
+                                <div style="font-size:0.75rem;">Perpindahan lokasi belum pernah dicatat secara resmi untuk unit ini.</div>
+                            </div>
+                        `;
+                    } else {
+                        listContainer.innerHTML = history.map((row, idx) => `
+                            <div style="padding:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:12px; position:relative;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                                    <span style="font-size:0.92rem; font-weight:800; color:#0f172a;">
+                                        <span style="color:#64748b;">${escapeHtml(row.from_location_name || 'Lokasi Awal')}</span>
+                                        <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; color:#0284c7; margin:0 6px;"></i>
+                                        <span style="color:#0284c7;">${escapeHtml(row.to_location_name || '-')}</span>
+                                    </span>
+                                    <span style="font-size:0.72rem; font-weight:600; background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px;">
+                                        ${row.movement_date ? new Date(row.movement_date.replace(' ', 'T')).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                                    </span>
+                                </div>
+                                ${row.notes ? `<div style="font-size:0.82rem; color:#334155; margin-bottom:6px;"><strong>Keperluan:</strong> ${escapeHtml(row.notes)}</div>` : ''}
+                                <div style="font-size:0.73rem; color:#64748b; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                    ${row.bast_number ? `<span><i class="fa-solid fa-file-contract"></i> <strong>BAST:</strong> ${escapeHtml(row.bast_number)}</span><span>&bull;</span>` : ''}
+                                    <span><i class="fa-solid fa-user-check"></i> ${escapeHtml(row.requested_by_name || 'Petugas')}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (e) {
+                console.warn(e);
+                if (listContainer) {
+                    listContainer.innerHTML = `<div style="color:#b91c1c; padding:16px;">Gagal memuat riwayat: ${escapeHtml(e.message)}</div>`;
+                }
             }
         };
 
@@ -9151,8 +9627,13 @@
                 }
                 const isActive = String(item.movementId) === String(latestMovementId);
                 const route = `${item.fromLocation || 'Lokasi awal tidak tercatat'} → ${item.toLocation || '-'}`;
-                const details = [item.bastNumber || 'Tanpa nomor BAST', date, route, item.requestedBy ? `Oleh ${item.requestedBy}` : '']
-                    .filter(Boolean).join(' · ');
+                const details = [
+                    item.bastNumber ? `BAST: ${item.bastNumber}` : 'Mutasi Internal',
+                    date,
+                    route,
+                    item.notes ? `Keperluan: ${item.notes}` : '',
+                    item.requestedBy ? `Oleh: ${item.requestedBy}` : ''
+                ].filter(Boolean).join(' · ');
                 return `
                         <div class="movement-timeline-item ${isActive ? 'latest' : ''}">
                             <div class="movement-timeline-title">${escapeHtml(item.toLocation || currentLoc || '-')} ${isActive ? '(Lokasi Aktif)' : ''}</div>
@@ -10419,6 +10900,9 @@
                             <button type="button" id="cBtnCond" class="callout-btn-pill info" style="background:#f0f9ff; border:1px solid #7dd3fc; color:#0284c7; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Condition Monitoring">
                                 <i class="fa-solid fa-gauge-high"></i> <span>Condition</span>
                             </button>
+                            <button type="button" id="cBtnRelocate" class="callout-btn-pill" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Mutasi / Pindah Lokasi Unit">
+                                <i class="fa-solid fa-route"></i> <span>Mutasi</span>
+                            </button>
                             <button type="button" id="cBtnEdit" class="callout-btn-pill neutral" style="background:#f8fafc; border:1px solid #cbd5e1; color:#475569; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Edit Metadata Unit">
                                 <i class="fa-solid fa-pen-to-square"></i> <span>Edit</span>
                             </button>
@@ -10451,6 +10935,9 @@
                                 </button>
                                 <button type="button" id="cBtnCond" class="callout-btn-pill info" style="background:#f0f9ff; border:1px solid #7dd3fc; color:#0284c7; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Condition Monitoring">
                                     <i class="fa-solid fa-gauge-high"></i> <span>Condition</span>
+                                </button>
+                                <button type="button" id="cBtnRelocate" class="callout-btn-pill" style="background:#f0fdf4; border:1px solid #86efac; color:#15803d; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Mutasi / Pindah Lokasi Unit">
+                                    <i class="fa-solid fa-route"></i> <span>Mutasi</span>
                                 </button>
                                 <button type="button" id="cBtnEdit" class="callout-btn-pill neutral" style="background:#f8fafc; border:1px solid #cbd5e1; color:#475569; border-radius:6px; padding:5px 10px; display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:0.76rem; font-weight:700; white-space:nowrap; transition:all 0.15s ease;" title="Edit Metadata Unit">
                                     <i class="fa-solid fa-pen-to-square"></i> <span>Edit</span>
@@ -10517,6 +11004,7 @@
             const btnP2H = document.getElementById('cBtnP2H');
             const btnWO = document.getElementById('cBtnWO');
             const btnCond = document.getElementById('cBtnCond');
+            const btnRelocate = document.getElementById('cBtnRelocate') || document.getElementById('calloutBtnRelocate');
             const btnEdit = document.getElementById('cBtnEdit');
             const btnArsip = document.getElementById('cBtnArsip');
 
@@ -10524,6 +11012,7 @@
             if (btnP2H) btnP2H.onclick = () => { closeAssetActionCallout(); openIntegratedP2H(assetId, 'history'); };
             if (btnWO) btnWO.onclick = () => { closeAssetActionCallout(); openIntegratedWO(assetId); };
             if (btnCond) btnCond.onclick = () => { closeAssetActionCallout(); ConditionMonitoring.openForAsset(assetId, 'overview'); };
+            if (btnRelocate) btnRelocate.onclick = () => { closeAssetActionCallout(); window.openRelocateAssetModal(assetId, location); };
             if (btnEdit) btnEdit.onclick = () => { closeAssetActionCallout(); if (typeof window.openEditAssetModal === 'function') { window.openEditAssetModal(assetId); } else { openAssetModal(assetId, status, category, location); } };
             if (btnArsip) btnArsip.onclick = () => { closeAssetActionCallout(); window.archiveData('asset', assetId); };
 
@@ -13290,6 +13779,13 @@
                     <div class="btn-text">
                         <strong>Condition</strong>
                         <small>Monitoring Status</small>
+                    </div>
+                </button>
+                <button type="button" class="callout-action-btn" id="calloutBtnRelocate">
+                    <div class="btn-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fa-solid fa-route"></i></div>
+                    <div class="btn-text">
+                        <strong>Mutasi Lokasi</strong>
+                        <small>Pindah Unit</small>
                     </div>
                 </button>
                 <button type="button" class="callout-action-btn" id="calloutBtnEdit">
