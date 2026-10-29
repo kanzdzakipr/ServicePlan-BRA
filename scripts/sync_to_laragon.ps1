@@ -236,7 +236,8 @@ if (-not $ImportDatabase) {
             (Join-Path $srcDir 'scripts\merge_live_host_data_20261029.php'),
             (Join-Path $srcDir 'scripts\migrate_batch12_sold_assets_archive.php'),
             (Join-Path $srcDir 'scripts\migrate_batch13_legacy_offhire_demobilization.php'),
-            (Join-Path $srcDir 'scripts\migrate_batch14_alias_consolidation_placeholder_cleanup.php')
+            (Join-Path $srcDir 'scripts\migrate_batch14_alias_consolidation_placeholder_cleanup.php'),
+            (Join-Path $srcDir 'scripts\migrate_batch15_project_location_alignment.php')
         )
         foreach ($bScript in $equipmentBatchScripts) {
             if ($phpExe -and (Test-Path $bScript)) {
@@ -363,7 +364,8 @@ if (-not $ImportDatabase) {
         (Join-Path $srcDir 'scripts\merge_live_host_data_20261029.php'),
         (Join-Path $srcDir 'scripts\migrate_batch12_sold_assets_archive.php'),
         (Join-Path $srcDir 'scripts\migrate_batch13_legacy_offhire_demobilization.php'),
-        (Join-Path $srcDir 'scripts\migrate_batch14_alias_consolidation_placeholder_cleanup.php')
+        (Join-Path $srcDir 'scripts\migrate_batch14_alias_consolidation_placeholder_cleanup.php'),
+        (Join-Path $srcDir 'scripts\migrate_batch15_project_location_alignment.php')
     )
     foreach ($bScript in $equipmentBatchScripts) {
         if ($phpExe -and (Test-Path $bScript)) {
