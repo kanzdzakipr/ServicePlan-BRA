@@ -21086,7 +21086,7 @@
       const unitLabel = plan.code || plan.id;
       const mType = meterType(plan);
 
-      const addEvt = (dateStr, kind, meterVal, tagLabel, cssClass) => {
+      const addEvt = (dateStr, kind, meterVal, tagLabel, shortTag, cssClass) => {
         if (!dateStr) return;
         const clean = String(dateStr).trim().slice(0, 10);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(clean)) return;
@@ -21103,6 +21103,7 @@
           meter: meterVal,
           unitLabel,
           tagLabel,
+          shortTag,
           mType,
           cssClass,
         });
@@ -21114,6 +21115,7 @@
           "actual",
           plan.actual,
           "Realisasi PM",
+          "PM",
           plan.actual == null ? "incomplete" : "",
         );
       }
@@ -21126,7 +21128,8 @@
             "history",
             h.meter,
             `Histori ${h.label || "Servis"}`,
-            "",
+            h.label || "Hist",
+            "kind-history",
           );
         }
       });
@@ -21137,17 +21140,24 @@
           "last",
           plan.last,
           "Servis Terakhir",
-          "",
+          "Last",
+          "kind-last",
         );
       }
 
-      if (calendarShowEstimates && !plan.completed && plan.nextServiceDate) {
+      if (
+        calendarShowEstimates &&
+        !plan.completed &&
+        plan.nextServiceDate &&
+        (varianceOf(plan) || 0) <= 0
+      ) {
         addEvt(
           plan.nextServiceDate,
           "estimate",
           plan.target,
           "Estimasi Jadwal",
-          "incomplete",
+          "Est",
+          "kind-estimate",
         );
       }
     });
@@ -21191,28 +21201,58 @@
     for (let day = 1; day <= daysInMonth; day++) {
       const dayEvents = eventsByDay[day] || [];
       const isToday = isCurrentRealMonth && day === todayDateNum;
-      const dayNumberHtml = isToday
-        ? `<div class="pm-calendar-number" style="display:flex; align-items:center; justify-content:space-between;"><span style="background:var(--pm-blue, #0284c7); color:#fff; border-radius:999px; padding:1px 7px; font-weight:800;">${day}</span><span style="font-size:0.6rem; color:var(--pm-blue, #0284c7); font-weight:700;">Hari Ini</span></div>`
-        : `<div class="pm-calendar-number">${day}</div>`;
+      const dayOfWeek = (firstDayOffset + day - 1) % 7;
+      const isWeekend = dayOfWeek >= 5;
+
+      const countBadge =
+        dayEvents.length > 1
+          ? `<span class="pm-calendar-day-count">${dayEvents.length} unit</span>`
+          : isToday
+            ? `<span class="pm-calendar-day-count" style="background:#bae6fd; color:#0369a1;">Hari Ini</span>`
+            : "";
+
       const eventsHtml = dayEvents
         .map((evt) => {
           const meterInfo =
             evt.meter != null ? ` · ${formatNumber(evt.meter)} ${evt.mType}` : "";
-          const badgePrefix =
-            evt.kind === "estimate" ? "[Est] " : evt.kind === "history" ? `[${evt.tagLabel.replace("Histori ", "")}] ` : "";
-          return `<button class="pm-calendar-event ${evt.cssClass}" data-pm-detail="${escapeHtml(planKey(evt.plan))}" title="${escapeHtml(`${evt.unitLabel} — ${evt.tagLabel}${meterInfo} (${evt.date})`)}">${escapeHtml(badgePrefix + evt.unitLabel)}</button>`;
+          const tagHtml =
+            evt.shortTag && evt.kind !== "actual"
+              ? `<span class="pm-calendar-event-tag">${escapeHtml(evt.shortTag)}</span>`
+              : "";
+          return `<button type="button" class="pm-calendar-event ${evt.cssClass}" data-pm-detail="${escapeHtml(planKey(evt.plan))}" title="${escapeHtml(`${evt.unitLabel} — ${evt.tagLabel}${meterInfo} (${evt.date})`)}"><span class="pm-calendar-event-code">${escapeHtml(evt.unitLabel)}</span>${tagHtml}</button>`;
         })
         .join("");
+
+      const dayClasses = [
+        "pm-calendar-day",
+        isToday ? "is-today" : "",
+        isWeekend ? "is-weekend" : "",
+        dayEvents.length > 0 ? "has-events" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
       cells.push(
-        `<div class="pm-calendar-day"${isToday ? ' style="background:#f0f9ff; box-shadow:inset 0 0 0 1px #7dd3fc;"' : ""}>${dayNumberHtml}${eventsHtml}</div>`,
+        `<div class="${dayClasses}"><div class="pm-calendar-day-top"><span class="pm-calendar-number">${day}</span>${countBadge}</div><div class="pm-calendar-events-list">${eventsHtml}</div></div>`,
       );
     }
 
+    const totalSlotCount = firstDayOffset + daysInMonth;
+    const trailingEmpty = (7 - (totalSlotCount % 7)) % 7;
+    for (let i = 0; i < trailingEmpty; i++) {
+      cells.push('<div class="pm-calendar-day empty"></div>');
+    }
+
     const totalEventsInMonth = Object.values(eventsByDay).flat().length;
-    const actualOrHistCount = Object.values(eventsByDay)
+    const actualCount = Object.values(eventsByDay)
       .flat()
-      .filter((e) => e.kind !== "estimate").length;
-    const estCount = totalEventsInMonth - actualOrHistCount;
+      .filter((e) => e.kind === "actual").length;
+    const histCount = Object.values(eventsByDay)
+      .flat()
+      .filter((e) => e.kind === "history" || e.kind === "last").length;
+    const estCount = Object.values(eventsByDay)
+      .flat()
+      .filter((e) => e.kind === "estimate").length;
 
     const attention = pmPlans.filter(
       (plan) =>
@@ -21236,37 +21276,58 @@
     panel.innerHTML = `
             <div class="pm-calendar-layout">
                 <section class="pm-card">
-                    <div class="pm-card-header" style="flex-wrap:wrap; gap:12px;">
+                    <div class="pm-card-header">
                         <div>
-                            <div class="pm-card-title"><i class="fa-regular fa-calendar-days"></i> ${calendarMonthNames[calendarMonth]} ${calendarYear}</div>
-                            <div class="pm-card-caption">Menampilkan realisasi servis, histori perawatan (${actualOrHistCount}), dan estimasi jatuh tempo (${estCount})</div>
+                            <div class="pm-card-title"><i class="fa-regular fa-calendar-days" style="color:var(--pm-blue); margin-right:6px;"></i> Kalender Eksekusi — ${calendarMonthNames[calendarMonth]} ${calendarYear}</div>
+                            <div class="pm-card-caption">Rekap tanggal realisasi PM (${actualCount}), histori servis (${histCount}), dan estimasi jadwal (${estCount})</div>
                         </div>
-                        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                            <button type="button" class="pm-row-action" id="pmCalPrevMonth" title="Bulan Sebelumnya" style="padding:5px 9px;"><i class="fa-solid fa-chevron-left"></i></button>
-                            <select id="pmCalMonthSelect" class="pm-select" aria-label="Pilih Bulan Kalender" style="min-width:130px; padding:5px 8px; height:32px; font-size:0.78rem;">${monthOptionsHtml}</select>
-                            <select id="pmCalYearSelect" class="pm-select" aria-label="Pilih Tahun Kalender" style="min-width:95px; padding:5px 8px; height:32px; font-size:0.78rem;">${yearOptionsHtml}</select>
-                            <button type="button" class="pm-row-action" id="pmCalNextMonth" title="Bulan Berikutnya" style="padding:5px 9px;"><i class="fa-solid fa-chevron-right"></i></button>
-                            <button type="button" class="pm-row-action" id="pmCalTodayBtn" title="Lompat ke Bulan Ini" style="padding:5px 10px; font-size:0.74rem;">Bulan Ini</button>
-                            ${calendarYear !== 2026 || calendarMonth !== 6 ? `<button type="button" class="pm-row-action" id="pmCalJuly2026Btn" title="Kembali ke Periode Juli 2026" style="padding:5px 10px; font-size:0.74rem; background:#eff6ff; color:#0284c7; border-color:#bae6fd;">Juli 2026</button>` : ""}
-                            <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.73rem; color:var(--text-muted); cursor:pointer; margin-left:4px; user-select:none;">
-                                <input type="checkbox" id="pmCalToggleEstimate" ${calendarShowEstimates ? "checked" : ""}> Estimasi Due
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <span class="pm-status completed"><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i> ${totalEventsInMonth} AGENDA</span>
+                        </div>
+                    </div>
+                    <div class="pm-cal-toolbar">
+                        <div class="pm-cal-nav-group">
+                            <div class="pm-cal-stepper">
+                                <button type="button" class="pm-cal-nav-btn" id="pmCalPrevMonth" title="Bulan Sebelumnya"><i class="fa-solid fa-chevron-left"></i></button>
+                                <select id="pmCalMonthSelect" class="pm-cal-select" aria-label="Pilih Bulan Kalender">${monthOptionsHtml}</select>
+                                <select id="pmCalYearSelect" class="pm-cal-select year-select" aria-label="Pilih Tahun Kalender">${yearOptionsHtml}</select>
+                                <button type="button" class="pm-cal-nav-btn" id="pmCalNextMonth" title="Bulan Berikutnya"><i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                            <button type="button" class="pm-cal-quick-btn" id="pmCalTodayBtn" title="Lompat ke Bulan Ini"><i class="fa-regular fa-calendar" style="margin-right:4px;"></i>Bulan Ini</button>
+                            ${calendarYear !== 2026 || calendarMonth !== 6 ? `<button type="button" class="pm-cal-quick-btn baseline" id="pmCalJuly2026Btn" title="Kembali ke Periode Baseline Juli 2026"><i class="fa-solid fa-clock-rotate-left" style="margin-right:4px;"></i>Juli 2026</button>` : ""}
+                        </div>
+                        <div class="pm-cal-legend-group">
+                            <span class="pm-cal-legend-item"><span class="pm-cal-legend-dot actual"></span>Realisasi PM</span>
+                            <span class="pm-cal-legend-item"><span class="pm-cal-legend-dot history"></span>Histori / Terakhir</span>
+                            <label class="pm-cal-toggle-pill" title="Tampilkan perkiraan jadwal jatuh tempo berikutnya">
+                                <input type="checkbox" id="pmCalToggleEstimate" ${calendarShowEstimates ? "checked" : ""}>
+                                <span class="pm-cal-legend-dot estimate"></span>Estimasi Due
                             </label>
-                            <span class="pm-status completed">${totalEventsInMonth} AGENDA</span>
                         </div>
                     </div>
                     <div class="pm-calendar">
-                        ${["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((day) => `<div class="pm-calendar-head">${day}</div>`).join("")}
+                        ${["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((day, idx) => `<div class="pm-calendar-head${idx >= 5 ? " weekend" : ""}">${day}</div>`).join("")}
                         ${cells.join("")}
                     </div>
                 </section>
                 <section class="pm-card">
-                    <div class="pm-card-header"><div><div class="pm-card-title"><i class="fa-solid fa-clipboard-list"></i> Perlu Dijadwalkan / Dilengkapi</div><div class="pm-card-caption">Unit Overdue, Due Soon, atau realisasi belum lengkap</div></div></div>
+                    <div class="pm-card-header">
+                        <div>
+                            <div class="pm-card-title"><i class="fa-solid fa-clipboard-list" style="color:var(--pm-amber); margin-right:6px;"></i> Perlu Dijadwalkan / Dilengkapi</div>
+                            <div class="pm-card-caption">${attention.length} unit berstatus Overdue, Due Soon, atau data belum lengkap</div>
+                        </div>
+                    </div>
                     <ul class="pm-unscheduled-list">
                         ${attention
                           .map((rawPlan) => {
                             const plan = mergedPlan(rawPlan);
                             const status = statusOf(plan);
-                            return `<li><div><strong>${escapeHtml(plan.code || plan.id)}</strong><span>${status === "COMPLETED" ? "Detail realisasi belum lengkap" : `${status} · ${varianceOf(plan) > 0 ? "+" : ""}${formatNumber(varianceOf(plan))} ${meterType(plan)}`}</span></div><button class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}">Buka</button></li>`;
+                            const v = varianceOf(plan);
+                            const subText =
+                              status === "COMPLETED"
+                                ? "Detail realisasi belum lengkap"
+                                : `Selisih ${v > 0 ? "+" : ""}${formatNumber(v)} ${meterType(plan)} · Target ${formatNumber(plan.target)} ${meterType(plan)}`;
+                            return `<li><div><div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;"><strong style="margin:0;">${escapeHtml(plan.code || plan.id)}</strong><span class="pm-status ${statusClass(status)}" style="font-size:0.58rem; padding:2px 6px;">${status}</span></div><span>${escapeHtml(subText)}</span></div><button type="button" class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}">Buka</button></li>`;
                           })
                           .join("")}
                     </ul>
