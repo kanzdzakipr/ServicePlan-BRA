@@ -23926,7 +23926,7 @@ body.sl-modal-open {
 #view-asset .master-asset-telemetry-grid,
 #view-asset .telemetry-status-grid {
     display: grid !important;
-    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     gap: 1px !important;
 }
 

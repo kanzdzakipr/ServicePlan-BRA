@@ -78,37 +78,37 @@ final class KpiCalculator
                     'Physical Availability (PA)',
                     $pa,
                     '%',
-                    'PA = ((W + S) / T) x 100%'
+                    '(Scheduled Hours – Breakdown Hours) / Scheduled Hours × 100%'
                 ),
                 'mechanicalAvailability' => self::metric(
                     'Mechanical Availability (MA)',
                     $ma,
                     '%',
-                    'MA = (W / (W + R)) x 100%'
+                    '(Available Hours – Mechanical Downtime) / Available Hours × 100%'
                 ),
                 'useOfAvailability' => self::metric(
                     'Use of Availability (UA)',
                     $ua,
                     '%',
-                    'UA = (W / (W + S)) x 100%'
+                    'Working Hours / Available Hours × 100%'
                 ),
                 'effectiveUtilization' => self::metric(
                     'Effective Utilization (EU)',
                     $eu,
                     '%',
-                    'EU = (W / T) x 100%'
+                    'Working Hours / Scheduled Hours × 100%'
                 ),
                 'mtbf' => self::metric(
                     'Mean Time Between Failures (MTBF)',
                     $mtbf,
                     'jam',
-                    'MTBF = W / frekuensi kerusakan'
+                    'Operating Hours / Number of Failures'
                 ),
                 'mttr' => self::metric(
                     'Mean Time To Repair (MTTR)',
                     $mttr,
                     'jam',
-                    'MTTR = R / frekuensi perbaikan selesai'
+                    'Total Corrective Repair Hours / Number of Completed Repairs'
                 ),
             ],
             'dataQuality' => [
@@ -125,12 +125,12 @@ final class KpiCalculator
     public static function formulaCatalog(): array
     {
         return [
-            'PA' => '((W + S) / T) x 100%',
-            'MA' => '(W / (W + R)) x 100%',
-            'UA' => '(W / (W + S)) x 100%',
-            'EU' => '(W / T) x 100%',
-            'MTBF' => 'W / frekuensi kerusakan',
-            'MTTR' => 'R / frekuensi perbaikan selesai',
+            'PA' => '(Scheduled Hours – Breakdown Hours) / Scheduled Hours × 100%',
+            'MA' => '(Available Hours – Mechanical Downtime) / Available Hours × 100%',
+            'UA' => 'Working Hours / Available Hours × 100%',
+            'EU' => 'Working Hours / Scheduled Hours × 100%',
+            'MTBF' => 'Operating Hours / Number of Failures',
+            'MTTR' => 'Total Corrective Repair Hours / Number of Completed Repairs',
         ];
     }
 
