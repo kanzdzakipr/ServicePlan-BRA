@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Local PDF OCR Runner</title>
+</head>
+<body>
+  <canvas id="page-canvas" hidden></canvas>
+  <script src="/vendor/pdf-3.11.174.min.js"></script>
+  <script src="/vendor/tesseract-5.1.1.min.js"></script>
+  <script>
+    'use strict';
+
+    let pdfDocument = null;
+    let ocrWorker = null;
+    let renderScale = 3;
+
+    window.ocrReady = true;
+
+    window.initializeOcr = async function (pdfUrl, scale) {
+      renderScale = Number(scale) || 3;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/vendor/pdf-3.11.174.worker.min.js';
+      pdfDocument = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
+      ocrWorker = await Tesseract.createWorker('ind+eng', 1, {
+        workerPath: '/vendor/tesseract-5.1.1.worker.min.js',
+        corePath: '/vendor',
+        langPath: '/vendor',
+        gzip: true
+      });
+      await ocrWorker.setParameters({ preserve_interword_spaces: '1' });
+      return { pages: pdfDocument.numPages };
+    };
+
+    window.recognizePage = async function (pageNumber) {
+      const page = await pdfDocument.getPage(pageNumber);
+      const viewport = page.getViewport({ scale: renderScale });
+      const canvas = document.getElementById('page-canvas');
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: context, viewport: viewport }).promise;
+      const result = await ocrWorker.recognize(canvas);
+      page.cleanup();
+      return {
+        page: pageNumber,
+        width: canvas.width,
+        height: canvas.height,
+        confidence: result.data.confidence,
+        text: result.data.text || '',
+        imageDataUrl: canvas.toDataURL('image/jpeg', 0.94)
+      };
+    };
+
+    window.shutdownOcr = async function () {
+      if (ocrWorker) await ocrWorker.terminate();
+      if (pdfDocument) await pdfDocument.destroy();
+      ocrWorker = null;
+      pdfDocument = null;
+      return true;
+    };
+  </script>
+</body>
+</html>

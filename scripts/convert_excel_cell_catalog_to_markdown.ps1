@@ -104,7 +104,7 @@ try {
 
             if ($null -eq $lastRowCell -or $null -eq $lastColumnCell) {
                 $writer.WriteLine('Sheet ini tidak memiliki sel berisi nilai atau rumus.')
-                $summary.Add([pscustomobject]@{ File = $fileName; Sheet = $worksheet.Name; Range = '-'; Cells = 0; Formulas = 0; Hyperlinks = 0; Empty = $true })
+                $summary.Add([pscustomobject]@{ File = $fileName; Sheet = $worksheet.Name; Range = '-'; Cells = 0; Formulas = 0; Hyperlinks = 0; Shapes = $worksheet.Shapes.Count; Empty = $true })
                 continue
             }
 
@@ -154,6 +154,20 @@ try {
                 }
             }
 
+            if ($worksheet.Shapes.Count -gt 0) {
+                $writer.WriteLine()
+                $writer.WriteLine('## Objek non-sel')
+                $writer.WriteLine()
+                foreach ($shape in $worksheet.Shapes) {
+                    $shapeText = ''
+                    try { $shapeText = [string]$shape.TextFrame2.TextRange.Text } catch { }
+                    $shapeText = ConvertTo-MarkdownText $shapeText
+                    $alternativeText = ConvertTo-MarkdownText ([string]$shape.AlternativeText)
+                    $topLeft = $shape.TopLeftCell.Address($false, $false)
+                    $writer.WriteLine("- ``$($shape.Name)``; tipe ``$($shape.Type)``; sel kiri atas ``$topLeft``; ukuran $([math]::Round($shape.Width)) x $([math]::Round($shape.Height)) pt; teks: $shapeText; alt: $alternativeText")
+                }
+            }
+
             $summary.Add([pscustomobject]@{
                 File = $fileName
                 Sheet = $worksheet.Name
@@ -161,6 +175,7 @@ try {
                 Cells = $cellCount
                 Formulas = $formulaCount
                 Hyperlinks = $hyperlinks.Count
+                Shapes = $worksheet.Shapes.Count
                 Empty = $false
             })
         }
@@ -188,6 +203,52 @@ try {
         $namesWriter.Dispose()
     }
 
+    $mediaFiles = [System.Collections.Generic.List[string]]::new()
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($SourcePath)
+    try {
+        $mediaDirectoryName = 'workbook_media'
+        $mediaDirectory = Join-Path $OutputDirectory $mediaDirectoryName
+        $mediaIndex = 0
+        foreach ($entry in $archive.Entries) {
+            if (-not $entry.FullName.StartsWith('xl/media/') -or $entry.Length -eq 0) { continue }
+            $mediaIndex++
+            New-Item -ItemType Directory -Path $mediaDirectory -Force | Out-Null
+            $mediaName = ('{0:D2}_{1}' -f $mediaIndex, [System.IO.Path]::GetFileName($entry.FullName))
+            $targetMediaPath = Join-Path $mediaDirectory $mediaName
+            $inputStream = $entry.Open()
+            $outputStream = [System.IO.File]::Create($targetMediaPath)
+            try { $inputStream.CopyTo($outputStream) }
+            finally { $outputStream.Dispose(); $inputStream.Dispose() }
+            $mediaFiles.Add("$mediaDirectoryName/$mediaName")
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
+
+    $mediaFile = $null
+    if ($mediaFiles.Count -gt 0) {
+        $mediaFile = ('{0:D2}_workbook_media.md' -f ($sheetNumber + 2))
+        $mediaWriter = [System.IO.StreamWriter]::new((Join-Path $OutputDirectory $mediaFile), $false, $utf8)
+        try {
+            $mediaWriter.WriteLine('# Media Workbook')
+            $mediaWriter.WriteLine()
+            $mediaWriter.WriteLine('Media berikut diekstrak langsung dari paket XLSX agar gambar atau logo tidak terlewat.')
+            $mediaWriter.WriteLine()
+            foreach ($mediaPath in $mediaFiles) {
+                $mediaWriter.WriteLine("- [$mediaPath]($mediaPath)")
+                if ($mediaPath -match '\.(png|jpe?g|gif|bmp)$') {
+                    $mediaWriter.WriteLine()
+                    $mediaWriter.WriteLine("  ![$mediaPath]($mediaPath)")
+                }
+            }
+        }
+        finally {
+            $mediaWriter.Dispose()
+        }
+    }
+
     $readmePath = Join-Path $OutputDirectory '00_README.md'
     $readme = [System.IO.StreamWriter]::new($readmePath, $false, $utf8)
     try {
@@ -205,15 +266,17 @@ try {
             if ($entry.Empty) {
                 $readme.WriteLine("- [$($entry.File)]($($entry.File)) - sheet ``$($entry.Sheet)`` kosong.")
             } else {
-                $readme.WriteLine("- [$($entry.File)]($($entry.File)) - sheet ``$($entry.Sheet)``; rentang ``$($entry.Range)``; $($entry.Cells) sel terisi; $($entry.Formulas) rumus; $($entry.Hyperlinks) hyperlink.")
+                $readme.WriteLine("- [$($entry.File)]($($entry.File)) - sheet ``$($entry.Sheet)``; rentang ``$($entry.Range)``; $($entry.Cells) sel terisi; $($entry.Formulas) rumus; $($entry.Hyperlinks) hyperlink; $($entry.Shapes) objek non-sel.")
             }
         }
         $readme.WriteLine("- [$namesFile]($namesFile) - seluruh $($workbook.Names.Count) named range workbook.")
+        if ($null -ne $mediaFile) { $readme.WriteLine("- [$mediaFile]($mediaFile) - $($mediaFiles.Count) media asli dari paket XLSX.") }
         $readme.WriteLine()
         $totalCells = ($summary | Measure-Object -Property Cells -Sum).Sum
         $totalFormulas = ($summary | Measure-Object -Property Formulas -Sum).Sum
         $totalHyperlinks = ($summary | Measure-Object -Property Hyperlinks -Sum).Sum
-        $readme.WriteLine("Validasi: $($workbook.Worksheets.Count) sheet diperiksa; $totalCells sel berisi nilai atau rumus, $totalFormulas rumus, $totalHyperlinks hyperlink, dan $($workbook.Names.Count) named range telah dicatat.")
+        $totalShapes = ($summary | Measure-Object -Property Shapes -Sum).Sum
+        $readme.WriteLine("Validasi: $($workbook.Worksheets.Count) sheet diperiksa; $totalCells sel berisi nilai atau rumus, $totalFormulas rumus, $totalHyperlinks hyperlink, $totalShapes objek non-sel, $($mediaFiles.Count) media, dan $($workbook.Names.Count) named range telah dicatat.")
     }
     finally {
         $readme.Dispose()
