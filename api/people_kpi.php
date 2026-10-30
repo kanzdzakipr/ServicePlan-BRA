@@ -361,35 +361,98 @@ if ($method === 'GET') {
     if ($action === 'overtime_leaderboard') {
         $location = people_kpi_require_location($db, $_GET['location_id'] ?? api_current_location_id());
         $locationId = (int) $location['location_id'];
-        // Aggregate real overtime from spl_overtime_records
-        // Period filter: YYYY-MM
-        $stmt = $db->prepare("
-            SELECT 
-                s.employee_user_id,
-                COALESCE(u.full_name, s.role_snapshot) AS employee_name,
-                s.role_snapshot AS role_name,
-                l.location_name,
-                COUNT(DISTINCT s.spl_number) AS total_spl,
-                SUM(s.duration_hours) AS total_hours,
-                SUM(CASE WHEN s.end_verified = 1 THEN 1 ELSE 0 END) AS verified_sessions
-            FROM spl_overtime_records s
-            LEFT JOIN users u ON u.user_id = s.employee_user_id
-            LEFT JOIN locations l ON l.location_id = s.location_id
-            WHERE s.reversed_at IS NULL
-              AND s.spl_date LIKE :period_like
-              AND s.location_id = :location_id
-            GROUP BY s.employee_user_id, employee_name, s.role_snapshot, l.location_name
-            ORDER BY total_hours DESC
-        ");
-        $stmt->execute([':period_like' => "{$period}%", ':location_id' => $locationId]);
-        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Cek apakah ada data resmi pada tabel employee_attendance_monthly
+        $checkStmt = $db->prepare("SELECT COUNT(*) FROM employee_attendance_monthly WHERE period_key = :period AND location_id = :location_id");
+        $checkStmt->execute([':period' => $period, ':location_id' => $locationId]);
+        $hasMonthly = (int)$checkStmt->fetchColumn() > 0;
+
+        if ($hasMonthly) {
+            $stmt = $db->prepare("
+                SELECT 
+                    m.user_id AS employee_user_id,
+                    COALESCE(u.full_name, m.role_snapshot) AS employee_name,
+                    m.role_snapshot AS role_name,
+                    l.location_name,
+                    m.kj_days,
+                    m.kl_days,
+                    m.off_days,
+                    m.cuti_days,
+                    m.sakit_days,
+                    m.izin_days,
+                    m.mangkir_days,
+                    m.total_work_days,
+                    m.total_overtime_hours AS total_hours,
+                    COALESCE(spl.total_spl, 0) AS total_spl,
+                    COALESCE(spl.verified_sessions, m.kj_days) AS verified_sessions
+                FROM employee_attendance_monthly m
+                LEFT JOIN users u ON u.user_id = m.user_id
+                LEFT JOIN locations l ON l.location_id = m.location_id
+                LEFT JOIN (
+                    SELECT 
+                        s.employee_user_id,
+                        COUNT(DISTINCT s.spl_number) AS total_spl,
+                        SUM(CASE WHEN s.end_verified = 1 THEN 1 ELSE 0 END) AS verified_sessions
+                    FROM spl_overtime_records s
+                    WHERE s.reversed_at IS NULL AND s.spl_date LIKE :period_like
+                    GROUP BY s.employee_user_id
+                ) spl ON spl.employee_user_id = m.user_id
+                WHERE m.period_key = :period
+                  AND m.location_id = :location_id
+                ORDER BY total_hours DESC, m.kj_days DESC
+            ");
+            $stmt->execute([':period' => $period, ':period_like' => "{$period}%", ':location_id' => $locationId]);
+            $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            // Fallback ke agregasi spl_overtime_records murni
+            $stmt = $db->prepare("
+                SELECT 
+                    s.employee_user_id,
+                    COALESCE(u.full_name, s.role_snapshot) AS employee_name,
+                    s.role_snapshot AS role_name,
+                    l.location_name,
+                    COUNT(DISTINCT s.spl_number) AS total_spl,
+                    SUM(s.duration_hours) AS total_hours,
+                    SUM(CASE WHEN s.end_verified = 1 THEN 1 ELSE 0 END) AS verified_sessions,
+                    NULL AS kj_days,
+                    NULL AS kl_days,
+                    NULL AS off_days
+                FROM spl_overtime_records s
+                LEFT JOIN users u ON u.user_id = s.employee_user_id
+                LEFT JOIN locations l ON l.location_id = s.location_id
+                WHERE s.reversed_at IS NULL
+                  AND s.spl_date LIKE :period_like
+                  AND s.location_id = :location_id
+                GROUP BY s.employee_user_id, employee_name, s.role_snapshot, l.location_name
+                ORDER BY total_hours DESC
+            ");
+            $stmt->execute([':period_like' => "{$period}%", ':location_id' => $locationId]);
+            $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         $hasData = !empty($records);
         $ranked = [];
         $rank = 1;
+        $welderTop = null;
+        $mekanikTop = null;
+        $grandTotalHours = 0.0;
+
         foreach ($records as $rec) {
             $rec['rank'] = $rank++;
             $rec['total_hours'] = round((float) $rec['total_hours'], 1);
+            if (isset($rec['kj_days'])) $rec['kj_days'] = (int)$rec['kj_days'];
+            if (isset($rec['kl_days'])) $rec['kl_days'] = (int)$rec['kl_days'];
+            if (isset($rec['off_days'])) $rec['off_days'] = (int)$rec['off_days'];
+            $grandTotalHours += $rec['total_hours'];
+
+            $rLower = strtolower($rec['role_name'] . ' ' . $rec['employee_name']);
+            if (!$welderTop && strpos($rLower, 'weld') !== false) {
+                $welderTop = ['name' => $rec['employee_name'], 'hours' => $rec['total_hours']];
+            }
+            if (!$mekanikTop && (strpos($rLower, 'mekanik') !== false && strpos($rLower, 'weld') === false)) {
+                $mekanikTop = ['name' => $rec['employee_name'], 'hours' => $rec['total_hours']];
+            }
+
             $ranked[] = $rec;
         }
 
@@ -398,8 +461,43 @@ if ($method === 'GET') {
             'period' => $period,
             'location' => $location,
             'has_data' => $hasData,
-            'message' => $hasData ? 'Data lembur terverifikasi ditemukan.' : 'Belum ada data lembur / SPL terverifikasi pada periode ' . $period . '.',
+            'source_mode' => $hasMonthly ? 'attendance_matrix' : 'spl_overtime',
+            'summary' => [
+                'total_personnel' => count($ranked),
+                'total_hours' => round($grandTotalHours, 1),
+                'top_welder' => $welderTop,
+                'top_mekanik' => $mekanikTop,
+            ],
+            'message' => $hasData ? 'Data lembur & presensi terverifikasi ditemukan.' : 'Belum ada data lembur / absensi resmi pada periode ' . $period . '.',
             'leaderboard' => $ranked
+        ]);
+    }
+
+    if ($action === 'attendance_summary') {
+        $location = people_kpi_require_location($db, $_GET['location_id'] ?? api_current_location_id());
+        $locationId = (int) $location['location_id'];
+
+        $stmt = $db->prepare("
+            SELECT 
+                m.*,
+                COALESCE(u.full_name, m.role_snapshot) AS employee_name,
+                l.location_name
+            FROM employee_attendance_monthly m
+            LEFT JOIN users u ON u.user_id = m.user_id
+            LEFT JOIN locations l ON l.location_id = m.location_id
+            WHERE m.period_key = :period
+              AND m.location_id = :location_id
+            ORDER BY m.total_overtime_hours DESC, m.kj_days DESC
+        ");
+        $stmt->execute([':period' => $period, ':location_id' => $locationId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        api_json_response(200, [
+            'status' => 'success',
+            'period' => $period,
+            'location' => $location,
+            'total' => count($rows),
+            'data' => $rows
         ]);
     }
 

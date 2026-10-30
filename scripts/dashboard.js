@@ -23491,7 +23491,7 @@
                         <div class="pk-card primary">
                             <div class="pk-card-info">
                                 <h4>Total Personel Terdata</h4>
-                                <div class="pk-val">27 Orang</div>
+                                <div class="pk-val" id="valAttTotalPersonel">27 Orang</div>
                                 <div class="pk-sub">22 Yard KM12, 5 Lapangan</div>
                             </div>
                             <div class="pk-card-icon"><i class="fa-solid fa-users"></i></div>
@@ -23499,7 +23499,7 @@
                         <div class="pk-card warning">
                             <div class="pk-card-info">
                                 <h4>Total Jam Lembur Audit</h4>
-                                <div class="pk-val">1.397 Jam</div>
+                                <div class="pk-val" id="valAttTotalLembur">1.397 Jam</div>
                                 <div class="pk-sub">31 Hari Periode Januari 2026</div>
                             </div>
                             <div class="pk-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
@@ -23507,7 +23507,7 @@
                         <div class="pk-card success">
                             <div class="pk-card-info">
                                 <h4>Lembur Welder Terbanyak</h4>
-                                <div class="pk-val">129.0 Jam</div>
+                                <div class="pk-val" id="valAttTopWelder">129.0 Jam</div>
                                 <div class="pk-sub">Suwardi (Mekanik Welding)</div>
                             </div>
                             <div class="pk-card-icon"><i class="fa-solid fa-fire"></i></div>
@@ -23515,7 +23515,7 @@
                         <div class="pk-card info">
                             <div class="pk-card-info">
                                 <h4>Lembur Mekanik Terbanyak</h4>
-                                <div class="pk-val">88.0 Jam</div>
+                                <div class="pk-val" id="valAttTopMekanik">88.0 Jam</div>
                                 <div class="pk-sub">Afriyandi (Mekanik Yard)</div>
                             </div>
                             <div class="pk-card-icon"><i class="fa-solid fa-wrench"></i></div>
@@ -24452,6 +24452,18 @@
         return;
       }
 
+      // Update top summary cards dynamically if summary data present
+      if (res.summary) {
+        const elTotalP = document.getElementById("valAttTotalPersonel");
+        if (elTotalP) elTotalP.textContent = `${res.summary.total_personnel || res.leaderboard.length} Orang`;
+        const elTotalL = document.getElementById("valAttTotalLembur");
+        if (elTotalL) elTotalL.textContent = `${Number(res.summary.total_hours || 0).toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Jam`;
+        const elTopW = document.getElementById("valAttTopWelder");
+        if (elTopW) elTopW.textContent = res.summary.top_welder ? `${Number(res.summary.top_welder.hours).toFixed(1)} Jam` : "-";
+        const elTopM = document.getElementById("valAttTopMekanik");
+        if (elTopM) elTopM.textContent = res.summary.top_mekanik ? `${Number(res.summary.top_mekanik.hours).toFixed(1)} Jam` : "-";
+      }
+
       tbody.innerHTML = res.leaderboard
         .map((item) => {
           let rankBadge = `<span class="pk-leaderboard-rank pk-rank-normal">${item.rank}</span>`;
@@ -24462,15 +24474,19 @@
           else if (item.rank === 3)
             rankBadge = `<span class="pk-leaderboard-rank pk-rank-3">3</span>`;
 
+          const kjDisplay = (item.kj_days !== undefined && item.kj_days !== null) ? `${item.kj_days} Hari` : `${item.total_spl || 0} SPL`;
+          const klDisplay = (item.kl_days !== undefined && item.kl_days !== null) ? `${item.kl_days} Hari` : `${item.verified_sessions || 0} Sesi`;
+          const offDisplay = (item.off_days !== undefined && item.off_days !== null) ? `${item.off_days} Hari` : `-`;
+
           return `
                 <tr>
                     <td style="text-align:center;">${rankBadge}</td>
                     <td><span class="pk-badge pk-badge-info">${escapeHtml(item.location_name || "Yard / Site")}</span></td>
                     <td><strong>${escapeHtml(item.employee_name)}</strong></td>
                     <td>${escapeHtml(item.role_name || "-")}</td>
-                    <td style="text-align:center;">${item.total_spl} SPL</td>
-                    <td style="text-align:center;">${item.verified_sessions} Sesi</td>
-                    <td style="text-align:center;">-</td>
+                    <td style="text-align:center;">${kjDisplay}</td>
+                    <td style="text-align:center;">${klDisplay}</td>
+                    <td style="text-align:center;">${offDisplay}</td>
                     <td style="font-weight:700; color:var(--primary); font-size:0.95rem;">${Number(item.total_hours).toFixed(1)} Jam</td>
                 </tr>
             `;
