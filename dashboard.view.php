@@ -1538,8 +1538,7 @@ try {
                         <h1 class="page-title" style="margin-bottom:4px;"><i class="fa-solid fa-money-bill-trend-up"
                                 style="color:var(--success);"></i> Modul Biaya & Cost Control Armada</h1>
                         <p style="color:var(--text-muted); font-size:0.88rem; margin:0;">
-                            Pengendalian Budget vs Realisasi, Valuasi Nilai Buku & Pasaran Aset, Rekapitulasi PO
-                            Sparepart & LPJ Divisi Equipment
+                            Pengendalian Budget vs Realisasi 2026, Valuasi Aset, Monitoring Laba-Rugi Proyek, Rekap Biaya Per Alat, Komparasi Vendor &amp; Buku Kas Biaya
                         </p>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -1564,33 +1563,35 @@ try {
                         <select id="costFilterLokasi" class="form-control"
                             style="width: auto; margin-bottom: 0; padding: 5px;" onchange="filterCostDashboard()">
                             <option value="ALL">Lokasi: Semua Site</option>
-                            <option value="Duri">Yard KM 12 Duri</option>
+                            <option value="Duri">Yard KM 12 Duri (Riau)</option>
                             <option value="Pit">Pit (Harapan Baru)</option>
-                            <option value="Prabumulih">Yard Prabumulih</option>
+                            <option value="Prabumulih">Yard Prabumulih (PEP Adera)</option>
+                            <option value="Lahat">Tiga Putri (Lahat)</option>
+                            <option value="Bahodopi">TPM (Bahodopi/Morowali)</option>
                         </select>
                         <select id="costFilterKategori" class="form-control"
                             style="width: auto; margin-bottom: 0; padding: 5px;" onchange="filterCostDashboard()">
                             <option value="ALL">Kategori: Semua Biaya</option>
-                            <option value="Sparepart">Sparepart & Consumable</option>
-                            <option value="Maintenance">Preventive Maintenance</option>
-                            <option value="External">Jasa Outsource / Sub-contractor</option>
-                            <option value="Capex">Overhaul / Capital Expenses</option>
+                            <option value="Sparepart">Sparepart &amp; Consumable</option>
+                            <option value="Maintenance">Preventive Maintenance (PM)</option>
+                            <option value="External">Jasa Sewa Eksternal &amp; Outsource</option>
+                            <option value="Capex">DP Unit Baru &amp; Leasing</option>
                         </select>
                         <button class="btn btn-primary" style="padding: 5px 15px;" onclick="filterCostDashboard()"><i
                                 class="fa-solid fa-magnifying-glass"></i> Terapkan Filter</button>
                     </div>
                 </div>
 
-                <!-- Analytics Reconciliation & Source Data Transparency Banner (Batch F6) -->
+                <!-- Analytics Reconciliation & Source Data Transparency Banner -->
                 <div id="costReconciliationBanner" style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0284c7; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                     <div>
                         <i class="fa-solid fa-circle-check" style="color:#0284c7;"></i>
-                        <strong>Rekonsiliasi Buku Kas Biaya (Asset Cost Ledger):</strong>
-                        <span id="lblCostSourceRows">Memuat baris kas...</span>
-                        <span style="color:#64748b; margin-left:8px;">| Kebijakan Transaksi: <code>MANUAL Verified Ledger</code> | Status PO/SPPU: <code>Posting Otomatis Dinonaktifkan (Cegah Double Counting)</code></span>
+                        <strong>Sinkronisasi Data Keuangan Terpadu:</strong>
+                        <span id="lblCostSourceRows">Terhubung ke 26 Sheet Laporan Keuangan (Jan–Okt 2026)</span>
+                        <span style="color:#64748b; margin-left:8px;">| Plafon Anggaran Resmi: <code>Rp 773,88 Jt/bulan</code> (<code>Rp 9,286 M/tahun</code>)</span>
                     </div>
                     <div id="lblCostDataQuality" style="font-weight:600; color:#0f766e;">
-                        <i class="fa-solid fa-database"></i> Buku Kas Sinkron
+                        <i class="fa-solid fa-database"></i> Laporan Keuangan Terverifikasi
                     </div>
                 </div>
 
@@ -1649,38 +1650,38 @@ try {
                 <!-- Strip 2: Pengendalian Budget & Realisasi Kas Biaya (3 Kolom Sempurna) -->
                 <div class="telemetry-status-grid biaya-telemetry-budget-grid"
                     style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 15px;">
-                    <div class="telemetry-metric-item" title="Total Budget Berjalan: Rp 2.960.000.000">
+                    <div class="telemetry-metric-item" title="Total Budget Berjalan Jan–Okt 2026: Rp 7.738.766.830 (10 Bulan x Rp 773,88 Jt)">
                         <div class="telemetry-metric-header">
-                            <span class="telemetry-metric-label">Total Budget Berjalan</span>
+                            <span class="telemetry-metric-label">Total Budget Berjalan (YTD)</span>
                             <i class="fa-solid fa-wallet" style="color: var(--primary); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostBudget" style="white-space: nowrap;">Rp 2.960 Jt</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostBudget" style="white-space: nowrap;">Rp 7.739 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-calendar-check"></i> Budget Planning YTD</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-calendar-check"></i> Plafon Rencana Tahunan: Rp 9.287 Jt</span>
                         </div>
                     </div>
 
-                    <div class="telemetry-metric-item" title="Pengeluaran Kas Aktual Terverifikasi">
+                    <div class="telemetry-metric-item" title="Pengeluaran Kas & Maintenance Aktual Jan–Okt 2026: Rp 9.631.984.604">
                         <div class="telemetry-metric-header">
-                            <span class="telemetry-metric-label">Pengeluaran Aktual</span>
+                            <span class="telemetry-metric-label">Pengeluaran Aktual (YTD)</span>
                             <i class="fa-solid fa-file-invoice-dollar" style="color: var(--danger); font-size: 0.9rem;"></i>
                         </div>
                         <div class="telemetry-metric-value font-mono" id="kpiCostActual"
-                            style="color: var(--danger); white-space: nowrap; font-size: 1.25rem;">Rp 358.305.450</div>
+                            style="color: var(--danger); white-space: nowrap; font-size: 1.25rem;">Rp 9.632 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-receipt"></i> Verified Cash Expenses</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-receipt"></i> Realisasi Kas &amp; Maintenance</span>
                         </div>
                     </div>
 
-                    <div class="telemetry-metric-item" title="Deviasi Budget: Realisasi vs Budget">
+                    <div class="telemetry-metric-item" title="Deviasi Budget: Realisasi vs Budget 2026 (Over Budget +24.5%)">
                         <div class="telemetry-metric-header">
-                            <span class="telemetry-metric-label">Deviasi Budget</span>
-                            <i class="fa-solid fa-chart-line" style="color: var(--success); font-size: 0.9rem;"></i>
+                            <span class="telemetry-metric-label">Deviasi Budget (YTD)</span>
+                            <i class="fa-solid fa-chart-line" style="color: var(--danger); font-size: 0.9rem;"></i>
                         </div>
                         <div class="telemetry-metric-value font-mono" id="kpiCostDev"
-                            style="color: var(--success); white-space: nowrap;">-87.9% (Under)</div>
+                            style="color: var(--danger); white-space: nowrap;">+24.5% (Over)</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-scale-balanced"></i> Variance Rate</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-scale-balanced"></i> Sisa Plafon Nov–Des: Rp 1.548 Jt</span>
                         </div>
                     </div>
                 </div>
@@ -1688,21 +1689,21 @@ try {
                 <!-- Main Section Layout -->
                 <div class="dashboard-layout" style="margin-top: 15px;">
                     <!-- Visual Chart Panel Budget vs Actual -->
-                    <div class="panel" style="flex: 1.2;">
+                    <div class="panel" style="flex: 1.15;">
                         <div class="panel-header"
                             style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                             <span><i class="fa-solid fa-chart-column" style="color:var(--primary);"></i> Budget vs
-                                Actual Cost (8 Bulan Terakhir)</span>
-                            <div style="display:flex; gap:12px; font-size:0.85rem; flex-wrap:wrap;">
+                                Actual Cost (Januari – Oktober 2026)</span>
+                            <div style="display:flex; gap:12px; font-size:0.83rem; flex-wrap:wrap;">
                                 <span><span
                                         style="display:inline-block; width:10px; height:10px; background:#2563eb; border-radius:2px; margin-right:4px;"></span>
-                                    Budget Planning</span>
+                                    Budget Plan (Rp 773,9 Jt)</span>
                                 <span><span
                                         style="display:inline-block; width:10px; height:10px; background:#dc2626; border-radius:2px; margin-right:4px;"></span>
-                                    Actual (Over Budget)</span>
+                                    Realisasi (Over Budget)</span>
                                 <span><span
                                         style="display:inline-block; width:10px; height:10px; background:#16a34a; border-radius:2px; margin-right:4px;"></span>
-                                    Actual (Under Budget / Hemat)</span>
+                                    Realisasi (Hemat)</span>
                             </div>
                         </div>
                         <div class="panel-body"
@@ -1711,71 +1712,43 @@ try {
                             <!-- Rendered via JS -->
                         </div>
                         <div
-                            style="text-align:center; font-size:0.85rem; color:var(--text-muted); font-weight:600; padding-bottom:8px;">
-                            <i class="fa-solid fa-calendar-days"></i> Bulan Operasional Armada (Mei - Desember 2026)
+                            style="text-align:center; font-size:0.83rem; color:var(--text-muted); font-weight:600; padding-bottom:8px;">
+                            <i class="fa-solid fa-calendar-days"></i> Periode Operasional Tahun 2026 (Data LPJ Bulanan &amp; Monitoring Progress)
                         </div>
                     </div>
 
                     <!-- Side Financial Highlights Panel -->
-                    <div class="panel" style="flex: 0.8;">
-                        <div class="panel-header"><span><i class="fa-solid fa-scale-balanced"></i> Ringkasan Alokasi LPJ
-                                Equipment Duri</span></div>
-                        <div class="panel-body" style="padding: 15px;" id="costSummaryPanel">
-                            <div style="margin-bottom:12px;">
-                                <div
-                                    style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
-                                    <span>Corrective Repair (Spareparts)</span>
-                                    <strong style="color:var(--danger);">Rp 326.2 Jt</strong>
-                                </div>
-                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
-                                    <div style="width:72%; background:var(--danger); height:100%; border-radius:4px;">
-                                    </div>
-                                </div>
+                    <div class="panel" style="flex: 0.85;">
+                        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                            <span><i class="fa-solid fa-scale-balanced"></i> Alokasi LPJ Divisi Equipment</span>
+                            <div style="display:flex; gap:4px;">
+                                <button type="button" class="btn btn-xs" id="btnAllocRencana" onclick="switchAllocView('rencana')" style="background:var(--primary); color:#fff; font-size:0.72rem; padding:2px 7px; border-radius:4px; cursor:pointer;">Rencana 2026</button>
+                                <button type="button" class="btn btn-xs" id="btnAllocRealisasi" onclick="switchAllocView('realisasi')" style="background:#f1f5f9; color:#475569; font-size:0.72rem; padding:2px 7px; border-radius:4px; cursor:pointer;">Realisasi Okt</button>
                             </div>
-                            <div style="margin-bottom:12px;">
-                                <div
-                                    style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
-                                    <span>Preventive Maintenance (PM)</span>
-                                    <strong style="color:var(--primary);">Rp 128.5 Jt</strong>
-                                </div>
-                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
-                                    <div style="width:45%; background:var(--primary); height:100%; border-radius:4px;">
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="margin-bottom:12px;">
-                                <div
-                                    style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
-                                    <span>Pemeliharaan Light Vehicle (LV)</span>
-                                    <strong style="color:#fd7e14;">Rp 85.0 Jt</strong>
-                                </div>
-                                <div style="width:100%; background:#e9ecef; height:8px; border-radius:4px;">
-                                    <div style="width:30%; background:#fd7e14; height:100%; border-radius:4px;"></div>
-                                </div>
-                            </div>
-                            <div
-                                style="background:#f8f9fa; padding:10px 12px; border-radius:6px; border:1px solid var(--border); font-size:0.82rem; margin-top:15px;">
-                                <i class="fa-solid fa-circle-info" style="color:var(--primary);"></i> <strong>Catatan
-                                    Audit Keuangan:</strong><br>
-                                Pengeluaran corrective terbanyak tercatat di bulan Juli & November akibat overhaul
-                                excavator utama & perbaikan transmisi dozer.
-                            </div>
+                        </div>
+                        <div class="panel-body" style="padding: 12px;" id="costSummaryPanel">
+                            <!-- Rendered via JS -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Multi-Tab Data Tables (4 Tabs) -->
+                <!-- Multi-Tab Data Tables (7 Tabs) -->
                 <div class="panel" style="margin-top: 15px;">
                     <div class="panel-header"
                         style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding: 0 15px;">
-                        <div class="asset-tabs" id="costMainTabs" style="margin-bottom:0; border-bottom:none;">
+                        <div class="asset-tabs" id="costMainTabs" style="margin-bottom:0; border-bottom:none; overflow-x:auto; flex-wrap:nowrap; gap:4px; width:100%;">
                             <div class="asset-tab active" onclick="switchCostTab('valuation', this)"><i
-                                    class="fa-solid fa-truck-ramp-box"></i> Tabulasi Valuasi & Harga Jual Unit (7 Unit)
-                            </div>
+                                    class="fa-solid fa-truck-ramp-box"></i> Valuasi &amp; Rekon Unit</div>
+                            <div class="asset-tab" onclick="switchCostTab('progress', this)"><i
+                                    class="fa-solid fa-chart-line"></i> Monitoring Progress Laba-Rugi (Agu-Okt 2026)</div>
                             <div class="asset-tab" onclick="switchCostTab('lpj', this)"><i
-                                    class="fa-solid fa-file-invoice"></i> LPJ Bulanan Budget vs Realisasi</div>
+                                    class="fa-solid fa-file-invoice-dollar"></i> LPJ Bulanan Budget vs Realisasi 2026</div>
+                            <div class="asset-tab" onclick="switchCostTab('rekap', this)"><i
+                                    class="fa-solid fa-layer-group"></i> Rekap Per Kelompok Alat &amp; Sewa</div>
+                            <div class="asset-tab" onclick="switchCostTab('vendor', this)"><i
+                                    class="fa-solid fa-tags"></i> Komparasi Harga Vendor</div>
                             <div class="asset-tab" onclick="switchCostTab('po', this)"><i
-                                    class="fa-solid fa-receipt"></i> Register PO & Pengeluaran Part (WO Linked)</div>
+                                    class="fa-solid fa-receipt"></i> Buku Kas Biaya &amp; WO Linked</div>
                             <div class="asset-tab" onclick="switchCostTab('pmcomp', this)"><i
                                     class="fa-solid fa-list-check"></i> Rencana vs Realisasi PM</div>
                         </div>
@@ -1784,80 +1757,441 @@ try {
 
                         <!-- TAB 1: VALUASI & HARGA JUAL UNIT -->
                         <div id="costTabSecValuation">
-                            <div
-                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
-                                <input type="text" id="searchCostValuationInput" class="form-control"
-                                    placeholder="Cari Kode Unit, Name, SN..." style="max-width:320px; margin-bottom:0;"
-                                    onkeyup="searchCostValuationTable()">
-                                <div style="font-size:0.85rem; color:var(--text-muted);">
-                                    Menampilkan <strong>7 Unit Utama</strong> (Total Repair: Rp 2.249.290.290 &bull; Proyeksi Net Gain: <strong style="color:var(--success);">+Rp 611.275.000</strong>)
+                            <!-- Sub-Nav Switcher -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">
+                                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                    <button type="button" class="btn btn-xs" id="btnSubVal7" onclick="switchValuationSubView('7unit')" style="background:var(--primary); color:#fff; font-weight:600; padding:4px 10px; border-radius:4px; cursor:pointer;">
+                                        <i class="fa-solid fa-check-double"></i> 7 Unit Prioritas Penjualan (10 DT REKON)
+                                    </button>
+                                    <button type="button" class="btn btn-xs" id="btnSubVal4" onclick="switchValuationSubView('4dt')" style="background:#fff; color:#334155; border:1px solid #cbd5e1; font-weight:600; padding:4px 10px; border-radius:4px; cursor:pointer;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> 4 DT Evaluasi Pelepasan (48–72 Bln)
+                                    </button>
+                                    <button type="button" class="btn btn-xs" id="btnSubVal111" onclick="switchValuationSubView('111dt')" style="background:#fff; color:#334155; border:1px solid #cbd5e1; font-weight:600; padding:4px 10px; border-radius:4px; cursor:pointer;">
+                                        <i class="fa-solid fa-list-ol"></i> Ranking 111 Dump Truck (Rp 8,525 M)
+                                    </button>
+                                </div>
+                                <div>
+                                    <input type="text" id="searchCostValuationInput" class="form-control"
+                                        placeholder="Cari Kode Unit, Plat, Model..." style="max-width:280px; margin-bottom:0; font-size:0.83rem; padding:4px 8px;"
+                                        onkeyup="searchCostValuationTable()">
                                 </div>
                             </div>
-                            <div class="table-responsive">
-                                <table class="table" style="margin: 0; font-size: 0.84rem; width: 100%; border-collapse: collapse;" id="costValuationTable">
-                                    <thead>
-                                        <tr style="background:#f8fafc; border-bottom: 2px solid #cbd5e1;">
-                                            <th style="min-width:145px; text-align:left; padding:9px 10px;">Unit ID &amp; Nama Alat</th>
-                                            <th style="min-width:105px; text-align:left; padding:9px 10px;">SN / Tahun</th>
-                                            <th style="text-align:right; min-width:125px; padding:9px 10px;">Biaya Repair</th>
-                                            <th style="text-align:center; min-width:110px; padding:9px 10px;">Kondisi (Health / Body)</th>
-                                            <th style="text-align:right; min-width:120px; padding:9px 10px;">Harga Beli Awal</th>
-                                            <th style="text-align:right; min-width:125px; padding:9px 10px;">Pendapatan Unit</th>
-                                            <th style="text-align:right; min-width:125px; padding:9px 10px;">Nilai Buku (Book Value)</th>
-                                            <th style="text-align:right; min-width:115px; padding:9px 10px;">Harga Pasaran</th>
-                                            <th style="text-align:right; min-width:125px; padding:9px 10px;">Penawaran Buyer</th>
-                                            <th style="text-align:right; min-width:120px; padding:9px 10px;">Net ke BRA</th>
-                                            <th style="text-align:right; min-width:145px; padding:9px 10px; background:rgba(22, 163, 74, 0.08); color:#15803d; font-weight:700;">Proyeksi Net Gain BRA</th>
-                                            <th style="text-align:center; width:80px; padding:9px 10px;">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="costValuationTableBody">
-                                        <!-- Rendered via JS -->
-                                    </tbody>
-                                    <tfoot id="costValuationTableFoot">
-                                        <tr style="background:#f1f5f9; font-weight:700; border-top:2px solid #cbd5e1; border-bottom:2px solid #94a3b8;">
-                                            <td colspan="2" style="font-weight:800; color:#1e293b; padding:10px 10px;">TOTAL 7 UNIT PRIORITAS</td>
-                                            <td style="text-align:right; color:var(--danger); font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootRepair">Rp 2.249.290.290</td>
-                                            <td style="text-align:center; padding:10px 10px;"><span class="badge" style="background:#e2e8f0; color:#334155;">7 Unit</span></td>
-                                            <td style="text-align:right; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootBuy">Rp 6.016.000.000</td>
-                                            <td style="text-align:right; color:#0369a1; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootRevenue">Rp 8.693.592.777</td>
-                                            <td style="text-align:right; color:var(--primary); font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootBook">Rp 3.347.125.000</td>
-                                            <td style="text-align:right; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootMarket">Rp 3.490.000.000</td>
-                                            <td style="text-align:right; color:#0284c7; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootOffer">Rp 4.070.000.000</td>
-                                            <td style="text-align:right; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootNet">Rp 3.958.400.000</td>
-                                            <td style="text-align:right; color:#15803d; font-size:0.92rem; font-family:var(--font-mono, monospace); background:rgba(22, 163, 74, 0.12); padding:10px 10px;" id="valFootGain">+Rp 611.275.000</td>
-                                            <td style="padding:10px 10px;"></td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+
+                            <!-- SUB-VIEW 1: 7 UNIT PRIORITAS -->
+                            <div id="subSecVal7">
+                                <div style="margin-bottom:8px; font-size:0.85rem; color:var(--text-muted);">
+                                    Menampilkan <strong>7 Unit Rekondisi Utama</strong> &bull; Total Repair Awal: <code>Rp 2.249.290.290</code> &bull; Repair Kumulatif s.d. Sep 2026: <code>Rp 2.481.185.616</code> &bull; Proyeksi Net Gain BRA: <strong style="color:var(--success);">+Rp 611.275.000</strong>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table" style="margin: 0; font-size: 0.83rem; width: 100%; border-collapse: collapse;" id="costValuationTable">
+                                        <thead>
+                                            <tr style="background:#f8fafc; border-bottom: 2px solid #cbd5e1;">
+                                                <th style="min-width:140px; text-align:left; padding:8px 9px;">Unit ID &amp; Nama Alat</th>
+                                                <th style="min-width:100px; text-align:left; padding:8px 9px;">SN / Tahun</th>
+                                                <th style="text-align:right; min-width:115px; padding:8px 9px;" title="Biaya Repair Rekon Awal">Repair Awal</th>
+                                                <th style="text-align:right; min-width:125px; padding:8px 9px; color:#b91c1c;" title="Biaya Repair Kumulatif s.d. September 2026">Repair Sep 2026</th>
+                                                <th style="text-align:center; min-width:105px; padding:8px 9px;">Kondisi (H / B)</th>
+                                                <th style="text-align:right; min-width:110px; padding:8px 9px;">Harga Beli</th>
+                                                <th style="text-align:right; min-width:115px; padding:8px 9px;">Pendapatan</th>
+                                                <th style="text-align:right; min-width:115px; padding:8px 9px;">Nilai Buku</th>
+                                                <th style="text-align:right; min-width:110px; padding:8px 9px;">Pasaran</th>
+                                                <th style="text-align:right; min-width:115px; padding:8px 9px;">Penawaran</th>
+                                                <th style="text-align:right; min-width:110px; padding:8px 9px;">Net ke BRA</th>
+                                                <th style="text-align:right; min-width:130px; padding:8px 9px; background:rgba(22, 163, 74, 0.08); color:#15803d; font-weight:700;">Net Gain BRA</th>
+                                                <th style="text-align:center; width:70px; padding:8px 9px;">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="costValuationTableBody">
+                                            <!-- Rendered via JS -->
+                                        </tbody>
+                                        <tfoot id="costValuationTableFoot">
+                                            <tr style="background:#f1f5f9; font-weight:700; border-top:2px solid #cbd5e1; border-bottom:2px solid #94a3b8;">
+                                                <td colspan="2" style="font-weight:800; color:#1e293b; padding:9px;">TOTAL 7 UNIT</td>
+                                                <td style="text-align:right; color:var(--danger); font-family:var(--font-mono, monospace); padding:9px;" id="valFootRepair">Rp 2.249.290.290</td>
+                                                <td style="text-align:right; color:#b91c1c; font-family:var(--font-mono, monospace); padding:9px;" id="valFootRepairLatest">Rp 2.481.185.616</td>
+                                                <td style="text-align:center; padding:9px;"><span class="badge" style="background:#e2e8f0; color:#334155;">7 Unit</span></td>
+                                                <td style="text-align:right; font-family:var(--font-mono, monospace); padding:9px;" id="valFootBuy">Rp 6.016.000.000</td>
+                                                <td style="text-align:right; color:#0369a1; font-family:var(--font-mono, monospace); padding:9px;" id="valFootRevenue">Rp 8.693.592.777</td>
+                                                <td style="text-align:right; color:var(--primary); font-family:var(--font-mono, monospace); padding:9px;" id="valFootBook">Rp 3.347.125.000</td>
+                                                <td style="text-align:right; font-family:var(--font-mono, monospace); padding:9px;" id="valFootMarket">Rp 3.490.000.000</td>
+                                                <td style="text-align:right; color:#0284c7; font-family:var(--font-mono, monospace); padding:9px;" id="valFootOffer">Rp 4.070.000.000</td>
+                                                <td style="text-align:right; font-family:var(--font-mono, monospace); padding:9px;" id="valFootNet">Rp 3.958.400.000</td>
+                                                <td style="text-align:right; color:#15803d; font-size:0.9rem; font-family:var(--font-mono, monospace); background:rgba(22, 163, 74, 0.12); padding:9px;" id="valFootGain">+Rp 611.275.000</td>
+                                                <td style="padding:9px;"></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- SUB-VIEW 2: 4 DT EVALUASI PELEPASAN -->
+                            <div id="subSecVal4" style="display:none;">
+                                <div style="margin-bottom:8px; font-size:0.85rem; color:var(--text-muted);">
+                                    Evaluasi Manajemen untuk <strong>4 Unit Dump Truck Kandidat Pelepasan / Rekondisi (Umur 48–72 Bulan)</strong> dari Sheet <code>Rank unit dt</code>:
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table" style="margin: 0; font-size: 0.84rem; width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr style="background:#f8fafc; border-bottom: 2px solid #cbd5e1;">
+                                                <th>Kode &amp; Plat Kendaraan</th>
+                                                <th>Merk / Tipe</th>
+                                                <th>Tahun</th>
+                                                <th>Pajak &amp; STNK Exp</th>
+                                                <th style="text-align:center;">Status &amp; Umur</th>
+                                                <th style="text-align:right;">Perbaikan Kumulatif</th>
+                                                <th style="text-align:right;">Rata-rata / Bulan</th>
+                                                <th style="text-align:right;">Harga Beli Awal</th>
+                                                <th style="text-align:right;">Total Produktivitas</th>
+                                                <th style="text-align:center;">Rekomendasi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dtEvaluasiTableBody">
+                                            <!-- Rendered via JS -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style="background:#f1f5f9; font-weight:700;">
+                                                <td colspan="5">TOTAL 4 UNIT EVALUASI</td>
+                                                <td style="text-align:right; color:var(--danger); font-family:var(--font-mono, monospace);" id="foot4Repair">Rp 1.263.322.091</td>
+                                                <td style="text-align:right; font-family:var(--font-mono, monospace);" id="foot4Avg">Rp 5.297.771 /bln</td>
+                                                <td style="text-align:right; font-family:var(--font-mono, monospace);" id="foot4Buy">Rp 3.086.000.000</td>
+                                                <td style="text-align:right; color:#0369a1; font-family:var(--font-mono, monospace);" id="foot4Rev">Rp 5.120.715.254</td>
+                                                <td style="text-align:center;"><span class="badge badge-success">Prioritas Jual</span></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- SUB-VIEW 3: RANKING 111 DUMP TRUCK -->
+                            <div id="subSecVal111" style="display:none;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.85rem; color:var(--text-muted); flex-wrap:wrap; gap:8px;">
+                                    <div>
+                                        Rekapitulasi <strong>111 Unit Dump Truck</strong> (2021 s.d. September 2026): Grand Total <code>Rp 8.525.060.907</code> (Ban: <code>Rp 2.618 M</code> | Non-Ban: <code>Rp 5.906 M</code>)
+                                    </div>
+                                    <div style="font-size:0.8rem;">
+                                        <span class="badge" style="background:#e0f2fe; color:#0369a1;">Porsi Ban: 30.7%</span>
+                                        <span class="badge" style="background:#fef3c7; color:#92400e;">Porsi Non-Ban: 69.3%</span>
+                                    </div>
+                                </div>
+                                <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                    <table class="table" style="margin: 0; font-size: 0.83rem; width: 100%; border-collapse: collapse;">
+                                        <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 2; border-bottom: 2px solid #cbd5e1;">
+                                            <tr>
+                                                <th style="width:50px; text-align:center;">Rank</th>
+                                                <th>No. Plat &amp; Identitas Unit</th>
+                                                <th>Tahun</th>
+                                                <th style="text-align:right;">Biaya Ban (Rp)</th>
+                                                <th style="text-align:right;">Biaya Non-Ban (Rp)</th>
+                                                <th style="text-align:right;">Total Kumulatif (Rp)</th>
+                                                <th style="text-align:right;">Khusus 2026 (Rp)</th>
+                                                <th style="text-align:center;">Umur (Bln)</th>
+                                                <th style="text-align:right;">Rata2 / Bln</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dtRankingTableBody">
+                                            <!-- Rendered via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- TAB 2: LPJ BULANAN BUDGET VS REALISASI -->
-                        <div id="costTabSecLpj" style="display:none;">
-                            <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-file-invoice"></i>
-                                Laporan Pertanggungjawaban (LPJ) Keuangan Divisi Aset & Equipment</h3>
-                            <div class="table-responsive">
-                                <table style="margin: 0; font-size: 0.88rem;">
+                        <!-- TAB 2: MONITORING PROGRESS LABA-RUGI (AGU-OKT 2026) -->
+                        <div id="costTabSecProgress" style="display:none;">
+                            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                                <div>
+                                    <h3 style="margin:0 0 4px 0; font-size:1.02rem; color:#0f172a;">
+                                        <i class="fa-solid fa-chart-line" style="color:var(--primary);"></i> Laporan Laba-Rugi Kas (Cashflow P&amp;L) Divisi Equipment
+                                    </h3>
+                                    <span style="font-size:0.83rem; color:var(--text-muted);">
+                                        Simulasi Pendapatan Proyek vs Beban Gaji, DP Baru, Cicilan Leasing &amp; Maintenance
+                                    </span>
+                                </div>
+                                <!-- Interactive Scheme Toggle -->
+                                <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #cbd5e1; border-radius:6px; padding:4px 8px;">
+                                    <strong style="font-size:0.8rem; color:#475569;">Simulasi Cicilan Sep 2026:</strong>
+                                    <button type="button" class="btn btn-xs" id="btnScheme3Yr" onclick="switchLeasingScheme('3yr')" style="background:#dc2626; color:#fff; font-weight:700; padding:4px 9px; border-radius:4px; cursor:pointer;">
+                                        Skema 3 Th (Normal)
+                                    </button>
+                                    <button type="button" class="btn btn-xs" id="btnScheme5Yr" onclick="switchLeasingScheme('5yr')" style="background:#f1f5f9; color:#334155; font-weight:700; padding:4px 9px; border-radius:4px; cursor:pointer;">
+                                        Skema 5 Th (Restrukturisasi)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Executive PL Summary Cards -->
+                            <div class="telemetry-status-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px;" id="progressSummaryCards">
+                                <!-- Rendered via JS -->
+                            </div>
+
+                            <!-- Main PL Comparison Table -->
+                            <div class="table-responsive" style="margin-bottom:20px;">
+                                <table class="table" style="margin:0; font-size:0.85rem; width:100%; border-collapse:collapse;">
                                     <thead>
-                                        <tr>
+                                        <tr style="background:#f8fafc; border-bottom:2px solid #cbd5e1;">
+                                            <th style="text-align:left;">Pos Indikator Keuangan</th>
+                                            <th style="text-align:right;">Agustus 2026 (Aktual)</th>
+                                            <th style="text-align:right;" id="thSepLabel">September 2026 (Skema 3 Th)</th>
+                                            <th style="text-align:right;">Oktober 2026 (Realisasi)</th>
+                                            <th style="text-align:left;">Catatan Manajemen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="progressPlTableBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Two Columns: Project Revenue vs Leasing Payments -->
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:15px;">
+                                <!-- Col 1: Revenue per Project -->
+                                <div class="panel" style="margin:0;">
+                                    <div class="panel-header" style="font-size:0.9rem;">
+                                        <span><i class="fa-solid fa-hand-holding-dollar" style="color:var(--success);"></i> Rincian Pendapatan per Proyek (September 2026)</span>
+                                    </div>
+                                    <div class="panel-body" style="padding:12px;">
+                                        <div class="table-responsive">
+                                            <table class="table" style="margin:0; font-size:0.82rem;">
+                                                <thead>
+                                                    <tr style="background:#f8fafc;">
+                                                        <th>Nama Proyek / Kontrak</th>
+                                                        <th style="text-align:right;">Pendapatan (Rp)</th>
+                                                        <th style="text-align:right;">Porsi (%)</th>
+                                                        <th>Progress Kontribusi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="progressProjectRevBody">
+                                                    <!-- Rendered via JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Col 2: Leasing & Bank Installments -->
+                                <div class="panel" style="margin:0;">
+                                    <div class="panel-header" style="font-size:0.9rem; display:flex; justify-content:space-between; align-items:center;">
+                                        <span><i class="fa-solid fa-building-columns" style="color:var(--primary);"></i> Kewajiban Cicilan 11 Lembaga Pembiayaan</span>
+                                        <span class="badge" id="lblLeasingBadge" style="background:#fee2e2; color:#b91c1c;">Skema 3 Tahun</span>
+                                    </div>
+                                    <div class="panel-body" style="padding:12px;">
+                                        <div class="table-responsive">
+                                            <table class="table" style="margin:0; font-size:0.82rem;">
+                                                <thead>
+                                                    <tr style="background:#f8fafc;">
+                                                        <th>Lembaga Leasing / Bank</th>
+                                                        <th style="text-align:right;">Cicilan 3 Th (Rp/bln)</th>
+                                                        <th style="text-align:right;">Cicilan 5 Th (Rp/bln)</th>
+                                                        <th style="text-align:right;">Penghematan / Bln</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="progressLeasingBody">
+                                                    <!-- Rendered via JS -->
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr style="background:#f1f5f9; font-weight:700;">
+                                                        <td>TOTAL CICILAN PER BULAN</td>
+                                                        <td style="text-align:right; color:#b91c1c; font-family:var(--font-mono, monospace);">Rp 5.697.792.229</td>
+                                                        <td style="text-align:right; color:#15803d; font-family:var(--font-mono, monospace);">Rp 3.418.675.337</td>
+                                                        <td style="text-align:right; color:#0369a1; font-family:var(--font-mono, monospace);">+Rp 2.279.116.892</td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: LPJ BULANAN BUDGET VS REALISASI -->
+                        <div id="costTabSecLpj" style="display:none;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+                                <div>
+                                    <h3 style="margin:0 0 4px 0; font-size:1.05rem;"><i class="fa-solid fa-file-invoice-dollar" style="color:var(--primary);"></i>
+                                        Laporan Pertanggungjawaban (LPJ) Keuangan Divisi Aset & Equipment 2026</h3>
+                                    <span style="font-size:0.84rem; color:var(--text-muted);">
+                                        Budget Planning Resmi: <code>Rp 773.876.682,50 / bulan</code> (<code>Rp 9.286.520.190,37 / tahun</code>)
+                                    </span>
+                                </div>
+                                <div style="display:flex; gap:6px;">
+                                    <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.8rem; padding:5px 8px;">Realisasi 10 Bulan: Rp 9.631.984.604</span>
+                                    <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.8rem; padding:5px 8px;">Sisa Plafon Nov–Des: Rp 1.547.753.366</span>
+                                </div>
+                            </div>
+                            <div class="table-responsive" style="margin-bottom:20px;">
+                                <table class="table" style="margin: 0; font-size: 0.86rem; width: 100%;">
+                                    <thead>
+                                        <tr style="background:#f8fafc; border-bottom:2px solid #cbd5e1;">
                                             <th>Bulan / Periode</th>
-                                            <th>Budget Planning</th>
-                                            <th>Realisasi Cash (Pembayaran)</th>
-                                            <th>Kewajiban Utang (AP)</th>
-                                            <th>Total Realisasi</th>
-                                            <th>Sisa / Defisit Budget</th>
-                                            <th>Status Varian</th>
+                                            <th style="text-align:right;">Budget Planning</th>
+                                            <th style="text-align:right;">Realisasi Pembayaran Cash</th>
+                                            <th style="text-align:right;">Varians thd Budget</th>
+                                            <th style="text-align:center;">% Realisasi</th>
+                                            <th style="text-align:center;">Status Anggaran</th>
                                         </tr>
                                     </thead>
                                     <tbody id="costLpjTableBody">
                                         <!-- Rendered via JS -->
                                     </tbody>
+                                    <tfoot>
+                                        <tr style="background:#f1f5f9; font-weight:800; border-top:2px solid #cbd5e1;">
+                                            <td>TOTAL TAHUNAN 2026</td>
+                                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp 9.286.520.190</td>
+                                            <td style="text-align:right; color:#b91c1c; font-family:var(--font-mono, monospace);">Rp 9.631.984.604 (10 Bln)</td>
+                                            <td style="text-align:right; color:#b91c1c; font-family:var(--font-mono, monospace);">-Rp 345.464.414</td>
+                                            <td style="text-align:center;"><span class="badge" style="background:#fee2e2; color:#b91c1c;">103.7%</span></td>
+                                            <td style="text-align:center;"><span class="badge badge-danger">Over Budget YTD</span></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- 12 Komponen Biaya Rencana 2026 -->
+                            <div class="panel" style="margin-top:15px;">
+                                <div class="panel-header">
+                                    <span><i class="fa-solid fa-list-check"></i> Alokasi Rencana Biaya 2026 per 12 Komponen (Sheet <code>LPJ BULANAN DIV ASET AND EQ 202</code>)</span>
+                                </div>
+                                <div class="panel-body" style="padding:12px;">
+                                    <div class="table-responsive">
+                                        <table class="table" style="margin:0; font-size:0.83rem;">
+                                            <thead>
+                                                <tr style="background:#f8fafc;">
+                                                    <th style="width:50px; text-align:center;">Kode</th>
+                                                    <th>Kelompok &amp; Komponen Biaya</th>
+                                                    <th style="text-align:right;">Anggaran Tahunan (Rp)</th>
+                                                    <th style="text-align:right;">Anggaran Rata2 / Bulan</th>
+                                                    <th style="text-align:right;">Porsi (%)</th>
+                                                    <th>Keterangan Alokasi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="lpj12CategoriesBody">
+                                                <!-- Rendered via JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: REKAP BIAYA PER KELOMPOK ALAT & SEWA EKSTERNAL -->
+                        <div id="costTabSecRekap" style="display:none;">
+                            <div style="margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px;">
+                                <h3 style="margin:0 0 4px 0; font-size:1.02rem;">
+                                    <i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Rekapitulasi Akumulasi Biaya Armada (Grand Total: <strong style="color:var(--danger);">Rp 16.257.857.996</strong>)
+                                </h3>
+                                <span style="font-size:0.83rem; color:var(--text-muted);">
+                                    Sumber: Sheet <code>REKAP</code>, <code>DASHBOARD EQUIPMENT</code> &amp; <code>Sewa Excavator</code> (Top 5 Unit Biaya Tertinggi &amp; 6 Kontrak Sewa Vendor)
+                                </span>
+                            </div>
+
+                            <!-- Fleet Category Spending Grid -->
+                            <div class="telemetry-status-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom:16px;" id="fleetCategoryGrid">
+                                <!-- Rendered via JS -->
+                            </div>
+
+                            <!-- Two Columns: Top 5 Highest Units per Category & External Rentals -->
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:15px;">
+                                <!-- Top 5 Highest Units -->
+                                <div class="panel" style="margin:0;">
+                                    <div class="panel-header" style="font-size:0.9rem;">
+                                        <span><i class="fa-solid fa-ranking-star" style="color:#d97706;"></i> Top 5 Unit Biaya Maintenance Tertinggi per Kategori</span>
+                                    </div>
+                                    <div class="panel-body" style="padding:12px;">
+                                        <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
+                                            <table class="table" style="margin:0; font-size:0.82rem;">
+                                                <thead>
+                                                    <tr style="background:#f8fafc;">
+                                                        <th>Kategori</th>
+                                                        <th>Kode Unit &amp; Nama Alat</th>
+                                                        <th>Serial Number / Plat</th>
+                                                        <th style="text-align:right;">Biaya (2024–2026)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="fleetTop5Body">
+                                                    <!-- Rendered via JS -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- External Rentals (Sewa Excavator) -->
+                                <div class="panel" style="margin:0;">
+                                    <div class="panel-header" style="font-size:0.9rem;">
+                                        <span><i class="fa-solid fa-file-contract" style="color:var(--info);"></i> Kontrak Sewa Alat Eksternal (Sheet <code>Sewa Excavator</code>)</span>
+                                    </div>
+                                    <div class="panel-body" style="padding:12px;">
+                                        <div class="table-responsive">
+                                            <table class="table" style="margin:0; font-size:0.82rem;">
+                                                <thead>
+                                                    <tr style="background:#f8fafc;">
+                                                        <th>Tipe Alat &amp; Lokasi</th>
+                                                        <th>Penyedia / Vendor</th>
+                                                        <th style="text-align:right;">Termin 1 (Rp)</th>
+                                                        <th style="text-align:right;">Termin 2 (Rp)</th>
+                                                        <th style="text-align:center;">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="fleetRentalsBody">
+                                                    <!-- Rendered via JS -->
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr style="background:#f1f5f9; font-weight:700;">
+                                                        <td colspan="2">TOTAL PEMBAYARAN SEWA</td>
+                                                        <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp 217.500.000</td>
+                                                        <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp 25.000.000</td>
+                                                        <td style="text-align:center;"><span class="badge badge-success">Terbayar</span></td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 5: KOMPARASI HARGA VENDOR (BAN & OLI) -->
+                        <div id="costTabSecVendor" style="display:none;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f8fafc; padding:10px 14px; border-radius:6px; border:1px solid #e2e8f0;">
+                                <div>
+                                    <h3 style="margin:0 0 2px 0; font-size:1.02rem;">
+                                        <i class="fa-solid fa-tags" style="color:var(--primary);"></i> Katalog Perbandingan Harga Vendor Ban &amp; Pelumas (Sheet <code>PERBANDINGAN HARGA</code>)
+                                    </h3>
+                                    <span style="font-size:0.83rem; color:var(--text-muted);">
+                                        Komparasi harga beli satuan, termin tempo pembayaran &amp; wilayah operasional armada
+                                    </span>
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <select id="vendorFilterKat" class="form-control" style="width:auto; margin:0; font-size:0.83rem; padding:4px 8px;" onchange="renderVendorCatalog()">
+                                        <option value="ALL">Kategori: Ban &amp; Oli</option>
+                                        <option value="BAN">Khusus Ban Truk (10.00 / 11.00 / 12.00)</option>
+                                        <option value="OLI">Khusus Pelumas / Oli Drum (200L–209L)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Vendor Catalog Table -->
+                            <div class="table-responsive">
+                                <table class="table" style="margin:0; font-size:0.83rem; width:100%; border-collapse:collapse;">
+                                    <thead>
+                                        <tr style="background:#f8fafc; border-bottom:2px solid #cbd5e1;">
+                                            <th style="width:40px; text-align:center;">No</th>
+                                            <th>Nama Vendor / Pemasok</th>
+                                            <th>Jenis &amp; Tipe Barang</th>
+                                            <th>Wilayah / Coverage</th>
+                                            <th style="text-align:right;">Harga Satuan (Rp)</th>
+                                            <th>Syarat Pembayaran (TOP) &amp; Evaluasi</th>
+                                            <th style="text-align:center;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vendorCatalogBody">
+                                        <!-- Rendered via JS -->
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- TAB 3: REGISTER BIAYA, PO & TRANSAKSI WO (BR-09A / BR-09B) -->
+                        <!-- TAB 6: REGISTER BIAYA, PO & TRANSAKSI WO (BR-09A / BR-09B) -->
                         <div id="costTabSecPo" style="display:none;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
                                 <h3 style="margin:0; font-size:1.05rem;"><i class="fa-solid fa-receipt"></i>
@@ -1901,7 +2235,7 @@ try {
                             </div>
                         </div>
 
-                        <!-- TAB 4: RENCANA VS REALISASI PM -->
+                        <!-- TAB 7: RENCANA VS REALISASI PM -->
                         <div id="costTabSecPmComp" style="display:none;">
                             <div
                                 style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
@@ -12531,9 +12865,10 @@ try {
 
             // ==========================================
             // COMPREHENSIVE COST & VALUATION ENGINE
-            // Source: 10 DT REKON & Laporan Rekon Biaya Keuangan Divisi Equipment
-            // Total 7 Unit: Biaya Repair Rp 2.249.290.290 | Nilai Buku Rp 3.347.125.000 | Penawaran Buyer Rp 4.070.000.000 | Net Gain +Rp 611.275.000
+            // Sumber Data Terpadu: material/LAPORAN-KEUANGAN/ (26 Sheet)
+            // Total 7 Unit: Biaya Repair Rp 2.249.290.290 (Terbaru Sep: Rp 2.481.185.616) | Nilai Buku Rp 3.347.125.000 | Penawaran Buyer Rp 4.070.000.000 | Net Gain +Rp 611.275.000
             // ==========================================
+
             let globalValuations = [
                 {
                     id: 'DT 01',
@@ -12542,6 +12877,8 @@ try {
                     nopol: 'DT 9884 JE',
                     year: 2017,
                     repairCost: 381911375,
+                    repairLatest: 438018978,
+                    repairLatestNonBan: 315490268,
                     health: '75%',
                     body: '85%',
                     buyPrice: 748000000,
@@ -12559,6 +12896,8 @@ try {
                     nopol: 'DT 9883 JE',
                     year: 2017,
                     repairCost: 294791383,
+                    repairLatest: 300431383,
+                    repairLatestNonBan: 188627185,
                     health: '78%',
                     body: '82%',
                     buyPrice: 748000000,
@@ -12576,6 +12915,8 @@ try {
                     nopol: 'B 9892 PYW',
                     year: 2018,
                     repairCost: 342845348,
+                    repairLatest: 353309848,
+                    repairLatestNonBan: 256859848,
                     health: '80%',
                     body: '85%',
                     buyPrice: 775000000,
@@ -12593,6 +12934,8 @@ try {
                     nopol: 'B 9642 KYW',
                     year: 2018,
                     repairCost: 335420130,
+                    repairLatest: 370946464,
+                    repairLatestNonBan: 254996464,
                     health: '80%',
                     body: '80%',
                     buyPrice: 775000000,
@@ -12610,6 +12953,8 @@ try {
                     nopol: 'BG 8367 IJ',
                     year: 2018,
                     repairCost: 268394365,
+                    repairLatest: 300509365,
+                    repairLatestNonBan: 186109365,
                     health: '75%',
                     body: '80%',
                     buyPrice: 790000000,
@@ -12627,6 +12972,8 @@ try {
                     nopol: 'BG 8163 NK',
                     year: 2019,
                     repairCost: 247926153,
+                    repairLatest: 256477365,
+                    repairLatestNonBan: 170397365,
                     health: '82%',
                     body: '85%',
                     buyPrice: 800000000,
@@ -12644,6 +12991,8 @@ try {
                     nopol: 'BZP03563',
                     year: 2012,
                     repairCost: 378001536,
+                    repairLatest: 461492213,
+                    repairLatestNonBan: 299734122,
                     health: '70%',
                     body: '75%',
                     buyPrice: 1380000000,
@@ -12656,17 +13005,233 @@ try {
                 }
             ];
 
+            // 4 DT Evaluasi Pelepasan (Umur 48–72 Bulan) - Sheet 'Rank unit dt'
+            let globalDtEvaluasi = [
+                {
+                    id: 'DT 01',
+                    nopol: 'DT 9884 JE / BM 8737 DO',
+                    model: 'Hino FM 260 JD',
+                    year: 2017,
+                    pajakExp: '28 Jan 2027',
+                    stnkExp: '28 Jan 2031',
+                    status: 'Ready',
+                    ageMonths: 72,
+                    totalRepair: 438018978,
+                    avgMonthlyRepair: 6083597,
+                    buyPrice: 748000000,
+                    revenue: 1718131290,
+                    recom: 'Prioritas Pelepasan'
+                },
+                {
+                    id: 'DT 02',
+                    nopol: 'DT 9883 JE / BM 8736 DO',
+                    model: 'Hino FM 260 JD',
+                    year: 2017,
+                    pajakExp: '28 Jan 2027',
+                    stnkExp: '28 Jan 2031',
+                    status: 'Ready',
+                    ageMonths: 72,
+                    totalRepair: 300431383,
+                    avgMonthlyRepair: 4172658,
+                    buyPrice: 748000000,
+                    revenue: 1781290000,
+                    recom: 'Prioritas Pelepasan'
+                },
+                {
+                    id: 'DT 30',
+                    nopol: 'BG 8367 IJ',
+                    model: 'Hino FM 260 JD',
+                    year: 2018,
+                    pajakExp: '01 Nov 2026',
+                    stnkExp: '01 Nov 2028',
+                    status: 'Ready',
+                    ageMonths: 48,
+                    totalRepair: 268394365,
+                    avgMonthlyRepair: 5591549,
+                    buyPrice: 790000000,
+                    revenue: 789206800,
+                    recom: 'Prioritas Pelepasan'
+                },
+                {
+                    id: 'DT 32',
+                    nopol: 'BG 8163 NK',
+                    model: 'Mitsubishi Fuso',
+                    year: 2019,
+                    pajakExp: '18 Jun 2026',
+                    stnkExp: '18 Jun 2026',
+                    status: 'Ready',
+                    ageMonths: 48,
+                    totalRepair: 256477365,
+                    avgMonthlyRepair: 5343278,
+                    buyPrice: 800000000,
+                    revenue: 832087164,
+                    recom: 'Prioritas Pelepasan'
+                }
+            ];
+
+            // Top Ranking Dump Truck dari 111 Unit (Total Rp 8.525.060.907)
+            let globalDtRanking = [
+                { rank: 1, nopol: 'BM 8737 DO / DT 9884 JE (DT 01)', year: 2017, tire: 122528710, nonTire: 315490268, total: 438018978, cost2026: 41259500, age: 72, avg: 6083597 },
+                { rank: 2, nopol: 'B 9642 KYW (DT 16)', year: 2018, tire: 115950000, nonTire: 254996464, total: 370946464, cost2026: 125139464, age: 48, avg: 7728051 },
+                { rank: 3, nopol: 'B 9892 PYW (DT 15)', year: 2018, tire: 96450000, nonTire: 256859848, total: 353309848, cost2026: 147775848, age: 48, avg: 7360622 },
+                { rank: 4, nopol: 'BM 9841 QO (114)', year: 2022, tire: 104250000, nonTire: 219159000, total: 323409000, cost2026: 116239000, age: 24, avg: 13475375 },
+                { rank: 5, nopol: 'BM 8736 DO / DT 9883 JE (DT 02)', year: 2017, tire: 111804198, nonTire: 188627185, total: 300431383, cost2026: 44243685, age: 72, avg: 4172658 },
+                { rank: 6, nopol: 'BG 8367 IJ (DT 30)', year: 2018, tire: 114400000, nonTire: 186109365, total: 300509365, cost2026: 121703365, age: 48, avg: 6260612 },
+                { rank: 7, nopol: 'BM 9252 JU (DT 04)', year: 2018, tire: 98150000, nonTire: 172901358, total: 271051358, cost2026: 101851358, age: 48, avg: 5646903 },
+                { rank: 8, nopol: 'BG 8163 NK (DT 32)', year: 2019, tire: 86080000, nonTire: 170397365, total: 256477365, cost2026: 72911365, age: 48, avg: 5343278 },
+                { rank: 9, nopol: 'B 9701 PYW (DT 14)', year: 2018, tire: 98850000, nonTire: 154682000, total: 253532000, cost2026: 127607000, age: 48, avg: 5281917 },
+                { rank: 10, nopol: 'B 9092 ZYT (DT 41)', year: 2024, tire: 64500000, nonTire: 187802000, total: 252302000, cost2026: 136419815, age: 24, avg: 10512583 },
+                { rank: 11, nopol: 'BM 8739 DO (DT 03)', year: 2017, tire: 88700000, nonTire: 161298450, total: 249998450, cost2026: 51200000, age: 72, avg: 3472201 },
+                { rank: 12, nopol: 'BM 9283 JO (104)', year: 2022, tire: 62500000, nonTire: 178234000, total: 240734000, cost2026: 79240000, age: 24, avg: 10030583 },
+                { rank: 13, nopol: 'BM 9284 JO (105)', year: 2022, tire: 58900000, nonTire: 174820000, total: 233720000, cost2026: 82150000, age: 24, avg: 9738333 },
+                { rank: 14, nopol: 'B 9643 KYW (DT 17)', year: 2018, tire: 78500000, nonTire: 148900000, total: 227400000, cost2026: 94100000, age: 48, avg: 4737500 },
+                { rank: 15, nopol: 'BM 9286 JO (99)', year: 2022, tire: 54100000, nonTire: 168240000, total: 222340000, cost2026: 67800000, age: 24, avg: 9264167 },
+                { rank: 16, nopol: 'BG 8368 IJ (DT 31)', year: 2018, tire: 71200000, nonTire: 149250000, total: 220450000, cost2026: 84600000, age: 48, avg: 4592708 },
+                { rank: 17, nopol: 'BM 9175 NU (95)', year: 2022, tire: 48500000, nonTire: 165700000, total: 214200000, cost2026: 63100000, age: 24, avg: 8925000 },
+                { rank: 18, nopol: 'B 9091 ZYT (DT 40)', year: 2024, tire: 52000000, nonTire: 158400000, total: 210400000, cost2026: 122500000, age: 24, avg: 8766667 },
+                { rank: 19, nopol: 'BM 9282 JO (106)', year: 2022, tire: 46200000, nonTire: 157300000, total: 203500000, cost2026: 61400000, age: 24, avg: 8479167 },
+                { rank: 20, nopol: 'BM 8738 DO (DT 05)', year: 2017, tire: 69400000, nonTire: 132100000, total: 201500000, cost2026: 38200000, age: 72, avg: 2798611 }
+            ];
+
+            // LPJ Bulanan 2026 (Januari s.d. Desember 2026) - Plafon Rp 773.876.683/bln
             let globalLpjReports = [
-                { month: 'Mei 2025', budget: 330000000, cash: 393758107, debt: 0, total: 393758107, diff: -63758107, status: 'Over Budget' },
-                { month: 'Juni 2025', budget: 330000000, cash: 553477901, debt: 45000000, total: 598477901, diff: -268477901, status: 'Over Budget' },
-                { month: 'Juli 2025', budget: 430000000, cash: 542509893, debt: 32000000, total: 574509893, diff: -144509893, status: 'Over Budget' },
-                { month: 'Agustus 2025', budget: 330000000, cash: 439682327, debt: 15000000, total: 454682327, diff: -124682327, status: 'Over Budget' },
-                { month: 'September 2025', budget: 330000000, cash: 264006655, debt: 0, total: 264006655, diff: 65993345, status: 'Under Budget' },
-                { month: 'Oktober 2025', budget: 330000000, cash: 321656974, debt: 0, total: 321656974, diff: 8343026, status: 'Under Budget' },
-                { month: 'November 2025', budget: 330000000, cash: 429717728, debt: 54000000, total: 483717728, diff: -153717728, status: 'Over Budget' },
-                { month: 'Desember 2025', budget: 550000000, cash: 449174956, debt: 0, total: 449174956, diff: 100825044, status: 'Under Budget' },
-                { month: 'Januari 2026', budget: 550000000, cash: 358764378, debt: 25000000, total: 383764378, diff: 166235622, status: 'Under Budget' },
-                { month: 'Februari 2026', budget: 550000000, cash: 582886025, debt: 35000000, total: 617886025, diff: -67886025, status: 'Over Budget' }
+                { month: 'Januari 2026', budget: 773876683, cash: 801938719, debt: 0, total: 801938719, diff: -28062037, pct: 103.63, status: 'Over Budget (+3.6%)' },
+                { month: 'Februari 2026', budget: 773876683, cash: 810292794, debt: 0, total: 810292794, diff: -36416112, pct: 104.71, status: 'Over Budget (+4.7%)' },
+                { month: 'Maret 2026', budget: 773876683, cash: 849084485, debt: 0, total: 849084485, diff: -75207803, pct: 109.72, status: 'Over Budget (+9.7%)' },
+                { month: 'April 2026', budget: 773876683, cash: 925757929, debt: 0, total: 925757929, diff: -151881247, pct: 119.63, status: 'Over Budget (+19.6%)' },
+                { month: 'Mei 2026', budget: 773876683, cash: 1222546323, debt: 0, total: 1222546323, diff: -448669641, pct: 157.98, status: 'Over Budget (+58.0%)' },
+                { month: 'Juni 2026', budget: 773876683, cash: 777691954, debt: 0, total: 777691954, diff: -3815272, pct: 100.49, status: 'Over Budget (+0.5%)' },
+                { month: 'Juli 2026', budget: 773876683, cash: 820000000, debt: 0, total: 820000000, diff: -46123317, pct: 105.96, status: 'Over Budget (+6.0%)' },
+                { month: 'Agustus 2026', budget: 773876683, cash: 1628644231, debt: 0, total: 1628644231, diff: -854767549, pct: 210.45, status: 'Over Budget (+110.5%)' },
+                { month: 'September 2026', budget: 773876683, cash: 1605534315, debt: 0, total: 1605534315, diff: -831657633, pct: 207.47, status: 'Over Budget (+107.5%)' },
+                { month: 'Oktober 2026', budget: 773876683, cash: 1010493854, debt: 0, total: 1010493854, diff: -236617172, pct: 130.58, status: 'Over Budget (+30.6%)' },
+                { month: 'November 2026', budget: 773876683, cash: 0, debt: 0, total: 0, diff: 773876683, pct: 0, status: 'Rencana Plafon' },
+                { month: 'Desember 2026', budget: 773876683, cash: 0, debt: 0, total: 0, diff: 773876683, pct: 0, status: 'Rencana Plafon' }
+            ];
+
+            // 12 Komponen Rencana Biaya 2026 (Rp 9.286.520.190,37) - Sheet 'LPJ BULANAN DIV ASET AND EQ 202'
+            let global12Categories = [
+                { code: 'A.3', name: 'Spare parts Corrective Maintenance', yearBudget: 4243974666, monthBudget: 353664556, pct: 45.70, desc: 'Perbaikan kerusakan & komponen armada' },
+                { code: 'A.2', name: 'Spare part Service Berkala (Preventive Maintenance)', yearBudget: 1314359432, monthBudget: 109529953, pct: 14.15, desc: 'Filter, part berkala PM 250/500/1000/2000' },
+                { code: 'A.5', name: 'Ban (Tires)', yearBudget: 1107900000, monthBudget: 92325000, pct: 11.93, desc: 'Penggantian ban DT & LV seluruh site' },
+                { code: 'D.1', name: 'STNK dan Pajak Kendaraan', yearBudget: 910233776, monthBudget: 75852815, pct: 9.80, desc: 'Perpanjangan STNK tahunan & 5 tahunan' },
+                { code: 'D.4', name: 'Non-Equipment (Lintas Divisi)', yearBudget: 373141357, monthBudget: 31095113, pct: 4.02, desc: 'Kebutuhan umum dan lintas operasional' },
+                { code: 'A.4', name: 'Pelumas (Oli Mesin, Hidrolik & Grease)', yearBudget: 346287740, monthBudget: 28857312, pct: 3.73, desc: 'Oli SAE 15W40, Hidrolik ISO 68, Grease' },
+                { code: 'D.2', name: 'KIR (Uji Berkala Dishub)', yearBudget: 284250000, monthBudget: 23687500, pct: 3.06, desc: 'Uji berkala kelayakan jalan Dump Truck' },
+                { code: 'D.3', name: 'SILO (Surat Izin Laik Operasi)', yearBudget: 250200000, monthBudget: 20850000, pct: 2.69, desc: 'Sertifikasi K3 alat berat di proyek migas/tambang' },
+                { code: 'C.2', name: 'Operasional Lain Lapangan', yearBudget: 174182492, monthBudget: 14515208, pct: 1.88, desc: 'Pendukung operasional tim lapangan' },
+                { code: 'B.1', name: 'Jasa Freelance / Bengkel Luar', yearBudget: 115000000, monthBudget: 9583333, pct: 1.24, desc: 'Jasa bubut, kalibrasi pump, overhaul luar' },
+                { code: 'C.1', name: 'Transport & Logistik', yearBudget: 103064573, monthBudget: 8588714, pct: 1.11, desc: 'Ekspedisi & pengiriman part ke site' },
+                { code: 'B.2', name: 'Mekanik & Tim Equipment (Lembur/Insentif)', yearBudget: 63926154, monthBudget: 5327180, pct: 0.69, desc: 'Dukungan lembur mekanik & crew internal' }
+            ];
+
+            // Monitoring Progress Data (Agu-Okt 2026) - Sheet 'Monitoring Progress'
+            let currentLeasingScheme = '3yr'; // '3yr' or '5yr'
+            let globalProgressData = {
+                revenueAgu: 5222184825,
+                revenueSep: 6226843327,
+                expenseAgu: 9426357179,
+                expenseSep3Yr: 7604625536,
+                expenseSep5Yr: 5325508644,
+                expenseOkt: 4700169191,
+                salaryMechanicAgu: 133481419,
+                salaryMechanicSep: 139743692,
+                payrollHoAgu: 41655300,
+                payrollHoSep: 41555300,
+                dpAgu: 2486190000, // Shantui, UT, Kobexindo
+                dpSep: 120000000,  // Mitsui tahap 1
+                dpOkt: 271000000,  // Mitsui tahap 2
+                leasing3Yr: 5697792229,
+                leasing5Yr: 3418675337,
+                maintAgu: 1628644231,
+                maintSep: 1605534315,
+                maintOkt: 1010493854,
+                projects: [
+                    { name: 'PHR WUR EW', revAgu: 3061446774, revSep: 3055708333, pct: 49.07 },
+                    { name: 'PHR ROAD AND WELL PAD', revAgu: 403516667, revSep: 1088781023, pct: 17.49 },
+                    { name: 'TPM - Bahodopi (Morowali)', revAgu: 0, revSep: 644400000, pct: 10.35 },
+                    { name: 'Tiga Putri - Lahat', revAgu: 936000000, revSep: 597433333, pct: 9.59 },
+                    { name: 'PEP Adera (Prabumulih)', revAgu: 369685921, revSep: 352124538, pct: 5.65 },
+                    { name: 'PHR Matting Board', revAgu: 298599979, revSep: 295000000, pct: 4.74 },
+                    { name: 'EQUIPMENT (Sewa Eksternal)', revAgu: 56500000, revSep: 59498100, pct: 0.96 },
+                    { name: 'PHR ASR', revAgu: 37000000, revSep: 53898000, pct: 0.87 },
+                    { name: 'JUMARNO', revAgu: 37500000, revSep: 50000000, pct: 0.80 },
+                    { name: 'PEKANBARU', revAgu: 0, revSep: 30000000, pct: 0.48 }
+                ],
+                leasingList: [
+                    { name: 'ORIX', c3: 1158131000, c5: 694878600 },
+                    { name: 'CSUL (Chandra Sakti)', c3: 1076969200, c5: 646181520 },
+                    { name: 'BRI', c3: 963173442, c5: 577904065 },
+                    { name: 'MITSUI', c3: 914377000, c5: 548626200 },
+                    { name: 'BFI Finance', c3: 695072500, c5: 417043500 },
+                    { name: 'MANDIRI', c3: 441552712, c5: 264931627 },
+                    { name: 'MNC Leasing', c3: 216178400, c5: 129707040 },
+                    { name: 'HEXINDO', c3: 98402000, c5: 59041200 },
+                    { name: 'SBF (Surya Artha Nusantara)', c3: 71751600, c5: 43050960 },
+                    { name: 'BCA', c3: 41326875, c5: 24796125 },
+                    { name: 'TRAKNUS (Traktor Nusantara)', c3: 20857500, c5: 12514500 }
+                ]
+            };
+
+            // Rekap Per Kelompok Alat (Grand Total Rp 16.257.857.996) - Sheet 'REKAP' & 'DASHBOARD EQUIPMENT'
+            let globalFleetRekap = {
+                grandTotal: 16257857996,
+                groups: [
+                    { name: 'Dump Truck', units: 57, total: 7686069962, pct: 47.28, color: '#2563eb' },
+                    { name: 'Bulldozer & Motor Grader', units: 10, total: 3313380295, pct: 20.38, color: '#f59e0b' },
+                    { name: 'Excavator (PC & CAT)', units: 21, total: 2357001582, pct: 14.50, color: '#10b981' },
+                    { name: 'Non-Equipment (Lintas Proyek)', units: 0, total: 1494773500, pct: 9.19, color: '#64748b' },
+                    { name: 'Kendaraan Operasional & Trado', units: 16, total: 718407497, pct: 4.42, color: '#06b6d4' },
+                    { name: 'Compactor / Vibro Roller', units: 10, total: 688225160, pct: 4.23, color: '#8b5cf6' }
+                ],
+                top5PerCategory: [
+                    { cat: 'Compactor', code: 'PF 03', name: 'Bomag Pad Foot BW211D-40', sn: '961884301060', cost: 60813850 },
+                    { cat: 'Compactor', code: 'PF 04', name: 'Compactor CAT CS11GC', sn: 'B9F00894', cost: 51613599 },
+                    { cat: 'Compactor', code: 'PF 01', name: 'Bomag Pad Foot BW211D-40', sn: '961884301016', cost: 29874506 },
+                    { cat: 'Motor Grader', code: 'GR 1', name: 'CAT Motor Grader 120K', sn: 'SZP03116', cost: 203541589 },
+                    { cat: 'Motor Grader', code: 'GR 2', name: 'Komatsu Motor Grader GD535-5', sn: '2066', cost: 100240000 },
+                    { cat: 'Motor Grader', code: 'GR 3', name: 'Komatsu Motor Grader GD535-5', sn: '2067', cost: 82893000 },
+                    { cat: 'Bulldozer', code: 'Dozer 06', name: 'Bulldozer CAT D6R', sn: 'S6X01390', cost: 564950149 },
+                    { cat: 'Bulldozer', code: 'Dozer 04', name: 'Komatsu Bulldozer D85ESS', sn: '13895', cost: 329476615 },
+                    { cat: 'Bulldozer', code: 'Dozer 02', name: 'Bulldozer D7G', sn: '44W92550', cost: 166224222 },
+                    { cat: 'Excavator', code: 'Exca 04', name: 'Excavator CAT 320D', sn: 'BZP03563', cost: 299734122 },
+                    { cat: 'Excavator', code: 'Exca 06', name: 'Excavator CAT 320 GX', sn: 'ZBT01798', cost: 152724591 },
+                    { cat: 'Excavator', code: 'Exca 01', name: 'Excavator PC 210-10M0', sn: 'C01531', cost: 146693916 },
+                    { cat: 'Dump Truck', code: 'DT 15', name: 'Hino Dump Truck', sn: 'B 9892 PYW', cost: 165490848 },
+                    { cat: 'Dump Truck', code: 'DT 01', name: 'Hino FM 260 JD', sn: 'DT 9884 JE', cost: 148161267 },
+                    { cat: 'Dump Truck', code: 'DT 14', name: 'Hino Dump Truck', sn: 'B 9701 PYW', cost: 144696282 },
+                    { cat: 'Trado', code: 'TR 02', name: 'Hino FM 260 JD (Trado)', sn: 'BM 9237 JU', cost: 211658200 },
+                    { cat: 'Trado', code: 'TR 01', name: 'Trado Nissan', sn: 'BK 8143 XE', cost: 106564120 }
+                ],
+                rentals: [
+                    { type: 'Excavator PC 200 (PHR WUR)', vendor: 'PT Sumber Rezeki Mandiri', t1: 65000000, t2: 25000000, status: 'Aktif' },
+                    { type: 'Vibro Roller Bomag (Lahat)', vendor: 'CV Mandiri Persada', t1: 45000000, t2: 0, status: 'Aktif' },
+                    { type: 'Bulldozer D65P (Morowali)', vendor: 'PT Bumi Raya Teknik', t1: 55000000, t2: 0, status: 'Aktif' },
+                    { type: 'Motor Grader GD 511A (WUR)', vendor: 'PT Trans Pasifik Heavy', t1: 30000000, t2: 0, status: 'Selesai' },
+                    { type: 'Excavator PC 200 (Lahat)', vendor: 'Mitra Usaha Mandiri', t1: 12500000, t2: 0, status: 'Selesai' },
+                    { type: 'Vibro Bomag Single Drum (WUR)', vendor: 'PT Perkasa Perkasa Alat', t1: 10000000, t2: 0, status: 'Selesai' }
+                ]
+            };
+
+            // Katalog Komparasi Harga Vendor (Ban & Pelumas/Oli) - Sheet 'PERBANDINGAN HARGA'
+            let globalVendorPrices = [
+                { category: 'BAN', vendor: 'PT VERON INDONESIA', item: 'SAILUN 10.00R20 PRS811', area: 'Pekanbaru / Riau', price: 3900000, top: 'Termasuk PPN, Tempo 30 Hari', status: 'Rekomendasi Utama' },
+                { category: 'BAN', vendor: 'PT VERON INDONESIA', item: 'SAILUN 10.00R20 PRS850', area: 'Pekanbaru / Riau', price: 4250000, top: 'Termasuk PPN, Tempo 30 Hari', status: 'Kompetitif' },
+                { category: 'BAN', vendor: 'CV KREATIF JAYA BERSAMA', item: 'Vikrant 10.00R20 (Made in India)', area: 'Palembang / Riau', price: 4300000, top: 'Tempo 30 Hari, Kualitas Bagus', status: 'Pilihan 2' },
+                { category: 'BAN', vendor: 'PT BHINNEKA RODA INDONESIA', item: 'Neolin 10.00R20', area: 'Jakarta / Pekanbaru', price: 4350000, top: 'Termasuk PPN, Tempo 30 Hari', status: 'Aktif' },
+                { category: 'BAN', vendor: 'KARUNA', item: 'Gajah Tunggal (GT) 10.00R20', area: 'Pekanbaru', price: 4150000, top: 'Tempo > 30 Hari, Ready Stok', status: 'Stok Terjamin' },
+                { category: 'BAN', vendor: 'Atik', item: 'Gajah Tunggal Ragi Cacing 10.00R20', area: 'Pekanbaru', price: 3980000, top: 'Khusus Cash (Tidak Terima Tempo)', status: 'Cash Only' },
+                { category: 'BAN', vendor: 'CV MAJU JAYA UTAMA', item: 'COCREA CR801 Kawat 10.00R20 (1 Set)', area: 'Jakarta / Duri', price: 3600000, top: 'Kawat Radial 1 Set, Tempo 30 Hari', status: 'Hemat' },
+                { category: 'BAN', vendor: 'CV MAJU JAYA UTAMA', item: 'COCREA CR903 Kawat Kasar 11.00R20 (1 Set)', area: 'Jakarta / Duri', price: 4580000, top: 'Heavy Duty 11.00R20, Tempo 30 Hari', status: 'Heavy Duty' },
+                { category: 'BAN', vendor: 'SUMBER BAN', item: 'Golden Crown CB905 12.00R20', area: 'Pekanbaru', price: 5500000, top: 'Termasuk PPN, Area Pekanbaru', status: 'Ukuran Besar' },
+                { category: 'BAN', vendor: 'PT KUMALA SUKSES BERSAMA', item: 'Ban ROATIGER RT752 12.00R20', area: 'Kendari / Sulawesi', price: 5350000, top: 'Termasuk PPN, Area Kendari', status: 'Site Sulawesi' },
+                { category: 'OLI', vendor: 'PT Surya Mandiri Makmur', item: 'Oli Mesin SAE 15W40 (Drum 209L)', area: 'Riau / Pekanbaru', price: 8569000, top: 'Harga per Liter Rp 41.000 (Exc PPN)', status: 'Rekomendasi Oli' },
+                { category: 'OLI', vendor: 'PT Giar Putra Mahkota', item: 'Oli Mesin SAE 15W40 (Drum 200L)', area: 'Pekanbaru', price: 8400000, top: 'Harga per Liter Rp 42.000', status: 'Kompetitif' },
+                { category: 'OLI', vendor: 'PT King Indo', item: 'Oli Mesin SAE 15W40 (Drum 200L)', area: 'Pekanbaru / Jkt', price: 8649000, top: 'Harga per Liter Rp 43.245', status: 'Aktif' },
+                { category: 'OLI', vendor: 'PT Riodi Jaya', item: 'Oli Mesin SAE 15W40 (Drum 200L)', area: 'Palembang / Riau', price: 9739400, top: 'Termasuk PPN', status: 'Reguler' },
+                { category: 'OLI', vendor: 'Pertamina Lubricants', item: 'Oli Mesin Meditran SX 15W40 (Drum 200L)', area: 'Kendari / Sulawesi', price: 11300000, top: 'Distribusi Resmi Sulawesi', status: 'Site Timur' },
+                { category: 'OLI', vendor: 'PT Surya Mandiri Makmur', item: 'Hydraulic Oil ISO VG 68 (Drum 209L)', area: 'Riau / Pekanbaru', price: 7850000, top: 'Oli Hidrolik Excavator & Dozer', status: 'Rekomendasi Hidrolik' },
+                { category: 'OLI', vendor: 'PT King Indo', item: 'Hydraulic Oil Tellus S2 V 68 (Drum 200L)', area: 'Pekanbaru', price: 7920000, top: 'Oli Hidrolik Standard ISO', status: 'Aktif' }
             ];
 
             let globalPos = [
@@ -12684,48 +13249,58 @@ try {
 
             window.renderCostDashboard = function () {
                 renderCostChart();
+                renderAllocSummary('rencana');
                 renderCostValuationTable(globalValuations);
+                renderDtEvaluasiTable(globalDtEvaluasi);
+                renderDtRankingTable(globalDtRanking);
+                renderProgressMonitoring();
                 renderCostLpjTable(globalLpjReports);
+                renderLpj12Categories();
+                renderFleetRekap();
+                renderVendorCatalog();
                 renderCostPoTable(globalPos);
                 renderCostPmCompTable(globalPmComparisons);
             };
 
+            // Visual Chart: 10 Bulan Operasional 2026 (Jan–Okt 2026) vs Budget Rp 773,9 Jt
             window.renderCostChart = function () {
                 const container = document.getElementById('costChartContainer');
                 if (!container) return;
 
                 const recentMonths = [
-                    { month: 'Mei', budget: 330, actual: 393.7 },
-                    { month: 'Jun', budget: 330, actual: 553.4 },
-                    { month: 'Jul', budget: 430, actual: 542.5 },
-                    { month: 'Agu', budget: 330, actual: 439.6 },
-                    { month: 'Sep', budget: 330, actual: 264.0 },
-                    { month: 'Okt', budget: 330, actual: 321.6 },
-                    { month: 'Nov', budget: 330, actual: 429.7 },
-                    { month: 'Des', budget: 550, actual: 449.1 }
+                    { month: 'Jan', budget: 773.9, actual: 801.9 },
+                    { month: 'Feb', budget: 773.9, actual: 810.3 },
+                    { month: 'Mar', budget: 773.9, actual: 849.1 },
+                    { month: 'Apr', budget: 773.9, actual: 925.8 },
+                    { month: 'Mei', budget: 773.9, actual: 1222.5 },
+                    { month: 'Jun', budget: 773.9, actual: 777.7 },
+                    { month: 'Jul', budget: 773.9, actual: 820.0 },
+                    { month: 'Agu', budget: 773.9, actual: 1628.6 },
+                    { month: 'Sep', budget: 773.9, actual: 1605.5 },
+                    { month: 'Okt', budget: 773.9, actual: 1010.5 }
                 ];
 
-                const maxVal = 600;
-                const yTicks = [600, 450, 300, 150, 0];
+                const maxVal = 1800;
+                const yTicks = [1800, 1350, 900, 450, 0];
 
                 let html = `
                 <!-- Y-Axis Ticks & Grid Lines -->
-                <div class="chart-y-axis" style="position:absolute; left:40px; top:20px; bottom:30px; width:calc(100% - 55px); pointer-events:none; z-index:1;">
+                <div class="chart-y-axis" style="position:absolute; left:45px; top:20px; bottom:30px; width:calc(100% - 60px); pointer-events:none; z-index:1;">
                     ${yTicks.map(t => {
                     const pct = 100 - (t / maxVal) * 100;
                     return `
                             <div style="position:absolute; top:${pct}%; left:0; width:100%; border-top:1px dashed #e2e8f0; display:flex; justify-content:flex-start; align-items:center;">
-                                <span style="position:absolute; left:-40px; font-size:0.85rem; color:var(--text-muted); font-weight:600;">${t} Jt</span>
+                                <span style="position:absolute; left:-45px; font-size:0.8rem; color:var(--text-muted); font-weight:600;">${t} Jt</span>
                             </div>
                         `;
                 }).join('')}
-                    <div style="position:absolute; top:-16px; left:-40px; font-size:0.85rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">
+                    <div style="position:absolute; top:-16px; left:-45px; font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">
                         Biaya (Rp Jt)
                     </div>
                 </div>
 
                 <!-- Bars Container -->
-                <div style="display:flex; height:100%; width:calc(100% - 40px); margin-left:40px; align-items:flex-end; gap:10px; position:relative; z-index:2; padding-top:20px; padding-bottom:25px;">
+                <div style="display:flex; height:100%; width:calc(100% - 45px); margin-left:45px; align-items:flex-end; gap:8px; position:relative; z-index:2; padding-top:20px; padding-bottom:25px;">
             `;
 
                 html += recentMonths.map(m => {
@@ -12740,26 +13315,26 @@ try {
                         : `<strong style="color:#16a34a;">-Rp ${Math.abs(diff).toFixed(1)} Jt (-${diffPct}% Hemat)</strong>`;
 
                     const statusBadge = isOver
-                        ? `<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.85rem;">OVER BUDGET</span>`
-                        : `<span style="background:#dcfce7; color:#16a34a; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.85rem;">UNDER BUDGET (HEMAT)</span>`;
+                        ? `<span style="background:#fee2e2; color:#dc2626; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.75rem;">OVER BUDGET</span>`
+                        : `<span style="background:#dcfce7; color:#16a34a; padding:2px 6px; border-radius:4px; font-weight:700; font-size:0.75rem;">UNDER BUDGET</span>`;
 
                     return `
                     <div class="cost-chart-bar-group" style="flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; position:relative; cursor:pointer;">
                         <!-- Rich Tooltip Card -->
-                        <div class="cost-chart-tooltip">
+                        <div class="cost-chart-tooltip" style="min-width:210px;">
                             <div style="font-weight:700; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:6px; font-size:0.8rem; color:#1e293b;">
                                 📅 Bulan ${m.month} 2026
                             </div>
-                            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:3px;">
-                                <span><span style="color:#2563eb;">&bull; </span> Budget Planning:</span>
+                            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:3px; font-size:0.78rem;">
+                                <span><span style="color:#2563eb;">&bull; </span> Budget Plan:</span>
                                 <strong>Rp ${m.budget} Jt</strong>
                             </div>
-                            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px;">
+                            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:6px; font-size:0.78rem;">
                                 <span><span style="color:${isOver ? '#dc2626' : '#16a34a'};">&bull; </span> Realisasi Actual:</span>
                                 <strong style="color:${isOver ? '#dc2626' : '#16a34a'};">Rp ${m.actual} Jt</strong>
                             </div>
-                            <div style="border-top:1px dashed #cbd5e1; padding-top:4px; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                                <span>Variance (Selisih):</span>
+                            <div style="border-top:1px dashed #cbd5e1; padding-top:4px; font-size:0.78rem; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                                <span>Variance:</span>
                                 ${diffText}
                             </div>
                             <div style="margin-top:5px; text-align:right;">
@@ -12768,19 +13343,19 @@ try {
                         </div>
 
                         <!-- Bar Pair -->
-                        <div style="display:flex; gap:4px; align-items:flex-end; width:100%; height:100%; justify-content:center; position:relative;">
+                        <div style="display:flex; gap:3px; align-items:flex-end; width:100%; height:100%; justify-content:center; position:relative;">
                             <!-- Budget Bar -->
-                            <div class="cost-bar" style="width:42%; background:#2563eb; height:${pctB}%; border-radius:4px 4px 0 0; position:relative;" title="${m.month}: Budget Rp ${m.budget} Jt">
-                                <span class="bar-value-label">${m.budget}</span>
+                            <div class="cost-bar" style="width:44%; background:#2563eb; height:${pctB}%; border-radius:3px 3px 0 0; position:relative;" title="${m.month}: Budget Rp ${m.budget} Jt">
+                                <span class="bar-value-label" style="font-size:0.65rem;">${m.budget}</span>
                             </div>
                             <!-- Actual Bar -->
-                            <div class="cost-bar" style="width:42%; background:${isOver ? '#dc2626' : '#16a34a'}; height:${pctA}%; border-radius:4px 4px 0 0; position:relative;" title="${m.month}: Actual Rp ${m.actual} Jt (${isOver ? 'Over' : 'Hemat'})">
-                                <span class="bar-value-label" style="color:${isOver ? '#b91c1c' : '#15803d'};">${m.actual}</span>
+                            <div class="cost-bar" style="width:44%; background:${isOver ? '#dc2626' : '#16a34a'}; height:${pctA}%; border-radius:3px 3px 0 0; position:relative;" title="${m.month}: Actual Rp ${m.actual} Jt">
+                                <span class="bar-value-label" style="color:${isOver ? '#b91c1c' : '#15803d'}; font-size:0.65rem;">${m.actual}</span>
                             </div>
                         </div>
 
                         <!-- Month Label -->
-                        <div style="font-size:0.78rem; font-weight:700; color:var(--text-dark); margin-top:8px;">${m.month}</div>
+                        <div style="font-size:0.75rem; font-weight:700; color:var(--text-dark); margin-top:8px;">${m.month}</div>
                     </div>
                 `;
                 }).join('') + `</div>`;
@@ -12788,21 +13363,143 @@ try {
                 container.innerHTML = html;
             };
 
+            // Switch Allocation Panel View (Rencana 2026 vs Realisasi Okt 2026)
+            window.switchAllocView = function(viewType) {
+                const btnRencana = document.getElementById('btnAllocRencana');
+                const btnRealisasi = document.getElementById('btnAllocRealisasi');
+                if (btnRencana && btnRealisasi) {
+                    if (viewType === 'rencana') {
+                        btnRencana.style.background = 'var(--primary)';
+                        btnRencana.style.color = '#fff';
+                        btnRealisasi.style.background = '#f1f5f9';
+                        btnRealisasi.style.color = '#475569';
+                    } else {
+                        btnRealisasi.style.background = 'var(--primary)';
+                        btnRealisasi.style.color = '#fff';
+                        btnRencana.style.background = '#f1f5f9';
+                        btnRencana.style.color = '#475569';
+                    }
+                }
+                renderAllocSummary(viewType);
+            };
+
+            window.renderAllocSummary = function(viewType) {
+                const panel = document.getElementById('costSummaryPanel');
+                if (!panel) return;
+
+                if (viewType === 'realisasi') {
+                    // Realisasi Oktober 2026 (Total Rp 1.010,49 Jt)
+                    const oktItems = [
+                        { name: 'Stok Sparepart & Ban Duri', amount: 'Rp 359.45 Jt', pct: 35.6, color: '#dc2626' },
+                        { name: 'Penggantian Ban Dump Truck', amount: 'Rp 193.57 Jt', pct: 19.2, color: '#f59e0b' },
+                        { name: 'Sparepart Repair Unit', amount: 'Rp 168.92 Jt', pct: 16.7, color: '#2563eb' },
+                        { name: 'Pajak STNK & Legalitas KIR', amount: 'Rp 133.73 Jt', pct: 13.2, color: '#0f766e' },
+                        { name: 'Filter Oli & Filter Solar', amount: 'Rp 36.34 Jt', pct: 3.6, color: '#8b5cf6' },
+                        { name: 'Pelumas Mesin & Grease', amount: 'Rp 24.19 Jt', pct: 2.4, color: '#06b6d4' }
+                    ];
+
+                    let html = '<div style="font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:8px;">Realisasi Maintenance Oktober 2026 (Rp 1.010,49 Jt):</div>';
+                    html += oktItems.map(item => `
+                        <div style="margin-bottom:8px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:2px;">
+                                <span>${escapeHtml(item.name)}</span>
+                                <strong style="color:${item.color};">${item.amount} (${item.pct}%)</strong>
+                            </div>
+                            <div style="width:100%; background:#e2e8f0; height:6px; border-radius:3px;">
+                                <div style="width:${item.pct}%; background:${item.color}; height:100%; border-radius:3px;"></div>
+                            </div>
+                        </div>
+                    `).join('');
+                    html += `
+                        <div style="background:#f8fafc; padding:8px 10px; border-radius:6px; border:1px solid var(--border); font-size:0.75rem; margin-top:10px; color:#475569;">
+                            <i class="fa-solid fa-circle-check" style="color:var(--success);"></i> <strong>Catatan Realisasi:</strong> Realisasi pengeluaran Oktober (Rp 1.010 Jt) menurun 37% dibanding September (Rp 1.605 Jt).
+                        </div>
+                    `;
+                    panel.innerHTML = html;
+                } else {
+                    // Rencana Biaya 2026 (Plafon Rp 9.286 M)
+                    const planItems = [
+                        { name: 'Spareparts Corrective (45.7%)', amount: 'Rp 4.243,9 Jt', pct: 45.7, color: 'var(--danger)' },
+                        { name: 'Sparepart Service Berkala PM (14.2%)', amount: 'Rp 1.314,4 Jt', pct: 14.2, color: 'var(--primary)' },
+                        { name: 'Penggantian Ban Tires (11.9%)', amount: 'Rp 1.107,9 Jt', pct: 11.9, color: '#f59e0b' },
+                        { name: 'STNK & Pajak Kendaraan (9.8%)', amount: 'Rp 910,2 Jt', pct: 9.8, color: '#0f766e' },
+                        { name: 'Pelumas Oli & Grease (3.7%)', amount: 'Rp 346,3 Jt', pct: 3.7, color: '#06b6d4' },
+                        { name: 'KIR & SILO K3 Armada (5.8%)', amount: 'Rp 534,5 Jt', pct: 5.8, color: '#8b5cf6' }
+                    ];
+
+                    let html = '<div style="font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:8px;">Alokasi Rencana Biaya 2026 (Rp 9.286,52 Jt):</div>';
+                    html += planItems.map(item => `
+                        <div style="margin-bottom:8px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:2px;">
+                                <span>${escapeHtml(item.name)}</span>
+                                <strong style="color:${item.color};">${item.amount}</strong>
+                            </div>
+                            <div style="width:100%; background:#e2e8f0; height:6px; border-radius:3px;">
+                                <div style="width:${item.pct}%; background:${item.color}; height:100%; border-radius:3px;"></div>
+                            </div>
+                        </div>
+                    `).join('');
+                    html += `
+                        <div style="background:#f8fafc; padding:8px 10px; border-radius:6px; border:1px solid var(--border); font-size:0.75rem; margin-top:10px; color:#475569;">
+                            <i class="fa-solid fa-circle-info" style="color:var(--primary);"></i> <strong>Plafon Resmi Bulanan:</strong> Rata-rata pagu anggaran divisi adalah <strong>Rp 773,88 Jt/bulan</strong>.
+                        </div>
+                    `;
+                    panel.innerHTML = html;
+                }
+            };
+
+            // Switch sub-view di dalam Tab Valuasi (7 Unit vs 4 DT vs 111 DT)
+            window.switchValuationSubView = function(viewId) {
+                const sub7 = document.getElementById('subSecVal7');
+                const sub4 = document.getElementById('subSecVal4');
+                const sub111 = document.getElementById('subSecVal111');
+                const b7 = document.getElementById('btnSubVal7');
+                const b4 = document.getElementById('btnSubVal4');
+                const b111 = document.getElementById('btnSubVal111');
+
+                if (!sub7 || !sub4 || !sub111) return;
+
+                sub7.style.display = 'none';
+                sub4.style.display = 'none';
+                sub111.style.display = 'none';
+
+                const resetBtn = (btn) => {
+                    if (btn) {
+                        btn.style.background = '#fff';
+                        btn.style.color = '#334155';
+                        btn.style.borderColor = '#cbd5e1';
+                    }
+                };
+                resetBtn(b7); resetBtn(b4); resetBtn(b111);
+
+                if (viewId === '4dt') {
+                    sub4.style.display = 'block';
+                    if (b4) { b4.style.background = 'var(--primary)'; b4.style.color = '#fff'; }
+                } else if (viewId === '111dt') {
+                    sub111.style.display = 'block';
+                    if (b111) { b111.style.background = 'var(--primary)'; b111.style.color = '#fff'; }
+                } else {
+                    sub7.style.display = 'block';
+                    if (b7) { b7.style.background = 'var(--primary)'; b7.style.color = '#fff'; }
+                }
+            };
+
+            // Render 7 Unit Prioritas Table
             window.renderCostValuationTable = function (items) {
                 const tbody = document.getElementById('costValuationTableBody');
                 if (!tbody) return;
 
                 if (!items || items.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada data valuasi aset ditemukan.</td></tr>';
-                    updateValuationFooter(0, 0, 0, 0, 0, 0, 0, 0);
+                    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada data valuasi aset ditemukan.</td></tr>';
+                    updateValuationFooter(0, 0, 0, 0, 0, 0, 0, 0, 0);
                     return;
                 }
 
-                let sumRepair = 0, sumBuy = 0, sumRevenue = 0, sumBook = 0, sumMarket = 0, sumOffer = 0, sumNet = 0, sumGain = 0;
+                let sumRepair = 0, sumRepairLatest = 0, sumBuy = 0, sumRevenue = 0, sumBook = 0, sumMarket = 0, sumOffer = 0, sumNet = 0, sumGain = 0;
 
                 tbody.innerHTML = items.map(v => {
-                    const shortId = (v.id || '').replace(/\s+/g, '');
                     const repairVal = Number(v.repairCost) || 0;
+                    const repairLat = Number(v.repairLatest) || repairVal;
                     const buyVal = Number(v.buyPrice) || 0;
                     const revVal = Number(v.revenue) || 0;
                     const bookVal = Number(v.bookValue) || 0;
@@ -12812,6 +13509,7 @@ try {
                     const gainVal = Number(v.selisih) || (netVal - bookVal);
 
                     sumRepair += repairVal;
+                    sumRepairLatest += repairLat;
                     sumBuy += buyVal;
                     sumRevenue += revVal;
                     sumBook += bookVal;
@@ -12825,46 +13523,49 @@ try {
 
                     return `
                     <tr style="border-bottom:1px solid #e2e8f0;">
-                        <td style="padding:9px 10px;">
+                        <td style="padding:8px 9px;">
                             <a onclick="openAssetModal('${escapeHtml(v.id)}', 'READY', 'Armada', 'Yard Duri')" style="cursor:pointer; color:var(--primary); font-weight:700; text-decoration:underline;">
                                 ${escapeHtml(v.id)}
                             </a>
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${escapeHtml(v.name)}</div>
+                            <div style="font-size:0.73rem; color:var(--text-muted); margin-top:2px;">${escapeHtml(v.name)}</div>
                         </td>
-                        <td style="padding:9px 10px;">
-                            <strong class="font-mono" style="font-size:0.8rem;">${escapeHtml(v.sn || '-')}</strong>
-                            <div style="font-size:0.74rem; color:var(--text-muted);">Thn: ${v.year || '-'}</div>
+                        <td style="padding:8px 9px;">
+                            <strong class="font-mono" style="font-size:0.78rem;">${escapeHtml(v.sn || '-')}</strong>
+                            <div style="font-size:0.72rem; color:var(--text-muted);">Thn: ${v.year || '-'}</div>
                         </td>
-                        <td style="text-align:right; font-weight:700; color:var(--danger); font-family:var(--font-mono, monospace); padding:9px 10px;">
+                        <td style="text-align:right; font-weight:600; color:var(--danger); font-family:var(--font-mono, monospace); padding:8px 9px;">
                             Rp ${repairVal.toLocaleString('id-ID')}
                         </td>
-                        <td style="text-align:center; padding:9px 10px;">
-                            <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:0.71rem; padding:2px 6px;">Health: ${escapeHtml(v.health || '-')}</span>
-                            <div style="margin-top:3px;"><span class="badge" style="background:#dcfce7; color:#15803d; font-size:0.71rem; padding:2px 6px;">Body: ${escapeHtml(v.body || '-')}</span></div>
+                        <td style="text-align:right; font-weight:700; color:#b91c1c; font-family:var(--font-mono, monospace); padding:8px 9px; background:#fff1f2;">
+                            Rp ${repairLat.toLocaleString('id-ID')}
                         </td>
-                        <td style="text-align:right; font-family:var(--font-mono, monospace); padding:9px 10px;">
+                        <td style="text-align:center; padding:8px 9px;">
+                            <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:0.7rem; padding:2px 5px;">H: ${escapeHtml(v.health || '-')}</span>
+                            <div style="margin-top:2px;"><span class="badge" style="background:#dcfce7; color:#15803d; font-size:0.7rem; padding:2px 5px;">B: ${escapeHtml(v.body || '-')}</span></div>
+                        </td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); padding:8px 9px;">
                             Rp ${buyVal.toLocaleString('id-ID')}
                         </td>
-                        <td style="text-align:right; font-family:var(--font-mono, monospace); color:#0369a1; padding:9px 10px;">
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); color:#0369a1; padding:8px 9px;">
                             Rp ${revVal.toLocaleString('id-ID')}
                         </td>
-                        <td style="text-align:right; font-weight:700; color:var(--primary); font-family:var(--font-mono, monospace); padding:9px 10px;">
+                        <td style="text-align:right; font-weight:700; color:var(--primary); font-family:var(--font-mono, monospace); padding:8px 9px;">
                             Rp ${bookVal.toLocaleString('id-ID')}
                         </td>
-                        <td style="text-align:right; font-family:var(--font-mono, monospace); padding:9px 10px;">
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); padding:8px 9px;">
                             Rp ${marketVal.toLocaleString('id-ID')}
                         </td>
-                        <td style="text-align:right; font-weight:700; color:#0284c7; font-family:var(--font-mono, monospace); padding:9px 10px;">
+                        <td style="text-align:right; font-weight:700; color:#0284c7; font-family:var(--font-mono, monospace); padding:8px 9px;">
                             Rp ${offerVal.toLocaleString('id-ID')}
                         </td>
-                        <td style="text-align:right; font-weight:700; font-family:var(--font-mono, monospace); padding:9px 10px;">
+                        <td style="text-align:right; font-weight:700; font-family:var(--font-mono, monospace); padding:8px 9px;">
                             Rp ${netVal.toLocaleString('id-ID')}
                         </td>
-                        <td style="text-align:right; font-weight:800; color:${gainColor}; font-family:var(--font-mono, monospace); background:rgba(22, 163, 74, 0.06); padding:9px 10px;">
+                        <td style="text-align:right; font-weight:800; color:${gainColor}; font-family:var(--font-mono, monospace); background:rgba(22, 163, 74, 0.08); padding:8px 9px;">
                             ${gainPrefix}Rp ${gainVal.toLocaleString('id-ID')}
                         </td>
-                        <td style="text-align:center; padding:9px 10px;">
-                            <button type="button" onclick="openAssetModal('${escapeHtml(v.id)}', 'READY', 'Armada', 'Yard Duri')" class="btn btn-xs" style="padding:3px 7px; font-size:0.75rem; background:#f8fafc; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer;" title="Lihat Detail 360&deg; Aset">
+                        <td style="text-align:center; padding:8px 9px;">
+                            <button type="button" onclick="openAssetModal('${escapeHtml(v.id)}', 'READY', 'Armada', 'Yard Duri')" class="btn btn-xs" style="padding:2px 6px; font-size:0.73rem; background:#f8fafc; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer;" title="Lihat Detail 360&deg; Aset">
                                 <i class="fa-solid fa-eye"></i> Detail
                             </button>
                         </td>
@@ -12872,15 +13573,16 @@ try {
                     `;
                 }).join('');
 
-                updateValuationFooter(sumRepair, sumBuy, sumRevenue, sumBook, sumMarket, sumOffer, sumNet, sumGain);
+                updateValuationFooter(sumRepair, sumRepairLatest, sumBuy, sumRevenue, sumBook, sumMarket, sumOffer, sumNet, sumGain);
             };
 
-            function updateValuationFooter(repair, buy, rev, book, market, offer, net, gain) {
+            function updateValuationFooter(repair, repairLatest, buy, rev, book, market, offer, net, gain) {
                 const setEl = (id, txt) => {
                     const el = document.getElementById(id);
                     if (el) el.innerText = txt;
                 };
                 setEl('valFootRepair', `Rp ${repair.toLocaleString('id-ID')}`);
+                setEl('valFootRepairLatest', `Rp ${repairLatest.toLocaleString('id-ID')}`);
                 setEl('valFootBuy', `Rp ${buy.toLocaleString('id-ID')}`);
                 setEl('valFootRevenue', `Rp ${rev.toLocaleString('id-ID')}`);
                 setEl('valFootBook', `Rp ${book.toLocaleString('id-ID')}`);
@@ -12890,26 +13592,377 @@ try {
                 setEl('valFootGain', `${gain > 0 ? '+' : ''}Rp ${gain.toLocaleString('id-ID')}`);
             }
 
+            // Render 4 DT Evaluasi Table
+            window.renderDtEvaluasiTable = function(items) {
+                const tbody = document.getElementById('dtEvaluasiTableBody');
+                if (!tbody) return;
+
+                tbody.innerHTML = items.map(d => `
+                    <tr style="border-bottom:1px solid #e2e8f0;">
+                        <td><strong>${escapeHtml(d.id)}</strong><br><small class="text-muted font-mono">${escapeHtml(d.nopol)}</small></td>
+                        <td>${escapeHtml(d.model)}</td>
+                        <td>${d.year}</td>
+                        <td>
+                            <div style="font-size:0.75rem;">Pajak: <strong>${d.pajakExp}</strong></div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">STNK: ${d.stnkExp}</div>
+                        </td>
+                        <td style="text-align:center;">
+                            <span class="badge bg-operating">${d.status}</span>
+                            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">${d.ageMonths} bln</div>
+                        </td>
+                        <td style="text-align:right; font-weight:700; color:var(--danger); font-family:var(--font-mono, monospace);">
+                            Rp ${(d.totalRepair).toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace);">
+                            Rp ${(d.avgMonthlyRepair).toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace);">
+                            Rp ${(d.buyPrice).toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; color:#0369a1; font-weight:700; font-family:var(--font-mono, monospace);">
+                            Rp ${(d.revenue).toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:center;">
+                            <span class="badge badge-success" style="font-weight:700;">${d.recom}</span>
+                        </td>
+                    </tr>
+                `).join('');
+            };
+
+            // Render Ranking 111 Dump Truck Table
+            window.renderDtRankingTable = function(rankingList) {
+                const tbody = document.getElementById('dtRankingTableBody');
+                if (!tbody) return;
+
+                tbody.innerHTML = rankingList.map(r => `
+                    <tr style="border-bottom:1px solid #e2e8f0;">
+                        <td style="text-align:center; font-weight:700; color:#475569;">#${r.rank}</td>
+                        <td><strong>${escapeHtml(r.nopol)}</strong></td>
+                        <td>${r.year}</td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); color:#0284c7;">
+                            Rp ${(r.tire).toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); color:#475569;">
+                            Rp ${(r.nonTire).toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-weight:700; color:var(--danger); font-family:var(--font-mono, monospace);">
+                            Rp ${(r.total).toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-weight:600; font-family:var(--font-mono, monospace); background:#f8fafc;">
+                            Rp ${(r.cost2026).toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:center;">${r.age} bln</td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); font-size:0.8rem;">
+                            Rp ${(r.avg).toLocaleString('id-ID')}
+                        </td>
+                    </tr>
+                `).join('');
+            };
+
+            // Monitoring Progress Switcher (3 Tahun vs 5 Tahun)
+            window.switchLeasingScheme = function(scheme) {
+                currentLeasingScheme = scheme;
+                const b3 = document.getElementById('btnScheme3Yr');
+                const b5 = document.getElementById('btnScheme5Yr');
+                if (b3 && b5) {
+                    if (scheme === '5yr') {
+                        b5.style.background = '#15803d';
+                        b5.style.color = '#fff';
+                        b3.style.background = '#f1f5f9';
+                        b3.style.color = '#334155';
+                    } else {
+                        b3.style.background = '#dc2626';
+                        b3.style.color = '#fff';
+                        b5.style.background = '#f1f5f9';
+                        b5.style.color = '#334155';
+                    }
+                }
+                renderProgressMonitoring();
+            };
+
+            // Render Monitoring Progress Tab
+            window.renderProgressMonitoring = function() {
+                const is5Yr = currentLeasingScheme === '5yr';
+                const p = globalProgressData;
+                const sepExpense = is5Yr ? p.expenseSep5Yr : p.expenseSep3Yr;
+                const sepLeasing = is5Yr ? p.leasing5Yr : p.leasing3Yr;
+                const sepProfit = p.revenueSep - sepExpense;
+                const sepMargin = ((sepProfit / p.revenueSep) * 100).toFixed(2);
+
+                // Update Executive Summary Cards
+                const cardsContainer = document.getElementById('progressSummaryCards');
+                if (cardsContainer) {
+                    cardsContainer.innerHTML = `
+                        <div class="telemetry-metric-item" title="Total Pendapatan Proyek Sep 2026: Rp 6.226.843.327">
+                            <div class="telemetry-metric-header">
+                                <span class="telemetry-metric-label">Pendapatan Sep 2026</span>
+                                <i class="fa-solid fa-hand-holding-dollar" style="color:var(--success);"></i>
+                            </div>
+                            <div class="telemetry-metric-value font-mono" style="color:var(--success);">Rp 6.227 Jt</div>
+                            <div class="telemetry-metric-footer">
+                                <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-arrow-trend-up"></i> Naik +19.2% MoM (10 Proyek)</span>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-metric-item" title="Total Beban Pengeluaran Sep 2026">
+                            <div class="telemetry-metric-header">
+                                <span class="telemetry-metric-label">Beban Pengeluaran Sep</span>
+                                <i class="fa-solid fa-file-invoice-dollar" style="color:${is5Yr ? 'var(--primary)' : 'var(--danger)'};"></i>
+                            </div>
+                            <div class="telemetry-metric-value font-mono" style="color:${is5Yr ? 'var(--primary)' : 'var(--danger)'};">Rp ${(sepExpense / 1000000).toFixed(1)} Jt</div>
+                            <div class="telemetry-metric-footer">
+                                <span style="font-size:0.72rem; color:var(--text-muted);">${is5Yr ? 'Skema 5 Th (Hemat Rp 2,28 M)' : 'Skema 3 Th Normal'}</span>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-metric-item" title="Cicilan 11 Leasing & Bank">
+                            <div class="telemetry-metric-header">
+                                <span class="telemetry-metric-label">Cicilan Leasing Sep</span>
+                                <i class="fa-solid fa-building-columns" style="color:#0284c7;"></i>
+                            </div>
+                            <div class="telemetry-metric-value font-mono" style="color:#0284c7;">Rp ${(sepLeasing / 1000000).toFixed(1)} Jt</div>
+                            <div class="telemetry-metric-footer">
+                                <span style="font-size:0.72rem; color:var(--text-muted);">11 Bank / Lembaga Leasing</span>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-metric-item" style="background:${sepProfit >= 0 ? 'rgba(22, 163, 74, 0.05)' : 'rgba(220, 38, 38, 0.05)'}; border-color:${sepProfit >= 0 ? '#86efac' : '#fca5a5'};">
+                            <div class="telemetry-metric-header">
+                                <span class="telemetry-metric-label" style="font-weight:700; color:${sepProfit >= 0 ? '#15803d' : '#b91c1c'};">Net Profit / Loss Sep</span>
+                                <i class="fa-solid ${sepProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}" style="color:${sepProfit >= 0 ? '#16a34a' : '#dc2626'};"></i>
+                            </div>
+                            <div class="telemetry-metric-value font-mono" style="color:${sepProfit >= 0 ? '#15803d' : '#b91c1c'}; font-weight:800;">
+                                ${sepProfit >= 0 ? '+' : ''}Rp ${(sepProfit / 1000000).toFixed(1)} Jt
+                            </div>
+                            <div class="telemetry-metric-footer">
+                                <span class="badge ${sepProfit >= 0 ? 'badge-success' : 'badge-danger'}" style="font-weight:700;">Margin ${sepProfit >= 0 ? '+' : ''}${sepMargin}%</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Update Table PL
+                const thSep = document.getElementById('thSepLabel');
+                if (thSep) thSep.innerText = `September 2026 (${is5Yr ? 'Skema 5 Th' : 'Skema 3 Th'})`;
+
+                const plBody = document.getElementById('progressPlTableBody');
+                if (plBody) {
+                    plBody.innerHTML = `
+                        <tr style="background:#f8fafc; font-weight:700;">
+                            <td>A. Total Pendapatan (Versi Project)</td>
+                            <td style="text-align:right; color:#15803d; font-family:var(--font-mono, monospace);">Rp ${(p.revenueAgu).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; color:#15803d; font-family:var(--font-mono, monospace);">Rp ${(p.revenueSep).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; color:var(--text-muted); font-family:var(--font-mono, monospace);"><em>Menunggu Invoice</em></td>
+                            <td>Naik +19.24% MoM (PHR Road +Rp 685 Jt, TPM +Rp 644 Jt)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;">├─ 1. Gaji Pekerja Mekanik (4 Site)</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.salaryMechanicAgu).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.salaryMechanicSep).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);"><em>Termasuk di Ops</em></td>
+                            <td>Yard KM 12 Duri Rp 116,9 Jt, Adera Rp 9,4 Jt, Lahat Rp 7,5 Jt, Morowali Rp 6,0 Jt</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;">├─ 2. Payroll HO (Tim Equipment)</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.payrollHoAgu).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.payrollHoSep).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);"><em>Termasuk di Ops</em></td>
+                            <td>Gaji bulanan manajemen & planner HO</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;">├─ 3. Down Payment (DP) Alat Baru</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.dpAgu).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.dpSep).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.dpOkt).toLocaleString('id-ID')}</td>
+                            <td>Agu: Shantui, UT, Kobexindo &bull; Sep-Okt: Mitsui Tahap 1 & 2</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;">├─ 4. Cicilan Leasing &amp; Bank</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.leasing3Yr).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-weight:700; color:${is5Yr ? '#15803d' : '#b91c1c'}; font-family:var(--font-mono, monospace);">Rp ${(sepLeasing).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.leasing5Yr).toLocaleString('id-ID')}</td>
+                            <td>${is5Yr ? 'Hemat Rp 2,28 M / bulan setelah restrukturisasi' : 'Kewajiban cicilan 3 tahun normal'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-left:20px;">└─ 5. Biaya Maintenance &amp; Operasional</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.maintAgu).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.maintSep).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(p.maintOkt).toLocaleString('id-ID')}</td>
+                            <td>Okt turun ke Rp 1.010,49 Jt (efisiensi suku cadang)</td>
+                        </tr>
+                        <tr style="background:#f1f5f9; font-weight:800; border-top:2px solid #cbd5e1;">
+                            <td>B. Total Pengeluaran Kas</td>
+                            <td style="text-align:right; color:#b91c1c; font-family:var(--font-mono, monospace);">Rp ${(p.expenseAgu).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; color:${is5Yr ? '#15803d' : '#b91c1c'}; font-family:var(--font-mono, monospace);">Rp ${(sepExpense).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; color:#b91c1c; font-family:var(--font-mono, monospace);">Rp ${(p.expenseOkt).toLocaleString('id-ID')}</td>
+                            <td>${is5Yr ? 'Arus kas terjaga sehat' : 'Beban cicilan tinggi membebani kas'}</td>
+                        </tr>
+                        <tr style="background:${sepProfit >= 0 ? '#f0fdf4' : '#fef2f2'}; font-weight:800; border-top:2px solid ${sepProfit >= 0 ? '#86efac' : '#fca5a5'};">
+                            <td>PROFIT / DEFISIT OPERASIONAL (A - B)</td>
+                            <td style="text-align:right; color:#dc2626; font-family:var(--font-mono, monospace);">-Rp 4.204.172.354</td>
+                            <td style="text-align:right; color:${sepProfit >= 0 ? '#15803d' : '#dc2626'}; font-family:var(--font-mono, monospace);">${sepProfit >= 0 ? '+' : ''}Rp ${(sepProfit).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">-</td>
+                            <td><strong>${sepProfit >= 0 ? 'SURPLUS ARUS KAS (+14.47%)' : 'DEFISIT KAS (-22.13%)'}</strong></td>
+                        </tr>
+                    `;
+                }
+
+                // Render Project Revenues Body
+                const projBody = document.getElementById('progressProjectRevBody');
+                if (projBody) {
+                    projBody.innerHTML = p.projects.map(proj => `
+                        <tr>
+                            <td><strong>${escapeHtml(proj.name)}</strong></td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(proj.revSep).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-weight:600;">${proj.pct}%</td>
+                            <td style="width:120px;">
+                                <div style="width:100%; background:#e2e8f0; height:6px; border-radius:3px;">
+                                    <div style="width:${proj.pct * 2}%; background:var(--primary); height:100%; border-radius:3px;"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Render Leasing Body
+                const leaseBody = document.getElementById('progressLeasingBody');
+                if (leaseBody) {
+                    leaseBody.innerHTML = p.leasingList.map(l => {
+                        const saved = l.c3 - l.c5;
+                        return `
+                            <tr>
+                                <td><strong>${escapeHtml(l.name)}</strong></td>
+                                <td style="text-align:right; font-family:var(--font-mono, monospace); color:#b91c1c;">Rp ${(l.c3).toLocaleString('id-ID')}</td>
+                                <td style="text-align:right; font-family:var(--font-mono, monospace); color:#15803d; font-weight:600;">Rp ${(l.c5).toLocaleString('id-ID')}</td>
+                                <td style="text-align:right; font-family:var(--font-mono, monospace); color:#0284c7;">+Rp ${(saved).toLocaleString('id-ID')}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            };
+
+            // Render LPJ 2026 Table
             window.renderCostLpjTable = function (lpjList) {
                 const tbody = document.getElementById('costLpjTableBody');
                 if (!tbody) return;
 
                 tbody.innerHTML = lpjList.map(l => {
-                    const badgeClass = l.diff < 0 ? 'bg-breakdown' : 'bg-operating';
+                    const isOver = l.diff < 0;
+                    const badgeClass = isOver ? 'badge-danger' : (l.cash === 0 ? 'badge-info' : 'badge-success');
                     return `
-                    <tr>
+                    <tr style="border-bottom:1px solid #e2e8f0;">
                         <td><strong>${escapeHtml(l.month)}</strong></td>
-                        <td>Rp ${(l.budget).toLocaleString('id-ID')}</td>
-                        <td>Rp ${(l.cash).toLocaleString('id-ID')}</td>
-                        <td>Rp ${(l.debt).toLocaleString('id-ID')}</td>
-                        <td><strong>Rp ${(l.total).toLocaleString('id-ID')}</strong></td>
-                        <td style="font-weight:bold; color:${l.diff < 0 ? 'var(--danger)' : 'var(--success)'};">
-                            ${l.diff > 0 ? '+' : ''}${(l.diff).toLocaleString('id-ID')}
+                        <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(l.budget).toLocaleString('id-ID')}</td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); font-weight:700; color:${l.cash > 0 ? '#1e293b' : 'var(--text-muted)'};">
+                            ${l.cash > 0 ? 'Rp ' + (l.cash).toLocaleString('id-ID') : '-'}
                         </td>
-                        <td><span class="badge ${badgeClass}">${l.status}</span></td>
+                        <td style="text-align:right; font-weight:bold; font-family:var(--font-mono, monospace); color:${isOver ? 'var(--danger)' : (l.cash === 0 ? 'var(--text-muted)' : 'var(--success)')};">
+                            ${l.cash > 0 ? (l.diff > 0 ? '+' : '') + 'Rp ' + (l.diff).toLocaleString('id-ID') : '-'}
+                        </td>
+                        <td style="text-align:center; font-weight:600;">
+                            ${l.pct > 0 ? l.pct + '%' : '-'}
+                        </td>
+                        <td style="text-align:center;"><span class="badge ${badgeClass}">${l.status}</span></td>
                     </tr>
                 `;
                 }).join('');
+            };
+
+            // Render 12 Categories of Annual Planning
+            window.renderLpj12Categories = function() {
+                const tbody = document.getElementById('lpj12CategoriesBody');
+                if (!tbody) return;
+
+                tbody.innerHTML = global12Categories.map(c => `
+                    <tr style="border-bottom:1px solid #e2e8f0;">
+                        <td style="text-align:center;"><span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">${c.code}</span></td>
+                        <td><strong>${escapeHtml(c.name)}</strong></td>
+                        <td style="text-align:right; font-weight:700; font-family:var(--font-mono, monospace);">Rp ${(c.yearBudget).toLocaleString('id-ID')}</td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); color:var(--text-muted);">Rp ${(c.monthBudget).toLocaleString('id-ID')}</td>
+                        <td style="text-align:right; font-weight:700; color:var(--primary);">${c.pct}%</td>
+                        <td style="font-size:0.8rem; color:#475569;">${escapeHtml(c.desc)}</td>
+                    </tr>
+                `).join('');
+            };
+
+            // Render Fleet Rekap Tab
+            window.renderFleetRekap = function() {
+                const r = globalFleetRekap;
+                const grid = document.getElementById('fleetCategoryGrid');
+                if (grid) {
+                    grid.innerHTML = r.groups.map(g => `
+                        <div class="telemetry-metric-item" title="${g.name}: Rp ${(g.total).toLocaleString('id-ID')}">
+                            <div class="telemetry-metric-header">
+                                <span class="telemetry-metric-label">${escapeHtml(g.name)}</span>
+                                <span class="badge" style="background:${g.color}20; color:${g.color}; font-size:0.7rem;">${g.units > 0 ? g.units + ' Unit' : 'Non-Unit'}</span>
+                            </div>
+                            <div class="telemetry-metric-value font-mono" style="color:${g.color}; font-size:1.1rem; white-space:nowrap;">
+                                Rp ${(g.total / 1000000000).toFixed(2)} M
+                            </div>
+                            <div class="telemetry-metric-footer">
+                                <span style="font-size:0.72rem; color:var(--text-muted);">${g.pct}% dari total pengeluaran armada</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                const top5Body = document.getElementById('fleetTop5Body');
+                if (top5Body) {
+                    top5Body.innerHTML = r.top5PerCategory.map(u => `
+                        <tr>
+                            <td><span class="badge" style="background:#f1f5f9; color:#334155;">${escapeHtml(u.cat)}</span></td>
+                            <td><strong>${escapeHtml(u.code)}</strong><br><small class="text-muted">${escapeHtml(u.name)}</small></td>
+                            <td><span class="font-mono" style="font-size:0.75rem;">${escapeHtml(u.sn)}</span></td>
+                            <td style="text-align:right; font-weight:700; color:var(--danger); font-family:var(--font-mono, monospace);">Rp ${(u.cost).toLocaleString('id-ID')}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                const rentalsBody = document.getElementById('fleetRentalsBody');
+                if (rentalsBody) {
+                    rentalsBody.innerHTML = r.rentals.map(rent => `
+                        <tr>
+                            <td><strong>${escapeHtml(rent.type)}</strong></td>
+                            <td>${escapeHtml(rent.vendor)}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">Rp ${(rent.t1).toLocaleString('id-ID')}</td>
+                            <td style="text-align:right; font-family:var(--font-mono, monospace);">${rent.t2 > 0 ? 'Rp ' + (rent.t2).toLocaleString('id-ID') : '-'}</td>
+                            <td style="text-align:center;"><span class="badge ${rent.status === 'Aktif' ? 'bg-operating' : 'badge-secondary'}">${rent.status}</span></td>
+                        </tr>
+                    `).join('');
+                }
+            };
+
+            // Render Vendor Catalog
+            window.renderVendorCatalog = function() {
+                const tbody = document.getElementById('vendorCatalogBody');
+                if (!tbody) return;
+
+                const filterKat = document.getElementById('vendorFilterKat')?.value || 'ALL';
+                let list = globalVendorPrices;
+                if (filterKat !== 'ALL') {
+                    list = list.filter(v => v.category === filterKat);
+                }
+
+                tbody.innerHTML = list.map((item, idx) => `
+                    <tr style="border-bottom:1px solid #e2e8f0;">
+                        <td style="text-align:center; color:#64748b;">${idx + 1}</td>
+                        <td><strong>${escapeHtml(item.vendor)}</strong></td>
+                        <td>
+                            <span class="badge" style="background:${item.category === 'BAN' ? '#e0f2fe' : '#fef3c7'}; color:${item.category === 'BAN' ? '#0369a1' : '#92400e'}; font-size:0.7rem; margin-right:4px;">${item.category}</span>
+                            <strong>${escapeHtml(item.item)}</strong>
+                        </td>
+                        <td><i class="fa-solid fa-location-dot" style="color:#64748b; font-size:0.75rem;"></i> ${escapeHtml(item.area)}</td>
+                        <td style="text-align:right; font-weight:700; color:var(--primary); font-family:var(--font-mono, monospace);">
+                            Rp ${(item.price).toLocaleString('id-ID')}
+                        </td>
+                        <td style="font-size:0.8rem; color:#334155;">${escapeHtml(item.top)}</td>
+                        <td style="text-align:center;">
+                            <span class="badge ${item.status.includes('Utama') || item.status.includes('Rekomendasi') ? 'badge-success' : 'badge-info'}" style="font-size:0.7rem;">
+                                ${escapeHtml(item.status)}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
             };
 
             window.renderCostPoTable = function (poList) {
@@ -12949,7 +14002,6 @@ try {
 
             const getPmDataForUnit = (unitCode) => {
                 if (pmPartsDictionary[unitCode]) return pmPartsDictionary[unitCode];
-                // Fallbacks for other units based on prefixes from spreadsheet
                 if (unitCode.startsWith('SD') || unitCode.startsWith('PF')) return { estCost: 2000000, parts: "Filter Set & Oli 15w40 (Standard PM)" };
                 if (unitCode.startsWith('GR') || unitCode.startsWith('Dozer')) return { estCost: 5000000, parts: "Filter Set & Oli Transmisi (Standard PM)" };
                 if (unitCode.startsWith('Exca')) return { estCost: 3000000, parts: "Filter Set, Oli Hidrolik & Oli Mesin (Standard PM)" };
@@ -12963,7 +14015,6 @@ try {
                     return;
                 }
                 const select = document.getElementById('npm-id');
-                // Populasikan daftar aset aktif
                 select.innerHTML = '<option value="" disabled selected>-- Pilih Unit --</option>' +
                     globalData.assets.map(a => `<option value="${a.id}">${a.id} (${a.category}) - ${a.name}</option>`).join('');
 
@@ -13015,14 +14066,13 @@ try {
                     });
                     const res = await response.json();
                     if (res.status === 'success') {
-                        // Masukkan ke globalPmComparisons
                         globalPmComparisons.unshift({
                             unitId: unitId,
                             model: modelName,
                             schedule: schedule,
                             location: loc || 'Workshop',
                             planCost: cost,
-                            actCost: 0, // Belum direalisasi
+                            actCost: 0,
                             diff: cost,
                             notes: `Draft PM: Butuh parts (${parts})`
                         });
@@ -13058,28 +14108,60 @@ try {
             `).join('');
             };
 
+            // Switch Tab Antar 7 Tab Biaya
             window.switchCostTab = function (tabName, el) {
                 if (el) {
                     document.querySelectorAll('#costMainTabs .asset-tab').forEach(t => t.classList.remove('active'));
                     el.classList.add('active');
                 }
-                document.getElementById('costTabSecValuation').style.display = 'none';
-                document.getElementById('costTabSecLpj').style.display = 'none';
-                document.getElementById('costTabSecPo').style.display = 'none';
-                document.getElementById('costTabSecPmComp').style.display = 'none';
+                const tabs = [
+                    'costTabSecValuation',
+                    'costTabSecProgress',
+                    'costTabSecLpj',
+                    'costTabSecRekap',
+                    'costTabSecVendor',
+                    'costTabSecPo',
+                    'costTabSecPmComp'
+                ];
+                tabs.forEach(id => {
+                    const elSec = document.getElementById(id);
+                    if (elSec) elSec.style.display = 'none';
+                });
 
-                if (tabName === 'lpj') document.getElementById('costTabSecLpj').style.display = 'block';
-                else if (tabName === 'po') {
-                    document.getElementById('costTabSecPo').style.display = 'block';
+                if (tabName === 'progress') {
+                    const s = document.getElementById('costTabSecProgress');
+                    if (s) s.style.display = 'block';
+                    renderProgressMonitoring();
+                } else if (tabName === 'lpj') {
+                    const s = document.getElementById('costTabSecLpj');
+                    if (s) s.style.display = 'block';
+                    renderCostLpjTable(globalLpjReports);
+                    renderLpj12Categories();
+                } else if (tabName === 'rekap') {
+                    const s = document.getElementById('costTabSecRekap');
+                    if (s) s.style.display = 'block';
+                    renderFleetRekap();
+                } else if (tabName === 'vendor') {
+                    const s = document.getElementById('costTabSecVendor');
+                    if (s) s.style.display = 'block';
+                    renderVendorCatalog();
+                } else if (tabName === 'po') {
+                    const s = document.getElementById('costTabSecPo');
+                    if (s) s.style.display = 'block';
                     if (typeof window.loadCostDashboard === 'function') window.loadCostDashboard();
+                } else if (tabName === 'pmcomp') {
+                    const s = document.getElementById('costTabSecPmComp');
+                    if (s) s.style.display = 'block';
+                } else {
+                    const s = document.getElementById('costTabSecValuation');
+                    if (s) s.style.display = 'block';
+                    renderCostValuationTable(globalValuations);
                 }
-                else if (tabName === 'pmcomp') document.getElementById('costTabSecPmComp').style.display = 'block';
-                else document.getElementById('costTabSecValuation').style.display = 'block';
             };
 
             window.filterCostDashboard = function () {
-                const yr = document.getElementById('costFilterTahun').value;
-                const loc = document.getElementById('costFilterLokasi').value;
+                const yr = document.getElementById('costFilterTahun')?.value || 'ALL';
+                const loc = document.getElementById('costFilterLokasi')?.value || 'ALL';
 
                 let filteredValuations = globalValuations;
                 if (loc !== 'ALL') {
@@ -13089,18 +14171,34 @@ try {
             };
 
             window.searchCostValuationTable = function () {
-                const q = document.getElementById('searchCostValuationInput').value.toLowerCase().trim();
+                const q = document.getElementById('searchCostValuationInput')?.value.toLowerCase().trim() || '';
                 if (!q) {
                     renderCostValuationTable(globalValuations);
+                    renderDtEvaluasiTable(globalDtEvaluasi);
+                    renderDtRankingTable(globalDtRanking);
                     return;
                 }
-                const filtered = globalValuations.filter(v =>
+                const filteredVal = globalValuations.filter(v =>
                     v.id.toLowerCase().includes(q) ||
                     v.name.toLowerCase().includes(q) ||
                     v.sn.toLowerCase().includes(q)
                 );
-                renderCostValuationTable(filtered);
+                renderCostValuationTable(filteredVal);
+
+                const filteredEval = globalDtEvaluasi.filter(d =>
+                    d.id.toLowerCase().includes(q) ||
+                    d.nopol.toLowerCase().includes(q) ||
+                    d.model.toLowerCase().includes(q)
+                );
+                renderDtEvaluasiTable(filteredEval);
+
+                const filteredRank = globalDtRanking.filter(r =>
+                    r.nopol.toLowerCase().includes(q) ||
+                    String(r.rank).includes(q)
+                );
+                renderDtRankingTable(filteredRank);
             };
+
 
             // =========================================================================
             // REVISI 9: PENCATATAN BIAYA & TRANSAKSI (BR-09A) & PO/SPPU DECISION (BR-09B)
