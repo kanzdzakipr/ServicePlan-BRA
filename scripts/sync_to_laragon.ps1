@@ -191,6 +191,16 @@ foreach ($sub in $uploadSubdirs) {
     }
 }
 
+# Additively sync tracked unit asset files (e.g. photos/docs) without deleting target files
+$sourceUnitsDir = Join-Path $sourceUploads 'assets\units'
+$targetUnitsDir = Join-Path $targetUploads 'assets\units'
+if (Test-Path $sourceUnitsDir) {
+    if (-not (Test-Path $targetUnitsDir)) {
+        New-Item -Path $targetUnitsDir -ItemType Directory -Force | Out-Null
+    }
+    & robocopy $sourceUnitsDir $targetUnitsDir /E /XO /R:2 /W:1 | Out-Null
+}
+
 
 # Database writes require explicit -ImportDatabase. When database is preserved,
 # we still apply idempotent additive migrations so missing columns do not break the APIs.
