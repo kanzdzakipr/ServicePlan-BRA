@@ -70,6 +70,14 @@ function Get-SafeFileName {
     return $safe.Trim('_')
 }
 
+function Get-SheetVisibilityText {
+    param([int]$Visibility)
+    if ($Visibility -eq -1) { return 'Terlihat' }
+    if ($Visibility -eq 0) { return 'Tersembunyi' }
+    if ($Visibility -eq 2) { return 'Sangat tersembunyi' }
+    return "Nilai Excel $Visibility"
+}
+
 if (-not (Test-Path -LiteralPath $SourcePath -PathType Leaf)) {
     throw "Workbook tidak ditemukan: $SourcePath"
 }
@@ -98,13 +106,16 @@ try {
             $writer.WriteLine()
             $writer.WriteLine("Sumber: ``$([System.IO.Path]::GetFileName($SourcePath))``")
             $writer.WriteLine()
+            $visibilityText = Get-SheetVisibilityText $worksheet.Visible
+            $writer.WriteLine("Status sheet: $visibilityText")
+            $writer.WriteLine()
 
             $lastRowCell = $worksheet.Cells.Find('*', $worksheet.Cells.Item(1, 1), -4123, 2, 1, 2, $false)
             $lastColumnCell = $worksheet.Cells.Find('*', $worksheet.Cells.Item(1, 1), -4123, 2, 2, 2, $false)
 
             if ($null -eq $lastRowCell -or $null -eq $lastColumnCell) {
                 $writer.WriteLine('Sheet ini tidak memiliki sel berisi nilai atau rumus.')
-                $summary.Add([pscustomobject]@{ File = $fileName; Sheet = $worksheet.Name; Range = '-'; Cells = 0; Formulas = 0; Hyperlinks = 0; Shapes = $worksheet.Shapes.Count; Empty = $true })
+                $summary.Add([pscustomobject]@{ File = $fileName; Sheet = $worksheet.Name; Visibility = $visibilityText; Range = '-'; Cells = 0; Formulas = 0; Hyperlinks = 0; Shapes = $worksheet.Shapes.Count; Empty = $true })
                 continue
             }
 
@@ -171,6 +182,7 @@ try {
             $summary.Add([pscustomobject]@{
                 File = $fileName
                 Sheet = $worksheet.Name
+                Visibility = $visibilityText
                 Range = "A1:$(Get-ColumnName $maxColumn)$maxRow"
                 Cells = $cellCount
                 Formulas = $formulaCount
@@ -264,9 +276,9 @@ try {
         $readme.WriteLine()
         foreach ($entry in $summary) {
             if ($entry.Empty) {
-                $readme.WriteLine("- [$($entry.File)]($($entry.File)) - sheet ``$($entry.Sheet)`` kosong.")
+                $readme.WriteLine("- [$($entry.File)]($($entry.File)) - sheet ``$($entry.Sheet)`` ($($entry.Visibility)) kosong.")
             } else {
-                $readme.WriteLine("- [$($entry.File)]($($entry.File)) - sheet ``$($entry.Sheet)``; rentang ``$($entry.Range)``; $($entry.Cells) sel terisi; $($entry.Formulas) rumus; $($entry.Hyperlinks) hyperlink; $($entry.Shapes) objek non-sel.")
+                $readme.WriteLine("- [$($entry.File)]($($entry.File)) - sheet ``$($entry.Sheet)`` ($($entry.Visibility)); rentang ``$($entry.Range)``; $($entry.Cells) sel terisi; $($entry.Formulas) rumus; $($entry.Hyperlinks) hyperlink; $($entry.Shapes) objek non-sel.")
             }
         }
         $readme.WriteLine("- [$namesFile]($namesFile) - seluruh $($workbook.Names.Count) named range workbook.")
