@@ -59,6 +59,7 @@ $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_telematics_asset_mappings_26102026.sql"),
     (Join-Path $srcDir "scripts\migrate_fuel_price_setting_26102026.sql"),
     (Join-Path $srcDir "scripts\migrate_asset_location_relocation_20261029.sql"),
+    (Join-Path $srcDir "scripts\migrate_material_documents.sql"),
     (Join-Path $srcDir "scripts\migrate_batch16_fleet_governance_views.sql")
 )
 
@@ -248,6 +249,16 @@ if (-not $ImportDatabase) {
             }
         }
         Write-Host "Equipment Report January 2026 Batch 1-7 verified." -ForegroundColor Green
+
+        $materialSyncScript = Join-Path $srcDir 'scripts\sync_material_markdown.php'
+        if ($phpExe -and (Test-Path $materialSyncScript)) {
+            $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+            & $phpExe $materialSyncScript --apply
+            if ($LASTEXITCODE -ne 0) {
+                throw 'Sinkronisasi Markdown material ke database gagal.'
+            }
+            Write-Host "Material Markdown archive synchronized and hash-verified." -ForegroundColor Green
+        }
     }
 } elseif ($mysqlExe -and (Test-Path $mysqlExe)) {
     Write-Host "`n[2/4] Importing explicitly selected local MySQL database '$DbName'..." -ForegroundColor Cyan
@@ -377,6 +388,16 @@ if (-not $ImportDatabase) {
         }
     }
     Write-Host "Equipment Report January 2026 Batch 1-7 verified." -ForegroundColor Green
+
+    $materialSyncScript = Join-Path $srcDir 'scripts\sync_material_markdown.php'
+    if ($phpExe -and (Test-Path $materialSyncScript)) {
+        $env:LOCAL_MYSQL_PASSWORD = $DbPassword
+        & $phpExe $materialSyncScript --apply
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Sinkronisasi Markdown material ke database gagal.'
+        }
+        Write-Host "Material Markdown archive synchronized and hash-verified." -ForegroundColor Green
+    }
 
     $notifRbacScript = Join-Path $srcDir 'scripts\migrate_notification_recipients_rbac_20261027.php'
     if ($phpExe -and (Test-Path $notifRbacScript)) {

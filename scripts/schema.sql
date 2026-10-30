@@ -616,6 +616,26 @@ CREATE TABLE `cost_financial_monthly` (
     `variance_amount` DECIMAL(15,2) GENERATED ALWAYS AS (`budget_amount` - `actual_amount`) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Lossless source archive for every Markdown file under material/.
+DROP TABLE IF EXISTS `material_documents`;
+CREATE TABLE `material_documents` (
+    `document_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `relative_path` VARCHAR(512) NOT NULL,
+    `category` VARCHAR(190) NOT NULL,
+    `file_name` VARCHAR(255) NOT NULL,
+    `title` VARCHAR(500) NOT NULL,
+    `content_markdown` LONGTEXT NOT NULL,
+    `content_sha256` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    `content_bytes` BIGINT UNSIGNED NOT NULL,
+    `source_modified_at` DATETIME NOT NULL,
+    `mapping_target` VARCHAR(190) NOT NULL DEFAULT 'document_archive',
+    `source_exists` TINYINT(1) NOT NULL DEFAULT 1,
+    `synced_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY `uq_material_documents_path` (`relative_path`),
+    KEY `idx_material_documents_category` (`category`,`source_exists`),
+    KEY `idx_material_documents_hash` (`content_sha256`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `unit_valuations`;
 CREATE TABLE `unit_valuations` (
     `valuation_id` INT AUTO_INCREMENT PRIMARY KEY,

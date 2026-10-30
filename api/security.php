@@ -638,6 +638,7 @@ function api_route_permission(): ?string
         'reports.php' => $readWrite('reports.read', 'reports.write'),
         'report_references.php' => 'reports.read',
         'administration_recap.php' => 'reports.read',
+        'material_documents.php' => 'reports.read',
         'archive.php' => $readWrite('archive.read', 'archive.write'),
         'settings.php' => $readWrite('dashboard.read', 'dashboard.read'),
         // POST also supports self-service password changes. Action-level checks
