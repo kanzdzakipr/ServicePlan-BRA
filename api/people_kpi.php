@@ -53,6 +53,20 @@ function people_kpi_require_location(PDO $db, mixed $value): array
     return $location;
 }
 
+function people_kpi_can_manage_attendance(array $roles): bool
+{
+    return (bool) array_intersect($roles, [
+        'administrator',
+        'super admin',
+        'equipment manager',
+        'asset manager',
+        'maintenance planner',
+        'hrd manager',
+        'site manager',
+        'admin',
+    ]);
+}
+
 function people_kpi_can_assess(array $roles): bool
 {
     return (bool) array_intersect($roles, [
@@ -371,7 +385,7 @@ if ($method === 'GET') {
             $stmt = $db->prepare("
                 SELECT 
                     m.user_id AS employee_user_id,
-                    COALESCE(u.full_name, m.role_snapshot) AS employee_name,
+                    COALESCE(u.full_name, m.employee_name, m.role_snapshot) AS employee_name,
                     m.role_snapshot AS role_name,
                     l.location_name,
                     m.kj_days,
@@ -480,7 +494,7 @@ if ($method === 'GET') {
         $stmt = $db->prepare("
             SELECT 
                 m.*,
-                COALESCE(u.full_name, m.role_snapshot) AS employee_name,
+                COALESCE(u.full_name, m.employee_name, m.role_snapshot) AS employee_name,
                 l.location_name
             FROM employee_attendance_monthly m
             LEFT JOIN users u ON u.user_id = m.user_id
@@ -536,6 +550,26 @@ if ($method === 'GET') {
         ]);
     }
 
+        if ($action === 'template_attendance') {
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="template_absensi_lembur_mekanik.csv"');
+        echo "﻿";
+        echo "Nama Personel,Jabatan / Posisi,Departemen,Hari Kerja (KJ),Kerja Libur (KL),Hari Off (O),Total Jam Lembur,Cuti,Sakit,Izin,Mangkir
+";
+        echo "Suwardi,Mekanik Welding,Welder,26,4,1,129.0,0,0,0,0
+";
+        echo "Afriyandi,Mekanik Senior,Mekanik,25,4,2,88.0,0,0,0,0
+";
+        echo "Rahmad K,Mekanik Senior,Mekanik,26,3,2,82.5,0,0,0,0
+";
+        echo "Darmawan,Mekanik Heavy Equipment,Mekanik,24,4,3,76.0,0,0,0,0
+";
+        echo "Joni Septian,Mekanik,Mekanik,25,3,3,71.0,0,0,0,0
+";
+        echo "Galuh Rizkiy,Helper Mekanik,Mekanik,25,3,3,65.0,0,0,0,0
+";
+        exit;
+    }
     api_json_response(400, [
         'status' => 'error',
         'code' => 'INVALID_ACTION',
@@ -1019,6 +1053,196 @@ if ($method === 'POST') {
         ]);
     }
 
+        if ($action === 'upload_attendance') {
+        if (!people_kpi_can_manage_attendance($currentRoles)) {
+            api_json_response(403, [
+                'status' => 'error',
+                'code' => 'FORBIDDEN',
+                'message' => 'Role Anda tidak memiliki wewenang mengunggah rekapitulasi absensi & lembur mekanik.',
+            ]);
+        }
+
+        $period = people_kpi_validate_period($input['period'] ?? '');
+        $location = people_kpi_require_location($db, $input['location_id'] ?? api_current_location_id());
+        $locationId = (int) $location['location_id'];
+        $sourceFile = trim((string) ($input['source_file'] ?? 'Upload Web Form'));
+        $rows = (array) ($input['rows'] ?? []);
+
+        if (empty($rows)) {
+            api_json_response(422, [
+                'status' => 'error',
+                'code' => 'EMPTY_DATA',
+                'message' => 'Tidak ada baris data absensi atau lembur yang valid untuk disimpan.',
+            ]);
+        }
+
+        // Preload active users for matching
+        $userStmt = $db->query("SELECT user_id, full_name, username FROM users WHERE is_active = 1");
+        $userList = $userStmt ? $userStmt->fetchAll(PDO::FETCH_ASSOC) : [];
+        $userMap = [];
+        foreach ($userList as $u) {
+            $fn = strtolower(trim((string)$u['full_name']));
+            $un = strtolower(trim((string)$u['username']));
+            if ($fn !== '') $userMap[$fn] = (int)$u['user_id'];
+            if ($un !== '') $userMap[$un] = (int)$u['user_id'];
+        }
+
+        $db->beginTransaction();
+        try {
+            $stmtUpsert = $db->prepare("
+                INSERT INTO employee_attendance_monthly (
+                    attendance_month_id,
+                    user_id,
+                    employee_name,
+                    role_snapshot,
+                    department,
+                    period_key,
+                    location_id,
+                    kj_days,
+                    kl_days,
+                    off_days,
+                    cuti_days,
+                    sakit_days,
+                    izin_days,
+                    mangkir_days,
+                    project_days,
+                    total_work_days,
+                    total_overtime_hours,
+                    source_file,
+                    uploaded_by,
+                    created_at,
+                    updated_at
+                ) VALUES (
+                    :attendance_month_id,
+                    :user_id,
+                    :employee_name,
+                    :role_snapshot,
+                    :department,
+                    :period_key,
+                    :location_id,
+                    :kj_days,
+                    :kl_days,
+                    :off_days,
+                    :cuti_days,
+                    :sakit_days,
+                    :izin_days,
+                    :mangkir_days,
+                    :project_days,
+                    :total_work_days,
+                    :total_overtime_hours,
+                    :source_file,
+                    :uploaded_by,
+                    NOW(),
+                    NOW()
+                ) ON DUPLICATE KEY UPDATE
+                    user_id = COALESCE(VALUES(user_id), user_id),
+                    role_snapshot = VALUES(role_snapshot),
+                    department = VALUES(department),
+                    kj_days = VALUES(kj_days),
+                    kl_days = VALUES(kl_days),
+                    off_days = VALUES(off_days),
+                    cuti_days = VALUES(cuti_days),
+                    sakit_days = VALUES(sakit_days),
+                    izin_days = VALUES(izin_days),
+                    mangkir_days = VALUES(mangkir_days),
+                    project_days = VALUES(project_days),
+                    total_work_days = VALUES(total_work_days),
+                    total_overtime_hours = VALUES(total_overtime_hours),
+                    source_file = COALESCE(VALUES(source_file), source_file),
+                    uploaded_by = VALUES(uploaded_by),
+                    updated_at = NOW()
+            ");
+
+            $savedCount = 0;
+            $totalOvertime = 0.0;
+
+            foreach ($rows as $row) {
+                $rawName = trim((string) ($row['employee_name'] ?? $row['nama'] ?? $row['nama_personel'] ?? ''));
+                if ($rawName === '') {
+                    continue;
+                }
+
+                $role = trim((string) ($row['role_snapshot'] ?? $row['role'] ?? $row['jabatan'] ?? 'Mekanik'));
+                if ($role === '') $role = 'Mekanik';
+                $dept = trim((string) ($row['department'] ?? $row['departemen'] ?? 'Mekanik'));
+                if ($dept === '') {
+                    $dept = (stripos($role, 'weld') !== false) ? 'Welder' : 'Mekanik';
+                }
+
+                $kj = max(0, (int) ($row['kj_days'] ?? $row['kj'] ?? $row['hari_kerja'] ?? 0));
+                $kl = max(0, (int) ($row['kl_days'] ?? $row['kl'] ?? $row['kerja_libur'] ?? 0));
+                $off = max(0, (int) ($row['off_days'] ?? $row['off'] ?? $row['hari_off'] ?? 0));
+                $cuti = max(0, (int) ($row['cuti_days'] ?? $row['cuti'] ?? 0));
+                $sakit = max(0, (int) ($row['sakit_days'] ?? $row['sakit'] ?? 0));
+                $izin = max(0, (int) ($row['izin_days'] ?? $row['izin'] ?? 0));
+                $mangkir = max(0, (int) ($row['mangkir_days'] ?? $row['mangkir'] ?? $row['alfa'] ?? 0));
+                $project = max(0, (int) ($row['project_days'] ?? $row['project'] ?? 0));
+
+                $totalWorkDays = isset($row['total_work_days']) ? (float)$row['total_work_days'] : (float)($kj + $kl);
+                $overtimeHours = max(0.0, (float) ($row['total_overtime_hours'] ?? $row['overtime_hours'] ?? $row['jam_lembur'] ?? $row['lembur'] ?? 0.0));
+                $totalOvertime += $overtimeHours;
+
+                // Match user_id
+                $userId = null;
+                $nameLower = strtolower($rawName);
+                if (isset($userMap[$nameLower])) {
+                    $userId = $userMap[$nameLower];
+                } else {
+                    foreach ($userMap as $uName => $uid) {
+                        if (strpos($uName, $nameLower) !== false || strpos($nameLower, $uName) !== false) {
+                            $userId = $uid;
+                            break;
+                        }
+                    }
+                }
+
+                $monthId = 'att-' . $period . '-u' . ($userId ?? substr(md5($rawName . '-' . $locationId), 0, 6));
+
+                $stmtUpsert->execute([
+                    ':attendance_month_id' => $monthId,
+                    ':user_id' => $userId,
+                    ':employee_name' => $rawName,
+                    ':role_snapshot' => $role,
+                    ':department' => $dept,
+                    ':period_key' => $period,
+                    ':location_id' => $locationId,
+                    ':kj_days' => $kj,
+                    ':kl_days' => $kl,
+                    ':off_days' => $off,
+                    ':cuti_days' => $cuti,
+                    ':sakit_days' => $sakit,
+                    ':izin_days' => $izin,
+                    ':mangkir_days' => $mangkir,
+                    ':project_days' => $project,
+                    ':total_work_days' => $totalWorkDays,
+                    ':total_overtime_hours' => $overtimeHours,
+                    ':source_file' => $sourceFile,
+                    ':uploaded_by' => $currentUserId > 0 ? $currentUserId : null,
+                ]);
+
+                $savedCount++;
+            }
+
+            $db->commit();
+
+            api_json_response(200, [
+                'status' => 'success',
+                'message' => "Data absensi & lembur periode {$period} lokasi {$location['location_name']} berhasil disimpan. Terproses {$savedCount} personel, total " . round($totalOvertime, 1) . " jam lembur.",
+                'saved_count' => $savedCount,
+                'total_overtime_hours' => round($totalOvertime, 1),
+                'period' => $period,
+                'location_id' => $locationId,
+                'location_name' => $location['location_name'],
+            ]);
+        } catch (Throwable $e) {
+            $db->rollBack();
+            api_json_response(500, [
+                'status' => 'error',
+                'code' => 'UPLOAD_FAILED',
+                'message' => 'Gagal memproses data absensi: ' . $e->getMessage(),
+            ]);
+        }
+    }
     api_json_response(400, ['status' => 'error', 'message' => 'Action POST tidak dikenali.']);
 }
 

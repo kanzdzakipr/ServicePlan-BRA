@@ -5985,6 +5985,109 @@ try {
             </div>
         </div>
 
+                <!-- Modal Upload Data Absensi & Lembur Mekanik -->
+        <div class="modal-overlay" id="modalUploadAttendance" style="z-index:999999;" onclick="if(event.target === this) closeModal('modalUploadAttendance')">
+            <div class="modal-content" style="max-width: 820px; width: 95%; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-cloud-arrow-up text-primary"></i> Upload Data Absensi & Lembur Tim
+                        </h3>
+                        <p style="margin: 4px 0 0; font-size: 0.78rem; color: #94a3b8;">
+                            Impor rekapitulasi kehadiran dan jam lembur bulanan mekanik / welder via CSV atau Paste Tabel Excel.
+                        </p>
+                    </div>
+                    <button type="button" onclick="closeModal('modalUploadAttendance')" style="background: none; border: none; font-size: 1.5rem; color: #cbd5e1; cursor: pointer; line-height: 1;" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 16px; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div>
+                            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                                <i class="fa-regular fa-calendar"></i> Target Periode:
+                            </label>
+                            <input type="month" id="uploadAttPeriod" class="form-control" style="font-size: 0.88rem; font-weight: 600;" value="2026-01">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                                <i class="fa-solid fa-location-dot"></i> Lokasi Site / Workshop:
+                            </label>
+                            <select id="uploadAttLocation" class="form-control" style="font-size: 0.88rem; font-weight: 600;">
+                                <option value="">Memuat lokasi...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pilihan Sumber Input (Upload File / Paste Data) -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" class="btn btn-sm btn-outline-primary active" id="btnUploadTabFile" onclick="window.switchAttUploadMode('file')">
+                                <i class="fa-solid fa-file-csv"></i> Upload File CSV / Text
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnUploadTabPaste" onclick="window.switchAttUploadMode('paste')">
+                                <i class="fa-solid fa-paste"></i> Paste dari Excel
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="window.downloadAttendanceTemplate()" style="font-size: 0.8rem;">
+                            <i class="fa-solid fa-download"></i> Unduh Format Templat (.CSV)
+                        </button>
+                    </div>
+
+                    <!-- Mode File Drop Zone -->
+                    <div id="attUploadFileArea" style="margin-bottom: 16px;">
+                        <div id="attDropZone" style="border: 2px dashed #cbd5e1; border-radius: 10px; padding: 24px; text-align: center; background: #fafafa; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('fileAttInput').click()">
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.2rem; color: #3b82f6; margin-bottom: 8px; display: block;"></i>
+                            <strong style="color: #1e293b; font-size: 0.95rem; display: block;">Klik untuk pilih file atau Seret (Drag & Drop) ke sini</strong>
+                            <span style="font-size: 0.8rem; color: #64748b;">Mendukung format .CSV, .TSV, atau .TXT (Pemisah koma, titik-koma, atau Tab)</span>
+                            <div id="attFileNameDisplay" style="margin-top: 8px; font-weight: 600; color: #0284c7; display: none;"></div>
+                        </div>
+                        <input type="file" id="fileAttInput" accept=".csv, .txt, .tsv" style="display: none;" onchange="window.handleAttendanceFileSelected(this.files)">
+                    </div>
+
+                    <!-- Mode Paste Textarea -->
+                    <div id="attUploadPasteArea" style="display: none; margin-bottom: 16px;">
+                        <textarea id="txtAttPaste" class="form-control" rows="6" placeholder="Salin (Copy) tabel dari Excel atau Google Sheets, lalu Paste di sini...&#10;Format kolom standar:&#10;Nama Personel&#9;Jabatan&#9;KJ&#9;KL&#9;Off&#9;Total Jam Lembur&#10;Suwardi&#9;Mekanik Welding&#9;26&#9;4&#9;1&#9;129.0" style="font-family: monospace; font-size: 0.82rem;"></textarea>
+                        <button type="button" class="btn btn-sm btn-primary" style="margin-top: 8px;" onclick="window.parseAttendancePastedText()">
+                            <i class="fa-solid fa-bolt"></i> Analisis Data Teks
+                        </button>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div id="attPreviewContainer" style="display: none; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <strong style="font-size: 0.9rem; color: #1e293b;"><i class="fa-solid fa-table-list text-primary"></i> Pratinjau Data Terbaca</strong>
+                                <span class="badge bg-primary" id="attPreviewCountBadge">0 Personel</span>
+                                <span class="badge bg-warning text-dark" id="attPreviewOvertimeBadge">0.0 Jam Lembur</span>
+                            </div>
+                            <span style="font-size: 0.78rem; color: #64748b;" id="attPreviewHint">Menampilkan pratinjau data</span>
+                        </div>
+                        <div class="table-responsive" style="max-height: 240px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <table class="table table-sm table-striped" style="margin: 0; font-size: 0.8rem;">
+                                <thead style="background: #f1f5f9; position: sticky; top: 0; z-index: 1;">
+                                    <tr>
+                                        <th style="width: 40px; text-align: center;">#</th>
+                                        <th>Nama Personel</th>
+                                        <th>Jabatan / Posisi</th>
+                                        <th style="text-align: center;">KJ</th>
+                                        <th style="text-align: center;">KL</th>
+                                        <th style="text-align: center;">Off</th>
+                                        <th style="text-align: right;">Total Lembur</th>
+                                        <th style="text-align: center;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbAttPreviewBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modalUploadAttendance')">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitUploadAttendance" onclick="window.submitUploadAttendance()" disabled style="display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Database
+                    </button>
+                </div>
+            </div>
+        </div>
         <!-- Leaflet Map Script -->
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

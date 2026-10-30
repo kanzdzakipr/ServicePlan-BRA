@@ -23540,9 +23540,15 @@
                     <div class="pk-panel">
                         <div class="pk-panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                             <span id="lblAttendancePeriodTitle"><i class="fa-solid fa-list-ol"></i> Rekapitulasi Jam Lembur & Absensi Personel (Januari 2026)</span>
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <label for="selAttendancePeriod" style="font-size:0.82rem; margin:0; font-weight:600;"><i class="fa-regular fa-calendar"></i> Periode Lembur:</label>
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <label for="selAttendancePeriod" style="font-size:0.82rem; margin:0; font-weight:600;"><i class="fa-regular fa-calendar"></i> Periode:</label>
                                 <input id="selAttendancePeriod" type="month" min="2026-01" max="2099-12" value="2026-01" class="form-control" style="width:auto; font-weight:600; padding:4px 8px; font-size:0.82rem; border-radius:6px;" aria-label="Pilih Periode Lembur">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.downloadAttendanceTemplate()" title="Unduh templat format CSV untuk upload absensi / lembur" style="font-size:0.82rem; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-file-csv"></i> Unduh Templat CSV
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="window.openUploadAttendanceModal()" title="Upload file data absensi & lembur mekanik" style="font-size:0.82rem; padding:4px 12px; display:inline-flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload Data Absensi & Lembur
+                                </button>
                             </div>
                         </div>
                         <div class="pk-panel-body no-padding">
@@ -24538,6 +24544,378 @@
   }
 
   // Global Export Function
+  
+  // =========================================================================
+  // UPLOAD DATA ABSENSI & LEMBUR MEKANIK HANDLERS
+  // =========================================================================
+  window._parsedAttendanceRows = [];
+  window._attendanceSourceFileName = "";
+
+  window.downloadAttendanceTemplate = function () {
+    const csvContent =
+      "\ufeffNama Personel,Jabatan / Posisi,Departemen,Hari Kerja (KJ),Kerja Libur (KL),Hari Off (O),Total Jam Lembur,Cuti,Sakit,Izin,Mangkir\r\n" +
+      "Suwardi,Mekanik Welding,Welder,26,4,1,129.0,0,0,0,0\r\n" +
+      "Afriyandi,Mekanik Senior,Mekanik,25,4,2,88.0,0,0,0,0\r\n" +
+      "Rahmad K,Mekanik Senior,Mekanik,26,3,2,82.5,0,0,0,0\r\n" +
+      "Darmawan,Mekanik Heavy Equipment,Mekanik,24,4,3,76.0,0,0,0,0\r\n" +
+      "Joni Septian,Mekanik,Mekanik,25,3,3,71.0,0,0,0,0\r\n" +
+      "Rezeki Siregar,Mekanik,Mekanik,24,4,3,68.5,0,0,0,0\r\n" +
+      "Galuh Rizkiy,Helper Mekanik,Mekanik,25,3,3,65.0,0,0,0,0\r\n" +
+      "Bambang Irawan,Mekanik Fabrikasi,Welder,24,4,3,64.0,0,0,0,0\r\n" +
+      "Eko Wahyudi,Mekanik Hidrolik,Mekanik,23,4,4,62.0,0,0,0,0\r\n" +
+      "Agus Prayitno,Mekanik Engine,Mekanik,25,3,3,59.5,0,0,0,0\r\n";
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "templat_absensi_lembur_mekanik.csv";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  window.openUploadAttendanceModal = function () {
+    const curPeriod = document.getElementById("selAttendancePeriod")?.value
+      || document.getElementById("selKpiPeriod")?.value
+      || "2026-01";
+    const periodInput = document.getElementById("uploadAttPeriod");
+    if (periodInput) periodInput.value = curPeriod;
+
+    // Sync locations from selKpiLocation
+    const locSelect = document.getElementById("uploadAttLocation");
+    const kpiLocSelect = document.getElementById("selKpiLocation");
+    if (locSelect && kpiLocSelect) {
+      locSelect.innerHTML = kpiLocSelect.innerHTML;
+      locSelect.value = kpiLocSelect.value || "4";
+    }
+
+    // Reset upload state
+    window._parsedAttendanceRows = [];
+    window._attendanceSourceFileName = "";
+    const previewContainer = document.getElementById("attPreviewContainer");
+    if (previewContainer) previewContainer.style.display = "none";
+    const tbPreview = document.getElementById("tbAttPreviewBody");
+    if (tbPreview) tbPreview.innerHTML = "";
+    const submitBtn = document.getElementById("btnSubmitUploadAttendance");
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Database`;
+    }
+    const fileNameDisplay = document.getElementById("attFileNameDisplay");
+    if (fileNameDisplay) {
+      fileNameDisplay.style.display = "none";
+      fileNameDisplay.textContent = "";
+    }
+    const fileInput = document.getElementById("fileAttInput");
+    if (fileInput) fileInput.value = "";
+    const txtPaste = document.getElementById("txtAttPaste");
+    if (txtPaste) txtPaste.value = "";
+
+    window.switchAttUploadMode("file");
+    window.openModal("modalUploadAttendance");
+    setupAttDropZone();
+  };
+
+  window.switchAttUploadMode = function (mode) {
+    const fileArea = document.getElementById("attUploadFileArea");
+    const pasteArea = document.getElementById("attUploadPasteArea");
+    const tabFile = document.getElementById("btnUploadTabFile");
+    const tabPaste = document.getElementById("btnUploadTabPaste");
+
+    if (mode === "paste") {
+      if (fileArea) fileArea.style.display = "none";
+      if (pasteArea) pasteArea.style.display = "block";
+      if (tabFile) { tabFile.classList.remove("btn-outline-primary", "active"); tabFile.classList.add("btn-outline-secondary"); }
+      if (tabPaste) { tabPaste.classList.remove("btn-outline-secondary"); tabPaste.classList.add("btn-outline-primary", "active"); }
+    } else {
+      if (fileArea) fileArea.style.display = "block";
+      if (pasteArea) pasteArea.style.display = "none";
+      if (tabPaste) { tabPaste.classList.remove("btn-outline-primary", "active"); tabPaste.classList.add("btn-outline-secondary"); }
+      if (tabFile) { tabFile.classList.remove("btn-outline-secondary"); tabFile.classList.add("btn-outline-primary", "active"); }
+    }
+  };
+
+  function setupAttDropZone() {
+    const zone = document.getElementById("attDropZone");
+    if (!zone || zone._boundDrop) return;
+    zone._boundDrop = true;
+
+    ["dragenter", "dragover"].forEach((evtName) => {
+      zone.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.style.borderColor = "#0284c7";
+        zone.style.background = "#f0f9ff";
+      });
+    });
+    ["dragleave", "drop"].forEach((evtName) => {
+      zone.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.style.borderColor = "#cbd5e1";
+        zone.style.background = "#fafafa";
+      });
+    });
+    zone.addEventListener("drop", (e) => {
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        window.handleAttendanceFileSelected(dt.files);
+      }
+    });
+  }
+
+  window.handleAttendanceFileSelected = function (files) {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    window._attendanceSourceFileName = file.name;
+
+    const fileNameDisplay = document.getElementById("attFileNameDisplay");
+    if (fileNameDisplay) {
+      fileNameDisplay.textContent = `File terpilih: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      fileNameDisplay.style.display = "block";
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const text = e.target.result;
+      parseAttendanceRawText(text, file.name);
+    };
+    reader.readAsText(file);
+  };
+
+  window.parseAttendancePastedText = function () {
+    const raw = document.getElementById("txtAttPaste")?.value || "";
+    if (!raw.trim()) {
+      alert("Silakan tempel (paste) data teks absensi / lembur terlebih dahulu.");
+      return;
+    }
+    parseAttendanceRawText(raw, "Paste Excel");
+  };
+
+  function parseAttendanceRawText(rawText, sourceName) {
+    if (!rawText || !rawText.trim()) return;
+
+    const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
+    if (lines.length === 0) {
+      alert("File atau teks kosong.");
+      return;
+    }
+
+    // Determine delimiter on first line
+    const firstLine = lines[0];
+    let delim = ",";
+    if (firstLine.includes("\t")) {
+      delim = "\t";
+    } else if (firstLine.includes(";") && !firstLine.includes(",")) {
+      delim = ";";
+    }
+
+    function splitLine(line, delimiter) {
+      if (delimiter === "\t") return line.split("\t").map((s) => s.trim());
+      const regex = new RegExp(`(?:^|${delimiter})(?:"([^"]*(?:""[^"]*)*)"|([^"${delimiter}]*))`, "g");
+      const entries = [];
+      let match;
+      while ((match = regex.exec(line)) !== null) {
+        let val = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
+        entries.push((val || "").trim());
+      }
+      return entries;
+    }
+
+    const rows = lines.map((l) => splitLine(l, delim));
+    if (rows.length === 0) return;
+
+    let colName = 0;
+    let colRole = 1;
+    let colDept = -1;
+    let colKj = -1;
+    let colKl = -1;
+    let colOff = -1;
+    let colOvertime = -1;
+    let colCuti = -1;
+    let colSakit = -1;
+    let colIzin = -1;
+    let colMangkir = -1;
+
+    let startIdx = 0;
+    const headerRow = rows[0].map((h) => String(h).toLowerCase());
+    const isHeader = headerRow.some((h) =>
+      h.includes("nama") || h.includes("personel") || h.includes("mekanik") || h.includes("jabatan") || h.includes("lembur") || h.includes("kj")
+    );
+
+    if (isHeader) {
+      startIdx = 1;
+      headerRow.forEach((h, idx) => {
+        if (h.includes("nama") || h.includes("personel") || h.includes("mekanik") || h.includes("employee")) colName = idx;
+        else if (h.includes("jabatan") || h.includes("posisi") || h.includes("role")) colRole = idx;
+        else if (h.includes("departemen") || h.includes("dept")) colDept = idx;
+        else if (h === "kj" || h.includes("hari kerja") || h.includes("kj_days")) colKj = idx;
+        else if (h === "kl" || h.includes("kerja libur") || h.includes("kl_days")) colKl = idx;
+        else if (h === "off" || h.includes("hari off") || h.includes("libur") || h.includes("off_days")) colOff = idx;
+        else if (h.includes("lembur") || h.includes("overtime") || h.includes("jam")) colOvertime = idx;
+        else if (h.includes("cuti")) colCuti = idx;
+        else if (h.includes("sakit")) colSakit = idx;
+        else if (h.includes("izin") || h.includes("ijin")) colIzin = idx;
+        else if (h.includes("mangkir") || h.includes("alfa")) colMangkir = idx;
+      });
+    }
+
+    if (colKj === -1) colKj = 2;
+    if (colKl === -1) colKl = 3;
+    if (colOff === -1) colOff = 4;
+    if (colOvertime === -1) colOvertime = 5;
+
+    function parseNum(val) {
+      if (val === undefined || val === null) return 0;
+      let s = String(val).trim().replace(/,/g, ".");
+      let n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    }
+
+    const parsed = [];
+    for (let i = startIdx; i < rows.length; i++) {
+      const r = rows[i];
+      const name = (r[colName] || "").trim();
+      if (!name) continue;
+
+      const role = colRole >= 0 && r[colRole] ? r[colRole].trim() : "Mekanik";
+      const dept = colDept >= 0 && r[colDept] ? r[colDept].trim() : (role.toLowerCase().includes("weld") ? "Welder" : "Mekanik");
+      const kj = Math.round(parseNum(r[colKj]));
+      const kl = Math.round(parseNum(r[colKl]));
+      const off = Math.round(parseNum(r[colOff]));
+      const ot = Math.max(0, parseNum(r[colOvertime]));
+      const cuti = colCuti >= 0 ? Math.round(parseNum(r[colCuti])) : 0;
+      const sakit = colSakit >= 0 ? Math.round(parseNum(r[colSakit])) : 0;
+      const izin = colIzin >= 0 ? Math.round(parseNum(r[colIzin])) : 0;
+      const mangkir = colMangkir >= 0 ? Math.round(parseNum(r[colMangkir])) : 0;
+
+      parsed.push({
+        employee_name: name,
+        role_snapshot: role,
+        department: dept,
+        kj_days: kj,
+        kl_days: kl,
+        off_days: off,
+        cuti_days: cuti,
+        sakit_days: sakit,
+        izin_days: izin,
+        mangkir_days: mangkir,
+        total_work_days: kj + kl,
+        total_overtime_hours: ot,
+      });
+    }
+
+    if (parsed.length === 0) {
+      alert("Tidak ada baris data mekanik yang valid ditemukan.");
+      return;
+    }
+
+    window._parsedAttendanceRows = parsed;
+    window._attendanceSourceFileName = sourceName || "Upload File";
+    renderAttendanceUploadPreview(parsed);
+  }
+
+  function renderAttendanceUploadPreview(items) {
+    const previewContainer = document.getElementById("attPreviewContainer");
+    const countBadge = document.getElementById("attPreviewCountBadge");
+    const otBadge = document.getElementById("attPreviewOvertimeBadge");
+    const tbBody = document.getElementById("tbAttPreviewBody");
+    const submitBtn = document.getElementById("btnSubmitUploadAttendance");
+    const hint = document.getElementById("attPreviewHint");
+
+    if (!previewContainer || !tbBody) return;
+
+    previewContainer.style.display = "block";
+    const totalOt = items.reduce((acc, it) => acc + (it.total_overtime_hours || 0), 0);
+
+    if (countBadge) countBadge.textContent = `${items.length} Personel`;
+    if (otBadge) otBadge.textContent = `${totalOt.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Jam Lembur`;
+    if (hint) hint.textContent = items.length > 15 ? `Menampilkan 15 dari ${items.length} baris data` : `Total ${items.length} baris siap disimpan`;
+
+    const slice = items.slice(0, 15);
+    tbBody.innerHTML = slice
+      .map(
+        (it, idx) => `
+        <tr>
+          <td style="text-align:center;">${idx + 1}</td>
+          <td><strong>${escapeHtml(it.employee_name)}</strong></td>
+          <td>${escapeHtml(it.role_snapshot || "-")}</td>
+          <td style="text-align:center;">${it.kj_days}</td>
+          <td style="text-align:center;">${it.kl_days}</td>
+          <td style="text-align:center;">${it.off_days}</td>
+          <td style="text-align:right; font-weight:700; color:var(--primary);">${Number(it.total_overtime_hours).toFixed(1)} Jam</td>
+          <td style="text-align:center;"><span class="badge bg-success" style="font-size:0.7rem;"><i class="fa-solid fa-check"></i> Siap</span></td>
+        </tr>
+      `
+      )
+      .join("");
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ${items.length} Data ke Database`;
+    }
+  }
+
+  window.submitUploadAttendance = async function () {
+    const items = window._parsedAttendanceRows;
+    if (!items || items.length === 0) {
+      alert("Tidak ada data absensi untuk disimpan.");
+      return;
+    }
+
+    const period = document.getElementById("uploadAttPeriod")?.value || activeKpiPeriod();
+    const locationId = Number(document.getElementById("uploadAttLocation")?.value || activeKpiLocationId());
+    const submitBtn = document.getElementById("btnSubmitUploadAttendance");
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan ke Database...`;
+    }
+
+    try {
+      const csrf = window.APP_CSRF_TOKEN || (typeof window.getCsrfToken === "function" ? await window.getCsrfToken() : "") || "";
+      const payload = {
+        period: period,
+        location_id: locationId,
+        source_file: window._attendanceSourceFileName || "Upload Absensi",
+        rows: items,
+        csrf_token: csrf,
+      };
+
+      const resp = await fetch("api/people_kpi.php?action=upload_attendance", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrf,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const res = await resp.json();
+      if (!resp.ok || res.status !== "success") {
+        throw new Error(res.message || "Gagal mengunggah data absensi.");
+      }
+
+      alert(res.message || "Data absensi & lembur mekanik berhasil disimpan ke database!");
+
+      const selAtt = document.getElementById("selAttendancePeriod");
+      if (selAtt && selAtt.value !== period) selAtt.value = period;
+      const selKpi = document.getElementById("selKpiPeriod");
+      if (selKpi && selKpi.value !== period) selKpi.value = period;
+      const selLoc = document.getElementById("selKpiLocation");
+      if (selLoc && Number(selLoc.value) !== locationId) selLoc.value = String(locationId);
+
+      window.closeModal("modalUploadAttendance");
+
+      await renderOvertimeAttendance();
+    } catch (err) {
+      alert("Terjadi kesalahan: " + err.message);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Coba Simpan Lagi`;
+      }
+    }
+  };
+
   window.exportKPIReport = function () {
     const period = activeKpiPeriod();
     const locationName = currentHeadKPIAssessment.location_name
