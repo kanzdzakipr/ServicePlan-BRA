@@ -29,6 +29,19 @@ final class CostLedger
     /** Ensure ledger table exists without inserting sample transactions. */
     public static function ensureTables(PDO $db): void
     {
+        static $ensured = false;
+        if ($ensured) {
+            return;
+        }
+        $stampFile = '';
+        if (PHP_SAPI !== 'cli') {
+            $stampFile = rtrim(sys_get_temp_dir(), '/\\') . '/bra_schema_cost_ledger_v3.stamp';
+            if (is_file($stampFile) && (time() - (int) @filemtime($stampFile)) < 3600) {
+                $ensured = true;
+                return;
+            }
+        }
+
         $db->exec("CREATE TABLE IF NOT EXISTS asset_cost_transactions (
             transaction_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             cost_code VARCHAR(50) NOT NULL UNIQUE,
@@ -60,6 +73,11 @@ final class CostLedger
         $count = (int) $db->query("SELECT COUNT(*) FROM asset_cost_transactions")->fetchColumn();
         if ($count === 0) {
             self::seedBaselineTransactions($db);
+        }
+
+        $ensured = true;
+        if ($stampFile !== '') {
+            @file_put_contents($stampFile, (string) time());
         }
     }
 

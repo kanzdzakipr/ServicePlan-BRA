@@ -67,6 +67,14 @@ final class Database
             api_authorize_current_route();
         }
 
+        // Release the exclusive PHP session file lock on read-only GET requests
+        // so concurrent Promise.all() API calls execute in parallel on Hostinger.
+        $reqMethod = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+        $reqScript = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+        if ($reqMethod === 'GET' && $reqScript !== 'auth.php' && session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+
         return self::$instance;
     }
 }

@@ -5,6 +5,19 @@ final class ReportIntegration
 {
     public static function ensureTables(PDO $db): void
     {
+        static $ensured = false;
+        if ($ensured) {
+            return;
+        }
+        $stampFile = '';
+        if (PHP_SAPI !== 'cli') {
+            $stampFile = rtrim(sys_get_temp_dir(), '/\\') . '/bra_schema_report_integration_v3.stamp';
+            if (is_file($stampFile) && (time() - (int) @filemtime($stampFile)) < 3600) {
+                $ensured = true;
+                return;
+            }
+        }
+
         $db->exec("CREATE TABLE IF NOT EXISTS spb_void_audit (
             spb_id VARCHAR(50) PRIMARY KEY,
             reason VARCHAR(500) NOT NULL,
@@ -512,6 +525,11 @@ final class ReportIntegration
             'idx_cutting_bit_location',
             'KEY idx_cutting_bit_location (location_id, reversed_at)'
         );
+
+        $ensured = true;
+        if ($stampFile !== '') {
+            @file_put_contents($stampFile, (string) time());
+        }
     }
 
     public static function applyFinal(

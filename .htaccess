@@ -63,3 +63,19 @@ DirectoryIndex index.html dashboard.php index.php
 
 # 6. Character Encoding Enforcement
 AddDefaultCharset UTF-8
+
+# 7. Gzip / Deflate Compression for Fast JSON, JS, CSS & HTML Transfer on Hostinger
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/x-javascript application/json image/svg+xml
+</IfModule>
+
+# 8. Browser Caching for Static Assets (Fonts, Images, Icons)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType font/woff2 "access plus 30 days"
+    ExpiresByType font/woff "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 7 days"
+    ExpiresByType image/png "access plus 7 days"
+    ExpiresByType image/jpeg "access plus 7 days"
+    ExpiresByType image/webp "access plus 7 days"
+</IfModule>

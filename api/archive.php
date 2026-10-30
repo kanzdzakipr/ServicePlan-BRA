@@ -10,6 +10,19 @@ $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
 function ensureArchiveSchema(PDO $db): void
 {
+    static $ensured = false;
+    if ($ensured) {
+        return;
+    }
+    $stampFile = '';
+    if (PHP_SAPI !== 'cli') {
+        $stampFile = rtrim(sys_get_temp_dir(), '/\\') . '/bra_schema_archive_v3.stamp';
+        if (is_file($stampFile) && (time() - (int) @filemtime($stampFile)) < 3600) {
+            $ensured = true;
+            return;
+        }
+    }
+
     try {
         $db->exec("
             CREATE TABLE IF NOT EXISTS `archived_items` (
@@ -53,6 +66,10 @@ function ensureArchiveSchema(PDO $db): void
         }
         if (!isset($existingCols['reason'])) {
             $db->exec("ALTER TABLE `archived_items` ADD COLUMN `reason` VARCHAR(255) NULL AFTER `archived_by_name`");
+        }
+        $ensured = true;
+        if ($stampFile !== '') {
+            @file_put_contents($stampFile, (string) time());
         }
     } catch (Throwable $e) {
         // Abaikan jika user DB di hosting memiliki batas DDL, fallback ditangani pada saat SELECT

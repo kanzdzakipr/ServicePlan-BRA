@@ -7670,13 +7670,13 @@ try {
             document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     if (window.loadAssetMapping) {
-                        await window.loadAssetMapping();
-                        // Re-render logistics to apply SN/Plat
-                        if (typeof renderTableMasuk === 'function') renderTableMasuk();
-                        if (typeof renderTableKeluar === 'function') renderTableKeluar();
+                        window.loadAssetMapping().then(() => {
+                            if (typeof renderTableMasuk === 'function') renderTableMasuk();
+                            if (typeof renderTableKeluar === 'function') renderTableKeluar();
+                        });
                     }
 
-                    // Fetch all initialization data concurrently
+                    // Fetch all initialization data concurrently without waiting for external Google Sheets CSV
                     const [apiInitData, assetPayload, fuelData, pmData, tireData, archiveDataRes, inspectionsRes, accidentsRes] = await Promise.all([
                         fetchJsonSafely('api/init.php'),
                         fetchJsonSafely('api/assets.php'),
