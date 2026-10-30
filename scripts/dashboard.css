@@ -10910,7 +10910,7 @@ body.cm-modal-open {
     border: 1px solid #bfdbfe;
     border-radius: 10px;
     display: grid;
-    grid-template-columns: minmax(190px, .55fr) minmax(0, 2fr);
+    grid-template-columns: minmax(180px, 230px) minmax(220px, 300px) minmax(0, 1fr);
     overflow: hidden;
 }
 
@@ -10944,6 +10944,58 @@ body.cm-modal-open {
     color: #dbeafe;
     font-size: .72rem;
     font-weight: 650;
+}
+
+.pk-planner-pm-actual {
+    align-items: flex-start;
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 22px 24px 25px;
+}
+
+.pk-planner-pm-actual span.pk-kpi-pill {
+    font-size: .69rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #e0f2fe;
+}
+
+.pk-planner-pm-actual strong {
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    font-size: clamp(2.15rem, 4vw, 3.25rem);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.06em;
+    line-height: 1;
+    margin: 12px 0 8px;
+    color: #ffffff;
+}
+
+.pk-planner-pm-actual small {
+    color: #dbeafe;
+    font-size: .72rem;
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+.pk-planner-pm-actual .pk-actual-meta {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .68rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-weight: 700;
 }
 
 .pk-planner-pm-copy {
@@ -11642,6 +11694,11 @@ body.cm-modal-open {
         grid-template-columns: 1fr;
     }
     .pk-planner-pm-target {
+        padding: 17px 19px 19px;
+    }
+    .pk-planner-pm-actual {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
         padding: 17px 19px 19px;
     }
     .pk-planner-pm-copy {
@@ -23922,18 +23979,18 @@ body.sl-modal-open {
     color: #b91c1c;
 }
 
-/* Master Asset Telemetry Strip Responsive Grid */
+/* Master Asset Telemetry Strip Responsive Grid (4 Operational Statuses) */
 #view-asset .master-asset-telemetry-grid,
 #view-asset .telemetry-status-grid {
     display: grid !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     gap: 1px !important;
 }
 
 @media (max-width: 1200px) {
     #view-asset .master-asset-telemetry-grid,
     #view-asset .telemetry-status-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
 }
 
@@ -24335,7 +24392,6 @@ body.sl-modal-open {
     #view-dashboard .telemetry-status-grid,
     #view-fuel .telemetry-status-grid,
     #view-asset .telemetry-status-grid,
-    #view-biaya .telemetry-status-grid,
     .kpi-grid,
     .monitoring-summary {
         display: grid !important;
@@ -24768,7 +24824,6 @@ body.sl-modal-open {
     #view-dashboard .telemetry-status-grid,
     #view-fuel .telemetry-status-grid,
     #view-asset .telemetry-status-grid,
-    #view-biaya .telemetry-status-grid,
     .kpi-grid {
         display: grid !important;
         grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
@@ -24881,3 +24936,41 @@ body.sl-modal-open {
 
 
 
+
+
+/* Modul Biaya: Structured 2-Tier Telemetry Grid (Valuation 4 Cols, Budget 3 Cols) */
+#view-biaya .biaya-telemetry-valuation-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+}
+
+#view-biaya .biaya-telemetry-budget-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 15px !important;
+}
+
+#view-biaya .telemetry-metric-value {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+@media (max-width: 1100px) {
+    #view-biaya .biaya-telemetry-valuation-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    #view-biaya .biaya-telemetry-budget-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    #view-biaya .biaya-telemetry-valuation-grid,
+    #view-biaya .biaya-telemetry-budget-grid {
+        grid-template-columns: 1fr !important;
+    }
+}

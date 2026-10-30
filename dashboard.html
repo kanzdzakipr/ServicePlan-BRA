@@ -621,21 +621,6 @@
                             <span class="badge badge-danger">Maintenance</span>
                         </div>
                     </div>
-
-                    <div class="telemetry-metric-item"
-                        title="Total Valuasi Pasaran Armada Aset: Rp.173,806,170,000 (173 Miliar 806 Juta 170 Ribu Rupiah)">
-                        <div class="telemetry-metric-header">
-                            <span class="telemetry-metric-label">Valuasi Aset</span>
-                            <i class="fa-solid fa-money-bill-trend-up"
-                                style="color: var(--info); font-size: 0.9rem;"></i>
-                        </div>
-                        <div class="telemetry-metric-value tabular-nums" id="kpiAssetMarketVal"
-                            style="color: var(--info); font-size: 1.15rem; letter-spacing: -0.02em;">Rp.173,806,170,000
-                        </div>
-                        <div class="telemetry-metric-footer">
-                            <span class="badge badge-info">Market Valuation</span>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="panel">
@@ -1681,72 +1666,93 @@
                     </div>
                 </div>
 
-                <!-- 6 Synchronized Telemetry Status Strip (6 Columns) -->
-                <div class="telemetry-status-grid"
-                    style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 15px;">
-                    <div class="telemetry-metric-item" title="Total Budget Berjalan: Rp 2.960 Jt">
+                <!-- Strip 1: Valuasi & Penjualan Aset Armada (4 Kolom Sempurna) -->
+                <div class="telemetry-status-grid biaya-telemetry-valuation-grid"
+                    style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 12px;">
+                    <div class="telemetry-metric-item" title="Total Valuasi Pasaran Seluruh Armada Aset: Rp 173.806.170.000 (173,8 Miliar Rupiah)">
                         <div class="telemetry-metric-header">
-                            <span class="telemetry-metric-label">Total Budget Berjalan</span>
+                            <span class="telemetry-metric-label">Valuasi Aset Armada</span>
+                            <i class="fa-solid fa-money-bill-trend-up" style="color: var(--info); font-size: 0.9rem;"></i>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostBudget">Rp 2.960 Jt</div>
+                        <div class="telemetry-metric-value tabular-nums font-mono" id="kpiAssetMarketVal"
+                            style="color: var(--info); font-size: 1.15rem; letter-spacing: -0.02em; white-space: nowrap;">Rp 173.806.170.000</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-wallet"></i>
-                                Budget YTD</span>
+                            <span class="badge badge-info"><i class="fa-solid fa-calculator"></i> Market Valuation (Seluruh Armada)</span>
                         </div>
                     </div>
-                    <div class="telemetry-metric-item" title="Pengeluaran Aktual: Rp 12.144 Jt">
-                        <div class="telemetry-metric-header">
-                            <span class="telemetry-metric-label">Pengeluaran Aktual</span>
-                        </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostActual" style="color: var(--danger);">
-                            Rp 12.144 Jt</div>
-                        <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i
-                                    class="fa-solid fa-file-invoice-dollar"></i> Actual Expenses</span>
-                        </div>
-                    </div>
-                    <div class="telemetry-metric-item" title="Deviasi Budget: +310.2% (Over)">
-                        <div class="telemetry-metric-header">
-                            <span class="telemetry-metric-label">Deviasi Budget</span>
-                        </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostDev" style="color: var(--warning);">
-                            +310.2% (Over)</div>
-                        <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i
-                                    class="fa-solid fa-chart-line"></i> Variance Rate</span>
-                        </div>
-                    </div>
-                    <div class="telemetry-metric-item" title="Nilai Buku Aset (7 Unit): Rp 3.347 Jt">
+
+                    <div class="telemetry-metric-item" title="Nilai Buku Aset (7 Unit Prioritas): Rp 3.347.125.000">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Nilai Buku Aset (7 Unit)</span>
+                            <i class="fa-solid fa-book" style="color: var(--success); font-size: 0.9rem;"></i>
                         </div>
                         <div class="telemetry-metric-value font-mono" id="kpiCostBookValue"
-                            style="color: var(--success);">Rp 3.347 Jt</div>
+                            style="color: var(--success); white-space: nowrap;">Rp 3.347 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-book"></i>
-                                Book Value</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-book-bookmark"></i> Book Value (7 Unit)</span>
                         </div>
                     </div>
-                    <div class="telemetry-metric-item" title="Harga Penawaran Buyer: Rp 4.070 Jt">
+
+                    <div class="telemetry-metric-item" title="Harga Penawaran Buyer (7 Unit Prioritas): Rp 4.070.000.000">
                         <div class="telemetry-metric-header">
                             <span class="telemetry-metric-label">Harga Penawaran Buyer</span>
+                            <i class="fa-solid fa-tags" style="color: var(--primary); font-size: 0.9rem;"></i>
                         </div>
                         <div class="telemetry-metric-value font-mono" id="kpiCostMarketValue"
-                            style="color: var(--primary);">Rp 4.070 Jt</div>
+                            style="color: var(--primary); white-space: nowrap;">Rp 4.070 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-tags"></i>
-                                Buyer Bids</span>
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-handshake"></i> Buyer Bids (7 Unit)</span>
                         </div>
                     </div>
-                    <div class="telemetry-metric-item" title="Proyeksi Net Gain BRA: +Rp 610 Jt">
+
+                    <div class="telemetry-metric-item" title="Proyeksi Net Gain BRA: +Rp 611.275.000" style="background: rgba(22, 163, 74, 0.04); border-color: #86efac;">
                         <div class="telemetry-metric-header">
-                            <span class="telemetry-metric-label">Proyeksi Net Gain BRA</span>
+                            <span class="telemetry-metric-label" style="color:#15803d; font-weight:800;">Proyeksi Net Gain BRA</span>
+                            <i class="fa-solid fa-arrow-trend-up" style="color: #16a34a; font-size: 0.95rem;"></i>
                         </div>
-                        <div class="telemetry-metric-value font-mono" id="kpiCostMargin" style="color: var(--success);">
-                            +Rp 610 Jt</div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostMargin" style="color: #15803d; font-weight:800; white-space: nowrap;">
+                            +Rp 611 Jt</div>
                         <div class="telemetry-metric-footer">
-                            <span style="font-size:0.72rem; color:var(--text-muted);"><i
-                                    class="fa-solid fa-hand-holding-dollar"></i> Net Margin</span>
+                            <span class="badge badge-success" style="font-weight:700;"><i class="fa-solid fa-circle-check"></i> Net Margin (+18.3%)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strip 2: Pengendalian Budget & Realisasi Kas Biaya (3 Kolom Sempurna) -->
+                <div class="telemetry-status-grid biaya-telemetry-budget-grid"
+                    style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 15px;">
+                    <div class="telemetry-metric-item" title="Total Budget Berjalan: Rp 2.960.000.000">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Total Budget Berjalan</span>
+                            <i class="fa-solid fa-wallet" style="color: var(--primary); font-size: 0.9rem;"></i>
+                        </div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostBudget" style="white-space: nowrap;">Rp 2.960 Jt</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-calendar-check"></i> Budget Planning YTD</span>
+                        </div>
+                    </div>
+
+                    <div class="telemetry-metric-item" title="Pengeluaran Kas Aktual Terverifikasi">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Pengeluaran Aktual</span>
+                            <i class="fa-solid fa-file-invoice-dollar" style="color: var(--danger); font-size: 0.9rem;"></i>
+                        </div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostActual"
+                            style="color: var(--danger); white-space: nowrap; font-size: 1.25rem;">Rp 358.305.450</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-receipt"></i> Verified Cash Expenses</span>
+                        </div>
+                    </div>
+
+                    <div class="telemetry-metric-item" title="Deviasi Budget: Realisasi vs Budget">
+                        <div class="telemetry-metric-header">
+                            <span class="telemetry-metric-label">Deviasi Budget</span>
+                            <i class="fa-solid fa-chart-line" style="color: var(--success); font-size: 0.9rem;"></i>
+                        </div>
+                        <div class="telemetry-metric-value font-mono" id="kpiCostDev"
+                            style="color: var(--success); white-space: nowrap;">-87.9% (Under)</div>
+                        <div class="telemetry-metric-footer">
+                            <span style="font-size:0.72rem; color:var(--text-muted);"><i class="fa-solid fa-scale-balanced"></i> Variance Rate</span>
                         </div>
                     </div>
                 </div>
@@ -1856,30 +1862,45 @@
                                     placeholder="Cari Kode Unit, Name, SN..." style="max-width:320px; margin-bottom:0;"
                                     onkeyup="searchCostValuationTable()">
                                 <div style="font-size:0.85rem; color:var(--text-muted);">
-                                    Menampilkan <strong>7 Unit Utama</strong> (Total Biaya Repair: Rp 2.249.290.290)
+                                    Menampilkan <strong>7 Unit Utama</strong> (Total Repair: Rp 2.249.290.290 &bull; Proyeksi Net Gain: <strong style="color:var(--success);">+Rp 611.275.000</strong>)
                                 </div>
                             </div>
                             <div class="table-responsive">
-                                <table style="margin: 0; font-size: 0.85rem;" id="costValuationTable">
+                                <table class="table" style="margin: 0; font-size: 0.84rem; width: 100%; border-collapse: collapse;" id="costValuationTable">
                                     <thead>
-                                        <tr>
-                                            <th>Unit ID & Nama Alat</th>
-                                            <th>SN / Tahun</th>
-                                            <th>Biaya Repair Kumulatif</th>
-                                            <th>Kondisi Health / Body</th>
-                                            <th>Harga Beli Awal</th>
-                                            <th>Pendapatan Unit</th>
-                                            <th>Nilai Buku (Book Value)</th>
-                                            <th>Harga Pasaran</th>
-                                            <th>Harga Ditawarkan Buyer</th>
-                                            <th>Net ke BRA</th>
-                                            <th>Margin Selisih</th>
-                                            <th>Aksi</th>
+                                        <tr style="background:#f8fafc; border-bottom: 2px solid #cbd5e1;">
+                                            <th style="min-width:145px; text-align:left; padding:9px 10px;">Unit ID &amp; Nama Alat</th>
+                                            <th style="min-width:105px; text-align:left; padding:9px 10px;">SN / Tahun</th>
+                                            <th style="text-align:right; min-width:125px; padding:9px 10px;">Biaya Repair</th>
+                                            <th style="text-align:center; min-width:110px; padding:9px 10px;">Kondisi (Health / Body)</th>
+                                            <th style="text-align:right; min-width:120px; padding:9px 10px;">Harga Beli Awal</th>
+                                            <th style="text-align:right; min-width:125px; padding:9px 10px;">Pendapatan Unit</th>
+                                            <th style="text-align:right; min-width:125px; padding:9px 10px;">Nilai Buku (Book Value)</th>
+                                            <th style="text-align:right; min-width:115px; padding:9px 10px;">Harga Pasaran</th>
+                                            <th style="text-align:right; min-width:125px; padding:9px 10px;">Penawaran Buyer</th>
+                                            <th style="text-align:right; min-width:120px; padding:9px 10px;">Net ke BRA</th>
+                                            <th style="text-align:right; min-width:145px; padding:9px 10px; background:rgba(22, 163, 74, 0.08); color:#15803d; font-weight:700;">Proyeksi Net Gain BRA</th>
+                                            <th style="text-align:center; width:80px; padding:9px 10px;">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="costValuationTableBody">
                                         <!-- Rendered via JS -->
                                     </tbody>
+                                    <tfoot id="costValuationTableFoot">
+                                        <tr style="background:#f1f5f9; font-weight:700; border-top:2px solid #cbd5e1; border-bottom:2px solid #94a3b8;">
+                                            <td colspan="2" style="font-weight:800; color:#1e293b; padding:10px 10px;">TOTAL 7 UNIT PRIORITAS</td>
+                                            <td style="text-align:right; color:var(--danger); font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootRepair">Rp 2.249.290.290</td>
+                                            <td style="text-align:center; padding:10px 10px;"><span class="badge" style="background:#e2e8f0; color:#334155;">7 Unit</span></td>
+                                            <td style="text-align:right; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootBuy">Rp 6.016.000.000</td>
+                                            <td style="text-align:right; color:#0369a1; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootRevenue">Rp 8.693.592.777</td>
+                                            <td style="text-align:right; color:var(--primary); font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootBook">Rp 3.347.125.000</td>
+                                            <td style="text-align:right; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootMarket">Rp 3.490.000.000</td>
+                                            <td style="text-align:right; color:#0284c7; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootOffer">Rp 4.070.000.000</td>
+                                            <td style="text-align:right; font-family:var(--font-mono, monospace); padding:10px 10px;" id="valFootNet">Rp 3.958.400.000</td>
+                                            <td style="text-align:right; color:#15803d; font-size:0.92rem; font-family:var(--font-mono, monospace); background:rgba(22, 163, 74, 0.12); padding:10px 10px;" id="valFootGain">+Rp 611.275.000</td>
+                                            <td style="padding:10px 10px;"></td>
+                                        </tr>
+                                    </tfoot>
                                 </table>
                             </div>
                         </div>
@@ -11848,145 +11869,133 @@
         };
 
         // ==========================================
-        // COMPREHENSIVE COST & VALUATION ENGINE
-        // ==========================================
-        let globalValuations = [
-            {
-                id: 'Dozer 06',
-                name: 'Bulldozer Caterpillar D6R',
-                sn: 'S6X00348',
-                year: 2011,
-                repairCost: 421415277,
-                health: '<50%',
-                body: '>80%',
-                buyPrice: 600000000,
-                revenue: 1640000000,
-                buyYear: 2022,
-                depreciationPct: 40,
-                depreciationVal: 240000000,
-                marketRange: '450.000.000 - 520.000.000',
-                offeredPrice: 550000000,
-                netPriceBra: 450000000,
-                selisih: 100000000,
-                bookValue: 360000000
-            },
-            {
-                id: 'Dozer 04',
-                name: 'Bulldozer Komatsu D85ESS-2',
-                sn: 'J16298',
-                year: 2013,
-                repairCost: 403684851,
-                health: '<50%',
-                body: '>80%',
-                buyPrice: 1220000000,
-                revenue: 1185564516,
-                buyYear: 2023,
-                depreciationPct: 30,
-                depreciationVal: 366000000,
-                marketRange: '750.000.000 - 900.000.000',
-                offeredPrice: 950000000,
-                netPriceBra: 820000000,
-                selisih: 130000000,
-                bookValue: 854000000
-            },
-            {
-                id: 'Exca 16',
-                name: 'Excavator Caterpillar 305.5E2',
-                sn: 'WE217079',
-                year: 2023,
-                repairCost: 35606864,
-                health: '<50%',
-                body: '<80%',
-                buyPrice: 841380000,
-                revenue: 1165833333,
-                buyYear: 2023,
-                depreciationPct: 30,
-                depreciationVal: 252414000,
-                marketRange: '420.000.000 - 480.000.000',
-                offeredPrice: 520000000,
-                netPriceBra: 460000000,
-                selisih: 60000000,
-                bookValue: 588966000
-            },
-            {
-                id: 'Exca 17',
-                name: 'Excavator Caterpillar 305.5E2',
-                sn: 'WE217080',
-                year: 2023,
-                repairCost: 66808545,
-                health: '<50%',
-                body: '<80%',
-                buyPrice: 841380000,
-                revenue: 1800000000,
-                buyYear: 2023,
-                depreciationPct: 30,
-                depreciationVal: 252414000,
-                marketRange: '420.000.000 - 480.000.000',
-                offeredPrice: 510000000,
-                netPriceBra: 450000000,
-                selisih: 60000000,
-                bookValue: 588966000
-            },
-            {
-                id: 'Dozer 07',
-                name: 'Bulldozer Caterpillar D7G2',
-                sn: '7MB05410',
-                year: 2010,
-                repairCost: 286553522,
-                health: '<50%',
-                body: '<80%',
-                buyPrice: 800000000,
-                revenue: 1530000000,
-                buyYear: 2022,
-                depreciationPct: 40,
-                depreciationVal: 320000000,
-                marketRange: '420.000.000 - 500.000.000',
-                offeredPrice: 520000000,
-                netPriceBra: 450000000,
-                selisih: 70000000,
-                bookValue: 480000000
-            },
-            {
-                id: 'Dozer 01',
-                name: 'Bulldozer Caterpillar D6G',
-                sn: 'P6G00163',
-                year: 2006,
-                repairCost: 579012317,
-                health: '<50%',
-                body: '<80%',
-                buyPrice: 415000000,
-                revenue: 1395000000,
-                buyYear: 2023,
-                depreciationPct: 30,
-                depreciationVal: 124500000,
-                marketRange: '400.000.000 - 550.000.000',
-                offeredPrice: 500000000,
-                netPriceBra: 430000000,
-                selisih: 70000000,
-                bookValue: 290500000
-            },
-            {
-                id: 'Exca 04',
-                name: 'Excavator Caterpillar 320D',
-                sn: 'BZP03563',
-                year: 2012,
-                repairCost: 456208914,
-                health: '<50%',
-                body: '<80%',
-                buyPrice: 370000000,
-                revenue: 1755000000,
-                buyYear: 2021,
-                depreciationPct: 50,
-                depreciationVal: 185000000,
-                marketRange: '400.000.000 - 580.000.000',
-                offeredPrice: 520000000,
-                netPriceBra: 400000000,
-                selisih: 120000000,
-                bookValue: 185000000
-            }
-        ];
+            // COMPREHENSIVE COST & VALUATION ENGINE
+            // Source: 10 DT REKON & Laporan Rekon Biaya Keuangan Divisi Equipment
+            // Total 7 Unit: Biaya Repair Rp 2.249.290.290 | Nilai Buku Rp 3.347.125.000 | Penawaran Buyer Rp 4.070.000.000 | Net Gain +Rp 611.275.000
+            // ==========================================
+            let globalValuations = [
+                {
+                    id: 'DT 01',
+                    name: 'Hino FM 260 JD (DT 9884 JE)',
+                    sn: 'MJED04257',
+                    nopol: 'DT 9884 JE',
+                    year: 2017,
+                    repairCost: 381911375,
+                    health: '75%',
+                    body: '85%',
+                    buyPrice: 748000000,
+                    revenue: 1718131290,
+                    bookValue: 420750000,
+                    marketPrice: 450000000,
+                    offeredPrice: 550000000,
+                    netPriceBra: 533500000,
+                    selisih: 112750000
+                },
+                {
+                    id: 'DT 02',
+                    name: 'Hino FM 260 JD (DT 9883 JE)',
+                    sn: 'MJED04258',
+                    nopol: 'DT 9883 JE',
+                    year: 2017,
+                    repairCost: 294791383,
+                    health: '78%',
+                    body: '82%',
+                    buyPrice: 748000000,
+                    revenue: 1781290000,
+                    bookValue: 420750000,
+                    marketPrice: 450000000,
+                    offeredPrice: 550000000,
+                    netPriceBra: 533500000,
+                    selisih: 112750000
+                },
+                {
+                    id: 'DT 15',
+                    name: 'Hino Dump Truck (B 9892 PYW)',
+                    sn: 'MJED05112',
+                    nopol: 'B 9892 PYW',
+                    year: 2018,
+                    repairCost: 342845348,
+                    health: '80%',
+                    body: '85%',
+                    buyPrice: 775000000,
+                    revenue: 1132517921,
+                    bookValue: 484375000,
+                    marketPrice: 550000000,
+                    offeredPrice: 600000000,
+                    netPriceBra: 582000000,
+                    selisih: 97625000
+                },
+                {
+                    id: 'DT 16',
+                    name: 'Hino Dump Truck (B 9642 KYW)',
+                    sn: 'MJED05115',
+                    nopol: 'B 9642 KYW',
+                    year: 2018,
+                    repairCost: 335420130,
+                    health: '80%',
+                    body: '80%',
+                    buyPrice: 775000000,
+                    revenue: 1073507603,
+                    bookValue: 484375000,
+                    marketPrice: 550000000,
+                    offeredPrice: 600000000,
+                    netPriceBra: 582000000,
+                    selisih: 97625000
+                },
+                {
+                    id: 'DT 30',
+                    name: 'Hino FM 260 JD (BG 8367 IJ)',
+                    sn: 'MJED06341',
+                    nopol: 'BG 8367 IJ',
+                    year: 2018,
+                    repairCost: 268394365,
+                    health: '75%',
+                    body: '80%',
+                    buyPrice: 790000000,
+                    revenue: 789206800,
+                    bookValue: 493750000,
+                    marketPrice: 470000000,
+                    offeredPrice: 585000000,
+                    netPriceBra: 567450000,
+                    selisih: 73700000
+                },
+                {
+                    id: 'DT 32',
+                    name: 'Mitsubishi Fuso (BG 8163 NK)',
+                    sn: 'FN527ML0012',
+                    nopol: 'BG 8163 NK',
+                    year: 2019,
+                    repairCost: 247926153,
+                    health: '82%',
+                    body: '85%',
+                    buyPrice: 800000000,
+                    revenue: 832087164,
+                    bookValue: 550000000,
+                    marketPrice: 500000000,
+                    offeredPrice: 585000000,
+                    netPriceBra: 567450000,
+                    selisih: 17450000
+                },
+                {
+                    id: 'Exca 04',
+                    name: 'Excavator CAT 320D (BZP03563)',
+                    sn: 'BZP03563',
+                    nopol: 'BZP03563',
+                    year: 2012,
+                    repairCost: 378001536,
+                    health: '70%',
+                    body: '75%',
+                    buyPrice: 1380000000,
+                    revenue: 1366851999,
+                    bookValue: 493125000,
+                    marketPrice: 520000000,
+                    offeredPrice: 600000000,
+                    netPriceBra: 592500000,
+                    selisih: 99375000
+                }
+            ];
 
-        let globalLpjReports = [
+            let globalLpjReports = [
             { month: 'Mei 2025', budget: 330000000, cash: 393758107, debt: 0, total: 393758107, diff: -63758107, status: 'Over Budget' },
             { month: 'Juni 2025', budget: 330000000, cash: 553477901, debt: 45000000, total: 598477901, diff: -268477901, status: 'Over Budget' },
             { month: 'Juli 2025', budget: 430000000, cash: 542509893, debt: 32000000, total: 574509893, diff: -144509893, status: 'Over Budget' },
@@ -12119,48 +12128,108 @@
         };
 
         window.renderCostValuationTable = function (items) {
-            const tbody = document.getElementById('costValuationTableBody');
-            if (!tbody) return;
+                const tbody = document.getElementById('costValuationTableBody');
+                if (!tbody) return;
 
-            if (items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada data valuasi aset ditemukan.</td></tr>';
-                return;
-            }
+                if (!items || items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px; color:var(--text-muted);">Tidak ada data valuasi aset ditemukan.</td></tr>';
+                    updateValuationFooter(0, 0, 0, 0, 0, 0, 0, 0);
+                    return;
+                }
 
-            tbody.innerHTML = items.map(v => {
-                const shortId = v.id.replace(/\s+/g, '');
-                return `
-                    <tr>
-                        <td>
-                            <a onclick="openAssetModal('${escapeHtml(shortId)}', 'READY', 'Bulldozer', 'Yard Duri')" style="cursor:pointer; color:var(--primary); font-weight:bold; text-decoration:underline;">
+                let sumRepair = 0, sumBuy = 0, sumRevenue = 0, sumBook = 0, sumMarket = 0, sumOffer = 0, sumNet = 0, sumGain = 0;
+
+                tbody.innerHTML = items.map(v => {
+                    const shortId = (v.id || '').replace(/\s+/g, '');
+                    const repairVal = Number(v.repairCost) || 0;
+                    const buyVal = Number(v.buyPrice) || 0;
+                    const revVal = Number(v.revenue) || 0;
+                    const bookVal = Number(v.bookValue) || 0;
+                    const marketVal = Number(v.marketPrice) || 0;
+                    const offerVal = Number(v.offeredPrice) || 0;
+                    const netVal = Number(v.netPriceBra) || 0;
+                    const gainVal = Number(v.selisih) || (netVal - bookVal);
+
+                    sumRepair += repairVal;
+                    sumBuy += buyVal;
+                    sumRevenue += revVal;
+                    sumBook += bookVal;
+                    sumMarket += marketVal;
+                    sumOffer += offerVal;
+                    sumNet += netVal;
+                    sumGain += gainVal;
+
+                    const gainPrefix = gainVal > 0 ? '+' : '';
+                    const gainColor = gainVal >= 0 ? '#15803d' : '#dc2626';
+
+                    return `
+                    <tr style="border-bottom:1px solid #e2e8f0;">
+                        <td style="padding:9px 10px;">
+                            <a onclick="openAssetModal('${escapeHtml(v.id)}', 'READY', 'Armada', 'Yard Duri')" style="cursor:pointer; color:var(--primary); font-weight:700; text-decoration:underline;">
                                 ${escapeHtml(v.id)}
                             </a>
-                            <br><small class="text-muted">${escapeHtml(v.name)}</small>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${escapeHtml(v.name)}</div>
                         </td>
-                        <td>${escapeHtml(v.sn)}<br><small class="text-muted">Tahun: ${v.year}</small></td>
-                        <td style="font-weight:bold; color:var(--danger);">Rp ${(v.repairCost).toLocaleString('id-ID')}</td>
-                        <td>
-                            <span class="badge bg-breakdown">Health: ${v.health}</span>
-                            <br><span class="badge bg-operating" style="margin-top:2px;">Body: ${v.body}</span>
+                        <td style="padding:9px 10px;">
+                            <strong class="font-mono" style="font-size:0.8rem;">${escapeHtml(v.sn || '-')}</strong>
+                            <div style="font-size:0.74rem; color:var(--text-muted);">Thn: ${v.year || '-'}</div>
                         </td>
-                        <td>Rp ${(v.buyPrice).toLocaleString('id-ID')}</td>
-                        <td>Rp ${(v.revenue).toLocaleString('id-ID')}</td>
-                        <td style="font-weight:bold; color:var(--primary);">Rp ${(v.bookValue).toLocaleString('id-ID')}</td>
-                        <td><span class="badge bg-operating" style="font-size:0.78rem;">${v.marketRange}</span></td>
-                        <td><strong style="color:var(--info);">${(v.offeredPrice / 1000000).toFixed(0)} Jt</strong></td>
-                        <td><strong>${(v.netPriceBra / 1000000).toFixed(0)} Jt</strong></td>
-                        <td style="font-weight:bold; color:var(--success);">+${(v.selisih / 1000000).toFixed(0)} Jt</td>
-                        <td>
-                            <button onclick="openAssetModal('${escapeHtml(shortId)}', 'READY', 'Bulldozer', 'Yard Duri')" class="btn" style="padding:3px 6px; font-size:0.85rem; background:#f8f9fa; border:1px solid var(--border);" title="Lihat Detail 360&deg; Aset">
-                                <i class="fa-solid fa-eye"></i> Detail 360&deg;
+                        <td style="text-align:right; font-weight:700; color:var(--danger); font-family:var(--font-mono, monospace); padding:9px 10px;">
+                            Rp ${repairVal.toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:center; padding:9px 10px;">
+                            <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:0.71rem; padding:2px 6px;">Health: ${escapeHtml(v.health || '-')}</span>
+                            <div style="margin-top:3px;"><span class="badge" style="background:#dcfce7; color:#15803d; font-size:0.71rem; padding:2px 6px;">Body: ${escapeHtml(v.body || '-')}</span></div>
+                        </td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); padding:9px 10px;">
+                            Rp ${buyVal.toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); color:#0369a1; padding:9px 10px;">
+                            Rp ${revVal.toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-weight:700; color:var(--primary); font-family:var(--font-mono, monospace); padding:9px 10px;">
+                            Rp ${bookVal.toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-family:var(--font-mono, monospace); padding:9px 10px;">
+                            Rp ${marketVal.toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-weight:700; color:#0284c7; font-family:var(--font-mono, monospace); padding:9px 10px;">
+                            Rp ${offerVal.toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-weight:700; font-family:var(--font-mono, monospace); padding:9px 10px;">
+                            Rp ${netVal.toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:right; font-weight:800; color:${gainColor}; font-family:var(--font-mono, monospace); background:rgba(22, 163, 74, 0.06); padding:9px 10px;">
+                            ${gainPrefix}Rp ${gainVal.toLocaleString('id-ID')}
+                        </td>
+                        <td style="text-align:center; padding:9px 10px;">
+                            <button type="button" onclick="openAssetModal('${escapeHtml(v.id)}', 'READY', 'Armada', 'Yard Duri')" class="btn btn-xs" style="padding:3px 7px; font-size:0.75rem; background:#f8fafc; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer;" title="Lihat Detail 360&deg; Aset">
+                                <i class="fa-solid fa-eye"></i> Detail
                             </button>
                         </td>
                     </tr>
-                `;
-            }).join('');
-        };
+                    `;
+                }).join('');
 
-        window.renderCostLpjTable = function (lpjList) {
+                updateValuationFooter(sumRepair, sumBuy, sumRevenue, sumBook, sumMarket, sumOffer, sumNet, sumGain);
+            };
+
+            function updateValuationFooter(repair, buy, rev, book, market, offer, net, gain) {
+                const setEl = (id, txt) => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = txt;
+                };
+                setEl('valFootRepair', `Rp ${repair.toLocaleString('id-ID')}`);
+                setEl('valFootBuy', `Rp ${buy.toLocaleString('id-ID')}`);
+                setEl('valFootRevenue', `Rp ${rev.toLocaleString('id-ID')}`);
+                setEl('valFootBook', `Rp ${book.toLocaleString('id-ID')}`);
+                setEl('valFootMarket', `Rp ${market.toLocaleString('id-ID')}`);
+                setEl('valFootOffer', `Rp ${offer.toLocaleString('id-ID')}`);
+                setEl('valFootNet', `Rp ${net.toLocaleString('id-ID')}`);
+                setEl('valFootGain', `${gain > 0 ? '+' : ''}Rp ${gain.toLocaleString('id-ID')}`);
+            }
+
+            window.renderCostLpjTable = function (lpjList) {
             const tbody = document.getElementById('costLpjTableBody');
             if (!tbody) return;
 
