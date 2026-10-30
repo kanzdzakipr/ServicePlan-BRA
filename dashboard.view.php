@@ -7618,10 +7618,16 @@ try {
                         // not receive a misleading synchronization warning.
                         return { status: 'success', data: [], permission_skipped: true };
                     }
-                    return await fetchJsonSafely('api/archive.php');
+                    const res = await fetchJsonSafely('api/archive.php');
+                    if (res && res.status === 'success' && Array.isArray(res.data)) {
+                        return res;
+                    }
+                    // Active-register endpoints (api/init.php, api/inspections.php, api/accidents.php)
+                    // already exclude archived rows server-side; fallback gracefully to empty list.
+                    return { status: 'success', data: [], fallback_skipped: true };
                 } catch (error) {
                     console.warn('Penanda arsip tidak dapat diverifikasi:', error.message || error);
-                    return null;
+                    return { status: 'success', data: [], fallback_skipped: true };
                 }
             }
 
