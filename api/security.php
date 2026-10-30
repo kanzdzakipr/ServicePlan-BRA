@@ -390,6 +390,22 @@ function api_refresh_authenticated_user(PDO $db): void
         return;
     }
 
+    $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+    $script = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+    $now = time();
+    $lastRefresh = (int) ($_SESSION['auth_user_refreshed_at'] ?? 0);
+
+    // On read-only GET requests (except auth/users/settings), reuse fresh session
+    // RBAC context for up to 30 seconds to avoid 3x redundant queries across 12 parallel API calls.
+    if (
+        $method === 'GET'
+        && !in_array($script, ['auth.php', 'users.php', 'settings.php'], true)
+        && !empty($_SESSION['auth_user']['permissions'])
+        && ($now - $lastRefresh) < 30
+    ) {
+        return;
+    }
+
     $context = api_load_user_context($db, (int) $_SESSION['auth_user']['id']);
     if ($context === null) {
         api_destroy_session();
@@ -400,6 +416,7 @@ function api_refresh_authenticated_user(PDO $db): void
         ]);
     }
     $_SESSION['auth_user'] = $context;
+    $_SESSION['auth_user_refreshed_at'] = $now;
 }
 
 function api_get_saved_rbac_matrix(PDO $db): ?array

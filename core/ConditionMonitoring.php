@@ -5,6 +5,19 @@ final class ConditionMonitoring
 {
     public static function ensureTables(PDO $db): void
     {
+        static $ensured = false;
+        if ($ensured) {
+            return;
+        }
+        $stampFile = '';
+        if (PHP_SAPI !== 'cli') {
+            $stampFile = rtrim(sys_get_temp_dir(), '/\\') . '/bra_schema_condition_monitoring_v3.stamp';
+            if (is_file($stampFile) && (time() - (int) @filemtime($stampFile)) < 3600) {
+                $ensured = true;
+                return;
+            }
+        }
+
         $db->exec("CREATE TABLE IF NOT EXISTS grease_logs (
             grease_log_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             asset_id VARCHAR(100) NOT NULL,
@@ -56,6 +69,11 @@ final class ConditionMonitoring
             'idx_battery_asset_date',
             'KEY idx_battery_asset_date (asset_id, inspected_at)'
         );
+
+        $ensured = true;
+        if ($stampFile !== '') {
+            @file_put_contents($stampFile, (string) time());
+        }
     }
 
     public static function save(PDO $db, string $domain, array $data, int $actorId): array

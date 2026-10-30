@@ -7618,10 +7618,16 @@ try {
                         // not receive a misleading synchronization warning.
                         return { status: 'success', data: [], permission_skipped: true };
                     }
-                    return await fetchJsonSafely('api/archive.php');
+                    const res = await fetchJsonSafely('api/archive.php');
+                    if (res && res.status === 'success' && Array.isArray(res.data)) {
+                        return res;
+                    }
+                    // Active-register endpoints (api/init.php, api/inspections.php, api/accidents.php)
+                    // already exclude archived rows server-side; fallback gracefully to empty list.
+                    return { status: 'success', data: [], fallback_skipped: true };
                 } catch (error) {
                     console.warn('Penanda arsip tidak dapat diverifikasi:', error.message || error);
-                    return null;
+                    return { status: 'success', data: [], fallback_skipped: true };
                 }
             }
 
@@ -7664,13 +7670,13 @@ try {
             document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     if (window.loadAssetMapping) {
-                        await window.loadAssetMapping();
-                        // Re-render logistics to apply SN/Plat
-                        if (typeof renderTableMasuk === 'function') renderTableMasuk();
-                        if (typeof renderTableKeluar === 'function') renderTableKeluar();
+                        window.loadAssetMapping().then(() => {
+                            if (typeof renderTableMasuk === 'function') renderTableMasuk();
+                            if (typeof renderTableKeluar === 'function') renderTableKeluar();
+                        });
                     }
 
-                    // Fetch all initialization data concurrently
+                    // Fetch all initialization data concurrently without waiting for external Google Sheets CSV
                     const [apiInitData, assetPayload, fuelData, pmData, tireData, archiveDataRes, inspectionsRes, accidentsRes] = await Promise.all([
                         fetchJsonSafely('api/init.php'),
                         fetchJsonSafely('api/assets.php'),

@@ -5,9 +5,21 @@
 
   window.loadAssetMapping = async function () {
     try {
+      const cacheKey = "bra_asset_db_mapping_v1";
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          window.assetDbMapping = JSON.parse(cached);
+          return;
+        }
+      } catch (_) {}
+
+      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
       const url =
         "https://docs.google.com/spreadsheets/d/1lrElHvYPB4ezXR13kOxy6WdECbRN4C3-H2UOF8ZcXtE/gviz/tq?tqx=out:csv&sheet=List%20Data%20Aset%20BRA";
-      const response = await fetch(url);
+      const response = await fetch(url, controller ? { signal: controller.signal } : undefined);
+      if (timeoutId) clearTimeout(timeoutId);
       const csvText = await response.text();
 
       const mapping = {};
@@ -29,9 +41,12 @@
         if (lambung) mapping[lambung.toUpperCase().trim()] = sn;
       }
       window.assetDbMapping = mapping;
+      try {
+        sessionStorage.setItem(cacheKey, JSON.stringify(mapping));
+      } catch (_) {}
       console.log("Asset DB mapping loaded from Google Sheets.");
     } catch (e) {
-      console.error("Error loading Asset DB mapping:", e);
+      console.warn("Asset DB mapping fallback to local DB:", e?.message || e);
     }
   };
 
