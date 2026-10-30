@@ -2874,7 +2874,6 @@ UNLOCK TABLES;
 /*!50001 SET character_set_results     = utf8mb4 */;
 /*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `v_active_assets` AS select `a`.`asset_id` AS `asset_id`,`a`.`asset_code` AS `asset_code`,`a`.`serial_number` AS `serial_number`,`a`.`license_plate` AS `license_plate`,`a`.`previous_license_plate` AS `previous_license_plate`,`a`.`hull_number` AS `hull_number`,`a`.`alias_name` AS `alias_name`,`a`.`category` AS `category`,`a`.`make_model` AS `make_model`,`a`.`type` AS `type`,`a`.`capacity` AS `capacity`,`a`.`year_manufacture` AS `year_manufacture`,`a`.`ownership` AS `ownership`,`a`.`dealer` AS `dealer`,`a`.`warranty` AS `warranty`,`a`.`project_name` AS `project_name`,`a`.`operational_position` AS `operational_position`,`a`.`raw_location_notes` AS `raw_location_notes`,`a`.`current_operator_name` AS `current_operator_name`,`a`.`status` AS `status`,`a`.`current_location_id` AS `current_location_id`,`a`.`last_hm_km` AS `last_hm_km`,`a`.`last_service_date` AS `last_service_date`,`a`.`last_service_hm_km` AS `last_service_hm_km`,`a`.`next_service_due_hm_km` AS `next_service_due_hm_km`,`a`.`next_service_estimated_date` AS `next_service_estimated_date`,`a`.`service_interval_val` AS `service_interval_val`,`a`.`service_interval_unit` AS `service_interval_unit`,`a`.`legal_stnk_expiry` AS `legal_stnk_expiry`,`a`.`legal_kir_expiry` AS `legal_kir_expiry`,`a`.`legal_silo_expiry` AS `legal_silo_expiry`,`a`.`is_active` AS `is_active`,`a`.`created_at` AS `created_at`,`a`.`last_update_timestamp` AS `last_update_timestamp` from `assets` `a` where ((`a`.`is_active` = 1) and (`a`.`status` <> 'INACTIVE')) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
@@ -2892,7 +2891,6 @@ UNLOCK TABLES;
 /*!50001 SET character_set_results     = utf8mb4 */;
 /*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `v_archived_assets` AS select `a`.`asset_id` AS `asset_id`,`a`.`asset_code` AS `asset_code`,`a`.`serial_number` AS `serial_number`,`a`.`license_plate` AS `license_plate`,`a`.`previous_license_plate` AS `previous_license_plate`,`a`.`hull_number` AS `hull_number`,`a`.`alias_name` AS `alias_name`,`a`.`category` AS `category`,`a`.`make_model` AS `make_model`,`a`.`project_name` AS `project_name`,`a`.`operational_position` AS `operational_position`,`a`.`raw_location_notes` AS `raw_location_notes`,`a`.`status` AS `status`,`a`.`is_active` AS `is_active`,`arc`.`archived_at` AS `archived_at`,`arc`.`archived_by_name` AS `archived_by_name`,`arc`.`reason` AS `archive_reason` from (`assets` `a` left join `archived_items` `arc` on(((`arc`.`item_type` = 'asset') and (`arc`.`item_id` = `a`.`asset_id`)))) where ((`a`.`is_active` = 0) or (`a`.`status` = 'INACTIVE')) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
@@ -2910,7 +2908,6 @@ UNLOCK TABLES;
 /*!50001 SET character_set_results     = utf8mb4 */;
 /*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
 /*!50001 VIEW `v_fleet_project_summary` AS select coalesce(nullif(`a`.`project_name`,''),'(Unassigned)') AS `project_name`,`a`.`category` AS `category`,count(0) AS `total_units`,sum((case when (`a`.`status` = 'OPERATING') then 1 else 0 end)) AS `operating_units`,sum((case when (`a`.`status` = 'STANDBY') then 1 else 0 end)) AS `standby_units`,sum((case when (`a`.`status` = 'INSPEKSI') then 1 else 0 end)) AS `inspeksi_units`,sum((case when (`a`.`status` = 'BREAKDOWN') then 1 else 0 end)) AS `breakdown_units`,sum((case when (`a`.`status` = 'ACCIDENT_HOLD') then 1 else 0 end)) AS `accident_hold_units` from `assets` `a` where ((`a`.`is_active` = 1) and (`a`.`status` <> 'INACTIVE')) group by coalesce(nullif(`a`.`project_name`,''),'(Unassigned)'),`a`.`category` order by `total_units` desc,`project_name` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
