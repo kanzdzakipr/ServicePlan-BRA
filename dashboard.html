@@ -1534,6 +1534,11 @@
                         <div id="fuelTabSecBaseline" style="display:none;">
                             <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-sliders"></i>
                                 Master Standar Konsumsi Baseline menurut Kategori & Model</h3>
+                            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0284c7; border-radius:6px; padding:10px 14px; margin-bottom:12px; font-size:0.84rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <div><i class="fa-solid fa-receipt" style="color:#0284c7;"></i> Subtotal Transaksi Cost Ledger PO: <strong id="lblPoLedgerTotal">Rp 358.305.450</strong> (<span id="lblPoLedgerCount">65</span> transaksi aktif)</div>
+                                <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> WO Linked &amp; Terverifikasi</span>
+                            </div>
+
                             <div class="table-responsive">
                                 <table style="margin: 0; font-size: 0.88rem;">
                                     <thead>
@@ -13748,26 +13753,20 @@
                     const transactions = result.data.transactions || [];
                     const summary = result.data.summary || {};
 
-                    // Update KPI elements if present
-                    const actualEl = document.getElementById('kpiCostActual');
-                    if (actualEl && summary.formattedTotalActive) {
-                        actualEl.textContent = summary.formattedTotalActive;
+                    // Update ledger subtotal elements inside Tab 6 without overwriting top executive financial cards
+                    const poTotalEl = document.getElementById('lblPoLedgerTotal');
+                    if (poTotalEl && summary.formattedTotalActive) {
+                        poTotalEl.textContent = summary.formattedTotalActive;
+                    }
+                    const poCountEl = document.getElementById('lblPoLedgerCount');
+                    if (poCountEl && summary.activeCount !== undefined) {
+                        poCountEl.textContent = summary.activeCount;
                     }
 
-                    // Dynamic Variance Calculation from real total (Batch F6)
-                    const budgetNominal = 2960000000; // Rp 2.960 Jt
-                    const devEl = document.getElementById('kpiCostDev');
-                    if (devEl && summary.totalActiveAmount !== undefined) {
-                        const diffPct = ((summary.totalActiveAmount - budgetNominal) / budgetNominal) * 100;
-                        const sign = diffPct >= 0 ? '+' : '';
-                        devEl.textContent = `${sign}${diffPct.toFixed(1)}% (${diffPct > 0 ? 'Over' : 'Under'})`;
-                        devEl.style.color = diffPct > 0 ? 'var(--danger)' : 'var(--success)';
-                    }
-
-                    // Update Reconciliation Transparency Elements (Batch F6)
+                    // Update Reconciliation Transparency Elements (26 Sheets Financial Report Linkage)
                     const sourceCostEl = document.getElementById('lblCostSourceRows');
                     if (sourceCostEl) {
-                        sourceCostEl.innerHTML = `Sumber Data: <strong>${summary.activeCount || 0} transaksi aktif</strong> (${summary.formattedTotalActive || 'Rp 0'}), <strong>${summary.reversedCount || 0} dibatalkan (void)</strong> (Total ${transactions.length} baris dimuat)`;
+                        sourceCostEl.innerHTML = `Terhubung ke 26 Sheet Laporan Keuangan (Jan–Okt 2026) | Plafon: <code>Rp 773,88 Jt/bln</code> &bull; Ledger PO: <strong>${summary.activeCount || 0} aktif</strong> (${summary.formattedTotalActive || 'Rp 0'}), <strong>${summary.reversedCount || 0} void</strong>`;
                     }
                     const qualityCostEl = document.getElementById('lblCostDataQuality');
                     if (qualityCostEl) {
