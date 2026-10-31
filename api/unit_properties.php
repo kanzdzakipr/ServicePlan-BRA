@@ -351,16 +351,20 @@ $contracts = $fetchAll($db,
 $asset['contracts'] = $contracts;
 $asset['active_contract'] = $contracts[0] ?? null;
 
-// Unit Valuations
-$valuations = $fetchAll($db,
-    "SELECT valuation_id, unit_name, unit_code_alias, total_repair_cost, purchase_price, book_value, 
-            monthly_rental_rate, monthly_leasing_installment, market_price_min, market_price_max, raw_market_price_str
-     FROM unit_valuations
-     WHERE asset_id = :asset_id
-     ORDER BY valuation_id DESC",
-    $params
-);
-$asset['valuation'] = $valuations[0] ?? null;
+// Unit Valuations (Restricted to Administrator / asset_valuation.read)
+if (api_can_read_valuation()) {
+    $valuations = $fetchAll($db,
+        "SELECT valuation_id, unit_name, unit_code_alias, total_repair_cost, purchase_price, book_value, 
+                monthly_rental_rate, monthly_leasing_installment, market_price_min, market_price_max, raw_market_price_str
+         FROM unit_valuations
+         WHERE asset_id = :asset_id
+         ORDER BY valuation_id DESC",
+        $params
+    );
+    $asset['valuation'] = $valuations[0] ?? null;
+} else {
+    $asset['valuation'] = null;
+}
 
 // Direct Operational Cost Transactions
 $costTransactions = $fetchAll($db,

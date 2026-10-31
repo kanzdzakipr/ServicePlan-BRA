@@ -1275,7 +1275,7 @@ INSERT INTO `locations` (`location_id`, `location_name`, `location_type`, `regio
 INSERT INTO `users` (`user_id`, `username`, `password_hash`, `full_name`, `role_id`, `assigned_location_id`) VALUES
 (1, 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator Utama', 1, 4),
 (2, 'dany_agung', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Dany Agung (Head of Equipment)', 2, 4),
-(3, 'martin_planner', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'P. Martin (Maintenance Planner)', 3, 4),
+(3, 'maintenance_planner', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Maintenance Planner', 3, 4),
 (4, 'rahmad_k', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Rahmad K (Mekanik Senior)', 4, 4),
 (5, 'mekanik', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Mekanik Junior / Helper', 5, 4),
 (6, 'joni_septian', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Joni Septian (Mekanik)', 4, 3),
@@ -1296,7 +1296,7 @@ INSERT INTO `user_roles` (`user_id`, `role_id`, `is_primary`) VALUES
 (1, 2, FALSE), -- Admin -> Equipment Manager (Secondary)
 (2, 2, TRUE),  -- Dany Agung -> Equipment Manager
 (2, 3, FALSE), -- Dany Agung -> Maintenance Planner (Secondary)
-(3, 3, TRUE),  -- P. Martin -> Maintenance Planner
+(3, 3, TRUE),  -- Maintenance Planner
 (4, 4, TRUE),  -- Rahmad K -> Mekanik Senior
 (5, 5, TRUE),  -- Urwatul Uska -> Helper Mekanik
 (6, 4, TRUE),  -- Joni -> Mekanik Senior
@@ -1330,7 +1330,7 @@ INSERT INTO `assets` (`asset_id`, `asset_code`, `serial_number`, `license_plate`
 INSERT INTO `work_orders` (`wo_id`, `asset_id`, `location_id`, `issue_description`, `downtime_formatted`, `downtime_minutes`, `status`, `priority`, `assigned_mechanic`) VALUES
 ('WO-26-101', 'DT-00049 - B 9104 ZYT', 4, 'DISMANTLE DISC CLUTCH LIMIT & REPAIR TRANSMISSION', '8 jam 55 menit', 535, 'In Progress', 'High', 'Rahmad K, Suwardi'),
 ('WO-26-102', 'CS-41001', 6, 'OVERLOAD PENGISIAN CEMENT - SYSTEM ERROR MONITOR', '#########################', 0, 'Open', 'Emergency', 'Teknisi XCMG & M. Fajar DC'),
-('WO-26-103', 'PF-00001', 1, 'INSPEKSI PM 500 HM & GANTI FILTER OLI', '2 jam 30 menit', 150, 'Closed', 'Normal', 'P. Martin');
+('WO-26-103', 'PF-00001', 1, 'INSPEKSI PM 500 HM & GANTI FILTER OLI', '2 jam 30 menit', 150, 'Closed', 'Normal', 'Maintenance Planner');
 
 -- 6. SEED PREVENTIVE MAINTENANCE PLANS (Plan Service Juli 2026)
 INSERT INTO `pm_plans` (`asset_id`, `interval_hm`, `current_smr`, `last_service_hm`, `last_service_date`, `target_due_hm`, `variance_hm`, `status`, `warranty_status`, `planner_note`) VALUES
@@ -1366,13 +1366,13 @@ INSERT INTO `head_kpi_assessments` (`period_month`, `period_year`, `indicator_no
 ('Januari', 2026, 9, 'Kepemimpinan', 'Monitoring & Pelaporan Unit', 'Konsisten', 1, 5.00, 'Disiplin update JO mekanik, target RTW, & report harian'),
 ('Januari', 2026, 10, 'Kepemimpinan', 'Inisiatif Percepatan Perbaikan', 'Aktif', 1, 5.00, 'Solusi percepatan (shift tambahan, vendor, prioritas)');
 
--- 10. SEED MAINTENANCE PLANNER COMPETENCY EVALUATION (P. Martin Matrix)
+-- 10. SEED MAINTENANCE PLANNER COMPETENCY EVALUATION (Planner Matrix)
 INSERT INTO `planner_evaluations` (`planner_user_id`, `competency_name`, `job_standard`, `actual_evaluation`, `target_level`, `actual_level`, `action_plan`) VALUES
-(3, 'Dasar Maintenance Alat Berat', 'D3/S1 Teknik Mesin', 'D3 Akuntansi', 4, 2, 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'),
+(3, 'Dasar Maintenance Alat Berat', 'D3/S1 Teknik Mesin', 'Perlu Pelatihan Teknis Mesin & Diagnostik', 4, 2, 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'),
 (3, 'PM Scheduling & Meter Reading', 'Update Real-Time Status KM/HM', 'Jadwal terbuat, Update KM tertinggal', 4, 3, 'Standardisasi Audit Meter Reading Harian Operator'),
 (3, 'Estimasi Durasi Repair', 'Akurat per Komponen', 'Belum menguasai estimasi waktu', 4, 2, 'Praktik & Benchmark Standard Job Time per Kategori Breakdown'),
 (3, 'Spare Parts Control & Kitting', 'Parts Ready sebelum Job Start', 'Memahami Logistik, Parts Kitting belum terikat JO', 4, 3, 'Integrasi Form SPB dengan Nomor WO/PM secara Wajib'),
-(3, 'Administrasi & Keuangan KESDMAN', 'Tertib Administrasi', 'Menguasai Administrasi & Akuntansi', 4, 5, 'Dipertahankan sebagai keunggulan kontrol dokumen');
+(3, 'Administrasi & Keuangan KESDMAN', 'Tertib Administrasi', 'Menguasai Administrasi & Pembukuan', 4, 5, 'Dipertahankan sebagai keunggulan kontrol dokumen');
 
 -- 11. SEED HSE ACCIDENTS
 INSERT INTO `accidents` (`accident_id`, `asset_id`, `report_date`, `incident_datetime`, `location_id`, `operator_name`, `operator_tenure`, `chronology`, `weather`, `road_condition`, `lighting_condition`, `severity`, `physical_damage`, `estimated_repair_cost`, `estimated_downtime_days`, `total_financial_loss`, `corrective_action`, `preventive_action`, `is_unit_locked`, `status`) VALUES

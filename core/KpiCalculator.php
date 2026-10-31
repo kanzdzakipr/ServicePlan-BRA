@@ -64,6 +64,25 @@ final class KpiCalculator
         $mtbf = self::divide($working, (float) $failures);
         $mttr = self::divide($repair, (float) $repairs);
 
+        $numPa = $pa !== null
+            ? sprintf('((%.2f jam terjadwal - %.2f jam breakdown) / %.2f jam) × 100 = %.2f%%', $scheduled, $repair, $scheduled, $pa)
+            : 'Tidak ada data (jam terjadwal = 0)';
+        $numMa = $ma !== null
+            ? sprintf('(%.2f jam operasi / (%.2f jam operasi + %.2f jam breakdown)) × 100 = %.2f%%', $working, $working, $repair, $ma)
+            : 'Tidak ada data (jam operasi + breakdown = 0)';
+        $numUa = $ua !== null
+            ? sprintf('(%.2f jam operasi / (%.2f jam operasi + %.2f jam standby)) × 100 = %.2f%%', $working, $working, $standby, $ua)
+            : 'Tidak ada data (jam operasi + standby = 0)';
+        $numEu = $eu !== null
+            ? sprintf('(%.2f jam operasi / %.2f jam terjadwal) × 100 = %.2f%%', $working, $scheduled, $eu)
+            : 'Tidak ada data (jam terjadwal = 0)';
+        $numMtbf = $mtbf !== null
+            ? sprintf('%.2f jam operasi / %d kali kerusakan = %.2f jam', $working, $failures, $mtbf)
+            : 'Tidak ada data (frekuensi kerusakan = 0)';
+        $numMttr = $mttr !== null
+            ? sprintf('%.2f jam breakdown / %d perbaikan selesai = %.2f jam', $repair, $repairs, $mttr)
+            : 'Tidak ada data (perbaikan selesai = 0)';
+
         return [
             'variables' => [
                 'W' => self::round($working),
@@ -78,37 +97,43 @@ final class KpiCalculator
                     'Physical Availability (PA)',
                     $pa,
                     '%',
-                    '(Scheduled Hours – Breakdown Hours) / Scheduled Hours × 100%'
+                    '(Scheduled Hours – Breakdown Hours) / Scheduled Hours × 100%',
+                    $numPa
                 ),
                 'mechanicalAvailability' => self::metric(
                     'Mechanical Availability (MA)',
                     $ma,
                     '%',
-                    '(Available Hours – Mechanical Downtime) / Available Hours × 100%'
+                    '(Available Hours – Mechanical Downtime) / Available Hours × 100%',
+                    $numMa
                 ),
                 'useOfAvailability' => self::metric(
                     'Use of Availability (UA)',
                     $ua,
                     '%',
-                    'Working Hours / Available Hours × 100%'
+                    'Working Hours / Available Hours × 100%',
+                    $numUa
                 ),
                 'effectiveUtilization' => self::metric(
                     'Effective Utilization (EU)',
                     $eu,
                     '%',
-                    'Working Hours / Scheduled Hours × 100%'
+                    'Working Hours / Scheduled Hours × 100%',
+                    $numEu
                 ),
                 'mtbf' => self::metric(
                     'Mean Time Between Failures (MTBF)',
                     $mtbf,
                     'jam',
-                    'Operating Hours / Number of Failures'
+                    'Operating Hours / Number of Failures',
+                    $numMtbf
                 ),
                 'mttr' => self::metric(
                     'Mean Time To Repair (MTTR)',
                     $mttr,
                     'jam',
-                    'Total Corrective Repair Hours / Number of Completed Repairs'
+                    'Total Corrective Repair Hours / Number of Completed Repairs',
+                    $numMttr
                 ),
             ],
             'dataQuality' => [
@@ -201,7 +226,7 @@ final class KpiCalculator
     }
 
     /** @return array{label:string,value:?float,formatted:string,unit:string,formula:string,status:string} */
-    private static function metric(string $label, ?float $value, string $unit, string $formula): array
+    private static function metric(string $label, ?float $value, string $unit, string $formula, string $numericFormula = ''): array
     {
         return [
             'label' => $label,
@@ -211,6 +236,7 @@ final class KpiCalculator
                 : number_format($value, self::PRECISION, ',', '.') . ' ' . $unit,
             'unit' => $unit,
             'formula' => $formula,
+            'numericFormula' => $numericFormula !== '' ? $numericFormula : ($value === null ? 'Tidak ada data' : $formula),
             'status' => $value === null ? 'NO_DATA' : 'CALCULATED',
         ];
     }

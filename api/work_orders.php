@@ -323,6 +323,28 @@ switch ($method) {
         }
         if ($mechanic === '') $mechanic = 'Belum ada PIC';
 
+        // Validasi: personel nonaktif tidak boleh dipilih untuk WO baru (Epic 4.2)
+        if ($mechanic !== 'Belum ada PIC') {
+            $mechanicParts = array_filter(array_map('trim', explode(',', $mechanic)));
+            if (!empty($mechanicParts)) {
+                $placeholders = implode(',', array_fill(0, count($mechanicParts), '?'));
+                $checkInactive = $db->prepare("
+                    SELECT full_name FROM users
+                    WHERE is_active = 0
+                      AND (full_name IN ($placeholders) OR username IN ($placeholders))
+                ");
+                $checkInactive->execute(array_merge($mechanicParts, $mechanicParts));
+                $inactiveFound = $checkInactive->fetchAll(PDO::FETCH_COLUMN);
+                if (!empty($inactiveFound)) {
+                    api_json_response(422, [
+                        'status' => 'error',
+                        'code' => 'INACTIVE_PERSONNEL',
+                        'message' => 'Personel ' . implode(', ', $inactiveFound) . ' berstatus nonaktif dan tidak dapat ditugaskan pada Work Order baru.',
+                    ]);
+                }
+            }
+        }
+
         try {
             $db->beginTransaction();
             $assetStmt = $db->prepare(

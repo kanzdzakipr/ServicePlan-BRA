@@ -1664,7 +1664,7 @@
                 </div>
 
                 <!-- Strip 1: Valuasi & Penjualan Aset Armada (4 Kolom Sempurna) -->
-                <div class="telemetry-status-grid biaya-telemetry-valuation-grid"
+                <div id="secBiayaValuationStrip" class="telemetry-status-grid biaya-telemetry-valuation-grid"
                     style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 12px;">
                     <div class="telemetry-metric-item" title="Total Valuasi Pasaran Seluruh Armada Aset: Rp 173.806.170.000 (173,8 Miliar Rupiah)">
                         <div class="telemetry-metric-header">
@@ -1805,7 +1805,7 @@
                     <div class="panel-header"
                         style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding: 0 15px;">
                         <div class="asset-tabs" id="costMainTabs" style="margin-bottom:0; border-bottom:none; overflow-x:auto; flex-wrap:nowrap; gap:4px; width:100%;">
-                            <div class="asset-tab active" onclick="switchCostTab('valuation', this)"><i
+                            <div class="asset-tab active" id="costTabNavValuation" onclick="switchCostTab('valuation', this)"><i
                                     class="fa-solid fa-truck-ramp-box"></i> Valuasi &amp; Rekon Unit</div>
                             <div class="asset-tab" onclick="switchCostTab('progress', this)"><i
                                     class="fa-solid fa-chart-line"></i> Monitoring Progress Laba-Rugi (Agu-Okt 2026)</div>

@@ -22628,12 +22628,12 @@
     },
   ];
 
-  // Data 3: Maintenance Planner Qualification & Evaluation (from Evaluasi_P_Martin_dan_Standar_Planner.md)
+  // Data 3: Maintenance Planner Qualification & Evaluation
   const plannerCompetencyMatrix = [
     {
       competency: "Dasar Maintenance Alat Berat",
       standard: "D3/S1 Teknik Mesin",
-      actual: "D3 Akuntansi",
+      actual: "Perlu Pelatihan Teknis Mesin & Diagnostik",
       targetLvl: 4,
       actualLvl: 2,
       gap: -2,
@@ -22689,7 +22689,7 @@
     {
       competency: "Administrasi & Keuangan (KESDMAN)",
       standard: "Tertib Administrasi",
-      actual: "Menguasai Administrasi & Akuntansi",
+      actual: "Menguasai Administrasi & Pembukuan",
       targetLvl: 4,
       actualLvl: 5,
       gap: 1,
@@ -26563,9 +26563,9 @@
                         <div class="telemetry-metric-item">
                             <div class="telemetry-metric-header">
                                 <span class="telemetry-metric-label">Physical Availability (PA)</span>
-                                ${renderMiniDonutChartSVG(57.13, "var(--warning)", 28, "kpi-pa-ring")}
+                                ${renderMiniDonutChartSVG(fleetKPIs.physicalAvailability?.value ?? 0, getKpiRingColor(fleetKPIs.physicalAvailability, "var(--warning)"), 28, "kpi-pa-ring")}
                             </div>
-                            <div class="telemetry-metric-value font-mono" id="kpi-pa-val" style="color:var(--warning);">57,13%</div>
+                            <div class="telemetry-metric-value font-mono" id="kpi-pa-val" style="color:var(--text-muted);">Memuat...</div>
                             <div class="telemetry-metric-footer">
                                 <span style="font-size:0.72rem; color:var(--text-muted);">Target: &ge; 90.0%</span>
                             </div>
@@ -27675,12 +27675,6 @@
       }
     }
 
-    fleetKPIs.physicalAvailability = {
-      ...(fleetKPIs.physicalAvailability || {}),
-      value: 57.13,
-      formatted: "57,13%",
-      status: "BELOW_TARGET",
-    };
     updateKpiEl("kpi-pa-val", fleetKPIs.physicalAvailability);
     updateKpiEl("kpi-ua-val", fleetKPIs.useOfAvailability);
     updateKpiEl("kpi-br-val", fleetKPIs.breakdownRate);

@@ -63,7 +63,7 @@
             lng: 101.2112000,
             radius: 400,
             color: '#ef4444',
-            pic: 'P. Martin (Maintenance Planner) & Darmawan',
+            pic: 'Maintenance Planner & Darmawan',
             radio: 'CH 03 (156.150 MHz VHF)',
             status: 'MAINTENANCE HUB'
         },

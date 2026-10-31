@@ -124,11 +124,11 @@ function get_default_head_kpi_indicators(): array {
 
 function get_default_planner_evaluations(): array {
     return [
-        ['competency_name' => 'Dasar Maintenance Alat Berat', 'job_standard' => 'D3/S1 Teknik Mesin', 'actual_evaluation' => 'D3 Akuntansi', 'target_level' => 4, 'actual_level' => 2, 'action_plan' => 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'],
+        ['competency_name' => 'Dasar Maintenance Alat Berat', 'job_standard' => 'D3/S1 Teknik Mesin', 'actual_evaluation' => 'Perlu Pelatihan Teknis Mesin & Diagnostik', 'target_level' => 4, 'actual_level' => 2, 'action_plan' => 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'],
         ['competency_name' => 'PM Scheduling & Meter Reading', 'job_standard' => 'Update Real-Time Status KM/HM', 'actual_evaluation' => 'Jadwal terbuat, Update KM tertinggal', 'target_level' => 4, 'actual_level' => 3, 'action_plan' => 'Standardisasi Audit Meter Reading Harian Operator'],
         ['competency_name' => 'Estimasi Durasi Repair', 'job_standard' => 'Akurat per Komponen', 'actual_evaluation' => 'Belum menguasai estimasi waktu', 'target_level' => 4, 'actual_level' => 2, 'action_plan' => 'Praktik & Benchmark Standard Job Time per Kategori Breakdown'],
         ['competency_name' => 'Spare Parts Control & Kitting', 'job_standard' => 'Parts Ready sebelum Job Start', 'actual_evaluation' => 'Memahami Logistik, Parts Kitting belum terikat JO', 'target_level' => 4, 'actual_level' => 3, 'action_plan' => 'Integrasi Form SPB dengan Nomor WO/PM secara Wajib'],
-        ['competency_name' => 'Administrasi & Keuangan KESDMAN', 'job_standard' => 'Tertib Administrasi', 'actual_evaluation' => 'Menguasai Administrasi & Akuntansi', 'target_level' => 4, 'actual_level' => 5, 'action_plan' => 'Dipertahankan sebagai keunggulan kontrol dokumen'],
+        ['competency_name' => 'Administrasi & Keuangan KESDMAN', 'job_standard' => 'Tertib Administrasi', 'actual_evaluation' => 'Menguasai Administrasi & Pembukuan', 'target_level' => 4, 'actual_level' => 5, 'action_plan' => 'Dipertahankan sebagai keunggulan kontrol dokumen'],
     ];
 }
 
@@ -364,11 +364,42 @@ if ($method === 'GET') {
             unset($r);
         }
 
+        // Hitung realisasi kepatuhan servis berkala aktual planner (Due vs Realized)
+        $dueStmt = $db->prepare("
+            SELECT COUNT(*) 
+            FROM pm_plans p 
+            INNER JOIN assets a ON a.asset_id = p.asset_id 
+            WHERE p.status IN ('PLANNED', 'DUE_SOON', 'OVERDUE', 'IN_PROGRESS', 'COMPLETED')
+        ");
+        $dueStmt->execute();
+        $totalDue = (int) $dueStmt->fetchColumn();
+
+        $realizedStmt = $db->prepare("
+            SELECT COUNT(DISTINCT h.asset_id) 
+            FROM asset_service_history h 
+            WHERE DATE_FORMAT(h.service_date, '%Y-%m') = :period
+        ");
+        $realizedStmt->execute([':period' => $period]);
+        $totalRealized = (int) $realizedStmt->fetchColumn();
+
+        $plannerPmPct = null;
+        if ($totalDue > 0) {
+            $plannerPmPct = round(($totalRealized / $totalDue) * 100, 1);
+        }
+
         api_json_response(200, [
             'status' => 'success',
             'period' => $period,
             'planner_id' => $plannerUserId,
-            'evaluations' => $rows
+            'evaluations' => $rows,
+            'pm_compliance' => [
+                'has_data' => $totalDue > 0,
+                'total_due' => $totalDue,
+                'total_realized' => $totalRealized,
+                'compliance_pct' => $plannerPmPct,
+                'formatted' => $plannerPmPct !== null ? number_format($plannerPmPct, 1, ',', '.') . '%' : 'Tidak ada data',
+                'meta' => $totalDue > 0 ? "{$totalRealized} dari {$totalDue} unit tervalidasi" : 'Tidak ada jadwal PM pada periode ini',
+            ]
         ]);
     }
 

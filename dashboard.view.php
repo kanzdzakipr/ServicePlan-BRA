@@ -37,6 +37,8 @@ try {
     <script>
         window.APP_CSRF_TOKEN = '<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>';
         window.SERVER_RBAC_MATRIX = <?= json_encode(api_get_saved_rbac_matrix($db), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: 'null' ?>;
+        window.APP_CAN_READ_VALUATION = <?= api_can_read_valuation() ? 'true' : 'false' ?>;
+        window.APP_IS_ADMIN = <?= api_is_admin() ? 'true' : 'false' ?>;
     </script>
     <script src="scripts/auth-client.js?v=<?= @filemtime(__DIR__ . '/scripts/auth-client.js') ?: '20261026' ?>"></script>
     <script src="scripts/rbac.js?v=<?= @filemtime(__DIR__ . '/scripts/rbac.js') ?: '20261026' ?>"></script>
@@ -1595,8 +1597,9 @@ try {
                     </div>
                 </div>
 
-                <!-- Strip 1: Valuasi & Penjualan Aset Armada (4 Kolom Sempurna) -->
-                <div class="telemetry-status-grid biaya-telemetry-valuation-grid"
+                <!-- Strip 1: Valuasi & Penjualan Aset Armada (4 Kolom Sempurna - Administrator Only) -->
+                <?php if (api_can_read_valuation()): ?>
+                <div id="secBiayaValuationStrip" class="telemetry-status-grid biaya-telemetry-valuation-grid"
                     style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 12px;">
                     <div class="telemetry-metric-item" title="Total Valuasi Pasaran Seluruh Armada Aset: Rp 173.806.170.000 (173,8 Miliar Rupiah)">
                         <div class="telemetry-metric-header">
@@ -1646,6 +1649,7 @@ try {
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <!-- Strip 2: Pengendalian Budget & Realisasi Kas Biaya (3 Kolom Sempurna) -->
                 <div class="telemetry-status-grid biaya-telemetry-budget-grid"
@@ -1737,9 +1741,11 @@ try {
                     <div class="panel-header"
                         style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding: 0 15px;">
                         <div class="asset-tabs" id="costMainTabs" style="margin-bottom:0; border-bottom:none; overflow-x:auto; flex-wrap:nowrap; gap:4px; width:100%;">
-                            <div class="asset-tab active" onclick="switchCostTab('valuation', this)"><i
+                            <?php if (api_can_read_valuation()): ?>
+                            <div class="asset-tab active" id="costTabNavValuation" onclick="switchCostTab('valuation', this)"><i
                                     class="fa-solid fa-truck-ramp-box"></i> Valuasi &amp; Rekon Unit</div>
-                            <div class="asset-tab" onclick="switchCostTab('progress', this)"><i
+                            <?php endif; ?>
+                            <div class="asset-tab <?= !api_can_read_valuation() ? 'active' : '' ?>" id="costTabNavProgress" onclick="switchCostTab('progress', this)"><i
                                     class="fa-solid fa-chart-line"></i> Monitoring Progress Laba-Rugi (Agu-Okt 2026)</div>
                             <div class="asset-tab" onclick="switchCostTab('lpj', this)"><i
                                     class="fa-solid fa-file-invoice-dollar"></i> LPJ Bulanan Budget vs Realisasi 2026</div>
@@ -1755,7 +1761,8 @@ try {
                     </div>
                     <div class="panel-body" style="padding: 15px;">
 
-                        <!-- TAB 1: VALUASI & HARGA JUAL UNIT -->
+                        <!-- TAB 1: VALUASI & HARGA JUAL UNIT (Administrator Only) -->
+                        <?php if (api_can_read_valuation()): ?>
                         <div id="costTabSecValuation">
                             <!-- Sub-Nav Switcher -->
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">
@@ -1895,9 +1902,10 @@ try {
                                 </div>
                             </div>
                         </div>
+                        <?php endif; ?>
 
                         <!-- TAB 2: MONITORING PROGRESS LABA-RUGI (AGU-OKT 2026) -->
-                        <div id="costTabSecProgress" style="display:none;">
+                        <div id="costTabSecProgress" style="<?= api_can_read_valuation() ? 'display:none;' : 'display:block;' ?>;">
                             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                                 <div>
                                     <h3 style="margin:0 0 4px 0; font-size:1.02rem; color:#0f172a;">
@@ -13347,6 +13355,15 @@ try {
 
             window.initBiayaEngine = function (costsData) {
                 renderCostDashboard();
+                if (window.APP_CAN_READ_VALUATION === false) {
+                    const strip = document.getElementById('secBiayaValuationStrip');
+                    if (strip) strip.style.display = 'none';
+                    const navVal = document.getElementById('costTabNavValuation');
+                    if (navVal) navVal.style.display = 'none';
+                    const secVal = document.getElementById('costTabSecValuation');
+                    if (secVal) secVal.style.display = 'none';
+                    switchCostTab('progress');
+                }
             };
             window.initBiayaView = window.initBiayaEngine;
 
@@ -14213,6 +14230,11 @@ try {
 
             // Switch Tab Antar 7 Tab Biaya
             window.switchCostTab = function (tabName, el) {
+                if (tabName === 'valuation' && window.APP_CAN_READ_VALUATION === false) {
+                    tabName = 'progress';
+                    const progEl = document.getElementById('costTabNavProgress');
+                    if (progEl) el = progEl;
+                }
                 if (el) {
                     document.querySelectorAll('#costMainTabs .asset-tab').forEach(t => t.classList.remove('active'));
                     el.classList.add('active');
