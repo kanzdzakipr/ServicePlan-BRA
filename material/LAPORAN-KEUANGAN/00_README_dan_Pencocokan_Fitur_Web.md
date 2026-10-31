@@ -1,5 +1,7 @@
 # Dokumentasi Laporan Keuangan Divisi Aset & Equipment & Pencocokan Fitur Web
 
+> **Dokumen terkait:** [`Dekomposisi Kebutuhan Klien dan Backlog Implementasi — 31 Oktober 2026`](../DEKOMPOSISI_KEBUTUHAN_KLIEN_DAN_BACKLOG_IMPLEMENTASI_2026-10-31.md), termasuk pemindahan valuasi aset ke area keuangan dan pembatasan akses hanya untuk Administrator.
+
 > **Sumber Dokumen**: `Equipment - Expenses & Report.xlsx` (Google Spreadsheet ID: `14MvzJ1nA5la69VtuI3cA3sSxf8o2PqNI3OsKINIENWg`)  
 > **Entitas**: PT Bina Rekayasa Anugrah — Divisi Asset & Equipment  
 > **Periode Data**: Tahun 2021 s.d. **31 Oktober 2026** (26 Sheet / Tabulasi)  
