@@ -1390,13 +1390,19 @@ INSERT INTO `head_kpi_assessments` (`period_month`, `period_year`, `indicator_no
 ('Januari', 2026, 9, 'Kepemimpinan', 'Monitoring & Pelaporan Unit', 'Konsisten', 1, 5.00, 'Disiplin update JO mekanik, target RTW, & report harian'),
 ('Januari', 2026, 10, 'Kepemimpinan', 'Inisiatif Percepatan Perbaikan', 'Aktif', 1, 5.00, 'Solusi percepatan (shift tambahan, vendor, prioritas)');
 
+<<<<<<< HEAD
 -- 10. SEED MAINTENANCE PLANNER COMPETENCY EVALUATION
 INSERT INTO `planner_evaluations` (`planner_user_id`, `competency_name`, `job_standard`, `actual_evaluation`, `target_level`, `actual_level`, `action_plan`) VALUES
 (3, 'Dasar Maintenance Alat Berat', 'D3/S1 Teknik Mesin', 'Perlu verifikasi kompetensi teknis', 4, 2, 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'),
+=======
+-- 10. SEED MAINTENANCE PLANNER COMPETENCY EVALUATION (Planner Matrix)
+INSERT INTO `planner_evaluations` (`planner_user_id`, `competency_name`, `job_standard`, `actual_evaluation`, `target_level`, `actual_level`, `action_plan`) VALUES
+(3, 'Dasar Maintenance Alat Berat', 'D3/S1 Teknik Mesin', 'Perlu Pelatihan Teknis Mesin & Diagnostik', 4, 2, 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'),
+>>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
 (3, 'PM Scheduling & Meter Reading', 'Update Real-Time Status KM/HM', 'Jadwal terbuat, Update KM tertinggal', 4, 3, 'Standardisasi Audit Meter Reading Harian Operator'),
 (3, 'Estimasi Durasi Repair', 'Akurat per Komponen', 'Belum menguasai estimasi waktu', 4, 2, 'Praktik & Benchmark Standard Job Time per Kategori Breakdown'),
 (3, 'Spare Parts Control & Kitting', 'Parts Ready sebelum Job Start', 'Memahami Logistik, Parts Kitting belum terikat JO', 4, 3, 'Integrasi Form SPB dengan Nomor WO/PM secara Wajib'),
-(3, 'Administrasi & Keuangan KESDMAN', 'Tertib Administrasi', 'Menguasai Administrasi & Akuntansi', 4, 5, 'Dipertahankan sebagai keunggulan kontrol dokumen');
+(3, 'Administrasi & Keuangan KESDMAN', 'Tertib Administrasi', 'Menguasai Administrasi & Pembukuan', 4, 5, 'Dipertahankan sebagai keunggulan kontrol dokumen');
 
 -- 11. SEED HSE ACCIDENTS
 INSERT INTO `accidents` (`accident_id`, `asset_id`, `report_date`, `incident_datetime`, `location_id`, `operator_name`, `operator_tenure`, `chronology`, `weather`, `road_condition`, `lighting_condition`, `severity`, `physical_damage`, `estimated_repair_cost`, `estimated_downtime_days`, `total_financial_loss`, `corrective_action`, `preventive_action`, `is_unit_locked`, `status`) VALUES

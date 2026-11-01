@@ -435,6 +435,28 @@ function api_get_saved_rbac_matrix(PDO $db): ?array
     return null;
 }
 
+function api_is_admin(): bool
+{
+    $roles = api_current_user()['roles'] ?? [];
+    return is_array($roles) && in_array('Administrator', $roles, true);
+}
+
+function api_can_read_valuation(): bool
+{
+    return api_is_admin() || api_has_permission('asset_valuation.read');
+}
+
+function api_require_valuation_access(): void
+{
+    if (!api_can_read_valuation()) {
+        api_json_response(403, [
+            'status' => 'error',
+            'code' => 'FORBIDDEN',
+            'message' => 'Hanya Administrator yang memiliki akses ke valuasi aset dan data penjualan.',
+        ]);
+    }
+}
+
 function api_has_permission(string $permission): bool
 {
     $permissions = api_current_user()['permissions'] ?? [];

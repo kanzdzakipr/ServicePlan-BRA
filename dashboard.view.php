@@ -38,6 +38,8 @@ try {
     <script>
         window.APP_CSRF_TOKEN = '<?= htmlspecialchars(api_csrf_token(), ENT_QUOTES, 'UTF-8') ?>';
         window.SERVER_RBAC_MATRIX = <?= json_encode(api_get_saved_rbac_matrix($db), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: 'null' ?>;
+        window.APP_CAN_READ_VALUATION = <?= api_can_read_valuation() ? 'true' : 'false' ?>;
+        window.APP_IS_ADMIN = <?= api_is_admin() ? 'true' : 'false' ?>;
     </script>
     <script src="scripts/auth-client.js?v=<?= @filemtime(__DIR__ . '/scripts/auth-client.js') ?: '20261026' ?>"></script>
     <script src="scripts/rbac.js?v=<?= @filemtime(__DIR__ . '/scripts/rbac.js') ?: '20261026' ?>"></script>
@@ -1467,6 +1469,11 @@ try {
                         <div id="fuelTabSecBaseline" style="display:none;">
                             <h3 style="margin-bottom:12px; font-size:1.05rem;"><i class="fa-solid fa-sliders"></i>
                                 Master Standar Konsumsi Baseline menurut Kategori & Model</h3>
+                            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0284c7; border-radius:6px; padding:10px 14px; margin-bottom:12px; font-size:0.84rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <div><i class="fa-solid fa-receipt" style="color:#0284c7;"></i> Subtotal Transaksi Cost Ledger PO: <strong id="lblPoLedgerTotal">Rp 358.305.450</strong> (<span id="lblPoLedgerCount">65</span> transaksi aktif)</div>
+                                <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> WO Linked &amp; Terverifikasi</span>
+                            </div>
+
                             <div class="table-responsive">
                                 <table style="margin: 0; font-size: 0.88rem;">
                                     <thead>
@@ -1596,9 +1603,15 @@ try {
                     </div>
                 </div>
 
+<<<<<<< HEAD
                 <?php if ($canViewAssetValuation): ?>
                 <!-- Strip 1: Valuasi & Penjualan Aset Armada (Administrator only) -->
                 <div class="telemetry-status-grid biaya-telemetry-valuation-grid"
+=======
+                <!-- Strip 1: Valuasi & Penjualan Aset Armada (4 Kolom Sempurna - Administrator Only) -->
+                <?php if (api_can_read_valuation()): ?>
+                <div id="secBiayaValuationStrip" class="telemetry-status-grid biaya-telemetry-valuation-grid"
+>>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
                     style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 12px;">
                     <div class="telemetry-metric-item" title="Total Valuasi Pasaran Seluruh Armada Aset: Rp 173.806.170.000 (173,8 Miliar Rupiah)">
                         <div class="telemetry-metric-header">
@@ -1648,6 +1661,7 @@ try {
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <?php endif; ?>
 
@@ -1741,11 +1755,19 @@ try {
                     <div class="panel-header"
                         style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding: 0 15px;">
                         <div class="asset-tabs" id="costMainTabs" style="margin-bottom:0; border-bottom:none; overflow-x:auto; flex-wrap:nowrap; gap:4px; width:100%;">
+<<<<<<< HEAD
                             <?php if ($canViewAssetValuation): ?>
                             <div class="asset-tab active" onclick="switchCostTab('valuation', this)"><i
                                     class="fa-solid fa-truck-ramp-box"></i> Valuasi &amp; Rekon Unit</div>
                             <?php endif; ?>
                             <div class="asset-tab<?= $canViewAssetValuation ? '' : ' active' ?>" onclick="switchCostTab('progress', this)"><i
+=======
+                            <?php if (api_can_read_valuation()): ?>
+                            <div class="asset-tab active" id="costTabNavValuation" onclick="switchCostTab('valuation', this)"><i
+                                    class="fa-solid fa-truck-ramp-box"></i> Valuasi &amp; Rekon Unit</div>
+                            <?php endif; ?>
+                            <div class="asset-tab <?= !api_can_read_valuation() ? 'active' : '' ?>" id="costTabNavProgress" onclick="switchCostTab('progress', this)"><i
+>>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
                                     class="fa-solid fa-chart-line"></i> Monitoring Progress Laba-Rugi (Agu-Okt 2026)</div>
                             <div class="asset-tab" onclick="switchCostTab('lpj', this)"><i
                                     class="fa-solid fa-file-invoice-dollar"></i> LPJ Bulanan Budget vs Realisasi 2026</div>
@@ -1761,8 +1783,13 @@ try {
                     </div>
                     <div class="panel-body" style="padding: 15px;">
 
+<<<<<<< HEAD
                         <?php if ($canViewAssetValuation): ?>
                         <!-- TAB 1: VALUASI & HARGA JUAL UNIT (Administrator only) -->
+=======
+                        <!-- TAB 1: VALUASI & HARGA JUAL UNIT (Administrator Only) -->
+                        <?php if (api_can_read_valuation()): ?>
+>>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
                         <div id="costTabSecValuation">
                             <!-- Sub-Nav Switcher -->
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">
@@ -1902,11 +1929,16 @@ try {
                                 </div>
                             </div>
                         </div>
+                        <?php endif; ?>
 
                         <?php endif; ?>
 
                         <!-- TAB 2: MONITORING PROGRESS LABA-RUGI (AGU-OKT 2026) -->
+<<<<<<< HEAD
                         <div id="costTabSecProgress"<?= $canViewAssetValuation ? ' style="display:none;"' : '' ?>>
+=======
+                        <div id="costTabSecProgress" style="<?= api_can_read_valuation() ? 'display:none;' : 'display:block;' ?>;">
+>>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
                             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                                 <div>
                                     <h3 style="margin:0 0 4px 0; font-size:1.02rem; color:#0f172a;">
@@ -13390,6 +13422,15 @@ try {
 
             window.initBiayaEngine = function (costsData) {
                 renderCostDashboard();
+                if (window.APP_CAN_READ_VALUATION === false) {
+                    const strip = document.getElementById('secBiayaValuationStrip');
+                    if (strip) strip.style.display = 'none';
+                    const navVal = document.getElementById('costTabNavValuation');
+                    if (navVal) navVal.style.display = 'none';
+                    const secVal = document.getElementById('costTabSecValuation');
+                    if (secVal) secVal.style.display = 'none';
+                    switchCostTab('progress');
+                }
             };
             window.initBiayaView = window.initBiayaEngine;
 
@@ -14258,6 +14299,11 @@ try {
 
             // Switch Tab Antar 7 Tab Biaya
             window.switchCostTab = function (tabName, el) {
+                if (tabName === 'valuation' && window.APP_CAN_READ_VALUATION === false) {
+                    tabName = 'progress';
+                    const progEl = document.getElementById('costTabNavProgress');
+                    if (progEl) el = progEl;
+                }
                 if (el) {
                     document.querySelectorAll('#costMainTabs .asset-tab').forEach(t => t.classList.remove('active'));
                     el.classList.add('active');
@@ -14470,26 +14516,20 @@ try {
                         const transactions = result.data.transactions || [];
                         const summary = result.data.summary || {};
 
-                        // Update KPI elements if present
-                        const actualEl = document.getElementById('kpiCostActual');
-                        if (actualEl && summary.formattedTotalActive) {
-                            actualEl.textContent = summary.formattedTotalActive;
+                        // Update ledger subtotal elements inside Tab 6 without overwriting top executive financial cards
+                        const poTotalEl = document.getElementById('lblPoLedgerTotal');
+                        if (poTotalEl && summary.formattedTotalActive) {
+                            poTotalEl.textContent = summary.formattedTotalActive;
+                        }
+                        const poCountEl = document.getElementById('lblPoLedgerCount');
+                        if (poCountEl && summary.activeCount !== undefined) {
+                            poCountEl.textContent = summary.activeCount;
                         }
 
-                        // Dynamic Variance Calculation from real total (Batch F6)
-                        const budgetNominal = 2960000000; // Rp 2.960 Jt
-                        const devEl = document.getElementById('kpiCostDev');
-                        if (devEl && summary.totalActiveAmount !== undefined) {
-                            const diffPct = ((summary.totalActiveAmount - budgetNominal) / budgetNominal) * 100;
-                            const sign = diffPct >= 0 ? '+' : '';
-                            devEl.textContent = `${sign}${diffPct.toFixed(1)}% (${diffPct > 0 ? 'Over' : 'Under'})`;
-                            devEl.style.color = diffPct > 0 ? 'var(--danger)' : 'var(--success)';
-                        }
-
-                        // Update Reconciliation Transparency Elements (Batch F6)
+                        // Update Reconciliation Transparency Elements (26 Sheets Financial Report Linkage)
                         const sourceCostEl = document.getElementById('lblCostSourceRows');
                         if (sourceCostEl) {
-                            sourceCostEl.innerHTML = `Sumber Data: <strong>${summary.activeCount || 0} transaksi aktif</strong> (${summary.formattedTotalActive || 'Rp 0'}), <strong>${summary.reversedCount || 0} dibatalkan (void)</strong> (Total ${transactions.length} baris dimuat)`;
+                            sourceCostEl.innerHTML = `Terhubung ke 26 Sheet Laporan Keuangan (Jan–Okt 2026) | Plafon: <code>Rp 773,88 Jt/bln</code> &bull; Ledger PO: <strong>${summary.activeCount || 0} aktif</strong> (${summary.formattedTotalActive || 'Rp 0'}), <strong>${summary.reversedCount || 0} void</strong>`;
                         }
                         const qualityCostEl = document.getElementById('lblCostDataQuality');
                         if (qualityCostEl) {

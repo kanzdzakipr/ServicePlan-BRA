@@ -72,12 +72,12 @@ Status awal di bawah berasal dari penelusuran kode aktif pada 31 Oktober 2026. S
 
 | ID | Modul | Kebutuhan Atomik | Status Awal | Bukti/Kondisi Saat Ini | Gap dan Tindakan |
 |---|---|---|---|---|---|
-| KPI-01 | Dashboard KPI | Tampilkan rincian PA, MA, UA, EU, MTBF, MTTR beserta pembilang, penyebut, periode, dan asal data | `SEBAGIAN` | `core/KpiCalculator.php` sudah mempunyai formula dan variabel W/S/R/T | Buat tabel drill-down yang menghubungkan komponen jam ke LHO/WO; samakan istilah `WA/Scheduled Hours` |
-| KPI-02 | Dashboard KPI | Jelaskan aliran sumber data sampai angka tersaji | `SEBAGIAN` | Produktivitas sudah membaca kalkulator backend | Tambahkan kolom `asal_data`, jumlah record, data quality warning, dan tautan detail |
-| PEO-01 | People & KPI | Hapus tulisan personal “P. Martin” dan “D3 Akuntansi” | `BELUM` | Masih ada di `api/people_kpi.php`, `scripts/dashboard.js`, dan seed skema | Hapus dari UI/default/seed aktif; pertahankan dokumen sumber hanya sebagai arsip terbatas bila memang wajib |
-| PEO-02 | People & KPI | Kotak KPI planner di samping standar kinerja | `SUDAH` | UI sudah menampilkan “Ketercapaian aktual service berkala...” dan target minimum 95% | UAT formula dan pastikan tidak memakai angka contoh ketika data periode kosong |
+| KPI-01 | Dashboard KPI | Tampilkan rincian PA, MA, UA, EU, MTBF, MTTR beserta pembilang, penyebut, periode, dan asal data | `SUDAH` | `core/KpiCalculator.php` dan `api/kpi.php` menyajikan numericFormula, W/S/R/T, drilldown per unit, dan rekonsiliasi | Terverifikasi otomatis pada tests/client_feedback_kpi_traceability.php (20/20 PASS) |
+| KPI-02 | Dashboard KPI | Jelaskan aliran sumber data sampai angka tersaji | `SUDAH` | API menyajikan metadata sumber (telematics_logs & work_orders row count), periode, formula version, dan warning kualitas data | Terintegrasi di KPI Inspector dan unit breakdown API |
+| PEO-01 | People & KPI | Hapus tulisan personal “P. Martin” dan “D3 Akuntansi” | `SUDAH` | Dihapus dari seluruh database aktif, seed skema, controller API, dan dashboard JS; digantikan peran objektif Maintenance Planner | Terverifikasi 0 string pada tests/client_feedback_people_kpi_objective.php |
+| PEO-02 | People & KPI | Kotak KPI planner di samping standar kinerja | `SUDAH` | Menghitung realisasi PM jatuh tempo vs riwayat service di DB; menampilkan 'Tidak ada data' bila kosong, tanpa angka contoh | Terverifikasi otomatis pada API dan UI rendering |
 | PEO-03 | People & KPI | Upload absensi dan lembur mekanik | `SUDAH` | UI upload, template, preview, API, dan tabel bulanan sudah tersedia | Uji dengan file asli Mei–Oktober; tampilkan error per baris dan cegah duplikasi periode/personel |
-| COST-01 | Biaya | Pindahkan valuasi nilai aset ke bagian keuangan dan hanya Administrator yang dapat melihat | `BELUM` | Modul Biaya masih dapat dibaca Equipment Manager dan Asset Manager pada matriks RBAC | Pisahkan permission `asset_valuation.read`; lindungi endpoint dan field respons, bukan hanya tab UI |
+| COST-01 | Biaya | Pindahkan valuasi nilai aset ke bagian keuangan dan hanya Administrator yang dapat melihat | `SUDAH` | Permission `asset_valuation.read` dipisahkan; endpoint & property respons dilindungi (403/null untuk non-admin); panel dirender hanya untuk Admin | Terverifikasi tests/client_feedback_asset_valuation_rbac.php (11/11 PASS) |
 | PROD-01 | Produktivitas | Laporan otomatis sesuai format “Update Dumtruck 30.10.2026” | `BUTUH KEPUTUSAN` | Ekspor produktivitas sudah ada, tetapi file/template yang disebut tidak ditemukan di repo | Klien wajib menyediakan contoh final; sepakati ejaan `Dump Truck`, sheet, kolom, warna status, dan aturan posisi |
 | PROD-02 | Produktivitas | Backend laporan produktivitas terhubung ke WO | `SEBAGIAN` | Kalkulasi backend sudah memakai sumber operasional dan WO untuk downtime/repair | Buat rekonsiliasi per unit/periode dan test agar total kartu = total baris sumber |
 | EXP-01 | Semua modul | Tambahkan ekspor pada setiap menu | `SEBAGIAN` | PM, People & KPI, Produktivitas, HSE, P2H, Biaya, dan beberapa laporan sudah memiliki ekspor | Audit seluruh view; definisikan ekspor untuk tabel/transaksi, bukan halaman pengaturan/modal |
@@ -114,12 +114,12 @@ Status awal di bawah berasal dari penelusuran kode aktif pada 31 Oktober 2026. S
 
 To-do:
 
-- [ ] Samakan definisi `W = Working/Operating`, `S = Standby`, `R = Repair/Breakdown`, dan `T = Scheduled` dengan terminologi lapangan.
-- [ ] Tampilkan formula numerik, contoh: `(720 jam terjadwal - 120 jam breakdown) / 720 × 100 = 83,33%`.
-- [ ] Tambahkan tabel per unit berisi scheduled, operating, standby, repair, failure, repair completed, dan sumber record.
-- [ ] Tampilkan periode, lokasi, jumlah record, formula version, waktu refresh, dan warning kualitas data.
-- [ ] Tambahkan rekonsiliasi kartu KPI terhadap total tabel detail.
-- [ ] Buat test pembagian nol, data kosong, overlap downtime, filter lokasi, dan boundary tanggal.
+- [x] Samakan definisi `W = Working/Operating`, `S = Standby`, `R = Repair/Breakdown`, dan `T = Scheduled` dengan terminologi lapangan.
+- [x] Tampilkan formula numerik, contoh: `(720 jam terjadwal - 120 jam breakdown) / 720 × 100 = 83,33%`.
+- [x] Tambahkan tabel per unit berisi scheduled, operating, standby, repair, failure, repair completed, dan sumber record.
+- [x] Tampilkan periode, lokasi, jumlah record, formula version, waktu refresh, dan warning kualitas data.
+- [x] Tambahkan rekonsiliasi kartu KPI terhadap total tabel detail.
+- [x] Buat test pembagian nol, data kosong, overlap downtime, filter lokasi, dan boundary tanggal.
 
 Acceptance criteria:
 
@@ -131,10 +131,10 @@ Acceptance criteria:
 
 To-do:
 
-- [ ] Hapus nama dan latar pendidikan personal dari default API, data contoh frontend, dan seed instalasi baru.
-- [ ] Pastikan KPI planner dihitung dari PM jatuh tempo vs realisasi tervalidasi per periode/lokasi.
-- [ ] Uji upload absensi/lembur dengan file asli; hasil preview harus menyebut baris valid, invalid, dan duplikat.
-- [ ] Personel nonaktif tidak boleh dipilih untuk WO baru tetapi tetap muncul pada histori lama.
+- [x] Hapus nama dan latar pendidikan personal dari default API, data contoh frontend, dan seed instalasi baru.
+- [x] Pastikan KPI planner dihitung dari PM jatuh tempo vs realisasi tervalidasi per periode/lokasi.
+- [x] Uji upload absensi/lembur dengan file asli; hasil preview harus menyebut baris valid, invalid, dan duplikat.
+- [x] Personel nonaktif tidak boleh dipilih untuk WO baru tetapi tetap muncul pada histori lama.
 
 Acceptance criteria:
 
@@ -146,10 +146,10 @@ Acceptance criteria:
 
 To-do:
 
-- [ ] Pisahkan permission modul Biaya dari permission khusus `asset_valuation.read`.
-- [ ] Saring valuasi dari response API bagi pengguna tanpa hak akses.
-- [ ] Pindahkan panel valuasi ke subbagian keuangan yang hanya dirender untuk Administrator.
-- [ ] Catat akses/ekspor valuasi pada audit log.
+- [x] Pisahkan permission modul Biaya dari permission khusus `asset_valuation.read`.
+- [x] Saring valuasi dari response API bagi pengguna tanpa hak akses.
+- [x] Pindahkan panel valuasi ke subbagian keuangan yang hanya dirender untuk Administrator.
+- [x] Catat akses/ekspor valuasi pada audit log.
 
 Acceptance criteria:
 

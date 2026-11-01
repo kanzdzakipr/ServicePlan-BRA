@@ -63,7 +63,11 @@ $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_batch16_fleet_governance_views.sql"),
     (Join-Path $srcDir "scripts\migrate_laporan_keuangan_lpj_2026.sql"),
     (Join-Path $srcDir "scripts\migrate_employee_attendance_monthly.sql"),
+<<<<<<< HEAD
     (Join-Path $srcDir "scripts\migrate_owner_editable_inputs_20261101.sql")
+=======
+    (Join-Path $srcDir "scripts\migrate_epic42_remove_personal_info.sql")
+>>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
 )
 
 if (-not (Test-Path -LiteralPath $laragonRootPath -PathType Container) -or
