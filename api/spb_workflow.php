@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
 require_once dirname(__DIR__) . '/core/SpbWorkflow.php';
+require_once dirname(__DIR__) . '/core/InputRevision.php';
 
 $db = Database::getInstance();
 $method = strtoupper((string) $_SERVER['REQUEST_METHOD']);
@@ -18,6 +19,8 @@ if ($method === 'GET') {
         $detailSql = 'SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.requested_by,
                              pr.requested_at, pr.status, pr.urgency, pr.spb_type, pr.notes,
                              u.full_name AS requester_name, l.location_name,
+                             EXISTS(SELECT 1 FROM purchase_orders po WHERE po.spb_id = pr.spb_id) AS has_purchase_order,
+                             EXISTS(SELECT 1 FROM report_purchase_request_integrations rpri WHERE rpri.spb_id = pr.spb_id AND rpri.reversed_at IS NULL) AS owned_by_report,
                              (SELECT ap.status FROM approvals ap WHERE ap.document_type = \'SPB\'
                               AND ap.document_id = pr.spb_id ORDER BY ap.approval_id DESC LIMIT 1) AS approval_status
                       FROM purchase_requests pr
@@ -39,6 +42,11 @@ if ($method === 'GET') {
                                 WHERE pri.spb_id = :spb_id ORDER BY pri.id');
         $items->execute([':spb_id' => $requestedSpbId]);
         $document['items'] = $items->fetchAll(PDO::FETCH_ASSOC);
+        $document['can_edit_own'] = ((int) $document['requested_by'] === InputRevision::actorId() || InputRevision::isPrivileged())
+            && in_array((string) $document['status'], ['Draft', 'Submitted'], true)
+            && strtoupper((string) ($document['approval_status'] ?? '')) !== 'APPROVED'
+            && empty($document['has_purchase_order'])
+            && empty($document['owned_by_report']);
         api_json_response(200, ['status' => 'success', 'data' => $document]);
     }
     $sql = "SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.requested_by, pr.requested_at,
@@ -46,6 +54,7 @@ if ($method === 'GET') {
                    COUNT(pri.id) AS item_count, COALESCE(SUM(pri.qty_requested), 0) AS total_quantity,
                    (SELECT ap.status FROM approvals ap WHERE ap.document_type = 'SPB'
                     AND ap.document_id = pr.spb_id ORDER BY ap.approval_id DESC LIMIT 1) AS approval_status,
+                   EXISTS(SELECT 1 FROM purchase_orders po WHERE po.spb_id = pr.spb_id) AS has_purchase_order,
                    (SELECT rpri.report_id FROM report_purchase_request_integrations rpri
                     WHERE rpri.spb_id = pr.spb_id AND rpri.reversed_at IS NULL
                     ORDER BY rpri.integration_id DESC LIMIT 1) AS source_report_id
@@ -59,9 +68,18 @@ if ($method === 'GET') {
               ORDER BY pr.requested_at DESC, pr.spb_id DESC LIMIT 500';
     $stmt = $db->prepare($sql);
     $stmt->execute($scope['params']);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as &$row) {
+        $row['can_edit_own'] = ((int) $row['requested_by'] === InputRevision::actorId() || InputRevision::isPrivileged())
+            && in_array((string) $row['status'], ['Draft', 'Submitted'], true)
+            && strtoupper((string) ($row['approval_status'] ?? '')) !== 'APPROVED'
+            && empty($row['has_purchase_order'])
+            && empty($row['source_report_id']);
+    }
+    unset($row);
     api_json_response(200, [
         'status' => 'success',
-        'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+        'data' => $rows,
         'canApprove' => api_has_permission('logistics.write')
             && SpbWorkflow::canApproveRoles((array) (api_current_user()['roles'] ?? [])),
         'canVoid' => api_has_permission('reports.approve'),
@@ -96,6 +114,83 @@ if (strtolower(trim((string) ($input['action'] ?? ''))) === 'void') {
 }
 
 $action = strtolower(trim((string) ($input['action'] ?? '')));
+if (in_array($action, ['update_own_pending', 'withdraw_own_pending'], true)) {
+    api_require_permission('logistics.write');
+    $spbId = trim((string) ($input['spbId'] ?? $input['spb_id'] ?? ''));
+    if ($spbId === '') api_json_response(422, ['status' => 'error', 'message' => 'Nomor SPB wajib diisi.']);
+    try {
+        $reason = InputRevision::reason($input);
+        $db->beginTransaction();
+        $lock = $db->prepare(
+            "SELECT pr.*,
+                    (SELECT ap.status FROM approvals ap WHERE ap.document_type = 'SPB' AND ap.document_id = pr.spb_id ORDER BY ap.approval_id DESC LIMIT 1) AS approval_status,
+                    EXISTS(SELECT 1 FROM purchase_orders po WHERE po.spb_id = pr.spb_id) AS has_purchase_order,
+                    EXISTS(SELECT 1 FROM report_purchase_request_integrations rpri WHERE rpri.spb_id = pr.spb_id AND rpri.reversed_at IS NULL) AS owned_by_report
+             FROM purchase_requests pr WHERE pr.spb_id = :id FOR UPDATE"
+        );
+        $lock->execute([':id' => $spbId]);
+        $current = $lock->fetch(PDO::FETCH_ASSOC);
+        if (!$current) throw new OutOfBoundsException('SPB tidak ditemukan.');
+        InputRevision::assertOwner($current['requested_by'] ?? null, 'Hanya pembuat SPB yang dapat merevisi input ini.');
+        if (!in_array((string) $current['status'], ['Draft', 'Submitted'], true)) {
+            throw new DomainException('SPB sudah diproses dan tidak dapat direvisi lagi.');
+        }
+        if (strtoupper((string) ($current['approval_status'] ?? '')) === 'APPROVED' || !empty($current['has_purchase_order'])) {
+            throw new DomainException('SPB sudah disetujui atau memiliki PPB sehingga tidak aman untuk direvisi.');
+        }
+        if (!empty($current['owned_by_report'])) {
+            throw new DomainException('SPB ini berasal dari Form. Revisi harus dilakukan pada Form sumbernya agar jejak tetap konsisten.');
+        }
+        if (!empty($current['asset_id'])) api_require_asset_access($db, (string) $current['asset_id']);
+
+        $oldItemsStmt = $db->prepare('SELECT id, part_number, description, qty_requested, status FROM purchase_request_items WHERE spb_id = :id ORDER BY id');
+        $oldItemsStmt->execute([':id' => $spbId]);
+        $before = $current;
+        $before['items'] = $oldItemsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($action === 'withdraw_own_pending') {
+            $db->prepare("UPDATE purchase_requests SET status = 'Draft', input_revision_no = input_revision_no + 1, input_last_edited_at = NOW(), input_last_edited_by = :actor WHERE spb_id = :id")
+                ->execute([':actor' => InputRevision::actorId(), ':id' => $spbId]);
+            $db->prepare("UPDATE purchase_request_items SET status = 'Draft' WHERE spb_id = :id")
+                ->execute([':id' => $spbId]);
+            $after = array_merge($before, ['status' => 'Draft']);
+            InputRevision::record($db, 'SPB', $spbId, 'WITHDRAW', $reason, $before, $after);
+            $db->commit();
+            api_json_response(200, ['status' => 'success', 'message' => 'SPB ditarik ke Draft dan tetap dapat diedit.', 'data' => ['spbId' => $spbId, 'status' => 'Draft']]);
+        }
+
+        $items = is_array($input['items'] ?? null) ? $input['items'] : [];
+        if (!$items) throw new InvalidArgumentException('Minimal satu item SPB wajib diisi.');
+        $urgency = in_array((string) ($input['urgency'] ?? ''), ['Normal', 'Emergency'], true) ? (string) $input['urgency'] : (string) $current['urgency'];
+        $notes = trim((string) ($input['notes'] ?? $current['notes'] ?? ''));
+        $db->prepare("UPDATE purchase_requests SET urgency = :urgency, notes = :notes, status = 'Submitted', input_revision_no = input_revision_no + 1, input_last_edited_at = NOW(), input_last_edited_by = :actor WHERE spb_id = :id")
+            ->execute([':urgency' => $urgency, ':notes' => $notes ?: null, ':actor' => InputRevision::actorId(), ':id' => $spbId]);
+        $db->prepare('DELETE FROM purchase_request_items WHERE spb_id = :id')->execute([':id' => $spbId]);
+        $insert = $db->prepare("INSERT INTO purchase_request_items (id, spb_id, part_number, description, qty_requested, status) VALUES (:id, :spb_id, :part, :description, :qty, 'Submitted')");
+        $normalizedItems = [];
+        foreach ($items as $idx => $item) {
+            $part = trim((string) ($item['part_number'] ?? $item['partNumber'] ?? ''));
+            $description = trim((string) ($item['description'] ?? ''));
+            $qty = (int) ($item['qty'] ?? $item['qty_requested'] ?? 0);
+            if (($part === '' && $description === '') || $qty < 1) throw new InvalidArgumentException('Part, deskripsi, dan qty setiap baris wajib valid.');
+            $part = $part ?: 'CUSTOM';
+            $description = $description ?: $part;
+            $insert->execute([':id' => sprintf('SPBI-%s-%02d', substr(md5($spbId . microtime(true)), 0, 8), $idx + 1), ':spb_id' => $spbId, ':part' => mb_substr($part, 0, 100), ':description' => mb_substr($description, 0, 255), ':qty' => $qty]);
+            $normalizedItems[] = ['part_number' => $part, 'description' => $description, 'qty_requested' => $qty, 'status' => 'Submitted'];
+        }
+        $after = array_merge($current, ['urgency' => $urgency, 'notes' => $notes ?: null, 'status' => 'Submitted', 'items' => $normalizedItems]);
+        InputRevision::record($db, 'SPB', $spbId, 'UPDATE', $reason, $before, $after);
+        $db->commit();
+        api_json_response(200, ['status' => 'success', 'message' => 'Revisi SPB tersimpan dan kembali masuk antrean approval.', 'data' => ['spbId' => $spbId, 'status' => 'Submitted', 'itemCount' => count($normalizedItems)]]);
+    } catch (InvalidArgumentException | DomainException | OutOfBoundsException $error) {
+        if ($db->inTransaction()) $db->rollBack();
+        api_json_response($error instanceof InvalidArgumentException ? 422 : ($error instanceof OutOfBoundsException ? 404 : 409), ['status' => 'error', 'message' => $error->getMessage()]);
+    } catch (Throwable $error) {
+        if ($db->inTransaction()) $db->rollBack();
+        error_log('SPB owner revision failed: ' . $error->getMessage());
+        api_json_response(500, ['status' => 'error', 'message' => 'Revisi SPB gagal disimpan.']);
+    }
+}
 if ($action === 'create') {
     api_require_permission('logistics.write');
     $spbId = trim((string) ($input['spbId'] ?? $input['spb_id'] ?? ''));

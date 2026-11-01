@@ -124,7 +124,7 @@ function get_default_head_kpi_indicators(): array {
 
 function get_default_planner_evaluations(): array {
     return [
-        ['competency_name' => 'Dasar Maintenance Alat Berat', 'job_standard' => 'D3/S1 Teknik Mesin', 'actual_evaluation' => 'D3 Akuntansi', 'target_level' => 4, 'actual_level' => 2, 'action_plan' => 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'],
+        ['competency_name' => 'Dasar Maintenance Alat Berat', 'job_standard' => 'D3/S1 Teknik Mesin', 'actual_evaluation' => 'Perlu verifikasi kompetensi teknis', 'target_level' => 4, 'actual_level' => 2, 'action_plan' => 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'],
         ['competency_name' => 'PM Scheduling & Meter Reading', 'job_standard' => 'Update Real-Time Status KM/HM', 'actual_evaluation' => 'Jadwal terbuat, Update KM tertinggal', 'target_level' => 4, 'actual_level' => 3, 'action_plan' => 'Standardisasi Audit Meter Reading Harian Operator'],
         ['competency_name' => 'Estimasi Durasi Repair', 'job_standard' => 'Akurat per Komponen', 'actual_evaluation' => 'Belum menguasai estimasi waktu', 'target_level' => 4, 'actual_level' => 2, 'action_plan' => 'Praktik & Benchmark Standard Job Time per Kategori Breakdown'],
         ['competency_name' => 'Spare Parts Control & Kitting', 'job_standard' => 'Parts Ready sebelum Job Start', 'actual_evaluation' => 'Memahami Logistik, Parts Kitting belum terikat JO', 'target_level' => 4, 'actual_level' => 3, 'action_plan' => 'Integrasi Form SPB dengan Nomor WO/PM secara Wajib'],

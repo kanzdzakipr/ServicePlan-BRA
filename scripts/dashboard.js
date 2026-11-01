@@ -3554,6 +3554,7 @@
                                 <td>${spb.source_report_id ? "—" : escapeHtml(spbDisplayStatus(spb))}</td>
                                 <td><div class="history-actions">
                                     <button type="button" data-spb-print="${escapeHtml(spb.spb_id)}"><i class="fa-regular fa-eye"></i> Lihat/Cetak</button>
+                                    ${spb.can_edit_own ? `<button type="button" class="primary" data-spb-edit="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-pen"></i> Edit input</button>` : ""}
                                     ${spb.source_report_id ? '<span title="Void melalui laporan Form asal">Void via Form</span>' : canVoidSpbDocuments ? `<button type="button" class="danger" data-spb-void="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-ban"></i> Void</button>` : ""}
                                 </div></td>
                             </tr>`,
@@ -3590,6 +3591,15 @@
       button.addEventListener("click", () =>
         viewSpbDocument(button.dataset.spbPrint),
       );
+    });
+    list.querySelectorAll("[data-spb-edit]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!window.SpareLogistics?.editPendingSpb) {
+          showToast("Modul Spare Part belum siap.", true);
+          return;
+        }
+        window.SpareLogistics.editPendingSpb(button.dataset.spbEdit);
+      });
     });
     list.querySelectorAll("[data-spb-void]").forEach((button) => {
       button.addEventListener("click", () =>
@@ -6184,6 +6194,7 @@
     parts: [],
     partSource: "warehouse",
     dropzoneReady: false,
+    editingWoId: "",
   };
 
   const byId = (id) => document.getElementById(id);
@@ -6876,6 +6887,11 @@
     renderNwoDraftRows();
     toggleMitigation(false);
     setMessage("");
+    state.editingWoId = "";
+    const title = byId("newWoTitle");
+    if (title) title.textContent = "Buat Work Order / Job Order";
+    const submitButton = byId("nwo-submit");
+    if (submitButton) submitButton.innerHTML = '<i class="fa-solid fa-file-circle-plus"></i> Buat tiket WO';
   }
 
   async function submit() {
@@ -6946,7 +6962,7 @@
       : "Belum ada PIC";
     const currentHmKm = Number(hmValue);
     const year = String(new Date().getFullYear()).slice(-2);
-    const woId = `WO-${year}-${Date.now().toString().slice(-8)}`;
+    const woId = state.editingWoId || `WO-${year}-${Date.now().toString().slice(-8)}`;
     const details = assetDetails(asset);
     const submitButton = byId("nwo-submit");
 
@@ -7012,6 +7028,21 @@
       mitigation_action: mitigation,
       assigned_mechanics: mechanics,
     };
+    if (state.editingWoId) {
+      const reason = window.prompt("Alasan koreksi input WO (wajib, maksimal 500 karakter):", "Koreksi data sebelum diproses");
+      if (reason === null) return;
+      if (!reason.trim() || reason.trim().length > 500) {
+        setMessage("Alasan koreksi wajib diisi (maksimal 500 karakter).", "error");
+        return;
+      }
+      payload.action = "update_own_pending";
+      payload.revision_reason = reason.trim();
+      delete payload.asset_id;
+      delete payload.parts_items;
+      delete payload.parts_requirement;
+      delete payload.parts_requirement_note;
+      delete payload.status;
+    }
 
     if (submitButton) {
       submitButton.disabled = true;
@@ -7025,7 +7056,7 @@
 
     try {
       const response = await fetch("api/work_orders.php", {
-        method: "POST",
+        method: state.editingWoId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -7076,7 +7107,7 @@
         );
         if (updatedAsset) updatedAsset.syncExpectedStatus = newAssetStatus;
       }
-      if (Array.isArray(window.globalData?.work_orders)) {
+      if (!state.editingWoId && Array.isArray(window.globalData?.work_orders)) {
         window.globalData.work_orders.unshift({
           ...workOrder,
           status: result?.data?.status || workOrder.status,
@@ -7094,7 +7125,9 @@
       }
       const directIssue = result?.data?.directIssue;
       const createdSpbId = result?.data?.createdSpbId;
-      let toastMsg = `${woId} berhasil dibuat untuk ${selectedAssetId}.`;
+      let toastMsg = state.editingWoId
+        ? `${woId} berhasil direvisi tanpa menunggu approval.`
+        : `${woId} berhasil dibuat untuk ${selectedAssetId}.`;
       if (directIssue) {
         toastMsg += ` Seluruh spare part tersedia & BHW-OUT #${directIssue.reportNumber} langsung diterbitkan.`;
       } else if (createdSpbId) {
@@ -7111,8 +7144,9 @@
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
-        submitButton.innerHTML =
-          '<i class="fa-solid fa-file-circle-plus"></i> Buat tiket WO';
+        submitButton.innerHTML = state.editingWoId
+          ? '<i class="fa-solid fa-floppy-disk"></i> Simpan revisi'
+          : '<i class="fa-solid fa-file-circle-plus"></i> Buat tiket WO';
       }
     }
   }
@@ -7132,6 +7166,45 @@
         });
         if (byId("newWoForm")) byId("newWoForm").scrollTop = 0;
       }, 80);
+    },
+    edit(raw) {
+      resetForm();
+      const woId = text(raw?.wo_id || raw?.woId);
+      const selectedAssetId = text(raw?.asset_id || raw?.assetId);
+      state.editingWoId = woId;
+      populateAssets("", selectedAssetId);
+      updateAssetSummary();
+      const setValue = (id, value) => { const el = byId(id); if (el && value !== undefined && value !== null) el.value = value; };
+      const dateTimeValue = (value) => value ? String(value).replace(" ", "T").slice(0, 16) : "";
+      setValue("nwo-location", raw?.raw_location || raw?.rawLocation || "");
+      setValue("nwo-hm-km", raw?.current_hm_km ?? raw?.currentHmKm ?? 0);
+      setValue("nwo-trouble-at", dateTimeValue(raw?.trouble_at || raw?.reported_at));
+      setValue("nwo-started-at", dateTimeValue(raw?.repair_started_at));
+      setValue("nwo-completed-at", dateTimeValue(raw?.estimated_completion_at));
+      setValue("nwo-prio", raw?.priority || "Normal");
+      setValue("nwo-type", raw?.maintenance_type || "Corrective");
+      setValue("nwo-issue", raw?.issue_description || "");
+      setValue("nwo-root-cause", raw?.root_cause || "");
+      setValue("nwo-repair-action", raw?.repair_action || "");
+      setValue("nwo-hull-number", raw?.hull_number || "");
+      setValue("nwo-down", Number(raw?.is_downtime) === 1 ? "Yes" : "No");
+      const forced = Number(raw?.is_forced_operation) === 1;
+      const forcedEl = byId("nwo-forced-operation");
+      if (forcedEl) forcedEl.checked = forced;
+      setValue("nwo-mitigation", raw?.mitigation_action || "");
+      toggleMitigation(forced);
+      let mechanics = [];
+      try { mechanics = Array.isArray(raw?.assigned_mechanics_json) ? raw.assigned_mechanics_json : JSON.parse(raw?.assigned_mechanics_json || "[]"); } catch (_) { mechanics = []; }
+      if (!mechanics.length && raw?.assigned_mechanic && raw.assigned_mechanic !== "Belum ada PIC") mechanics = String(raw.assigned_mechanic).split(",").map((item) => item.trim()).filter(Boolean);
+      state.mechanics = mechanics;
+      renderMechanics();
+      const title = byId("newWoTitle");
+      if (title) title.textContent = `Revisi Work Order ${woId}`;
+      const submitButton = byId("nwo-submit");
+      if (submitButton) submitButton.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan revisi';
+      setMessage("Anda sedang mengoreksi input sendiri. Revisi tersimpan pada audit trail.", "info");
+      setupDropzone();
+      window.openModal?.("modalNewWO");
     },
     addPart: addNwoPartRow,
     submit,
@@ -8443,7 +8516,7 @@
 
                         <section class="sl-modal-section sl-spb-builder">
                             <div class="sl-modal-section-heading">
-                                <div><span class="sl-eyebrow">FORM P-1 · SURAT PERMINTAAN BARANG</span><h3>Draft SPB Unit</h3><p>Setiap item baru akan masuk ke Approval dan tetap tertaut ke unit serta Work Order.</p></div>
+                                <div><span class="sl-eyebrow">FORM P-1 · SURAT PERMINTAAN BARANG</span><h3>${state.modal.editingSpbId ? `Revisi ${escapeHtml(state.modal.editingSpbId)}` : "Draft SPB Unit"}</h3><p>${state.modal.editingSpbId ? "Perubahan akan dicatat sebagai revisi dan dokumen kembali ke antrean approval." : "Setiap item baru akan masuk ke Approval dan tetap tertaut ke unit serta Work Order."}</p></div>
                                 <span class="sl-form-code"><i class="fa-solid fa-file-invoice"></i> P-1</span>
                             </div>
                             <div class="sl-spb-context">
@@ -8461,7 +8534,7 @@
                             <div class="sl-draft-actions">
                                 <button type="button" class="sl-add-item-button" data-sl-action="add-draft"><i class="fa-solid fa-plus"></i>Tambah Item</button>
                                 <label><span>Catatan permintaan</span><input id="spb-notes" type="text" value="${escapeHtml(state.modal.notes || "")}" placeholder="Keterangan, spesifikasi alternatif, atau kendala..." data-sl-modal-field="notes"></label>
-                                <button type="button" class="sl-submit-button" data-sl-action="submit"><i class="fa-solid fa-paper-plane"></i>Ajukan SPB</button>
+                                <button type="button" class="sl-submit-button" data-sl-action="submit"><i class="fa-solid ${state.modal.editingSpbId ? "fa-floppy-disk" : "fa-paper-plane"}"></i>${state.modal.editingSpbId ? "Simpan revisi" : "Ajukan SPB"}</button>
                             </div>
                             <div class="sl-governance-note"><i class="fa-solid fa-link"></i><span><strong>Linkage aktif:</strong> Master Asset â†’ P2H / Condition Monitoring â†’ Work Order â†’ SPB â†’ Approval â†’ pengadaan â†’ kesiapan RTW.</span></div>
                         </section>
@@ -8663,6 +8736,43 @@
     openForAsset(resolvedAssetId, woId, recommended);
   }
 
+  async function editPendingSpb(spbId) {
+    try {
+      const response = await fetch(`api/spb_workflow.php?spb_id=${encodeURIComponent(spbId)}`, {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success" || !payload.data) {
+        throw new Error(payload.message || "SPB tidak dapat dimuat.");
+      }
+      const spb = payload.data;
+      if (!spb.can_edit_own) {
+        throw new Error("SPB sudah diproses atau bukan milik akun Anda.");
+      }
+      window.showView?.("logistics", "", "menu-logistics");
+      state.modal = {
+        assetId: String(spb.asset_id || ""),
+        woId: String(spb.wo_id || ""),
+        priority: spb.urgency === "Emergency" ? "Critical" : "Normal",
+        rtwImpact: spb.urgency === "Emergency",
+        notes: String(spb.notes || ""),
+        editingSpbId: String(spb.spb_id),
+        draft: (Array.isArray(spb.items) ? spb.items : []).map((item) => ({
+          partNumber: String(item.part_number || ""),
+          description: String(item.description || ""),
+          qty: Math.max(1, Number(item.qty_requested) || 1),
+          uom: String(item.unit_measure || "pcs").toLowerCase(),
+          isManual: !masterParts.some((part) => part.partNumber === item.part_number),
+        })),
+      };
+      render();
+      document.querySelector(".sl-spb-builder")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      window.FleetReportForms?.notify?.(error.message || "SPB gagal dibuka.", true);
+    }
+  }
+
   function openFullSpbFormForWorkOrder(woId, assetId) {
     const reports = window.FleetReportForms;
     if (!reports?.importDraft) return false;
@@ -8840,6 +8950,39 @@
         "Work Order wajib dipilih agar SPB dapat ditelusuri dari sumbernya.",
         true,
       );
+      return;
+    }
+
+    if (state.modal.editingSpbId) {
+      const reason = window.prompt("Alasan koreksi input (wajib, maksimal 500 karakter):", "Koreksi data sebelum approval");
+      if (reason === null) return;
+      if (!reason.trim() || reason.trim().length > 500) {
+        notify("Alasan koreksi wajib diisi (maksimal 500 karakter).", true);
+        return;
+      }
+      try {
+        const response = await fetch("api/spb_workflow.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-CSRF-Token": window.APP_CSRF_TOKEN || "" },
+          body: JSON.stringify({
+            action: "update_own_pending",
+            spbId: state.modal.editingSpbId,
+            urgency: state.modal.priority === "Normal" ? "Normal" : "Emergency",
+            notes: state.modal.notes,
+            revision_reason: reason.trim(),
+            items: validLines.map((item) => ({ part_number: item.partNumber, description: item.description, qty: Number(item.qty) })),
+          }),
+        });
+        const payload = await response.json();
+        if (!response.ok || payload.status !== "success") throw new Error(payload.message || "Revisi SPB gagal.");
+        const editedId = state.modal.editingSpbId;
+        closeDetail();
+        await loadDatabaseRecords();
+        window.loadSpbApprovalInbox?.();
+        window.FleetReportForms?.notify?.(`${editedId} berhasil direvisi dan masuk kembali ke antrean approval.`);
+      } catch (error) {
+        notify(error.message || "Revisi SPB gagal disimpan.", true);
+      }
       return;
     }
 
@@ -9198,6 +9341,7 @@
     },
     openForAsset,
     openForWorkOrder,
+    editPendingSpb,
     openFullSpbFormForWorkOrder,
     addDraftItem,
     addRecommendedItem(domain) {
@@ -22633,7 +22777,7 @@
     {
       competency: "Dasar Maintenance Alat Berat",
       standard: "D3/S1 Teknik Mesin",
-      actual: "D3 Akuntansi",
+      actual: "Perlu verifikasi kompetensi teknis",
       targetLvl: 4,
       actualLvl: 2,
       gap: -2,

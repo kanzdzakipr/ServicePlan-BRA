@@ -118,6 +118,11 @@ CREATE TABLE IF NOT EXISTS `notification_recipients` (
 DROP TABLE IF EXISTS `assets`;
 CREATE TABLE `assets` (
     `asset_id` VARCHAR(100) PRIMARY KEY, -- Full ID string e.g. 'DZ-00002 SN P6G01656', 'CS-41001'
+    `created_by` INT NULL,
+    `input_state` VARCHAR(20) NOT NULL DEFAULT 'SUBMITTED',
+    `input_revision_no` INT UNSIGNED NOT NULL DEFAULT 0,
+    `input_last_edited_at` DATETIME NULL,
+    `input_last_edited_by` INT NULL,
     `asset_code` VARCHAR(50) NOT NULL,    -- Cleaned Code e.g. 'DZ-00002', 'CS-41001'
     `serial_number` VARCHAR(100) NULL,
     `license_plate` VARCHAR(50) NULL,
@@ -269,6 +274,11 @@ DROP TABLE IF EXISTS `work_order_service_requests`;
 DROP TABLE IF EXISTS `work_orders`;
 CREATE TABLE `work_orders` (
     `wo_id` VARCHAR(50) PRIMARY KEY, -- e.g. 'WO-26-347'
+    `created_by` INT NULL,
+    `input_state` VARCHAR(20) NOT NULL DEFAULT 'SUBMITTED',
+    `input_revision_no` INT UNSIGNED NOT NULL DEFAULT 0,
+    `input_last_edited_at` DATETIME NULL,
+    `input_last_edited_by` INT NULL,
     `asset_id` VARCHAR(100) NOT NULL,
     `hull_number` VARCHAR(100) NULL,
     `equipment_type` VARCHAR(100) NULL,
@@ -410,6 +420,9 @@ CREATE TABLE `purchase_requests` (
     `requested_by` INT NOT NULL,
     `urgency` ENUM('Normal', 'Emergency') DEFAULT 'Normal',
     `status` ENUM('Draft', 'Submitted', 'Approved', 'Ordered', 'Issued', 'Closed') DEFAULT 'Submitted',
+    `input_revision_no` INT UNSIGNED NOT NULL DEFAULT 0,
+    `input_last_edited_at` DATETIME NULL,
+    `input_last_edited_by` INT NULL,
     `notes` TEXT NULL,
     `requested_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`wo_id`) REFERENCES `work_orders`(`wo_id`) ON DELETE CASCADE,
@@ -645,9 +658,20 @@ CREATE TABLE `unit_valuations` (
     `total_repair_cost` DECIMAL(15,2) DEFAULT 0.00,
     `purchase_price` DECIMAL(15,2) DEFAULT 0.00,
     `book_value` DECIMAL(15,2) DEFAULT 0.00,
+    `monthly_rental_rate` DECIMAL(15,2) DEFAULT 0.00,
+    `monthly_leasing_installment` DECIMAL(15,2) DEFAULT 0.00,
     `market_price_min` DECIMAL(15,2) DEFAULT 0.00,
     `market_price_max` DECIMAL(15,2) DEFAULT 0.00,
     `raw_market_price_str` VARCHAR(100) NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `valuation_access_audit` (
+    `audit_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `actor_user_id` INT NOT NULL,
+    `action` VARCHAR(30) NOT NULL,
+    `filter_json` JSON NULL,
+    `accessed_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_valuation_audit_actor_time` (`actor_user_id`, `accessed_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `asset_cost_transactions`;
@@ -1275,7 +1299,7 @@ INSERT INTO `locations` (`location_id`, `location_name`, `location_type`, `regio
 INSERT INTO `users` (`user_id`, `username`, `password_hash`, `full_name`, `role_id`, `assigned_location_id`) VALUES
 (1, 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator Utama', 1, 4),
 (2, 'dany_agung', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Dany Agung (Head of Equipment)', 2, 4),
-(3, 'martin_planner', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'P. Martin (Maintenance Planner)', 3, 4),
+(3, 'maintenance_planner', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Maintenance Planner', 3, 4),
 (4, 'rahmad_k', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Rahmad K (Mekanik Senior)', 4, 4),
 (5, 'mekanik', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Mekanik Junior / Helper', 5, 4),
 (6, 'joni_septian', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Joni Septian (Mekanik)', 4, 3),
@@ -1296,7 +1320,7 @@ INSERT INTO `user_roles` (`user_id`, `role_id`, `is_primary`) VALUES
 (1, 2, FALSE), -- Admin -> Equipment Manager (Secondary)
 (2, 2, TRUE),  -- Dany Agung -> Equipment Manager
 (2, 3, FALSE), -- Dany Agung -> Maintenance Planner (Secondary)
-(3, 3, TRUE),  -- P. Martin -> Maintenance Planner
+(3, 3, TRUE),  -- Maintenance Planner
 (4, 4, TRUE),  -- Rahmad K -> Mekanik Senior
 (5, 5, TRUE),  -- Urwatul Uska -> Helper Mekanik
 (6, 4, TRUE),  -- Joni -> Mekanik Senior
@@ -1330,7 +1354,7 @@ INSERT INTO `assets` (`asset_id`, `asset_code`, `serial_number`, `license_plate`
 INSERT INTO `work_orders` (`wo_id`, `asset_id`, `location_id`, `issue_description`, `downtime_formatted`, `downtime_minutes`, `status`, `priority`, `assigned_mechanic`) VALUES
 ('WO-26-101', 'DT-00049 - B 9104 ZYT', 4, 'DISMANTLE DISC CLUTCH LIMIT & REPAIR TRANSMISSION', '8 jam 55 menit', 535, 'In Progress', 'High', 'Rahmad K, Suwardi'),
 ('WO-26-102', 'CS-41001', 6, 'OVERLOAD PENGISIAN CEMENT - SYSTEM ERROR MONITOR', '#########################', 0, 'Open', 'Emergency', 'Teknisi XCMG & M. Fajar DC'),
-('WO-26-103', 'PF-00001', 1, 'INSPEKSI PM 500 HM & GANTI FILTER OLI', '2 jam 30 menit', 150, 'Closed', 'Normal', 'P. Martin');
+('WO-26-103', 'PF-00001', 1, 'INSPEKSI PM 500 HM & GANTI FILTER OLI', '2 jam 30 menit', 150, 'Closed', 'Normal', 'Maintenance Planner');
 
 -- 6. SEED PREVENTIVE MAINTENANCE PLANS (Plan Service Juli 2026)
 INSERT INTO `pm_plans` (`asset_id`, `interval_hm`, `current_smr`, `last_service_hm`, `last_service_date`, `target_due_hm`, `variance_hm`, `status`, `warranty_status`, `planner_note`) VALUES
@@ -1366,9 +1390,9 @@ INSERT INTO `head_kpi_assessments` (`period_month`, `period_year`, `indicator_no
 ('Januari', 2026, 9, 'Kepemimpinan', 'Monitoring & Pelaporan Unit', 'Konsisten', 1, 5.00, 'Disiplin update JO mekanik, target RTW, & report harian'),
 ('Januari', 2026, 10, 'Kepemimpinan', 'Inisiatif Percepatan Perbaikan', 'Aktif', 1, 5.00, 'Solusi percepatan (shift tambahan, vendor, prioritas)');
 
--- 10. SEED MAINTENANCE PLANNER COMPETENCY EVALUATION (P. Martin Matrix)
+-- 10. SEED MAINTENANCE PLANNER COMPETENCY EVALUATION
 INSERT INTO `planner_evaluations` (`planner_user_id`, `competency_name`, `job_standard`, `actual_evaluation`, `target_level`, `actual_level`, `action_plan`) VALUES
-(3, 'Dasar Maintenance Alat Berat', 'D3/S1 Teknik Mesin', 'D3 Akuntansi', 4, 2, 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'),
+(3, 'Dasar Maintenance Alat Berat', 'D3/S1 Teknik Mesin', 'Perlu verifikasi kompetensi teknis', 4, 2, 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'),
 (3, 'PM Scheduling & Meter Reading', 'Update Real-Time Status KM/HM', 'Jadwal terbuat, Update KM tertinggal', 4, 3, 'Standardisasi Audit Meter Reading Harian Operator'),
 (3, 'Estimasi Durasi Repair', 'Akurat per Komponen', 'Belum menguasai estimasi waktu', 4, 2, 'Praktik & Benchmark Standard Job Time per Kategori Breakdown'),
 (3, 'Spare Parts Control & Kitting', 'Parts Ready sebelum Job Start', 'Memahami Logistik, Parts Kitting belum terikat JO', 4, 3, 'Integrasi Form SPB dengan Nomor WO/PM secara Wajib'),

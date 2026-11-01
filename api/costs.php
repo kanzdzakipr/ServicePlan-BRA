@@ -39,6 +39,63 @@ if (!defined('API_SKIP_ROUTING')) {
     }
 
     if ($method === 'GET') {
+        if (isset($_GET['valuation']) && $_GET['valuation'] === '1') {
+            $roles = (array) ($currentUser['roles'] ?? []);
+            if (!in_array('Administrator', $roles, true)) {
+                api_json_response(403, [
+                    'status' => 'error',
+                    'code' => 'ASSET_VALUATION_FORBIDDEN',
+                    'message' => 'Valuasi aset hanya dapat diakses oleh Administrator.',
+                ]);
+            }
+
+            $db->exec("CREATE TABLE IF NOT EXISTS valuation_access_audit (
+                audit_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                actor_user_id INT NOT NULL,
+                action VARCHAR(30) NOT NULL,
+                filter_json JSON NULL,
+                accessed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_valuation_audit_actor_time (actor_user_id, accessed_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+            $sql = "SELECT v.valuation_id, v.asset_id, v.unit_name, v.unit_code_alias,
+                           v.total_repair_cost, v.purchase_price, v.book_value,
+                           v.monthly_rental_rate, v.monthly_leasing_installment,
+                           v.market_price_min, v.market_price_max, v.raw_market_price_str,
+                           a.asset_code, a.make_model, a.current_location_id, l.location_name
+                    FROM unit_valuations v
+                    LEFT JOIN assets a ON a.asset_id = v.asset_id
+                    LEFT JOIN locations l ON l.location_id = a.current_location_id";
+            $params = [];
+            if ($locationId !== null) {
+                $sql .= ' WHERE a.current_location_id = :location_id';
+                $params[':location_id'] = $locationId;
+            }
+            $sql .= ' ORDER BY v.unit_name, v.valuation_id DESC';
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $audit = $db->prepare(
+                'INSERT INTO valuation_access_audit (actor_user_id, action, filter_json)
+                 VALUES (:actor, :action, :filters)'
+            );
+            $audit->execute([
+                ':actor' => (int) ($currentUser['id'] ?? 0),
+                ':action' => isset($_GET['export']) ? 'EXPORT' : 'READ',
+                ':filters' => json_encode(['location_id' => $locationId], JSON_UNESCAPED_SLASHES),
+            ]);
+
+            api_json_response(200, [
+                'status' => 'success',
+                'data' => [
+                    'valuations' => $rows,
+                    'count' => count($rows),
+                    'access' => 'Administrator',
+                ],
+            ]);
+        }
+
         $woId = isset($_GET['wo_id']) ? trim((string)$_GET['wo_id']) : '';
         if ($woId !== '') {
             api_require_work_order_access($db, $woId);

@@ -7,6 +7,7 @@ if (!defined('DASHBOARD_RENDER_ALLOWED') || DASHBOARD_RENDER_ALLOWED !== true) {
 }
 
 $settingsMap = [];
+$canViewAssetValuation = isset($canViewAssetValuation) && $canViewAssetValuation === true;
 try {
     $stSettings = $db->query("SELECT setting_key, setting_value FROM operational_settings");
     if ($stSettings) {
@@ -1595,7 +1596,8 @@ try {
                     </div>
                 </div>
 
-                <!-- Strip 1: Valuasi & Penjualan Aset Armada (4 Kolom Sempurna) -->
+                <?php if ($canViewAssetValuation): ?>
+                <!-- Strip 1: Valuasi & Penjualan Aset Armada (Administrator only) -->
                 <div class="telemetry-status-grid biaya-telemetry-valuation-grid"
                     style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 12px;">
                     <div class="telemetry-metric-item" title="Total Valuasi Pasaran Seluruh Armada Aset: Rp 173.806.170.000 (173,8 Miliar Rupiah)">
@@ -1646,6 +1648,8 @@ try {
                         </div>
                     </div>
                 </div>
+
+                <?php endif; ?>
 
                 <!-- Strip 2: Pengendalian Budget & Realisasi Kas Biaya (3 Kolom Sempurna) -->
                 <div class="telemetry-status-grid biaya-telemetry-budget-grid"
@@ -1737,9 +1741,11 @@ try {
                     <div class="panel-header"
                         style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding: 0 15px;">
                         <div class="asset-tabs" id="costMainTabs" style="margin-bottom:0; border-bottom:none; overflow-x:auto; flex-wrap:nowrap; gap:4px; width:100%;">
+                            <?php if ($canViewAssetValuation): ?>
                             <div class="asset-tab active" onclick="switchCostTab('valuation', this)"><i
                                     class="fa-solid fa-truck-ramp-box"></i> Valuasi &amp; Rekon Unit</div>
-                            <div class="asset-tab" onclick="switchCostTab('progress', this)"><i
+                            <?php endif; ?>
+                            <div class="asset-tab<?= $canViewAssetValuation ? '' : ' active' ?>" onclick="switchCostTab('progress', this)"><i
                                     class="fa-solid fa-chart-line"></i> Monitoring Progress Laba-Rugi (Agu-Okt 2026)</div>
                             <div class="asset-tab" onclick="switchCostTab('lpj', this)"><i
                                     class="fa-solid fa-file-invoice-dollar"></i> LPJ Bulanan Budget vs Realisasi 2026</div>
@@ -1755,7 +1761,8 @@ try {
                     </div>
                     <div class="panel-body" style="padding: 15px;">
 
-                        <!-- TAB 1: VALUASI & HARGA JUAL UNIT -->
+                        <?php if ($canViewAssetValuation): ?>
+                        <!-- TAB 1: VALUASI & HARGA JUAL UNIT (Administrator only) -->
                         <div id="costTabSecValuation">
                             <!-- Sub-Nav Switcher -->
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">
@@ -1896,8 +1903,10 @@ try {
                             </div>
                         </div>
 
+                        <?php endif; ?>
+
                         <!-- TAB 2: MONITORING PROGRESS LABA-RUGI (AGU-OKT 2026) -->
-                        <div id="costTabSecProgress" style="display:none;">
+                        <div id="costTabSecProgress"<?= $canViewAssetValuation ? ' style="display:none;"' : '' ?>>
                             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                                 <div>
                                     <h3 style="margin:0 0 4px 0; font-size:1.02rem; color:#0f172a;">
@@ -5252,6 +5261,9 @@ try {
                         </button>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-primary btn-sm" id="modalWoEditInputBtn" type="button" style="display:none; padding:5px 12px; font-size:0.82rem;">
+                            <i class="fa-solid fa-pen-to-square"></i> Edit input saya
+                        </button>
                         <button class="btn btn-outline-warning btn-sm" id="modalWoOvertimeFooterBtn" onclick="window.createSplForCurrentWo()" type="button" style="padding:5px 12px; font-size:0.82rem;" title="Ajukan Surat Perintah Lembur Mekanik untuk WO Ini">
                             <i class="fa-solid fa-business-time"></i> Ajukan SPL Lembur
                         </button>
@@ -6133,7 +6145,7 @@ try {
                         alert('Akses Ditolak: Anda tidak memiliki hak akses (C - Create) untuk menambah Master Asset.');
                         return;
                     }
-                    if (id === 'modalEditAsset' && !window.FleetRBAC.hasAccess('asset', 'U')) {
+                    if (id === 'modalEditAsset' && !window.FleetRBAC.hasAccess('asset', 'U') && !window.ownerAssetRevisionAllowed) {
                         alert('Akses Ditolak: Anda tidak memiliki hak akses (U - Update) untuk mengubah data Master Asset.');
                         return;
                     }
@@ -7370,7 +7382,9 @@ try {
                 const assetBtn = document.getElementById('modalWoAssetBtn');
                 const documentBtn = document.getElementById('modalWoPrintDocumentBtn');
                 const documentAlias = document.getElementById('modalWoDocumentAlias');
+                const editInputBtn = document.getElementById('modalWoEditInputBtn');
                 if (documentBtn) { documentBtn.disabled = true; documentBtn.onclick = null; }
+                if (editInputBtn) { editInputBtn.style.display = 'none'; editInputBtn.onclick = null; }
 
                 const targetAssetId = wo ? (wo.assetId || wo.unitId) : (fallbackAssetId || '');
                 const allAssetsList = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
@@ -7396,6 +7410,7 @@ try {
                     const rawData = result.data;
                     const detail = normalizeWorkOrder(rawData);
                     detail.support = rawData.support || null;
+                    detail.canOwnerEdit = Boolean(rawData.can_owner_edit);
 
                     if (wo) Object.assign(wo, detail);
                     else wo = detail;
@@ -7441,6 +7456,13 @@ try {
                     if (documentBtn) {
                         documentBtn.disabled = false;
                         documentBtn.onclick = () => window.open(`api/work_order_document.php?id=${encodeURIComponent(detail.woId)}&doc_alias=${encodeURIComponent(documentAlias?.value || 'WO')}`, '_blank', 'noopener');
+                    }
+                    if (editInputBtn && detail.canOwnerEdit) {
+                        editInputBtn.style.display = 'inline-flex';
+                        editInputBtn.onclick = () => {
+                            closeModal('modalWoDetail');
+                            window.NewWorkOrderForm?.edit?.(rawData);
+                        };
                     }
 
                     renderWoCommandCenterSupport(detail, detail.support || {});
@@ -10060,6 +10082,10 @@ try {
                     return;
                 }
 
+                window.ownerAssetRevisionAllowed = Boolean(assetObj.can_owner_edit || assetObj.canOwnerEdit);
+                const editModal = document.getElementById('modalEditAsset');
+                if (editModal) editModal.dataset.ownerRevision = window.ownerAssetRevisionAllowed ? 'true' : 'false';
+
                 document.getElementById('ea-id-label').textContent = assetObj.id;
                 document.getElementById('ea-id').value = assetObj.id;
                 document.getElementById('ea-cat').value = assetObj.category || 'Other';
@@ -10132,8 +10158,10 @@ try {
 
                 const errAlert = document.getElementById('ea-error-alert');
                 if (errAlert) {
-                    errAlert.style.display = 'none';
-                    errAlert.textContent = '';
+                    errAlert.style.display = window.ownerAssetRevisionAllowed ? 'block' : 'none';
+                    errAlert.textContent = window.ownerAssetRevisionAllowed
+                        ? 'Mode revisi input: Anda dapat memperbaiki data unit sendiri sebelum dipakai proses operasional. Semua perubahan dicatat.'
+                        : '';
                 }
 
                 openModal('modalEditAsset');
@@ -10912,6 +10940,12 @@ try {
                         legal_kir_expiry: document.getElementById('ea-kir').value || null,
                         legal_silo_expiry: document.getElementById('ea-silo').value || null
                     };
+                    if (document.getElementById('modalEditAsset')?.dataset.ownerRevision === 'true') {
+                        const revisionReason = window.prompt('Alasan koreksi input Master Asset (wajib, maksimal 500 karakter):', 'Koreksi data sebelum diproses');
+                        if (revisionReason === null) return;
+                        if (!revisionReason.trim() || revisionReason.trim().length > 500) throw new Error('Alasan koreksi wajib diisi (maksimal 500 karakter).');
+                        payload.revision_reason = revisionReason.trim();
+                    }
                     if (isDumpTruck) {
                         payload[dumpIdentityKind] = dumpIdentity || null;
                         payload.stnk_location = stnkLocation || null;
@@ -12968,10 +13002,12 @@ try {
 
             // ==========================================
             // COMPREHENSIVE COST & VALUATION ENGINE
-            // Sumber Data Terpadu: material/LAPORAN-KEUANGAN/ (26 Sheet)
-            // Total 7 Unit: Biaya Repair Rp 2.249.290.290 (Terbaru Sep: Rp 2.481.185.616) | Nilai Buku Rp 3.347.125.000 | Penawaran Buyer Rp 4.070.000.000 | Net Gain +Rp 611.275.000
+            // Sumber Data Terpadu: material/LAPORAN-KEUANGAN/ (26 Sheet).
+            // Nilai sensitif hanya disisipkan server-side untuk Administrator.
             // ==========================================
 
+            <?php if ($canViewAssetValuation): ?>
+            // Ringkasan 7 unit tersedia di blok admin ini; non-admin menerima array kosong.
             let globalValuations = [
                 {
                     id: 'DT 01',
@@ -13195,6 +13231,13 @@ try {
                 { rank: 19, nopol: 'BM 9282 JO (106)', year: 2022, tire: 46200000, nonTire: 157300000, total: 203500000, cost2026: 61400000, age: 24, avg: 8479167 },
                 { rank: 20, nopol: 'BM 8738 DO (DT 05)', year: 2017, tire: 69400000, nonTire: 132100000, total: 201500000, cost2026: 38200000, age: 72, avg: 2798611 }
             ];
+            <?php else: ?>
+            // Safe empty datasets prevent runtime errors without embedding
+            // valuation, buyer offer, or disposal figures in non-admin HTML.
+            let globalValuations = [];
+            let globalDtEvaluasi = [];
+            let globalDtRanking = [];
+            <?php endif; ?>
 
             // LPJ Bulanan 2026 (Januari s.d. Desember 2026) - Plafon Rp 773.876.683/bln
             let globalLpjReports = [
@@ -13353,9 +13396,11 @@ try {
             window.renderCostDashboard = function () {
                 renderCostChart();
                 renderAllocSummary('rencana');
-                renderCostValuationTable(globalValuations);
-                renderDtEvaluasiTable(globalDtEvaluasi);
-                renderDtRankingTable(globalDtRanking);
+                if (document.getElementById('costTabSecValuation')) {
+                    renderCostValuationTable(globalValuations);
+                    renderDtEvaluasiTable(globalDtEvaluasi);
+                    renderDtRankingTable(globalDtRanking);
+                }
                 renderProgressMonitoring();
                 renderCostLpjTable(globalLpjReports);
                 renderLpj12Categories();

@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
 require_once dirname(__DIR__) . '/core/NotificationAudience.php';
+require_once dirname(__DIR__) . '/core/InputRevision.php';
 
 $db = Database::getInstance();
 ReportIntegration::ensureTables($db);
@@ -243,6 +244,8 @@ switch ($method) {
                           (SELECT rwi.report_id FROM report_work_order_integrations rwi
                            WHERE rwi.work_order_id = w.wo_id AND rwi.reversed_at IS NULL
                            ORDER BY rwi.integration_id DESC LIMIT 1) AS source_report_id,
+                          EXISTS(SELECT 1 FROM purchase_requests pr WHERE pr.wo_id = w.wo_id) AS has_purchase_request,
+                          EXISTS(SELECT 1 FROM inventory_transactions it WHERE it.wo_id = w.wo_id AND it.reversed_at IS NULL) AS has_inventory_transaction,
                           (SELECT rr.report_number
                            FROM report_work_order_integrations rwi
                            INNER JOIN report_records rr ON rr.report_id = rwi.report_id
@@ -283,6 +286,20 @@ switch ($method) {
             $stmt = $db->prepare($sql);
             $stmt->execute($scope['params']);
             $result = $stmt->fetchAll();
+        }
+        $decorateEditable = static function (array &$row): void {
+            $row['can_owner_edit'] = ((int) ($row['created_by'] ?? 0) === InputRevision::actorId() || InputRevision::isPrivileged())
+                && (string) ($row['input_state'] ?? 'SUBMITTED') === 'SUBMITTED'
+                && (string) ($row['status'] ?? '') === 'Open'
+                && empty($row['has_purchase_request'])
+                && empty($row['has_inventory_transaction'])
+                && empty($row['source_report_id']);
+        };
+        if (isset($_GET['id'])) {
+            $decorateEditable($result);
+        } else {
+            foreach ($result as &$row) $decorateEditable($row);
+            unset($row);
         }
         echo json_encode(['status' => 'success', 'data' => $result]);
         break;
@@ -377,13 +394,13 @@ switch ($method) {
 
             $stmt = $db->prepare(
                 'INSERT INTO work_orders
-                 (wo_id, asset_id, hull_number, equipment_type, current_hm_km, trouble_at,
+                 (wo_id, created_by, input_state, asset_id, hull_number, equipment_type, current_hm_km, trouble_at,
                   raw_location, issue_description, status, priority, maintenance_type,
                   parts_requirement, parts_requirement_note,
                   assigned_mechanic, assigned_mechanics_json, root_cause, repair_action,
                   is_downtime, is_forced_operation, mitigation_action, downtime_formatted,
                   repair_started_at, estimated_completion_at)
-                 VALUES (:wo_id, :asset_id, :hull_number, :equipment_type, :current_hm_km, :trouble_at,
+                 VALUES (:wo_id, :created_by, :input_state, :asset_id, :hull_number, :equipment_type, :current_hm_km, :trouble_at,
                          :raw_location, :issue, :status, :priority, :maintenance_type,
                          :parts_requirement, :parts_requirement_note,
                          :mechanic, :mechanics_json, :root_cause, :repair_action,
@@ -392,6 +409,8 @@ switch ($method) {
             );
             $stmt->execute([
                 ':wo_id' => (string) $data['wo_id'],
+                ':created_by' => InputRevision::actorId() ?: null,
+                ':input_state' => 'SUBMITTED',
                 ':asset_id' => (string) $data['asset_id'],
                 ':issue' => $issue,
                 ':status' => $status,
@@ -567,6 +586,9 @@ switch ($method) {
                     'partsAvailability' => $partsAvailability,
                 ],
             ]);
+        } catch (DomainException $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            api_json_response(409, ['status' => 'error', 'message' => $e->getMessage()]);
         } catch (InvalidArgumentException $e) {
             if ($db->inTransaction()) $db->rollBack();
             api_json_response(422, ['status' => 'error', 'message' => $e->getMessage()]);
@@ -584,8 +606,9 @@ switch ($method) {
         }
 
         $id = (string) ($_GET['id'] ?? $data['wo_id']);
+        $isOwnerRevision = strtolower(trim((string) ($data['action'] ?? ''))) === 'update_own_pending';
         $isClosing = isset($data['status']) && $data['status'] === 'Closed';
-        AuthMiddleware::checkAccess('wo', $isClosing ? 'A' : 'U');
+        AuthMiddleware::checkAccess('wo', $isOwnerRevision ? 'R' : ($isClosing ? 'A' : 'U'));
         api_require_work_order_access($db, $id);
 
         try {
@@ -596,6 +619,24 @@ switch ($method) {
             if (!$current) {
                 $db->rollBack();
                 api_json_response(404, ['status' => 'error', 'message' => 'Work Order tidak ditemukan.']);
+            }
+
+            $revisionReason = null;
+            if ($isOwnerRevision) {
+                InputRevision::assertOwner($current['created_by'] ?? null, 'Hanya pembuat WO yang dapat merevisi input ini.');
+                if ((string) ($current['input_state'] ?? 'SUBMITTED') !== 'SUBMITTED' || (string) $current['status'] !== 'Open') {
+                    throw new DomainException('WO sudah diproses dan tidak dapat direvisi sebagai input awal.');
+                }
+                $downstream = $db->prepare(
+                    'SELECT EXISTS(SELECT 1 FROM purchase_requests WHERE wo_id = :wo_id)
+                            OR EXISTS(SELECT 1 FROM inventory_transactions WHERE wo_id = :wo_id AND reversed_at IS NULL)
+                            OR EXISTS(SELECT 1 FROM report_work_order_integrations WHERE work_order_id = :wo_id AND reversed_at IS NULL)'
+                );
+                $downstream->execute([':wo_id' => $id]);
+                if ((int) $downstream->fetchColumn() === 1) {
+                    throw new DomainException('WO sudah memiliki SPB, transaksi stok, atau Form sumber sehingga revisi input harus melalui proses koreksi resmi.');
+                }
+                $revisionReason = InputRevision::reason($data);
             }
 
             $assetStmt = $db->prepare(
@@ -719,6 +760,12 @@ switch ($method) {
                 $fields[] = 'closed_at = NULL';
             }
 
+            if ($isOwnerRevision) {
+                $fields[] = 'input_revision_no = input_revision_no + 1';
+                $fields[] = 'input_last_edited_at = NOW()';
+                $fields[] = 'input_last_edited_by = :input_last_edited_by';
+                $params[':input_last_edited_by'] = InputRevision::actorId();
+            }
             if (!$fields) {
                 $db->rollBack();
                 api_json_response(422, ['status' => 'error', 'message' => 'Tidak ada data yang diperbarui.']);
@@ -726,6 +773,14 @@ switch ($method) {
 
             $stmt = $db->prepare('UPDATE work_orders SET ' . implode(', ', array_unique($fields)) . ' WHERE wo_id = :id');
             $stmt->execute($params);
+
+            if ($isOwnerRevision) {
+                $afterStmt = $db->prepare('SELECT * FROM work_orders WHERE wo_id = :id');
+                $afterStmt->execute([':id' => $id]);
+                $afterRevision = $afterStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+                InputRevision::record($db, 'WO', $id, 'UPDATE', (string) $revisionReason, (array) $current, $afterRevision);
+                wo_insert_timeline($db, $id, 'OWNER_REVISION', (string) $current['status'], (string) $current['status'], 'Input awal direvisi oleh pembuat', (string) $revisionReason);
+            }
 
             if ($ticket !== null && (
                 array_key_exists('current_hm_km', $data) || array_key_exists('currentHmKm', $data)
@@ -908,7 +963,10 @@ switch ($method) {
                 (string) $current['asset_id']
             );
 
-            echo json_encode(['status' => 'success', 'message' => 'Work Order berhasil diperbarui.']);
+            echo json_encode(['status' => 'success', 'message' => $isOwnerRevision ? 'Revisi input Work Order berhasil disimpan.' : 'Work Order berhasil diperbarui.']);
+        } catch (DomainException $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            api_json_response(409, ['status' => 'error', 'message' => $e->getMessage()]);
         } catch (InvalidArgumentException $e) {
             if ($db->inTransaction()) $db->rollBack();
             api_json_response(422, ['status' => 'error', 'message' => $e->getMessage()]);

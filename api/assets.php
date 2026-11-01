@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
+require_once dirname(__DIR__) . '/core/InputRevision.php';
 
 $db = Database::getInstance();
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
@@ -75,7 +76,9 @@ switch ($method) {
         $scope = api_location_scope_clause('a', 'asset_list_location_id');
 
         if (isset($_GET['id'])) {
-            $sql = "SELECT a.*, l.location_name as location_name 
+            $sql = "SELECT a.*, l.location_name as location_name,
+                           EXISTS(SELECT 1 FROM work_orders w WHERE w.asset_id = a.asset_id) AS has_work_order,
+                           EXISTS(SELECT 1 FROM asset_movements am WHERE am.asset_id = a.asset_id) AS has_movement
                     FROM assets a 
                     LEFT JOIN locations l ON a.current_location_id = l.location_id
                     WHERE a.asset_id = :id
@@ -92,6 +95,9 @@ switch ($method) {
             }
             $completeness = asset_compute_completeness($row);
             $result = array_merge($row, $completeness);
+            $result['can_owner_edit'] = ((int) ($row['created_by'] ?? 0) === InputRevision::actorId() || InputRevision::isPrivileged())
+                && (string) ($row['input_state'] ?? 'SUBMITTED') === 'SUBMITTED'
+                && empty($row['has_work_order']) && empty($row['has_movement']);
             $historyStmt = $db->prepare('SELECT history_id, old_hull_number, new_hull_number, change_reason, effective_date, changed_by_name, changed_at FROM asset_hull_history WHERE asset_id = :id ORDER BY changed_at DESC, history_id DESC');
             $historyStmt->execute([':id' => (string) $_GET['id']]);
             $result['hull_history'] = $historyStmt->fetchAll();
@@ -122,7 +128,9 @@ switch ($method) {
                 $result[$key] = $relatedStmt->fetchAll();
             }
         } else {
-            $sql = "SELECT a.*, l.location_name as location_name 
+            $sql = "SELECT a.*, l.location_name as location_name,
+                           EXISTS(SELECT 1 FROM work_orders w WHERE w.asset_id = a.asset_id) AS has_work_order,
+                           EXISTS(SELECT 1 FROM asset_movements am WHERE am.asset_id = a.asset_id) AS has_movement
                     FROM assets a 
                     LEFT JOIN locations l ON a.current_location_id = l.location_id
                     WHERE NOT EXISTS (
@@ -135,7 +143,11 @@ switch ($method) {
             $stmt->execute($scope['params']);
             $rows = $stmt->fetchAll();
             $result = array_map(function (array $row) {
-                return array_merge($row, asset_compute_completeness($row));
+                return array_merge($row, asset_compute_completeness($row), [
+                    'can_owner_edit' => ((int) ($row['created_by'] ?? 0) === InputRevision::actorId() || InputRevision::isPrivileged())
+                        && (string) ($row['input_state'] ?? 'SUBMITTED') === 'SUBMITTED'
+                        && empty($row['has_work_order']) && empty($row['has_movement']),
+                ]);
             }, $rows);
         }
 
@@ -288,7 +300,7 @@ switch ($method) {
             $db->beginTransaction();
             $stmt = $db->prepare("
                 INSERT INTO assets (
-                    asset_id, asset_code, hull_number, alias_name, serial_number, license_plate,
+                    asset_id, created_by, input_state, asset_code, hull_number, alias_name, serial_number, license_plate,
                     make_model, year_manufacture, type, category, status,
                     warranty, capacity, chassis_number, dealer, project_name, operational_position,
                     invoice_location, stnk_location, bpkb_location, vehicle_type, asset_age,
@@ -298,7 +310,7 @@ switch ($method) {
                     next_service_due_hm_km, next_service_estimated_date,
                     legal_stnk_expiry, legal_kir_expiry, legal_silo_expiry
                 ) VALUES (
-                    :id, :code, :hull, :alias, :sn, :plate,
+                    :id, :created_by, 'SUBMITTED', :code, :hull, :alias, :sn, :plate,
                     :make_model, :year, :type, :cat, :status,
                     :warranty, :capacity, :chassis, :dealer, :project_name, :position,
                     :invoice_location, :stnk_location, :bpkb_location, :vehicle_type, :asset_age,
@@ -316,6 +328,7 @@ switch ($method) {
             $chassisVal = trim((string) ($data['chassis_number'] ?? $data['chassis'] ?? '')) ?: null;
             $stmt->execute([
                 ':id' => $assetId,
+                ':created_by' => InputRevision::actorId() ?: null,
                 ':code' => $assetCode,
                 ':hull' => $initialHull !== '' ? $initialHull : null,
                 ':alias' => $initialHull !== '' ? $initialHull : null,
@@ -399,7 +412,6 @@ switch ($method) {
         break;
 
     case 'PUT':
-        AuthMiddleware::checkAccess('asset', 'U');
         $data = json_decode((string) file_get_contents("php://input"), true);
         if (!$data || !is_array($data) || (!isset($data['asset_id']) && !isset($_GET['id']))) {
             api_json_response(422, ["status" => "error", "message" => "Payload tidak valid atau ID aset tidak disertakan."]);
@@ -407,6 +419,23 @@ switch ($method) {
 
         $id = trim((string) ($_GET['id'] ?? $data['asset_id']));
         api_require_asset_access($db, $id);
+
+        $ownershipStmt = $db->prepare(
+            'SELECT a.*,
+                    EXISTS(SELECT 1 FROM work_orders w WHERE w.asset_id = a.asset_id) AS has_work_order,
+                    EXISTS(SELECT 1 FROM asset_movements am WHERE am.asset_id = a.asset_id) AS has_movement
+             FROM assets a WHERE a.asset_id = :id LIMIT 1'
+        );
+        $ownershipStmt->execute([':id' => $id]);
+        $ownership = $ownershipStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$ownership) api_json_response(404, ['status' => 'error', 'message' => 'Aset tidak ditemukan.']);
+        $specialAction = strtolower(trim((string) ($data['action'] ?? '')));
+        $isOwnerRevision = $specialAction === ''
+            && (int) ($ownership['created_by'] ?? 0) === InputRevision::actorId()
+            && (string) ($ownership['input_state'] ?? 'SUBMITTED') === 'SUBMITTED'
+            && empty($ownership['has_work_order']) && empty($ownership['has_movement']);
+        AuthMiddleware::checkAccess('asset', $isOwnerRevision ? 'R' : 'U');
+        $revisionReason = $isOwnerRevision ? InputRevision::reason($data) : null;
 
         if (array_key_exists('asset_code', $data)) {
             $codeStmt = $db->prepare('SELECT asset_code FROM assets WHERE asset_id = :id');
@@ -701,6 +730,12 @@ switch ($method) {
                 $params[":$field"] = $value;
             }
         }
+        if ($isOwnerRevision) {
+            $fields[] = '`input_revision_no` = `input_revision_no` + 1';
+            $fields[] = '`input_last_edited_at` = NOW()';
+            $fields[] = '`input_last_edited_by` = :input_last_edited_by';
+            $params[':input_last_edited_by'] = InputRevision::actorId();
+        }
 
         if (empty($fields)) {
             api_json_response(422, ["status" => "error", "message" => "Tidak ada field data yang diubah."]);
@@ -711,6 +746,11 @@ switch ($method) {
             $query = "UPDATE assets SET " . implode(", ", $fields) . " WHERE asset_id = :id";
             $stmt = $db->prepare($query);
             $stmt->execute($params);
+            if ($isOwnerRevision) {
+                $afterStmt = $db->prepare('SELECT * FROM assets WHERE asset_id = :id');
+                $afterStmt->execute([':id' => $id]);
+                InputRevision::record($db, 'ASSET', $id, 'UPDATE', (string) $revisionReason, $ownership, $afterStmt->fetch(PDO::FETCH_ASSOC) ?: []);
+            }
             if ($onboarding !== null && $onboarding['current_operator_name'] !== ($previous['current_operator_name'] ?? null)) {
                 $closeOp = $db->prepare('UPDATE asset_operator_history SET end_date = CURDATE() WHERE asset_id = :id AND end_date IS NULL');
                 $closeOp->execute([':id' => $id]);

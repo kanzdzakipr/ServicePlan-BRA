@@ -25,6 +25,10 @@ if (!api_has_permission('dashboard.read')) {
     exit('Akses dashboard ditolak.');
 }
 
+// Valuasi aset adalah data keuangan terbatas. Nilai ini dipakai oleh view
+// untuk tidak merender markup maupun data JavaScript sensitif bagi non-admin.
+$canViewAssetValuation = in_array('Administrator', (array) ($context['roles'] ?? []), true);
+
 header('Content-Type: text/html; charset=UTF-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');

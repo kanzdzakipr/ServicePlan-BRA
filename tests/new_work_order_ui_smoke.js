@@ -126,6 +126,29 @@ async function main() {
             throw new Error(`Desktop form tidak sesuai: ${JSON.stringify(desktop)}`);
         }
 
+        await cdp.evaluate(sessionId, `window.NewWorkOrderForm.edit({
+            wo_id: 'WO-OWNER-EDIT-01', asset_id: 'EXC-0099', raw_location: 'Pit Barat Front 4',
+            current_hm_km: 8450.2, trouble_at: '2026-11-01 08:15:00', priority: 'High',
+            maintenance_type: 'Corrective', issue_description: 'Koreksi gejala hydraulic',
+            root_cause: 'Seal diperiksa ulang', assigned_mechanics_json: '["Apeng (Lead Mechanic)"]',
+            is_downtime: 1, is_forced_operation: 0
+        })`);
+        const revisionMode = await cdp.evaluate(sessionId, `(() => ({
+            title: document.getElementById('newWoTitle').textContent,
+            location: document.getElementById('nwo-location').value,
+            hm: document.getElementById('nwo-hm-km').value,
+            issue: document.getElementById('nwo-issue').value,
+            priority: document.getElementById('nwo-prio').value,
+            button: document.getElementById('nwo-submit').textContent.trim(),
+            message: document.getElementById('nwo-form-message').textContent
+        }))()`);
+        if (!revisionMode.title.includes('WO-OWNER-EDIT-01') || revisionMode.location !== 'Pit Barat Front 4'
+            || revisionMode.hm !== '8450.2' || revisionMode.issue !== 'Koreksi gejala hydraulic'
+            || revisionMode.priority !== 'High' || !revisionMode.button.includes('Simpan revisi')
+            || !revisionMode.message.includes('audit trail')) {
+            throw new Error(`Mode revisi WO tidak sesuai: ${JSON.stringify(revisionMode)}`);
+        }
+
         const screenshot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
         fs.writeFileSync(screenshotPath, Buffer.from(screenshot.data, 'base64'));
 
@@ -134,7 +157,7 @@ async function main() {
         const mobileColumns = await cdp.evaluate(sessionId, "getComputedStyle(document.querySelector('.wo-form-grid')).gridTemplateColumns.split(' ').length");
         if (mobileColumns !== 1) throw new Error(`Grid mobile masih ${mobileColumns} kolom.`);
 
-        console.log(`PASS: modal WO terlihat, autofill lengkap, mitigasi aktif, chip PIC bekerja, dan grid mobile 1 kolom.`);
+        console.log(`PASS: modal WO terlihat, autofill lengkap, mode revisi pemilik bekerja, dan grid mobile 1 kolom.`);
         console.log(`SCREENSHOT: ${screenshotPath}`);
     } finally {
         chrome.kill();

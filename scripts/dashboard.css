@@ -16182,13 +16182,15 @@ body.sl-modal-open {
 .sl-parts-table-wrap {
     max-height: 290px;
     overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable both-edges;
 }
 
 .sl-parts-table,
 .sl-draft-table {
     border-collapse: separate;
     border-spacing: 0;
-    font-size: .64rem;
+    font-size: .78rem;
     min-width: 990px;
     width: 100%;
 }
@@ -16198,10 +16200,13 @@ body.sl-modal-open {
     background: #f1f5f9;
     border-bottom: 1px solid #d7e0eb;
     color: #526078;
-    font-size: .58rem;
+    font-size: .68rem;
     letter-spacing: .025em;
     padding: 8px 9px;
     text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    z-index: 3;
 }
 
 .sl-parts-table td,
@@ -16220,7 +16225,7 @@ body.sl-modal-open {
 .sl-parts-table td > small {
     color: #8390a3;
     display: block;
-    font-size: .54rem;
+    font-size: .68rem;
     margin-top: 3px;
     max-width: 330px;
 }
@@ -16340,6 +16345,9 @@ body.sl-modal-open {
 
 .sl-draft-table-wrap {
     overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
 }
 
 .sl-draft-table {
@@ -16351,9 +16359,18 @@ body.sl-modal-open {
     border: 1px solid #cbd5e1;
     border-radius: 5px;
     font: inherit;
-    height: 32px;
+    font-size: .78rem;
+    height: 38px;
     padding: 0 8px;
     width: 100%;
+}
+
+.sl-draft-table input:focus-visible,
+.sl-draft-table select:focus-visible,
+.sl-master-part-select:focus-visible {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .16);
+    outline: none;
 }
 
 .sl-draft-table select {
@@ -16373,9 +16390,22 @@ body.sl-modal-open {
     border-bottom: 1px solid #dbe4ef;
     color: #526078;
     display: flex;
-    font-size: .61rem;
+    font-size: .74rem;
     gap: 7px;
     padding: 8px 14px;
+}
+
+@media (max-width: 720px) {
+    .sl-parts-table,
+    .sl-draft-table {
+        min-width: 860px;
+    }
+
+    .sl-parts-table-wrap,
+    .sl-draft-table-wrap {
+        margin-inline: -10px;
+        padding-inline: 10px;
+    }
 }
 
 .sl-master-part-help i {
