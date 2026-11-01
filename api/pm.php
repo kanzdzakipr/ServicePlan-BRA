@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/AssetOnboarding.php';
+require_once dirname(__DIR__) . '/core/PmForecast.php';
 $db = Database::getInstance();
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 if ($method === 'POST') {
@@ -214,6 +215,7 @@ if ($view === 'available_units') {
                    ) AS daily_usage_coefficient,
                    COALESCE(a.next_service_due_hm_km, p.target_due_hm) AS next_service_due_hm_km,
                    a.next_service_estimated_date, p.pm_plan_id, p.status AS pm_status,
+                   p.original_estimated_date,p.revised_estimated_date,p.forecast_revision_no,
                    p.planner_note,
                    CASE WHEN (a.next_service_due_hm_km IS NOT NULL OR p.pm_plan_id IS NOT NULL) THEN 1 ELSE 0 END AS in_pm_table
             FROM assets a
@@ -260,6 +262,7 @@ $sql = 'SELECT a.asset_id, a.asset_code, a.hull_number, a.alias_name, a.serial_n
                COALESCE(a.next_service_due_hm_km, p.target_due_hm) AS next_service_due_hm_km,
                a.next_service_estimated_date,
                a.service_manual_pdf_url, p.pm_plan_id, p.status AS pm_status,
+               p.original_estimated_date,p.revised_estimated_date,p.forecast_revision_no,
                COALESCE(p.warranty_status, NULLIF(a.warranty, \'\'), \'No Warranty\') AS warranty_status,
                p.planner_note
         FROM assets a
@@ -282,6 +285,8 @@ $byId = [];
 foreach ($assets as &$asset) {
     $asset['service_history'] = [];
     $asset['gallery_photos'] = [];
+    $asset['forecast_adjustments'] = [];
+    $asset['quality_flags'] = PmForecast::qualityFlags($asset['last_hm_km'] ?? null, $asset['service_interval_val'] ?? null, $asset['daily_usage_coefficient'] ?? null);
     $byId[$asset['asset_id']] = &$asset;
 }
 unset($asset);
@@ -298,6 +303,11 @@ if ($assets) {
     $photoStmt->execute($ids);
     foreach ($photoStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $byId[$row['asset_id']]['gallery_photos'][] = $row;
+    }
+    $adjustmentStmt = $db->prepare("SELECT adjustment_id,pm_plan_id,asset_id,adjustment_type,original_estimated_date,revised_estimated_date,target_meter,current_meter,usage_rate,effective_from,effective_to,status_source,reason,created_by,created_at FROM pm_forecast_adjustments WHERE asset_id IN ($placeholders) ORDER BY created_at DESC,adjustment_id DESC");
+    $adjustmentStmt->execute($ids);
+    foreach ($adjustmentStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $byId[$row['asset_id']]['forecast_adjustments'][] = $row;
     }
 }
 api_json_response(200, ['status' => 'success', 'data' => $assets]);

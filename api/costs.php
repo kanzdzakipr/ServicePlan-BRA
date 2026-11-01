@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/CostLedger.php';
+require_once dirname(__DIR__) . '/core/ExportService.php';
 
 $db = Database::getInstance();
 CostLedger::ensureTables($db);
@@ -39,61 +40,32 @@ if (!defined('API_SKIP_ROUTING')) {
     }
 
     if ($method === 'GET') {
-<<<<<<< HEAD
-        if (isset($_GET['valuation']) && $_GET['valuation'] === '1') {
-            $roles = (array) ($currentUser['roles'] ?? []);
-            if (!in_array('Administrator', $roles, true)) {
-                api_json_response(403, [
-                    'status' => 'error',
-                    'code' => 'ASSET_VALUATION_FORBIDDEN',
-                    'message' => 'Valuasi aset hanya dapat diakses oleh Administrator.',
-                ]);
-            }
-
-            $db->exec("CREATE TABLE IF NOT EXISTS valuation_access_audit (
-                audit_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                actor_user_id INT NOT NULL,
-                action VARCHAR(30) NOT NULL,
-                filter_json JSON NULL,
-                accessed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                KEY idx_valuation_audit_actor_time (actor_user_id, accessed_at)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-            $sql = "SELECT v.valuation_id, v.asset_id, v.unit_name, v.unit_code_alias,
-                           v.total_repair_cost, v.purchase_price, v.book_value,
-                           v.monthly_rental_rate, v.monthly_leasing_installment,
-                           v.market_price_min, v.market_price_max, v.raw_market_price_str,
-                           a.asset_code, a.make_model, a.current_location_id, l.location_name
-                    FROM unit_valuations v
-                    LEFT JOIN assets a ON a.asset_id = v.asset_id
-                    LEFT JOIN locations l ON l.location_id = a.current_location_id";
-            $params = [];
-            if ($locationId !== null) {
-                $sql .= ' WHERE a.current_location_id = :location_id';
-                $params[':location_id'] = $locationId;
-            }
-            $sql .= ' ORDER BY v.unit_name, v.valuation_id DESC';
-            $stmt = $db->prepare($sql);
-            $stmt->execute($params);
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            $audit = $db->prepare(
-                'INSERT INTO valuation_access_audit (actor_user_id, action, filter_json)
-                 VALUES (:actor, :action, :filters)'
-            );
-            $audit->execute([
-                ':actor' => (int) ($currentUser['id'] ?? 0),
-                ':action' => isset($_GET['export']) ? 'EXPORT' : 'READ',
-                ':filters' => json_encode(['location_id' => $locationId], JSON_UNESCAPED_SLASHES),
-            ]);
-=======
         $action = isset($_GET['action']) ? trim((string)$_GET['action']) : '';
-        if ($action === 'valuation' || $action === 'export_valuation') {
-            api_require_valuation_access();
-
-            // Record valuation access/export in audit log
+        $valuationRequested = (isset($_GET['valuation']) && $_GET['valuation'] === '1')
+            || $action === 'valuation' || $action === 'export_valuation';
+        if ($valuationRequested) {
+            if (!api_can_read_valuation()) {
+                api_json_response(403, ['status'=>'error','code'=>'ASSET_VALUATION_FORBIDDEN','message'=>'Valuasi aset hanya dapat diakses oleh Administrator.']);
+            }
+            $exporting = $action === 'export_valuation' || isset($_GET['export']);
+            $db->exec("CREATE TABLE IF NOT EXISTS valuation_access_audit (
+                audit_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, actor_user_id INT NOT NULL,
+                action VARCHAR(30) NOT NULL, filter_json JSON NULL,
+                accessed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_valuation_audit_actor_time (actor_user_id,accessed_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $sql="SELECT uv.valuation_id,uv.asset_id,uv.unit_name,uv.unit_code_alias,uv.total_repair_cost,
+                         uv.purchase_price,uv.book_value,uv.monthly_rental_rate,uv.monthly_leasing_installment,
+                         uv.market_price_min,uv.market_price_max,uv.raw_market_price_str,
+                         a.asset_code,a.category,a.make_model,a.serial_number,a.current_location_id,l.location_name
+                  FROM unit_valuations uv LEFT JOIN assets a ON uv.asset_id=a.asset_id
+                  LEFT JOIN locations l ON l.location_id=a.current_location_id";
+            $params=[]; if($locationId!==null){$sql.=' WHERE a.current_location_id=:location_id';$params[':location_id']=$locationId;}
+            $stmt=$db->prepare($sql.' ORDER BY uv.valuation_id ASC');$stmt->execute($params);$rows=$stmt->fetchAll(PDO::FETCH_ASSOC);
+            $audit=$db->prepare('INSERT INTO valuation_access_audit (actor_user_id,action,filter_json) VALUES (:actor,:action,:filters)');
+            $audit->execute([':actor'=>(int)($currentUser['id']??0),':action'=>$exporting?'EXPORT':'READ',':filters'=>json_encode(['location_id'=>$locationId])]);
             try {
-                $auditAction = ($action === 'export_valuation') ? 'ASSET_VALUATION_EXPORT' : 'ASSET_VALUATION_VIEW';
+                $auditAction = $exporting ? 'ASSET_VALUATION_EXPORT' : 'ASSET_VALUATION_VIEW';
                 $auditStmt = $db->prepare(
                     "INSERT INTO user_audit_trail (action, actor_user_id, actor_username, details_json, created_at)
                      VALUES (:action, :actor_id, :actor_user, :details, NOW())"
@@ -109,53 +81,20 @@ if (!defined('API_SKIP_ROUTING')) {
                     ])
                 ]);
             } catch (Throwable $t) {
-                // Non-fatal if audit trail insert fails
+                error_log('Valuation user audit failed: '.$t->getMessage());
             }
-
-            $stmt = $db->query(
-                "SELECT uv.*, a.asset_code, a.category, a.make_model, a.serial_number
-                 FROM unit_valuations uv
-                 LEFT JOIN assets a ON uv.asset_id = a.asset_id
-                 ORDER BY uv.valuation_id ASC"
-            );
-            $rows = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
-
             $totalFleetMarket = 173806170000.0;
             $totalBook7 = 3347125000.0;
             $totalOffer7 = 4070000000.0;
             $netGain7 = 611275000.0;
-
-            if ($action === 'export_valuation') {
-                header('Content-Type: text/csv; charset=UTF-8');
-                header('Content-Disposition: attachment; filename="asset_valuations_' . date('Ymd_His') . '.csv"');
-                $out = fopen('php://output', 'w');
-                fputcsv($out, ['ID', 'Asset ID', 'Unit Name', 'Book Value', 'Purchase Price', 'Repair Cost', 'Market Min', 'Market Max']);
-                foreach ($rows as $r) {
-                    fputcsv($out, [
-                        $r['valuation_id'],
-                        $r['asset_id'],
-                        $r['unit_name'],
-                        $r['book_value'],
-                        $r['purchase_price'],
-                        $r['total_repair_cost'],
-                        $r['market_price_min'],
-                        $r['market_price_max']
-                    ]);
-                }
-                fclose($out);
-                exit;
-            }
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
+            if($exporting) ExportService::download($rows,'asset-valuation',null,$locationId!==null?'location-'.$locationId:'semua-lokasi');
 
             api_json_response(200, [
                 'status' => 'success',
                 'data' => [
                     'valuations' => $rows,
-<<<<<<< HEAD
                     'count' => count($rows),
                     'access' => 'Administrator',
-                ],
-=======
                     'summary' => [
                         'totalFleetMarket' => $totalFleetMarket,
                         'formattedFleetMarket' => 'Rp 173.806.170.000',
@@ -168,7 +107,6 @@ if (!defined('API_SKIP_ROUTING')) {
                         'netMarginPct' => 18.3
                     ]
                 ]
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
             ]);
         }
 

@@ -386,11 +386,35 @@ CREATE TABLE `pm_plans` (
     `last_service_hm` DECIMAL(10,2) DEFAULT 0.00,
     `last_service_date` DATE NULL,
     `target_due_hm` DECIMAL(10,2) NOT NULL,
+    `original_estimated_date` DATE NULL,
+    `revised_estimated_date` DATE NULL,
+    `forecast_revision_no` INT UNSIGNED NOT NULL DEFAULT 0,
+    `generation_key` VARCHAR(100) NULL,
     `variance_hm` DECIMAL(10,2) DEFAULT 0.00,
     `status` ENUM('PLANNED', 'DUE_SOON', 'OVERDUE', 'IN_PROGRESS', 'COMPLETED') DEFAULT 'PLANNED',
     `warranty_status` VARCHAR(100) DEFAULT 'No Warranty',
     `planner_note` TEXT NULL,
     FOREIGN KEY (`asset_id`) REFERENCES `assets`(`asset_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `pm_forecast_adjustments` (
+    `adjustment_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `pm_plan_id` INT NOT NULL,
+    `asset_id` VARCHAR(100) NOT NULL,
+    `adjustment_type` ENUM('METER_CORRECTION','LONG_STANDBY','BREAKDOWN','OPERATION_CHANGE','OTHER') NOT NULL,
+    `original_estimated_date` DATE NULL,
+    `revised_estimated_date` DATE NOT NULL,
+    `target_meter` DECIMAL(12,2) NOT NULL,
+    `current_meter` DECIMAL(12,2) NOT NULL,
+    `usage_rate` DECIMAL(12,4) NULL,
+    `effective_from` DATE NULL,
+    `effective_to` DATE NULL,
+    `status_source` VARCHAR(100) NULL,
+    `reason` VARCHAR(500) NOT NULL,
+    `created_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_pm_adjustment_plan` (`pm_plan_id`,`created_at`),
+    KEY `idx_pm_adjustment_asset` (`asset_id`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
@@ -401,12 +425,39 @@ CREATE TABLE `parts` (
     `part_id` INT AUTO_INCREMENT PRIMARY KEY,
     `part_number` VARCHAR(100) NOT NULL UNIQUE,
     `part_name` VARCHAR(150) NOT NULL,
+    `technical_name` VARCHAR(180) NULL,
+    `authenticity` ENUM('GENUINE','NON_GENUINE','UNVERIFIED') NOT NULL DEFAULT 'UNVERIFIED',
+    `part_group` VARCHAR(100) NULL,
     `category` ENUM('Filter', 'Hose', 'Cutting Bit', 'Tire', 'Battery', 'Fast Moving', 'Engine Part', 'Hydraulic', 'Other') DEFAULT 'Other',
     `unit_measure` VARCHAR(20) DEFAULT 'Pcs',
+    `base_uom` VARCHAR(30) NULL,
+    `transaction_uom` VARCHAR(30) NULL,
+    `conversion_factor` DECIMAL(18,6) NOT NULL DEFAULT 1,
     `stock_qty` INT DEFAULT 0,
     `min_stock_qty` INT DEFAULT 2,
     `unit_cost` DECIMAL(15,2) DEFAULT 0.00,
     `location_warehouse` VARCHAR(100) DEFAULT 'Gudang Yard KM 12'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `part_import_staging` (
+    `staging_id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `batch_key` VARCHAR(80) NOT NULL,
+    `row_number` INT NOT NULL,
+    `sku` VARCHAR(100) NULL,
+    `technical_name` VARCHAR(180) NULL,
+    `authenticity` VARCHAR(30) NULL,
+    `part_group` VARCHAR(100) NULL,
+    `base_uom` VARCHAR(30) NULL,
+    `transaction_uom` VARCHAR(30) NULL,
+    `conversion_factor` DECIMAL(18,6) NULL,
+    `warehouse_location` VARCHAR(100) NULL,
+    `opening_balance` DECIMAL(18,6) NULL,
+    `validation_status` ENUM('VALID','INVALID','DUPLICATE') NOT NULL,
+    `validation_errors` TEXT NULL,
+    `imported_by` INT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `uq_part_stage_batch_row` (`batch_key`,`row_number`),
+    KEY `idx_part_stage_status` (`batch_key`,`validation_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `purchase_order_items`;
@@ -415,11 +466,13 @@ DROP TABLE IF EXISTS `purchase_request_items`;
 DROP TABLE IF EXISTS `purchase_requests`;
 CREATE TABLE `purchase_requests` (
     `spb_id` VARCHAR(50) PRIMARY KEY,
+    `parent_spb_id` VARCHAR(50) NULL,
+    `revision_no` INT UNSIGNED NOT NULL DEFAULT 0,
     `wo_id` VARCHAR(50) NOT NULL,
     `asset_id` VARCHAR(100) NULL,
     `requested_by` INT NOT NULL,
     `urgency` ENUM('Normal', 'Emergency') DEFAULT 'Normal',
-    `status` ENUM('Draft', 'Submitted', 'Approved', 'Ordered', 'Issued', 'Closed') DEFAULT 'Submitted',
+    `status` ENUM('Draft', 'Submitted', 'Revision Required', 'Rejected', 'Approved', 'Ordered', 'Issued', 'Closed', 'Cancelled') DEFAULT 'Submitted',
     `input_revision_no` INT UNSIGNED NOT NULL DEFAULT 0,
     `input_last_edited_at` DATETIME NULL,
     `input_last_edited_by` INT NULL,
@@ -433,8 +486,16 @@ CREATE TABLE `purchase_request_items` (
     `id` VARCHAR(100) PRIMARY KEY,
     `spb_id` VARCHAR(50) NOT NULL,
     `part_number` VARCHAR(100) NOT NULL,
+    `part_id` INT NULL,
+    `pm_plan_id` INT NULL,
     `description` VARCHAR(255) NULL,
     `qty_requested` INT NOT NULL DEFAULT 1,
+    `transaction_uom` VARCHAR(30) NULL,
+    `conversion_factor_snapshot` DECIMAL(18,6) NOT NULL DEFAULT 1,
+    `base_quantity` DECIMAL(18,6) NULL,
+    `fulfilled_quantity` DECIMAL(18,6) NOT NULL DEFAULT 0,
+    `fulfilment_pic_user_id` INT NULL,
+    `fulfilled_at` DATETIME NULL,
     `status` VARCHAR(50) NOT NULL DEFAULT 'Menunggu Approval',
     KEY `idx_purchase_request_items_spb` (`spb_id`),
     CONSTRAINT `fk_purchase_request_items_header` FOREIGN KEY (`spb_id`) REFERENCES `purchase_requests` (`spb_id`) ON DELETE CASCADE
@@ -1390,15 +1451,9 @@ INSERT INTO `head_kpi_assessments` (`period_month`, `period_year`, `indicator_no
 ('Januari', 2026, 9, 'Kepemimpinan', 'Monitoring & Pelaporan Unit', 'Konsisten', 1, 5.00, 'Disiplin update JO mekanik, target RTW, & report harian'),
 ('Januari', 2026, 10, 'Kepemimpinan', 'Inisiatif Percepatan Perbaikan', 'Aktif', 1, 5.00, 'Solusi percepatan (shift tambahan, vendor, prioritas)');
 
-<<<<<<< HEAD
 -- 10. SEED MAINTENANCE PLANNER COMPETENCY EVALUATION
 INSERT INTO `planner_evaluations` (`planner_user_id`, `competency_name`, `job_standard`, `actual_evaluation`, `target_level`, `actual_level`, `action_plan`) VALUES
 (3, 'Dasar Maintenance Alat Berat', 'D3/S1 Teknik Mesin', 'Perlu verifikasi kompetensi teknis', 4, 2, 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'),
-=======
--- 10. SEED MAINTENANCE PLANNER COMPETENCY EVALUATION (Planner Matrix)
-INSERT INTO `planner_evaluations` (`planner_user_id`, `competency_name`, `job_standard`, `actual_evaluation`, `target_level`, `actual_level`, `action_plan`) VALUES
-(3, 'Dasar Maintenance Alat Berat', 'D3/S1 Teknik Mesin', 'Perlu Pelatihan Teknis Mesin & Diagnostik', 4, 2, 'Pelatihan Dasar Teknik Mesin Alat Berat & System Diagnosis'),
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
 (3, 'PM Scheduling & Meter Reading', 'Update Real-Time Status KM/HM', 'Jadwal terbuat, Update KM tertinggal', 4, 3, 'Standardisasi Audit Meter Reading Harian Operator'),
 (3, 'Estimasi Durasi Repair', 'Akurat per Komponen', 'Belum menguasai estimasi waktu', 4, 2, 'Praktik & Benchmark Standard Job Time per Kategori Breakdown'),
 (3, 'Spare Parts Control & Kitting', 'Parts Ready sebelum Job Start', 'Memahami Logistik, Parts Kitting belum terikat JO', 4, 3, 'Integrasi Form SPB dengan Nomor WO/PM secara Wajib'),

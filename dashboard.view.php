@@ -1603,15 +1603,9 @@ try {
                     </div>
                 </div>
 
-<<<<<<< HEAD
                 <?php if ($canViewAssetValuation): ?>
                 <!-- Strip 1: Valuasi & Penjualan Aset Armada (Administrator only) -->
-                <div class="telemetry-status-grid biaya-telemetry-valuation-grid"
-=======
-                <!-- Strip 1: Valuasi & Penjualan Aset Armada (4 Kolom Sempurna - Administrator Only) -->
-                <?php if (api_can_read_valuation()): ?>
                 <div id="secBiayaValuationStrip" class="telemetry-status-grid biaya-telemetry-valuation-grid"
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
                     style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 12px;">
                     <div class="telemetry-metric-item" title="Total Valuasi Pasaran Seluruh Armada Aset: Rp 173.806.170.000 (173,8 Miliar Rupiah)">
                         <div class="telemetry-metric-header">
@@ -1661,8 +1655,6 @@ try {
                         </div>
                     </div>
                 </div>
-                <?php endif; ?>
-
                 <?php endif; ?>
 
                 <!-- Strip 2: Pengendalian Budget & Realisasi Kas Biaya (3 Kolom Sempurna) -->
@@ -1755,19 +1747,11 @@ try {
                     <div class="panel-header"
                         style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding: 0 15px;">
                         <div class="asset-tabs" id="costMainTabs" style="margin-bottom:0; border-bottom:none; overflow-x:auto; flex-wrap:nowrap; gap:4px; width:100%;">
-<<<<<<< HEAD
                             <?php if ($canViewAssetValuation): ?>
-                            <div class="asset-tab active" onclick="switchCostTab('valuation', this)"><i
-                                    class="fa-solid fa-truck-ramp-box"></i> Valuasi &amp; Rekon Unit</div>
-                            <?php endif; ?>
-                            <div class="asset-tab<?= $canViewAssetValuation ? '' : ' active' ?>" onclick="switchCostTab('progress', this)"><i
-=======
-                            <?php if (api_can_read_valuation()): ?>
                             <div class="asset-tab active" id="costTabNavValuation" onclick="switchCostTab('valuation', this)"><i
                                     class="fa-solid fa-truck-ramp-box"></i> Valuasi &amp; Rekon Unit</div>
                             <?php endif; ?>
-                            <div class="asset-tab <?= !api_can_read_valuation() ? 'active' : '' ?>" id="costTabNavProgress" onclick="switchCostTab('progress', this)"><i
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
+                            <div class="asset-tab<?= $canViewAssetValuation ? '' : ' active' ?>" id="costTabNavProgress" onclick="switchCostTab('progress', this)"><i
                                     class="fa-solid fa-chart-line"></i> Monitoring Progress Laba-Rugi (Agu-Okt 2026)</div>
                             <div class="asset-tab" onclick="switchCostTab('lpj', this)"><i
                                     class="fa-solid fa-file-invoice-dollar"></i> LPJ Bulanan Budget vs Realisasi 2026</div>
@@ -1783,13 +1767,8 @@ try {
                     </div>
                     <div class="panel-body" style="padding: 15px;">
 
-<<<<<<< HEAD
                         <?php if ($canViewAssetValuation): ?>
                         <!-- TAB 1: VALUASI & HARGA JUAL UNIT (Administrator only) -->
-=======
-                        <!-- TAB 1: VALUASI & HARGA JUAL UNIT (Administrator Only) -->
-                        <?php if (api_can_read_valuation()): ?>
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
                         <div id="costTabSecValuation">
                             <!-- Sub-Nav Switcher -->
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">
@@ -1931,14 +1910,8 @@ try {
                         </div>
                         <?php endif; ?>
 
-                        <?php endif; ?>
-
                         <!-- TAB 2: MONITORING PROGRESS LABA-RUGI (AGU-OKT 2026) -->
-<<<<<<< HEAD
                         <div id="costTabSecProgress"<?= $canViewAssetValuation ? ' style="display:none;"' : '' ?>>
-=======
-                        <div id="costTabSecProgress" style="<?= api_can_read_valuation() ? 'display:none;' : 'display:block;' ?>;">
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
                             <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                                 <div>
                                     <h3 style="margin:0 0 4px 0; font-size:1.02rem; color:#0f172a;">

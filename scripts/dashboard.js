@@ -8554,6 +8554,7 @@
             <div class="sl-shell">
                 <header class="sl-page-header">
                     <div><span class="sl-eyebrow">WAREHOUSE · PROCUREMENT · MAINTENANCE</span><h1>Spare Part & Logistik</h1><p>Tabulasi kebutuhan per unit, ketersediaan, SPB, pengadaan, dan dampaknya terhadap kesiapan alat.</p></div>
+                    <div class="sl-modal-actions"><button type="button" data-sl-action="unfulfilled"><i class="fa-solid fa-hourglass-half"></i><span>Part belum terpenuhi</span></button><a class="sl-access-button" href="api/exports.php?module=unfulfilled-parts"><i class="fa-solid fa-file-csv"></i>Ekspor aging</a></div>
                 </header>
                 ${renderKpis()}
                 ${renderToolbar()}
@@ -9208,10 +9209,29 @@
     }
   }
 
+  async function openUnfulfilledParts() {
+    try {
+      const response = await fetch("api/unfulfilled_parts.php", { headers: { Accept: "application/json" }, cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success") throw new Error(payload.message || "Laporan fulfilment gagal dimuat.");
+      const rows = payload.data || [];
+      const markup = rows.map((item) => `<tr><td><strong>${escapeHtml(item.sku || "-")}</strong><small>${escapeHtml(item.technical_name || item.description || "-")}</small></td><td>${escapeHtml(item.asset_code || item.asset_id || "-")}<small>${escapeHtml(item.location_name || "-")}</small></td><td><strong>${escapeHtml(item.spb_id)}</strong><small>${escapeHtml(item.wo_id || "Tanpa WO")}</small></td><td>${Number(item.outstanding_base_quantity || 0).toLocaleString("id-ID")} ${escapeHtml(item.base_uom || "")}</td><td><strong>${Number(item.aging_calendar_days || 0)} hari</strong><small>${Number(item.aging_working_days || 0)} hari kerja</small></td><td>${escapeHtml(item.fulfilment_pic_name || "Belum ditetapkan")}</td><td><span class="sl-procurement-badge ${statusClass(item.status)}">${escapeHtml(item.status || "Belum diproses")}</span></td></tr>`).join("");
+      document.body.insertAdjacentHTML("beforeend", `<div class="sl-modal-overlay" id="slUnfulfilledModal" role="dialog" aria-modal="true"><div class="sl-modal-dialog"><header class="sl-modal-header"><div class="sl-modal-title"><span class="sl-modal-avatar"><i class="fa-solid fa-hourglass-half"></i></span><div><span class="sl-eyebrow">FULFILMENT AGING</span><h2>Part belum terpenuhi</h2><p>${rows.length} item aktif · aging kalender dan Senin–Jumat</p></div></div><button type="button" class="sl-modal-close" aria-label="Tutup">&times;</button></header><div class="sl-modal-scroll"><div class="table-responsive sl-parts-table-wrap"><table class="sl-parts-table"><thead><tr><th>Part</th><th>Unit/Lokasi</th><th>SPB/WO</th><th>Sisa</th><th>Aging</th><th>PIC</th><th>Status</th></tr></thead><tbody>${markup || '<tr><td colspan="7" class="sl-empty-row">Tidak ada part yang belum terpenuhi pada scope aktif.</td></tr>'}</tbody></table></div></div></div></div>`);
+      const modal = document.getElementById("slUnfulfilledModal");
+      const close = () => modal?.remove();
+      modal?.querySelector(".sl-modal-close")?.addEventListener("click", close);
+      modal?.addEventListener("click", (event) => { if (event.target === modal) close(); });
+    } catch (error) { notify(error.message || "Laporan fulfilment gagal dimuat.", true); }
+  }
+
   function handleClick(event) {
     const control = event.target.closest("[data-sl-action]");
     if (!control) return;
     const action = control.dataset.slAction;
+    if (action === "unfulfilled") {
+      openUnfulfilledParts();
+      return;
+    }
     if (action === "overlay" && event.target !== control) return;
     if (action === "open") {
       openForAsset(control.dataset.assetId);
@@ -20478,6 +20498,7 @@
           key: `asset-${aid}`,
           id: aid,
           assetId: aid,
+          pmPlanId: asset.pm_plan_id == null ? null : Number(asset.pm_plan_id),
           code: displayCode,
           asset:
             [asset.category, asset.make_model].filter(Boolean).join(" ") ||
@@ -20518,6 +20539,11 @@
               : Number(asset.daily_usage_coefficient),
           meterUnit: String(asset.service_interval_unit || ""),
           nextServiceDate: String(asset.next_service_estimated_date || ""),
+          originalEstimate: String(asset.original_estimated_date || asset.next_service_estimated_date || ""),
+          revisedEstimate: String(asset.revised_estimated_date || ""),
+          forecastRevisionNo: Number(asset.forecast_revision_no) || 0,
+          forecastAdjustments: Array.isArray(asset.forecast_adjustments) ? asset.forecast_adjustments : [],
+          backendQualityFlags: Array.isArray(asset.quality_flags) ? asset.quality_flags : [],
           history: history.map((item, index) => ({
             label: `P${history.length - index}`,
             date: String(item.service_date || "").slice(0, 10),
@@ -20732,6 +20758,8 @@
                     <button class="pm-button primary" id="pmEnrollUnitButton" style="background:#0284c7; border-color:#0284c7;"><i class="fa-solid fa-calendar-plus"></i> Masukkan Unit ke Tabel PM</button>
                     <button class="pm-button primary" id="pmAddAssetButton" style="background:#16a34a; border-color:#16a34a;" onclick="window.openModal ? window.openModal('modalNewAsset') : null"><i class="fa-solid fa-plus"></i> Tambah Unit Baru</button>
                     <button class="pm-button secondary" id="pmMethodButton"><i class="fa-solid fa-calculator"></i> Metodologi</button>
+                    <button class="pm-button secondary" id="pmPreviewNextMonth"><i class="fa-solid fa-eye"></i> Preview Bulan Depan</button>
+                    <button class="pm-button secondary" id="pmPublishNextMonth"><i class="fa-solid fa-calendar-check"></i> Publish Bulan Depan</button>
                     <button class="pm-button primary" id="pmExportButton"><i class="fa-solid fa-file-export"></i> Export Tracker</button>
                 </div>
             </div>
@@ -20805,6 +20833,8 @@
     document
       .getElementById("pmExportButton")
       .addEventListener("click", exportTracker);
+    document.getElementById("pmPreviewNextMonth")?.addEventListener("click", () => generateNextMonth("preview_next_month"));
+    document.getElementById("pmPublishNextMonth")?.addEventListener("click", () => generateNextMonth("publish_next_month"));
     document
       .getElementById("pmBackToCondition")
       ?.addEventListener("click", () => {
@@ -20840,6 +20870,31 @@
     saveLocalState();
     renderAll();
     showToast("Warning window diperbarui dan status dihitung ulang.");
+  }
+
+  async function generateNextMonth(action) {
+    const next = new Date();
+    next.setMonth(next.getMonth() + 1, 1);
+    const month = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
+    try {
+      const response = await fetch("api/pm_plans.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": window.APP_CSRF_TOKEN || "" },
+        body: JSON.stringify({ action, month }),
+      });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success") throw new Error(payload.message || "Generator PM gagal.");
+      if (action === "preview_next_month") {
+        const publishable = (payload.data || []).filter((row) => row.publishable).length;
+        const flagged = (payload.data || []).length - publishable;
+        showToast(`Preview ${month}: ${publishable} siap dipublish, ${flagged} perlu kelengkapan data.`);
+      } else {
+        showToast(`Jadwal ${month}: ${payload.data.created} dibuat, ${payload.data.skipped} dilewati tanpa duplikasi.`);
+        await hydrateReportPmPlans();
+      }
+    } catch (error) {
+      showToast(error.message || "Generator PM gagal.", true);
+    }
   }
 
   function switchTab(tab) {
@@ -21743,6 +21798,8 @@
                         ${detailStat("Selisih", `${variance > 0 ? "+" : ""}${formatNumber(variance)} ${meterType(plan)}`)}
                         ${detailStat("Interval", `${formatNumber(plan.interval)} ${meterType(plan)}`)}
                         ${detailStat("Warranty", escapeHtml(plan.warranty))}
+                        ${detailStat("Estimasi awal", formatDate(plan.originalEstimate || plan.nextServiceDate))}
+                        ${detailStat("Estimasi revisi", formatDate(plan.revisedEstimate))}
                     </div>
                     <div class="pm-detail-section">
                         <h3>Dasar Perhitungan</h3>
@@ -21764,6 +21821,18 @@
                             <div class="pm-field full"><label>Analisa / catatan planner</label><textarea class="pm-input" name="plannerNote" rows="3">${escapeHtml(plan.plannerNote || "")}</textarea></div>
                         </form>
                     </div>
+                    <div class="pm-detail-section">
+                        <h3>Revisi forecast beralasan</h3>
+                        <form class="pm-detail-form" id="pmForecastAdjustmentForm">
+                            <div class="pm-field"><label>Jenis revisi</label><select class="pm-select" name="adjustmentType" required><option value="">Pilih alasan</option><option value="METER_CORRECTION">Koreksi meter</option><option value="LONG_STANDBY">Long standby</option><option value="BREAKDOWN">Breakdown</option><option value="OPERATION_CHANGE">Perubahan operasi</option><option value="OTHER">Lainnya</option></select></div>
+                            <div class="pm-field"><label>Estimasi baru</label><input class="pm-input" name="revisedDate" type="date" value="${escapeHtml(plan.revisedEstimate || plan.nextServiceDate || "")}" required></div>
+                            <div class="pm-field"><label>Mulai periode status</label><input class="pm-input" name="effectiveFrom" type="date"></div>
+                            <div class="pm-field"><label>Selesai periode status</label><input class="pm-input" name="effectiveTo" type="date"></div>
+                            <div class="pm-field"><label>Sumber status</label><input class="pm-input" name="statusSource" placeholder="WO, laporan operasi, atau inspeksi"></div>
+                            <div class="pm-field full"><label>Alasan rinci</label><textarea class="pm-input" name="reason" minlength="5" maxlength="500" required></textarea></div>
+                        </form>
+                        <div class="pm-detail-footer"><button class="pm-button secondary" type="button" id="pmSaveForecastAdjustment"><i class="fa-solid fa-clock-rotate-left"></i> Simpan revisi forecast</button></div>
+                    </div>
                     ${flags.length ? `<div class="pm-quality-flag"><i class="fa-solid fa-triangle-exclamation"></i><span><strong>Quality gate:</strong><br>${flags.map(escapeHtml).join("<br>")}</span></div>` : ""}
                 </div>
                 <div class="pm-detail-footer">
@@ -21779,6 +21848,20 @@
     document
       .getElementById("pmSaveExecution")
       .addEventListener("click", () => saveExecution(planKey(plan)));
+    document.getElementById("pmSaveForecastAdjustment")?.addEventListener("click", () => saveForecastAdjustment(plan));
+  }
+
+  async function saveForecastAdjustment(plan) {
+    const form = document.getElementById("pmForecastAdjustmentForm");
+    if (!form || !form.reportValidity()) return;
+    if (!plan.pmPlanId) { showToast("Rencana ini belum memiliki PM Plan ID database.", true); return; }
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const response = await fetch("api/pm_plans.php", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": window.APP_CSRF_TOKEN || "" }, body: JSON.stringify({ action: "adjust_forecast", pm_plan_id: plan.pmPlanId, adjustment_type: data.adjustmentType, revised_estimated_date: data.revisedDate, effective_from: data.effectiveFrom || null, effective_to: data.effectiveTo || null, status_source: data.statusSource, reason: data.reason }) });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success") throw new Error(payload.message || "Revisi forecast gagal.");
+      closeDetail(); await hydrateReportPmPlans(); showToast("Revisi forecast tersimpan; target meter tetap dipertahankan.");
+    } catch (error) { showToast(error.message || "Revisi forecast gagal.", true); }
   }
 
   function detailStat(label, value) {
@@ -22777,11 +22860,7 @@
     {
       competency: "Dasar Maintenance Alat Berat",
       standard: "D3/S1 Teknik Mesin",
-<<<<<<< HEAD
       actual: "Perlu verifikasi kompetensi teknis",
-=======
-      actual: "Perlu Pelatihan Teknis Mesin & Diagnostik",
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
       targetLvl: 4,
       actualLvl: 2,
       gap: -2,

@@ -1,0 +1,3 @@
+sku,technical_name,authenticity,part_group,base_uom,transaction_uom,conversion_factor,warehouse_location,opening_balance,validator,validation_note
+FLT-AIR-0001,Air Filter Outer,UNVERIFIED,Filter Udara,Pcs,Pcs,1,Gudang Yard KM 12,0,,
+OIL-15W40-DRUM,Engine Oil SAE 15W40,UNVERIFIED,Pelumas,Liter,Drum,,Gudang Yard KM 12,0,,Isi conversion_factor sesuai kemasan produk; jangan diasumsikan 200 liter

@@ -351,19 +351,12 @@ $contracts = $fetchAll($db,
 $asset['contracts'] = $contracts;
 $asset['active_contract'] = $contracts[0] ?? null;
 
-<<<<<<< HEAD
 // Unit valuation is financial data restricted to Administrator. Keep the key
 // absent (not null/zero) for other roles so field names and amounts cannot leak.
 $canReadValuation = in_array('Administrator', (array) (api_current_user()['roles'] ?? []), true);
 if ($canReadValuation) {
     $valuations = $fetchAll($db,
         "SELECT valuation_id, unit_name, unit_code_alias, total_repair_cost, purchase_price, book_value,
-=======
-// Unit Valuations (Restricted to Administrator / asset_valuation.read)
-if (api_can_read_valuation()) {
-    $valuations = $fetchAll($db,
-        "SELECT valuation_id, unit_name, unit_code_alias, total_repair_cost, purchase_price, book_value, 
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
                 monthly_rental_rate, monthly_leasing_installment, market_price_min, market_price_max, raw_market_price_str
          FROM unit_valuations
          WHERE asset_id = :asset_id
@@ -371,11 +364,6 @@ if (api_can_read_valuation()) {
         $params
     );
     $asset['valuation'] = $valuations[0] ?? null;
-<<<<<<< HEAD
-=======
-} else {
-    $asset['valuation'] = null;
->>>>>>> ae467723955a2ff657d2d44d50c5eaabd51e2d28
 }
 
 // Direct Operational Cost Transactions

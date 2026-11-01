@@ -124,8 +124,35 @@ if (!defined('API_SKIP_ROUTING')) {
             'notes' => (string) ($row['notes'] ?? ''),
             'reportNumber' => (string) ($row['report_number'] ?? ''),
             'source' => 'Laporan LHO',
+            'sourceData' => 'report_operation_logs',
+            'workOrderNumbers' => [],
         ];
     }, $statement->fetchAll(PDO::FETCH_ASSOC));
+
+    // Traceability contract: associate WO in the same asset/period. The external
+    // spreadsheet layout remains provisional until Widya approves the template.
+    $woSql = "SELECT w.wo_id,w.asset_id,DATE(COALESCE(w.trouble_at,w.reported_at)) AS event_date,
+                     w.status,w.issue_description,w.repair_action
+              FROM work_orders w INNER JOIN assets a ON a.asset_id=w.asset_id WHERE 1=1";
+    $woParams = $scope['params'];
+    if ($scope['sql'] !== '') $woSql .= ' AND ' . $scope['sql'];
+    if ($assetId !== '') { $woSql .= ' AND w.asset_id=:wo_asset_id'; $woParams[':wo_asset_id']=$assetId; }
+    if ($category !== '') { $woSql .= ' AND a.category=:wo_category'; $woParams[':wo_category']=$category; }
+    if ($period !== 'all') {
+        $woSql .= ' AND COALESCE(w.trouble_at,w.reported_at)>=:wo_start AND COALESCE(w.trouble_at,w.reported_at)<:wo_end';
+        $woParams[':wo_start']=$periodStart; $woParams[':wo_end']=$periodEnd;
+    }
+    $woStmt=$db->prepare($woSql.' ORDER BY COALESCE(w.trouble_at,w.reported_at),w.wo_id');
+    $woStmt->execute($woParams); $workOrders=$woStmt->fetchAll(PDO::FETCH_ASSOC); $woByAsset=[];
+    foreach($workOrders as $wo) $woByAsset[(string)$wo['asset_id']][]=$wo;
+    foreach($rows as &$operation){
+        $linked=array_values(array_filter($woByAsset[$operation['assetId']]??[],static function(array $wo)use($operation):bool{
+            return abs(strtotime((string)$wo['event_date'])-strtotime((string)$operation['date'])) <= 86400*3;
+        }));
+        $operation['workOrderNumbers']=array_values(array_column($linked,'wo_id'));
+        $operation['workOrders']=$linked;
+    }
+    unset($operation);
 
     $summary = [
         'recordCount' => count($rows),
@@ -141,6 +168,17 @@ if (!defined('API_SKIP_ROUTING')) {
         'status' => 'success',
         'data' => array_merge($productivityData, [
             'operations' => $rows,
+            'workOrders' => $workOrders,
+            'exportContract' => [
+                'status'=>'PROVISIONAL_AWAITING_WIDYA_TEMPLATE',
+                'columns'=>['Kode Unit','Nomor Posisi','Lokasi','Status Teks','Periode','No. WO','Sumber Data'],
+                'statusLegend'=>[
+                    ['code'=>'OPERATING','label'=>'Operating / Working','color'=>'#2f855a'],
+                    ['code'=>'STANDBY','label'=>'Standby','color'=>'#b7791f'],
+                    ['code'=>'BREAKDOWN','label'=>'Repair / Breakdown','color'=>'#c53030'],
+                ],
+                'note'=>'Warna hanya penanda visual; kolom status teks selalu wajib.',
+            ],
             'summary' => $summary,
         ]),
     ]);

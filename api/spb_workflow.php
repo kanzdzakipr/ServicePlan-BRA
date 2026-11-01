@@ -5,6 +5,7 @@ require_once 'db.php';
 require_once dirname(__DIR__) . '/core/AuthMiddleware.php';
 require_once dirname(__DIR__) . '/core/SpbWorkflow.php';
 require_once dirname(__DIR__) . '/core/InputRevision.php';
+require_once dirname(__DIR__) . '/core/PartUnitConversion.php';
 
 $db = Database::getInstance();
 $method = strtoupper((string) $_SERVER['REQUEST_METHOD']);
@@ -16,7 +17,7 @@ if ($method === 'GET') {
         if (mb_strlen($requestedSpbId, 'UTF-8') > 50) {
             api_json_response(422, ['status' => 'error', 'message' => 'Nomor SPB tidak valid.']);
         }
-        $detailSql = 'SELECT pr.spb_id, pr.wo_id, pr.asset_id, pr.requested_by,
+        $detailSql = 'SELECT pr.spb_id, pr.parent_spb_id, pr.revision_no, pr.wo_id, pr.asset_id, pr.requested_by,
                              pr.requested_at, pr.status, pr.urgency, pr.spb_type, pr.notes,
                              u.full_name AS requester_name, l.location_name,
                              EXISTS(SELECT 1 FROM purchase_orders po WHERE po.spb_id = pr.spb_id) AS has_purchase_order,
@@ -35,13 +36,15 @@ if ($method === 'GET') {
         if (!$document) {
             api_json_response(404, ['status' => 'error', 'message' => 'SPB tidak ditemukan atau tidak dapat diakses.']);
         }
-        $items = $db->prepare('SELECT pri.id, pri.part_number, pri.description, pri.qty_requested,
-                                      pri.status, COALESCE(p.unit_measure, \'PCS\') AS unit_measure
+        $items = $db->prepare('SELECT pri.id, pri.part_id, pri.pm_plan_id, pri.part_number, pri.description, pri.qty_requested,
+                                      pri.transaction_uom, pri.conversion_factor_snapshot, pri.base_quantity, pri.fulfilled_quantity,
+                                      pri.status, COALESCE(p.base_uom,p.unit_measure, \'PCS\') AS unit_measure
                                 FROM purchase_request_items pri
                                 LEFT JOIN parts p ON p.part_number = pri.part_number
                                 WHERE pri.spb_id = :spb_id ORDER BY pri.id');
         $items->execute([':spb_id' => $requestedSpbId]);
         $document['items'] = $items->fetchAll(PDO::FETCH_ASSOC);
+        $document['revision_history'] = InputRevision::history($db, 'SPB', $requestedSpbId);
         $document['can_edit_own'] = ((int) $document['requested_by'] === InputRevision::actorId() || InputRevision::isPrivileged())
             && in_array((string) $document['status'], ['Draft', 'Submitted'], true)
             && strtoupper((string) ($document['approval_status'] ?? '')) !== 'APPROVED'
@@ -114,13 +117,43 @@ if (strtolower(trim((string) ($input['action'] ?? ''))) === 'void') {
 }
 
 $action = strtolower(trim((string) ($input['action'] ?? '')));
-if (in_array($action, ['update_own_pending', 'withdraw_own_pending'], true)) {
+if ($action === 'create_revision') {
+    api_require_permission('logistics.write');
+    $sourceId=trim((string)($input['spbId']??$input['spb_id']??''));
+    $reason=InputRevision::reason($input); $idempotencyKey=InputRevision::idempotencyKey($input);
+    if($sourceId==='')api_json_response(422,['status'=>'error','message'=>'Nomor SPB sumber wajib diisi.']);
+    $db->beginTransaction();
+    try{
+        if($idempotencyKey!==null&&!InputRevision::reserveIdempotency($db,$idempotencyKey,'SPB',$sourceId,'CREATE_REVISION')){ $db->rollBack();api_json_response(200,['status'=>'success','message'=>'Revisi identik sudah diproses.','data'=>['idempotent'=>true]]); }
+        $lock=$db->prepare('SELECT * FROM purchase_requests WHERE spb_id=:id FOR UPDATE');$lock->execute([':id'=>$sourceId]);$source=$lock->fetch(PDO::FETCH_ASSOC);
+        if(!$source)throw new OutOfBoundsException('SPB sumber tidak ditemukan.'); InputRevision::assertOwner($source['requested_by']??null,'Hanya pembuat atau pengelola berwenang yang dapat membuat revisi.');
+        if(!in_array((string)$source['status'],['Revision Required','Rejected','Approved','Closed'],true))throw new DomainException('Revisi formal hanya dibuat dari dokumen yang ditolak, diminta revisi, approved, atau closed.');
+        if(!empty($source['asset_id']))api_require_asset_access($db,(string)$source['asset_id']);
+        $root=(string)($source['parent_spb_id']?:$source['spb_id']);
+        $seq=$db->prepare('SELECT COALESCE(MAX(revision_no),0)+1 FROM purchase_requests WHERE spb_id=:root OR parent_spb_id=:root');$seq->execute([':root'=>$root]);$revisionNo=(int)$seq->fetchColumn();
+        $newId=$root.'-R'.$revisionNo;
+        $copy=$db->prepare("INSERT INTO purchase_requests (spb_id,parent_spb_id,revision_no,wo_id,asset_id,requested_by,urgency,spb_type,status,input_revision_no,notes,requested_at) VALUES (:new_id,:parent,:revision_no,:wo,:asset,:requester,:urgency,:type,'Draft',0,:notes,NOW())");
+        $copy->execute([':new_id'=>$newId,':parent'=>$root,':revision_no'=>$revisionNo,':wo'=>$source['wo_id'],':asset'=>$source['asset_id'],':requester'=>InputRevision::actorId()?:$source['requested_by'],':urgency'=>$source['urgency'],':type'=>$source['spb_type']??'NORMAL',':notes'=>$source['notes']]);
+        $items=$db->prepare('SELECT * FROM purchase_request_items WHERE spb_id=:id ORDER BY id');$items->execute([':id'=>$sourceId]);
+        $insert=$db->prepare("INSERT INTO purchase_request_items (id,spb_id,part_number,part_id,pm_plan_id,description,qty_requested,transaction_uom,conversion_factor_snapshot,base_quantity,fulfilled_quantity,status) VALUES (:id,:spb,:part,:part_id,:pm_plan,:description,:qty,:uom,:factor,:base_qty,0,'Draft')");
+        foreach($items->fetchAll(PDO::FETCH_ASSOC) as $idx=>$item)$insert->execute([':id'=>sprintf('SPBI-%s-%02d',substr(md5($newId),0,8),$idx+1),':spb'=>$newId,':part'=>$item['part_number'],':part_id'=>$item['part_id']??null,':pm_plan'=>$item['pm_plan_id']??null,':description'=>$item['description'],':qty'=>$item['qty_requested'],':uom'=>$item['transaction_uom']??null,':factor'=>$item['conversion_factor_snapshot']??1,':base_qty'=>$item['base_quantity']??$item['qty_requested']]);
+        $after=array_merge($source,['spb_id'=>$newId,'parent_spb_id'=>$root,'revision_no'=>$revisionNo,'status'=>'Draft']);
+        InputRevision::record($db,'SPB',$newId,'REVISE',$reason,$source,$after,$idempotencyKey,$sourceId);
+        $db->commit();api_json_response(201,['status'=>'success','message'=>'Versi revisi dibuat sebagai Draft tanpa menimpa dokumen lama.','data'=>['spbId'=>$newId,'parentSpbId'=>$root,'revisionNo'=>$revisionNo,'status'=>'Draft']]);
+    }catch(Throwable $e){if($db->inTransaction())$db->rollBack();api_json_response($e instanceof OutOfBoundsException?404:($e instanceof DomainException?409:422),['status'=>'error','message'=>$e->getMessage()]);}
+}
+if (in_array($action, ['update_own_pending', 'withdraw_own_pending'], true) || $action === 'cancel_own_pending') {
     api_require_permission('logistics.write');
     $spbId = trim((string) ($input['spbId'] ?? $input['spb_id'] ?? ''));
     if ($spbId === '') api_json_response(422, ['status' => 'error', 'message' => 'Nomor SPB wajib diisi.']);
     try {
         $reason = InputRevision::reason($input);
+        $idempotencyKey = InputRevision::idempotencyKey($input);
         $db->beginTransaction();
+        if ($idempotencyKey !== null && !InputRevision::reserveIdempotency($db, $idempotencyKey, 'SPB', $spbId, strtoupper($action))) {
+            $db->rollBack();
+            api_json_response(200, ['status'=>'success','message'=>'Permintaan identik sudah diproses.','data'=>['spbId'=>$spbId,'idempotent'=>true]]);
+        }
         $lock = $db->prepare(
             "SELECT pr.*,
                     (SELECT ap.status FROM approvals ap WHERE ap.document_type = 'SPB' AND ap.document_id = pr.spb_id ORDER BY ap.approval_id DESC LIMIT 1) AS approval_status,
@@ -148,13 +181,24 @@ if (in_array($action, ['update_own_pending', 'withdraw_own_pending'], true)) {
         $before = $current;
         $before['items'] = $oldItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        if ($action === 'cancel_own_pending') {
+            if ((string) $current['status'] !== 'Draft') throw new DomainException('Hanya SPB Draft yang dapat dibatalkan; tarik kembali Submitted terlebih dahulu.');
+            $db->prepare("UPDATE purchase_requests SET status='Cancelled', input_revision_no=input_revision_no+1, input_last_edited_at=NOW(), input_last_edited_by=:actor WHERE spb_id=:id")
+                ->execute([':actor'=>InputRevision::actorId(), ':id'=>$spbId]);
+            $db->prepare("UPDATE purchase_request_items SET status='Cancelled' WHERE spb_id=:id")->execute([':id'=>$spbId]);
+            $after = array_merge($before, ['status'=>'Cancelled','input_revision_no'=>(int)($current['input_revision_no'] ?? 0)+1]);
+            InputRevision::record($db, 'SPB', $spbId, 'CANCEL', $reason, $before, $after, $idempotencyKey);
+            $db->commit();
+            api_json_response(200, ['status'=>'success','message'=>'SPB Draft dibatalkan tanpa menghapus riwayat.','data'=>['spbId'=>$spbId,'status'=>'Cancelled']]);
+        }
+
         if ($action === 'withdraw_own_pending') {
             $db->prepare("UPDATE purchase_requests SET status = 'Draft', input_revision_no = input_revision_no + 1, input_last_edited_at = NOW(), input_last_edited_by = :actor WHERE spb_id = :id")
                 ->execute([':actor' => InputRevision::actorId(), ':id' => $spbId]);
             $db->prepare("UPDATE purchase_request_items SET status = 'Draft' WHERE spb_id = :id")
                 ->execute([':id' => $spbId]);
             $after = array_merge($before, ['status' => 'Draft']);
-            InputRevision::record($db, 'SPB', $spbId, 'WITHDRAW', $reason, $before, $after);
+            InputRevision::record($db, 'SPB', $spbId, 'WITHDRAW', $reason, $before, $after, $idempotencyKey);
             $db->commit();
             api_json_response(200, ['status' => 'success', 'message' => 'SPB ditarik ke Draft dan tetap dapat diedit.', 'data' => ['spbId' => $spbId, 'status' => 'Draft']]);
         }
@@ -166,7 +210,7 @@ if (in_array($action, ['update_own_pending', 'withdraw_own_pending'], true)) {
         $db->prepare("UPDATE purchase_requests SET urgency = :urgency, notes = :notes, status = 'Submitted', input_revision_no = input_revision_no + 1, input_last_edited_at = NOW(), input_last_edited_by = :actor WHERE spb_id = :id")
             ->execute([':urgency' => $urgency, ':notes' => $notes ?: null, ':actor' => InputRevision::actorId(), ':id' => $spbId]);
         $db->prepare('DELETE FROM purchase_request_items WHERE spb_id = :id')->execute([':id' => $spbId]);
-        $insert = $db->prepare("INSERT INTO purchase_request_items (id, spb_id, part_number, description, qty_requested, status) VALUES (:id, :spb_id, :part, :description, :qty, 'Submitted')");
+        $insert = $db->prepare("INSERT INTO purchase_request_items (id,spb_id,part_number,part_id,pm_plan_id,description,qty_requested,transaction_uom,conversion_factor_snapshot,base_quantity,status) VALUES (:id,:spb_id,:part,:part_id,:pm_plan_id,:description,:qty,:uom,:factor,:base_qty,'Submitted')");
         $normalizedItems = [];
         foreach ($items as $idx => $item) {
             $part = trim((string) ($item['part_number'] ?? $item['partNumber'] ?? ''));
@@ -175,11 +219,15 @@ if (in_array($action, ['update_own_pending', 'withdraw_own_pending'], true)) {
             if (($part === '' && $description === '') || $qty < 1) throw new InvalidArgumentException('Part, deskripsi, dan qty setiap baris wajib valid.');
             $part = $part ?: 'CUSTOM';
             $description = $description ?: $part;
-            $insert->execute([':id' => sprintf('SPBI-%s-%02d', substr(md5($spbId . microtime(true)), 0, 8), $idx + 1), ':spb_id' => $spbId, ':part' => mb_substr($part, 0, 100), ':description' => mb_substr($description, 0, 255), ':qty' => $qty]);
-            $normalizedItems[] = ['part_number' => $part, 'description' => $description, 'qty_requested' => $qty, 'status' => 'Submitted'];
+            $partStmt=$db->prepare("SELECT part_id,COALESCE(base_uom,unit_measure,'Pcs') base_uom,COALESCE(transaction_uom,base_uom,unit_measure,'Pcs') transaction_uom,conversion_factor FROM parts WHERE part_number=:part LIMIT 1");
+            $partStmt->execute([':part'=>$part]); $master=$partStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $uom=trim((string)($item['uom']??$item['transaction_uom']??$master['transaction_uom']??'Pcs'));
+            $snapshot=PartUnitConversion::snapshot($qty,$uom,(float)($master['conversion_factor']??1),(string)($master['base_uom']??$uom));
+            $insert->execute([':id' => sprintf('SPBI-%s-%02d', substr(md5($spbId . microtime(true)), 0, 8), $idx + 1), ':spb_id' => $spbId, ':part' => mb_substr($part, 0, 100), ':part_id'=>$master['part_id']??null, ':pm_plan_id'=>$item['pm_plan_id']??null, ':description' => mb_substr($description, 0, 255), ':qty' => $qty, ':uom'=>$snapshot['transaction_uom'], ':factor'=>$snapshot['conversion_factor'], ':base_qty'=>$snapshot['base_quantity']]);
+            $normalizedItems[] = ['part_number' => $part, 'description' => $description, 'qty_requested' => $qty, 'transaction_uom'=>$snapshot['transaction_uom'], 'base_quantity'=>$snapshot['base_quantity'], 'status' => 'Submitted'];
         }
         $after = array_merge($current, ['urgency' => $urgency, 'notes' => $notes ?: null, 'status' => 'Submitted', 'items' => $normalizedItems]);
-        InputRevision::record($db, 'SPB', $spbId, 'UPDATE', $reason, $before, $after);
+        InputRevision::record($db, 'SPB', $spbId, 'UPDATE', $reason, $before, $after, $idempotencyKey);
         $db->commit();
         api_json_response(200, ['status' => 'success', 'message' => 'Revisi SPB tersimpan dan kembali masuk antrean approval.', 'data' => ['spbId' => $spbId, 'status' => 'Submitted', 'itemCount' => count($normalizedItems)]]);
     } catch (InvalidArgumentException | DomainException | OutOfBoundsException $error) {
@@ -235,8 +283,8 @@ if ($action === 'create') {
 
         $itemStmt = $db->prepare("
             INSERT INTO purchase_request_items
-            (id, spb_id, part_number, description, qty_requested, status)
-            VALUES (:id, :spb_id, :part_number, :description, :qty_requested, 'Submitted')
+            (id,spb_id,part_number,part_id,pm_plan_id,description,qty_requested,transaction_uom,conversion_factor_snapshot,base_quantity,status)
+            VALUES (:id,:spb_id,:part_number,:part_id,:pm_plan_id,:description,:qty_requested,:transaction_uom,:factor,:base_quantity,'Submitted')
         ");
 
         foreach ($items as $idx => $p) {
@@ -244,13 +292,22 @@ if ($action === 'create') {
             $partNumber = trim((string) ($p['part_number'] ?? $p['partNumber'] ?? 'CUSTOM'));
             $desc = trim((string) ($p['description'] ?? $p['nama'] ?? $partNumber));
             $qty = max(1, (int) ($p['qty'] ?? $p['qty_requested'] ?? 1));
+            $partStmt=$db->prepare("SELECT part_id,COALESCE(base_uom,unit_measure,'Pcs') base_uom,COALESCE(transaction_uom,base_uom,unit_measure,'Pcs') transaction_uom,conversion_factor FROM parts WHERE part_number=:part LIMIT 1");
+            $partStmt->execute([':part'=>$partNumber]); $master=$partStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $uom=trim((string)($p['uom']??$p['transaction_uom']??$master['transaction_uom']??'Pcs'));
+            $snapshot=PartUnitConversion::snapshot($qty,$uom,(float)($master['conversion_factor']??1),(string)($master['base_uom']??$uom));
 
             $itemStmt->execute([
                 ':id' => $itemId,
                 ':spb_id' => $spbId,
                 ':part_number' => $partNumber ?: 'CUSTOM',
+                ':part_id' => $master['part_id'] ?? null,
+                ':pm_plan_id' => $p['pm_plan_id'] ?? null,
                 ':description' => mb_substr($desc, 0, 255),
                 ':qty_requested' => $qty,
+                ':transaction_uom' => $snapshot['transaction_uom'],
+                ':factor' => $snapshot['conversion_factor'],
+                ':base_quantity' => $snapshot['base_quantity'],
             ]);
         }
 
