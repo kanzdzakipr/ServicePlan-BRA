@@ -2,6 +2,7 @@
 require_once 'db.php';
 require_once dirname(__DIR__) . '/core/ReportIntegration.php';
 require_once dirname(__DIR__) . '/core/WorkOrderSupport.php';
+require_once dirname(__DIR__) . '/core/PartUnitConversion.php';
 
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
@@ -22,7 +23,7 @@ switch ($method) {
         if (isset($_GET['type'])) {
             if ($_GET['type'] == 'inventory') {
                 $stockStatement = $db->query(
-                    "SELECT p.part_id, p.part_number, p.part_name, p.unit_measure, p.stock_qty,
+                    "SELECT p.part_id, p.part_number, p.part_name, p.technical_name, p.authenticity, p.part_group, p.unit_measure, p.base_uom, p.transaction_uom, p.conversion_factor, p.stock_qty,
                             p.min_stock_qty, p.location_warehouse,
                             (SELECT pws.reported_balance FROM parts_weekly_snapshots pws
                              WHERE pws.part_id=p.part_id AND pws.reversed_at IS NULL
@@ -44,7 +45,7 @@ switch ($method) {
                             END), 0) AS issued_total
                      FROM parts p
                      LEFT JOIN inventory_transactions it ON it.part_id = p.part_id
-                     GROUP BY p.part_id, p.part_number, p.part_name, p.unit_measure, p.stock_qty,
+                     GROUP BY p.part_id, p.part_number, p.part_name, p.technical_name, p.authenticity, p.part_group, p.unit_measure, p.base_uom, p.transaction_uom, p.conversion_factor, p.stock_qty,
                               p.min_stock_qty, p.location_warehouse
                      ORDER BY p.part_name, p.part_number"
                 );
@@ -53,7 +54,13 @@ switch ($method) {
                         'partId' => (int) $row['part_id'],
                         'partNumber' => (string) $row['part_number'],
                         'namaParts' => (string) $row['part_name'],
+                        'technicalName' => (string) ($row['technical_name'] ?? $row['part_name']),
+                        'authenticity' => (string) ($row['authenticity'] ?? 'UNVERIFIED'),
+                        'partGroup' => (string) ($row['part_group'] ?? 'Lainnya'),
                         'satuan' => (string) $row['unit_measure'],
+                        'baseUom' => (string) ($row['base_uom'] ?? $row['unit_measure']),
+                        'transactionUom' => (string) ($row['transaction_uom'] ?? $row['unit_measure']),
+                        'conversionFactor' => (float) ($row['conversion_factor'] ?? 1.0),
                         'penerimaanTotal' => (int) $row['received_total'],
                         'pemakaianTotal' => (int) $row['issued_total'],
                         'saldo' => (int) $row['stock_qty'],
@@ -70,7 +77,7 @@ switch ($method) {
                 $incomingStatement = $db->query(
                     "SELECT it.transaction_id, it.transaction_date, it.reference_number, it.counterparty,
                             it.quantity, it.unit_measure, it.stock_before, it.stock_after, it.notes,
-                            p.part_number, p.part_name, r.report_number, rt.template_key
+                            p.part_number, p.part_name, p.technical_name, p.authenticity, p.part_group, p.base_uom, p.transaction_uom, p.conversion_factor, r.report_number, rt.template_key
                      FROM inventory_transactions it
                      INNER JOIN parts p ON p.part_id = it.part_id
                      INNER JOIN report_records r ON r.report_id = it.report_id
@@ -88,7 +95,13 @@ switch ($method) {
                         'namaParts' => (string) $row['part_name'],
                         'partNumber' => (string) $row['part_number'],
                         'merk' => '',
+                        'technicalName' => (string) ($row['technical_name'] ?? $row['part_name']),
+                        'authenticity' => (string) ($row['authenticity'] ?? 'UNVERIFIED'),
+                        'partGroup' => (string) ($row['part_group'] ?? 'Lainnya'),
                         'satuan' => (string) $row['unit_measure'],
+                        'baseUom' => (string) ($row['base_uom'] ?? $row['unit_measure']),
+                        'transactionUom' => (string) ($row['transaction_uom'] ?? $row['unit_measure']),
+                        'conversionFactor' => (float) ($row['conversion_factor'] ?? 1.0),
                         'jml' => (int) $row['quantity'],
                         'unit' => '',
                         'noSpb' => (string) ($row['report_number'] ?? ''),
@@ -107,7 +120,7 @@ switch ($method) {
                     "SELECT it.transaction_id, it.transaction_date, it.reference_number, it.counterparty,
                             it.asset_id, it.wo_id,
                             it.quantity, it.unit_measure, it.stock_before, it.stock_after, it.notes,
-                            p.part_number, p.part_name, r.report_number, rt.template_key
+                            p.part_number, p.part_name, p.technical_name, p.authenticity, p.part_group, p.base_uom, p.transaction_uom, p.conversion_factor, r.report_number, rt.template_key
                      FROM inventory_transactions it
                      INNER JOIN parts p ON p.part_id = it.part_id
                      INNER JOIN report_records r ON r.report_id = it.report_id
@@ -129,7 +142,13 @@ switch ($method) {
                         'partNumber' => (string) $row['part_number'],
                         'spesifikasi' => (string) $row['part_number'],
                         'qty' => (int) $row['quantity'],
+                        'technicalName' => (string) ($row['technical_name'] ?? $row['part_name']),
+                        'authenticity' => (string) ($row['authenticity'] ?? 'UNVERIFIED'),
+                        'partGroup' => (string) ($row['part_group'] ?? 'Lainnya'),
                         'satuan' => (string) $row['unit_measure'],
+                        'baseUom' => (string) ($row['base_uom'] ?? $row['unit_measure']),
+                        'transactionUom' => (string) ($row['transaction_uom'] ?? $row['unit_measure']),
+                        'conversionFactor' => (float) ($row['conversion_factor'] ?? 1.0),
                         'status' => 'Dikeluarkan',
                         'kesimpulan' => 'TERCATAT',
                         'saldoLalu' => (int) $row['stock_before'],
@@ -149,6 +168,35 @@ switch ($method) {
             } elseif ($_GET['type'] == 'parts') {
                 $stmt = $db->query("SELECT * FROM parts");
                 echo json_encode(["status" => "success", "data" => $stmt->fetchAll()]);
+                break;
+            } elseif ($_GET['type'] == 'staging_report') {
+                $batchStats = $db->query("
+                    SELECT batch_key,
+                           COUNT(*) as total_rows,
+                           SUM(CASE WHEN validation_status = 'VALID' THEN 1 ELSE 0 END) as valid_rows,
+                           SUM(CASE WHEN validation_status = 'DUPLICATE' THEN 1 ELSE 0 END) as duplicate_rows,
+                           SUM(CASE WHEN validation_status = 'INVALID' THEN 1 ELSE 0 END) as invalid_rows,
+                           MIN(created_at) as created_at
+                    FROM part_import_staging
+                    GROUP BY batch_key
+                    ORDER BY MIN(created_at) DESC
+                ")->fetchAll(PDO::FETCH_ASSOC);
+
+                $exceptions = $db->query("
+                    SELECT staging_id, batch_key, `row_number`, sku, technical_name, validation_status, validation_errors
+                    FROM part_import_staging
+                    WHERE validation_status IN ('INVALID', 'DUPLICATE')
+                    ORDER BY staging_id DESC
+                    LIMIT 100
+                ")->fetchAll(PDO::FETCH_ASSOC);
+
+                echo json_encode([
+                    "status" => "success",
+                    "data" => [
+                        "batches" => $batchStats,
+                        "exceptions" => $exceptions,
+                    ]
+                ]);
                 break;
             } elseif ($_GET['type'] == 'costs') {
                 $stmt = $db->query("SELECT * FROM cost_financial_monthly");
@@ -227,11 +275,13 @@ switch ($method) {
                                      ON DUPLICATE KEY UPDATE
                                          urgency=VALUES(urgency), status=VALUES(status), notes=VALUES(notes)");
                                      
-            $stmtItem = $db->prepare("INSERT INTO purchase_request_items (id, spb_id, part_number, description, qty_requested, status)
-                                      VALUES (:id, :spb, :part, :desc, :qty, :status)
+            $stmtItem = $db->prepare("INSERT INTO purchase_request_items 
+                                      (id, spb_id, part_id, part_number, description, qty_requested, transaction_uom, conversion_factor_snapshot, base_quantity, status)
+                                      VALUES (:id, :spb, :part_id, :part, :desc, :qty, :tx_uom, :factor, :base_qty, :status)
                                       ON DUPLICATE KEY UPDATE
-                                          part_number=VALUES(part_number), description=VALUES(description),
-                                          status=VALUES(status), qty_requested=VALUES(qty_requested)");
+                                          part_id=VALUES(part_id), part_number=VALUES(part_number), description=VALUES(description),
+                                          transaction_uom=VALUES(transaction_uom), conversion_factor_snapshot=VALUES(conversion_factor_snapshot),
+                                          base_quantity=VALUES(base_quantity), status=VALUES(status), qty_requested=VALUES(qty_requested)");
 
             $actor = api_current_user();
             $actorId = (int) ($actor['id'] ?? 0);
@@ -298,13 +348,32 @@ switch ($method) {
                     ':notes' => trim((string) ($r['notes'] ?? '')) ?: null,
                 ]);
                 
-                // Insert Item
+                $pLookup = $db->prepare('SELECT part_id, technical_name, unit_measure, base_uom, transaction_uom, conversion_factor FROM parts WHERE part_number = :pnum OR part_id = :pid LIMIT 1');
+                $pLookup->execute([
+                    ':pnum' => (string) ($r['partNumber'] ?? ''),
+                    ':pid' => is_numeric($r['partNumber'] ?? null) ? (int)$r['partNumber'] : 0,
+                ]);
+                $matchedPart = $pLookup->fetch(PDO::FETCH_ASSOC);
+
+                $partId = $matchedPart ? (int)$matchedPart['part_id'] : null;
+                $txUom = trim((string)($r['transactionUom'] ?? ($matchedPart['transaction_uom'] ?? 'Pcs')));
+                $baseUom = trim((string)($r['baseUom'] ?? ($matchedPart['base_uom'] ?? ($matchedPart['unit_measure'] ?? 'Pcs'))));
+                $factor = (float)($r['conversionFactor'] ?? ($matchedPart['conversion_factor'] ?? 1.0));
+                $qtyRequested = (float)($r['qtyRequested'] ?? 1.0);
+
+                $snap = PartUnitConversion::snapshot($qtyRequested, $txUom, $factor, $baseUom);
+
+                // Insert Item with snapshot
                 $stmtItem->execute([
                     ':id' => $r['id'],
                     ':spb' => $r['spbId'],
+                    ':part_id' => $partId,
                     ':part' => $r['partNumber'],
-                    ':desc' => $r['description'],
-                    ':qty' => $r['qtyRequested'],
+                    ':desc' => $r['description'] ?: ($matchedPart['technical_name'] ?? $r['partNumber']),
+                    ':qty' => (int)round($qtyRequested),
+                    ':tx_uom' => $snap['transaction_uom'],
+                    ':factor' => $snap['conversion_factor'],
+                    ':base_qty' => $snap['base_quantity'],
                     ':status' => $r['status'] ?? 'Menunggu Approval'
                 ]);
 

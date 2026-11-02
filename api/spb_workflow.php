@@ -38,9 +38,9 @@ if ($method === 'GET') {
         }
         $items = $db->prepare('SELECT pri.id, pri.part_id, pri.pm_plan_id, pri.part_number, pri.description, pri.qty_requested,
                                       pri.transaction_uom, pri.conversion_factor_snapshot, pri.base_quantity, pri.fulfilled_quantity,
-                                      pri.status, COALESCE(p.base_uom,p.unit_measure, \'PCS\') AS unit_measure
+                                      pri.status, COALESCE(p.base_uom,p.unit_measure, \'PCS\') AS unit_measure, p.technical_name, p.authenticity, p.part_group, p.conversion_factor
                                 FROM purchase_request_items pri
-                                LEFT JOIN parts p ON p.part_number = pri.part_number
+                                LEFT JOIN parts p ON (p.part_number = pri.part_number OR p.part_id = pri.part_id)
                                 WHERE pri.spb_id = :spb_id ORDER BY pri.id');
         $items->execute([':spb_id' => $requestedSpbId]);
         $document['items'] = $items->fetchAll(PDO::FETCH_ASSOC);

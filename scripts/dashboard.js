@@ -12,7 +12,7 @@
           window.assetDbMapping = JSON.parse(cached);
           return;
         }
-      } catch (_) {}
+      } catch (_) { }
 
       const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
       const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
@@ -43,7 +43,7 @@
       window.assetDbMapping = mapping;
       try {
         sessionStorage.setItem(cacheKey, JSON.stringify(mapping));
-      } catch (_) {}
+      } catch (_) { }
       console.log("Asset DB mapping loaded from Google Sheets.");
     } catch (e) {
       console.warn("Asset DB mapping fallback to local DB:", e?.message || e);
@@ -1821,11 +1821,11 @@
       const localRecord = localById.get(serverRecord.id);
       return localRecord
         ? {
-            ...serverRecord,
-            ...localRecord,
-            status: serverRecord.status,
-            backend: true,
-          }
+          ...serverRecord,
+          ...localRecord,
+          status: serverRecord.status,
+          backend: true,
+        }
         : serverRecord;
     });
     localRecords
@@ -1935,10 +1935,10 @@
       const assets =
         activeSchema?.id === "cutting-bit-usage"
           ? reportReferences.assets.filter((asset) =>
-              /(?:^|\s)(?:RM|WR)-|reclaimer|milling|cold\s*recycler|road\s*reclaimer/i.test(
-                `${asset.id || ""} ${asset.code || ""} ${asset.category || ""} ${asset.makeModel || ""}`,
-              ),
-            )
+            /(?:^|\s)(?:RM|WR)-|reclaimer|milling|cold\s*recycler|road\s*reclaimer/i.test(
+              `${asset.id || ""} ${asset.code || ""} ${asset.category || ""} ${asset.makeModel || ""}`,
+            ),
+          )
           : reportReferences.assets;
       return assets
         .map(
@@ -3276,14 +3276,13 @@
       csvButton.disabled = false;
       const renderTable = (title, rows) => `
                 <h3>${title} (${rows.length} baris)</h3>
-                ${
-                  rows.length
-                    ? `<div class="admin-recap-table-wrap"><table class="admin-recap-table">
+                ${rows.length
+          ? `<div class="admin-recap-table-wrap"><table class="admin-recap-table">
                     <thead><tr><th>Tanggal</th><th>Bukti</th><th>Dari/ke</th><th>Part number</th><th>Nama part</th><th>Satuan</th><th>Jumlah</th><th>Saldo sebelum</th><th>Saldo sesudah</th><th>Laporan</th></tr></thead>
                     <tbody>${rows.map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.reference)}</td><td>${escapeHtml(row.counterparty)}</td><td>${escapeHtml(row.partNumber)}</td><td>${escapeHtml(row.partName)}</td><td>${escapeHtml(row.unit)}</td><td>${escapeHtml(row.quantity)}</td><td>${escapeHtml(row.stockBefore)}</td><td>${escapeHtml(row.stockAfter)}</td><td>${escapeHtml(row.reportNumber)}</td></tr>`).join("")}</tbody>
                 </table></div>`
-                    : "<p>Belum ada transaksi aplikasi untuk periode ini.</p>"
-                }`;
+          : "<p>Belum ada transaksi aplikasi untuk periode ini.</p>"
+        }`;
       result.innerHTML = `<div class="admin-recap-summary">
                 <strong>Periode ${escapeHtml(payload.period)}</strong>
                 <span>Masuk: ${escapeHtml(payload.summary.incomingLines)} baris / ${escapeHtml(payload.summary.receivedQuantity)} unit</span>
@@ -3568,8 +3567,8 @@
                     </tr></thead>
                     <tbody>
                         ${filtered
-                          .map(
-                            (record) => `
+          .map(
+            (record) => `
                             <tr>
                                 <td><strong>${escapeHtml(formatDateTime(record.createdAt))}</strong><small>${escapeHtml(record.id)}</small></td>
                                 <td>${escapeHtml(record.reportNumber)}</td>
@@ -3585,11 +3584,11 @@
                                 </td>
                             </tr>
                         `,
-                          )
-                          .join("")}
+          )
+          .join("")}
                         ${filteredSpbs
-                          .map(
-                            (spb) => `
+          .map(
+            (spb) => `
                             <tr>
                                 <td><strong>${escapeHtml(formatDateTime(spb.requested_at))}</strong><small>${escapeHtml(spb.wo_id)} / ${escapeHtml(spb.asset_id)}</small></td>
                                 <td>${escapeHtml(spb.spb_id)}</td>
@@ -3602,8 +3601,8 @@
                                     ${spb.source_report_id ? '<span title="Void melalui laporan Form asal">Void via Form</span>' : canVoidSpbDocuments ? `<button type="button" class="danger" data-spb-void="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-ban"></i> Void</button>` : ""}
                                 </div></td>
                             </tr>`,
-                          )
-                          .join("")}
+          )
+          .join("")}
                     </tbody>
                 </table>
             </div>
@@ -3837,8 +3836,8 @@
 
     grid.innerHTML = visibleItems.length
       ? visibleItems
-          .map(
-            (item) => `
+        .map(
+          (item) => `
             <article class="report-card">
                 <div class="report-file-icon" data-code="${escapeHtml(item.code)}">
                     <i class="fa-regular fa-file-lines"></i>
@@ -3854,8 +3853,8 @@
                 <button class="report-open-btn" data-open-form="${escapeHtml(item.id)}">Isi Form</button>
             </article>
         `,
-          )
-          .join("")
+        )
+        .join("")
       : `
             <div class="report-empty">
                 <i class="fa-regular fa-folder-open"></i>
@@ -3871,11 +3870,11 @@
     document.getElementById("reportPagination").innerHTML =
       items.length > pageSize
         ? Array.from(
-            { length: totalPages },
-            (_, index) => `
+          { length: totalPages },
+          (_, index) => `
                 <button class="report-page-btn ${currentPage === index + 1 ? "active" : ""}" data-page="${index + 1}">${index + 1}</button>
             `,
-          ).join("")
+        ).join("")
         : "";
     document.querySelectorAll("[data-page]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -3897,9 +3896,9 @@
     }
     return stored && stored.fields && Array.isArray(stored.rows)
       ? {
-          ...stored,
-          fields: { ...(schema.seedFields || {}), ...stored.fields },
-        }
+        ...stored,
+        fields: { ...(schema.seedFields || {}), ...stored.fields },
+      }
       : createEmptyDraft(schema);
   }
 
@@ -3967,15 +3966,15 @@
     return `
             <div class="template-number-control" data-template-number="${escapeHtml(item.key)}" data-template-pattern="${escapeHtml(template)}">
                 ${tokens
-                  .map((token) => {
-                    if (!token.editable)
-                      return `<span class="template-number-fixed">${escapeHtml(token.value)}</span>`;
-                    const currentIndex = valueIndex++;
-                    const width = Math.max(
-                      3,
-                      Math.min(10, token.value.length + 1),
-                    );
-                    return `<input
+        .map((token) => {
+          if (!token.editable)
+            return `<span class="template-number-fixed">${escapeHtml(token.value)}</span>`;
+          const currentIndex = valueIndex++;
+          const width = Math.max(
+            3,
+            Math.min(10, token.value.length + 1),
+          );
+          return `<input
                         class="template-number-part"
                         type="text"
                         inputmode="text"
@@ -3989,8 +3988,8 @@
                         aria-label="${escapeHtml(`${item.label} bagian ${currentIndex + 1}`)}"
                         ${item.required ? "required" : ""}
                     >`;
-                  })
-                  .join("")}
+        })
+        .join("")}
             </div>
             <small class="template-number-hint"><i class="fa-solid fa-lock"></i> Bagian format baku dikunci; isi hanya kotak yang tersedia.</small>
         `;
@@ -4153,9 +4152,9 @@
     if (item.type === "text") {
       const maxLength = Number(
         item.maxLength ||
-          (/alamat|uraian|analisa|temuan|riwayat|catatan|keterangan/.test(key)
-            ? 500
-            : 160),
+        (/alamat|uraian|analisa|temuan|riwayat|catatan|keterangan/.test(key)
+          ? 500
+          : 160),
       );
       return `${item.required ? 'minlength="2"' : ""} maxlength="${maxLength}"`;
     }
@@ -4213,22 +4212,21 @@
     const evidence = row._evidence;
     return `
             <div class="evidence-control ${evidence?.dataUrl ? "has-file" : ""}">
-                ${
-                  evidence?.dataUrl
-                    ? `
+                ${evidence?.dataUrl
+        ? `
                     <img src="${escapeHtml(evidence.dataUrl)}" alt="Bukti ${rowIndex + 1}">
                     <span title="${escapeHtml(evidence.name)}">${escapeHtml(evidence.name)}</span>
                     <button type="button" data-remove-evidence="${rowIndex}" title="Hapus gambar"><i class="fa-solid fa-xmark"></i></button>
                     <input class="evidence-caption-input" type="text" data-evidence-caption-row="${rowIndex}" value="${escapeHtml(evidence.caption || "")}" placeholder="Keterangan/konteks foto *">
                 `
-                    : `
+        : `
                     <label>
                         <i class="fa-solid fa-camera"></i>
                         <span>Unggah gambar <b>*</b></span>
                         <input type="file" accept="image/jpeg,image/png,image/webp" data-evidence-row="${rowIndex}">
                     </label>
                 `
-                }
+      }
             </div>
         `;
   }
@@ -4381,13 +4379,12 @@
   function tableHeaderMarkup(item) {
     return `
             <div class="table-header-content">
-                <span>${escapeHtml(item.label)}${
-                  item.readonly
-                    ? "<em>Otomatis</em>"
-                    : item.required
-                      ? '<b class="required-mark">*</b>'
-                      : "<em>Opsional</em>"
-                }</span>
+                <span>${escapeHtml(item.label)}${item.readonly
+        ? "<em>Otomatis</em>"
+        : item.required
+          ? '<b class="required-mark">*</b>'
+          : "<em>Opsional</em>"
+      }</span>
             </div>
         `;
   }
@@ -4423,16 +4420,16 @@
                             <div class="guide-reference-table">
                                 <div class="guide-reference-row head"><span>Field</span><span>Status</span><span>Cara mengisi</span></div>
                                 ${activeSchema.fields
-                                  .map(
-                                    (item) => `
+        .map(
+          (item) => `
                                     <div class="guide-reference-row">
                                         <strong>${escapeHtml(item.label)}</strong>
                                         <span><em class="${item.required ? "required" : "optional"}">${item.required ? "Wajib" : "Opsional"}</em></span>
                                         <p>${escapeHtml(fieldInstruction(item))}</p>
                                     </div>
                                 `,
-                                  )
-                                  .join("")}
+        )
+        .join("")}
                             </div>
                         </section>
                         <section class="guide-reference">
@@ -4443,27 +4440,26 @@
                             <div class="guide-reference-table">
                                 <div class="guide-reference-row head"><span>Kolom</span><span>Status</span><span>Cara mengisi</span></div>
                                 ${activeSchema.columns
-                                  .map(
-                                    (item) => `
+        .map(
+          (item) => `
                                     <div class="guide-reference-row">
                                         <strong>${escapeHtml(item.label)}</strong>
                                         <span><em class="${item.readonly ? "automatic" : item.required ? "required" : "optional"}">${item.readonly ? "Otomatis" : item.required ? "Wajib" : "Opsional"}</em></span>
                                         <p>${escapeHtml(columnInstruction(item))}</p>
                                     </div>
                                 `,
-                                  )
-                                  .join("")}
-                                ${
-                                  requiresEvidence()
-                                    ? `
+        )
+        .join("")}
+                                ${requiresEvidence()
+        ? `
                                     <div class="guide-reference-row">
                                         <strong>Bukti gambar & keterangan</strong>
                                         <span><em class="required">Wajib</em></span>
                                         <p>Unggah satu foto minimal HD 1280×720px untuk setiap item, lalu tuliskan konteks foto. Foto akan menjadi halaman lampiran tersendiri.</p>
                                     </div>
                                 `
-                                    : ""
-                                }
+        : ""
+      }
                             </div>
                         </section>
                     </div>
@@ -4785,11 +4781,10 @@
                 <div class="summary-line"><span>Realisasi</span><strong>${realization.toLocaleString("id-ID")}%</strong></div>
                 <div class="summary-line"><span>Hari planning / actual</span><strong>${plannedDays.toLocaleString("id-ID")} / ${actualDays.toLocaleString("id-ID")} hari</strong></div>
                 <div class="summary-line"><span>Actual tanpa planning</span><strong>${anomalousDays.toLocaleString("id-ID")} hari</strong></div>
-                ${
-                  sourceMismatches.length
-                    ? `<div class="summary-line"><span>Review nilai sumber</span><strong>${escapeHtml(sourceMismatches.join(", "))}</strong></div>`
-                    : ""
-                }
+                ${sourceMismatches.length
+          ? `<div class="summary-line"><span>Review nilai sumber</span><strong>${escapeHtml(sourceMismatches.join(", "))}</strong></div>`
+          : ""
+        }
                 <div class="summary-line total"><span>Sisa terhadap kebutuhan + safety stock</span><strong>${remainingRequirement.toLocaleString("id-ID")} pcs</strong></div>
             `;
     }
@@ -4858,9 +4853,9 @@
       );
       const averageHours = measured.length
         ? measured.reduce(
-            (sum, row) => sum + numberValue(row.total_waktu_aktual),
-            0,
-          ) / measured.length
+          (sum, row) => sum + numberValue(row.total_waktu_aktual),
+          0,
+        ) / measured.length
         : 0;
       return `
                 <div class="summary-line"><span>Total item dimonitor</span><strong>${populated.length.toLocaleString("id-ID")} item</strong></div>
@@ -4919,9 +4914,8 @@
                     </div>
                     <div class="autosave-badge" id="autosaveBadge"><i class="fa-solid fa-cloud"></i> Auto-save aktif</div>
                 </div>
-                ${
-                  activeDraft.importSource
-                    ? `
+                ${activeDraft.importSource
+        ? `
                     <div class="imported-source-banner">
                         <i class="fa-solid fa-file-shield"></i>
                         <div>
@@ -4929,23 +4923,21 @@
                             <span>SHA-256 ${escapeHtml(String(activeDraft.importSource.sha256 || "").slice(0, 16))}... ·
                             pemetaan ${Math.round(Number(activeDraft.importSource.mappingCoverage || 0) * 100)}% ·
                             ${Number(activeDraft.importSource.unmappedFragments || 0)} fragmen tetap tersimpan di arsip impor.
-                            ${
-                              activeDraft.importSource.rowsLimited
-                                ? ` Draft memakai ${Number(activeDraft.importSource.appliedRows || 0).toLocaleString("id-ID")} dari ${Number(activeDraft.importSource.totalMappedRows || 0).toLocaleString("id-ID")} baris terpetakan.`
-                                : ""
-                            }
-                            ${
-                              Number(
-                                activeDraft.importSource.typeIssueCount || 0,
-                              )
-                                ? ` ${Number(activeDraft.importSource.typeIssueCount).toLocaleString("id-ID")} nilai tidak diterapkan langsung karena tipe, opsi, atau kolomnya tidak cocok dengan schema dan perlu direview.`
-                                : ""
-                            }</span>
+                            ${activeDraft.importSource.rowsLimited
+          ? ` Draft memakai ${Number(activeDraft.importSource.appliedRows || 0).toLocaleString("id-ID")} dari ${Number(activeDraft.importSource.totalMappedRows || 0).toLocaleString("id-ID")} baris terpetakan.`
+          : ""
+        }
+                            ${Number(
+          activeDraft.importSource.typeIssueCount || 0,
+        )
+          ? ` ${Number(activeDraft.importSource.typeIssueCount).toLocaleString("id-ID")} nilai tidak diterapkan langsung karena tipe, opsi, atau kolomnya tidak cocok dengan schema dan perlu direview.`
+          : ""
+        }</span>
                         </div>
                     </div>
                 `
-                    : ""
-                }
+        : ""
+      }
                 <form id="dynamicReportForm" novalidate>
                     ${renderReferenceDatalists()}
                     <div class="form-builder-body">
@@ -5096,9 +5088,9 @@
     if (!validity || validity.valid) return "";
     const label = control.dataset.field
       ? activeSchema?.fields.find((item) => item.key === control.dataset.field)
-          ?.label
+        ?.label
       : activeSchema?.columns.find((item) => item.key === control.dataset.key)
-          ?.label;
+        ?.label;
     const fieldLabel = label || "Field ini";
     if (validity.valueMissing) return `${fieldLabel} wajib diisi.`;
     if (validity.typeMismatch) {
@@ -5277,9 +5269,9 @@
       Januari: 31,
       Februari:
         hasField("tahun") &&
-        (numericField("tahun") % 400 === 0 ||
-          (numericField("tahun") % 4 === 0 &&
-            numericField("tahun") % 100 !== 0))
+          (numericField("tahun") % 400 === 0 ||
+            (numericField("tahun") % 4 === 0 &&
+              numericField("tahun") % 100 !== 0))
           ? 29
           : hasField("tahun")
             ? 28
@@ -5625,7 +5617,7 @@
       .filter(Boolean);
     const averageValueLength = sampledValues.length
       ? sampledValues.reduce((total, value) => total + value.length, 0) /
-        sampledValues.length
+      sampledValues.length
       : 0;
     const longestValue = sampledValues.reduce(
       (longest, value) => Math.max(longest, value.length),
@@ -5848,12 +5840,12 @@
                 </div>
                 <div class="print-meta">
                     ${schema.fields
-                      .map(
-                        (item) => `
+        .map(
+          (item) => `
                         <div><strong>${escapeHtml(item.label)}</strong><span>${escapeHtml(displayValue(item, draft.fields[item.key]))}</span></div>
                     `,
-                      )
-                      .join("")}
+        )
+        .join("")}
                 </div>
                 </section>
                 <section class="print-data-section">
@@ -5874,29 +5866,29 @@
                     </tr></thead>
                     <tbody>
                         ${rows
-                          .map(
-                            (row, index) => `<tr>
+        .map(
+          (row, index) => `<tr>
                             <td>${index + 1}</td>
                             ${schema.columns.map((item) => `<td>${escapeHtml(displayValue(item, row[item.key]))}</td>`).join("")}
                         </tr>`,
-                          )
-                          .join("")}
+        )
+        .join("")}
                     </tbody>
                 </table>
                 <section class="print-closing-section">
                 ${summary ? `<div class="calculation-summary"><div class="summary-card">${summary}</div></div>` : ""}
                 <div class="print-approvals" style="grid-template-columns:repeat(${approvals.length},1fr)">
                     ${approvals
-                      .map((item) => {
-                        const name = item.nameField
-                          ? draft.fields[item.nameField]
-                          : "";
-                        const role = item.roleField
-                          ? draft.fields[item.roleField]
-                          : "";
-                        return `<div><span>${escapeHtml(item.label)}</span><div class="signature-space"></div><strong>( ${escapeHtml(name || "__________________")} )</strong>${role ? `<small>${escapeHtml(role)}</small>` : ""}</div>`;
-                      })
-                      .join("")}
+        .map((item) => {
+          const name = item.nameField
+            ? draft.fields[item.nameField]
+            : "";
+          const role = item.roleField
+            ? draft.fields[item.roleField]
+            : "";
+          return `<div><span>${escapeHtml(item.label)}</span><div class="signature-space"></div><strong>( ${escapeHtml(name || "__________________")} )</strong>${role ? `<small>${escapeHtml(role)}</small>` : ""}</div>`;
+        })
+        .join("")}
                 </div>
                 <footer class="print-footer">
                     <span>Dibuat otomatis oleh FleetMonitor</span>
@@ -6040,8 +6032,8 @@
     const sourceFields = payload?.fields;
     const importedFieldValues =
       sourceFields &&
-      typeof sourceFields === "object" &&
-      !Array.isArray(sourceFields)
+        typeof sourceFields === "object" &&
+        !Array.isArray(sourceFields)
         ? sourceFields
         : {};
     if (sourceFields != null && importedFieldValues !== sourceFields) {
@@ -6147,8 +6139,8 @@
 
     const sourceMetadata =
       payload?.importSource &&
-      typeof payload.importSource === "object" &&
-      !Array.isArray(payload.importSource)
+        typeof payload.importSource === "object" &&
+        !Array.isArray(payload.importSource)
         ? { ...payload.importSource }
         : {};
     const importSource = {
@@ -6161,10 +6153,10 @@
       fields: replace
         ? { ...(schema.seedFields || {}), ...normalizedFields }
         : {
-            ...(schema.seedFields || {}),
-            ...(existing.fields || {}),
-            ...normalizedFields,
-          },
+          ...(schema.seedFields || {}),
+          ...(existing.fields || {}),
+          ...normalizedFields,
+        },
       rows: replace
         ? importedRows
         : [...(existing.rows || []).filter(isRowPopulated), ...importedRows],
@@ -6273,19 +6265,19 @@
       category: text(asset?.category || asset?.type || "Heavy Equipment"),
       hull: text(
         asset?.hull_number ||
-          asset?.alias_name ||
-          asset?.hullNumber ||
-          asset?.asset_code ||
-          id,
+        asset?.alias_name ||
+        asset?.hullNumber ||
+        asset?.asset_code ||
+        id,
       ),
       serial: text(asset?.serial_number || asset?.serialNumber || "-"),
       plate: text(asset?.license_plate || asset?.licensePlate || "-"),
       model: text(asset?.make_model || asset?.model || asset?.name || "-"),
       location: text(
         asset?.location_name ||
-          asset?.location ||
-          asset?.raw_location_notes ||
-          "",
+        asset?.location ||
+        asset?.raw_location_notes ||
+        "",
       ),
       hm: asset?.last_hm_km ?? asset?.hm ?? "",
       status: text(asset?.status || "UNKNOWN"),
@@ -6405,11 +6397,11 @@
     if (!container) return;
     container.innerHTML = state.mechanics.length
       ? state.mechanics
-          .map(
-            (name, index) =>
-              `<span class="wo-chip"><i class="fa-solid fa-user-gear"></i>${escapeText(name)}<button type="button" data-mechanic-index="${index}" aria-label="Hapus ${escapeText(name)}">&times;</button></span>`,
-          )
-          .join("")
+        .map(
+          (name, index) =>
+            `<span class="wo-chip"><i class="fa-solid fa-user-gear"></i>${escapeText(name)}<button type="button" data-mechanic-index="${index}" aria-label="Hapus ${escapeText(name)}">&times;</button></span>`,
+        )
+        .join("")
       : '<span class="wo-chip-empty">Belum ada PIC dipilih</span>';
     container.querySelectorAll("[data-mechanic-index]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -6685,7 +6677,7 @@
           (p) =>
             p.partNumber &&
             p.partNumber.toLowerCase() ===
-              (item.partNumber || "").toLowerCase(),
+            (item.partNumber || "").toLowerCase(),
         );
         const isManual = Boolean(
           item.isManual || (item.partNumber && !matchedPart),
@@ -6702,14 +6694,14 @@
                     <select class="form-control" onchange="window.handleNwoPartSelectChange(${index}, this.value)" aria-label="Pilih Suku Cadang" style="margin-bottom:6px; font-weight:600;">
                         <option value="">-- Pilih dari Katalog Gudang --</option>
                         ${masterParts
-                          .map(
-                            (part) => `
+            .map(
+              (part) => `
                             <option value="${escapeText(part.partNumber)}" ${selectedValue === part.partNumber ? "selected" : ""}>
                                 ${escapeText(part.partNumber)} · ${escapeText(part.description || "Tanpa nama")} (Stok: ${part.stockQty} ${escapeText(part.uom)})
                             </option>
                         `,
-                          )
-                          .join("")}
+            )
+            .join("")}
                         <option value="__MANUAL__" ${selectedValue === "__MANUAL__" ? "selected" : ""}>+ Part Baru / Input Manual</option>
                     </select>
                     <div style="display:grid; grid-template-columns: 1fr 2fr; gap:6px;">
@@ -6772,7 +6764,7 @@
             (p) =>
               p.partNumber &&
               p.partNumber.toLowerCase() ===
-                (item.partNumber || "").toLowerCase(),
+              (item.partNumber || "").toLowerCase(),
           );
           const reqQty = Math.max(1, Number(item.qty) || 1);
           const avail = matchedPart
@@ -6901,7 +6893,7 @@
         (p) =>
           p.partNumber &&
           p.partNumber.toLowerCase() ===
-            (item.partNumber || "").toLowerCase(),
+          (item.partNumber || "").toLowerCase(),
       );
       const isManual = Boolean(
         item.isManual || (item.partNumber && !matchedPart),
@@ -7707,10 +7699,18 @@
         description: String(
           row.part_name || row.namaParts || row.description || row.name || "",
         ).trim(),
+        technicalName: String(
+          row.technical_name || row.technicalName || row.part_name || row.namaParts || "",
+        ).trim(),
+        authenticity: String(row.authenticity || "UNVERIFIED").trim(),
+        partGroup: String(row.part_group || row.partGroup || row.category || "Lainnya").trim(),
         uom:
           String(
             row.unit_measure || row.satuan || row.uom || row.unit || "pcs",
           ).trim() || "pcs",
+        baseUom: String(row.base_uom || row.baseUom || row.unit_measure || "pcs").trim(),
+        transactionUom: String(row.transaction_uom || row.transactionUom || row.unit_measure || "pcs").trim(),
+        conversionFactor: Number(row.conversion_factor || row.conversionFactor || 1) || 1,
         stockQty: Number(row.stock_qty ?? row.saldo ?? row.stock) || 0,
         category: String(row.category || "").trim(),
         warehouse: String(
@@ -7959,8 +7959,8 @@
       .includes("dump")
       ? "fa-truck-moving"
       : String(asset.category || "")
-            .toLowerCase()
-            .includes("excavator")
+        .toLowerCase()
+        .includes("excavator")
         ? "fa-person-digging"
         : "fa-tractor";
   }
@@ -8034,31 +8034,28 @@
                         <small class="sl-asset-status ${escapeHtml(String(asset.status || "READY").toLowerCase())}">${escapeHtml(asset.status || "READY")}</small>
                     </div>
                 </td>
-                <td>${
-                  primaryWo
-                    ? `<button type="button" class="clickable-wo-link" onclick="openWoDetailModal('${escapeHtml(primaryWo.woId)}', '${escapeHtml(asset.id)}')"><i class="fa-solid fa-screwdriver-wrench"></i> ${escapeHtml(primaryWo.woId)}</button><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(primaryWo.priority || "Normal")}</small>`
-                    : '<span class="sl-empty-value">Tidak ada WO aktif</span>'
-                }</td>
+                <td>${primaryWo
+        ? `<button type="button" class="clickable-wo-link" onclick="openWoDetailModal('${escapeHtml(primaryWo.woId)}', '${escapeHtml(asset.id)}')"><i class="fa-solid fa-screwdriver-wrench"></i> ${escapeHtml(primaryWo.woId)}</button><small>${workOrders.length > 1 ? `+${workOrders.length - 1} WO lainnya` : escapeHtml(primaryWo.priority || "Normal")}</small>`
+        : '<span class="sl-empty-value">Tidak ada WO aktif</span>'
+      }</td>
                 <td>
                     <div class="sl-item-counter ${hasParts ? summary.overall : "muted"}">
                         <strong>${summary.itemCount}</strong>
                         <span>item<small>${summary.requested} total qty</small></span>
                     </div>
                 </td>
-                <td>${
-                  hasParts
-                    ? `
+                <td>${hasParts
+        ? `
                     <div class="sl-fulfilment">
                         <div><strong>${summary.available}/${summary.requested}</strong><span>${fulfilment}% tersedia</span></div>
                         <span class="sl-progress"><i style="width:${Math.min(fulfilment, 100)}%"></i></span>
                     </div>`
-                    : '<span class="sl-empty-value">Belum ada kebutuhan</span>'
-                }</td>
-                <td>${
-                  hasParts
-                    ? `<span class="sl-procurement-badge ${summary.overall}">${summary.delayed ? `${summary.delayed} tertunda` : summary.ready === summary.itemCount ? "Siap / diserahkan" : summary.progress ? "Dalam pengadaan" : "Menunggu proses"}</span><small>${formatDate(summary.latest)}</small>`
-                    : '<span class="sl-procurement-badge muted">Belum ditabulasi</span>'
-                }</td>
+        : '<span class="sl-empty-value">Belum ada kebutuhan</span>'
+      }</td>
+                <td>${hasParts
+        ? `<span class="sl-procurement-badge ${summary.overall}">${summary.delayed ? `${summary.delayed} tertunda` : summary.ready === summary.itemCount ? "Siap / diserahkan" : summary.progress ? "Dalam pengadaan" : "Menunggu proses"}</span><small>${formatDate(summary.latest)}</small>`
+        : '<span class="sl-procurement-badge muted">Belum ditabulasi</span>'
+      }</td>
                 <td>${workflowCell(asset)}</td>
                 <td><button class="sl-access-button" type="button" data-sl-action="open" data-asset-id="${escapeHtml(asset.id)}"><i class="fa-solid fa-arrow-up-right-from-square"></i>Akses</button></td>
             </tr>`;
@@ -8091,24 +8088,22 @@
                     <div>
                         <span class="sl-eyebrow">${hasParts ? "PRIORITAS PENGADAAN & KITTING" : "REGISTRY BELUM BERTAUT PART"}</span>
                         <h2>${hasParts ? "Unit yang Sudah Memiliki Spare Part" : "Unit yang Belum Memiliki Spare Part"}</h2>
-                        <p>${
-                          hasParts
-                            ? "Counter menunjukkan baris item dan total kuantitas aktif per unit."
-                            : "Akses unit untuk menambahkan kebutuhan baru atau menautkannya ke Work Order."
-                        }</p>
+                        <p>${hasParts
+        ? "Counter menunjukkan baris item dan total kuantitas aktif per unit."
+        : "Akses unit untuk menambahkan kebutuhan baru atau menautkannya ke Work Order."
+      }</p>
                     </div>
                     <span class="sl-section-count ${hasParts ? "primary" : "neutral"}"><strong>${filtered.length}</strong> unit</span>
                 </header>
                 <div class="table-responsive sl-table-wrap">
                     <table class="sl-unit-table">
                         <thead><tr><th>Unit / Tipe</th><th>Lokasi & Status</th><th>Referensi WO</th><th>Counter Part</th><th>Pemenuhan</th><th>Status Pengadaan</th><th>Linkage</th><th>Akses</th></tr></thead>
-                        <tbody>${
-                          pageRows.length
-                            ? pageRows
-                                .map((asset) => renderAssetRow(asset, hasParts))
-                                .join("")
-                            : `<tr><td colspan="8" class="sl-empty-row">Tidak ada unit yang sesuai dengan filter saat ini.</td></tr>`
-                        }</tbody>
+                        <tbody>${pageRows.length
+        ? pageRows
+          .map((asset) => renderAssetRow(asset, hasParts))
+          .join("")
+        : `<tr><td colspan="8" class="sl-empty-row">Tidak ada unit yang sesuai dengan filter saat ini.</td></tr>`
+      }</tbody>
                     </table>
                 </div>
                 ${renderPager(kind, page, totalPages, filtered.length, start, pageRows)}
@@ -8427,8 +8422,8 @@
                 <table class="sl-parts-table">
                     <thead><tr><th>Part / Deskripsi</th><th>SPB / WO</th><th>Kebutuhan</th><th>Tersedia</th><th>Status & ETA</th><th>Dampak</th></tr></thead>
                     <tbody>${items
-                      .map(
-                        (item) => `
+        .map(
+          (item) => `
                         <tr>
                             <td><strong>${escapeHtml(item.partNumber)}</strong><small>${escapeHtml(item.description)}</small></td>
                             <td><strong>${escapeHtml(item.spbId || "Draft")}</strong>${item.woId ? `<button type="button" class="sl-inline-link" data-sl-action="record-wo" data-wo-id="${escapeHtml(item.woId)}">${escapeHtml(item.woId)}</button>` : "<small>Belum terkait WO</small>"}</td>
@@ -8442,8 +8437,8 @@
                             </td>
                             <td><span class="sl-rtw-chip ${item.rtwImpact ? "danger" : "neutral"}">${item.rtwImpact ? "RTW terdampak" : "Tidak berdampak"}</span><small>${escapeHtml(item.source || "SPB")}</small></td>
                         </tr>`,
-                      )
-                      .join("")}</tbody>
+        )
+        .join("")}</tbody>
                 </table>
             </div>`;
   }
@@ -8459,8 +8454,8 @@
                 <table class="sl-parts-table">
                     <thead><tr><th>Tanggal / bukti</th><th>Part / kode</th><th>Qty</th><th>WO / JO</th><th>Sumber</th></tr></thead>
                     <tbody>${visible
-                      .map(
-                        (item) => `
+        .map(
+          (item) => `
                         <tr>
                             <td><strong>${escapeHtml(item.tglSpb || "-")}</strong><small>${escapeHtml(item.noBukti || item.noSpb || "-")}</small></td>
                             <td><strong>${escapeHtml(item.namaSparepart || "-")}</strong><small>${escapeHtml(item.spesifikasi || "Part number tidak tercatat")}</small></td>
@@ -8468,8 +8463,8 @@
                             <td>${escapeHtml(item.noJo || "Tidak tercatat")}</td>
                             <td><small>${escapeHtml(item.source || "Bank Data Equipment")}</small></td>
                         </tr>`,
-                      )
-                      .join("")}</tbody>
+        )
+        .join("")}</tbody>
                 </table>
                 ${usage.length > visible.length ? `<div class="sl-table-footer"><span>Menampilkan 25 transaksi terbaru dari ${usage.length.toLocaleString("id-ID")} riwayat unit.</span></div>` : ""}
             </div>`;
@@ -8501,7 +8496,19 @@
                 </td>
                 <td><input type="text" value="${escapeHtml(item.description || "")}" placeholder="Nama / spesifikasi part" data-sl-draft-field="description" data-index="${index}" ${matchedPart && !isManual ? "readonly" : ""}></td>
                 <td><input type="number" min="1" value="${Number(item.qty) || 1}" data-sl-draft-field="qty" data-index="${index}"></td>
-                <td><input type="text" value="${escapeHtml(item.uom || "pcs")}" placeholder="pcs" data-sl-draft-field="uom" data-index="${index}" ${matchedPart && !isManual ? "readonly" : ""}></td>
+                <td>
+                    <input type="text" value="${escapeHtml(item.uom || "pcs")}" placeholder="pcs" data-sl-draft-field="uom" data-index="${index}" ${matchedPart && !isManual ? "readonly" : ""}>
+                    ${(() => {
+                        const factor = Number(matchedPart?.conversionFactor || item.conversionFactor || 1);
+                        const txUom = matchedPart?.transactionUom || item.uom || "pcs";
+                        const baseUom = matchedPart?.baseUom || "pcs";
+                        if (factor > 1) {
+                            const totalBase = Math.round((Number(item.qty) || 1) * factor * 100) / 100;
+                            return `<div class="sl-uom-convert-badge" style="font-size:0.75rem; color:#0284c7; margin-top:3px;"><i class="fa-solid fa-calculator"></i> 1 ${escapeHtml(txUom)} = ${factor} ${escapeHtml(baseUom)} (Total: ${totalBase} ${escapeHtml(baseUom)})</div>`;
+                        }
+                        return "";
+                    })()}
+                </td>
                 <td><button type="button" class="sl-remove-draft" data-sl-action="remove-draft" data-index="${index}" title="Hapus draft item"><i class="fa-solid fa-trash"></i></button></td>
             </tr>`;
       })
@@ -8669,7 +8676,7 @@
       (part) =>
         part.partNumber.toLowerCase() === query ||
         `${part.partNumber} — ${part.description || "Tanpa nama"}`.toLowerCase() ===
-          query ||
+        query ||
         String(part.description || "").toLowerCase() === query,
     );
     const selected = matches.length === 1 ? matches[0] : null;
@@ -8851,13 +8858,13 @@
     };
     const rows = draft.draft.length
       ? draft.draft.map((item) => ({
-          nama: item.description || "",
-          spesifikasi: item.partNumber || "",
-          satuan: item.uom || "pcs",
-          jumlah: Number(item.qty) || 1,
-          keterangan: "",
-          status: "Diajukan",
-        }))
+        nama: item.description || "",
+        spesifikasi: item.partNumber || "",
+        satuan: item.uom || "pcs",
+        jumlah: Number(item.qty) || 1,
+        keterangan: "",
+        status: "Diajukan",
+      }))
       : [{}];
     closeDetail();
     window.showView?.("reports", "", "menu-reports");
@@ -9892,13 +9899,13 @@
 
     const dbAssetInspections = window.globalTireInspectionsByAsset
       ? window.globalTireInspectionsByAsset[rawAssetId.toLowerCase()] ||
-        window.globalTireInspectionsByAsset[code.toLowerCase()]
+      window.globalTireInspectionsByAsset[code.toLowerCase()]
       : null;
 
     return layout.map((position, index) => {
       let dbRecord = dbAssetInspections
         ? dbAssetInspections[position.posCode] ||
-          dbAssetInspections[position.code]
+        dbAssetInspections[position.code]
         : null;
       if (dbRecord) {
         return {
@@ -10199,8 +10206,8 @@
       0,
       Math.round(
         100 -
-          weighted.filter((value) => value === "warning").length * 12 -
-          weighted.filter((value) => value === "danger").length * 28,
+        weighted.filter((value) => value === "warning").length * 12 -
+        weighted.filter((value) => value === "danger").length * 28,
       ),
     );
     return {
@@ -10216,7 +10223,7 @@
   function statusLabel(status) {
     return (
       { success: "Aman", warning: "Perhatian", danger: "Kritis", muted: "N/A" }[
-        status
+      status
       ] || status
     );
   }
@@ -10375,16 +10382,16 @@
     const kpiRank = { danger: 0, warning: 1, success: 2 };
     const kpiRows = activeKpi
       ? rows
-          .filter(
-            (item) =>
-              catalogState.activeKpi === "all" ||
-              item.commonOverall === catalogState.activeKpi,
-          )
-          .sort(
-            (a, b) =>
-              kpiRank[a.commonOverall] - kpiRank[b.commonOverall] ||
-              shortCode(a.asset.id).localeCompare(shortCode(b.asset.id)),
-          )
+        .filter(
+          (item) =>
+            catalogState.activeKpi === "all" ||
+            item.commonOverall === catalogState.activeKpi,
+        )
+        .sort(
+          (a, b) =>
+            kpiRank[a.commonOverall] - kpiRank[b.commonOverall] ||
+            shortCode(a.asset.id).localeCompare(shortCode(b.asset.id)),
+        )
       : [];
     const cuttingRows = rows
       .filter((item) => supportsCuttingBit(item.asset))
@@ -10446,9 +10453,8 @@
                 <button type="button" class="cm-catalog-kpi success ${catalogState.activeKpi === "success" ? "active" : ""}" onclick="ConditionMonitoring.toggleKpiTable('success')" aria-expanded="${catalogState.activeKpi === "success"}" aria-controls="cm-kpi-drilldown"><div><span>Dalam Batas Aman</span><strong>${totalSafe}</strong><small>Monitoring rutin dilanjutkan</small><em>Lihat tabulasi lengkap <i class="fa-solid fa-arrow-right"></i></em></div><i class="fa-solid fa-shield-check"></i></button>
             </section>
 
-            ${
-              activeKpi
-                ? `<section id="cm-kpi-drilldown" class="cm-kpi-drilldown ${activeKpi.tone}" aria-labelledby="cm-kpi-drilldown-title">
+            ${activeKpi
+        ? `<section id="cm-kpi-drilldown" class="cm-kpi-drilldown ${activeKpi.tone}" aria-labelledby="cm-kpi-drilldown-title">
                 <header class="cm-kpi-drilldown-header">
                     <div class="cm-kpi-drilldown-title">
                         <span class="cm-kpi-drilldown-icon"><i class="fa-solid ${activeKpi.icon}"></i></span>
@@ -10460,45 +10466,44 @@
                     <table class="cm-catalog-table cm-kpi-table">
                         <thead><tr><th>Unit / Tipe</th><th>Lokasi & Status</th><th>Ban</th><th>Grease</th><th>Aki</th><th>${catalogState.activeKpi === "success" ? "Komponen Termonitor" : catalogState.activeKpi === "all" ? "Ringkasan Kondisi" : "Komponen Pemicu"}</th><th>Inspeksi Terakhir</th><th>Tindak Lanjut</th><th>Aksi</th></tr></thead>
                         <tbody>
-                            ${
-                              kpiRows.length
-                                ? kpiRows
-                                    .map(
-                                      ({
-                                        asset,
-                                        profile,
-                                        summary,
-                                        commonOverall,
-                                      }) => {
-                                        const latest = latestConditionFor(
-                                          asset.id,
-                                        );
-                                        const activeWo = findActiveWo(asset.id);
-                                        const components =
-                                          commonComponentDetails(
-                                            profile,
-                                            summary,
-                                          );
-                                        const focusComponents =
-                                          commonOverall === "success"
-                                            ? components.filter(
-                                                (item) =>
-                                                  item.status !== "muted",
-                                              )
-                                            : components.filter(
-                                                (item) =>
-                                                  item.status === commonOverall,
-                                              );
-                                        const focusMarkup =
-                                          focusComponents.length
-                                            ? focusComponents
-                                                .map(
-                                                  (item) =>
-                                                    `<span class="cm-kpi-domain-chip ${item.status}" title="${esc(item.detail)}">${esc(item.name)}</span>`,
-                                                )
-                                                .join("")
-                                            : '<span class="cm-no-record">Tidak ada pemicu</span>';
-                                        return `<tr>
+                            ${kpiRows.length
+          ? kpiRows
+            .map(
+              ({
+                asset,
+                profile,
+                summary,
+                commonOverall,
+              }) => {
+                const latest = latestConditionFor(
+                  asset.id,
+                );
+                const activeWo = findActiveWo(asset.id);
+                const components =
+                  commonComponentDetails(
+                    profile,
+                    summary,
+                  );
+                const focusComponents =
+                  commonOverall === "success"
+                    ? components.filter(
+                      (item) =>
+                        item.status !== "muted",
+                    )
+                    : components.filter(
+                      (item) =>
+                        item.status === commonOverall,
+                    );
+                const focusMarkup =
+                  focusComponents.length
+                    ? focusComponents
+                      .map(
+                        (item) =>
+                          `<span class="cm-kpi-domain-chip ${item.status}" title="${esc(item.detail)}">${esc(item.name)}</span>`,
+                      )
+                      .join("")
+                    : '<span class="cm-no-record">Tidak ada pemicu</span>';
+                return `<tr>
                                     <td><div class="cm-unit-table-cell"><span class="cm-unit-table-icon ${commonOverall}"><i class="fa-solid ${supportsCuttingBit(asset) ? "fa-road" : isDumpTruck(asset) ? "fa-truck-moving" : "fa-tractor"}"></i></span><div><strong>${esc(shortCode(asset.id))}</strong><small>${esc(assetType(asset))}</small></div></div></td>
                                     <td><div class="cm-location-cell"><span title="${esc(asset.location || "")}">${esc(asset.location || "Lokasi belum ditetapkan")}</span><small class="cm-asset-status ${esc(String(asset.status || "READY").toLowerCase())}">${esc(asset.status || "READY")}</small></div></td>
                                     <td>${conditionCell(summary.statuses.tire, `${summary.tireDanger} kritis · ${summary.tireWarning} warning`)}</td>
@@ -10509,18 +10514,18 @@
                                     <td class="cm-kpi-follow-up">${activeWo ? `<button class="cm-wo-link" type="button" onclick="ConditionMonitoring.openLinkedWO('${esc(asset.id)}')"><i class="fa-solid fa-wrench"></i>${esc(activeWo.woId)}</button>` : `<span>${esc(commonFollowUp(commonOverall, focusComponents))}</span>`}</td>
                                     <td><button class="cm-detail-button" type="button" onclick="ConditionMonitoring.openDetail('${esc(asset.id)}'); event.stopPropagation();"><i class="fa-solid fa-eye"></i> Detail</button></td>
                                 </tr>`;
-                                      },
-                                    )
-                                    .join("")
-                                : '<tr><td colspan="9" class="cm-empty-cell">Tidak ada unit dalam kategori KPI ini.</td></tr>'
-                            }
+              },
+            )
+            .join("")
+          : '<tr><td colspan="9" class="cm-empty-cell">Tidak ada unit dalam kategori KPI ini.</td></tr>'
+        }
                         </tbody>
                     </table>
                 </div>
                 <footer class="cm-kpi-drilldown-footer"><i class="fa-solid fa-table-list"></i>Menampilkan seluruh ${kpiRows.length.toLocaleString("id-ID")} unit tanpa pembatasan halaman.</footer>
             </section>`
-                : ""
-            }
+        : ""
+      }
 
             <section class="cm-catalog-panel">
                 <div class="cm-catalog-panel-head">
@@ -10554,26 +10559,25 @@
                     <table class="cm-catalog-table">
                         <thead><tr><th>Unit / Tipe</th><th>Lokasi & Status</th><th>Ban</th><th>Grease</th><th>Aki</th><th>Inspeksi Terakhir</th><th>Tindak Lanjut</th><th>Aksi</th></tr></thead>
                         <tbody>
-                            ${
-                              pageRows.length
-                                ? pageRows
-                                    .map(
-                                      ({
-                                        asset,
-                                        profile,
-                                        summary,
-                                        commonOverall,
-                                      }) => {
-                                        const latest = latestConditionFor(
-                                          asset.id,
-                                        );
-                                        const activeWo = findActiveWo(asset.id);
-                                        const greaseElapsed = Math.max(
-                                          profile.grease.currentHm -
-                                            profile.grease.lastHm,
-                                          0,
-                                        );
-                                        return `<tr>
+                            ${pageRows.length
+        ? pageRows
+          .map(
+            ({
+              asset,
+              profile,
+              summary,
+              commonOverall,
+            }) => {
+              const latest = latestConditionFor(
+                asset.id,
+              );
+              const activeWo = findActiveWo(asset.id);
+              const greaseElapsed = Math.max(
+                profile.grease.currentHm -
+                profile.grease.lastHm,
+                0,
+              );
+              return `<tr>
                                     <td><div class="cm-unit-table-cell"><span class="cm-unit-table-icon ${commonOverall}"><i class="fa-solid ${supportsCuttingBit(asset) ? "fa-road" : isDumpTruck(asset) ? "fa-truck-moving" : "fa-tractor"}"></i></span><div><strong>${esc(shortCode(asset.id))}</strong><small>${esc(assetType(asset))}</small></div></div></td>
                                     <td><div class="cm-location-cell"><span title="${esc(asset.location || "")}">${esc(asset.location || "Lokasi belum ditetapkan")}</span><small class="cm-asset-status ${esc(String(asset.status || "READY").toLowerCase())}">${esc(asset.status || "READY")}</small></div></td>
                                     <td>${conditionCell(summary.statuses.tire, `${summary.tireDanger} kritis · ${summary.tireWarning} warning`)}</td>
@@ -10583,11 +10587,11 @@
                                     <td>${activeWo ? `<button class="cm-wo-link" type="button" onclick="ConditionMonitoring.openLinkedWO('${esc(asset.id)}')"><i class="fa-solid fa-wrench"></i>${esc(activeWo.woId)}</button>` : `<span class="cm-overall-chip ${commonOverall}">${statusLabel(commonOverall)}</span>`}</td>
                                     <td><button class="cm-detail-button" type="button" data-asset-id="${esc(asset.id)}" onclick="window.ConditionMonitoring && window.ConditionMonitoring.openDetail('${esc(asset.id)}'); event.stopPropagation();"><i class="fa-solid fa-eye"></i> Detail</button></td>
                                 </tr>`;
-                                      },
-                                    )
-                                    .join("")
-                                : '<tr><td colspan="8" class="cm-empty-cell">Tidak ada unit yang sesuai dengan pencarian dan filter.</td></tr>'
-                            }
+            },
+          )
+          .join("")
+        : '<tr><td colspan="8" class="cm-empty-cell">Tidak ada unit yang sesuai dengan pencarian dan filter.</td></tr>'
+      }
                         </tbody>
                     </table>
                 </div>
@@ -10620,28 +10624,27 @@
                     <table class="cm-catalog-table cm-cutting-table">
                         <thead><tr><th>Unit / Tipe</th><th>Lokasi & Status</th><th>Shift / HM</th><th>Terpasang / Kembali</th><th>Rasio Pemakaian</th><th>Stok Akhir</th><th>Status</th><th>Update Terakhir</th><th>Aksi</th></tr></thead>
                         <tbody>
-                            ${
-                              cuttingRows.length
-                                ? cuttingRows
-                                    .map(
-                                      ({
-                                        asset,
-                                        profile,
-                                        cuttingMetrics: metrics,
-                                      }) => {
-                                        const latestCutting = conditionHistory(
-                                          asset.id,
-                                        ).find(
-                                          (item) =>
-                                            item.domain === "Cutting Bit",
-                                        );
-                                        const latestReport =
-                                          cuttingReportRecords(asset.id)[0] ||
-                                          null;
-                                        const updatedAt =
-                                          latestCutting?.at ||
-                                          profile.cutting.updatedAt;
-                                        return `<tr>
+                            ${cuttingRows.length
+        ? cuttingRows
+          .map(
+            ({
+              asset,
+              profile,
+              cuttingMetrics: metrics,
+            }) => {
+              const latestCutting = conditionHistory(
+                asset.id,
+              ).find(
+                (item) =>
+                  item.domain === "Cutting Bit",
+              );
+              const latestReport =
+                cuttingReportRecords(asset.id)[0] ||
+                null;
+              const updatedAt =
+                latestCutting?.at ||
+                profile.cutting.updatedAt;
+              return `<tr>
                                     <td><div class="cm-unit-table-cell"><span class="cm-unit-table-icon ${metrics.status}"><i class="fa-solid fa-road"></i></span><div><strong>${esc(shortCode(asset.id))}</strong><small>${esc(assetType(asset))}</small></div></div></td>
                                     <td><div class="cm-location-cell"><span title="${esc(asset.location || "")}">${esc(asset.location || "Lokasi belum ditetapkan")}</span><small class="cm-asset-status ${esc(String(asset.status || "READY").toLowerCase())}">${esc(asset.status || "READY")}</small></div></td>
                                     <td class="cm-cutting-metric"><strong>${esc(profile.cutting.shift)}</strong><small>${fmt(metrics.hours, 1)} HM operasi</small></td>
@@ -10652,11 +10655,11 @@
                                     <td>${updatedAt ? `<strong>${esc(formatDate(updatedAt))}</strong><small>${latestReport ? esc(latestReport.reportNumber || "Laporan Cutting Bit") : latestCutting ? "Input inspeksi" : "Data awal"}</small>` : '<span class="cm-no-record">Belum ada input</span>'}</td>
                                     <td><button class="cm-detail-button cm-cutting-detail-button" type="button" onclick="ConditionMonitoring.openDetail('${esc(asset.id)}', 'cutting'); event.stopPropagation();"><i class="fa-solid fa-screwdriver-wrench"></i> Periksa</button></td>
                                 </tr>`;
-                                      },
-                                    )
-                                    .join("")
-                                : '<tr><td colspan="9" class="cm-empty-cell">Unit recycler/milling belum ditemukan pada master aset.</td></tr>'
-                            }
+            },
+          )
+          .join("")
+        : '<tr><td colspan="9" class="cm-empty-cell">Unit recycler/milling belum ditemukan pada master aset.</td></tr>'
+      }
                         </tbody>
                     </table>
                 </div>
@@ -10697,32 +10700,32 @@
                             </section>
                             <nav class="cm-tabs" aria-label="Jenis pemeriksaan">
                                 ${[
-                                  ["overview", "fa-gauge-high", "Ringkasan"],
-                                  ["tire", "fa-circle-dot", "Ban"],
-                                  ["grease", "fa-oil-can", "Grease"],
-                                  ...(profile &&
-                                  profile.cutting &&
-                                  profile.cutting.applicable
-                                    ? [
-                                        [
-                                          "cutting",
-                                          "fa-screwdriver-wrench",
-                                          "Cutting Bit",
-                                        ],
-                                      ]
-                                    : []),
-                                  ["battery", "fa-car-battery", "Aki"],
-                                  [
-                                    "history",
-                                    "fa-clock-rotate-left",
-                                    "Riwayat",
-                                  ],
-                                ]
-                                  .map(
-                                    ([key, icon, label]) =>
-                                      `<button type="button" class="${state.activeTab === key ? "active" : ""}" onclick="ConditionMonitoring.switchTab('${key}')"><i class="fa-solid ${icon}"></i>${label}</button>`,
-                                  )
-                                  .join("")}
+          ["overview", "fa-gauge-high", "Ringkasan"],
+          ["tire", "fa-circle-dot", "Ban"],
+          ["grease", "fa-oil-can", "Grease"],
+          ...(profile &&
+            profile.cutting &&
+            profile.cutting.applicable
+            ? [
+              [
+                "cutting",
+                "fa-screwdriver-wrench",
+                "Cutting Bit",
+              ],
+            ]
+            : []),
+          ["battery", "fa-car-battery", "Aki"],
+          [
+            "history",
+            "fa-clock-rotate-left",
+            "Riwayat",
+          ],
+        ]
+          .map(
+            ([key, icon, label]) =>
+              `<button type="button" class="${state.activeTab === key ? "active" : ""}" onclick="ConditionMonitoring.switchTab('${key}')"><i class="fa-solid ${icon}"></i>${label}</button>`,
+          )
+          .join("")}
                             </nav>
                             <section class="cm-workspace">${renderTab(asset, profile, summary)}</section>
                         </div>
@@ -10845,20 +10848,19 @@
                         <span class="cm-count-badge">${alerts.length}</span>
                     </div>
                     <div class="cm-alert-list">
-                        ${
-                          alerts.length
-                            ? alerts
-                                .map(
-                                  (alert) => `
+                        ${alerts.length
+        ? alerts
+          .map(
+            (alert) => `
                             <button type="button" class="cm-alert-item ${alert.level}" onclick="ConditionMonitoring.switchTab('${alert.domain === "Ban" ? "tire" : alert.domain === "Grease" ? "grease" : alert.domain === "Aki" ? "battery" : "cutting"}')">
                                 <i class="fa-solid ${statusIcon(alert.level)}"></i>
                                 <span><strong>${esc(alert.domain)}</strong><small>${esc(alert.text)}</small></span>
                                 <i class="fa-solid fa-arrow-right"></i>
                             </button>`,
-                                )
-                                .join("")
-                            : `<div class="cm-all-good"><i class="fa-solid fa-shield-check"></i><strong>Seluruh komponen dalam batas aman.</strong><span>Tetap lakukan pemeriksaan sesuai interval.</span></div>`
-                        }
+          )
+          .join("")
+        : `<div class="cm-all-good"><i class="fa-solid fa-shield-check"></i><strong>Seluruh komponen dalam batas aman.</strong><span>Tetap lakukan pemeriksaan sesuai interval.</span></div>`
+      }
                     </div>
                 </article>
                 <article class="cm-card">
@@ -10904,14 +10906,14 @@
                         <div class="cm-chassis"></div>
                         <div class="cm-tire-grid">
                             ${profile.tires
-                              .map(
-                                (item) => `
+        .map(
+          (item) => `
                                 <button type="button" class="cm-tire ${tireStatus(item)} ${item.code === tire.code ? "selected" : ""}" style="grid-row:${item.row};grid-column:${item.col};" onclick="ConditionMonitoring.selectTire('${item.code}')" title="${esc(item.label)}">
                                     <strong>${esc(item.code)}</strong>
                                     <small>${item.tread === null ? "DG" : `${fmt(item.tread)} mm`}</small>
                                 </button>`,
-                              )
-                              .join("")}
+        )
+        .join("")}
                         </div>
                     </div>
                     <div class="cm-legend">
@@ -10960,11 +10962,11 @@
                     </div>
                     <div class="cm-point-list">
                         ${Object.entries(grease.points)
-                          .map(
-                            ([point, done]) =>
-                              `<div class="${done ? "done" : ""}"><i class="fa-solid ${done ? "fa-circle-check" : "fa-circle"}"></i><span>${esc(point)}</span><strong>${done ? "Tercover" : "Periksa"}</strong></div>`,
-                          )
-                          .join("")}
+        .map(
+          ([point, done]) =>
+            `<div class="${done ? "done" : ""}"><i class="fa-solid ${done ? "fa-circle-check" : "fa-circle"}"></i><span>${esc(point)}</span><strong>${done ? "Tercover" : "Periksa"}</strong></div>`,
+        )
+        .join("")}
                     </div>
                     <div class="cm-threshold-note warning"><i class="fa-solid fa-lightbulb"></i><span>Prioritaskan pin-bushing, steering linkage, undercarriage, dan universal joint pada jam operasi tinggi.</span></div>
                 </article>
@@ -10978,13 +10980,13 @@
                         <label class="cm-field-full"><span>Jenis grease</span><select id="cm-grease-type" class="form-control">${["Lithium EP-2", "Moly EP-2", "Calcium Sulfonate", "OEM Special Grease"].map((value) => `<option ${grease.greaseType === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>
                     </div>
                     <fieldset class="cm-check-fieldset"><legend>Titik yang sudah dilumasi</legend>${Object.entries(
-                      grease.points,
-                    )
-                      .map(
-                        ([point, done], index) =>
-                          `<label><input type="checkbox" data-cm-grease-point="${esc(point)}" ${done ? "checked" : ""}><span>${esc(point)}</span></label>`,
-                      )
-                      .join("")}</fieldset>
+          grease.points,
+        )
+        .map(
+          ([point, done], index) =>
+            `<label><input type="checkbox" data-cm-grease-point="${esc(point)}" ${done ? "checked" : ""}><span>${esc(point)}</span></label>`,
+        )
+        .join("")}</fieldset>
                     <label class="cm-block-label"><span>Catatan mekanik</span><textarea id="cm-grease-note" class="form-control" rows="3">${esc(grease.note)}</textarea></label>
                     <button id="cm-save-grease" class="btn btn-primary cm-save-btn" type="button" onclick="ConditionMonitoring.saveGrease()"><i class="fa-solid fa-floppy-disk"></i> Simpan regreasing</button>
                     <small class="cm-source-line"><i class="fa-solid fa-file-lines"></i> ${esc(MATERIAL_SOURCES.grease)}</small>
@@ -11109,11 +11111,11 @@
                     <article class="cm-card cm-doc-card">
                         <h3><i class="fa-solid fa-book-open"></i> Jejak dokumen sumber</h3>
                         ${Object.entries(MATERIAL_SOURCES)
-                          .map(
-                            ([key, value]) =>
-                              `<div><span>${esc(key === "tire" ? "Ban" : key === "grease" ? "Grease" : key === "cutting" ? "Cutting Bit" : "Aki")}</span><small>${esc(value)}</small></div>`,
-                          )
-                          .join("")}
+        .map(
+          ([key, value]) =>
+            `<div><span>${esc(key === "tire" ? "Ban" : key === "grease" ? "Grease" : key === "cutting" ? "Cutting Bit" : "Aki")}</span><small>${esc(value)}</small></div>`,
+        )
+        .join("")}
                     </article>
                 </aside>
             </div>`;
@@ -11412,15 +11414,15 @@
         typeof window.resolveAsset === "function"
           ? window.resolveAsset(assetId)
           : allAssets().find((a) => {
-              const parsed = window.parseAssetId
-                ? window.parseAssetId(a.id).unitId.toLowerCase()
-                : a.id.toLowerCase();
-              return (
-                a.id.toLowerCase() === assetId.toLowerCase() ||
-                parsed === assetId.toLowerCase() ||
-                a.id.toLowerCase().includes(assetId.toLowerCase())
-              );
-            });
+            const parsed = window.parseAssetId
+              ? window.parseAssetId(a.id).unitId.toLowerCase()
+              : a.id.toLowerCase();
+            return (
+              a.id.toLowerCase() === assetId.toLowerCase() ||
+              parsed === assetId.toLowerCase() ||
+              a.id.toLowerCase().includes(assetId.toLowerCase())
+            );
+          });
 
       // Auto generate dummy dumptruck asset if not found
       if (!asset) {
@@ -11893,14 +11895,14 @@
               ? tireRows
               : recentTire
                 ? [
-                    {
-                      unit: shortCode(recentTire.assetId),
-                      pos: "Terbaru",
-                      cond: statusLabel(recentTire.status),
-                      pressure: "-",
-                      badge: `badge-soft-${recentTire.status === "danger" ? "danger" : recentTire.status === "warning" ? "warning" : "success"}`,
-                    },
-                  ]
+                  {
+                    unit: shortCode(recentTire.assetId),
+                    pos: "Terbaru",
+                    cond: statusLabel(recentTire.status),
+                    pressure: "-",
+                    badge: `badge-soft-${recentTire.status === "danger" ? "danger" : recentTire.status === "warning" ? "warning" : "success"}`,
+                  },
+                ]
                 : [],
         },
         grease: {
@@ -11934,13 +11936,13 @@
             },
             ...(recentGrease
               ? [
-                  {
-                    unit: shortCode(recentGrease.assetId),
-                    lastHm: "Data terbaru",
-                    status: statusLabel(recentGrease.status),
-                    badge: `badge-soft-${recentGrease.status === "danger" ? "danger" : recentGrease.status === "warning" ? "warning" : "success"}`,
-                  },
-                ]
+                {
+                  unit: shortCode(recentGrease.assetId),
+                  lastHm: "Data terbaru",
+                  status: statusLabel(recentGrease.status),
+                  badge: `badge-soft-${recentGrease.status === "danger" ? "danger" : recentGrease.status === "warning" ? "warning" : "success"}`,
+                },
+              ]
               : []),
           ].slice(0, 5),
         },
@@ -12247,7 +12249,7 @@
       if (uncompressedSize > limits.maxEntryBytes) {
         throw new Error(
           `${label} memiliki entry ${name} sebesar ${(uncompressedSize / 1024 / 1024).toFixed(1)} MB; ` +
-            `batas aman ${limits.maxEntryBytes / 1024 / 1024} MB.`,
+          `batas aman ${limits.maxEntryBytes / 1024 / 1024} MB.`,
         );
       }
       if (method === 0 && compressedSize !== uncompressedSize) {
@@ -12264,7 +12266,7 @@
       if (uncompressedBytes > limits.maxUncompressedBytes) {
         throw new Error(
           `${label} mengembang menjadi ${(uncompressedBytes / 1024 / 1024).toFixed(1)} MB; ` +
-            `batas aman ${limits.maxUncompressedBytes / 1024 / 1024} MB.`,
+          `batas aman ${limits.maxUncompressedBytes / 1024 / 1024} MB.`,
         );
       }
       if (localOffsets.has(localOffset)) {
@@ -12351,7 +12353,7 @@
       if (spans[index].start < spans[index - 1].end) {
         throw new Error(
           `${label} memiliki rentang data entry yang overlap: ` +
-            `${spans[index - 1].name} / ${spans[index].name}.`,
+          `${spans[index - 1].name} / ${spans[index].name}.`,
         );
       }
     }
@@ -12783,13 +12785,13 @@
     if (text.length > MAX_FRAGMENT_CHARACTERS) {
       throw new Error(
         `${sourceRef || kind} memuat ${text.length.toLocaleString("id-ID")} karakter; ` +
-          `batas aman per fragmen ${MAX_FRAGMENT_CHARACTERS.toLocaleString("id-ID")}.`,
+        `batas aman per fragmen ${MAX_FRAGMENT_CHARACTERS.toLocaleString("id-ID")}.`,
       );
     }
     if (extraction.fragments.length >= MAX_RETAINED_FRAGMENTS) {
       throw new Error(
         `Dokumen menghasilkan lebih dari ${MAX_RETAINED_FRAGMENTS.toLocaleString("id-ID")} fragmen; ` +
-          "impor dihentikan untuk melindungi memori browser.",
+        "impor dihentikan untuk melindungi memori browser.",
       );
     }
     const nextCharacterCount =
@@ -12797,7 +12799,7 @@
     if (nextCharacterCount > MAX_RETAINED_CHARACTERS) {
       throw new Error(
         `Dokumen menghasilkan lebih dari ${MAX_RETAINED_CHARACTERS / 1024 / 1024} MiB teks; ` +
-          "impor dihentikan untuk melindungi memori browser.",
+        "impor dihentikan untuk melindungi memori browser.",
       );
     }
     extraction._characterCount = nextCharacterCount;
@@ -12830,7 +12832,7 @@
     if (characterCount > MAX_RETAINED_CHARACTERS) {
       throw new Error(
         `Dokumen menghasilkan ${(characterCount / 1024 / 1024).toFixed(1)} MiB teks; ` +
-          `batas aman ${MAX_RETAINED_CHARACTERS / 1024 / 1024} MiB.`,
+        `batas aman ${MAX_RETAINED_CHARACTERS / 1024 / 1024} MiB.`,
       );
     }
     extraction.stats = {
@@ -13062,15 +13064,15 @@
       if (uncompressedSize > MAX_ZIP_ENTRY_BYTES) {
         throw new Error(
           `${fileName} memiliki entry ${safeName} sebesar ` +
-            `${(uncompressedSize / 1024 / 1024).toFixed(1)} MB; ` +
-            `batas aman per entry ${MAX_ZIP_ENTRY_BYTES / 1024 / 1024} MB.`,
+          `${(uncompressedSize / 1024 / 1024).toFixed(1)} MB; ` +
+          `batas aman per entry ${MAX_ZIP_ENTRY_BYTES / 1024 / 1024} MB.`,
         );
       }
       uncompressedBytes += uncompressedSize;
       if (uncompressedBytes > MAX_ZIP_UNCOMPRESSED_BYTES) {
         throw new Error(
           `${fileName} mengembang menjadi ${(uncompressedBytes / 1024 / 1024).toFixed(1)} MB; ` +
-            `batas aman ${MAX_ZIP_UNCOMPRESSED_BYTES / 1024 / 1024} MB.`,
+          `batas aman ${MAX_ZIP_UNCOMPRESSED_BYTES / 1024 / 1024} MB.`,
         );
       }
       position = recordEnd;
@@ -13287,7 +13289,7 @@
     if (Number(file.size || 0) > MAX_SOURCE_BYTES) {
       throw new Error(
         `Ukuran file ${Math.ceil(file.size / 1024 / 1024)} MB melewati batas aman ` +
-          `${MAX_SOURCE_BYTES / 1024 / 1024} MB.`,
+        `${MAX_SOURCE_BYTES / 1024 / 1024} MB.`,
       );
     }
     const extension = extensionOf(file.name);
@@ -13297,7 +13299,7 @@
     ) {
       throw new Error(
         `Ukuran Markdown ${Math.ceil(file.size / 1024 / 1024)} MB melewati batas aman ` +
-          `${MAX_MARKDOWN_BYTES / 1024 / 1024} MB.`,
+        `${MAX_MARKDOWN_BYTES / 1024 / 1024} MB.`,
       );
     }
     const buffer = await file.arrayBuffer();
@@ -13331,10 +13333,10 @@
     const zipPreflightAudit =
       signature === "zip" && expectedSignatures.includes("zip")
         ? global.FleetZipPreflight?.inspect(bytes, source.fileName, {
-            maxEntries: MAX_ZIP_ENTRIES,
-            maxEntryBytes: MAX_ZIP_ENTRY_BYTES,
-            maxUncompressedBytes: MAX_ZIP_UNCOMPRESSED_BYTES,
-          })
+          maxEntries: MAX_ZIP_ENTRIES,
+          maxEntryBytes: MAX_ZIP_ENTRY_BYTES,
+          maxUncompressedBytes: MAX_ZIP_UNCOMPRESSED_BYTES,
+        })
         : null;
     if (
       signature === "zip" &&
@@ -13616,7 +13618,7 @@
     if (buffer.byteLength > MAX_MARKDOWN_BYTES) {
       throw new Error(
         `${source.fileName} berukuran ${(buffer.byteLength / 1024 / 1024).toFixed(1)} MiB; ` +
-          `batas Markdown ${MAX_MARKDOWN_BYTES / 1024 / 1024} MiB.`,
+        `batas Markdown ${MAX_MARKDOWN_BYTES / 1024 / 1024} MiB.`,
       );
     }
     const decoded = decodeMarkdownBytes(
@@ -14356,8 +14358,8 @@
     if (oversizedEntry) {
       throw new Error(
         `${fileName} memiliki entry ${oversizedEntry.name} sebesar ` +
-          `${(Number(oversizedEntry._data?.uncompressedSize || 0) / 1024 / 1024).toFixed(1)} MB; ` +
-          `batas aman per entry ${MAX_ZIP_ENTRY_BYTES / 1024 / 1024} MB.`,
+        `${(Number(oversizedEntry._data?.uncompressedSize || 0) / 1024 / 1024).toFixed(1)} MB; ` +
+        `batas aman per entry ${MAX_ZIP_ENTRY_BYTES / 1024 / 1024} MB.`,
       );
     }
     const uncompressedBytes = entries.reduce(
@@ -14367,7 +14369,7 @@
     if (uncompressedBytes > MAX_ZIP_UNCOMPRESSED_BYTES) {
       throw new Error(
         `${fileName} mengembang menjadi ${(uncompressedBytes / 1024 / 1024).toFixed(1)} MB; ` +
-          `batas aman ${MAX_ZIP_UNCOMPRESSED_BYTES / 1024 / 1024} MB.`,
+        `batas aman ${MAX_ZIP_UNCOMPRESSED_BYTES / 1024 / 1024} MB.`,
       );
     }
     return uncompressedBytes;
@@ -14518,8 +14520,8 @@
             .map((child) =>
               child.localName === "tbl"
                 ? elementsByLocalName(child, "t")
-                    .map((node) => node.textContent)
-                    .join(" ")
+                  .map((node) => node.textContent)
+                  .join(" ")
                 : openXmlVisibleText(child),
             )
             .filter(Boolean)
@@ -14568,7 +14570,7 @@
     const headerLooksUseful =
       firstRowValues.filter(Boolean).length >= Math.min(2, maxColumns) &&
       new Set(firstRowValues.map(normalizeKey).filter(Boolean)).size ===
-        firstRowValues.filter(Boolean).length;
+      firstRowValues.filter(Boolean).length;
     const headers = Array.from({ length: maxColumns }, (_, columnIndex) =>
       headerLooksUseful && firstRowValues[columnIndex]
         ? firstRowValues[columnIndex]
@@ -14583,9 +14585,9 @@
       headerRowNumber: headerLooksUseful ? 1 : null,
       headerFragmentRefs: headerLooksUseful
         ? Array.from(
-            { length: maxColumns },
-            (_, index) => rawRows[0][index]?.fragmentId || null,
-          )
+          { length: maxColumns },
+          (_, index) => rawRows[0][index]?.fragmentId || null,
+        )
         : [],
       preamble: [],
       rows: dataRows.map((row, rowIndex) => ({
@@ -14768,8 +14770,8 @@
     ) {
       throw new Error(
         `Raster ${fileName} berukuran ${dimensions.width} x ${dimensions.height} piksel; ` +
-          `batas aman ${MAX_RASTER_DIMENSION} piksel per sisi dan ` +
-          `${MAX_RASTER_PIXELS.toLocaleString("id-ID")} piksel total.`,
+        `batas aman ${MAX_RASTER_DIMENSION} piksel per sisi dan ` +
+        `${MAX_RASTER_PIXELS.toLocaleString("id-ID")} piksel total.`,
       );
     }
     return dimensions;
@@ -14794,7 +14796,7 @@
       const error = pdfDeadlineError(label);
       try {
         cancel?.(error);
-      } catch (unused) {}
+      } catch (unused) { }
       return Promise.reject(error);
     }
     return new Promise((resolve, reject) => {
@@ -14802,7 +14804,7 @@
         const error = pdfDeadlineError(label);
         try {
           cancel?.(error);
-        } catch (unused) {}
+        } catch (unused) { }
         reject(error);
       }, remaining);
       Promise.resolve(promise).then(
@@ -14840,7 +14842,7 @@
           deadline,
           `Text layer halaman ${pageNumber}`,
           (error) => {
-            void reader.cancel(error).catch(() => {});
+            void reader.cancel(error).catch(() => { });
             destroyDocument();
           },
         );
@@ -14862,11 +14864,11 @@
         ) {
           const error = new Error(
             `Text layer halaman ${pageNumber} melewati batas ` +
-              `${MAX_PDF_TEXT_ITEMS_PER_PAGE.toLocaleString("id-ID")} item / ` +
-              `${MAX_PDF_TEXT_CHARACTERS_PER_PAGE / 1024 / 1024} MiB karakter.`,
+            `${MAX_PDF_TEXT_ITEMS_PER_PAGE.toLocaleString("id-ID")} item / ` +
+            `${MAX_PDF_TEXT_CHARACTERS_PER_PAGE / 1024 / 1024} MiB karakter.`,
           );
           error.code = "pdf_text_limit";
-          await reader.cancel(error).catch(() => {});
+          await reader.cancel(error).catch(() => { });
           throw error;
         }
         items.push(...chunkItems);
@@ -14876,11 +14878,11 @@
       if (!completed) {
         await reader
           .cancel(new Error("Pembacaan text layer dihentikan."))
-          .catch(() => {});
+          .catch(() => { });
       }
       try {
         reader.releaseLock();
-      } catch (unused) {}
+      } catch (unused) { }
     }
     return items;
   }
@@ -14905,7 +14907,7 @@
     const destroyDocument = () => {
       if (documentDestroyed) return;
       documentDestroyed = true;
-      void loadingTask.destroy().catch(() => {});
+      void loadingTask.destroy().catch(() => { });
     };
     const pdf = await withPdfDeadline(
       loadingTask.promise,
@@ -14915,7 +14917,7 @@
     );
     const pageTotal = pdf.numPages;
     if (pageTotal > MAX_PDF_PAGES) {
-      await pdf.destroy().catch(() => {});
+      await pdf.destroy().catch(() => { });
       throw new Error(
         `PDF memiliki ${pageTotal} halaman; batas aman ${MAX_PDF_PAGES} halaman per file.`,
       );
@@ -14958,8 +14960,8 @@
         extraction,
         "pdf_interactive_objects_skipped",
         "Outline, anotasi, field interaktif, dan lampiran PDF tidak dimuat karena PDF.js 3.11 dapat " +
-          "mengembangkan isi lampiran saat objek tersebut dibaca. Teks halaman dan OCR tetap diproses; " +
-          "ekspor field/lampiran secara terpisah bila dokumen menggunakannya.",
+        "mengembangkan isi lampiran saat objek tersebut dibaca. Teks halaman dan OCR tetap diproses; " +
+        "ekspor field/lampiran secara terpisah bila dokumen menggunakannya.",
         "warning",
         "pdf:interactive-objects",
       );
@@ -14991,7 +14993,7 @@
           );
           const garbledRatio = nativeText
             ? (nativeText.match(/[\uFFFDÃ¢–Â¡Ã¯Â¿Â½]/g) || []).length /
-              nativeText.length
+            nativeText.length
             : 1;
           const nativeReadable = nativeText.length >= 30 && garbledRatio < 0.08;
           if (nativeReadable) nativeTextPages += 1;
@@ -15060,7 +15062,7 @@
                     "ocr-text",
                     line.text,
                     line.sourceRef ||
-                      `pdf:p${pageNumber}:ocr-line${lineIndex + 1}`,
+                    `pdf:p${pageNumber}:ocr-line${lineIndex + 1}`,
                     {
                       page: pageNumber,
                       confidence: line.confidence,
@@ -15155,8 +15157,8 @@
       }
     } finally {
       await ocr.terminate();
-      await pdf.cleanup().catch(() => {});
-      await pdf.destroy().catch(() => {});
+      await pdf.cleanup().catch(() => { });
+      await pdf.destroy().catch(() => { });
     }
 
     extraction.stats.pagesProcessed = pageTotal - pageFailureCount;
@@ -15356,7 +15358,7 @@
     if (totalTiles > MAX_OCR_TILES_PER_PAGE) {
       throw new Error(
         `Halaman ${pageNumber} membutuhkan ${totalTiles} tile OCR; ` +
-          `batas aman ${MAX_OCR_TILES_PER_PAGE}.`,
+        `batas aman ${MAX_OCR_TILES_PER_PAGE}.`,
       );
     }
     const lines = [];
@@ -15466,7 +15468,7 @@
           Number(tile.top || 0) + index * lineHeight,
           Number(tile.left || 0) + safeWidth,
           Number(tile.top || 0) +
-            Math.min(safeHeight, (index + 1) * lineHeight),
+          Math.min(safeHeight, (index + 1) * lineHeight),
         ],
         confidence: tile.confidence,
         sourceRef: `${tile.sourceRef}:line${index + 1}`,
@@ -15947,14 +15949,14 @@
     const accepted =
       extraction.format === "markdown"
         ? Boolean(
-            best &&
-            (best.score >= 0.72 || (best.score >= 0.52 && margin >= 0.055)),
-          )
+          best &&
+          (best.score >= 0.72 || (best.score >= 0.52 && margin >= 0.055)),
+        )
         : Boolean(
-            best &&
-            best.score >= 0.32 &&
-            (margin >= 0.035 || best.score >= 0.72),
-          );
+          best &&
+          best.score >= 0.32 &&
+          (margin >= 0.035 || best.score >= 0.72),
+        );
     const confidence = !accepted
       ? "none"
       : best.score >= 0.74 && margin >= 0.1
@@ -16243,8 +16245,8 @@
             fragmentIds: unique([row.fragmentRefs?.[0], row.fragmentRefs?.[1]]),
             sourceRef: row.fragmentRefs?.[1]
               ? extraction.fragments.find(
-                  (fragment) => fragment.id === row.fragmentRefs[1],
-                )?.sourceRef
+                (fragment) => fragment.id === row.fragmentRefs[1],
+              )?.sourceRef
               : `${table.sourceRef}:r${row.rowNumber}`,
             method: "markdown-identity-table",
           });
@@ -16303,9 +16305,9 @@
         definition?.type === "number"
           ? firstLocalizedNumber(candidate.value)
           : normalizeMappedValue(
-              candidate.value,
-              definition || { type: "text" },
-            );
+            candidate.value,
+            definition || { type: "text" },
+          );
       if (normalized === "") return;
       fields[fieldKey] = normalized;
       provenance[fieldKey] = {
@@ -16434,7 +16436,7 @@
           column,
           score:
             explicitKey?.toLocaleLowerCase("id") ===
-            column.key.toLocaleLowerCase("id")
+              column.key.toLocaleLowerCase("id")
               ? 1
               : bestAliasScore(header, fieldAliases(column)),
         }))
@@ -16455,7 +16457,7 @@
       : 0;
     const average = assignments.length
       ? assignments.reduce((sum, assignment) => sum + assignment.score, 0) /
-        assignments.length
+      assignments.length
       : 0;
     return {
       assignments,
@@ -16543,8 +16545,8 @@
               fragmentId: row.fragmentRefs?.[datesIndex] || null,
               sourceRef: row.fragmentRefs?.[datesIndex]
                 ? extraction.fragments.find(
-                    (fragment) => fragment.id === row.fragmentRefs[datesIndex],
-                  )?.sourceRef
+                  (fragment) => fragment.id === row.fragmentRefs[datesIndex],
+                )?.sourceRef
                 : table.sourceRef,
             });
           });
@@ -16579,8 +16581,8 @@
             fragmentId: row.fragmentRefs?.[noteIndex] || null,
             sourceRef: row.fragmentRefs?.[noteIndex]
               ? extraction.fragments.find(
-                  (fragment) => fragment.id === row.fragmentRefs[noteIndex],
-                )?.sourceRef
+                (fragment) => fragment.id === row.fragmentRefs[noteIndex],
+              )?.sourceRef
               : table.sourceRef,
           });
         });
@@ -17153,19 +17155,19 @@
         extracted.extraction.format === "markdown";
       const fieldResult = usesCuttingBitMarkdownProfile
         ? {
-            ...mapCuttingBitFields(
-              extracted.extraction,
-              selectedSchema,
-              usedFragmentIds,
-            ),
-            candidatesTruncated: false,
-          }
-        : mapFields(
+          ...mapCuttingBitFields(
             extracted.extraction,
             selectedSchema,
             usedFragmentIds,
-            conflicts,
-          );
+          ),
+          candidatesTruncated: false,
+        }
+        : mapFields(
+          extracted.extraction,
+          selectedSchema,
+          usedFragmentIds,
+          conflicts,
+        );
       const rowResult = mapRows(
         extracted.extraction,
         selectedSchema,
@@ -17304,11 +17306,11 @@
       classification,
       target: selectedSchema
         ? {
-            schemaId: selectedSchema.id,
-            code: selectedSchema.code,
-            title: selectedSchema.title,
-            schemaVersion: "prototype-1",
-          }
+          schemaId: selectedSchema.id,
+          code: selectedSchema.code,
+          title: selectedSchema.title,
+          schemaVersion: "prototype-1",
+        }
         : null,
       mapping,
       quality: {
@@ -17541,7 +17543,7 @@
     let status = unsupported
       ? "unsupported"
       : record.quality?.errors ||
-          (record.target && Number(record.quality?.requiredCoverage ?? 0) < 1)
+        (record.target && Number(record.quality?.requiredCoverage ?? 0) < 1)
         ? "review"
         : record.target
           ? "ready"
@@ -17975,8 +17977,8 @@
     );
     grid.innerHTML = filtered.length
       ? filtered
-          .map(
-            (schema) => `
+        .map(
+          (schema) => `
             <article class="official-template-card">
                 <div class="official-template-file"><i class="fa-regular fa-file-excel"></i><span>XLSX</span></div>
                 <div>
@@ -17989,8 +17991,8 @@
                 </button>
             </article>
         `,
-          )
-          .join("")
+        )
+        .join("")
       : `
             <div class="official-template-empty"><i class="fa-regular fa-folder-open"></i> Template tidak ditemukan.</div>
         `;
@@ -18114,8 +18116,8 @@
         ).length;
         const confirmed = window.confirm(
           `Hapus seluruh ${state.summaries.length} arsip impor dari browser ini?\n\n` +
-            `${referenced ? `${referenced} arsip masih direferensikan oleh draft/laporan. ` : ""}` +
-            "File sumber asli tidak berubah. Tindakan ini tidak dapat dipulihkan.",
+          `${referenced ? `${referenced} arsip masih direferensikan oleh draft/laporan. ` : ""}` +
+          "File sumber asli tidak berubah. Tindakan ini tidak dapat dipulihkan.",
         );
         if (!confirmed) return;
         event.currentTarget.disabled = true;
@@ -18412,9 +18414,8 @@
     );
     const batch = state.currentBatch;
     container.innerHTML = `
-            ${
-              batch
-                ? `
+            ${batch
+        ? `
                 <div class="import-batch-manifest ${batch.complete && batch.failed === 0 && !batch.warnings.length ? "complete" : ""}">
                     <i class="fa-solid ${batch.complete ? "fa-clipboard-check" : "fa-spinner fa-spin"}"></i>
                     <div>
@@ -18424,8 +18425,8 @@
                     </div>
                 </div>
             `
-                : ""
-            }
+        : ""
+      }
             <div class="import-summary-strip">
                 <div><strong>${persistent.length}</strong><span>FILE DIAUDIT</span></div>
                 <div><strong>${counts.ready || 0}</strong><span>SIAP DRAFT</span></div>
@@ -18469,18 +18470,17 @@
                         <strong title="${escapeHtml(summary.relativePath || summary.fileName)}">${escapeHtml(summary.fileName)}</strong>
                         <span>${formatBytes(summary.size)} · ${escapeHtml(summary.target?.code || "Belum dipetakan")}</span>
                         <em class="import-status ${status.className}"><i class="fa-solid ${status.icon}"></i>${status.label}</em>
-                        ${
-                          summary.status === "processing" ||
-                          summary.status === "queued"
-                            ? `
+                        ${summary.status === "processing" ||
+            summary.status === "queued"
+            ? `
                             <div class="import-card-progress" role="progressbar" aria-label="Progres ${escapeHtml(summary.fileName)}"
                                 aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progressPercent}">
                                 <div><span style="width:${progressPercent}%"></span></div>
                                 <small>${escapeHtml(summary.progress?.message || "Memproses...")}</small>
                             </div>
                         `
-                            : ""
-                        }
+            : ""
+          }
                     </div>
                 </button>
             `;
@@ -18581,8 +18581,8 @@
       record.extraction.format === "pdf"
         ? `${stats.pagesProcessed || 0}/${stats.pagesExpected || 0} halaman`
         : ["xlsx", "xls", "xlsm", "csv", "tsv"].includes(
-              record.extraction.format,
-            )
+          record.extraction.format,
+        )
           ? `${stats.sheets || 0} sheet · ${(stats.nonEmptyCells || 0).toLocaleString("id-ID")} sel berisi data`
           : record.extraction.format === "docx"
             ? `${stats.xmlPartsProcessed || 0} bagian · ${stats.tables || 0} tabel`
@@ -18613,14 +18613,14 @@
                     <select id="importTargetSchema" class="report-select">
                         <option value="__none__" ${!record.target && record.classification.mode === "manual" ? "selected" : ""}>— Belum ada template yang dipilih —</option>
                         ${schemas
-                          .map(
-                            (schema) => `
+        .map(
+          (schema) => `
                             <option value="${escapeHtml(schema.id)}" ${record.target?.schemaId === schema.id ? "selected" : ""}>
                                 ${escapeHtml(schema.code)} — ${escapeHtml(schema.title)}
                             </option>
                         `,
-                          )
-                          .join("")}
+        )
+        .join("")}
                     </select>
                     <span>Deteksi ${escapeHtml(confidenceLabel(record.classification.confidence))} · skor ${formatPercent(record.classification.score)}</span>
                 </div>
@@ -18643,28 +18643,27 @@
                     <small>${warningCounts.error || 0} error · ${warningCounts.warning || 0} warning · ${record.quality.conflicts || 0} konflik</small>
                 </div>
             </div>
-            ${
-              record.duplicateOf
-                ? `
+            ${record.duplicateOf
+        ? `
                 <div class="import-inline-alert">
                     <i class="fa-solid fa-copy"></i>
                     <span>Checksum identik dengan arsip <code>${escapeHtml(record.duplicateOf)}</code>. File tetap dicatat agar audit folder berjumlah lengkap.</span>
                 </div>
             `
-                : ""
-            }
+        : ""
+      }
             <div class="import-warning-list">
                 ${record.quality.warnings
-                  .slice(0, 20)
-                  .map(
-                    (warning) => `
+        .slice(0, 20)
+        .map(
+          (warning) => `
                     <div class="${escapeHtml(warning.severity)}">
                         <i class="fa-solid ${warning.severity === "error" ? "fa-circle-xmark" : warning.severity === "warning" ? "fa-triangle-exclamation" : "fa-circle-info"}"></i>
                         <span><strong>${escapeHtml(warning.code)}</strong>${escapeHtml(warning.message)}<small>${escapeHtml(warning.sourceRef || "")}</small></span>
                     </div>
                 `,
-                  )
-                  .join("")}
+        )
+        .join("")}
             </div>
             <nav class="import-detail-tabs" aria-label="Detail hasil impor">
                 ${detailTabButton("mapping", "fa-diagram-project", "Pemetaan")}
@@ -18793,9 +18792,8 @@
                     <span>fragmen tetap di arsip</span>
                 </div>
             </div>
-            ${
-              unmappedFields.length
-                ? `
+            ${unmappedFields.length
+        ? `
                 <section class="import-manual-mapping">
                     <div class="import-section-title">
                         <div>
@@ -18806,15 +18804,15 @@
                     <form id="manualMappingForm">
                         <div class="import-manual-field-grid">
                             ${unmappedFields
-                              .map(
-                                (field) => `
+          .map(
+            (field) => `
                                 <label>
                                     <span>${escapeHtml(field.label)} ${field.required ? "<b>WAJIB</b>" : "<em>Opsional</em>"}</span>
                                     ${manualMappingControl(field)}
                                 </label>
                             `,
-                              )
-                              .join("")}
+          )
+          .join("")}
                         </div>
                         <div class="import-manual-actions">
                             <span><i class="fa-solid fa-circle-info"></i> Isi field yang diketahui; field wajib harus lengkap sebelum laporan difinalkan.</span>
@@ -18823,13 +18821,13 @@
                     </form>
                 </section>
             `
-                : `
+        : `
                 <div class="import-inline-alert success">
                     <i class="fa-solid fa-circle-check"></i>
                     <span>Seluruh field template sudah terpetakan. Tetap periksa nilainya sebelum menyimpan laporan final.</span>
                 </div>
             `
-            }
+      }
             <section class="import-detail-section">
                 <div class="import-section-title"><h3>Pemetaan field identitas</h3><span>Nilai normalized + sumber asli</span></div>
                 <div class="import-mapping-table-wrap">
@@ -18837,11 +18835,11 @@
                         <thead><tr><th>Field laporan</th><th>Nilai hasil</th><th>Confidence</th><th>Sumber</th></tr></thead>
                         <tbody>
                             ${fields
-                              .map((field) => {
-                                const provenance =
-                                  record.mapping.fieldProvenance[field.key];
-                                const value = record.mapping.fields[field.key];
-                                return `
+        .map((field) => {
+          const provenance =
+            record.mapping.fieldProvenance[field.key];
+          const value = record.mapping.fields[field.key];
+          return `
                                     <tr class="${value === undefined || value === "" ? "missing" : ""}">
                                         <td><strong>${escapeHtml(field.label)}</strong>${field.required ? "<small>WAJIB</small>" : ""}</td>
                                         <td>${value !== undefined && value !== "" ? escapeHtml(value) : "<em>Belum ditemukan</em>"}</td>
@@ -18849,8 +18847,8 @@
                                         <td><code>${escapeHtml(provenance?.sourceRef || "—")}</code></td>
                                     </tr>
                                 `;
-                              })
-                              .join("")}
+        })
+        .join("")}
                         </tbody>
                     </table>
                 </div>
@@ -18863,16 +18861,15 @@
                 <summary>Preview informasi belum terpetakan (${record.mapping.unmappedCount})</summary>
                 <p>Fragmen berikut belum cocok dengan field template, tetapi tetap ada dalam JSON/IndexedDB.</p>
                 <div class="import-fragment-list">
-                    ${
-                      record.mapping.unmappedPreview
-                        .slice(0, 100)
-                        .map(
-                          (fragment) => `
+                    ${record.mapping.unmappedPreview
+        .slice(0, 100)
+        .map(
+          (fragment) => `
                         <div><code>${escapeHtml(fragment.sourceRef)}</code><span>${escapeHtml(fragment.value)}</span></div>
                     `,
-                        )
-                        .join("") || "<em>Tidak ada fragmen.</em>"
-                    }
+        )
+        .join("") || "<em>Tidak ada fragmen.</em>"
+      }
                 </div>
             </details>
         `;
@@ -18891,13 +18888,13 @@
                     <thead><tr>${columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("")}</tr></thead>
                     <tbody>
                         ${record.mapping.rows
-                          .slice(0, 50)
-                          .map(
-                            (row) => `
+        .slice(0, 50)
+        .map(
+          (row) => `
                             <tr>${columns.map((column) => `<td>${escapeHtml(row[column.key] ?? "")}</td>`).join("")}</tr>
                         `,
-                          )
-                          .join("")}
+        )
+        .join("")}
                     </tbody>
                 </table>
             </div>
@@ -18950,14 +18947,14 @@
                     <label for="importTableSelect">Tabel sumber</label>
                     <select id="importTableSelect" class="report-select">
                         ${tables
-                          .map(
-                            (item, index) => `
+        .map(
+          (item, index) => `
                             <option value="${index}" ${index === state.tableIndex ? "selected" : ""}>
                                 ${escapeHtml(item.title)} — ${(item.rows || []).length} baris
                             </option>
                         `,
-                          )
-                          .join("")}
+        )
+        .join("")}
                     </select>
                 </div>
                 <span><code>${escapeHtml(table.sourceRef)}</code></span>
@@ -18965,21 +18962,21 @@
             <div class="import-source-table-wrap">
                 <table class="import-source-table">
                     <thead><tr>${(table.headers || [])
-                      .slice(0, maxColumns)
-                      .map((header) => `<th>${escapeHtml(header)}</th>`)
-                      .join("")}</tr></thead>
+        .slice(0, maxColumns)
+        .map((header) => `<th>${escapeHtml(header)}</th>`)
+        .join("")}</tr></thead>
                     <tbody>
                         ${(table.rows || [])
-                          .slice(0, 100)
-                          .map(
-                            (row) => `
+        .slice(0, 100)
+        .map(
+          (row) => `
                             <tr>${(row.values || [])
-                              .slice(0, maxColumns)
-                              .map((value) => `<td>${escapeHtml(value)}</td>`)
-                              .join("")}</tr>
+              .slice(0, maxColumns)
+              .map((value) => `<td>${escapeHtml(value)}</td>`)
+              .join("")}</tr>
                         `,
-                          )
-                          .join("")}
+        )
+        .join("")}
                     </tbody>
                 </table>
             </div>
@@ -19022,16 +19019,15 @@
             <section class="import-detail-section">
                 <div class="import-section-title"><h3>Artefak & bagian non-teks</h3><span>${record.extraction.artifacts.length} item</span></div>
                 <div class="import-artifact-list">
-                    ${
-                      record.extraction.artifacts
-                        .slice(0, 300)
-                        .map(
-                          (artifact) => `
+                    ${record.extraction.artifacts
+        .slice(0, 300)
+        .map(
+          (artifact) => `
                         <div><i class="fa-regular fa-file"></i><span><strong>${escapeHtml(artifact.name)}</strong><small>${escapeHtml(artifact.kind)} · ${formatBytes(artifact.size)} · ${escapeHtml(artifact.sourceRef)}</small></span></div>
                     `,
-                        )
-                        .join("") || "<em>Tidak ada artefak tambahan.</em>"
-                    }
+        )
+        .join("") || "<em>Tidak ada artefak tambahan.</em>"
+      }
                 </div>
             </section>
             <div class="import-database-note">
@@ -19089,7 +19085,7 @@
     record.quality.completeness = Math.min(
       1,
       Number(record.quality.extractionCoverage || 0) * 0.35 +
-        requiredCoverage * 0.65,
+      requiredCoverage * 0.65,
     );
     record.quality.canCreateDraft = Boolean(
       record.extraction.stats.supported !== false &&
@@ -19234,8 +19230,8 @@
         );
         const confirmed = window.confirm(
           `Hapus arsip impor "${summary?.fileName || button.dataset.deleteImport}"Â?\n\n` +
-            `${referenced ? "Arsip ini masih direferensikan oleh draft/laporan; provenance detail tidak lagi dapat dibuka. " : ""}` +
-            "Hasil ekstraksi di browser ini akan dihapus. File sumber asli tidak berubah.",
+          `${referenced ? "Arsip ini masih direferensikan oleh draft/laporan; provenance detail tidak lagi dapat dibuka. " : ""}` +
+          "Hasil ekstraksi di browser ini akan dihapus. File sumber asli tidak berubah.",
         );
         if (!confirmed) return;
         button.disabled = true;
@@ -19257,7 +19253,7 @@
     if (record.quality.errors) {
       const confirmed = window.confirm(
         `Ekstraksi "${record.source.fileName}"Â memiliki ${record.quality.errors} error audit.\n\n` +
-          "Draft akan tetap berstatus review dan tidak difinalkan otomatis. Lanjutkan membuat draft parsial?",
+        "Draft akan tetap berstatus review dan tidak difinalkan otomatis. Lanjutkan membuat draft parsial?",
       );
       if (!confirmed) return;
     }
@@ -20211,7 +20207,7 @@
         window.assetDbMapping[plan.id] ||
         (linkedAsset
           ? window.assetDbMapping[linkedAsset.id] ||
-            window.assetDbMapping[linkedAsset.asset_code]
+          window.assetDbMapping[linkedAsset.asset_code]
           : "") ||
         "";
     }
@@ -20814,15 +20810,14 @@
                     <button class="pm-button primary" id="pmExportButton"><i class="fa-solid fa-file-export"></i> Export Tracker</button>
                 </div>
             </div>
-            ${
-              conditionContext
-                ? `<div class="pm-condition-context">
+            ${conditionContext
+        ? `<div class="pm-condition-context">
                 <i class="fa-solid fa-link"></i>
                 <div><strong>Konteks dari ${escapeHtml(conditionContext.source || "Condition Monitoring")}: ${escapeHtml(conditionContext.assetId)}</strong><span>${escapeHtml(conditionContext.finding?.domain || "Komponen")} · ${escapeHtml(conditionContext.finding?.text || "Perlu tindak lanjut terencana")}</span></div>
                 <button type="button" id="pmBackToCondition">${conditionContext.source === "Spare Part & Logistik" ? "Kembali ke logistik" : "Buka inspeksi unit"}</button>
             </div>`
-                : ""
-            }
+        : ""
+      }
             <div class="pm-context-bar">
                 <div class="pm-context-group">
                     <i class="fa-regular fa-calendar"></i>
@@ -21039,25 +21034,25 @@
                     <div class="pm-field"><label>Pencarian unit</label><input id="pmSearch" class="pm-input" type="search" placeholder="Kode, lambung, atau nama asset..."></div>
                     <div class="pm-field"><label>Status</label><select id="pmStatusFilter" class="pm-select"><option value="">Semua status</option>${["COMPLETED", "OVERDUE", "DUE SOON", "DUE", "NOT DUE", "NO DATA"].map((status) => `<option>${status}</option>`).join("")}</select></div>
                     <div class="pm-field"><label>Kategori</label><select id="pmCategoryFilter" class="pm-select"><option value="">Semua kategori</option>${[
-                      ...new Set(pmPlans.map(categoryOf)),
-                    ]
-                      .sort()
-                      .map(
-                        (category) =>
-                          `<option>${escapeHtml(category)}</option>`,
-                      )
-                      .join("")}</select></div>
+        ...new Set(pmPlans.map(categoryOf)),
+      ]
+        .sort()
+        .map(
+          (category) =>
+            `<option>${escapeHtml(category)}</option>`,
+        )
+        .join("")}</select></div>
                     <div class="pm-field"><label>Site</label><select id="pmSiteFilter" class="pm-select"><option value="">Semua site</option>${[
-                      ...new Set(
-                        pmPlans.map((p) => p.location).filter(Boolean),
-                      ),
-                    ]
-                      .sort()
-                      .map(
-                        (site) =>
-                          `<option value="${escapeHtml(site)}">${escapeHtml(site)}</option>`,
-                      )
-                      .join("")}</select></div>
+        ...new Set(
+          pmPlans.map((p) => p.location).filter(Boolean),
+        ),
+      ]
+        .sort()
+        .map(
+          (site) =>
+            `<option value="${escapeHtml(site)}">${escapeHtml(site)}</option>`,
+        )
+        .join("")}</select></div>
                     <button class="pm-button secondary" id="pmResetFilter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
                 </div>
                 <div class="pm-table-wrap">
@@ -21275,11 +21270,10 @@
                     <button class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}" style="margin-top:4px; padding:2px 6px; font-size:0.68rem; display:inline-flex; align-items:center; gap:3px;"><i class="fa-regular fa-eye"></i> Detail</button>
                 </td>
                 <td>
-                    ${
-                      hull !== "-"
-                        ? `<span class="badge" style="background:#fef3c7; color:#92400e; font-weight:700; font-family:var(--font-mono); font-size:0.8rem; border:1px solid #fde68a;">${escapeHtml(hull)}</span>`
-                        : `<span style="color:#94a3b8; font-style:italic; font-size:0.75rem;">Belum ada</span>`
-                    }
+                    ${hull !== "-"
+            ? `<span class="badge" style="background:#fef3c7; color:#92400e; font-weight:700; font-family:var(--font-mono); font-size:0.8rem; border:1px solid #fde68a;">${escapeHtml(hull)}</span>`
+            : `<span style="color:#94a3b8; font-style:italic; font-size:0.75rem;">Belum ada</span>`
+          }
                 </td>
                 <td>
                     <div style="font-size:0.75rem; color:var(--text-muted);">SN: <strong style="font-family:var(--font-mono); color:var(--text-main); font-size:0.78rem;">${escapeHtml(snPlate.sn)}</strong></div>
@@ -21302,27 +21296,25 @@
                 <td>
                     <strong style="font-size:0.82rem;">${formatNumber(plan.target)} ${meterType(plan)}</strong>
                     <div style="margin-top:3px;">
-                        ${
-                          nextServiceEst.isOverdue
-                            ? `<span class="badge" style="background:#fee2e2; color:#b91c1c; font-size:0.7rem; font-weight:700; padding:2px 6px; border:1px solid #fecdd3;"><i class="fa-solid fa-triangle-exclamation"></i> Overdue / Hari Ini</span>`
-                            : `<span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.7rem; font-weight:600; padding:2px 6px; border:1px solid #fde68a;"><i class="fa-regular fa-calendar-check" style="margin-right:3px;"></i>${nextServiceEst.days == null ? "Estimasi belum tersedia" : `Est: ${nextServiceEst.dateStr} (~${nextServiceEst.days} hr)`}</span>`
-                        }
+                        ${nextServiceEst.isOverdue
+            ? `<span class="badge" style="background:#fee2e2; color:#b91c1c; font-size:0.7rem; font-weight:700; padding:2px 6px; border:1px solid #fecdd3;"><i class="fa-solid fa-triangle-exclamation"></i> Overdue / Hari Ini</span>`
+            : `<span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.7rem; font-weight:600; padding:2px 6px; border:1px solid #fde68a;"><i class="fa-regular fa-calendar-check" style="margin-right:3px;"></i>${nextServiceEst.days == null ? "Estimasi belum tersedia" : `Est: ${nextServiceEst.dateStr} (~${nextServiceEst.days} hr)`}</span>`
+          }
                     </div>
                 </td>
                 <td>
                     <div style="display:flex; flex-wrap:wrap; gap:3px;">
-                        ${
-                          historyLogs
-                            .map(
-                              (h) => `
+                        ${historyLogs
+            .map(
+              (h) => `
                             <span class="badge" style="background:#f8fafc; color:#334155; font-size:0.68rem; padding:1px 5px; border:1px solid #e2e8f0;" title="${h.label}: ${formatNumber(h.meter)} ${meterType(plan)}">
                                 <strong style="color:var(--primary);">${h.label}:</strong> ${h.date}
                             </span>
                         `,
-                            )
-                            .join("") ||
-                          '<span style="color:#94a3b8;">Belum ada histori</span>'
-                        }
+            )
+            .join("") ||
+          '<span style="color:#94a3b8;">Belum ada histori</span>'
+          }
                     </div>
                 </td>
                 <td style="text-align:center;">
@@ -21584,17 +21576,17 @@
                     </div>
                     <ul class="pm-unscheduled-list">
                         ${attention
-                          .map((rawPlan) => {
-                            const plan = mergedPlan(rawPlan);
-                            const status = statusOf(plan);
-                            const v = varianceOf(plan);
-                            const subText =
-                              status === "COMPLETED"
-                                ? "Detail realisasi belum lengkap"
-                                : `Selisih ${v > 0 ? "+" : ""}${formatNumber(v)} ${meterType(plan)} · Target ${formatNumber(plan.target)} ${meterType(plan)}`;
-                            return `<li><div><div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;"><strong style="margin:0;">${escapeHtml(plan.code || plan.id)}</strong><span class="pm-status ${statusClass(status)}" style="font-size:0.58rem; padding:2px 6px;">${status}</span></div><span>${escapeHtml(subText)}</span></div><button type="button" class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}">Buka</button></li>`;
-                          })
-                          .join("")}
+        .map((rawPlan) => {
+          const plan = mergedPlan(rawPlan);
+          const status = statusOf(plan);
+          const v = varianceOf(plan);
+          const subText =
+            status === "COMPLETED"
+              ? "Detail realisasi belum lengkap"
+              : `Selisih ${v > 0 ? "+" : ""}${formatNumber(v)} ${meterType(plan)} · Target ${formatNumber(plan.target)} ${meterType(plan)}`;
+          return `<li><div><div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;"><strong style="margin:0;">${escapeHtml(plan.code || plan.id)}</strong><span class="pm-status ${statusClass(status)}" style="font-size:0.58rem; padding:2px 6px;">${status}</span></div><span>${escapeHtml(subText)}</span></div><button type="button" class="pm-row-action" data-pm-detail="${escapeHtml(planKey(plan))}">Buka</button></li>`;
+        })
+        .join("")}
                     </ul>
                 </section>
             </div>
@@ -21669,43 +21661,43 @@
                         <thead><tr><th>Unit</th><th>Model</th><th>Total item</th><th>PN dapat digunakan</th><th>Perlu verifikasi</th><th>Kelengkapan PN</th><th>Status</th><th>Mekanik</th><th>Aksi</th></tr></thead>
                         <tbody>
                             ${kitReferences
-                              .map((kit) => {
-                                const usableItems = kit.items - kit.issues;
-                                const readiness = Math.round(
-                                  (usableItems / kit.items) * 100,
-                                );
+        .map((kit) => {
+          const usableItems = kit.items - kit.issues;
+          const readiness = Math.round(
+            (usableItems / kit.items) * 100,
+          );
 
-                                let mechanicName = "-";
-                                const woList =
-                                  typeof globalData !== "undefined" &&
-                                  globalData &&
-                                  Array.isArray(globalData.work_orders)
-                                    ? globalData.work_orders
-                                    : Array.isArray(
-                                          window.globalData?.work_orders,
-                                        )
-                                      ? window.globalData.work_orders
-                                      : [];
-                                if (woList.length > 0) {
-                                  const activeWo = woList.find(
-                                    (w) =>
-                                      (w.assetId === kit.id ||
-                                        w.unitId === kit.id ||
-                                        w.assetId === kit.code ||
-                                        w.unitId === kit.code) &&
-                                      w.status !== "Closed" &&
-                                      w.status !== "Resolved",
-                                  );
-                                  if (activeWo) {
-                                    mechanicName =
-                                      activeWo.assignedTo ||
-                                      activeWo.assigned_mechanic ||
-                                      activeWo.mechanic ||
-                                      "-";
-                                  }
-                                }
+          let mechanicName = "-";
+          const woList =
+            typeof globalData !== "undefined" &&
+              globalData &&
+              Array.isArray(globalData.work_orders)
+              ? globalData.work_orders
+              : Array.isArray(
+                window.globalData?.work_orders,
+              )
+                ? window.globalData.work_orders
+                : [];
+          if (woList.length > 0) {
+            const activeWo = woList.find(
+              (w) =>
+                (w.assetId === kit.id ||
+                  w.unitId === kit.id ||
+                  w.assetId === kit.code ||
+                  w.unitId === kit.code) &&
+                w.status !== "Closed" &&
+                w.status !== "Resolved",
+            );
+            if (activeWo) {
+              mechanicName =
+                activeWo.assignedTo ||
+                activeWo.assigned_mechanic ||
+                activeWo.mechanic ||
+                "-";
+            }
+          }
 
-                                return `<tr>
+          return `<tr>
                                     <td class="pm-unit-cell"><strong>${escapeHtml(kit.code)}</strong><span>${escapeHtml(kit.id)}</span></td>
                                     <td class="pm-asset-cell"><strong>${escapeHtml(kit.model)}</strong></td>
                                     <td>${kit.items}</td><td>${usableItems}</td><td>${kit.issues}</td>
@@ -21714,8 +21706,8 @@
                                     <td style="font-size: 0.8rem; font-weight: 500; color: var(--text-main);"><i class="fa-solid fa-user-gear" style="color: var(--text-muted); margin-right: 4px;"></i>${escapeHtml(mechanicName)}</td>
                                     <td><button class="pm-row-action" data-kit-detail="${kit.no}">Tinjau</button></td>
                                 </tr>`;
-                              })
-                              .join("")}
+        })
+        .join("")}
                         </tbody>
                     </table>
                 </div>
@@ -21781,19 +21773,18 @@
                     <table class="pm-table">
                         <thead><tr><th>Identifikasi</th><th>Alat</th><th>Lokasi</th><th>Rencana</th><th>Pelaksanaan</th><th>Metode</th><th>Hasil</th><th>Tindak lanjut</th><th>Laporan</th></tr></thead>
                         <tbody>
-                            ${
-                              calibrationRecords.length
-                                ? calibrationRecords
-                                    .map((record) => {
-                                      const resultClass =
-                                        record.result === "Memenuhi"
-                                          ? "completed"
-                                          : "overdue";
-                                      const followUpClass =
-                                        record.followUp === "Selesai"
-                                          ? "completed"
-                                          : "due-soon";
-                                      return `<tr>
+                            ${calibrationRecords.length
+        ? calibrationRecords
+          .map((record) => {
+            const resultClass =
+              record.result === "Memenuhi"
+                ? "completed"
+                : "overdue";
+            const followUpClass =
+              record.followUp === "Selesai"
+                ? "completed"
+                : "due-soon";
+            return `<tr>
                                     <td class="pm-unit-cell"><strong>${escapeHtml(record.identification)}</strong><span>${escapeHtml(record.brandType)}</span></td>
                                     <td class="pm-asset-cell"><strong>${escapeHtml(record.instrumentName)}</strong><span>${escapeHtml(record.notes || "")}</span></td>
                                     <td>${escapeHtml(record.location)}</td>
@@ -21804,10 +21795,10 @@
                                     <td><span class="pm-status ${followUpClass}">${escapeHtml(record.followUp)}</span></td>
                                     <td><strong>${escapeHtml(record.reportNumber)}</strong><br><span class="pm-card-caption">${escapeHtml(record.checkedBy)}</span></td>
                                 </tr>`;
-                                    })
-                                    .join("")
-                                : '<tr><td colspan="9" style="text-align:center; padding:28px">Belum ada laporan kalibrasi final.</td></tr>'
-                            }
+          })
+          .join("")
+        : '<tr><td colspan="9" style="text-align:center; padding:28px">Belum ada laporan kalibrasi final.</td></tr>'
+      }
                         </tbody>
                     </table>
                 </div>
@@ -22310,7 +22301,7 @@
 
       const defaultRate =
         unit.daily_usage_coefficient != null &&
-        Number(unit.daily_usage_coefficient) > 0
+          Number(unit.daily_usage_coefficient) > 0
           ? Number(unit.daily_usage_coefficient)
           : defaultUnit === "KM"
             ? 150
@@ -22465,7 +22456,7 @@
       await hydrateReportPmPlans();
       showToast(
         result.message ||
-          `Unit ${data.asset_id} berhasil dimasukkan ke tabel Preventive Maintenance.`,
+        `Unit ${data.asset_id} berhasil dimasukkan ke tabel Preventive Maintenance.`,
       );
     } catch (error) {
       showToast(error.message, true);
@@ -24565,11 +24556,10 @@
                     <td><strong>${record.personnelCount} personel</strong><small>${plannerSplTaskCount(record)} item pekerjaan · ${escapeHtml(record.totalPersonHours)}</small></td>
                     <td><strong>${escapeHtml(creator?.name || "Belum dicatat")}</strong><small>${escapeHtml(creator?.status || "Status belum tersedia")}</small></td>
                     <td><span class="pk-badge ${headApproved ? "pk-badge-success" : "pk-badge-warning"}">${headApproved ? "Diketahui / disetujui" : "Menunggu Head"}</span><small>${escapeHtml(headApproval?.name || "Belum ditentukan")}</small></td>
-                    <td>${
-                      review
-                        ? `<span class="pk-badge pk-badge-success">Sudah ditinjau</span><small>${escapeHtml(formatPlannerReviewTime(review.reviewedAt))}</small>`
-                        : '<span class="pk-badge pk-badge-warning">Perlu ditinjau</span><small>Belum ada catatan planner</small>'
-                    }</td>
+                    <td>${review
+            ? `<span class="pk-badge pk-badge-success">Sudah ditinjau</span><small>${escapeHtml(formatPlannerReviewTime(review.reviewedAt))}</small>`
+            : '<span class="pk-badge pk-badge-warning">Perlu ditinjau</span><small>Belum ada catatan planner</small>'
+          }</td>
                     <td><button type="button" class="pk-spl-review-button" data-pk-spl-review="${escapeHtml(record.id)}"><i class="fa-solid fa-eye"></i>${review ? "Lihat Review" : "Tinjau"}</button></td>
                 </tr>`;
       })
@@ -24641,40 +24631,39 @@
                     </div>
                     <div class="pk-spl-personnel-grid">
                         ${record.personnel
-                          .map(
-                            (person, index) => `
+        .map(
+          (person, index) => `
                             <article class="pk-spl-person-card">
                                 <header><span>${String(index + 1).padStart(2, "0")}</span><div><strong>${escapeHtml(person.name)}</strong><small>${escapeHtml(person.role)}</small></div></header>
                                 <ol>${person.tasks.map((task) => `<li>${escapeHtml(task)}</li>`).join("")}</ol>
                                 <footer><span><i class="fa-solid fa-clock"></i> ${escapeHtml(person.startTime || "-")}–${escapeHtml(person.endTime || "-")}</span><span>TTD mulai: ${person.startTTD ? "Ada" : "Belum ada"} · TTD selesai: ${person.endTTD ? "Ada" : "Belum ada"}</span></footer>
                             </article>`,
-                          )
-                          .join("")}
+        )
+        .join("")}
                     </div>
                     <div class="pk-spl-authorization-heading"><span>Matriks otorisasi & verifikasi tanda tangan SPL</span><small>Urutan menunjukkan pihak yang membuat, mengetahui, menyetujui, dan meninjau dokumen.</small></div>
                     <div class="pk-spl-signature-grid">
                         ${approvalMatrix
-                          .map((item) => {
-                            const complete =
-                              item.status.includes("Approved") ||
-                              item.status.includes("Reviewed");
-                            return `
+        .map((item) => {
+          const complete =
+            item.status.includes("Approved") ||
+            item.status.includes("Reviewed");
+          return `
                                 <div class="pk-spl-sig-box ${complete ? "complete" : "pending"}">
                                     <div class="pk-role">${escapeHtml(item.role)}</div>
                                     <div class="pk-name">${escapeHtml(item.name)}</div>
                                     <div class="pk-status"><span class="pk-badge ${complete ? "pk-badge-success" : "pk-badge-warning"}">${escapeHtml(item.status)}</span></div>
                                 </div>`;
-                          })
-                          .join("")}
+        })
+        .join("")}
                     </div>
                 </div>
                 <footer class="pk-spl-audit-footer">
                     <div><i class="fa-solid ${headApproved ? "fa-circle-check" : "fa-circle-exclamation"}"></i><span>${headApproved ? `Head of Equipment: ${escapeHtml(headApproval.name)} telah mengetahui dokumen ini.` : "Review planner dikunci sampai Head of Equipment menyetujui dokumen."}</span></div>
-                    ${
-                      review
-                        ? `<span class="pk-spl-reviewed-stamp"><i class="fa-solid fa-check-double"></i> Ditinjau ${escapeHtml(formatPlannerReviewTime(review.reviewedAt))}</span>`
-                        : `<button type="button" class="pk-spl-mark-reviewed" data-pk-spl-mark-reviewed="${escapeHtml(record.id)}" ${headApproved ? "" : "disabled"}><i class="fa-solid fa-check-double"></i>Catat sudah ditinjau Planner</button>`
-                    }
+                    ${review
+        ? `<span class="pk-spl-reviewed-stamp"><i class="fa-solid fa-check-double"></i> Ditinjau ${escapeHtml(formatPlannerReviewTime(review.reviewedAt))}</span>`
+        : `<button type="button" class="pk-spl-mark-reviewed" data-pk-spl-mark-reviewed="${escapeHtml(record.id)}" ${headApproved ? "" : "disabled"}><i class="fa-solid fa-check-double"></i>Catat sudah ditinjau Planner</button>`
+      }
                 </footer>
             </section>`;
 
@@ -24733,9 +24722,9 @@
     const tbody = document.getElementById("tbAttendanceBody");
     if (!tbody) return;
 
-    const activePeriod = document.getElementById("selAttendancePeriod")?.value 
-                      || document.getElementById("selKpiPeriod")?.value 
-                      || "2026-01";
+    const activePeriod = document.getElementById("selAttendancePeriod")?.value
+      || document.getElementById("selKpiPeriod")?.value
+      || "2026-01";
 
     const headerTitle = document.getElementById("lblAttendancePeriodTitle");
     if (headerTitle) {
@@ -24822,7 +24811,7 @@
   }
 
   // Global Export Function
-  
+
   // =========================================================================
   // UPLOAD DATA ABSENSI & LEMBUR MEKANIK HANDLERS
   // =========================================================================
@@ -26076,7 +26065,7 @@
         } else {
           alert(
             "Gagal menyimpan insiden ke database: " +
-              (result.message || "Unknown error"),
+            (result.message || "Unknown error"),
           );
         }
       })
@@ -27670,19 +27659,18 @@
     const panel = document.getElementById("contractCsvFeedback");
     if (!panel) return;
     panel.classList.toggle("is-error", errors.length > 0);
-    panel.innerHTML = `<strong>${escapeHtml(message)}</strong>${
-      errors.length
+    panel.innerHTML = `<strong>${escapeHtml(message)}</strong>${errors.length
         ? `<ul>${errors
-            .slice(0, 50)
-            .map(
-              (error) =>
-                `<li>Baris ${Number(error.row) || 0}: ${escapeHtml(error.message)}</li>`,
-            )
-            .join(
-              "",
-            )}</ul>${errors.length > 50 ? `<small>${errors.length - 50} kesalahan lain belum ditampilkan.</small>` : ""}`
+          .slice(0, 50)
+          .map(
+            (error) =>
+              `<li>Baris ${Number(error.row) || 0}: ${escapeHtml(error.message)}</li>`,
+          )
+          .join(
+            "",
+          )}</ul>${errors.length > 50 ? `<small>${errors.length - 50} kesalahan lain belum ditampilkan.</small>` : ""}`
         : ""
-    }`;
+      }`;
   }
 
   async function submitContractCsv(mode) {
@@ -27900,15 +27888,15 @@
         const excBadges =
           Array.isArray(r.exceptions) && r.exceptions.length > 0
             ? r.exceptions
-                .map((e) => {
-                  const cls = e.includes("Anomaly")
+              .map((e) => {
+                const cls = e.includes("Anomaly")
+                  ? "prod-badge-danger"
+                  : e.includes("Offline")
                     ? "prod-badge-danger"
-                    : e.includes("Offline")
-                      ? "prod-badge-danger"
-                      : "prod-badge-warning";
-                  return `<span class="prod-badge ${cls}">${escapeHtml(e)}</span>`;
-                })
-                .join(" ")
+                    : "prod-badge-warning";
+                return `<span class="prod-badge ${cls}">${escapeHtml(e)}</span>`;
+              })
+              .join(" ")
             : '<span class="prod-badge prod-badge-success"><i class="fa-solid fa-check"></i> Sesuai</span>';
 
         return `
@@ -29583,7 +29571,7 @@
       ) {
         throw new Error(
           inspectionsPayload?.message ||
-            "Data inspeksi tidak dapat dimuat ulang.",
+          "Data inspeksi tidak dapat dimuat ulang.",
         );
       }
 
@@ -29914,7 +29902,7 @@
       window._execApexChartInstances.forEach((c) => {
         try {
           c?.destroy();
-        } catch (e) {}
+        } catch (e) { }
       });
     }
     window._execApexChartInstances = [];
@@ -30043,11 +30031,11 @@
       liveServiceRows.length > 0
         ? liveServiceRows
         : serviceBerkalaData.map((row) => ({
-            ...row,
-            category: "Lainnya",
-            dateValue: new Date().toISOString().slice(0, 10),
-            dateLabel: row.date,
-          }));
+          ...row,
+          category: "Lainnya",
+          dateValue: new Date().toISOString().slice(0, 10),
+          dateLabel: row.date,
+        }));
     const serviceCategories = [
       ...new Set(displayServiceRows.map((row) => row.category)),
     ].sort((a, b) => a.localeCompare(b, "id"));
@@ -30213,8 +30201,8 @@
                                     </thead>
                                     <tbody id="executiveServiceTableBody">
                                         ${displayServiceRows
-                                          .map(
-                                            (s) => `
+        .map(
+          (s) => `
                                             <tr data-service-category="${escapeHtml(s.category)}" data-service-date="${escapeHtml(s.dateValue)}" data-service-status="${escapeHtml(s.status)}">
                                                 <td class="executive-service-unit-cell">
                                                     <a href="javascript:void(0)" onclick="window.openUnitProperties('${escapeHtml(s.unit)}')" class="unit-prop-link" title="Buka Properties Unit ${escapeHtml(s.unit)}">
@@ -30230,8 +30218,8 @@
                                                 <td class="executive-service-priority-cell" style="color:${s.priority.includes("Tinggi") ? "var(--danger)" : "var(--text-main)"};">${s.priority}</td>
                                             </tr>
                                         `,
-                                          )
-                                          .join("")}
+        )
+        .join("")}
                                     </tbody>
                                 </table>
                             </div>
@@ -30476,16 +30464,16 @@
                                     </thead>
                                     <tbody>
                                         ${greaseDashboard.rows
-                                          .map(
-                                            (g) => `
+        .map(
+          (g) => `
                                             <tr>
                                                 <td class="text-left cell-unit"><strong class="unit-code">${escapeHtml(g.unit)}</strong></td>
                                                 <td class="text-center cell-val tabular-nums">${escapeHtml(g.lastHm)}</td>
                                                 <td class="text-center cell-badge"><span class="p2h-badge ${g.badge}">${escapeHtml(g.status)}</span></td>
                                             </tr>
                                         `,
-                                          )
-                                          .join("")}
+        )
+        .join("")}
                                     </tbody>
                                 </table>
                             </div>
@@ -30526,8 +30514,8 @@
                                     </thead>
                                     <tbody>
                                         ${mechanicProductivityData
-                                          .map(
-                                            (m) => `
+        .map(
+          (m) => `
                                             <tr>
                                                 <td class="text-left cell-name"><strong class="mechanic-name">${escapeHtml(m.name)}</strong></td>
                                                 <td class="text-center cell-actual tabular-nums"><strong>${m.actual} jam</strong></td>
@@ -30535,8 +30523,8 @@
                                                 <td class="text-right cell-badge"><span class="p2h-badge ${m.color}">${m.pct}%</span></td>
                                             </tr>
                                         `,
-                                          )
-                                          .join("")}
+        )
+        .join("")}
                                     </tbody>
                                 </table>
                             </div>
@@ -30648,8 +30636,8 @@
         selectedCondition === "ALL"
           ? tireDashboard.rows
           : tireDashboard.rows.filter(
-              (row) => row.conditionKey === selectedCondition,
-            );
+            (row) => row.conditionKey === selectedCondition,
+          );
       tireRendered = 0;
       tireLoading = false;
       tireBody?.replaceChildren();
@@ -31892,8 +31880,8 @@ function renderTableStock(filterText = "") {
   const limited = filtered.slice(0, 100);
   tbody.innerHTML = limited.length
     ? limited
-        .map(
-          (item) => `
+      .map(
+        (item) => `
         <tr>
             <td><strong>${escapeHtml(item.namaParts) || "-"}</strong></td>
             <td>${escapeHtml(item.partNumber) || "-"}</td>
@@ -31903,11 +31891,11 @@ function renderTableStock(filterText = "") {
             <td><strong>${escapeHtml(item.saldo) || "0"}</strong></td>
             <td><small>${escapeHtml(item.source) || "-"}</small></td>
         </tr>`,
-        )
-        .join("") +
-      (filtered.length > limited.length
-        ? `<tr><td colspan="7" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString("id-ID")}.</td></tr>`
-        : "")
+      )
+      .join("") +
+    (filtered.length > limited.length
+      ? `<tr><td colspan="7" style="text-align:center; padding:14px; color:var(--text-muted);">Menampilkan 100 baris pertama dari ${filtered.length.toLocaleString("id-ID")}.</td></tr>`
+      : "")
     : `<tr><td colspan="7" style="text-align:center; padding:20px;">Tidak ada data ditemukan</td></tr>`;
 }
 
@@ -31942,17 +31930,17 @@ function renderTableOil(filterText = "") {
   const limited = filtered.slice(0, 150);
   tbody.innerHTML = limited.length
     ? limited
-        .map(
-          (item) => `<tr>
+      .map(
+        (item) => `<tr>
         <td>${escapeHtml(item.no) || "-"}</td><td>${escapeHtml(item.tanggal) || "-"}</td><td>${escapeHtml(item.noBukti) || "-"}</td>
         <td><strong>${escapeHtml(item.namaProduk) || "-"}</strong></td><td>${escapeHtml(item.kodeProduk) || "-"}</td><td>${escapeHtml(item.satuan) || "-"}</td>
         <td><strong>${escapeHtml(item.jumlah) || "0"}</strong></td><td>${escapeHtml(item.unit) || "-"}</td><td>${escapeHtml(window.getSnPlatFromUnit(item.unit))}</td>
         <td>${formatLogisticsCurrency(item.nilai)}</td></tr>`,
-        )
-        .join("") +
-      (filtered.length > limited.length
-        ? `<tr><td colspan="10" class="logistics-limit-note">Menampilkan 150 dari ${filtered.length.toLocaleString("id-ID")} transaksi. Gunakan pencarian untuk mempersempit data.</td></tr>`
-        : "")
+      )
+      .join("") +
+    (filtered.length > limited.length
+      ? `<tr><td colspan="10" class="logistics-limit-note">Menampilkan 150 dari ${filtered.length.toLocaleString("id-ID")} transaksi. Gunakan pencarian untuk mempersempit data.</td></tr>`
+      : "")
     : '<tr><td colspan="10" class="logistics-limit-note">Tidak ada transaksi oli yang cocok.</td></tr>';
 }
 
@@ -31990,17 +31978,17 @@ function renderTableUsed(filterText = "", statusText = "") {
   const limited = filtered.slice(0, 150);
   tbody.innerHTML = limited.length
     ? limited
-        .map(
-          (item) => `<tr>
+      .map(
+        (item) => `<tr>
         <td>${escapeHtml(item.no) || "-"}</td><td>${escapeHtml(item.tglSpb) || "-"}</td><td>${escapeHtml(item.noSpb) || "-"}</td><td>${escapeHtml(item.noJo) || "-"}</td>
         <td><button type="button" class="logistics-unit-link" onclick="openLogisticsAsset('${escapeHtml(item.idUnit)}')">${escapeHtml(item.idUnit) || "-"}</button></td>
         <td>${escapeHtml(window.getSnPlatFromUnit(item.idUnit))}</td><td><strong>${escapeHtml(item.namaSparepart) || "-"}</strong></td><td>${escapeHtml(item.spesifikasi) || "-"}</td>
         <td>${escapeHtml(item.qty) || "-"}</td><td><span class="logistics-used-status status-${itemStatusClass(item.kesimpulan)}">${escapeHtml(item.kesimpulan) || "-"}</span></td><td><small>${escapeHtml(item.source) || "-"}</small></td></tr>`,
-        )
-        .join("") +
-      (filtered.length > limited.length
-        ? `<tr><td colspan="11" class="logistics-limit-note">Menampilkan 150 dari ${filtered.length.toLocaleString("id-ID")} transaksi.</td></tr>`
-        : "")
+      )
+      .join("") +
+    (filtered.length > limited.length
+      ? `<tr><td colspan="11" class="logistics-limit-note">Menampilkan 150 dari ${filtered.length.toLocaleString("id-ID")} transaksi.</td></tr>`
+      : "")
     : '<tr><td colspan="11" class="logistics-limit-note">Tidak ada status barang bekas yang cocok.</td></tr>';
 }
 
@@ -32785,7 +32773,7 @@ window.renderArchiveTables = function () {
       .then((res) => {
         if (res.ok) fetchNotificationsFromApi();
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
   function updateBadge() {
@@ -32863,40 +32851,37 @@ window.renderArchiveTables = function () {
                         <span class="notif-user-pill">
                             <i class="fa-solid fa-user-check text-primary"></i> ${escapeHtml(n.user)} (${escapeHtml(n.role)})
                         </span>
-                        ${
-                          n.involvedParties && n.involvedParties.length > 0
-                            ? `
+                        ${n.involvedParties && n.involvedParties.length > 0
+            ? `
                             <span class="notif-parties-pill" title="Pihak Terlibat">
                                 <i class="fa-solid fa-users"></i> ${escapeHtml(n.involvedParties.slice(0, 2).join(", "))}${n.involvedParties.length > 2 ? " +" + (n.involvedParties.length - 2) : ""}
                             </span>
                         `
-                            : ""
-                        }
+            : ""
+          }
                     </div>
 
-                    ${
-                      woId
-                        ? `
+                    ${woId
+            ? `
                         <div style="margin-top:6px;">
                             <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); window.openNotificationTarget(${n.id}, '${escapeHtml(woId)}', '${escapeHtml(assetId || "")}')" style="padding:2px 8px; font-size:0.75rem; background:var(--primary, #0284c7); color:#fff; border:none; border-radius:3px; cursor:pointer;">
                                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Work Order #${escapeHtml(woId)}
                             </button>
                         </div>
                     `
-                        : isArchive
-                        ? `
+            : isArchive
+              ? `
                         <div style="margin-top:6px;">
                             <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); window.openArchiveNotificationTarget(${n.id}, '${escapeHtml(archiveItemType)}')" style="padding:2px 8px; font-size:0.75rem; background:#475569; color:#fff; border:none; border-radius:3px; cursor:pointer;">
                                 <i class="fa-solid fa-box-archive"></i> Buka Register Arsip
                             </button>
                         </div>
                     `
-                        : ""
-                    }
+              : ""
+          }
 
-                    ${
-                      n.relatedTables
-                        ? `
+                    ${n.relatedTables
+            ? `
                         <button type="button" class="notif-json-toggle" onclick="toggleJsonBlock(${n.id}, event)">
                             <i class="fa-solid fa-code"></i> Detail Tabel Terkait (JSON)
                         </button>
@@ -32904,8 +32889,8 @@ window.renderArchiveTables = function () {
                             ${escapeHtml(JSON.stringify(n.relatedTables, null, 2))}
                         </div>
                     `
-                        : ""
-                    }
+            : ""
+          }
                 </div>
             </div>
             `;
@@ -33006,7 +32991,7 @@ window.renderArchiveTables = function () {
       try {
         const t = await window.getCsrfToken();
         if (t) return t;
-      } catch (e) {}
+      } catch (e) { }
     }
     try {
       const res = await fetch("api/auth.php", { cache: "no-store" });
@@ -33015,7 +33000,7 @@ window.renderArchiveTables = function () {
         window.APP_CSRF_TOKEN = json.csrf_token;
         return json.csrf_token;
       }
-    } catch (e) {}
+    } catch (e) { }
     return "";
   }
 
