@@ -5266,6 +5266,7 @@ try {
                         </button>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-outline-danger btn-sm" id="modalWoCancelInputBtn" type="button" style="display:none; padding:5px 12px; font-size:0.82rem;" title="Batalkan Work Order sebelum dikerjakan"><i class="fa-solid fa-ban"></i> Batalkan WO</button>
                         <button class="btn btn-primary btn-sm" id="modalWoEditInputBtn" type="button" style="display:none; padding:5px 12px; font-size:0.82rem;">
                             <i class="fa-solid fa-pen-to-square"></i> Edit input saya
                         </button>
@@ -7388,8 +7389,10 @@ try {
                 const documentBtn = document.getElementById('modalWoPrintDocumentBtn');
                 const documentAlias = document.getElementById('modalWoDocumentAlias');
                 const editInputBtn = document.getElementById('modalWoEditInputBtn');
+                const cancelInputBtn = document.getElementById('modalWoCancelInputBtn');
                 if (documentBtn) { documentBtn.disabled = true; documentBtn.onclick = null; }
                 if (editInputBtn) { editInputBtn.style.display = 'none'; editInputBtn.onclick = null; }
+                if (cancelInputBtn) { cancelInputBtn.style.display = 'none'; cancelInputBtn.onclick = null; }
 
                 const targetAssetId = wo ? (wo.assetId || wo.unitId) : (fallbackAssetId || '');
                 const allAssetsList = typeof getAllAssets === 'function' ? getAllAssets() : (typeof globalData !== 'undefined' && Array.isArray(globalData?.assets) ? globalData.assets : []);
@@ -7467,6 +7470,49 @@ try {
                         editInputBtn.onclick = () => {
                             closeModal('modalWoDetail');
                             window.NewWorkOrderForm?.edit?.(rawData);
+                        };
+                    }
+
+                    if (cancelInputBtn && detail.canOwnerEdit) {
+                        cancelInputBtn.style.display = 'inline-flex';
+                        cancelInputBtn.onclick = async () => {
+                            const reason = window.prompt(`Batalkan Work Order #${detail.woId}?\nMasukkan alasan pembatalan (wajib, maksimal 500 karakter):`, 'Koreksi salah input sebelum penanganan');
+                            if (reason === null) return;
+                            const normReason = reason.trim();
+                            if (!normReason || normReason.length > 500) {
+                                alert('Alasan pembatalan wajib diisi (maksimal 500 karakter).');
+                                return;
+                            }
+                            try {
+                                cancelInputBtn.disabled = true;
+                                const res = await fetch(`api/work_orders.php?id=${encodeURIComponent(detail.woId)}`, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-Token': window.APP_CSRF_TOKEN || ''
+                                    },
+                                    body: JSON.stringify({
+                                        action: 'cancel_own_pending',
+                                        reason: normReason
+                                    })
+                                });
+                                const payload = await res.json();
+                                if (!res.ok || payload.status !== 'success') {
+                                    throw new Error(payload.message || 'Pembatalan Work Order gagal.');
+                                }
+                                closeModal('modalWoDetail');
+                                if (typeof showToast === 'function') {
+                                    showToast(`Work Order #${detail.woId} berhasil dibatalkan.`);
+                                } else {
+                                    alert(`Work Order #${detail.woId} berhasil dibatalkan.`);
+                                }
+                                if (typeof loadWorkOrders === 'function') loadWorkOrders();
+                                if (typeof refreshWorkOrderKanban === 'function') refreshWorkOrderKanban();
+                            } catch (err) {
+                                alert(err.message || 'Gagal membatalkan Work Order.');
+                            } finally {
+                                cancelInputBtn.disabled = false;
+                            }
                         };
                     }
 

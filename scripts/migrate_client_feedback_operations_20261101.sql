@@ -52,13 +52,13 @@ CREATE TABLE IF NOT EXISTS pm_forecast_adjustments (
 
 CREATE TABLE IF NOT EXISTS part_import_staging (
   staging_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, batch_key VARCHAR(80) NOT NULL,
-  row_number INT NOT NULL, sku VARCHAR(100) NULL, technical_name VARCHAR(180) NULL,
+  `row_number` INT NOT NULL, sku VARCHAR(100) NULL, technical_name VARCHAR(180) NULL,
   authenticity VARCHAR(30) NULL, part_group VARCHAR(100) NULL, base_uom VARCHAR(30) NULL,
   transaction_uom VARCHAR(30) NULL, conversion_factor DECIMAL(18,6) NULL,
   warehouse_location VARCHAR(100) NULL, opening_balance DECIMAL(18,6) NULL,
   validation_status ENUM('VALID','INVALID','DUPLICATE') NOT NULL, validation_errors TEXT NULL,
   imported_by INT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uq_part_stage_batch_row (batch_key,row_number), KEY idx_part_stage_status (batch_key,validation_status)
+  UNIQUE KEY uq_part_stage_batch_row (`batch_key`,`row_number`), KEY idx_part_stage_status (batch_key,validation_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS input_revision_idempotency (

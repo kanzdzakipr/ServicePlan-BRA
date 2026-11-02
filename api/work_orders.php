@@ -628,9 +628,11 @@ switch ($method) {
         }
 
         $id = (string) ($_GET['id'] ?? $data['wo_id']);
-        $isOwnerRevision = strtolower(trim((string) ($data['action'] ?? ''))) === 'update_own_pending';
+        $woAction = strtolower(trim((string) ($data['action'] ?? '')));
+        $isOwnerRevision = $woAction === 'update_own_pending';
+        $isOwnerCancel = $woAction === 'cancel_own_pending';
         $isClosing = isset($data['status']) && $data['status'] === 'Closed';
-        AuthMiddleware::checkAccess('wo', $isOwnerRevision ? 'R' : ($isClosing ? 'A' : 'U'));
+        AuthMiddleware::checkAccess('wo', ($isOwnerRevision || $isOwnerCancel) ? 'R' : ($isClosing ? 'A' : 'U'));
         api_require_work_order_access($db, $id);
 
         try {
@@ -641,6 +643,111 @@ switch ($method) {
             if (!$current) {
                 $db->rollBack();
                 api_json_response(404, ['status' => 'error', 'message' => 'Work Order tidak ditemukan.']);
+            }
+
+            if ($isOwnerCancel) {
+                $cancelReason = InputRevision::reason($data, 'Pembatalan Work Order oleh pembuat');
+                $idempotencyKey = InputRevision::idempotencyKey($data);
+                if ($idempotencyKey !== null && !InputRevision::reserveIdempotency($db, $idempotencyKey, 'WO', $id, 'CANCEL')) {
+                    $db->rollBack();
+                    api_json_response(200, ['status' => 'success', 'message' => 'Permintaan pembatalan identik sudah diproses.', 'data' => ['woId' => $id, 'idempotent' => true]]);
+                }
+                InputRevision::assertOwner($current['created_by'] ?? null, 'Hanya pembuat WO atau pengelola berwenang yang dapat membatalkan WO ini.');
+                if ((string) $current['status'] !== 'Open') {
+                    throw new DomainException('Hanya Work Order berstatus Open yang dapat dibatalkan langsung oleh pembuat.');
+                }
+                $downstream = $db->prepare(
+                    'SELECT (SELECT 1 FROM purchase_requests WHERE wo_id = :wo_id AND status != "Cancelled" LIMIT 1) AS has_spb,
+                            (SELECT 1 FROM inventory_transactions WHERE wo_id = :wo_id AND reversed_at IS NULL LIMIT 1) AS has_stock,
+                            (SELECT 1 FROM report_work_order_integrations WHERE work_order_id = :wo_id AND reversed_at IS NULL LIMIT 1) AS has_report'
+                );
+                $downstream->execute([':wo_id' => $id]);
+                $ds = $downstream->fetch(PDO::FETCH_ASSOC) ?: [];
+                if (!empty($ds['has_spb'])) {
+                    throw new DomainException('Work Order memiliki SPB aktif. Batalkan SPB terlebih dahulu sebelum membatalkan WO.');
+                }
+                if (!empty($ds['has_stock'])) {
+                    throw new DomainException('Work Order sudah memiliki transaksi suku cadang di gudang. Batalkan/reversal transaksi stok terlebih dahulu.');
+                }
+                if (!empty($ds['has_report'])) {
+                    throw new DomainException('Work Order berasal dari Formulir/Laporan terintegrasi. Pembatalan harus dilakukan pada Form sumbernya.');
+                }
+
+                $db->prepare("
+                    UPDATE work_orders
+                    SET status = 'Cancelled',
+                        input_state = 'VOID',
+                        closed_at = NOW(),
+                        input_revision_no = input_revision_no + 1,
+                        input_last_edited_at = NOW(),
+                        input_last_edited_by = :actor
+                    WHERE wo_id = :id
+                ")->execute([':actor' => InputRevision::actorId(), ':id' => $id]);
+
+                $assetId = (string) ($current['asset_id'] ?? '');
+                if ($assetId !== '') {
+                    $activeWosStmt = $db->prepare("
+                        SELECT COUNT(*), COALESCE(SUM(CASE WHEN is_downtime = 1 THEN 1 ELSE 0 END), 0) AS downtime_count
+                        FROM work_orders 
+                        WHERE asset_id = :asset_id AND wo_id != :wo_id 
+                          AND status IN ('Open', 'In Progress', 'Waiting Part', 'Testing')
+                    ");
+                    $activeWosStmt->execute([':asset_id' => $assetId, ':wo_id' => $id]);
+                    $remaining = $activeWosStmt->fetch(PDO::FETCH_ASSOC);
+                    $remainingActive = (int) ($remaining['COUNT(*)'] ?? 0);
+
+                    $assetStmt = $db->prepare('SELECT status FROM assets WHERE asset_id = :asset_id FOR UPDATE');
+                    $assetStmt->execute([':asset_id' => $assetId]);
+                    $currAssetSt = strtoupper(trim((string) $assetStmt->fetchColumn()));
+
+                    if ($remainingActive === 0 && !in_array($currAssetSt, ['ACCIDENT_HOLD', 'INACTIVE'], true) && $currAssetSt !== 'READY') {
+                        $db->prepare("UPDATE assets SET status = 'READY' WHERE asset_id = :aid")->execute([':aid' => $assetId]);
+                        wo_insert_timeline(
+                            $db,
+                            $id,
+                            'STATUS_CHANGE',
+                            $currAssetSt,
+                            'READY',
+                            "Status unit {$assetId} dikembalikan ke READY",
+                            "Work Order dibatalkan oleh pembuat sebelum pengerjaan dimulai."
+                        );
+                    }
+                }
+
+                wo_insert_timeline(
+                    $db,
+                    $id,
+                    'OWNER_CANCEL',
+                    (string) $current['status'],
+                    'Cancelled',
+                    'Work Order dibatalkan oleh pembuat',
+                    $cancelReason
+                );
+
+                $after = array_merge((array) $current, [
+                    'status' => 'Cancelled',
+                    'input_state' => 'VOID',
+                    'closed_at' => date('Y-m-d H:i:s'),
+                    'input_revision_no' => (int) ($current['input_revision_no'] ?? 0) + 1,
+                ]);
+                InputRevision::record($db, 'WO', $id, 'CANCEL', $cancelReason, (array) $current, $after, $idempotencyKey);
+
+                $db->commit();
+
+                wo_notify(
+                    $db,
+                    'WO_CANCELLED',
+                    $id,
+                    "Work Order #{$id} dibatalkan oleh pembuat. Alasan: {$cancelReason}",
+                    (string) ($current['assigned_mechanic'] ?? ''),
+                    $assetId
+                );
+
+                api_json_response(200, [
+                    'status' => 'success',
+                    'message' => 'Work Order berhasil dibatalkan tanpa menghapus jejak audit.',
+                    'data' => ['woId' => $id, 'status' => 'Cancelled']
+                ]);
             }
 
             $revisionReason = null;
@@ -1005,9 +1112,30 @@ switch ($method) {
             api_json_response(422, ['status' => 'error', 'message' => 'ID Work Order wajib diisi.']);
         }
         api_require_work_order_access($db, (string) $_GET['id']);
-        $stmt = $db->prepare('DELETE FROM work_orders WHERE wo_id = :id');
-        $stmt->execute([':id' => (string) $_GET['id']]);
-        echo json_encode(['status' => 'success', 'message' => 'Work Order dihapus.']);
+        $delId = (string) $_GET['id'];
+        $db->beginTransaction();
+        try {
+            $lock = $db->prepare('SELECT * FROM work_orders WHERE wo_id = :id FOR UPDATE');
+            $lock->execute([':id' => $delId]);
+            $current = $lock->fetch(PDO::FETCH_ASSOC);
+            if (!$current) {
+                $db->rollBack();
+                api_json_response(404, ['status' => 'error', 'message' => 'Work Order tidak ditemukan.']);
+            }
+            $reason = trim((string) ($_GET['reason'] ?? 'Void administratif'));
+            $db->prepare("UPDATE work_orders SET status = 'Cancelled', input_state = 'VOID', closed_at = NOW(), input_revision_no = input_revision_no + 1, input_last_edited_at = NOW(), input_last_edited_by = :actor WHERE wo_id = :id")
+               ->execute([':actor' => InputRevision::actorId(), ':id' => $delId]);
+            wo_insert_timeline($db, $delId, 'VOID', (string) $current['status'], 'Cancelled', 'Work Order di-void oleh Administrator', $reason);
+            InputRevision::record($db, 'WO', $delId, 'VOID', $reason, $current, array_merge($current, ['status' => 'Cancelled', 'input_state' => 'VOID']));
+            $db->commit();
+            echo json_encode(['status' => 'success', 'message' => 'Work Order berhasil di-void tanpa menghapus jejak audit.']);
+            break;
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            api_json_response(500, ['status' => 'error', 'message' => 'Gagal memproses void Work Order: ' . $e->getMessage()]);
+        }
+
+
         break;
 
     default:

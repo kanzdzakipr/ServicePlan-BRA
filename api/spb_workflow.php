@@ -46,7 +46,7 @@ if ($method === 'GET') {
         $document['items'] = $items->fetchAll(PDO::FETCH_ASSOC);
         $document['revision_history'] = InputRevision::history($db, 'SPB', $requestedSpbId);
         $document['can_edit_own'] = ((int) $document['requested_by'] === InputRevision::actorId() || InputRevision::isPrivileged())
-            && in_array((string) $document['status'], ['Draft', 'Submitted'], true)
+            && in_array((string) $document['status'], ['Draft', 'Submitted', 'Revision Required'], true)
             && strtoupper((string) ($document['approval_status'] ?? '')) !== 'APPROVED'
             && empty($document['has_purchase_order'])
             && empty($document['owned_by_report']);
@@ -74,7 +74,7 @@ if ($method === 'GET') {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as &$row) {
         $row['can_edit_own'] = ((int) $row['requested_by'] === InputRevision::actorId() || InputRevision::isPrivileged())
-            && in_array((string) $row['status'], ['Draft', 'Submitted'], true)
+            && in_array((string) $row['status'], ['Draft', 'Submitted', 'Revision Required'], true)
             && strtoupper((string) ($row['approval_status'] ?? '')) !== 'APPROVED'
             && empty($row['has_purchase_order'])
             && empty($row['source_report_id']);
@@ -165,7 +165,7 @@ if (in_array($action, ['update_own_pending', 'withdraw_own_pending'], true) || $
         $current = $lock->fetch(PDO::FETCH_ASSOC);
         if (!$current) throw new OutOfBoundsException('SPB tidak ditemukan.');
         InputRevision::assertOwner($current['requested_by'] ?? null, 'Hanya pembuat SPB yang dapat merevisi input ini.');
-        if (!in_array((string) $current['status'], ['Draft', 'Submitted'], true)) {
+        if (!in_array((string) $current['status'], ['Draft', 'Submitted', 'Revision Required'], true)) {
             throw new DomainException('SPB sudah diproses dan tidak dapat direvisi lagi.');
         }
         if (strtoupper((string) ($current['approval_status'] ?? '')) === 'APPROVED' || !empty($current['has_purchase_order'])) {
@@ -182,14 +182,14 @@ if (in_array($action, ['update_own_pending', 'withdraw_own_pending'], true) || $
         $before['items'] = $oldItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
         if ($action === 'cancel_own_pending') {
-            if ((string) $current['status'] !== 'Draft') throw new DomainException('Hanya SPB Draft yang dapat dibatalkan; tarik kembali Submitted terlebih dahulu.');
+            if (!in_array((string) $current['status'], ['Draft', 'Submitted', 'Revision Required'], true)) throw new DomainException('Hanya SPB berstatus Draft, Submitted, atau Revision Required yang dapat dibatalkan.');
             $db->prepare("UPDATE purchase_requests SET status='Cancelled', input_revision_no=input_revision_no+1, input_last_edited_at=NOW(), input_last_edited_by=:actor WHERE spb_id=:id")
                 ->execute([':actor'=>InputRevision::actorId(), ':id'=>$spbId]);
             $db->prepare("UPDATE purchase_request_items SET status='Cancelled' WHERE spb_id=:id")->execute([':id'=>$spbId]);
             $after = array_merge($before, ['status'=>'Cancelled','input_revision_no'=>(int)($current['input_revision_no'] ?? 0)+1]);
             InputRevision::record($db, 'SPB', $spbId, 'CANCEL', $reason, $before, $after, $idempotencyKey);
             $db->commit();
-            api_json_response(200, ['status'=>'success','message'=>'SPB Draft dibatalkan tanpa menghapus riwayat.','data'=>['spbId'=>$spbId,'status'=>'Cancelled']]);
+            api_json_response(200, ['status'=>'success','message'=>'SPB berhasil dibatalkan tanpa menghapus riwayat audit.','data'=>['spbId'=>$spbId,'status'=>'Cancelled']]);
         }
 
         if ($action === 'withdraw_own_pending') {
@@ -366,10 +366,10 @@ if (!SpbWorkflow::canApproveRoles((array) (api_current_user()['roles'] ?? []))) 
 $spbId = trim((string) ($input['spbId'] ?? ''));
 $decision = strtolower(trim((string) ($input['decision'] ?? '')));
 $reason = trim((string) ($input['reason'] ?? ''));
-if ($spbId === '' || !in_array($decision, ['approve', 'reject'], true)) {
+if ($spbId === '' || !in_array($decision, ['approve', 'reject', 'request_revision'], true)) {
     api_json_response(422, ['status' => 'error', 'message' => 'SPB dan keputusan wajib diisi.']);
 }
-if ($decision === 'reject' && ($reason === '' || mb_strlen($reason, 'UTF-8') > 500)) {
+if (in_array($decision, ['reject', 'request_revision'], true) && ($reason === '' || mb_strlen($reason, 'UTF-8') > 500)) {
     api_json_response(422, ['status' => 'error', 'message' => 'Alasan penolakan wajib diisi (maksimal 500 karakter).']);
 }
 

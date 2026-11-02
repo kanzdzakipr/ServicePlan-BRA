@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   "use strict";
 
   window.assetDbMapping = null;
@@ -3393,6 +3393,8 @@
     const current = String(spb?.status || "");
     if (current === "Draft" && spb?.approval_status === "REJECTED")
       return "Rejected";
+    if (current === "Cancelled") return "Dibatalkan (Void)";
+    if (current === "Revision Required") return "Perlu Revisi";
     if (current === "Submitted") return "Menunggu Approval";
     return current || "Status tidak tersedia";
   }
@@ -3485,6 +3487,48 @@
     }
   }
 
+  async function cancelOwnerSpb(spbId) {
+    if (
+      !window.confirm(
+        `Batalkan pengajuan SPB ${spbId}?\nSPB akan dibatalkan tanpa menghapus jejak audit dan tidak memerlukan approval atasan.`,
+      )
+    )
+      return;
+    const reason = window.prompt(
+      "Alasan pembatalan input SPB (wajib, maksimal 500 karakter):",
+      "Koreksi salah input sebelum approval"
+    );
+    if (reason === null) return;
+    const normalizedReason = reason.trim();
+    if (!normalizedReason || normalizedReason.length > 500) {
+      showToast("Alasan pembatalan wajib diisi (maksimal 500 karakter).", true);
+      return;
+    }
+    try {
+      const response = await fetch("api/spb_workflow.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": window.APP_CSRF_TOKEN || "",
+        },
+        body: JSON.stringify({
+          action: "cancel_own_pending",
+          spbId,
+          reason: normalizedReason,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success")
+        throw new Error(payload.message || "Pembatalan SPB gagal.");
+      document.getElementById("historyPrintArea")?.replaceChildren();
+      await loadSpbDocuments();
+      window.loadSpbApprovalInbox?.();
+      showToast(`SPB ${spbId} berhasil dibatalkan oleh pembuat.`);
+    } catch (error) {
+      showToast(error.message || "Pembatalan SPB gagal.", true);
+    }
+  }
+
   function renderHistory() {
     const list = document.getElementById("historyList");
     if (!list) return;
@@ -3554,7 +3598,7 @@
                                 <td>${spb.source_report_id ? "—" : escapeHtml(spbDisplayStatus(spb))}</td>
                                 <td><div class="history-actions">
                                     <button type="button" data-spb-print="${escapeHtml(spb.spb_id)}"><i class="fa-regular fa-eye"></i> Lihat/Cetak</button>
-                                    ${spb.can_edit_own ? `<button type="button" class="primary" data-spb-edit="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-pen"></i> Edit input</button>` : ""}
+                                    ${spb.can_edit_own ? `<button type="button" class="primary" data-spb-edit="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-pen"></i> Edit input</button><button type="button" class="danger" data-spb-owner-cancel="${escapeHtml(spb.spb_id)}" title="Batalkan input SPB ini"><i class="fa-solid fa-xmark"></i> Batalkan input</button>` : ""}
                                     ${spb.source_report_id ? '<span title="Void melalui laporan Form asal">Void via Form</span>' : canVoidSpbDocuments ? `<button type="button" class="danger" data-spb-void="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-ban"></i> Void</button>` : ""}
                                 </div></td>
                             </tr>`,
@@ -3600,6 +3644,11 @@
         }
         window.SpareLogistics.editPendingSpb(button.dataset.spbEdit);
       });
+    });
+    list.querySelectorAll("[data-spb-owner-cancel]").forEach((button) => {
+      button.addEventListener("click", () =>
+        cancelOwnerSpb(button.dataset.spbOwnerCancel),
+      );
     });
     list.querySelectorAll("[data-spb-void]").forEach((button) => {
       button.addEventListener("click", () =>
@@ -8534,7 +8583,7 @@
                             <div class="sl-draft-actions">
                                 <button type="button" class="sl-add-item-button" data-sl-action="add-draft"><i class="fa-solid fa-plus"></i>Tambah Item</button>
                                 <label><span>Catatan permintaan</span><input id="spb-notes" type="text" value="${escapeHtml(state.modal.notes || "")}" placeholder="Keterangan, spesifikasi alternatif, atau kendala..." data-sl-modal-field="notes"></label>
-                                <button type="button" class="sl-submit-button" data-sl-action="submit"><i class="fa-solid ${state.modal.editingSpbId ? "fa-floppy-disk" : "fa-paper-plane"}"></i>${state.modal.editingSpbId ? "Simpan revisi" : "Ajukan SPB"}</button>
+                                <button type="button" class="sl-submit-button" data-sl-action="submit"><i class="fa-solid ${state.modal.editingSpbId ? "fa-floppy-disk" : "fa-paper-plane"}"></i>${state.modal.editingSpbId ? "Simpan revisi" : "Ajukan SPB"}</button>${state.modal.editingSpbId ? `<button type="button" class="sl-submit-button" style="background:#dc2626; margin-left:8px;" data-sl-action="cancel-spb"><i class="fa-solid fa-xmark"></i> Batalkan SPB</button>` : ""}
                             </div>
                             <div class="sl-governance-note"><i class="fa-solid fa-link"></i><span><strong>Linkage aktif:</strong> Master Asset â†’ P2H / Condition Monitoring â†’ Work Order â†’ SPB â†’ Approval â†’ pengadaan â†’ kesiapan RTW.</span></div>
                         </section>
@@ -9264,6 +9313,8 @@
       syncDraftFromDom();
       state.modal.draft.splice(Number(control.dataset.index), 1);
       render();
+    } else if (action === "cancel-spb") {
+      if (state.modal?.editingSpbId) cancelOwnerSpb(state.modal.editingSpbId);
     } else if (action === "submit") {
       submitDraft();
     } else if (action === "record-wo") {

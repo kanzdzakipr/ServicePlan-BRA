@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/InputRevision.php';
+
 final class SpbWorkflow
 {
     public static function ensureVoidAudit(PDO $db): void
@@ -45,9 +47,13 @@ final class SpbWorkflow
         $snapshot = json_encode(['request' => $request, 'items' => $items->fetchAll(PDO::FETCH_ASSOC), 'approvals' => $approvals->fetchAll(PDO::FETCH_ASSOC)], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $db->prepare('INSERT INTO spb_void_audit (spb_id, reason, snapshot_json, voided_by) VALUES (:id, :reason, :snapshot, :actor)')
             ->execute([':id' => $spbId, ':reason' => $reason, ':snapshot' => $snapshot, ':actor' => $actorId]);
-        $db->prepare('DELETE FROM purchase_request_items WHERE spb_id = :id')->execute([':id' => $spbId]);
-        $db->prepare('DELETE FROM purchase_requests WHERE spb_id = :id')->execute([':id' => $spbId]);
-        return ['spbId' => $spbId, 'status' => 'VOID'];
+        // Cancel/void bukan DELETE; record tetap ada untuk audit dan tidak dapat diduplikasi
+        $db->prepare("UPDATE purchase_request_items SET status = 'Cancelled' WHERE spb_id = :id")->execute([':id' => $spbId]);
+        $db->prepare("UPDATE purchase_requests SET status = 'Cancelled', notes = CONCAT(COALESCE(notes, ''), ' [VOID OPERASIONAL: ', :reason, ']'), input_revision_no = input_revision_no + 1, input_last_edited_at = NOW(), input_last_edited_by = :actor WHERE spb_id = :id")
+            ->execute([':id' => $spbId, ':reason' => mb_substr($reason, 0, 200), ':actor' => $actorId]);
+        InputRevision::record($db, 'SPB', $spbId, 'VOID', $reason, $request, array_merge($request, ['status' => 'Cancelled']));
+        return ['spbId' => $spbId, 'status' => 'Cancelled'];
+
     }
     public static function canApproveRoles(array $roles): bool
     {
@@ -56,11 +62,11 @@ final class SpbWorkflow
 
     public static function decide(PDO $db, string $spbId, int $actorId, string $decision, string $reason, callable $authorizeAsset): array
     {
-        if ($spbId === '' || $actorId < 1 || !in_array($decision, ['approve', 'reject'], true)) {
+        if ($spbId === '' || $actorId < 1 || !in_array($decision, ['approve', 'reject', 'request_revision'], true)) {
             throw new InvalidArgumentException('SPB dan keputusan wajib diisi.');
         }
-        if ($decision === 'reject' && ($reason === '' || mb_strlen($reason, 'UTF-8') > 500)) {
-            throw new InvalidArgumentException('Alasan penolakan wajib diisi (maksimal 500 karakter).');
+        if (in_array($decision, ['reject', 'request_revision'], true) && ($reason === '' || mb_strlen($reason, 'UTF-8') > 500)) {
+            throw new InvalidArgumentException('Alasan penolakan / permintaan revisi wajib diisi (maksimal 500 karakter).');
         }
 
         $stmt = $db->prepare('SELECT spb_id, asset_id, status FROM purchase_requests WHERE spb_id = :id FOR UPDATE');
@@ -72,7 +78,7 @@ final class SpbWorkflow
             throw new DomainException('SPB sudah diproses atau belum diajukan. Muat ulang daftar.');
         }
 
-        $newStatus = $decision === 'approve' ? 'Approved' : 'Draft';
+        $newStatus = $decision === 'approve' ? 'Approved' : ($decision === 'request_revision' ? 'Revision Required' : 'Rejected');
         $update = $db->prepare("UPDATE purchase_requests SET status = :status WHERE spb_id = :id AND status = 'Submitted'");
         $update->execute([':status' => $newStatus, ':id' => $spbId]);
         if ($update->rowCount() !== 1) throw new DomainException('SPB berubah selama diproses. Muat ulang daftar.');
@@ -82,8 +88,8 @@ final class SpbWorkflow
             ->execute([
                 ':id' => $spbId,
                 ':actor' => $actorId,
-                ':status' => $decision === 'approve' ? 'APPROVED' : 'REJECTED',
-                ':reason' => $decision === 'reject' ? $reason : null,
+                ':status' => $decision === 'approve' ? 'APPROVED' : ($decision === 'request_revision' ? 'REVISION_REQUIRED' : 'REJECTED'),
+                ':reason' => in_array($decision, ['reject', 'request_revision'], true) ? $reason : null,
             ]);
         return ['spbId' => $spbId, 'status' => $newStatus];
     }
