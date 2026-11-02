@@ -4874,15 +4874,32 @@ try {
                         <div class="wo-field">
                             <label for="nwo-mechanic-input">PIC mekanik / teknisi (Multi-Pilih)</label>
                             <div class="wo-chip-composer"><input id="nwo-mechanic-input" list="nwo-mechanic-options" placeholder="Ketik nama lalu Enter" onkeydown="handleNewWOMechanicKey(event)"><button type="button" onclick="addNewWOMechanic()" aria-label="Tambah PIC"><i class="fa-solid fa-plus"></i></button></div>
-                            <datalist id="nwo-mechanic-options"><option value="Suryanto (Lead Engine)"></option><option value="Bambang (Hydraulic)"></option><option value="Agus W. (Electrical)"></option><option value="Joko P. (Undercarriage)"></option><option value="Dedi K. (Powertrain)"></option><option value="Apeng (Lead Mechanic)"></option><option value="Maman (Senior Technician)"></option><option value="Soleh (Hydraulic Specialist)"></option><option value="Darmawan (Electrical Mechanic)"></option><option value="Regar (Junior Mechanic)"></option></datalist>
+                            <datalist id="nwo-mechanic-options">
+                                <option value="Rahmad K (Mekanik Senior)"></option>
+                                <option value="Joni Septian (Mekanik)"></option>
+                                <option value="Afriyandi (Mekanik Senior)"></option>
+                                <option value="Darmawan (Mekanik)"></option>
+                                <option value="Risman (Mekanik)"></option>
+                                <option value="Firlanda (Mekanik)"></option>
+                                <option value="Hendrik (Mekanik / Welder)"></option>
+                                <option value="Suwardi (Mekanik Welding)"></option>
+                                <option value="Rezeki Siregar (Mekanik)"></option>
+                                <option value="Daniel Sitepu (Mekanik)"></option>
+                                <option value="Gabriel (Helper Mekanik)"></option>
+                                <option value="Faikar (Mekanik)"></option>
+                                <option value="Martono (Mekanik)"></option>
+                                <option value="Galuh Rizkiy (Mekanik Junior)"></option>
+                            </datalist>
                             <div class="wo-quick-mechanics" style="display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-top:6px;">
                                 <span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">Pilih Cepat:</span>
-                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Suryanto')">+ Suryanto</button>
-                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Bambang')">+ Bambang</button>
-                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Agus W.')">+ Agus W.</button>
-                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Apeng')">+ Apeng</button>
-                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Maman')">+ Maman</button>
-                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Soleh')">+ Soleh</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Rahmad K')">+ Rahmad K</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Joni Septian')">+ Joni Septian</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Afriyandi')">+ Afriyandi</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Darmawan')">+ Darmawan</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Risman')">+ Risman</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Firlanda')">+ Firlanda</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Hendrik')">+ Hendrik</button>
+                                <button type="button" class="btn btn-xs" style="padding:2px 7px; font-size:0.72rem; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:12px; cursor:pointer;" onclick="addNewWOMechanic('Suwardi')">+ Suwardi</button>
                             </div>
                             <div class="wo-chip-list" id="nwo-mechanic-chips" aria-live="polite"><span class="wo-chip-empty">Belum ada PIC dipilih</span></div>
                             <input type="hidden" id="nwo-mechanic" value="Belum ada PIC">

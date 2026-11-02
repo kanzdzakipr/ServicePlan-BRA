@@ -6411,6 +6411,25 @@
     });
   }
 
+  let activeMechanicsCache = [];
+  async function loadActiveMechanicsOptions() {
+    try {
+      const res = await fetch("api/users.php?type=mechanics&active_only=1", { cache: "no-store" });
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.status === "success" && Array.isArray(json.data)) {
+        activeMechanicsCache = json.data;
+        const datalist = byId("nwo-mechanic-options");
+        if (datalist && activeMechanicsCache.length > 0) {
+          datalist.innerHTML = activeMechanicsCache.map((m) => {
+            const roleStr = m.role_name ? ` (${m.role_name})` : "";
+            return `<option value="${escapeText(m.full_name)}${roleStr}"></option>`;
+          }).join("");
+        }
+      }
+    } catch (_) {}
+  }
+
   function addMechanic(nameOverride) {
     const input = byId("nwo-mechanic-input");
     const raw = nameOverride || input?.value;
@@ -7197,6 +7216,7 @@
       resetForm();
       populateAssets("", selectedAssetId);
       setupDropzone();
+      loadActiveMechanicsOptions();
       ensureNwoMasterParts().then(() => {
         renderNwoDraftRows();
       });

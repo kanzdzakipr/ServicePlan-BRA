@@ -35,11 +35,19 @@ function recordUserAudit(PDO $db, string $action, array $target, array $details 
 try {
     switch ($method) {
         case 'GET':
-            if (!api_can_manage_users(api_current_user())) {
+            $isMechanicsQuery = (isset($_GET['type']) && $_GET['type'] === 'mechanics')
+                || (isset($_GET['mechanics_only']) && (int)$_GET['mechanics_only'] === 1)
+                || (isset($_GET['role_name']) && str_contains(strtolower((string)$_GET['role_name']), 'mekanik'));
+
+            if (!$isMechanicsQuery && !api_can_manage_users(api_current_user())) {
                 api_json_response(403, ['status' => 'error', 'code' => 'FORBIDDEN', 'message' => 'Hanya administrator dapat melihat daftar pengguna.']);
             }
             $roleId = isset($_GET['role_id']) && $_GET['role_id'] !== '' ? (int) $_GET['role_id'] : null;
             $roleName = isset($_GET['role_name']) && trim((string)$_GET['role_name']) !== '' ? trim((string)$_GET['role_name']) : null;
+            $activeOnly = isset($_GET['active_only']) ? (int)$_GET['active_only'] : (isset($_GET['is_active']) ? (int)$_GET['is_active'] : null);
+            if ($isMechanicsQuery && $activeOnly === null) {
+                $activeOnly = 1; // Default to active mechanics only for operational selection
+            }
 
             // Fetch list of all roles for reference
             $rolesStmt = $db->query('SELECT role_id, role_name, description FROM roles ORDER BY role_id ASC');
@@ -75,6 +83,14 @@ try {
             } elseif ($roleName !== null) {
                 $where[] = 'r.role_name = :role_name';
                 $params[':role_name'] = $roleName;
+            } elseif ($isMechanicsQuery) {
+                $where[] = '(r.role_name LIKE :mekanik_role OR u.role_id IN (4, 5, 6))';
+                $params[':mekanik_role'] = '%Mekanik%';
+            }
+
+            if ($activeOnly !== null) {
+                $where[] = 'u.is_active = :active_status';
+                $params[':active_status'] = $activeOnly;
             }
 
             if (!empty($where)) {
