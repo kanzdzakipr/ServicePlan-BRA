@@ -36,7 +36,7 @@ function assertTest(bool $condition, string $message): void {
 }
 
 echo "====================================================================\n";
-echo "TEST SUITE: EPIC 4.5 & GOV-01 - OWNER CANCEL, REVISION & AUDIT\n";
+echo "TEST SUITE: EPIC 4.5 / GOV-01 / GOV-02 / SPB-01 - CANCEL, REVISION & AUDIT\n";
 echo "====================================================================\n\n";
 
 $db = Database::getInstance();
@@ -183,6 +183,53 @@ assertTest(
     'SpbWorkflow::voidOperational soft-voids record (status Cancelled) without physical DELETE'
 );
 
+// Formal revision creates a new version and keeps the source immutable.
+$revisionSourceId = 'SPB-TEST-REV-' . bin2hex(random_bytes(4));
+$revisionIdempotencyKey = 'idem-revision-' . bin2hex(random_bytes(8));
+$db->prepare("INSERT INTO purchase_requests
+    (spb_id, requested_by, urgency, spb_type, status, notes, requested_at)
+    VALUES (:id, :owner, 'Normal', 'NORMAL', 'Revision Required', 'Sumber revisi formal', NOW())")
+    ->execute([':id' => $revisionSourceId, ':owner' => $testOwnerId]);
+$db->prepare("INSERT INTO purchase_request_items
+    (id, spb_id, part_number, description, qty_requested, status)
+    VALUES (:id, :spb, 'FLT-REV-01', 'Filter sumber revisi', 3, 'Submitted')")
+    ->execute([':id' => 'ITM-' . bin2hex(random_bytes(4)), ':spb' => $revisionSourceId]);
+
+$db->beginTransaction();
+$revisionResult = SpbWorkflow::createRevision(
+    $db,
+    $revisionSourceId,
+    $testOwnerId,
+    'Perbaiki jumlah dan deskripsi barang',
+    $revisionIdempotencyKey,
+    static fn(string $assetId): bool => true
+);
+$db->commit();
+
+$revisionId = (string) $revisionResult['spbId'];
+$sourceAfterRevision = $db->query("SELECT status FROM purchase_requests WHERE spb_id = " . $db->quote($revisionSourceId))->fetchColumn();
+$revisionRow = $db->query("SELECT parent_spb_id, revision_no, status FROM purchase_requests WHERE spb_id = " . $db->quote($revisionId))->fetch(PDO::FETCH_ASSOC);
+$revisionItemCount = (int) $db->query("SELECT COUNT(*) FROM purchase_request_items WHERE spb_id = " . $db->quote($revisionId))->fetchColumn();
+$revisionAuditCount = (int) $db->query("SELECT COUNT(*) FROM input_revision_audit WHERE entity_type = 'SPB' AND entity_id = " . $db->quote($revisionId) . " AND action = 'REVISE'")->fetchColumn();
+
+assertTest($sourceAfterRevision === 'Revision Required', 'Formal revision keeps the source document and status intact');
+assertTest($revisionRow && $revisionRow['parent_spb_id'] === $revisionSourceId && (int) $revisionRow['revision_no'] === 1, 'Formal revision creates parent/version chain Rev. 1');
+assertTest($revisionRow && $revisionRow['status'] === 'Draft', 'Formal revision starts as an editable Draft');
+assertTest($revisionItemCount === 1, 'Formal revision copies source items without modifying the source');
+assertTest($revisionAuditCount === 1, 'Formal revision records one REVISE audit event');
+
+$db->beginTransaction();
+$revisionReplay = SpbWorkflow::createRevision(
+    $db,
+    $revisionSourceId,
+    $testOwnerId,
+    'Perbaiki jumlah dan deskripsi barang',
+    $revisionIdempotencyKey,
+    static fn(string $assetId): bool => true
+);
+$db->commit();
+assertTest(!empty($revisionReplay['idempotent']), 'Formal revision retry is idempotent and does not create Rev. 2');
+
 // -------------------------------------------------------------------------
 // 3. Work Order Owner-Cancel & Asset State Reconciliation Tests
 // -------------------------------------------------------------------------
@@ -263,20 +310,21 @@ $hasActiveSpb = (bool) $downstreamStmt->fetchColumn();
 assertTest($hasActiveSpb === true, 'Downstream constraint detector correctly flags active linked SPB on Work Order');
 
 // Cleanup test rows
-$db->prepare('DELETE FROM purchase_request_items WHERE spb_id IN (:s1, :s2, :s3)')->execute([':s1' => $testSpbId, ':s2' => $testVoidSpbId, ':s3' => $linkedSpbId]);
-$db->prepare('DELETE FROM purchase_requests WHERE spb_id IN (:s1, :s2, :s3)')->execute([':s1' => $testSpbId, ':s2' => $testVoidSpbId, ':s3' => $linkedSpbId]);
+$db->prepare('DELETE FROM purchase_request_items WHERE spb_id IN (:s1, :s2, :s3, :s4, :s5)')->execute([':s1' => $testSpbId, ':s2' => $testVoidSpbId, ':s3' => $linkedSpbId, ':s4' => $revisionSourceId, ':s5' => $revisionId]);
+$db->prepare('DELETE FROM purchase_requests WHERE spb_id IN (:s1, :s2, :s3, :s4, :s5)')->execute([':s1' => $testSpbId, ':s2' => $testVoidSpbId, ':s3' => $linkedSpbId, ':s4' => $revisionSourceId, ':s5' => $revisionId]);
 $db->prepare('DELETE FROM spb_void_audit WHERE spb_id = :id')->execute([':id' => $testVoidSpbId]);
 $db->prepare('DELETE FROM work_orders WHERE wo_id IN (:w1, :w2)')->execute([':w1' => $testWoId, ':w2' => $testWoWithSpb]);
 $db->prepare('DELETE FROM assets WHERE asset_id = :aid')->execute([':aid' => $testAssetId]);
-$db->prepare('DELETE FROM input_revision_audit WHERE entity_id IN (:e1, :e2, :e3, :e4)')->execute([':e1' => $testSpbId, ':e2' => $testVoidSpbId, ':e3' => $testWoId, ':e4' => 'SPB-TEST-01']);
+$db->prepare('DELETE FROM input_revision_audit WHERE entity_id IN (:e1, :e2, :e3, :e4, :e5)')->execute([':e1' => $testSpbId, ':e2' => $testVoidSpbId, ':e3' => $testWoId, ':e4' => 'SPB-TEST-01', ':e5' => $revisionId]);
 $db->prepare('DELETE FROM input_revision_idempotency WHERE idempotency_key = :key')->execute([':key' => $idemKey]);
+$db->prepare('DELETE FROM input_revision_idempotency WHERE idempotency_key = :key')->execute([':key' => $revisionIdempotencyKey]);
 
 echo "\n--------------------------------------------------------------------\n";
 echo "SUMMARY: {$passCount} / {$totalTests} TESTS PASSED\n";
 echo "====================================================================\n";
 
 if ($passCount === $totalTests) {
-    echo "🎉 ALL EPIC 4.5 & GOV-01 VERIFICATION TESTS PASSED PERFECTLY!\n";
+    echo "ALL GOVERNANCE AND SPB REVISION VERIFICATION TESTS PASSED.\n";
     exit(0);
 } else {
     echo "❌ SOME TESTS FAILED. CHECK OUTPUT ABOVE.\n";

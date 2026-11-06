@@ -331,7 +331,7 @@ final class ProductivityCalculator
             'repairCount' => $closedRepairsCount,
         ]);
 
-        $pa = 57.13;
+        $pa = $lockedKpis['kpis']['physicalAvailability']['value'];
         $ma = $lockedKpis['kpis']['mechanicalAvailability']['value'];
         $ua = $lockedKpis['kpis']['useOfAvailability']['value'];
         $ut = $lockedKpis['kpis']['effectiveUtilization']['value'];
@@ -342,11 +342,11 @@ final class ProductivityCalculator
 
         $kpis = [
             'physicalAvailability' => [
-                'value' => 57.13,
-                'formatted' => '57,13%',
+                'value' => $pa,
+                'formatted' => $lockedKpis['kpis']['physicalAvailability']['formatted'],
                 'unit' => '%',
                 'target' => '>= 90.0%',
-                'status' => 'BELOW_TARGET',
+                'status' => $pa === null ? 'NO_DATA' : ($pa >= 90.0 ? 'MEETS_TARGET' : 'BELOW_TARGET'),
                 'formula' => $lockedKpis['kpis']['physicalAvailability']['formula'],
                 'sources' => ['telematics_logs.actual_working_hours', 'telematics_logs.working_hours', 'work_orders.downtime_minutes'],
                 'details' => [
@@ -504,11 +504,11 @@ final class ProductivityCalculator
         $result = [];
         foreach ($keys as $k => $spec) {
             $result[$k] = [
-                'value' => $k === 'physicalAvailability' ? 57.13 : null,
-                'formatted' => $k === 'physicalAvailability' ? '57,13%' : 'Tidak Ada Data',
+                'value' => null,
+                'formatted' => 'Tidak Ada Data',
                 'unit' => $spec['unit'],
                 'target' => $spec['target'],
-                'status' => $k === 'physicalAvailability' ? 'BELOW_TARGET' : 'NO_DATA',
+                'status' => 'NO_DATA',
                 'formula' => $spec['formula'],
                 'sources' => ['Data belum tersedia untuk cakupan lokasi/periode ini'],
                 'details' => null,

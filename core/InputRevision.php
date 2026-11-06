@@ -61,12 +61,17 @@ final class InputRevision
 
     public static function reserveIdempotency(PDO $db, string $key, string $type, string $id, string $action): bool
     {
-        $db->exec("CREATE TABLE IF NOT EXISTS input_revision_idempotency (
-            idempotency_key VARCHAR(100) PRIMARY KEY, entity_type VARCHAR(30) NOT NULL,
-            entity_id VARCHAR(100) NOT NULL, action VARCHAR(30) NOT NULL,
-            response_json LONGTEXT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            KEY idx_revision_idempotency_entity (entity_type, entity_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        // MySQL implicitly commits DDL. Never create support tables while a
+        // business transaction is active; deployed schemas must come from the
+        // idempotent migration before transactional workflow calls run.
+        if (!$db->inTransaction()) {
+            $db->exec("CREATE TABLE IF NOT EXISTS input_revision_idempotency (
+                idempotency_key VARCHAR(100) PRIMARY KEY, entity_type VARCHAR(30) NOT NULL,
+                entity_id VARCHAR(100) NOT NULL, action VARCHAR(30) NOT NULL,
+                response_json LONGTEXT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_revision_idempotency_entity (entity_type, entity_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        }
         $stmt = $db->prepare('INSERT IGNORE INTO input_revision_idempotency (idempotency_key,entity_type,entity_id,action) VALUES (:key,:type,:id,:action)');
         $stmt->execute([':key'=>$key, ':type'=>$type, ':id'=>$id, ':action'=>$action]);
         return $stmt->rowCount() === 1;
@@ -74,7 +79,7 @@ final class InputRevision
 
     public static function record(PDO $db, string $type, string $id, string $action, string $reason, array $before, array $after, ?string $idempotencyKey = null, ?string $parentId = null): void
     {
-        self::ensureAudit($db);
+        if (!$db->inTransaction()) self::ensureAudit($db);
         $columns = $db->query("SHOW COLUMNS FROM input_revision_audit")->fetchAll(PDO::FETCH_COLUMN);
         $extended = in_array('revision_no', $columns, true);
         if ($extended) {

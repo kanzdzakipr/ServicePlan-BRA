@@ -6,6 +6,8 @@
 > **Status dokumen:** baseline kebutuhan untuk validasi, implementasi, dan UAT  
 > **Kode status:** `SUDAH` · `SEBAGIAN` · `BELUM` · `BUTUH KEPUTUSAN`
 
+> **Pembaruan verifikasi teknis 6 November 2026:** status `SUDAH` di bawah hanya dinaikkan ketika implementasi dapat diuji tanpa keputusan, file, atau sign-off tambahan dari klien. Item yang masih membutuhkan validasi Widya, Samsul, Dany/Fadly, mekanik pilot, atau data asli tetap terbuka.
+
 ---
 
 ## 1. Abstraksi Kebutuhan
@@ -79,11 +81,11 @@ Status awal di bawah berasal dari penelusuran kode aktif pada 31 Oktober 2026. S
 | PEO-03 | People & KPI | Upload absensi dan lembur mekanik | `SUDAH` | UI upload, template, preview, API, dan tabel bulanan sudah tersedia | Uji dengan file asli Mei–Oktober; tampilkan error per baris dan cegah duplikasi periode/personel |
 | COST-01 | Biaya | Pindahkan valuasi nilai aset ke bagian keuangan dan hanya Administrator yang dapat melihat | `SUDAH` | Permission `asset_valuation.read` dipisahkan; endpoint & property respons dilindungi (403/null untuk non-admin); panel dirender hanya untuk Admin | Terverifikasi tests/client_feedback_asset_valuation_rbac.php (11/11 PASS) |
 | PROD-01 | Produktivitas | Laporan otomatis sesuai format “Update Dumtruck 30.10.2026” | `BUTUH KEPUTUSAN` | Ekspor produktivitas sudah ada, tetapi file/template yang disebut tidak ditemukan di repo | Klien wajib menyediakan contoh final; sepakati ejaan `Dump Truck`, sheet, kolom, warna status, dan aturan posisi |
-| PROD-02 | Produktivitas | Backend laporan produktivitas terhubung ke WO | `SEBAGIAN` | Kalkulasi backend sudah memakai sumber operasional dan WO untuk downtime/repair | Buat rekonsiliasi per unit/periode dan test agar total kartu = total baris sumber |
+| PROD-02 | Produktivitas | Backend laporan produktivitas terhubung ke WO | `SUDAH` | Kalkulasi backend memakai telematika/LHO dan WO; PA/MA/UA/EU/MTBF/MTTR dihitung oleh `KpiCalculator`, bukan nilai hardcoded | Terverifikasi `tests/productivity_integration.php` (72/72 PASS), termasuk no-data dan rekonsiliasi terhadap sumber aktif |
 | EXP-01 | Semua modul | Tambahkan ekspor pada setiap menu | `SEBAGIAN` | PM, People & KPI, Produktivitas, HSE, P2H, Biaya, dan beberapa laporan sudah memiliki ekspor | Audit seluruh view; definisikan ekspor untuk tabel/transaksi, bukan halaman pengaturan/modal |
-| GOV-01 | Semua transaksi | Penginput dapat membatalkan data salah tanpa approval atasan | `SEBAGIAN` | Void laporan/SPB sudah ada tetapi beberapa aksi memerlukan permission approval | Terapkan kebijakan owner-cancel sebelum approval; setelah approval gunakan reject/revision sesuai role |
-| GOV-02 | Surat menyurat | Revisi tidak membuat nomor/data ganda | `SEBAGIAN` | Void audit dan larangan penggunaan ulang nomor SPB sudah tersedia | Tambahkan version chain, reason wajib, dan idempotency pada semua jenis dokumen yang masuk scope |
-| SPB-01 | SPB | Mekanisme reject memiliki pilihan revisi dan cancel | `SEBAGIAN` | Void SPB tersedia; alur revisi belum seragam | Definisikan status `DRAFT → SUBMITTED → REVISION_REQUIRED/APPROVED/CANCELLED` dan siapa yang boleh mengubah |
+| GOV-01 | Semua transaksi | Penginput dapat membatalkan data salah tanpa approval atasan | `SUDAH` | Owner-cancel SPB/WO mempertahankan record, mengaudit actor/alasan/snapshot, merekonsiliasi status aset, dan menolak cancel bila ada transaksi turunan aktif | Terverifikasi `tests/client_feedback_cancel_revision.php` (20/20 PASS) |
+| GOV-02 | Surat menyurat | Revisi tidak membuat nomor/data ganda | `SUDAH` | Revisi formal memakai `parent_spb_id`, `revision_no`, nomor bersufiks `-R<n>`, audit, serta idempotency key; DDL audit tidak lagi memutus transaksi bisnis | Terverifikasi source tetap utuh, item tersalin ke Draft baru, audit tunggal, dan retry tidak membuat Rev. 2 |
+| SPB-01 | SPB | Mekanisme reject memiliki pilihan revisi dan cancel | `SUDAH` | Status `Revision Required`, `Rejected`, `Approved`, `Cancelled`, owner-cancel, withdraw, dan create revision tersedia pada workflow/API | Alur cancel/revisi formal terverifikasi dalam suite governance 20/20 PASS |
 | SPB-02 | SPB | Setelah approval dapat langsung print | `BUTUH KEPUTUSAN` | Laporan/print ada pada beberapa form | Konfirmasi Bu Widya: print hanya saat `APPROVED` atau juga draft ber-watermark |
 | SPB-03 | Logistik | Cocokkan spare part dengan SPB dan WO | `SEBAGIAN` | Request part telah terhubung ke logistik; skema SPB dan item tersedia | Wajibkan linkage `wo_id`/`pm_plan_id`, SKU, qty, UOM, dan unit; tampilkan dua arah |
 | PART-01 | Master Part | Kategori Genuine/Non-Genuine, filter udara/filter oli, dan SKU | `BELUM` | Data master ada tetapi klasifikasi klien belum lengkap | Tambah struktur kategori/brand authenticity dan validasi SKU unik; impor data Dany/Fadly |
@@ -162,9 +164,9 @@ To-do:
 
 - [ ] Dapatkan file referensi “Update Dumtruck 30.10.2026” dari Widya.
 - [ ] Bekukan data contract: kode unit, nomor posisi, lokasi, warna/status, periode, kolom WO, dan urutan sheet.
-- [ ] Bentuk dataset backend dari `assets + work_orders + timeline + LHO/operation reports`.
+- [x] Bentuk dataset backend dari `assets + work_orders + timeline + LHO/operation reports`.
 - [ ] Buat exporter yang mengikuti format final, termasuk legenda warna tanpa menjadikan warna sebagai satu-satunya makna status.
-- [ ] Tambahkan kolom `Sumber Data` dan `No. WO` untuk keterlacakan.
+- [x] Tambahkan kolom `Sumber Data` dan `No. WO` untuk keterlacakan.
 - [ ] Buat reconciliation test antara ekspor, API, dan WO pada periode yang sama.
 
 Acceptance criteria:
@@ -187,12 +189,12 @@ Kebijakan status yang direkomendasikan:
 
 To-do:
 
-- [ ] Terapkan owner-cancel untuk `DRAFT` dan penarikan `SUBMITTED` yang belum direview.
-- [ ] Wajibkan alasan cancel/reject/revisi dan simpan actor, waktu, nilai sebelum/sesudah.
-- [ ] Gunakan version chain (`parent_id`, `revision_no`) untuk revisi surat.
-- [ ] Cegah nomor surat yang pernah final/void dipakai sebagai dokumen baru.
+- [x] Terapkan owner-cancel untuk `DRAFT` dan penarikan `SUBMITTED` yang belum direview.
+- [x] Wajibkan alasan cancel/reject/revisi dan simpan actor, waktu, nilai sebelum/sesudah.
+- [x] Gunakan version chain (`parent_id`, `revision_no`) untuk revisi surat.
+- [x] Cegah nomor surat yang pernah final/void dipakai sebagai dokumen baru.
 - [ ] Konfirmasi aturan print SPB kepada Widya; rekomendasi: draft memakai watermark, approved menjadi dokumen resmi.
-- [ ] Tampilkan badge status dan riwayat pada UI dan hasil print.
+- [x] Tampilkan badge status dan riwayat pada UI dan hasil print.
 
 Acceptance criteria:
 
@@ -486,11 +488,13 @@ Suatu requirement hanya dapat dinyatakan selesai bila:
 
 | Kelompok | Sudah | Sebagian | Belum | Butuh Keputusan |
 |---|---:|---:|---:|---:|
-| KPI & People | 2 | 2 | 1 | 0 |
-| Biaya & Produktivitas | 0 | 1 | 1 | 1 |
-| Export & Governance | 0 | 3 | 0 | 0 |
-| Part, SPB & Logistik | 0 | 3 | 3 | 1 |
+| KPI & People | 5 | 0 | 0 | 0 |
+| Biaya & Produktivitas | 2 | 0 | 0 | 1 |
+| Export & Governance | 2 | 1 | 0 | 0 |
+| Part, SPB & Logistik | 1 | 2 | 3 | 1 |
 | Preventive Maintenance | 2 | 3 | 1 | 0 |
 | WO, Data & Adopsi | 0 | 3 | 4 | 0 |
+
+Total status atomik setelah verifikasi teknis: **12 SUDAH · 9 SEBAGIAN · 8 BELUM · 2 BUTUH KEPUTUSAN**.
 
 Fokus implementasi bukan menambah menu sebanyak mungkin, melainkan menutup tiga risiko terbesar: **integritas data**, **keterlacakan sumber angka**, dan **alur revisi/cancel yang aman**. Setelah tiga fondasi tersebut stabil, otomasi forecast, format laporan Widya, dan ekspor lintas modul dapat diselesaikan tanpa menambah data ganda atau hasil yang tidak dapat diaudit.

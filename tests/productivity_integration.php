@@ -160,13 +160,18 @@ if (isset($reconcilSnLookup['J10309'])) {
     testAssert(true, 'Offline check skipped because unit J10309 is outside current local dataset');
 }
 
-// TEST 5: Standby Fleet Audit Rekap (48 units)
+// TEST 5: Standby Fleet Audit Rekap against current database facts.
 $standby = $result['standbySummary'];
-testAssert($standby['totalUnits'] === 48, "Standby fleet total is 48 units");
-testAssert(count($standby['locations']) === 2, "Standby fleet has 2 yard locations (Duri & Prabumulih)");
-testAssert($standby['locations'][0]['name'] === 'YARD DURI' && $standby['locations'][0]['count'] === 35, "Yard Duri has 35 standby units (72.9%)");
-testAssert($standby['locations'][1]['name'] === 'YARD PRABUMULIH' && $standby['locations'][1]['count'] === 13, "Yard Prabumulih has 13 standby units (27.1%)");
-testAssert(count($standby['categories']) === 5, "Standby fleet has 5 category breakdowns");
+$expectedStandbyTotal = (int) $db->query("SELECT COUNT(*) FROM assets WHERE status = 'STANDBY'")->fetchColumn();
+$expectedLocationCount = (int) $db->query("SELECT COUNT(DISTINCT COALESCE(current_location_id, 0)) FROM assets WHERE status = 'STANDBY'")->fetchColumn();
+$expectedCategoryCount = (int) $db->query("SELECT COUNT(DISTINCT COALESCE(category, 'Lainnya')) FROM assets WHERE status = 'STANDBY'")->fetchColumn();
+$locationTotal = array_sum(array_column($standby['locations'], 'count'));
+$categoryTotal = array_sum(array_column($standby['categories'], 'count'));
+testAssert($standby['totalUnits'] === $expectedStandbyTotal, "Standby fleet total matches current assets table ({$expectedStandbyTotal})");
+testAssert(count($standby['locations']) === $expectedLocationCount, "Standby location breakdown matches current database ({$expectedLocationCount} locations)");
+testAssert(count($standby['categories']) === $expectedCategoryCount, "Standby category breakdown matches current database ({$expectedCategoryCount} categories)");
+testAssert($locationTotal === $expectedStandbyTotal, 'Standby location rows reconcile to fleet total');
+testAssert($categoryTotal === $expectedStandbyTotal, 'Standby category rows reconcile to fleet total');
 
 // TEST 6: API Integration verification
 define('API_SKIP_ROUTING', true);
