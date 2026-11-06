@@ -8512,7 +8512,10 @@
                 <td>
                     <input class="sl-master-part-select" type="search" list="sl-part-suggestions-${index}" data-sl-master-part data-index="${index}" value="${escapeHtml(selectedValue === "__MANUAL__" ? "" : selectedValue)}" placeholder="Ketik nomor atau nama part..." autocomplete="off" aria-label="Cari Master Part">
                     <datalist id="sl-part-suggestions-${index}">${masterParts.map((part) => `<option value="${escapeHtml(`${part.partNumber} — ${part.description || "Tanpa nama"}`)}" label="${escapeHtml(`Stok ${part.stockQty} ${part.uom}`)}"></option>`).join("")}</datalist>
-                    <input type="text" value="${escapeHtml(item.partNumber || "")}" placeholder="Part number" data-sl-draft-field="partNumber" data-index="${index}" ${matchedPart && !isManual ? "readonly" : ""}>
+                    <div style="display:flex; gap:5px; align-items:center; margin-top:3px;">
+                        <input type="text" value="${escapeHtml(item.partNumber || "")}" placeholder="Part number" data-sl-draft-field="partNumber" data-index="${index}" ${matchedPart && !isManual ? "readonly" : ""}>
+                        <button type="button" class="sl-pick-master-btn" data-sl-action="open-catalog-picker" data-index="${index}" title="Cari dari Katalog Master Part (1.681 item)"><i class="fa-solid fa-magnifying-glass-plus"></i> Cari</button>
+                    </div>
                 </td>
                 <td><input type="text" value="${escapeHtml(item.description || "")}" placeholder="Nama / spesifikasi part" data-sl-draft-field="description" data-index="${index}" ${matchedPart && !isManual ? "readonly" : ""}></td>
                 <td><input type="number" min="1" value="${Number(item.qty) || 1}" data-sl-draft-field="qty" data-index="${index}"></td>
@@ -8630,7 +8633,7 @@
             <div class="sl-shell">
                 <header class="sl-page-header">
                     <div><span class="sl-eyebrow">WAREHOUSE · PROCUREMENT · MAINTENANCE</span><h1>Spare Part & Logistik</h1><p>Tabulasi kebutuhan per unit, ketersediaan, SPB, pengadaan, dan dampaknya terhadap kesiapan alat.</p></div>
-                    <div class="sl-modal-actions"><button type="button" data-sl-action="unfulfilled"><i class="fa-solid fa-hourglass-half"></i><span>Part belum terpenuhi</span></button><a class="sl-access-button" href="api/exports.php?module=unfulfilled-parts"><i class="fa-solid fa-file-csv"></i>Ekspor aging</a></div>
+                    <div class="sl-modal-actions"><button type="button" class="sl-access-button" data-sl-action="open-master-catalog" style="background:#2563eb; color:#fff; border:none; margin-right:6px;"><i class="fa-solid fa-boxes-stacked"></i><span>Katalog Master Part</span></button><button type="button" data-sl-action="unfulfilled"><i class="fa-solid fa-hourglass-half"></i><span>Part belum terpenuhi</span></button><a class="sl-access-button" href="api/exports.php?module=unfulfilled-parts"><i class="fa-solid fa-file-csv"></i>Ekspor aging</a></div>
                 </header>
                 ${renderKpis()}
                 ${renderToolbar()}
@@ -9285,6 +9288,269 @@
     }
   }
 
+  async function openMasterPartsCatalogModal(targetIndex = null) {
+    await loadMasterParts();
+    const partsList = Array.isArray(masterParts) && masterParts.length ? masterParts : [];
+    
+    const groups = [...new Set(partsList.map((p) => p.partGroup).filter(Boolean))].sort();
+    const authenticities = [...new Set(partsList.map((p) => p.authenticity).filter(Boolean))].sort();
+
+    let catSearch = "";
+    let catGroup = "ALL";
+    let catAuth = "ALL";
+    let catStock = "ALL";
+    let catPage = 1;
+    const catPageSize = 25;
+
+    const modalId = "slMasterPartsCatalogModal";
+    document.getElementById(modalId)?.remove();
+
+    const renderCatalogRows = (filtered, start) => {
+      const pageItems = filtered.slice(start, start + catPageSize);
+      if (!pageItems.length) {
+        return `<tr><td colspan="8" class="sl-draft-empty">Tidak ada suku cadang yang sesuai dengan kriteria filter.</td></tr>`;
+      }
+      return pageItems.map((part) => {
+        const authUpper = String(part.authenticity || "").toUpperCase();
+        const authClass = authUpper === "GENUINE" ? "sl-badge-genuine" : (authUpper === "NON_GENUINE" ? "sl-badge-nongenuine" : "sl-badge-unverified");
+        const factor = Number(part.conversionFactor || 1);
+        const hasConversion = factor > 1;
+        const stockQty = Number(part.stockQty || 0);
+        const inStock = stockQty > 0;
+        return `
+          <tr data-part-number="${escapeHtml(part.partNumber)}">
+            <td>
+              <strong style="color:var(--text-main); font-family:monospace; font-size:0.83rem;">${escapeHtml(part.partNumber)}</strong>
+              ${targetIndex !== null ? `<br><small style="color:#64748b; font-size:0.7rem;">ID: ${escapeHtml(part.id)}</small>` : ""}
+            </td>
+            <td>
+              <strong style="display:block; color:#1e293b;">${escapeHtml(part.technicalName || part.description || "Tanpa Nama")}</strong>
+              <small style="color:#64748b; font-size:0.72rem;">${escapeHtml(part.description !== part.technicalName ? part.description : (part.warehouse || "Gudang Utama"))}</small>
+            </td>
+            <td><span class="sl-badge-authenticity ${authClass}">${escapeHtml(part.authenticity || "UNVERIFIED")}</span></td>
+            <td><span class="sl-group-tag">${escapeHtml(part.partGroup || "Lainnya")}</span></td>
+            <td>
+              <span class="sl-uom-tag">${escapeHtml(part.transactionUom || part.uom || "pcs")}</span>
+              ${hasConversion ? `<br><small style="color:#64748b;">(Base: ${escapeHtml(part.baseUom)})</small>` : ""}
+            </td>
+            <td>
+              ${hasConversion ? `<span class="sl-group-tag" style="background:#e0f2fe; color:#0369a1; border-color:#bae6fd;"><i class="fa-solid fa-scale-balanced"></i> 1 ${escapeHtml(part.transactionUom)} = ${factor} ${escapeHtml(part.baseUom)}</span>` : `<span style="color:#94a3b8;">1 : 1</span>`}
+            </td>
+            <td>
+              <span class="sl-stock-pill ${inStock ? "in-stock" : "empty-stock"}">
+                <i class="fa-solid ${inStock ? "fa-circle-check" : "fa-circle-xmark"}"></i> ${stockQty.toLocaleString("id-ID")} ${escapeHtml(part.uom)}
+              </span>
+            </td>
+            <td style="text-align:center;">
+              ${targetIndex !== null
+                ? `<button type="button" class="btn btn-sm btn-primary" data-sl-catalog-select="${escapeHtml(part.partNumber)}" style="padding:4px 10px; font-size:0.75rem; border-radius:5px;"><i class="fa-solid fa-check"></i> Pilih</button>`
+                : `<button type="button" class="btn btn-sm btn-outline-secondary" data-sl-catalog-copy="${escapeHtml(part.partNumber)}" title="Salin SKU" style="padding:4px 8px; font-size:0.75rem; border-radius:5px;"><i class="fa-solid fa-copy"></i></button>`
+              }
+            </td>
+          </tr>
+        `;
+      }).join("");
+    };
+
+    const updateView = () => {
+      const q = catSearch.trim().toLowerCase();
+      const filtered = partsList.filter((p) => {
+        if (catGroup !== "ALL" && p.partGroup !== catGroup) return false;
+        if (catAuth !== "ALL" && p.authenticity !== catAuth) return false;
+        if (catStock === "IN_STOCK" && (Number(p.stockQty) || 0) <= 0) return false;
+        if (catStock === "EMPTY" && (Number(p.stockQty) || 0) > 0) return false;
+        if (q) {
+          const matchNum = String(p.partNumber || "").toLowerCase().includes(q);
+          const matchTech = String(p.technicalName || "").toLowerCase().includes(q);
+          const matchDesc = String(p.description || "").toLowerCase().includes(q);
+          const matchGroup = String(p.partGroup || "").toLowerCase().includes(q);
+          if (!matchNum && !matchTech && !matchDesc && !matchGroup) return false;
+        }
+        return true;
+      });
+
+      const totalPages = Math.max(1, Math.ceil(filtered.length / catPageSize));
+      catPage = Math.min(Math.max(1, catPage), totalPages);
+      const start = (catPage - 1) * catPageSize;
+
+      const tbody = document.getElementById("slMasterCatalogTbody");
+      if (tbody) tbody.innerHTML = renderCatalogRows(filtered, start);
+
+      const info = document.getElementById("slMasterCatalogInfo");
+      if (info) {
+        const end = Math.min(start + catPageSize, filtered.length);
+        info.textContent = `Menampilkan ${filtered.length ? start + 1 : 0}–${end} dari ${filtered.length.toLocaleString("id-ID")} suku cadang`;
+      }
+
+      const pageIndicator = document.getElementById("slMasterCatalogPageIndicator");
+      if (pageIndicator) pageIndicator.textContent = `Hal ${catPage} / ${totalPages}`;
+
+      const btnPrev = document.getElementById("slMasterCatalogPrev");
+      if (btnPrev) btnPrev.disabled = catPage <= 1;
+
+      const btnNext = document.getElementById("slMasterCatalogNext");
+      if (btnNext) btnNext.disabled = catPage >= totalPages;
+    };
+
+    const modalHtml = `
+      <div class="sl-modal-overlay" id="${modalId}" role="dialog" aria-modal="true" style="z-index:9999;">
+        <div class="sl-modal-dialog sl-master-catalog-dialog">
+          <header class="sl-modal-header">
+            <div class="sl-modal-title">
+              <span class="sl-modal-avatar"><i class="fa-solid fa-boxes-stacked"></i></span>
+              <div>
+                <span class="sl-eyebrow">MASTER SUKU CADANG & LOGISTIK GUDANG</span>
+                <h2>Katalog Master Part (${partsList.length.toLocaleString("id-ID")} Items)</h2>
+                <p>${targetIndex !== null ? `Pilih suku cadang untuk dimasukkan ke Form SPB Baris #${targetIndex + 1}` : "Database resmi spare part, UOM konversi, klasifikasi keaslian, dan saldo stok gudang."}</p>
+              </div>
+            </div>
+            <button type="button" class="sl-modal-close" id="slMasterCatalogClose" aria-label="Tutup">&times;</button>
+          </header>
+
+          <div class="sl-master-catalog-toolbar">
+            <div style="position:relative;">
+              <input type="search" id="slMasterCatalogSearch" class="form-control" placeholder="Cari SKU, nama teknis, deskripsi, kelompok..." value="${escapeHtml(catSearch)}">
+            </div>
+            <select id="slMasterCatalogGroup" class="form-control" aria-label="Filter Kelompok Part">
+              <option value="ALL">Semua Kelompok Part</option>
+              ${groups.map((g) => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("")}
+            </select>
+            <select id="slMasterCatalogAuth" class="form-control" aria-label="Filter Authenticity">
+              <option value="ALL">Semua Keaslian</option>
+              <option value="GENUINE">GENUINE</option>
+              <option value="NON_GENUINE">NON_GENUINE</option>
+              <option value="UNVERIFIED">UNVERIFIED</option>
+            </select>
+            <select id="slMasterCatalogStock" class="form-control" aria-label="Filter Status Stok">
+              <option value="ALL">Semua Saldo Stok</option>
+              <option value="IN_STOCK">Tersedia (Stok > 0)</option>
+              <option value="EMPTY">Habis (Stok = 0)</option>
+            </select>
+            <button type="button" id="slMasterCatalogReset" class="sl-reset-button" style="height:36px; padding:0 12px;"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+          </div>
+
+          <div class="table-responsive sl-master-part-table-wrap">
+            <table class="sl-master-part-table">
+              <thead>
+                <tr>
+                  <th style="width:16%;">SKU / Part Number</th>
+                  <th style="width:26%;">Nama Teknis & Umum</th>
+                  <th style="width:12%;">Keaslian</th>
+                  <th style="width:14%;">Kelompok Part</th>
+                  <th style="width:10%;">Kemasan</th>
+                  <th style="width:10%;">Konversi UOM</th>
+                  <th style="width:12%;">Stok Gudang</th>
+                  <th style="width:10%; text-align:center;">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="slMasterCatalogTbody"></tbody>
+            </table>
+          </div>
+
+          <footer class="sl-catalog-footer">
+            <div id="slMasterCatalogInfo" style="color:#64748b; font-weight:500;"></div>
+            <div class="sl-catalog-pagination">
+              <button type="button" id="slMasterCatalogPrev"><i class="fa-solid fa-chevron-left"></i> Sebelumnya</button>
+              <span id="slMasterCatalogPageIndicator" style="font-weight:600; padding:0 8px;"></span>
+              <button type="button" id="slMasterCatalogNext">Selanjutnya <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+          </footer>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+    const modalEl = document.getElementById(modalId);
+    const closeModal = () => modalEl?.remove();
+
+    document.getElementById("slMasterCatalogClose")?.addEventListener("click", closeModal);
+    modalEl?.addEventListener("click", (e) => {
+      if (e.target === modalEl) closeModal();
+    });
+
+    let debounceTimer = null;
+    document.getElementById("slMasterCatalogSearch")?.addEventListener("input", (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        catSearch = e.target.value;
+        catPage = 1;
+        updateView();
+      }, 150);
+    });
+
+    document.getElementById("slMasterCatalogGroup")?.addEventListener("change", (e) => {
+      catGroup = e.target.value;
+      catPage = 1;
+      updateView();
+    });
+
+    document.getElementById("slMasterCatalogAuth")?.addEventListener("change", (e) => {
+      catAuth = e.target.value;
+      catPage = 1;
+      updateView();
+    });
+
+    document.getElementById("slMasterCatalogStock")?.addEventListener("change", (e) => {
+      catStock = e.target.value;
+      catPage = 1;
+      updateView();
+    });
+
+    document.getElementById("slMasterCatalogReset")?.addEventListener("click", () => {
+      catSearch = "";
+      catGroup = "ALL";
+      catAuth = "ALL";
+      catStock = "ALL";
+      catPage = 1;
+      const s = document.getElementById("slMasterCatalogSearch");
+      if (s) s.value = "";
+      const g = document.getElementById("slMasterCatalogGroup");
+      if (g) g.value = "ALL";
+      const a = document.getElementById("slMasterCatalogAuth");
+      if (a) a.value = "ALL";
+      const st = document.getElementById("slMasterCatalogStock");
+      if (st) st.value = "ALL";
+      updateView();
+    });
+
+    document.getElementById("slMasterCatalogPrev")?.addEventListener("click", () => {
+      if (catPage > 1) {
+        catPage--;
+        updateView();
+        document.querySelector(".sl-master-part-table-wrap")?.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    document.getElementById("slMasterCatalogNext")?.addEventListener("click", () => {
+      catPage++;
+      updateView();
+      document.querySelector(".sl-master-part-table-wrap")?.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    modalEl?.addEventListener("click", (e) => {
+      const selectBtn = e.target.closest("[data-sl-catalog-select]");
+      if (selectBtn) {
+        const pNum = selectBtn.dataset.slCatalogSelect;
+        if (targetIndex !== null && state.modal?.draft[targetIndex]) {
+          applyMasterPart(targetIndex, pNum);
+          closeModal();
+          notify(`Part ${pNum} berhasil dipilih.`);
+        }
+        return;
+      }
+
+      const copyBtn = e.target.closest("[data-sl-catalog-copy]");
+      if (copyBtn) {
+        const pNum = copyBtn.dataset.slCatalogCopy;
+        navigator.clipboard?.writeText(pNum).then(() => {
+          notify(`SKU ${pNum} disalin ke clipboard.`);
+        });
+      }
+    });
+
+    updateView();
+  }
+
   async function openUnfulfilledParts() {
     try {
       const response = await fetch("api/unfulfilled_parts.php", { headers: { Accept: "application/json" }, cache: "no-store" });
@@ -9304,6 +9570,14 @@
     const control = event.target.closest("[data-sl-action]");
     if (!control) return;
     const action = control.dataset.slAction;
+    if (action === "open-master-catalog") {
+      openMasterPartsCatalogModal(null);
+      return;
+    }
+    if (action === "open-catalog-picker") {
+      openMasterPartsCatalogModal(Number(control.dataset.index));
+      return;
+    }
     if (action === "unfulfilled") {
       openUnfulfilledParts();
       return;
@@ -9447,6 +9721,7 @@
     },
     submitDraft,
     createProcurementReport,
+    openMasterPartsCatalog: openMasterPartsCatalogModal,
     close: closeDetail,
     getMasterParts() {
       return Array.isArray(masterParts) ? masterParts : [];

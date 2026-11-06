@@ -1,5 +1,5 @@
 Berikut versi teks untuk dicross-check tim per **06 November 2026**.  
-Dari 19 task pada daftar backlog, **5 task telah selesai dikerjakan dan terverifikasi penuh**, sedangkan **14 task lainnya masih terbuka/membutuhkan input klien**.
+Dari 19 task pada daftar backlog, **6 task telah selesai dikerjakan dan terverifikasi penuh**, sedangkan **13 task lainnya masih terbuka/membutuhkan input klien**.
 
 ---
 
@@ -38,10 +38,15 @@ Dari 19 task pada daftar backlog, **5 task telah selesai dikerjakan dan terverif
    *Implementasi*: Engine konversi [core/UomConversionEngine.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/core/UomConversionEngine.php) aktif untuk konversi satuan kemasan ke base unit liter/kg (Drum 200L, Drum 209L spesifik vendor PT Surya Mandiri Makmur, Pail 20L, Drum 180Kg grease). Transaksi SPB mengabadikan snapshot faktor pada `purchase_request_items` (`conversion_factor_snapshot`, `base_quantity`, `transaction_uom`) sehingga histori transaksi lama terlindungi dari perubahan master.  
    *Verifikasi*: Lolos automated test `tests/client_feedback_parts_uom_fulfilment.php` (22/22 PASS).
 
-- [ ] 8. `PART-04` — Perbaikan grid dan scroll master part  
-   Dibutuhkan: screenshot/video masalah, perangkat, browser, resolusi, zoom, kolom prioritas, dan pilihan tampilan mobile.  
-   PIC: pengguna logistik dan Widya.  
-   Cross-check: tidak ada kolom terpotong, header tetap terlihat, dan filter tetap dapat digunakan.
+- [x] 8. `PART-04` — Perbaikan grid dan scroll master part  
+   **STATUS: SELESAI (06 November 2026)**  
+   *Implementasi*: Grid & layout katalog Master Part diperbaiki menyeluruh di [scripts/dashboard.css](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.css) dan [scripts/dashboard.js](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.js):  
+   1. **Sticky Header**: Header tabel Master Part (`.sl-master-part-table th`) terkunci di bagian atas saat scroll (`position: sticky; top: 0; z-index: 5`).  
+   2. **Controlled Scroll**: Kontainer tabel (`.sl-master-part-table-wrap`) menerapkan `overflow-x: auto`, `scrollbar-gutter: stable`, serta smooth momentum scrolling tanpa kolom terpotong (`min-width: 980px`).  
+   3. **Modal & Multi-Filter Katalog**: Tombol *"Katalog Master Part"* ditambahkan pada header Logistik, membuka modal interaktif 1.681 item suku cadang dengan multi-filter (Kelompok Part, Keaslian Genuine/Non-Genuine, Status Saldo Stok, dan Pencarian Bebas) plus paginasi halus (25 item/halaman).  
+   4. **Visual Picker pada Draft SPB**: Tombol *"Cari"* (`.sl-pick-master-btn`) disematkan di setiap baris item draft SPB, memudahkan penginput memilih suku cadang secara visual tanpa dropdown yang terpotong di layar sentuh/mobile.  
+   5. **Responsif Mobile**: Toolbar filter dan tabel terisolasi dengan breakpoint responsif (< 900px dan < 600px).  
+   *Verifikasi*: Lolos automated test `tests/client_feedback_master_part_grid_ux.php` (17/17 PASS).
 
 - [ ] 9. `PM-01` — Revisi jadwal PM  
    Dibutuhkan: field yang boleh diedit, field yang dikunci, daftar alasan revisi, role yang boleh merevisi, aturan approval, dan contoh nilai sebelum/sesudah.  
@@ -104,6 +109,6 @@ Dari 19 task pada daftar backlog, **5 task telah selesai dikerjakan dan terverif
 
 1. **Keputusan Widya**: `PROD-01`, `EXP-01`, `SPB-02`, `WO-03`.
 2. **Data & Alur Samsul/Planner**: `PM-01`, `PM-02`, `PM-04`.
-3. **Data & Keputusan Logistik**: `SPB-03`, `PART-02`, `PART-04`.
+3. **Data & Keputusan Logistik**: `SPB-03`, `PART-02`.
 4. **Data Mekanik & Adopsi Lapangan (HRD / Dheny / Fajar)**: `WO-01`, `WO-02`, `DOC-01`.
 5. **Manifest Seluruh File Import**: `DATA-03`.
