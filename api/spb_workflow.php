@@ -124,22 +124,10 @@ if ($action === 'create_revision') {
     if($sourceId==='')api_json_response(422,['status'=>'error','message'=>'Nomor SPB sumber wajib diisi.']);
     $db->beginTransaction();
     try{
-        if($idempotencyKey!==null&&!InputRevision::reserveIdempotency($db,$idempotencyKey,'SPB',$sourceId,'CREATE_REVISION')){ $db->rollBack();api_json_response(200,['status'=>'success','message'=>'Revisi identik sudah diproses.','data'=>['idempotent'=>true]]); }
-        $lock=$db->prepare('SELECT * FROM purchase_requests WHERE spb_id=:id FOR UPDATE');$lock->execute([':id'=>$sourceId]);$source=$lock->fetch(PDO::FETCH_ASSOC);
-        if(!$source)throw new OutOfBoundsException('SPB sumber tidak ditemukan.'); InputRevision::assertOwner($source['requested_by']??null,'Hanya pembuat atau pengelola berwenang yang dapat membuat revisi.');
-        if(!in_array((string)$source['status'],['Revision Required','Rejected','Approved','Closed'],true))throw new DomainException('Revisi formal hanya dibuat dari dokumen yang ditolak, diminta revisi, approved, atau closed.');
-        if(!empty($source['asset_id']))api_require_asset_access($db,(string)$source['asset_id']);
-        $root=(string)($source['parent_spb_id']?:$source['spb_id']);
-        $seq=$db->prepare('SELECT COALESCE(MAX(revision_no),0)+1 FROM purchase_requests WHERE spb_id=:root OR parent_spb_id=:root');$seq->execute([':root'=>$root]);$revisionNo=(int)$seq->fetchColumn();
-        $newId=$root.'-R'.$revisionNo;
-        $copy=$db->prepare("INSERT INTO purchase_requests (spb_id,parent_spb_id,revision_no,wo_id,asset_id,requested_by,urgency,spb_type,status,input_revision_no,notes,requested_at) VALUES (:new_id,:parent,:revision_no,:wo,:asset,:requester,:urgency,:type,'Draft',0,:notes,NOW())");
-        $copy->execute([':new_id'=>$newId,':parent'=>$root,':revision_no'=>$revisionNo,':wo'=>$source['wo_id'],':asset'=>$source['asset_id'],':requester'=>InputRevision::actorId()?:$source['requested_by'],':urgency'=>$source['urgency'],':type'=>$source['spb_type']??'NORMAL',':notes'=>$source['notes']]);
-        $items=$db->prepare('SELECT * FROM purchase_request_items WHERE spb_id=:id ORDER BY id');$items->execute([':id'=>$sourceId]);
-        $insert=$db->prepare("INSERT INTO purchase_request_items (id,spb_id,part_number,part_id,pm_plan_id,description,qty_requested,transaction_uom,conversion_factor_snapshot,base_quantity,fulfilled_quantity,status) VALUES (:id,:spb,:part,:part_id,:pm_plan,:description,:qty,:uom,:factor,:base_qty,0,'Draft')");
-        foreach($items->fetchAll(PDO::FETCH_ASSOC) as $idx=>$item)$insert->execute([':id'=>sprintf('SPBI-%s-%02d',substr(md5($newId),0,8),$idx+1),':spb'=>$newId,':part'=>$item['part_number'],':part_id'=>$item['part_id']??null,':pm_plan'=>$item['pm_plan_id']??null,':description'=>$item['description'],':qty'=>$item['qty_requested'],':uom'=>$item['transaction_uom']??null,':factor'=>$item['conversion_factor_snapshot']??1,':base_qty'=>$item['base_quantity']??$item['qty_requested']]);
-        $after=array_merge($source,['spb_id'=>$newId,'parent_spb_id'=>$root,'revision_no'=>$revisionNo,'status'=>'Draft']);
-        InputRevision::record($db,'SPB',$newId,'REVISE',$reason,$source,$after,$idempotencyKey,$sourceId);
-        $db->commit();api_json_response(201,['status'=>'success','message'=>'Versi revisi dibuat sebagai Draft tanpa menimpa dokumen lama.','data'=>['spbId'=>$newId,'parentSpbId'=>$root,'revisionNo'=>$revisionNo,'status'=>'Draft']]);
+        $result=SpbWorkflow::createRevision($db,$sourceId,InputRevision::actorId(),$reason,$idempotencyKey,static function(string $assetId)use($db):void{api_require_asset_access($db,$assetId);});
+        $db->commit();
+        if(!empty($result['idempotent']))api_json_response(200,['status'=>'success','message'=>'Revisi identik sudah diproses.','data'=>$result]);
+        api_json_response(201,['status'=>'success','message'=>'Versi revisi dibuat sebagai Draft tanpa menimpa dokumen lama.','data'=>$result]);
     }catch(Throwable $e){if($db->inTransaction())$db->rollBack();api_json_response($e instanceof OutOfBoundsException?404:($e instanceof DomainException?409:422),['status'=>'error','message'=>$e->getMessage()]);}
 }
 if (in_array($action, ['update_own_pending', 'withdraw_own_pending'], true) || $action === 'cancel_own_pending') {
