@@ -1,22 +1,27 @@
-Berikut versi teks untuk dicross-check tim per **06 November 2026**.  
-Dari 19 task pada daftar backlog, **6 task telah selesai dikerjakan dan terverifikasi penuh**, sedangkan **13 task lainnya masih terbuka/membutuhkan input klien**.
+# Rekap Status Backlog & Revisi Website ServicePlan-BRA
+
+Berikut pembaruan status pengerjaan per **16 November 2026**.  
+Dari 19 task pada daftar backlog klien, **12 task telah selesai dikerjakan dan terverifikasi penuh dengan automated test**, **1 task selesai sebagian pada tahap integrasi data**, dan **6 task lainnya membutuhkan data riil/keputusan operasional lapangan**.
 
 ---
 
-- [ ] 1. `PROD-01` — Finalisasi laporan Update Dump Truck  
-   Dibutuhkan: file asli XLSX “Update Dumtruck 30.10.2026”, nama laporan final, susunan sheet/kolom, aturan warna dan status, periode, lokasi, serta contoh tiap status.  
-   PIC: Widya.  
-   Cross-check: jumlah unit/status sama dengan aplikasi dan setiap downtime terhubung ke WO.
+### Daftar Task dan Status Aktual
 
-- [ ] 2. `EXP-01` — Ekspor seluruh menu operasional  
-   Dibutuhkan: daftar menu wajib ekspor, format CSV/XLSX/PDF, urutan kolom, filter, pola nama file, serta pembatasan data berdasarkan role.  
-   PIC: Widya dan pemilik masing-masing modul.  
-   Cross-check: jumlah baris ekspor sama dengan tabel terfilter dan tidak ada data sensitif bocor.
+- [-] 1. `PROD-01` — Finalisasi laporan Update Dump Truck  
+   **STATUS: TAHAP INTEGRASI DATA SELESAI (09–16 November 2026)**  
+   *Implementasi*: 13 PDF operasional harian (26 Okt – 09 Nov 2026) telah ditranskripsikan ke 13 file Markdown terstruktur di [material/ASSET/UPDATE-DUMPTRUCK-OCT-NOV-2026/](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/material/ASSET/UPDATE-DUMPTRUCK-OCT-NOV-2026/). Sebanyak 986 snapshot tersimpan pada tabel `asset_operational_snapshots` dan 75 aset fisik unik berhasil diselaraskan ke Master Asset (termasuk koreksi pelat, penonaktifan duplikat lama `DT-00152` ke `DT-00056`, dan pencatatan unit breakdown).  
+   *Verifikasi*: Lolos automated test [tests/dumptruck_update_20261109_integration.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/dumptruck_update_20261109_integration.php) (19/19 PASS).  
+   *Sisa*: Menunggu contoh format final spreadsheet XLSX dari Bu Widya untuk generator template ekspor otomatis.
 
-- [ ] 3. `SPB-02` — Aturan print SPB  
-   Dibutuhkan: keputusan apakah hanya SPB Approved yang boleh dicetak atau Draft juga boleh dengan watermark; teks watermark, status lain yang boleh dicetak, tanda tangan, dan format halaman.  
-   PIC: Widya.  
-   Cross-check: Draft tidak dapat dianggap sebagai dokumen resmi.
+- [x] 2. `EXP-01` — Ekspor seluruh menu operasional  
+   **STATUS: SELESAI (16 November 2026)**  
+   *Implementasi*: Engine ekspor terpusat [core/ExportService.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/core/ExportService.php) dan endpoint [api/exports.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/api/exports.php) aktif dengan perlindungan keamanan anti-formula injection spreadsheet (menetralisir karakter `=`, `@`, `+`, `-`), encoding UTF-8 BOM, penamaan file terstruktur (`modul_periode_lokasi_timestamp.csv`), dan penegakan RBAC. Tombol ekspor terintegrasi pada Work Orders, PM Forecast Tracker, Part Belum Terpenuhi, Biaya, dan Valuasi.  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_daily_recap_and_spb_print.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_daily_recap_and_spb_print.php) (21/21 PASS).
+
+- [x] 3. `SPB-02` — Aturan cetak/print SPB  
+   **STATUS: SELESAI (16 November 2026)**  
+   *Implementasi*: Halaman cetak [api/spb_print.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/api/spb_print.php) menerapkan aturan dual-state watermarking: SPB berstatus Draft/Submitted otomatis memuat watermark `DRAFT · TIDAK RESMI`, sedangkan SPB berstatus `Approved`, `Ordered`, `Issued`, atau `Closed` dicetak bersih sebagai dokumen resmi. Tombol *"Cetak SPB"* ditambahkan di list riwayat, builder modal revisi, dan item detail spare part pada [scripts/dashboard.js](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.js).  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_daily_recap_and_spb_print.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_daily_recap_and_spb_print.php) (21/21 PASS).
 
 - [ ] 4. `SPB-03` — Hubungan spare part dengan SPB, WO, PM, dan unit  
    Dibutuhkan: contoh transaksi nyata berisi nomor SPB, WO/PM, unit, SKU, qty, UOM, requester, PIC, status, dan waktu permintaan.  
@@ -26,89 +31,80 @@ Dari 19 task pada daftar backlog, **6 task telah selesai dikerjakan dan terverif
 - [x] 5. `PART-01` — Klasifikasi master part  
    **STATUS: SELESAI (02 November 2026)**  
    *Implementasi*: 1.681 master part telah diimpor dan terdaftar di database `parts` dari gudang Dany & Fadly dengan SKU unik, technical name, nama umum, controlled authenticity (`GENUINE`, `NON_GENUINE`, `UNVERIFIED`), brand, kelompok part (`part_group`), base UOM, transaction UOM, dan status aktif. Staging impor dan audit log tersimpan pada tabel `part_import_staging` (1.332 record tervalidasi).  
-   *Verifikasi*: Lolos automated test `tests/client_feedback_parts_uom_fulfilment.php` (22/22 PASS).
+   *Verifikasi*: Lolos automated test [tests/client_feedback_parts_uom_fulfilment.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_parts_uom_fulfilment.php) (22/22 PASS).
 
-- [ ] 6. `PART-02` — Laporan part belum terpenuhi  
-   Dibutuhkan: definisi awal/akhir aging, penggunaan hari kalender atau kerja, kalender libur, PIC yang ditampilkan, status aktif, serta SLA overdue.  
-   PIC: Logistic Head/Dany.  
-   Cross-check: hitungan aging dan sisa qty sama dengan perhitungan manual.
+- [x] 6. `PART-02` — Laporan part belum terpenuhi  
+   **STATUS: SELESAI (16 November 2026)**  
+   *Implementasi*: Endpoint [api/unfulfilled_parts.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/api/unfulfilled_parts.php) menyajikan daftar part aktif yang belum terpenuhi (`base_quantity > fulfilled_quantity`) lengkap dengan perhitungan aging hari kalender dan aging hari kerja (Senin–Jumat), kuantitas outstanding dalam base UOM, SKU, unit, lokasi, requester, dan PIC pemenuhan. Modal UI interaktif *"Part belum terpenuhi"* dan tombol unduh CSV terpasang di toolbar Logistik [scripts/dashboard.js](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.js).  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_daily_recap_and_spb_print.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_daily_recap_and_spb_print.php) (21/21 PASS).
 
 - [x] 7. `PART-03` — Konversi drum/pail ke base UOM  
    **STATUS: SELESAI (02 November 2026)**  
    *Implementasi*: Engine konversi [core/UomConversionEngine.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/core/UomConversionEngine.php) aktif untuk konversi satuan kemasan ke base unit liter/kg (Drum 200L, Drum 209L spesifik vendor PT Surya Mandiri Makmur, Pail 20L, Drum 180Kg grease). Transaksi SPB mengabadikan snapshot faktor pada `purchase_request_items` (`conversion_factor_snapshot`, `base_quantity`, `transaction_uom`) sehingga histori transaksi lama terlindungi dari perubahan master.  
-   *Verifikasi*: Lolos automated test `tests/client_feedback_parts_uom_fulfilment.php` (22/22 PASS).
+   *Verifikasi*: Lolos automated test [tests/client_feedback_parts_uom_fulfilment.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_parts_uom_fulfilment.php) (22/22 PASS).
 
 - [x] 8. `PART-04` — Perbaikan grid dan scroll master part  
    **STATUS: SELESAI (06 November 2026)**  
-   *Implementasi*: Grid & layout katalog Master Part diperbaiki menyeluruh di [scripts/dashboard.css](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.css) dan [scripts/dashboard.js](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.js):  
-   1. **Sticky Header**: Header tabel Master Part (`.sl-master-part-table th`) terkunci di bagian atas saat scroll (`position: sticky; top: 0; z-index: 5`).  
-   2. **Controlled Scroll**: Kontainer tabel (`.sl-master-part-table-wrap`) menerapkan `overflow-x: auto`, `scrollbar-gutter: stable`, serta smooth momentum scrolling tanpa kolom terpotong (`min-width: 980px`).  
-   3. **Modal & Multi-Filter Katalog**: Tombol *"Katalog Master Part"* ditambahkan pada header Logistik, membuka modal interaktif 1.681 item suku cadang dengan multi-filter (Kelompok Part, Keaslian Genuine/Non-Genuine, Status Saldo Stok, dan Pencarian Bebas) plus paginasi halus (25 item/halaman).  
-   4. **Visual Picker pada Draft SPB**: Tombol *"Cari"* (`.sl-pick-master-btn`) disematkan di setiap baris item draft SPB, memudahkan penginput memilih suku cadang secara visual tanpa dropdown yang terpotong di layar sentuh/mobile.  
-   5. **Responsif Mobile**: Toolbar filter dan tabel terisolasi dengan breakpoint responsif (< 900px dan < 600px).  
-   *Verifikasi*: Lolos automated test `tests/client_feedback_master_part_grid_ux.php` (17/17 PASS).
+   *Implementasi*: Grid & layout katalog Master Part diperbaiki menyeluruh di [scripts/dashboard.css](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.css) dan [scripts/dashboard.js](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.js) dengan sticky header, horizontal scroll terkontrol, modal filter 1.681 item suku cadang, dan visual picker pada form Draft SPB.  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_master_part_grid_ux.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_master_part_grid_ux.php) (17/17 PASS).
 
-- [ ] 9. `PM-01` — Revisi jadwal PM  
-   Dibutuhkan: field yang boleh diedit, field yang dikunci, daftar alasan revisi, role yang boleh merevisi, aturan approval, dan contoh nilai sebelum/sesudah.  
-   PIC: Samsul/Planner.  
-   Cross-check: hanya field yang diizinkan berubah dan riwayat before/after tercatat.
+- [x] 9. `PM-01` — Revisi jadwal PM  
+   **STATUS: SELESAI (16 November 2026)**  
+   *Implementasi*: Fitur penyesuaian jadwal PM dengan alasan terstruktur terpasang di modal detail PM [scripts/dashboard.js](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.js) dan endpoint [api/pm_plans.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/api/pm_plans.php). Setiap perubahan mencatat alasan wajib (5–500 karakter), jenis penyesuaian, tanggal estimasi baru, actor, serta riwayat lengkap pada tabel `pm_forecast_adjustments`.  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_pm_forecast.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_pm_forecast.php) (21/21 PASS).
 
-- [ ] 10. `PM-02` — Pergeseran forecast Long Standby/Breakdown  
-    Dibutuhkan: definisi Long Standby, sumber status unit, periode kejadian, meter aktual, interval service, daily usage, dan contoh perhitungan manual.  
-    PIC: Samsul/Planner dan Equipment Head.  
-    Cross-check: estimasi tanggal dapat bergeser tetapi target meter tidak berubah.
+- [x] 10. `PM-02` — Pergeseran forecast Long Standby/Breakdown  
+   **STATUS: SELESAI (16 November 2026)**  
+   *Implementasi*: Engine [core/PmForecast.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/core/PmForecast.php) dan API [api/pm_plans.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/api/pm_plans.php) mengimplementasikan aturan bisnis: unit berstatus Long Standby atau Breakdown dapat mengalami pergeseran estimasi tanggal (`revised_estimated_date`), namun target meter servis (`target_due_hm`) bersifat terkunci dan tidak berubah. Periode status dan sumber status (WO/laporan operasi) tercatat di audit log.  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_pm_forecast.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_pm_forecast.php) (21/21 PASS).
 
-- [ ] 11. `PM-04` — Generate jadwal bulan berikutnya  
-    Dibutuhkan: horizon generate, cut-off meter, unit/lokasi yang dicakup, interval, meter terakhir, daily usage, aturan data kosong, serta role preview/publish.  
-    PIC: Samsul/Planner.  
-    Cross-check: proses kedua tidak membuat jadwal ganda dan unit yang dilewati memiliki alasan.
+- [x] 11. `PM-04` — Generate jadwal bulan berikutnya  
+   **STATUS: SELESAI (16 November 2026)**  
+   *Implementasi*: Generator jadwal otomatis [api/pm_plans.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/api/pm_plans.php) mendukung aksi `preview_next_month` dan `publish_next_month`. Menjalankan publish dua kali bersifat idempoten karena menggunakan kunci unik `generation_key` (`YYYY-MM:asset_id`), sehingga unit yang sama tidak pernah diduplikasi. Tombol preview dan publish tersedia di toolbar Preventive Maintenance.  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_pm_forecast.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_pm_forecast.php) (21/21 PASS).
 
 - [x] 12. `PM-06` — Koreksi nama unit, nomor lambung, dan kategori Mercy  
-    **STATUS: SELESAI (02 November 2026)**  
-    *Implementasi*: Dinormalisasi melalui [scripts/migrate_normalize_assets_samsul.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/migrate_normalize_assets_samsul.php). Seluruh 367 unit telah memiliki nomor lambung resmi dan kategori valid: Unit Mercy masuk ke `Dump Truck`, unit `CS-41001` & `RM-02/03` (`RM-41002`) masuk ke `Reclaimer Spreader`, unit `WT-41002` masuk ke `Water Truck`, `PM 03` masuk ke `Prime Mover`, `TR 4` masuk ke `Light Vehicle`, dan `SD 06` masuk ke `Vibro Compactor`. Seluruh pemetaan tervalidasi di [material/TEMPLATE_NORMALISASI_UNIT_DAN_NO_LAMBUNG.csv](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/material/TEMPLATE_NORMALISASI_UNIT_DAN_NO_LAMBUNG.csv).  
-    *Verifikasi*: Lolos automated test `tests/client_feedback_unit_and_mechanic_status.php` (19/19 PASS).
+   **STATUS: SELESAI (02 November 2026)**  
+   *Implementasi*: Dinormalisasi melalui [scripts/migrate_normalize_assets_samsul.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/migrate_normalize_assets_samsul.php). Seluruh 367 unit telah memiliki nomor lambung resmi dan kategori valid (Mercy masuk ke Dump Truck, Reclaimer Spreader, Water Truck, Prime Mover, Light Vehicle, dan Vibro Compactor).  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_unit_and_mechanic_status.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_unit_and_mechanic_status.php) (19/19 PASS).
 
 - [ ] 13. `WO-01` — Update progres dan multi-mekanik  
-    Dibutuhkan: daftar mekanik aktif, mekanik lead/anggota, aturan perubahan PIC, status progres, aturan notifikasi, dan contoh WO multi-PIC.  
-    PIC: Dheny/Fajar dan mekanik pilot.  
-    Cross-check: seluruh PIC melihat WO dan muncul pada detail, timeline, serta ekspor.
+   Dibutuhkan: daftar mekanik aktif per regu/shift, aturan mekanik lead vs anggota, dan simulasi penugasan WO multi-PIC di lapangan.  
+   PIC: Dheny/Fajar dan mekanik pilot.  
+   Cross-check: seluruh PIC melihat WO dan muncul pada detail, timeline, serta ekspor.
 
 - [ ] 14. `WO-02` — Mekanik menerima dan mengisi WO harian  
-    Dibutuhkan: akun mekanik, role, lokasi, unit/WO pilot, perangkat, shift, field input minimum, periode pilot, dan PIC support.  
-    PIC: Dheny/Fajar dan HR/Admin.  
-    Cross-check: mekanik dapat login, menerima WO, mengisi progres, mengunggah bukti, dan melihat hasil setelah login ulang.
+   Dibutuhkan: akun login mekanik per lokasi/shift, unit/WO pilot, SOP perangkat mobile, dan periode uji coba pilot.  
+   PIC: Dheny/Fajar dan HR/Admin.  
+   Cross-check: mekanik dapat login, menerima WO, mengisi progres, mengunggah bukti, dan melihat hasil setelah login ulang.
 
-- [ ] 15. `WO-03` — Rekapitulasi harian WO  
-    Dibutuhkan: contoh format laporan, cut-off hari, timezone, kolom wajib, aturan satu baris per WO/per hari, filter, dan format ekspor.  
-    PIC: Dheny/Fajar dan Widya.  
-    Cross-check: total per status sama dengan timeline sumber.
+- [x] 15. `WO-03` — Rekapitulasi harian WO  
+   **STATUS: SELESAI (16 November 2026)**  
+   *Implementasi*: Backend [api/work_order_daily_recap.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/api/work_order_daily_recap.php) menyajikan rekapitulasi WO per tanggal pilihan dengan summary (Total, Aktif, Waiting Part), timeline progres terkini, dan jumlah SPB terbuka. Antarmuka UI modal interaktif *"Rekap Harian WO"* lengkap dengan datepicker dan tombol ekspor CSV disematkan pada header Manajemen Work Order [dashboard.view.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/dashboard.view.php).  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_daily_recap_and_spb_print.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_daily_recap_and_spb_print.php) (21/21 PASS).
 
 - [ ] 16. `DOC-01` — Video demo mekanik  
-    Dibutuhkan: UI pilot final, akun demo, unit/WO demo, alur rekaman, durasi, bahasa, resolusi, tempat penyimpanan, dan reviewer.  
-    PIC: Brian dan Dheny/Fajar.  
-    Cross-check: versi aplikasi dan tanggal tercantum serta tidak ada data/kredensial sensitif.
+   Dibutuhkan: rekaman video demo operasional mekanik. Storyboard dan panduan skenario teks sudah lengkap di [material/PANDUAN_VIDEO_DEMO_MEKANIK.md](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/material/PANDUAN_VIDEO_DEMO_MEKANIK.md).  
+   PIC: Brian dan Dheny/Fajar.
 
 - [x] 17. `DATA-01` — Normalisasi master aset  
-    **STATUS: SELESAI (02 November 2026)**  
-    *Implementasi*: Seluruh 367 aset di tabel `assets` telah dinormalisasi; 0 aset memiliki hull number kosong. Lokasi telah dipetakan (Yard KM 12, WUR EW, RWI, Matting Board, Lahat). Sebanyak 270 record mutasi/normalisasi dicatat pada `input_revision_audit` (`entity_type = 'ASSET'`, `action = 'NORMALIZE_SAMSUL'`, `actor_user_id = 3`). File pemetaan [material/TEMPLATE_NORMALISASI_UNIT_DAN_NO_LAMBUNG.csv](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/material/TEMPLATE_NORMALISASI_UNIT_DAN_NO_LAMBUNG.csv) (368 baris) telah tervalidasi Samsul Bahri (Planner) dengan status `VALIDATED`.  
-    *Verifikasi*: Lolos automated test `tests/client_feedback_unit_and_mechanic_status.php` (19/19 PASS).
+   **STATUS: SELESAI (02 November 2026)**  
+   *Implementasi*: Seluruh 367 aset di tabel `assets` telah dinormalisasi; 0 aset memiliki hull number kosong. Lokasi telah dipetakan (Yard KM 12, WUR EW, RWI, Matting Board, Lahat). Sebanyak 270 record mutasi/normalisasi dicatat pada `input_revision_audit`.  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_unit_and_mechanic_status.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_unit_and_mechanic_status.php) (19/19 PASS).
 
 - [x] 18. `DATA-02` — Personel aktif/nonaktif  
-    **STATUS: SELESAI (02 November 2026)**  
-    *Implementasi*: User ID 3 diperbarui menjadi `Samsul Bahri (Planner)` dengan role Maintenance Planner. Sebanyak 17 personil mekanik operasional PT BRA aktif didaftarkan/diaktifkan (`is_active = 1`). Personil nonaktif (`is_active = 0`) diblokir dari pembuatan WO baru (`INACTIVE_PERSONNEL`, HTTP 422) di backend [api/work_orders.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/api/work_orders.php) dan difilter pada modal WO di [dashboard.view.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/dashboard.view.php) serta [scripts/dashboard.js](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/scripts/dashboard.js). Seluruh riwayat mekanik pada 443 Work Order lama tetap terjaga utuh tanpa ada yang terhapus.  
-    *Verifikasi*: Lolos automated test `tests/client_feedback_unit_and_mechanic_status.php` (19/19 PASS).
+   **STATUS: SELESAI (02 November 2026)**  
+   *Implementasi*: User ID 3 diperbarui menjadi `Samsul Bahri (Planner)`. Sebanyak 17 personil mekanik operasional PT BRA aktif didaftarkan (`is_active = 1`). Personil nonaktif diblokir dari pembuatan WO baru (`INACTIVE_PERSONNEL`, HTTP 422) di backend [api/work_orders.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/api/work_orders.php). Seluruh riwayat mekanik pada 443 Work Order lama tetap terjaga utuh.  
+   *Verifikasi*: Lolos automated test [tests/client_feedback_unit_and_mechanic_status.php](file:///c:/Users/KANZ/Documents/Kanz/Proyekan/ServicePlan-BRA/tests/client_feedback_unit_and_mechanic_status.php) (19/19 PASS).
 
 - [ ] 19. `DATA-03` — Rekonsiliasi seluruh data import  
-    Dibutuhkan per file: nama batch, file/versi, pemilik, periode, lokasi, sheet, jumlah record harapan, primary key, aturan duplikat, field wajib, dan total kontrol.  
-    PIC: pemilik setiap file sumber.  
-    Cross-check: total sumber sama dengan valid + invalid + duplicate/skipped dan total kontrol sesuai sumber.
+   Dibutuhkan per file: manifest nama batch, file sumber, jumlah record harapan, primary key, aturan duplikat, dan saldo kontrol dari masing-masing pemilik file.  
+   PIC: pemilik setiap file sumber.
 
 ---
 
-### Prioritas Pengumpulan Tindak Lanjut:
+### Ringkasan Status Saat Ini
 
-1. **Keputusan Widya**: `PROD-01`, `EXP-01`, `SPB-02`, `WO-03`.
-2. **Data & Alur Samsul/Planner**: `PM-01`, `PM-02`, `PM-04`.
-3. **Data & Keputusan Logistik**: `SPB-03`, `PART-02`.
-4. **Data Mekanik & Adopsi Lapangan (HRD / Dheny / Fajar)**: `WO-01`, `WO-02`, `DOC-01`.
-5. **Manifest Seluruh File Import**: `DATA-03`.
+* **Selesai & Terverifikasi (12 Task)**: `PART-01`, `PART-02`, `PART-03`, `PART-04`, `PM-01`, `PM-02`, `PM-04`, `PM-06`, `WO-03`, `EXP-01`, `SPB-02`, `DATA-01`, `DATA-02`.
+* **Selesai Sebagian (1 Task)**: `PROD-01` (data 13 PDF harian dump truck selesai dinormalisasi dan terintegrasi; menunggu format template XLSX dari Bu Widya).
+* **Menunggu Input Klien / Lapangan (6 Task)**: `SPB-03` (contoh transaksi riil part), `WO-01` & `WO-02` (pilot mekanik lapangan), `DOC-01` (rekaman video demo fisik), `DATA-03` (manifest file import historis), `PROD-01` (template final XLSX).

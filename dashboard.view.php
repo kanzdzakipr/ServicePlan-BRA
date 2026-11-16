@@ -735,6 +735,12 @@ try {
                             <button type="button" data-wo-mode="table" onclick="switchWorkOrderMode('table')"><i
                                     class="fa-solid fa-table-list"></i> Tabel</button>
                         </div>
+                        <button type="button" class="btn btn-sm" id="btnWoDailyRecap" onclick="openWoDailyRecapModal()" style="height:38px; display:inline-flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #cbd5e1; color:#334155; font-weight:600; border-radius:6px; padding:0 12px; cursor:pointer;" title="Lihat Rekapitulasi Harian Work Order">
+                            <i class="fa-solid fa-calendar-day" style="color:#2563eb;"></i> Rekap Harian WO
+                        </button>
+                        <a href="api/exports.php?module=work-orders" class="btn btn-sm" style="height:38px; display:inline-flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #cbd5e1; color:#334155; font-weight:600; border-radius:6px; padding:0 12px; text-decoration:none;" title="Ekspor Seluruh Work Order ke CSV">
+                            <i class="fa-solid fa-file-csv" style="color:#16a34a;"></i> Ekspor WO
+                        </a>
                         <button class="btn btn-danger rbac-create-only" data-rbac-menu="wo" data-rbac-action="C" onclick="openNewWOModal()"><i class="fa-solid fa-plus"></i> Buat
                             Tiket WO</button>
                     </div>
@@ -11233,6 +11239,128 @@ try {
             async function submitNewWO() {
                 return window.NewWorkOrderForm.submit();
             }
+
+            async function openWoDailyRecapModal(targetDate = null) {
+                const date = targetDate || new Date().toISOString().slice(0, 10);
+                const existing = document.getElementById('slWoDailyRecapModal');
+                if (existing) existing.remove();
+
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.id = 'slWoDailyRecapModal';
+                loadingOverlay.className = 'sl-modal-overlay';
+                loadingOverlay.setAttribute('role', 'dialog');
+                loadingOverlay.setAttribute('aria-modal', 'true');
+                loadingOverlay.innerHTML = `
+                    <div class="sl-modal-dialog" style="max-width: 1100px; width: 95%;">
+                        <header class="sl-modal-header">
+                            <div class="sl-modal-title">
+                                <span class="sl-modal-avatar"><i class="fa-solid fa-calendar-day"></i></span>
+                                <div>
+                                    <span class="sl-eyebrow">REKAPITULASI WORK ORDER HARIAN</span>
+                                    <h2>Rekap Operasional WO</h2>
+                                    <p>Memuat data tanggal ${date}...</p>
+                                </div>
+                            </div>
+                            <button type="button" class="sl-modal-close" onclick="document.getElementById('slWoDailyRecapModal')?.remove()">&times;</button>
+                        </header>
+                        <div class="sl-modal-scroll" style="padding: 24px; text-align: center;">
+                            <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--primary);"></i>
+                            <p style="margin-top: 10px; color: var(--text-muted);">Mengambil rekapitulasi Work Order...</p>
+                        </div>
+                    </div>`;
+                document.body.appendChild(loadingOverlay);
+
+                try {
+                    const response = await fetch(`api/work_order_daily_recap.php?date=${encodeURIComponent(date)}`, {
+                        headers: { Accept: 'application/json' },
+                        cache: 'no-store'
+                    });
+                    const payload = await response.json();
+                    if (!response.ok || payload.status !== 'success') {
+                        throw new Error(payload.message || 'Gagal memuat rekapitulasi.');
+                    }
+                    const rows = payload.data || [];
+                    const summary = payload.summary || { total: rows.length, open: 0, waiting_part: 0 };
+
+                    const dialog = loadingOverlay.querySelector('.sl-modal-dialog');
+                    dialog.innerHTML = `
+                        <header class="sl-modal-header">
+                            <div class="sl-modal-title">
+                                <span class="sl-modal-avatar"><i class="fa-solid fa-calendar-day"></i></span>
+                                <div>
+                                    <span class="sl-eyebrow">REKAPITULASI WORK ORDER HARIAN</span>
+                                    <h2>Rekap Operasional WO</h2>
+                                    <p>Periode ${payload.date} · ${summary.total} WO tercatat (${summary.open} aktif, ${summary.waiting_part} menunggu part)</p>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <label for="woRecapDatePicker" style="font-size:12px; font-weight:600; color:#475569;">Tanggal:</label>
+                                    <input type="date" id="woRecapDatePicker" value="${payload.date}" style="padding:4px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px;" onchange="openWoDailyRecapModal(this.value)">
+                                </div>
+                                <a href="api/exports.php?module=work-orders&period=${encodeURIComponent(payload.date)}" class="btn btn-sm" style="display:inline-flex; align-items:center; gap:4px; background:#f8fafc; border:1px solid #cbd5e1; padding:5px 10px; border-radius:6px; text-decoration:none; color:#334155; font-size:12px; font-weight:600;"><i class="fa-solid fa-download"></i> Ekspor CSV</a>
+                                <button type="button" class="sl-modal-close" onclick="document.getElementById('slWoDailyRecapModal')?.remove()">&times;</button>
+                            </div>
+                        </header>
+                        <div class="sl-modal-scroll" style="padding: 16px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; text-align:center;">
+                                    <span style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Total WO</span>
+                                    <div style="font-size:22px; font-weight:800; color:#0f172a;">${summary.total}</div>
+                                </div>
+                                <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px; text-align:center;">
+                                    <span style="font-size:11px; font-weight:700; color:#2563eb; text-transform:uppercase;">Aktif (Open/In-Progress)</span>
+                                    <div style="font-size:22px; font-weight:800; color:#1d4ed8;">${summary.open}</div>
+                                </div>
+                                <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:12px; text-align:center;">
+                                    <span style="font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase;">Waiting Part</span>
+                                    <div style="font-size:22px; font-weight:800; color:#b45309;">${summary.waiting_part}</div>
+                                </div>
+                            </div>
+                            <div class="table-responsive sl-parts-table-wrap" style="max-height: 480px; overflow-y: auto;">
+                                <table class="sl-parts-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+                                    <thead>
+                                        <tr style="background:#f1f5f9; text-align:left;">
+                                            <th style="padding:8px; border-bottom:2px solid #cbd5e1;">WO / Unit</th>
+                                            <th style="padding:8px; border-bottom:2px solid #cbd5e1;">Lokasi</th>
+                                            <th style="padding:8px; border-bottom:2px solid #cbd5e1;">Status</th>
+                                            <th style="padding:8px; border-bottom:2px solid #cbd5e1;">Prioritas</th>
+                                            <th style="padding:8px; border-bottom:2px solid #cbd5e1;">Keluhan / Troubleshooting</th>
+                                            <th style="padding:8px; border-bottom:2px solid #cbd5e1;">Mekanik</th>
+                                            <th style="padding:8px; border-bottom:2px solid #cbd5e1;">Progres Terkini</th>
+                                            <th style="padding:8px; border-bottom:2px solid #cbd5e1;">SPB</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${rows.length ? rows.map(r => `
+                                            <tr style="border-bottom:1px solid #e2e8f0;">
+                                                <td style="padding:8px;"><strong>${escapeHtml(r.wo_id)}</strong><br><small style="color:#64748b;">${escapeHtml(r.asset_code || r.asset_id)} ${r.hull_number ? '(' + escapeHtml(r.hull_number) + ')' : ''}</small></td>
+                                                <td style="padding:8px;">${escapeHtml(r.location_name || '-')}</td>
+                                                <td style="padding:8px;"><span class="badge" style="padding:3px 8px; border-radius:4px; font-weight:700; font-size:11px; background:${r.status === 'Closed' ? '#dcfce7; color:#15803d;' : (r.status === 'Waiting Part' ? '#fef3c7; color:#b45309;' : '#fee2e2; color:#b91c1c;')}">${escapeHtml(r.status)}</span></td>
+                                                <td style="padding:8px;"><span style="font-weight:600; color:${r.priority === 'Critical' ? '#dc2626' : (r.priority === 'High' ? '#ea580c' : '#475569')};">${escapeHtml(r.priority || 'Normal')}</span></td>
+                                                <td style="padding:8px; max-width:240px;"><strong>${escapeHtml(r.issue_description || '-')}</strong>${r.repair_action ? `<br><small style="color:#059669;">Tindakan: ${escapeHtml(r.repair_action)}</small>` : ''}</td>
+                                                <td style="padding:8px;"><small>${escapeHtml(r.assigned_mechanic || 'Belum ditugaskan')}</small></td>
+                                                <td style="padding:8px; max-width:200px;"><small style="color:#334155;">${escapeHtml(r.latest_progress || 'Belum ada log progres')}</small></td>
+                                                <td style="padding:8px; text-align:center;">${Number(r.open_spb_count) > 0 ? `<span style="background:#dbeafe; color:#1e40af; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px;">${r.open_spb_count} SPB</span>` : '<span style="color:#94a3b8; font-size:11px;">—</span>'}</td>
+                                            </tr>
+                                        `).join('') : `<tr><td colspan="8" style="text-align:center; padding:32px; color:#64748b;">Tidak ada data Work Order pada tanggal ${payload.date}.</td></tr>`}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>`;
+                } catch (err) {
+                    loadingOverlay.querySelector('.sl-modal-dialog').innerHTML = `
+                        <header class="sl-modal-header">
+                            <h2>Gagal Memuat Rekapitulasi</h2>
+                            <button type="button" class="sl-modal-close" onclick="document.getElementById('slWoDailyRecapModal')?.remove()">&times;</button>
+                        </header>
+                        <div style="padding:24px; text-align:center; color:#b91c1c;">
+                            <i class="fa-solid fa-circle-exclamation fa-2x"></i>
+                            <p style="margin-top:10px;">${escapeHtml(err.message || 'Terjadi kesalahan sistem.')}</p>
+                        </div>`;
+                }
+            }
+            window.openWoDailyRecapModal = openWoDailyRecapModal;
 
             function refreshAllViews() {
                 initDashboard(globalData);

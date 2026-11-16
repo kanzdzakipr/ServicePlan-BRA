@@ -3596,7 +3596,8 @@
                                 <td>${Number(spb.item_count) || 0} item / ${Number(spb.total_quantity) || 0} qty</td>
                                 <td>${spb.source_report_id ? "—" : escapeHtml(spbDisplayStatus(spb))}</td>
                                 <td><div class="history-actions">
-                                    <button type="button" data-spb-print="${escapeHtml(spb.spb_id)}"><i class="fa-regular fa-eye"></i> Lihat/Cetak</button>
+                                    <button type="button" data-spb-print="${escapeHtml(spb.spb_id)}"><i class="fa-regular fa-eye"></i> Lihat Form</button>
+                                    <a href="api/spb_print.php?spb_id=${encodeURIComponent(spb.spb_id)}" target="_blank" class="btn-sm" style="display:inline-flex; align-items:center; gap:4px; text-decoration:none; padding:4px 8px; border:1px solid #cbd5e1; border-radius:4px; font-size:12px; font-weight:600; color:#334155; background:#fff;" title="Cetak Dokumen Resmi SPB"><i class="fa-solid fa-print" style="color:#2563eb;"></i> Cetak SPB</a>
                                     ${spb.can_edit_own ? `<button type="button" class="primary" data-spb-edit="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-pen"></i> Edit input</button><button type="button" class="danger" data-spb-owner-cancel="${escapeHtml(spb.spb_id)}" title="Batalkan input SPB ini"><i class="fa-solid fa-xmark"></i> Batalkan input</button>` : ""}
                                     ${spb.source_report_id ? '<span title="Void melalui laporan Form asal">Void via Form</span>' : canVoidSpbDocuments ? `<button type="button" class="danger" data-spb-void="${escapeHtml(spb.spb_id)}"><i class="fa-solid fa-ban"></i> Void</button>` : ""}
                                 </div></td>
@@ -8446,7 +8447,7 @@
           (item) => `
                         <tr>
                             <td><strong>${escapeHtml(item.partNumber)}</strong><small>${escapeHtml(item.description)}</small></td>
-                            <td><strong>${escapeHtml(item.spbId || "Draft")}</strong>${item.woId ? `<button type="button" class="sl-inline-link" data-sl-action="record-wo" data-wo-id="${escapeHtml(item.woId)}">${escapeHtml(item.woId)}</button>` : "<small>Belum terkait WO</small>"}</td>
+                            <td><strong>${escapeHtml(item.spbId || "Draft")}</strong>${item.woId ? `<button type="button" class="sl-inline-link" data-sl-action="record-wo" data-wo-id="${escapeHtml(item.woId)}">${escapeHtml(item.woId)}</button>` : "<small>Belum terkait WO</small>"}${item.spbId && item.spbId !== "Draft" ? `<br><a href="api/spb_print.php?spb_id=${encodeURIComponent(item.spbId)}" target="_blank" class="sl-access-button" style="font-size:10px; padding:2px 5px; margin-top:2px; display:inline-block; text-decoration:none;" title="Cetak SPB ${escapeHtml(item.spbId)}"><i class="fa-solid fa-print"></i> Cetak</a>` : ""}</td>
                             <td><strong>${Number(item.qtyRequested) || 0}</strong> ${escapeHtml(item.uom || "pcs")}</td>
                             <td><strong>${Number(item.qtyAvailable) || 0}</strong> ${escapeHtml(item.uom || "pcs")}</td>
                             <td>
@@ -8613,7 +8614,7 @@
                             <div class="sl-draft-actions">
                                 <button type="button" class="sl-add-item-button" data-sl-action="add-draft"><i class="fa-solid fa-plus"></i>Tambah Item</button>
                                 <label><span>Catatan permintaan</span><input id="spb-notes" type="text" value="${escapeHtml(state.modal.notes || "")}" placeholder="Keterangan, spesifikasi alternatif, atau kendala..." data-sl-modal-field="notes"></label>
-                                <button type="button" class="sl-submit-button" data-sl-action="submit"><i class="fa-solid ${state.modal.editingSpbId ? "fa-floppy-disk" : "fa-paper-plane"}"></i>${state.modal.editingSpbId ? "Simpan revisi" : "Ajukan SPB"}</button>${state.modal.editingSpbId ? `<button type="button" class="sl-submit-button" style="background:#dc2626; margin-left:8px;" data-sl-action="cancel-spb"><i class="fa-solid fa-xmark"></i> Batalkan SPB</button>` : ""}
+                                <button type="button" class="sl-submit-button" data-sl-action="submit"><i class="fa-solid ${state.modal.editingSpbId ? "fa-floppy-disk" : "fa-paper-plane"}"></i>${state.modal.editingSpbId ? "Simpan revisi" : "Ajukan SPB"}</button>${state.modal.editingSpbId ? `<a href="api/spb_print.php?spb_id=${encodeURIComponent(state.modal.editingSpbId)}" target="_blank" class="sl-submit-button" style="background:#2563eb; margin-left:8px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;" title="Cetak Dokumen Surat Permintaan Barang"><i class="fa-solid fa-print"></i> Cetak SPB</a><button type="button" class="sl-submit-button" style="background:#dc2626; margin-left:8px;" data-sl-action="cancel-spb"><i class="fa-solid fa-xmark"></i> Batalkan SPB</button>` : ""}
                             </div>
                             <div class="sl-governance-note"><i class="fa-solid fa-link"></i><span><strong>Linkage aktif:</strong> Master Asset â†’ P2H / Condition Monitoring â†’ Work Order â†’ SPB â†’ Approval â†’ pengadaan â†’ kesiapan RTW.</span></div>
                         </section>
