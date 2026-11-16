@@ -66,6 +66,7 @@ $migrationPaths = @(
     (Join-Path $srcDir "scripts\migrate_owner_editable_inputs_20261101.sql"),
     (Join-Path $srcDir "scripts\migrate_epic42_remove_personal_info.sql"),
     (Join-Path $srcDir "scripts\migrate_client_feedback_operations_20261101.sql")
+    (Join-Path $srcDir "scripts\migrate_dumptruck_update_20261109.sql")
 )
 
 if (-not (Test-Path -LiteralPath $laragonRootPath -PathType Container) -or
@@ -265,6 +266,16 @@ if (-not $ImportDatabase) {
         }
         Write-Host "Equipment Report January 2026 Batch 1-7 verified." -ForegroundColor Green
 
+        # Legacy batch scripts can restore superseded placeholder identities.
+        # Re-run the scoped reconciliation last so the newest operational source wins.
+        $dumptruckReconciliation = Join-Path $srcDir 'scripts\migrate_dumptruck_update_20261109.sql'
+        if (Test-Path $dumptruckReconciliation) {
+            $mysqlDumptruckPath = $dumptruckReconciliation.Replace('\', '/')
+            & $mysqlExe @mysqlArgs --default-character-set=utf8mb4 $DbName -e "source $mysqlDumptruckPath"
+            if ($LASTEXITCODE -ne 0) { throw 'Rekonsiliasi final UPDATE DUMPTRUCK gagal.' }
+            Write-Host "Dump truck operational reconciliation verified last." -ForegroundColor Green
+        }
+
         $materialSyncScript = Join-Path $srcDir 'scripts\sync_material_markdown.php'
         if ($phpExe -and (Test-Path $materialSyncScript)) {
             $env:LOCAL_MYSQL_PASSWORD = $DbPassword
@@ -403,6 +414,16 @@ if (-not $ImportDatabase) {
         }
     }
     Write-Host "Equipment Report January 2026 Batch 1-7 verified." -ForegroundColor Green
+
+    # Legacy batch scripts can restore superseded placeholder identities.
+    # Re-run the scoped reconciliation last so the newest operational source wins.
+    $dumptruckReconciliation = Join-Path $srcDir 'scripts\migrate_dumptruck_update_20261109.sql'
+    if (Test-Path $dumptruckReconciliation) {
+        $mysqlDumptruckPath = $dumptruckReconciliation.Replace('\', '/')
+        & $mysqlExe @mysqlArgs --default-character-set=utf8mb4 $DbName -e "source $mysqlDumptruckPath"
+        if ($LASTEXITCODE -ne 0) { throw 'Rekonsiliasi final UPDATE DUMPTRUCK gagal.' }
+        Write-Host "Dump truck operational reconciliation verified last." -ForegroundColor Green
+    }
 
     $materialSyncScript = Join-Path $srcDir 'scripts\sync_material_markdown.php'
     if ($phpExe -and (Test-Path $materialSyncScript)) {

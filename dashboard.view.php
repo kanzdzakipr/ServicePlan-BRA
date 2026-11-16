@@ -9246,6 +9246,12 @@ try {
                         if (s === 'Warranty (Tidak Ada HM)' || s.toLowerCase() === 'warranty (tidak ada hm)') return 'Warranty';
                         return s;
                     };
+                    const operationalSourceDate = asset.operational_report_date
+                        ? new Date(`${String(asset.operational_report_date).slice(0, 10)}T00:00:00`).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+                        : '';
+                    const operationalSource = operationalSourceDate
+                        ? `<small title="${escapeHtml(asset.operational_source_condition || asset.operational_source_file || '')}"><i class="fa-solid fa-file-circle-check"></i> Update DT ${escapeHtml(operationalSourceDate)} · ${escapeHtml(asset.operational_source_unit_codes || ident.hull || '')}</small>`
+                        : '';
 
                     return `
                     <tr data-asset-id="${escapeHtml(asset.id)}"
@@ -9263,7 +9269,7 @@ try {
                         <td onclick="event.stopPropagation();">
                             <div class="asset-cell-line"><span>Project</span><b><a href="javascript:void(0)" class="site-prop-hover-link" onclick="window.openSiteProperties('${escapeHtml(asset.location || asset.project_name || '')}', 'asset'); return false;" title="Buka Detail Lembar Properties &amp; Peta Site ${escapeHtml(asset.location || asset.project_name || '')}"><i class="fa-solid fa-location-dot site-loc-pin-icon"></i><span class="site-name-text">${shown(asset.project_name || asset.location)}</span><i class="fa-solid fa-arrow-up-right-from-square site-prop-hover-icon"></i></a></b><button type="button" class="asset-inline-action" onclick="event.stopPropagation(); window.openRelocateAssetModal('${escapeHtml(asset.id)}', '${escapeHtml(asset.location || asset.project_name || '')}')" title="Mutasi / Pindah Lokasi Unit"><i class="fa-solid fa-route"></i></button></div><div class="asset-cell-line"><span>Posisi</span><b>${shown(asset.operational_position || asset.raw_location_notes)}</b></div>
                         </td>
-                        <td><div class="asset-condition-stack">${badge}${compl.isComplete ? '<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Lengkap</span>' : `<span class="badge badge-warning" title="${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum lengkap</span><small>Kurang: ${escapeHtml(compl.missing.join(', '))}</small>`}</div></td>
+                        <td><div class="asset-condition-stack">${badge}${compl.isComplete ? '<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Lengkap</span>' : `<span class="badge badge-warning" title="${escapeHtml(compl.missing.join(', '))}"><i class="fa-solid fa-triangle-exclamation"></i> Belum lengkap</span><small>Kurang: ${escapeHtml(compl.missing.join(', '))}</small>`}${operationalSource}</div></td>
                         <td onclick="event.stopPropagation();"><button type="button" class="btn btn-sm asset-document-button" onclick="window.openAssetLegalDocuments('${escapeHtml(asset.id)}')" title="Cek legalitas dan dokumentasi unit"><i class="fa-solid fa-folder-open"></i><span>Dokumen</span></button></td>
                         <td onclick="event.stopPropagation();">
                             <div class="asset-row-actions">

@@ -77,10 +77,14 @@ switch ($method) {
 
         if (isset($_GET['id'])) {
             $sql = "SELECT a.*, l.location_name as location_name,
+                           ops.operational_report_date, ops.operational_source_unit_codes,
+                           ops.operational_source_file, ops.operational_source_location,
+                           ops.operational_source_condition, ops.operational_resolution_state,
                            EXISTS(SELECT 1 FROM work_orders w WHERE w.asset_id = a.asset_id) AS has_work_order,
                            EXISTS(SELECT 1 FROM asset_movements am WHERE am.asset_id = a.asset_id) AS has_movement
                     FROM assets a 
                     LEFT JOIN locations l ON a.current_location_id = l.location_id
+                    LEFT JOIN v_asset_latest_operational_snapshot ops ON ops.asset_id = a.asset_id
                     WHERE a.asset_id = :id
                       AND NOT EXISTS (
                           SELECT 1 FROM archived_items arc 
@@ -129,10 +133,14 @@ switch ($method) {
             }
         } else {
             $sql = "SELECT a.*, l.location_name as location_name,
+                           ops.operational_report_date, ops.operational_source_unit_codes,
+                           ops.operational_source_file, ops.operational_source_location,
+                           ops.operational_source_condition, ops.operational_resolution_state,
                            EXISTS(SELECT 1 FROM work_orders w WHERE w.asset_id = a.asset_id) AS has_work_order,
                            EXISTS(SELECT 1 FROM asset_movements am WHERE am.asset_id = a.asset_id) AS has_movement
                     FROM assets a 
                     LEFT JOIN locations l ON a.current_location_id = l.location_id
+                    LEFT JOIN v_asset_latest_operational_snapshot ops ON ops.asset_id = a.asset_id
                     WHERE NOT EXISTS (
                         SELECT 1 FROM archived_items arc 
                         WHERE arc.item_type = 'asset' AND arc.item_id = a.asset_id
